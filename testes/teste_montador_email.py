@@ -118,6 +118,32 @@ def teste_ct068_prefixo_ate_preservado():
     assert "Até 5 pontos" in html
 
 
+def teste_pior_caso_cabe_no_limite_do_gmail():
+    """C05: acima de ~102 KB o Gmail corta a exibicao e esconde o resto.
+
+    Guarda automatica contra o crescimento do catalogo. O cenario e
+    impossivel na pratica — todas as favoritas em promocao no mesmo dia,
+    todas com Clube — mas e ele que define o teto. Se este teste falhar,
+    o catalogo cresceu demais e o e-mail precisa encolher antes.
+    """
+    from robo_livelo.adaptadores import CatalogoArquivo
+
+    limite_do_gmail = 102 * 1024
+    favoritas = CatalogoArquivo("config/lojas_favoritas.toml").listar()
+
+    agrupamento: dict[str, list] = {}
+    for loja in favoritas:
+        agrupamento.setdefault(loja.categoria, []).append(
+            faz_parceiro(loja.nome, "84", clube="120", prefixo_ate=True)
+        )
+
+    tamanho = len(montar(agrupamento).corpo_html)
+    assert tamanho < limite_do_gmail, (
+        f"O pior caso ocupa {tamanho} bytes, acima do corte do Gmail. "
+        "Reduza o catalogo ou enxugue o HTML do e-mail."
+    )
+
+
 def teste_moeda_em_dolar_nao_e_convertida():
     """RN11."""
     html = montar({"Viagem": [faz_parceiro("Booking com", "4", moeda="U$")]}).corpo_html
