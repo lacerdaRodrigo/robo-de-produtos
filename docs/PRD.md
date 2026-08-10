@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 implementada. Fatia vertical rodando fim a fim, 70 testes verdes, 94% de cobertura. Falta apenas configurar os segredos no GitHub para a primeira execução agendada.
+**Status:** V1.0 implementada. Fatia vertical rodando fim a fim, 71 testes verdes, 94% de cobertura. Falta apenas configurar os segredos no GitHub para a primeira execução agendada.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
