@@ -221,3 +221,487 @@ categoria = "Transporte / Telecom"
 #
 # Nome com caractere especial é armadilha: a Livelo escreve "C&A" como "CEA".
 # Ao cadastrar loja nova, confira o nome EXATO exibido na página antes de supor.
+
+# ── Adicionadas em 2026-08-09 ──────────────────────────────────────────────
+# Todas as lojas das categorias Beleza, Marketplace/Varejo, Moda e Eletro,
+# derivadas da taxonomia oficial da Livelo embutida na propria pagina.
+# Nomes copiados exatamente como a Livelo exibe.
+
+# --- Beleza ---
+[[loja]]
+nome = "Abelha Rainha"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "ADCOS"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "AMOBELEZA"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Beyoung"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Coliseu"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "elbo"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Forever Liss"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Granado"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Loccitane"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Loccitane au Bresil"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Nars"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "O.U.i Paris"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Oceane"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Piatan Natural"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Quem Disse, Berenice?"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Shiseido"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Truss"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Vult"
+apelidos = []
+categoria = "Beleza"
+
+
+# --- Eletro ---
+[[loja]]
+nome = "ACER"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Baianão"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Carrefour Shopping"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Dufrio"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Electrolux"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Frigelar"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Gazin"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Midea"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Qcompra"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Top Móveis"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Trocafy"
+apelidos = []
+categoria = "Eletro"
+
+
+# --- Marketplace / Varejo Geral ---
+[[loja]]
+nome = "Aliexpress"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Lojas Torra"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "OLX"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Quero-Quero"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Sam's Club"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Sam's Club - E-commerce"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+
+# --- Moda ---
+[[loja]]
+nome = "Asics"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Bibi"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "BO.BÔ"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Bobstore"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Cabana Magazine"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Carters"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Centauro"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Colcci"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Converse"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Crocs"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Decathlon"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Democrata"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Dudalina"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Ellus"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Estoque"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Euro"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Fila"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Fóssil"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Go case"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Guess"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Havaianas"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Hering Outlet"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Hope"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Hope Resort"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Individual"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Insider Store"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "John John"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Lacoste"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "LE LIS"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "LIVE!"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Liz"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Loungerie"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Malwee"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Meia Sola"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Mizuno"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Mondaine"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Monte Carlo"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Morana"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Netshoes"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "New Balance"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Oficina"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Olympikus"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Osklen"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Posthaus"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Puket"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Quintess"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Reserva"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Richards"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Salinas"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Seculus"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Shoestock"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Speedo"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Studio Z"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Technos"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Umbro"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Under Armour"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Vivara"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "VR Collezioni"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Zattini"
+apelidos = []
+categoria = "Moda"
+
+

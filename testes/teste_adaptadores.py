@@ -104,9 +104,28 @@ def teste_loja_sem_categoria_e_recusada(tmp_path):
 
 
 def teste_config_real_do_projeto_e_valida():
-    """O catalogo versionado precisa carregar sem erro."""
+    """O catalogo versionado precisa carregar sem erro.
+
+    Nao fixa a quantidade de lojas: o catalogo e dado que muda quando se
+    adiciona ou remove loja, e um numero fixo aqui quebraria a cada edicao
+    sem apontar defeito nenhum. O que se verifica sao as invariantes.
+    """
     lojas = CatalogoArquivo("config/lojas_favoritas.toml").listar()
-    assert len(lojas) == 38
+    assert len(lojas) > 100
+
     por_nome = {loja.nome: loja for loja in lojas}
     assert por_nome["C&A"].apelidos == ("CEA",)
     assert por_nome["Booking.com"].apelidos == ("Booking com",)
+
+    # Toda loja tem categoria, e nenhuma loja aparece em duas categorias (RN01).
+    assert all(loja.categoria for loja in lojas)
+    assert len(por_nome) == len(lojas)
+
+    # Pares que uma correspondencia por substring confundiria. Nao ha problema
+    # em ambos serem favoritos — RN04 e o que garante que cada um pontue por si.
+    for base, parecido in [
+        ("Hering", "Hering Outlet"),
+        ("Carrefour Mercado", "Carrefour Shopping"),
+    ]:
+        if parecido in por_nome:
+            assert por_nome[base] != por_nome[parecido]

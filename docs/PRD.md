@@ -32,7 +32,7 @@ Promoção de pontuação turbinada na Livelo é efêmera, não tem aviso prévi
 - Banco de dados e qualquer serviço hospedado além do GitHub.
 - Histórico entre execuções, comparação de execuções e gráfico de tendência.
   *(O robô é stateless: cada execução mostra tudo que está ativo naquele momento, mesmo que repita o e-mail do dia anterior. A arquitetura deixa um contrato de repositório no-op como ponto de extensão — ver Seção 4.)*
-- Data de validade da promoção (exigiria ~40 requisições extras por execução — ver Seção 3).
+- Data de validade da promoção. **A justificativa original desta exclusão era falsa** e está registrada em 11.2: acreditava-se que exigiria ~40 requisições extras, mas a página já traz `dateStart` e `dateEnd` no mesmo payload. Segue fora da V1.0 apenas porque a V1.0 já estava fechada quando isso foi descoberto.
 - Login na conta Livelo, compra automática ou clique automático. **O robô nunca autentica** — lê apenas página pública.
 - Multiusuário, cadastro ou preferências por usuário.
 - Outros programas de pontos (Esfera, Latam Pass etc.). Somente Livelo.
@@ -329,7 +329,13 @@ categoria = "Marketplace / Varejo Geral"
 
 O formato TOML é lido pelo `tomllib`, nativo no Python 3.11 — a configuração externa **não adiciona nenhuma dependência** ao projeto.
 
-O arquivo já existe, preenchido com **38 lojas** em 10 categorias, cujos nomes foram conferidos contra a página real em 2026-08-09. Duas descobertas dessa conferência:
+O arquivo já existe, preenchido com **132 lojas** em 10 categorias, com os nomes conferidos contra a página real em 2026-08-09.
+
+As categorias **Beleza, Marketplace / Varejo Geral, Moda e Eletro** contêm *todas* as lojas que a Livelo classifica nesses segmentos. Elas não foram escolhidas a dedo nem classificadas por palpite: a própria página embute a taxonomia oficial da Livelo e a lista de categorias de cada parceiro, e foi ela que definiu o agrupamento. As demais categorias seguem curadas manualmente.
+
+Quando um parceiro pertence a várias categorias da Livelo, a atribuição segue a ordem Marketplace, Eletro, Beleza, Moda — necessária porque RN01 exige categoria única, e a Livelo permite várias.
+
+Duas descobertas da conferência de nomes:
 
 **RN04 deixou de ser hipótese.** A página lista pares que uma correspondência por substring confundiria de imediato: `Magalu` e `Consórcio Magalu`, `Hering` e `Hering Outlet`, `Carrefour Mercado` e `Carrefour Shopping`, `Petlove` e `Petlove Saúde`, `Localiza`, `Localiza Internacional` e `Localiza Meoo`. São parceiros distintos, com pontuação própria. A regra de match exato não é precaução teórica — sem ela o e-mail traria a loja errada.
 
@@ -660,6 +666,7 @@ A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando,
 
 | Candidato | Gatilho | Observação |
 |---|---|---|
+| **Data de validade da promoção** | Alta prioridade | A página embute um payload JSON com `dateStart`, `dateEnd`, `parity`, `parityClub` e `parityBau` por parceiro. Na medição de 2026-08-09, **31 das 40 promoções terminavam naquele mesmo dia** — é a informação que transforma o e-mail em algo acionável. Custo real: zero requisição extra, apenas ler o payload em vez de raspar o card |
 | Playwright no lugar de `requests` | **Somente se C04 disparar** | A porta `FonteDePagina` já existe para isso (Seção 4.2). Não é para contornar bloqueio (10.1) |
 | Histórico de execuções | Vontade de comparar promoções entre dias | Exige a porta de persistência documentada em 4.2 |
 | Segundo canal de notificação | Cansaço do e-mail | A porta `Notificador` já existe |
