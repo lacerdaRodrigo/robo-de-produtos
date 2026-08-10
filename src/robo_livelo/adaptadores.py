@@ -168,3 +168,49 @@ class NotificadorEmail:
             ) from erro.__class__(erro.smtp_code, b"")
         except Exception as erro:
             raise FalhaAoNotificar(f"Falha ao enviar o e-mail: {type(erro).__name__}") from None
+
+
+class CatalogoPostgres:
+    """Le as lojas favoritas do Postgres (PRD V2, secao 7.1.1).
+
+    Mesma porta que CatalogoArquivo implementa. O nucleo nao sabe de onde
+    o catalogo veio, entao trocar arquivo por banco nao toca uma linha de
+    regra de negocio — era exatamente para isto que a porta existia.
+    """
+
+    CONSULTA = """
+        SELECT l.nome, l.categoria, COALESCE(
+                   ARRAY_AGG(a.texto) FILTER (WHERE a.texto IS NOT NULL),
+                   ARRAY[]::TEXT[]
+               ) AS apelidos
+          FROM loja l
+          LEFT JOIN apelido a ON a.loja_id = l.id
+         GROUP BY l.id, l.nome, l.categoria
+         ORDER BY l.categoria, l.nome
+    """
+
+    def __init__(self, url: str) -> None:
+        if not url:
+            raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
+        self._url = url
+
+    def listar(self) -> list[LojaFavorita]:
+        import psycopg  # importado aqui para nao exigir o driver em quem usa arquivo
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(self.CONSULTA)
+                linhas = cursor.fetchall()
+        except psycopg.Error as erro:
+            # Mensagem propria: a original pode carregar a senha da URL.
+            raise ConfiguracaoInvalida(
+                f"Falha ao consultar o catalogo no banco: {type(erro).__name__}"
+            ) from None
+
+        if not linhas:
+            raise ConfiguracaoInvalida("Nenhuma loja favorita cadastrada no banco.")
+
+        return [
+            LojaFavorita(nome=nome, categoria=categoria, apelidos=tuple(apelidos))
+            for nome, categoria, apelidos in linhas
+        ]
