@@ -148,3 +148,12 @@ def teste_moeda_em_dolar_nao_e_convertida():
     """RN11."""
     html = montar({"Viagem": [faz_parceiro("Booking com", "4", moeda="U$")]}).corpo_html
     assert "U$ 1" in html
+
+
+def teste_versao_aparece_no_rodape():
+    """Saber qual versao gerou o e-mail e o que torna um defeito rastreavel."""
+    from robo_livelo import __version__
+
+    mensagem = montar({"Beleza": [faz_parceiro("Natura", "5")]})
+    assert __version__ in mensagem.corpo_html
+    assert __version__ in mensagem.corpo_texto

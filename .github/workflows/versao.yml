@@ -1,0 +1,47 @@
+name: versao
+
+# Versionamento semantico automatico a partir dos commits:
+#   fix:   -> patch (1.0.0 -> 1.0.1)
+#   feat:  -> minor (1.0.0 -> 1.1.0)
+#   feat!: -> major (1.0.0 -> 2.0.0)
+#   docs:, test:, chore: -> nao mudam a versao
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Este e o UNICO workflow com permissao de escrita, e ele so cria tag,
+# CHANGELOG e Release. O workflow do robo mantem contents: read (PRD 9.4).
+permissions:
+  contents: write
+
+concurrency:
+  group: versao
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release precisa do historico inteiro
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar semantic-release
+        run: pip install python-semantic-release
+
+      - name: Configurar autoria dos commits de release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Calcular e publicar versao
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: semantic-release version

@@ -572,6 +572,21 @@ Executado inteiramente dentro do GitHub Actions, sem serviço externo. O gate ro
 | **Teste de fronteira** | Um módulo do núcleo importa `requests`, `smtplib`, `tomllib`, `os` ou `pathlib` |
 | Dependabot | — abre Pull Request para atualização de segurança |
 
+### 9.3.1 Versionamento
+
+A versão do projeto é calculada pelos commits, não escolhida à mão. O padrão Conventional Commits, que o repositório já seguia desde o primeiro commit, decide o incremento:
+
+| Prefixo | Incremento |
+|---|---|
+| `fix:` | patch — 1.0.0 para 1.0.1 |
+| `feat:` | minor — 1.0.0 para 1.1.0 |
+| `feat!:` ou `BREAKING CHANGE` | major — 1.0.0 para 2.0.0 |
+| `docs:`, `test:`, `chore:` | nenhum |
+
+A ferramenta é o `python-semantic-release`, que mantém `pyproject.toml`, `__init__.py` e `CHANGELOG.md` em sincronia e cria a tag e o Release no GitHub. A versão aparece no rodapé de todo e-mail, para que um defeito relatado possa ser amarrado ao código que o gerou.
+
+> **Tensão declarada:** criar tag e release exige `contents: write`, e §9.4 diz que o projeto não escreve no repositório. A regra continua valendo onde importa — o workflow do robô mantém `contents: read`. Quem ganha escrita é o workflow `versao.yml`, que só roda em push na `main`, só cria tag, changelog e release, e nunca é acionado pelo robô. São superfícies diferentes, e a do scraper continua sem poder escrever.
+
 O **teste de fronteira** paga a dívida assumida na Seção 4.4. Como a estrutura é plana, a separação entre núcleo e adaptador não é imposta pela árvore de pastas; um teste percorre os imports dos módulos do núcleo e falha se encontrar dependência externa. Custa um arquivo de teste e nenhuma ferramenta nova.
 
 > **Decisão registrada:** SonarCloud foi avaliado e descartado. O ganho seria o badge de qualidade para O4, mas o custo é uma conta de terceiro, mais um token e um gate impossível de rodar antes do push. Em um projeto de poucas centenas de linhas, a análise encontraria pouco além do que o `ruff` já cobre.

@@ -10,6 +10,7 @@ from decimal import Decimal
 from html import escape
 from urllib.parse import urlparse
 
+from robo_livelo import __version__
 from robo_livelo.modelos import DOMINIO_LIVELO, Mensagem, Parceiro
 
 _log = logging.getLogger(__name__)
@@ -151,7 +152,13 @@ def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
 
         texto.append("")
 
+    # Versao no rodape: quando algo vier errado, da pra saber o que gerou.
+    html.append(
+        f"<p style='margin-top:24px;font-size:11px;color:#a1a1a6;text-align:center;'>"
+        f"robô-livelo v{escape(__version__)}</p>"
+    )
     html.append("</div></body></html>")
+    texto.append(f"-- robô-livelo v{__version__}")
     return Mensagem(
         assunto=_assunto(agrupamento),
         corpo_html="".join(html),
