@@ -658,7 +658,7 @@ O repositório é público por decisão do objetivo O4, o que expõe publicament
 |---|---|---|
 | **V1.0** ✔ | Fatia vertical completa: todo o escopo da Seção 2, rodando no GitHub Actions com o quality gate verde | MS2 verificado contra a página real (247 parceiros, 9 promoções). MS3 pendente até a primeira execução no Actions |
 | **V1.1** | Roteiro do smoke manual e regra de filtro no Gmail para os e-mails sem promoção (11.4) | MS1 e MS5 medidos ao longo de 30 dias |
-| **V2** | Candidatos, nenhum comprometido — ver 11.2 | — |
+| **V2** | Planejada em documento próprio: [`PRD-V2.md`](PRD-V2.md). Data de validade, página estática no GitHub Pages e e-mail condicional | Ver Seção 4 do PRD V2 |
 
 A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando, da requisição HTTP até o e-mail entregue. Não há versão anterior a ela porque qualquer recorte menor não produz valor — meio caminho não manda e-mail nenhum.
 
@@ -675,7 +675,9 @@ A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando,
 
 ### 11.3 Fora do roadmap
 
-Registrado para não voltar como ideia nova: front-end, banco de dados, multiusuário com cadastro, outros programas de pontos, compra ou clique automático, e qualquer técnica de evasão de bloqueio.
+Registrado para não voltar como ideia nova: banco de dados, multiusuário com cadastro, outros programas de pontos, compra ou clique automático, e qualquer técnica de evasão de bloqueio.
+
+> **Front-end saiu desta lista.** A V2 o traz de volta como página estática publicada no GitHub Pages, com a justificativa registrada na Seção 1 do [`PRD-V2.md`](PRD-V2.md). O motivo do veto original — infraestrutura sob responsabilidade própria, contra O2 — não se aplica a uma página estática servida pelo GitHub.
 
 ### 11.4 Nota sobre volume de e-mail
 
