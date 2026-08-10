@@ -1,0 +1,223 @@
+# Lojas favoritas monitoradas pelo robô.
+# Schema: PRD §5.3. Regra de reconhecimento: PRD RN04 (match exato, sem substring).
+#
+# `nome`     — nome canônico, usado na exibição do e-mail
+# `apelidos` — variações exatas que a Livelo exibe e que a normalização de RN03
+#              (acento, caixa, espaços nas bordas) NÃO resolve sozinha
+# `categoria`— agrupamento no e-mail (RN01: uma loja, uma categoria)
+#
+# Nomes conferidos contra a página real em 2026-08-09. Loja favorita que não
+# aparecer numa execução é registrada no log (RN19) — sinal de que o nome mudou.
+
+# ── Marketplace / Varejo Geral ───────────────────────────────────────────────
+[[loja]]
+nome = "Mercado Livre"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Shopee"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Casas Bahia"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+# Atenção: "Consórcio Magalu" é parceiro DISTINTO e não deve ser capturado aqui.
+[[loja]]
+nome = "Magalu"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Extra"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+[[loja]]
+nome = "Pontofrio"
+apelidos = []
+categoria = "Marketplace / Varejo Geral"
+
+# ── Eletro ──────────────────────────────────────────────────────────────────
+[[loja]]
+nome = "Fast Shop"
+apelidos = []
+categoria = "Eletro"
+
+[[loja]]
+nome = "Kabum!"
+apelidos = ["Kabum"]
+categoria = "Eletro"
+
+# ── Moda ────────────────────────────────────────────────────────────────────
+[[loja]]
+nome = "Renner"
+apelidos = []
+categoria = "Moda"
+
+# A Livelo exibe "CEA", sem o "&" — daí o apelido.
+[[loja]]
+nome = "C&A"
+apelidos = ["CEA"]
+categoria = "Moda"
+
+[[loja]]
+nome = "Riachuelo"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Dafiti"
+apelidos = []
+categoria = "Moda"
+
+# Atenção: "Hering Outlet" é parceiro DISTINTO e não deve ser capturado aqui.
+[[loja]]
+nome = "Hering"
+apelidos = []
+categoria = "Moda"
+
+[[loja]]
+nome = "Nike"
+apelidos = []
+categoria = "Moda"
+
+# ── Beleza ──────────────────────────────────────────────────────────────────
+[[loja]]
+nome = "Natura"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "O Boticário"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Sephora"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Eudora"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Avon"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Época Cosméticos"
+apelidos = []
+categoria = "Beleza"
+
+[[loja]]
+nome = "Beleza na Web"
+apelidos = []
+categoria = "Beleza"
+
+# ── Farmácia ────────────────────────────────────────────────────────────────
+[[loja]]
+nome = "Drogaria São Paulo"
+apelidos = []
+categoria = "Farmácia"
+
+[[loja]]
+nome = "Drogarias Pacheco"
+apelidos = []
+categoria = "Farmácia"
+
+[[loja]]
+nome = "Farmácias App"
+apelidos = []
+categoria = "Farmácia"
+
+# ── Pet ─────────────────────────────────────────────────────────────────────
+[[loja]]
+nome = "Petz"
+apelidos = []
+categoria = "Pet"
+
+# Atenção: "Petlove Saúde" é parceiro DISTINTO e não deve ser capturado aqui.
+[[loja]]
+nome = "Petlove"
+apelidos = []
+categoria = "Pet"
+
+# ── Viagem ──────────────────────────────────────────────────────────────────
+# A Livelo exibe "Booking com", sem o ponto — daí o apelido.
+[[loja]]
+nome = "Booking.com"
+apelidos = ["Booking com"]
+categoria = "Viagem"
+
+[[loja]]
+nome = "Decolar"
+apelidos = []
+categoria = "Viagem"
+
+# Atenção: "Localiza Internacional" e "Localiza Meoo" são parceiros DISTINTOS.
+[[loja]]
+nome = "Localiza"
+apelidos = []
+categoria = "Viagem"
+
+[[loja]]
+nome = "Movida"
+apelidos = []
+categoria = "Viagem"
+
+# ── Mercado / Alimentação ───────────────────────────────────────────────────
+# Atenção: "Carrefour Shopping" é parceiro DISTINTO.
+[[loja]]
+nome = "Carrefour Mercado"
+apelidos = []
+categoria = "Mercado / Alimentação"
+
+[[loja]]
+nome = "Angeloni"
+apelidos = []
+categoria = "Mercado / Alimentação"
+
+# ── Casa & Construção ───────────────────────────────────────────────────────
+[[loja]]
+nome = "Camicado"
+apelidos = []
+categoria = "Casa & Construção"
+
+[[loja]]
+nome = "ABC da Construção"
+apelidos = []
+categoria = "Casa & Construção"
+
+[[loja]]
+nome = "Telhanorte"
+apelidos = []
+categoria = "Casa & Construção"
+
+# ── Transporte / Telecom ────────────────────────────────────────────────────
+[[loja]]
+nome = "Uber"
+apelidos = []
+categoria = "Transporte / Telecom"
+
+[[loja]]
+nome = "Claro"
+apelidos = []
+categoria = "Transporte / Telecom"
+
+[[loja]]
+nome = "TIM"
+apelidos = []
+categoria = "Transporte / Telecom"
+
+# ── Notas ───────────────────────────────────────────────────────────────────
+# Amazon nunca entra: não é parceira de acúmulo da Livelo (RN09).
+#
+# Nome com caractere especial é armadilha: a Livelo escreve "C&A" como "CEA".
+# Ao cadastrar loja nova, confira o nome EXATO exibido na página antes de supor.

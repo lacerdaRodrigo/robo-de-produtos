@@ -1,0 +1,22 @@
+# Segredos — nunca commitar (PRD §9.1)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Testes e cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
