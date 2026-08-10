@@ -1,7 +1,9 @@
 # PRD V2 — Robô de Pontuação Turbinada (Livelo)
 
-**Versão:** v2.0 (planejamento)
+**Versão:** v2.1 (planejamento)
 **Status:** planejado, não implementado. A V1.0 continua em produção e não é interrompida.
+
+> A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
 
 Este documento é o **delta sobre o [`PRD.md`](PRD.md)**, que segue valendo como fonte da verdade de tudo que não for redefinido aqui. Onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
 
@@ -48,15 +50,17 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 - Extração a partir do **payload JSON** da página, em vez do texto renderizado dos cards.
 - Data de início e fim da promoção, com destaque para o que termina hoje.
 - Distinção entre promoção de pontuação base e promoção exclusiva do Clube Livelo.
-- Página estática publicada no GitHub Pages, com as 132 favoritas e suas pontuações atuais.
-- E-mail enviado somente quando houver promoção nas favoritas.
+- **Site próprio, com backend e autenticação**, onde as lojas favoritas e os limiares de alerta são consultados **e editados**.
+- **Banco de dados Postgres** como fonte da configuração, substituindo o arquivo TOML.
+- **Novo critério de alerta**: múltiplo da pontuação base com piso absoluto — ver Seção 6.1.
+- E-mail enviado somente quando alguma favorita cruzar o próprio limiar.
 
 ### 3.2 Fora
 
-- Framework de front-end, build de JavaScript, `package.json`. A página é HTML estático gerado pelo mesmo Python.
-- Banco de dados e histórico entre execuções. **A decisão de 1.4 do PRD segue valendo.**
-- Multiusuário, login, cadastro.
+- Multiusuário, cadastro, recuperação de senha. O site tem um único dono.
+- Histórico entre execuções e gráfico de tendência. **A decisão de 1.4 do PRD segue valendo** — o banco guarda configuração, não série temporal.
 - Hospedar logotipos ou imagens dos parceiros — ver 9.2.
+- Compra, clique automático ou qualquer autenticação na Livelo.
 
 ### 3.3 O que este documento revoga do PRD V1
 
@@ -66,8 +70,12 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | §1.4 "Fora do escopo: data de validade" | **Revogado.** A justificativa era falsa |
 | §11.3 "Fora do roadmap: front-end" | **Revogado** pelo mesmo motivo |
 | **RF10** (enviar sempre) | **Substituído** por RF16 — ver Seção 5 |
+| **RN02** (piso de boost zero: qualquer aumento conta) | **Revogado e invertido** por RN27 — ver 6.1. Era o coração do filtro da V1 e passa a ser o oposto |
 | **MS5** (sinal de vida pelo e-mail) | **Substituído** por MS6 — ver Seção 4 |
-| §9.4 "nunca escreve no repositório" | **Mantido.** O deploy do Pages não commita — ver 7.3 |
+| §1.4 "sem banco de dados" e §11.3 | **Revogado.** A configuração passa a viver em Postgres, porque o site precisa escrevê-la |
+| §5.3 (configuração em `lojas_favoritas.toml`) | **Substituído.** O TOML vira a carga inicial do banco, não a fonte da verdade |
+| §9.4 "nunca escreve no repositório" | **Mantido e reforçado.** O robô continua com `contents: read`; agora nem para publicar página ele escreve |
+| §2.2 RNF01 "custo zero" | **Mantido**, mas agora depende de free tier de terceiros — ver C08 |
 
 ---
 
@@ -92,9 +100,9 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | ID | Requisito |
 |---|---|
 | **RF14** | Extrair os dados dos parceiros a partir do payload JSON embutido na página, incluindo `parity`, `parityClub`, `parityBau`, `dateStart`, `dateEnd` e `activeCampaign` |
-| **RF15** | Gerar uma página HTML estática com todas as lojas favoritas, suas pontuações atuais e as promoções em destaque |
-| **RF16** | Enviar e-mail **somente quando houver ao menos uma promoção** nas lojas favoritas. **Substitui RF10** |
-| **RF17** | Publicar a página no GitHub Pages a cada execução |
+| **RF15** | Servir um site com todas as lojas favoritas, suas pontuações atuais e as promoções em destaque |
+| **RF16** | Enviar e-mail **somente quando ao menos uma favorita cruzar o próprio limiar de alerta**. **Substitui RF10** |
+| **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja |
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
 
@@ -113,7 +121,9 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | ID | Restrição | Impacto |
 |---|---|---|
 | **C06** | O payload JSON é interno da Livelo e pode mudar de forma sem aviso — não é uma API pública com contrato | Mesma fragilidade de C04, agora concentrada em outro ponto. RN13 continua sendo a rede de proteção |
-| **C07** | O GitHub Pages tem limite de 1 GB de site e ~10 builds por hora | Folga enorme: a página tem dezenas de KB e são 3 deploys por dia |
+| **C07** | `parityBau` é preenchido pela Livelo e o alerta inteiro depende dele ser honesto | Se um dia vier igual ao valor promocional, todo mundo vira 1x e **nenhum alerta dispara, em silêncio**. Exige a checagem de RN29 |
+| **C08** | O custo zero passa a depender de free tier de terceiros: Neon 0,5 GB e 100 CU-horas por mês, Vercel no plano gratuito | Medido: o projeto usa ~88 KB e ~290 consultas por mês. Folga de mais de 100x, mas os termos podem mudar |
+| **C09** | O compute do Neon hiberna após 5 minutos ocioso | Acorda sozinho em milissegundos. Irrelevante para o robô 3x ao dia; a primeira tela do site após ociosidade carrega um pouco mais devagar |
 
 ---
 
@@ -127,8 +137,36 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN24** | A página exibe **todas** as favoritas, em promoção ou não. É o que permite consultar a pontuação base sem abrir a Livelo (O5) |
 | **RN25** | A página nunca carrega imagem, fonte ou script de domínio externo. Logotipo de parceiro não é hospedado nem apontado por link direto — ver 9.2 |
 | **RN26** | O carimbo de atualização é obrigatório e sempre visível. Sem ele a página não cumpre MS6 |
+| **RN27** | **Uma loja gera alerta quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** Substitui e inverte RN02 |
+| **RN28** | Multiplicador e piso têm valor padrão global, sobrescrevível por loja. Loja sem sobrescrita usa o padrão |
+| **RN29** | Se nenhuma favorita cruzar o limiar por muitos dias seguidos, o fato é registrado como suspeita — é o sintoma de C07 |
+| **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
 
-### 6.1 Sobre RN23 e o Clube
+### 6.1 O novo critério de alerta
+
+A V1 alertava quando a Livelo pendurava a etiqueta "Promoção". Medido em 2026-08-09, esse critério **errava nos dois sentidos**:
+
+| Erro | Exemplo real |
+|---|---|
+| Avisava sem haver aumento | `Eudora` 2 → 2 e `O Boticário` 3 → 3, ambos etiquetados como promoção |
+| Não avisava havendo aumento | `Avon` com 6 pontos contra base 2, um salto de 3x, **sem etiqueta nenhuma** |
+
+O critério passa a comparar com `parityBau`, a pontuação normal declarada pela própria Livelo. Dois botões:
+
+- **Multiplicador** — quanto acima do normal daquela loja. Padrão **2,0**
+- **Piso** — mínimo absoluto para valer um e-mail. Padrão **4 pontos**
+
+**Por que múltiplo e não número fixo.** Um limiar absoluto ignora a escala de cada loja. Simulado no catálogo real, a regra "avise acima de 8" perderia `Crocs` (2→7), `Avon` (2→6), `Osklen` (2→6), `Fast Shop` (2→5) e `Magalu` (2→4) — todas oportunidades legítimas.
+
+**Por que o piso existe.** Só o multiplicador deixaria passar `Mercado Livre` 1→2 e `Bibi` 1→2. Dobrou, mas são 2 pontos.
+
+**Prova de que não vaza ruído.** `Claro`, `TIM` e `Decolar` dão 6 pontos com base 6, e `Natura` dá 4 com base 4. São pontuações altas permanentes, não oportunidades — nenhuma dispara. Um limiar absoluto de 5 mandaria `Claro` e `TIM` todo dia.
+
+Com padrão 2,0 e piso 4, a medição de 2026-08-09 produziria **um e-mail com 12 lojas**, de 126 favoritas.
+
+> **Recomendação de uso:** subir com o padrão global e **nenhuma sobrescrita**. Configurar 132 limiares na largada é armadilha — você chuta todos, erra a maioria e nunca revisa. Depois de duas ou três semanas, sobrescrever apenas as poucas lojas que incomodarem. A capacidade existe desde o primeiro dia; o uso dela deve ser preguiçoso.
+
+### 6.2 Sobre RN23 e o Clube
 
 A V1 tratou como promoção qualquer parceiro com a etiqueta "Promoção", e isso produziu ruído real: `O Boticário` apareceu com base 3 → 3 pontos, ou seja, sem aumento nenhum na base — o boost estava só no tier Clube, de 3 para 10.
 
@@ -148,10 +186,17 @@ A regra de ouro não muda: núcleo puro, mundo por contrato. A V2 acrescenta **u
 | Peça | Tipo | Papel |
 |---|---|---|
 | `extrator.py` | Núcleo, **reescrito** | Passa a ler o payload JSON em vez do texto dos cards |
-| `montador_pagina.py` | Núcleo, **novo** | Agrupamento → HTML da página. Espelha `montador_email.py` |
-| `PublicadorDePagina` | **Porta nova** | Entrega a página gerada. Implementação V2: gravar em `site/` |
+| `alertas.py` | Núcleo, **novo** | Aplica RN27 e RN28: decide o que merece alerta. Função pura, sem I/O |
 | `montador_email.py` | Núcleo, ajustado | Ganha validade e marcação de Clube |
-| `principal.py` | Orquestração, ajustada | Decide envio por RF16 e chama o publicador |
+| `CatalogoFavoritas` | **Porta existente, nova implementação** | Passa a ler do Postgres em vez do TOML. **O contrato não muda** — é o dividendo da arquitetura da V1 |
+| `principal.py` | Orquestração, ajustada | Decide envio por RF16 |
+| Site | **Componente novo**, fora do robô | Next.js na Vercel: exibe e edita. Fala com o mesmo banco |
+
+### 7.1.1 O que a arquitetura da V1 economiza aqui
+
+Trocar arquivo TOML por Postgres **não toca uma linha do núcleo**. `CatalogoFavoritas.listar()` continua devolvendo `list[LojaFavorita]`, e quem chama não sabe de onde veio. Era exatamente para isto que a porta existia — e é a primeira vez que ela paga o próprio custo.
+
+O TOML atual vira a **carga inicial** do banco, não some.
 
 ```mermaid
 flowchart TD
@@ -187,11 +232,20 @@ Ler o payload é **mais estável** que raspar o card renderizado:
 
 Isso ataca **C04**, que é o maior risco do projeto. A troca é protegida pelos 71 testes existentes: o contrato `extrair_parceiros(html) -> list[Parceiro]` não muda, só a implementação por dentro.
 
-### 7.3 Deploy sem escrever no repositório
+### 7.3 Infraestrutura
 
-O deploy usa a action oficial de Pages, que publica um artefato — **não faz commit**. As permissões necessárias são `pages: write` e `id-token: write`, ambas concedidas apenas ao job de deploy.
+| Peça | Onde | Por quê |
+|---|---|---|
+| Robô | GitHub Actions, 3x ao dia | O agendamento, os testes e o gate já funcionam. A notificação nativa de falha sustenta O3 |
+| Banco | **Neon** (Postgres) | Não expira e acorda sozinho. Escolhido também por ensinar Postgres, que é conhecimento transferível |
+| Site | **Vercel** | Não tem o desligamento longo de outras hospedagens gratuitas |
 
-`permissions: contents: read` continua valendo (§9.4 do PRD V1), e o repositório não acumula commits automáticos. Era exatamente a objeção que derrubou a ideia de histórico via commit na V1, e aqui ela não se aplica.
+**Alternativas descartadas, com o motivo:**
+
+- **Render** — o Postgres gratuito **expira 30 dias após a criação e é apagado com os dados**. O web service dorme em 15 minutos e leva cerca de 1 minuto para voltar, o pior perfil possível para um site consultado esporadicamente.
+- **Configuração continuar no git**, editada pelo site via API do GitHub — tecnicamente viável e mais simples, dispensando banco. Descartada por decisão explícita: aprender Postgres num projeto próprio é objetivo declarado, e isso pesa mais que a simplicidade aqui. **Registrado como escolha de aprendizado, não como necessidade técnica.**
+
+O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca escreve no repositório.
 
 ---
 
@@ -206,17 +260,47 @@ O deploy usa a action oficial de Pages, que publica um artefato — **não faz c
 | `fim_promocao` | `datetime \| None` | `dateEnd`, base de RN21 e RN22 |
 | `campanha` | `str \| None` | `activeCampaign`, base de RN23 |
 
-Estrutura nova:
+`LojaFavorita` ganha os campos de alerta:
 
-| Estrutura | Descrição |
-|---|---|
-| `Pagina` | `titulo`, `html`, `atualizado_em`. Espelha `Mensagem` |
+| Campo | Tipo | Regra |
+|---|---|---|
+| `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
+| `piso_pontos` | `Decimal \| None` | Idem |
 
-Configuração nova: `ASSINANTE_CLUBE`, padrão `false`.
+### 8.1 Esquema do banco
+
+```
+loja        id, nome, categoria, multiplicador?, piso_pontos?, criada_em
+apelido     id, loja_id, texto              -- RN04 continua exigindo grafia exata
+preferencia chave, valor                    -- multiplicador e piso padrão, assinante_clube
+```
+
+Três tabelas. Restrições que o banco garante, e não o código — a garantia mora na camada mais baixa possível:
+
+- `nome` único
+- `texto` do apelido único **entre todas as lojas**, porque RN04 proíbe ambiguidade
+- `categoria` obrigatória, `multiplicador > 0`, `piso_pontos >= 0`
+
+Configuração nova: `assinante_clube`, padrão `false`, agora na tabela de preferências.
 
 ---
 
 ## 9. Segurança, privacidade e legal
+
+### 9.0 Autenticação do site
+
+Decisão tomada: **senha única**, guardada como variável de ambiente na Vercel, sem cadastro nem tabela de usuários.
+
+O trade-off foi apresentado e aceito: senha compartilhada é credencial de vida longa, sem segundo fator e sem revogação individual. Quatro medidas obrigatórias, porque neste desenho quem entra no site altera o que o robô faz:
+
+| Medida | Motivo |
+|---|---|
+| Senha longa e aleatória, nunca no código nem no repositório | O repositório é público |
+| Limite de tentativas de login | Sem isso, senha única cai por força bruta |
+| Cookie de sessão `httpOnly` e `secure`, só sobre HTTPS | Impede leitura por script e trânsito em claro |
+| Credenciais do banco só no servidor, nunca no navegador | O front nunca fala direto com o Postgres |
+
+**Leitura pública, edição protegida.** Quem tem a URL vê as promoções; só quem tem a senha altera.
 
 ### 9.1 A página é pública
 
@@ -278,11 +362,13 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 
 | Fase | Entrega | Por que nesta ordem |
 |---|---|---|
-| **V2.0** | Extrator lendo o payload, com validade e campanha no modelo. E-mail ganha validade e marcação de Clube | É a base dos outros dois. Sozinha já melhora o e-mail de hoje, sem front nenhum |
-| **V2.1** | Página gerada e publicada no Pages, com todas as favoritas e o carimbo | Precisa dos dados da V2.0. Entrega O5 e prepara o terreno do e-mail condicional |
-| **V2.2** | E-mail condicional (RF16) e `ASSINANTE_CLUBE` | **Só depois da V2.1 estar no ar e verificada.** Antes disso, cortar o e-mail diário reabre o buraco do O3 |
+| **V2.0** | Extrator lendo o payload: base, validade e campanha. E-mail mostra validade e marca o que é só do Clube | Base de tudo. Sozinha já melhora o e-mail de hoje, sem site e sem banco |
+| **V2.1** | Banco no Neon, `CatalogoFavoritas` lendo de lá, TOML como carga inicial | O núcleo não muda — só a implementação da porta. Fase de menor risco de todas |
+| **V2.2** | Regras de alerta RN27 e RN28, ainda com o e-mail diário | Permite calibrar multiplicador e piso **vendo o resultado** antes de depender deles |
+| **V2.3** | Site na Vercel: consulta e edição, com senha | Precisa do banco da V2.1. Entrega O5 |
+| **V2.4** | E-mail condicional (RF16) | **Só depois da V2.3 no ar e verificada.** Antes disso, cortar o e-mail diário reabre o buraco do O3 |
 
-> A ordem não é negociável na V2.2: implementá-la antes da página no ar significa ficar sem sinal de vida nenhum.
+> Duas ordens não são negociáveis. **V2.4 depois da V2.3**, senão fica sem sinal de vida nenhum. E **V2.2 antes da V2.4**, porque calibrar limiar recebendo e-mail todo dia é fácil; calibrar limiar quando o e-mail só chega se o limiar estiver certo é adivinhação.
 
 ---
 
@@ -291,6 +377,9 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 | Risco | Mitigação |
 |---|---|
 | O formato do payload muda (C06) | RN13 continua: poucos parceiros extraídos derruba a execução com erro ruidoso |
-| A página vira o canal principal e o e-mail perde relevância | Aceito. Se acontecer, o e-mail condicional já é a resposta certa |
+| O e-mail perder relevância diante do site | **Não é risco, é o desenho.** Cada canal ganha um trabalho só: o site é consulta, o e-mail é alarme. O e-mail para de ser catálogo |
+| `parityBau` deixar de ser confiável (C07) | RN29: ausência prolongada de alerta é tratada como suspeita, não como "não teve promoção" |
+| Senha única vazar | 9.0: senha aleatória, limite de tentativas, sessão protegida. Estrago limitado a este projeto |
+| Free tier de Neon ou Vercel mudar (C08) | Uso medido é ~1% do limite. Se mudar, a configuração volta para arquivo — o contrato `CatalogoFavoritas` torna a volta barata |
 | Deixar de abrir a página e não perceber que o robô morreu | Limitação declarada em MS6. Se virar problema real, o candidato é um e-mail semanal de resumo, mesmo sem promoção |
 | A exposição pública dos dados atrair atenção da Livelo | 9.3: a página sai do ar na primeira manifestação |
