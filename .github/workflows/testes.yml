@@ -1,0 +1,35 @@
+name: testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# PRD 9.4: o token nao precisa de escrita. Sem esta linha, uma dependencia
+# comprometida poderia commitar no repositorio.
+permissions:
+  contents: read
+
+jobs:
+  qualidade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Formatacao (ruff)
+        run: ruff format --check .
+
+      # PRD 8.4: minimo de 90% no nucleo puro.
+      - name: Testes e cobertura
+        run: pytest --cov --cov-fail-under=90

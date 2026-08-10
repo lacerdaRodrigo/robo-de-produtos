@@ -10,17 +10,17 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 
 ---
 
-## `testes/teste_categorias.py` — função `encontrar_categoria()`
+## `testes/teste_categorias.py` — função `reconhecer()`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-001 | Loja exata na lista | Nome cadastrado igualzinho ("Natura") deve retornar a categoria certa | Chamar `encontrar_categoria("Natura")`, esperar `"Beleza"` |
+| CT-001 | Loja exata na lista | Nome cadastrado igualzinho ("Natura") deve retornar a categoria certa | Chamar `reconhecer("Natura")`, esperar `"Beleza"` |
 | CT-002 | Acentuação diferente | "Boticário" e "boticario" (sem acento) devem dar o mesmo resultado | Testar as duas grafias, comparar retorno |
 | CT-003 | Caixa alta/baixa | "CASAS BAHIA", "casas bahia", "Casas Bahia" devem funcionar igual | Rodar as 3 variações, checar retorno idêntico |
 | CT-004 | Loja não cadastrada | Loja fora do dicionário deve retornar `None`, sem quebrar | Chamar com nome não listado, checar `is None` |
 | CT-005 | Sufixo só casa se for apelido cadastrado ⚠️ | RN04 proíbe substring. "Casas Bahia Oficial" só é reconhecido se estiver na lista de apelidos da loja; um sufixo não cadastrado **não** pode casar | Testar apelido cadastrado (espera a categoria) e sufixo não cadastrado (espera `None`) |
 | CT-006 | Lojas parecidas não se confundem ⚠️ | "Ponto" e "Pontofrio" são lojas diferentes, não podem se capturar por engano | Testar os dois nomes, garantir categorias corretas e distintas |
-| CT-007 | String vazia | Nome vazio não pode gerar erro | Chamar `encontrar_categoria("")`, checar `None` sem exceção |
+| CT-007 | String vazia | Nome vazio não pode gerar erro | Chamar `reconhecer("")`, checar `None` sem exceção |
 | CT-008 | Espaços extras | " Natura " (com espaços) deve funcionar igual a "Natura" | Testar com espaços sobrando, comparar resultado |
 
 ## `testes/teste_extrator.py` — núcleo puro: HTML → `Parceiro` (fixture de HTML, **nunca** rede)
@@ -108,13 +108,18 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 
 ## Totais
 
-| Arquivo | Casos |
-|---|---|
-| `teste_categorias.py` | 8 |
-| `teste_extrator.py` | 11 |
-| `teste_adaptadores.py` | 7 |
-| `teste_montador_email.py` | 14 |
-| `teste_principal.py` | 12 |
-| `teste_fronteira.py` | 1 |
-| **Automatizados** | **53** |
-| Manuais (CT-050, CT-051) | 2 |
+Os casos com identificador CT são os planejados. A implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado.
+
+| Arquivo | Casos CT | Executados |
+|---|---|---|
+| `teste_categorias.py` | 8 | 11 |
+| `teste_extrator.py` | 11 | 16 |
+| `teste_adaptadores.py` | 7 | 9 |
+| `teste_montador_email.py` | 14 | 15 |
+| `teste_principal.py` | 12 | 13 |
+| `teste_fronteira.py` | 1 | 5 |
+| **Total** | **53** | **69** |
+
+Manuais: CT-050 e CT-051.
+
+Confirme o número real com `pytest --collect-only -q` antes de citá-lo em qualquer documento — foi assim que o total errado de "47 casos" sobreviveu ao planejamento original.

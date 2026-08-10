@@ -1,0 +1,38 @@
+name: robo
+
+on:
+  schedule:
+    # 12h/17h/23h UTC = 09h/14h/20h de Brasilia (UTC-3, fixo o ano todo).
+    # C02: o cron do Actions nao garante horario exato, atraso e normal.
+    - cron: "0 12,17,23 * * *"
+  workflow_dispatch:
+
+# PRD 9.4: o robo nunca escreve no repositorio.
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e .
+
+      # RNF06: qualquer falha sai com codigo diferente de zero e o GitHub
+      # notifica sozinho. E o que distingue "sem promocao" de "robo quebrado".
+      - name: Verificar promocoes
+        env:
+          EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
+          SENHA_APP_GMAIL: ${{ secrets.SENHA_APP_GMAIL }}
+          EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
+          LIMIAR_PARCEIROS: "150"
+        run: python -m robo_livelo.principal

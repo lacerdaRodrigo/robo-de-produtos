@@ -183,7 +183,9 @@ Regras numeradas e referenciadas pelo restante do documento. Qualquer mudança a
 
 ### 4.1 Princípio
 
-O núcleo não conhece `requests`, `beautifulsoup4` nem `smtplib`. Tudo que fala com o mundo externo entra por contrato. Trocar qualquer adaptador não toca a lógica.
+O núcleo **não faz entrada e saída**. Nada de rede, disco, variável de ambiente ou SMTP. Tudo que fala com o mundo externo entra por contrato, e trocar qualquer adaptador não toca a lógica.
+
+A fronteira é I/O, não "dependência externa". O núcleo pode usar `beautifulsoup4`, que é biblioteca de transformação pura: recebe texto, devolve estrutura, não abre conexão nem arquivo. Proibir uma biblioteca só por ser de terceiro protegeria o rótulo em vez do princípio — e o Plano B do Playwright troca o *baixador* da página, nunca o *interpretador* do HTML.
 
 A divisão que importa: **baixar** a página é sujo, **interpretar** o HTML é puro. Receber uma string de HTML e devolver objetos não depende de rede. É essa fronteira que torna o Plano B (Playwright) uma troca de uma peça só, e é a mesma fronteira que a estratégia de testes já assume ao usar fixtures de HTML sem rede.
 
@@ -558,7 +560,7 @@ Executado inteiramente dentro do GitHub Actions, sem serviço externo. O gate ro
 | `pytest` | Qualquer teste quebra |
 | Cobertura | Núcleo puro abaixo de 90% (Seção 8.4) |
 | `ruff` | Lint ou formatação fora do padrão |
-| **Teste de fronteira** | Um módulo do núcleo importa `requests`, `beautifulsoup4` ou `smtplib` |
+| **Teste de fronteira** | Um módulo do núcleo importa `requests`, `smtplib`, `tomllib`, `os` ou `pathlib` |
 | Dependabot | — abre Pull Request para atualização de segurança |
 
 O **teste de fronteira** paga a dívida assumida na Seção 4.4. Como a estrutura é plana, a separação entre núcleo e adaptador não é imposta pela árvore de pastas; um teste percorre os imports dos módulos do núcleo e falha se encontrar dependência externa. Custa um arquivo de teste e nenhuma ferramenta nova.

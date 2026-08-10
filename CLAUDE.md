@@ -8,7 +8,7 @@ Robô que lê a página pública de parceiros da Livelo, filtra as lojas favorit
 
 ## Regras de ouro
 
-1. **O núcleo é puro.** `extrator.py`, `categorias.py` e `montador_email.py` não podem importar `requests`, `beautifulsoup4` nem `smtplib`. Existe um teste que falha se isso acontecer (CT-074).
+1. **O núcleo não faz I/O.** `modelos.py`, `extrator.py`, `categorias.py` e `montador_email.py` não podem importar `requests`, `smtplib`, `tomllib`, `os` nem `pathlib`. Existe um teste que falha se isso acontecer (CT-074). `beautifulsoup4` é permitido: transforma texto em estrutura, não abre conexão nem arquivo.
 2. **O mundo entra por contrato.** Três portas em `portas.py`: `FonteDePagina`, `Notificador`, `CatalogoFavoritas`. Nada de acesso externo fora dos adaptadores.
 3. **Todo dado vindo do site é hostil.** Escapar antes de renderizar (RN07) e validar o domínio do link antes de colocá-lo no e-mail (§9.2).
 4. **Falha nunca é silenciosa.** Erro encerra com código de saída diferente de zero (RNF06). "Sem promoção" e "robô quebrado" precisam ser distinguíveis (RN13).
