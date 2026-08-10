@@ -112,13 +112,13 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
-| `teste_categorias.py` | 8 | 11 |
+| `teste_categorias.py` | 8 | 12 |
 | `teste_extrator.py` | 11 | 16 |
 | `teste_adaptadores.py` | 7 | 9 |
 | `teste_montador_email.py` | 14 | 15 |
 | `teste_principal.py` | 12 | 13 |
 | `teste_fronteira.py` | 1 | 5 |
-| **Total** | **53** | **69** |
+| **Total** | **53** | **70** |
 
 Manuais: CT-050 e CT-051.
 

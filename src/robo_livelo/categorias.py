@@ -6,6 +6,7 @@ Regras aplicadas aqui: RN01, RN03, RN04, RN05, RN14, RF06.
 from __future__ import annotations
 
 import unicodedata
+from dataclasses import replace
 
 from robo_livelo.modelos import LojaFavorita, Parceiro
 
@@ -57,8 +58,12 @@ def agrupar(parceiros: list[Parceiro], favoritas: list[LojaFavorita]) -> dict[st
         loja = indice.get(normalizar(parceiro.nome))
         if loja is None:
             continue
-        # RN01: a loja tem uma categoria fixa, e o nome exibido e o canonico.
-        agrupado.setdefault(loja.categoria, []).append(parceiro)
+        # RN01: categoria fixa por loja. O nome exibido passa a ser o canonico
+        # do catalogo, nao o do site: a Livelo escreve "CEA", "Booking com" e
+        # "O Boticario", e quem le o e-mail espera "C&A", "Booking.com" e
+        # "O Boticario" com acento. O nome do site ja cumpriu seu papel no
+        # reconhecimento (RN04).
+        agrupado.setdefault(loja.categoria, []).append(replace(parceiro, nome=loja.nome))
 
     return {
         categoria: sorted(lista, key=lambda p: p.pontos_atuais, reverse=True)

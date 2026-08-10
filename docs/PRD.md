@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
-**Versão:** v1.0
-**Status:** planejamento concluído — nenhuma linha de código escrita ainda.
+**Versão:** v1.1
+**Status:** V1.0 implementada. Fatia vertical rodando fim a fim, 70 testes verdes, 94% de cobertura. Falta apenas configurar os segredos no GitHub para a primeira execução agendada.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -123,6 +123,7 @@ Limitações reais do ambiente escolhido. Não são negociáveis — o projeto c
 | **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h/14h/20h são aproximados; atraso de minutos é comportamento normal |
 | **C03** | O Gmail exige verificação em 2 etapas e senha de aplicativo | Setup manual obrigatório; a senha pode ser revogada a qualquer momento pelo Google |
 | **C04** | A Livelo pode alterar o HTML ou adotar proteção anti-bot sem aviso | O extrator é frágil por natureza — é exatamente o que RF12 existe para detectar |
+| **C05** | O Gmail corta mensagens acima de ~102 KB, escondendo o resto atrás de um link | Limita o tamanho do corpo do e-mail. Medido: 6 KB no cenário real e 27 KB no pior caso, com todas as favoritas em promoção. Folga de quase 4x |
 
 ### 2.4 Parâmetros de configuração
 
@@ -163,6 +164,7 @@ Regras numeradas e referenciadas pelo restante do documento. Qualquer mudança a
 | ID | Regra |
 |---|---|
 | **RN08** | O link do e-mail aponta sempre para a página do parceiro **dentro da Livelo**, nunca para o site da loja. É por esse caminho que a pontuação é validada pelo programa. |
+| **RN20** | O e-mail exibe o **nome canônico do catálogo**, não o nome que a Livelo mostra na página. O nome do site já cumpriu seu papel no reconhecimento (RN04). Sem esta regra o e-mail traria "CEA", "Booking com" e "O Boticario" sem acento, que são as grafias da Livelo e não as do leitor. |
 | **RN10** | O valor exclusivo do Clube Livelo só aparece quando existir. Sem valor, nenhum bloco vazio é renderizado. |
 | **RN11** | A moeda pode ser R$ ou U$ — parceiros de viagem usam dólar. O valor **nunca é convertido**: é exibido na moeda em que veio. |
 | **RN12** | Os prefixos "Até X pontos" e "Eram X pontos" têm o número extraído sem que o sentido se perca na exibição. |
@@ -247,7 +249,8 @@ robo-livelo/
 │   └── lojas_favoritas.toml    # RNF09 — dado de negócio fora do código ✔
 ├── src/robo_livelo/
 │   ├── __init__.py
-│   ├── portas.py               # os 3 contratos
+│   ├── modelos.py              # núcleo puro: Parceiro, LojaFavorita, Mensagem
+│   ├── portas.py               # os 3 contratos e as exceções do domínio
 │   ├── extrator.py             # núcleo puro: HTML → Parceiro
 │   ├── categorias.py           # núcleo puro: filtrar, agrupar, ordenar
 │   ├── montador_email.py       # núcleo puro: Parceiro → mensagem
@@ -647,7 +650,7 @@ O repositório é público por decisão do objetivo O4, o que expõe publicament
 
 | Versão | Conteúdo | Critério de saída |
 |---|---|---|
-| **V1.0** | Fatia vertical completa: todo o escopo da Seção 2, rodando no GitHub Actions com o quality gate verde | MS2 e MS3 verificados |
+| **V1.0** ✔ | Fatia vertical completa: todo o escopo da Seção 2, rodando no GitHub Actions com o quality gate verde | MS2 verificado contra a página real (247 parceiros, 9 promoções). MS3 pendente até a primeira execução no Actions |
 | **V1.1** | Roteiro do smoke manual e regra de filtro no Gmail para os e-mails sem promoção (11.4) | MS1 e MS5 medidos ao longo de 30 dias |
 | **V2** | Candidatos, nenhum comprometido — ver 11.2 | — |
 

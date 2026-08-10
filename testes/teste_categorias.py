@@ -84,3 +84,11 @@ def teste_favoritas_ausentes_considera_apelidos(favoritas):
     assert "C&A" not in ausentes
     assert "Natura" not in ausentes
     assert "Magalu" in ausentes
+
+
+def teste_agrupamento_usa_o_nome_canonico_do_catalogo(favoritas):
+    """A Livelo escreve "CEA" e "Booking com"; o e-mail mostra o nome do catalogo."""
+    parceiros = [faz_parceiro("CEA", "5"), faz_parceiro("Booking com", "4")]
+    agrupado = agrupar(parceiros, favoritas)
+    assert agrupado["Moda"][0].nome == "C&A"
+    assert agrupado["Viagem"][0].nome == "Booking.com"

@@ -14,7 +14,7 @@ from robo_livelo.modelos import DOMINIO_LIVELO, Mensagem, Parceiro
 
 _log = logging.getLogger(__name__)
 
-ASSUNTO_SEM_PROMOCAO = "Livelo: nenhuma promocao nas suas lojas hoje"
+ASSUNTO_SEM_PROMOCAO = "Livelo: nenhuma promoção nas suas lojas hoje"
 
 _CORES = [
     "#df0979",
@@ -53,7 +53,7 @@ def formatar_pontos(valor: Decimal) -> str:
 
 def _descricao(parceiro: Parceiro) -> str:
     """Monta 'Ate 4 pontos por R$ 1', preservando RN11 e RN12."""
-    prefixo = "Ate " if parceiro.prefixo_ate else ""
+    prefixo = "Até " if parceiro.prefixo_ate else ""
     return f"{prefixo}{formatar_pontos(parceiro.pontos_atuais)} pontos por {parceiro.moeda} 1"
 
 
@@ -67,7 +67,7 @@ def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
     total = sum(len(lojas) for lojas in agrupamento.values())
     if total == 0:
         return ASSUNTO_SEM_PROMOCAO  # RF10
-    plural = "promocoes" if total > 1 else "promocao"
+    plural = "promoções" if total > 1 else "promoção"
     return f"Livelo: {total} {plural} nas suas lojas"
 
 
@@ -79,22 +79,22 @@ def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
         "background:#f5f5f7;margin:0;padding:24px;'>",
         "<div style='max-width:640px;margin:0 auto;background:#ffffff;"
         "border-radius:12px;padding:24px;'>",
-        "<h1 style='font-size:20px;margin:0 0 4px;color:#1d1d1f;'>Pontuacao turbinada</h1>",
+        "<h1 style='font-size:20px;margin:0 0 4px;color:#1d1d1f;'>Pontuação turbinada</h1>",
     ]
-    texto: list[str] = ["PONTUACAO TURBINADA NA LIVELO", ""]
+    texto: list[str] = ["PONTUAÇÃO TURBINADA NA LIVELO", ""]
 
     if total == 0:
         # RF10: o e-mail sai mesmo assim. O silencio passa a significar
         # uma coisa so: o robo parou (MS5).
         html.append(
-            "<p style='color:#6e6e73;font-size:14px;'>Nenhuma das suas lojas esta "
-            "com pontuacao turbinada agora.</p>"
+            "<p style='color:#6e6e73;font-size:14px;'>Nenhuma das suas lojas está "
+            "com pontuação turbinada agora.</p>"
         )
-        texto.append("Nenhuma das suas lojas esta com pontuacao turbinada agora.")
+        texto.append("Nenhuma das suas lojas está com pontuação turbinada agora.")
     else:
         html.append(
             f"<p style='color:#6e6e73;font-size:14px;margin:0 0 20px;'>"
-            f"{total} loja(s) com pontuacao acima do normal.</p>"
+            f"{total} loja(s) com pontuação acima do normal.</p>"
         )
 
     # RN14: categoria sem loja nao aparece. O agrupamento ja filtra, mas a

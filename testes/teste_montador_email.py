@@ -115,7 +115,7 @@ def teste_ct067_pontuacao_fracionada_sem_lixo_de_float():
 def teste_ct068_prefixo_ate_preservado():
     """RN12."""
     html = montar({"Beleza": [faz_parceiro("Natura", "5", prefixo_ate=True)]}).corpo_html
-    assert "Ate 5 pontos" in html
+    assert "Até 5 pontos" in html
 
 
 def teste_moeda_em_dolar_nao_e_convertida():
