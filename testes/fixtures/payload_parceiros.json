@@ -1,0 +1,179 @@
+{
+  "props": {
+    "pageProps": {
+      "page": {
+        "components": [
+          {
+            "type": "carrossel",
+            "props": {
+              "title": "[AP] - Mosaico Carrossel de Parceiros - Página Compre e Pontue",
+              "configPartners": [
+                {
+                  "partnerCode": "BOK",
+                  "details": {
+                    "id": "BOK",
+                    "name": "Booking com",
+                    "parity": { "currency": "U$", "parity": 6, "parityBau": 4, "parityClub": 6, "promotion": true }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "type": "listagem",
+            "props": {
+              "title": "C&P - Site - Listagem de Parceiros",
+              "configPartners": [
+                {
+                  "id": "MCL",
+                  "name": "Mercado Livre",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/mercado-livre/MCL",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/mercado-livre/MCL",
+                  "categories": "todos marketplace",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 1, "parityClub": 1,
+                    "legalTerms": "<p><br></p>", "separator": "=", "parityBau": 1,
+                    "promotion": false, "separatorSlug": "IGUAL", "activeCampaign": "BAU",
+                    "categoryParities": []
+                  }
+                },
+                {
+                  "id": "BOK",
+                  "name": "Booking com",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/booking/BOK",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/booking/BOK",
+                  "categories": "todos viagem",
+                  "parity": {
+                    "currency": "U$", "currencyValue": 1, "parity": 6, "parityClub": 6,
+                    "legalTerms": "<p>Campanha válida de 11 a 13/08/2026.</p>", "separator": "=",
+                    "parityBau": 4, "promotion": true, "separatorSlug": "IGUAL",
+                    "dateStart": "2026-08-11-00:00:00 GMT-03:00",
+                    "dateEnd": "2026-08-13-23:59:00 GMT-03:00",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "BOT",
+                  "name": "O Boticário",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/o-boticario/BOT",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/o-boticario/BOT",
+                  "categories": "todos beleza",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 3, "parityClub": 10,
+                    "legalTerms": "<p>Oferta exclusiva para assinantes do Clube Livelo.</p>", "separator": "=",
+                    "parityBau": 3, "promotion": true, "separatorSlug": "IGUAL",
+                    "dateStart": "2026-08-10-00:00:00 GMT-03:00",
+                    "dateEnd": "2026-08-20-23:59:00 GMT-03:00",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "CSB",
+                  "name": "Casas Bahia",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/casas-bahia/CSB",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/casas-bahia/CSB",
+                  "categories": "todos marketplace",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 4, "parityClub": 4,
+                    "legalTerms": "<p><br></p>", "separator": "<", "parityBau": 2,
+                    "promotion": true, "separatorSlug": "ATE",
+                    "dateStart": "2026-08-10-00:00:00 GMT-03:00",
+                    "dateEnd": "2026-08-11-23:59:00 GMT-03:00",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "MZL",
+                  "name": "Magalu",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/magalu/MZL",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/magalu/MZL",
+                  "categories": "todos marketplace",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 5, "parityClub": 5,
+                    "legalTerms": "<p>Campanha encerrada, ainda nao removida da pagina.</p>", "separator": "=",
+                    "parityBau": 2, "promotion": true, "separatorSlug": "IGUAL",
+                    "dateStart": "2026-08-01-00:00:00 GMT-03:00",
+                    "dateEnd": "2026-08-05-23:59:00 GMT-03:00",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "PTF",
+                  "name": "Pontofrio",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/pontofrio/PTF",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/pontofrio/PTF",
+                  "categories": "todos marketplace",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 6, "parityClub": 6,
+                    "legalTerms": "<p><br></p>", "separator": "=", "parityBau": 3,
+                    "promotion": true, "separatorSlug": "IGUAL",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "PLV",
+                  "name": "Petlove",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/pet-love/PLV",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/pet-love/PLV",
+                  "categories": "todos pet",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 3, "parityClub": 3,
+                    "legalTerms": "<p><br></p>", "separator": "=", "parityBau": 1,
+                    "promotion": true, "separatorSlug": "IGUAL",
+                    "dateStart": "2026-08-08-00:00:00 GMT-03:00",
+                    "dateEnd": "data-invalida",
+                    "activeCampaign": "PROMOTION", "categoryParities": []
+                  }
+                },
+                {
+                  "id": "ABC",
+                  "name": "ABC da Construcao",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/abc-da-construcao/ABC",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/abc-da-construcao/ABC",
+                  "categories": "todos construcaoeferramentas casaedecoracao",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 1, "parityClub": 1,
+                    "legalTerms": "<p><br></p>", "separator": "=", "parityBau": 1,
+                    "promotion": false, "separatorSlug": "IGUAL", "activeCampaign": "BAU",
+                    "categoryParities": []
+                  }
+                },
+                {
+                  "id": "MCL",
+                  "name": "Mercado Livre",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/mercado-livre/MCL",
+                  "partnerDetailsPage": "https://livelo.com.br/juntar-pontos/parceiros/mercado-livre/MCL",
+                  "categories": "todos marketplace",
+                  "parity": {
+                    "currency": "R$", "currencyValue": 1, "parity": 1, "parityClub": 1,
+                    "legalTerms": "<p><br></p>", "separator": "=", "parityBau": 1,
+                    "promotion": false, "separatorSlug": "IGUAL", "activeCampaign": "BAU",
+                    "categoryParities": []
+                  }
+                },
+                {
+                  "id": "XXX",
+                  "name": "",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/sem-nome/XXX",
+                  "parity": {
+                    "currency": "R$", "parity": 5, "parityBau": 5, "parityClub": 5,
+                    "promotion": false, "separatorSlug": "IGUAL", "activeCampaign": "BAU"
+                  }
+                },
+                {
+                  "id": "YYY",
+                  "name": "Loja Quebrada",
+                  "link": "https://livelo.com.br/juntar-pontos/parceiros/loja-quebrada/YYY",
+                  "parity": {
+                    "currency": "R$", "parity": "não é número", "parityBau": 1, "parityClub": 1,
+                    "promotion": false, "separatorSlug": "IGUAL", "activeCampaign": "BAU"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -27,6 +28,10 @@ _log = logging.getLogger("robo_livelo")
 LIMIAR_PADRAO = 150  # PRD 2.4: a pagina trazia 247 parceiros em 2026-08-09
 CAMINHO_CONFIG_PADRAO = Path("config/lojas_favoritas.toml")
 
+# Brasil nao usa mais horario de verao desde 2019 — fuso fixo, sem
+# dependencia nova (RNF13).
+FUSO_BRASILIA = timezone(timedelta(hours=-3))
+
 _SEGREDOS = ("EMAIL_REMETENTE", "SENHA_APP_GMAIL", "EMAIL_DESTINO")
 
 
@@ -42,13 +47,21 @@ def verificar_promocoes(
     catalogo: CatalogoFavoritas,
     notificador: Notificador,
     limiar: int = LIMIAR_PADRAO,
+    agora: datetime | None = None,
 ) -> int:
-    """Executa a fatia vertical completa e devolve quantas promocoes achou."""
+    """Executa a fatia vertical completa e devolve quantas promocoes achou.
+
+    `agora` e resolvido aqui (unica camada que le o relogio) e propagado
+    para o extrator e o montador de e-mail, para os dois concordarem sobre
+    "hoje" mesmo que a execucao atravesse a meia-noite (RN21, RN22).
+    """
+    agora = agora or datetime.now(FUSO_BRASILIA)
+
     favoritas = catalogo.listar()
     _log.info("Lojas favoritas carregadas: %d", len(favoritas))
 
     html = fonte.obter_html()
-    parceiros = extrator.extrair_parceiros(html)
+    parceiros = extrator.extrair_parceiros(html, agora=agora)
     _log.info("Parceiros extraidos: %d", len(parceiros))
 
     # RN13: ausencia de promocao nao e erro, ausencia de parceiros e.
@@ -65,7 +78,7 @@ def verificar_promocoes(
     agrupamento = categorias.agrupar(parceiros, favoritas)
     total = sum(len(lojas) for lojas in agrupamento.values())
 
-    mensagem = montador_email.montar(agrupamento)
+    mensagem = montador_email.montar(agrupamento, agora=agora)
     notificador.enviar(mensagem)  # RF10: envia em toda execucao
     _log.info("E-mail enviado. Promocoes: %d em %d categorias.", total, len(agrupamento))
     return total

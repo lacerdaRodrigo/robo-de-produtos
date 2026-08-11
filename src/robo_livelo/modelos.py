@@ -6,6 +6,7 @@ Ver PRD secao 5.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 
 DOMINIO_LIVELO = "livelo.com.br"
@@ -23,6 +24,10 @@ class Parceiro:
     pontos_anteriores: Decimal | None = None
     pontos_clube: Decimal | None = None
     prefixo_ate: bool = False
+    pontos_base: Decimal | None = None
+    inicio_promocao: datetime | None = None
+    fim_promocao: datetime | None = None
+    campanha: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

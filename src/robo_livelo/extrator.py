@@ -1,13 +1,15 @@
-"""Nucleo puro: transforma o HTML da pagina em objetos Parceiro.
+"""Nucleo puro: transforma o payload JSON da pagina em objetos Parceiro.
 
-Nao toca a rede. Recebe uma string, devolve estrutura. Ver PRD secao 6.
-Regras aplicadas aqui: RN06, RN11, RN12, RN15.
+Nao toca a rede. Recebe uma string (a pagina inteira), devolve estrutura.
+Ver PRD secao 6 e PRD-V2 RF14. Regras aplicadas aqui: RN06, RN11, RN12,
+RN15, RN21.
 """
 
 from __future__ import annotations
 
+import json
 import logging
-import re
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from bs4 import BeautifulSoup
@@ -16,99 +18,150 @@ from robo_livelo.modelos import Parceiro
 
 _log = logging.getLogger(__name__)
 
-# Seletores da pagina da Livelo. Sao a parte mais fragil do projeto (C04):
-# se a Livelo mudar o layout, e aqui que quebra, e RN13 e quem avisa.
-_SELETOR_LINK = '[data-testid="a_PartnerCard_card_link"]'
-_SELETOR_CARD = '[data-testid="div_PartnerCard"]'
-_SELETOR_LOGO = '[data-testid="img_PartnerCard_partnerImage"]'
-_SELETOR_TAG_PROMOCAO = '[data-testid="span_PartnerCard_promotionTag"]'
+# A Livelo pode reordenar as secoes da pagina (C06) — por isso a secao e
+# achada pelo titulo, nunca por indice fixo em `components`.
+TITULO_SECAO_PARCEIROS = "C&P - Site - Listagem de Parceiros"
 
-_PREFIXO_LOGO = "Logo "
-_MARCADOR_CLUBE = "Clube"
-
-# "Ate 4 pontos por R$ 1" / "2 pontos por U$ 1"
-_PONTOS = re.compile(
-    r"(?P<ate>At[eé]\s+)?(?P<valor>\d+(?:[.,]\d+)?)\s+pontos?\s+por\s+(?P<moeda>R\$|U\$)",
-    re.IGNORECASE,
-)
-# "Eram 1 ponto" / "Eram 2 pontos"
-_ANTERIORES = re.compile(r"Eram\s+(?P<valor>\d+(?:[.,]\d+)?)\s+pontos?", re.IGNORECASE)
+# separatorSlug "ATE" para o prefixo "Ate X pontos" (RN12): hipotese, sem
+# exemplo real confirmado ainda. So "IGUAL" foi observado em producao.
+_ATE_SEPARATOR_SLUG = "ATE"
 
 
-def _para_decimal(texto: str) -> Decimal:
-    """Converte o numero como a Livelo escreve. Decimal, nunca float (PRD 5.4)."""
-    return Decimal(texto.replace(".", "").replace(",", "."))
+def _texto_do_payload(html: str) -> str | None:
+    """Localiza o <script id="__NEXT_DATA__"> dentro do HTML da pagina."""
+    sopa = BeautifulSoup(html, "lxml")
+    tag = sopa.find("script", id="__NEXT_DATA__")
+    if tag is None or not tag.string:
+        _log.warning("Script __NEXT_DATA__ nao encontrado na pagina.")
+        return None
+    return tag.string
 
 
-def _nome_do_card(card, link) -> str | None:
-    """Le o nome exibido. RN15: usa o alt do logo, com o texto do link como reserva."""
-    logo = card.select_one(_SELETOR_LOGO)
-    alt = (logo.get("alt") or "").strip() if logo else ""
-    if alt.startswith(_PREFIXO_LOGO):
-        alt = alt[len(_PREFIXO_LOGO) :].strip()
-    if alt:
-        return alt
-    texto = link.get_text(" ", strip=True)
-    return texto or None
+def _config_partners(dados: dict) -> list[dict]:
+    """Acha a lista de parceiros pelo titulo da secao, nao pelo indice (C06)."""
+    props_raiz = dados.get("props") or {}
+    page_props = props_raiz.get("pageProps") or {}
+    page = page_props.get("page") or {}
+    componentes = page.get("components") or []
+
+    for componente in componentes:
+        if not isinstance(componente, dict):
+            continue
+        props = componente.get("props") or {}
+        if props.get("title") == TITULO_SECAO_PARCEIROS:
+            return props.get("configPartners") or []
+
+    _log.warning("Secao %r nao encontrada nos components da pagina.", TITULO_SECAO_PARCEIROS)
+    return []
 
 
-def extrair_parceiros(html: str) -> list[Parceiro]:
-    """Devolve os parceiros presentes no HTML.
+def _parse_data(texto: str | None) -> datetime | None:
+    """dateStart/dateEnd vem como "2026-08-13-23:59:00 GMT-03:00", nao ISO8601.
+
+    Data ausente ou ilegivel vira None sem derrubar o parceiro (RF14).
+    """
+    if not texto:
+        return None
+    limpo = texto.replace("GMT", "").strip()
+    try:
+        return datetime.strptime(limpo, "%Y-%m-%d-%H:%M:%S %z")
+    except ValueError:
+        _log.warning("Data de validade ilegivel, descartada: %r", texto)
+        return None
+
+
+def _para_decimal(valor) -> Decimal:
+    return Decimal(str(valor))
+
+
+def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
+    if not isinstance(item, dict):
+        _log.warning("Item do payload nao e um objeto, descartado: %r", item)
+        return None
+
+    nome = item.get("name")
+    parity = item.get("parity") or {}
+    if not isinstance(parity, dict):
+        parity = {}
+
+    try:
+        if not nome:
+            raise KeyError("name")
+        pontos_atuais = _para_decimal(parity["parity"])
+    except (KeyError, TypeError, InvalidOperation):
+        _log.warning(
+            "Item do payload sem nome ou pontuacao legivel, descartado: %r", item.get("id")
+        )
+        return None
+
+    pontos_base = None
+    if parity.get("parityBau") is not None:
+        try:
+            pontos_base = _para_decimal(parity["parityBau"])
+        except InvalidOperation:
+            pontos_base = None
+
+    pontos_clube = None
+    if parity.get("parityClub") is not None:
+        try:
+            valor_clube = _para_decimal(parity["parityClub"])
+        except InvalidOperation:
+            valor_clube = None
+        if valor_clube is not None and valor_clube != pontos_atuais:  # so quando ha distincao
+            pontos_clube = valor_clube
+
+    inicio_promocao = _parse_data(parity.get("dateStart"))
+    fim_promocao = _parse_data(parity.get("dateEnd"))
+
+    em_promocao = bool(parity.get("promotion", False))
+    if em_promocao and fim_promocao is not None and fim_promocao < agora:  # RN21
+        em_promocao = False
+
+    return Parceiro(
+        nome=nome,
+        pontos_atuais=pontos_atuais,
+        moeda=parity.get("currency") or "",
+        link=(item.get("link") or item.get("partnerDetailsPage") or "").strip(),
+        em_promocao=em_promocao,
+        pontos_clube=pontos_clube,
+        prefixo_ate=(parity.get("separatorSlug") or "").strip().upper() == _ATE_SEPARATOR_SLUG,
+        pontos_base=pontos_base,
+        inicio_promocao=inicio_promocao,
+        fim_promocao=fim_promocao,
+        campanha=parity.get("activeCampaign"),
+    )
+
+
+def extrair_parceiros(html: str, *, agora: datetime) -> list[Parceiro]:
+    """Devolve os parceiros presentes no payload JSON embutido na pagina.
 
     Parceiro malformado e descartado e registrado no log, sem derrubar a
-    execucao (PRD 6.4). Repetido conta uma vez so (RN06).
+    execucao (PRD 6.4). Repetido conta uma vez so (RN06). Se a secao do
+    payload nao for achada, devolve lista vazia — quem transforma isso em
+    falha e o limiar RN13, em principal.py.
     """
-    sopa = BeautifulSoup(html, "lxml")
+    texto = _texto_do_payload(html)
+    if texto is None:
+        return []
+
+    try:
+        dados = json.loads(texto, parse_float=Decimal, parse_int=Decimal)
+    except json.JSONDecodeError:
+        _log.warning("Payload __NEXT_DATA__ nao e JSON valido.")
+        return []
+    if not isinstance(dados, dict):
+        _log.warning("Payload __NEXT_DATA__ nao e um objeto JSON.")
+        return []
+
     parceiros: list[Parceiro] = []
     vistos: set[str] = set()
-
-    for link in sopa.select(_SELETOR_LINK):
-        card = link.select_one(_SELETOR_CARD)
-        if card is None:
+    for item in _config_partners(dados):
+        parceiro = _para_parceiro(item, agora=agora)
+        if parceiro is None:
             continue
-
-        nome = _nome_do_card(card, link)
-        if not nome:
-            _log.warning("Card sem nome identificavel, descartado.")
+        if parceiro.nome in vistos:  # RN06
             continue
-
-        if nome in vistos:  # RN06
-            continue
-
-        texto = card.get_text(" ", strip=True)
-        base, _, clube = texto.partition(_MARCADOR_CLUBE)
-
-        achado = _PONTOS.search(base)
-        if achado is None:
-            _log.warning("Parceiro %r sem pontuacao legivel, descartado.", nome)
-            continue
-
-        try:
-            pontos_atuais = _para_decimal(achado.group("valor"))
-            anteriores = _ANTERIORES.search(base)
-            pontos_anteriores = _para_decimal(anteriores.group("valor")) if anteriores else None
-
-            pontos_clube = None
-            if clube:
-                achado_clube = _PONTOS.search(clube)
-                if achado_clube:
-                    pontos_clube = _para_decimal(achado_clube.group("valor"))
-        except (InvalidOperation, ValueError):
-            _log.warning("Parceiro %r com valor nao numerico, descartado.", nome)
-            continue
-
-        vistos.add(nome)
-        parceiros.append(
-            Parceiro(
-                nome=nome,
-                pontos_atuais=pontos_atuais,
-                moeda=achado.group("moeda").upper(),  # RN11: nunca converte
-                link=(link.get("href") or "").strip(),
-                em_promocao=card.select_one(_SELETOR_TAG_PROMOCAO) is not None,
-                pontos_anteriores=pontos_anteriores,
-                pontos_clube=pontos_clube,
-                prefixo_ate=bool(achado.group("ate")),  # RN12
-            )
-        )
+        vistos.add(parceiro.nome)
+        parceiros.append(parceiro)
 
     return parceiros

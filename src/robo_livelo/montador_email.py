@@ -1,11 +1,13 @@
 """Nucleo puro: transforma o agrupamento no e-mail pronto.
 
-Regras aplicadas aqui: RN07, RN08, RN10, RN11, RN12, RN14, RF07, RF08.
+Regras aplicadas aqui: RN07, RN08, RN10, RN11, RN12, RN14, RN22, RN23,
+RF07, RF08, RF18.
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from decimal import Decimal
 from html import escape
 from urllib.parse import urlparse
@@ -58,10 +60,33 @@ def _descricao(parceiro: Parceiro) -> str:
     return f"{prefixo}{formatar_pontos(parceiro.pontos_atuais)} pontos por {parceiro.moeda} 1"
 
 
-def _texto_anterior(parceiro: Parceiro) -> str:
-    if parceiro.pontos_anteriores is None:
-        return ""
-    return f"eram {formatar_pontos(parceiro.pontos_anteriores)}"
+def _termina_hoje(parceiro: Parceiro, agora: datetime) -> bool:
+    """RN22: promocao que termina no mesmo dia recebe destaque proprio."""
+    if parceiro.fim_promocao is None:
+        return False
+    return parceiro.fim_promocao.astimezone(agora.tzinfo).date() == agora.date()
+
+
+def _texto_validade(parceiro: Parceiro, agora: datetime) -> str | None:
+    """RF18: quanto tempo resta ate o fim da promocao."""
+    if parceiro.fim_promocao is None:
+        return None
+    if _termina_hoje(parceiro, agora):
+        return "Termina hoje!"
+    fim_local = parceiro.fim_promocao.astimezone(agora.tzinfo)
+    return f"Válido até {fim_local:%d/%m}"
+
+
+def _eh_exclusivo_clube(parceiro: Parceiro) -> bool:
+    """RN23: o ganho existe so no tier Clube — a base nao se moveu.
+
+    Sem `pontos_base` conhecido nao da para provar que a base nao se mexeu,
+    entao o default e nao marcar (evita falso positivo em todo parceiro
+    construido sem essa informacao).
+    """
+    if parceiro.pontos_clube is None or parceiro.pontos_base is None:
+        return False
+    return parceiro.pontos_atuais == parceiro.pontos_base
 
 
 def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
@@ -72,8 +97,13 @@ def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
     return f"Livelo: {total} {plural} nas suas lojas"
 
 
-def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
-    """Devolve a mensagem pronta, em HTML e em texto simples (RF07)."""
+def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensagem:
+    """Devolve a mensagem pronta, em HTML e em texto simples (RF07).
+
+    `agora` decide RN22 (destaque de "termina hoje") e RF18 (texto de
+    validade) — passado explicitamente para o nucleo continuar sem ler o
+    relogio por conta propria (ver PRD-V2 7.2).
+    """
     total = sum(len(lojas) for lojas in agrupamento.values())
     html: list[str] = [
         "<html><body style='font-family:Arial,Helvetica,sans-serif;"
@@ -115,7 +145,8 @@ def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
             # RN07: tudo que veio do site e hostil ate ser escapado.
             nome = escape(parceiro.nome)
             descricao = escape(_descricao(parceiro))
-            anterior = escape(_texto_anterior(parceiro))
+            validade = _texto_validade(parceiro, agora)
+            termina_hoje = _termina_hoje(parceiro, agora)
 
             html.append(
                 "<div style='border:1px solid #e5e5ea;border-radius:10px;"
@@ -123,10 +154,18 @@ def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
                 f"<strong style='font-size:15px;color:#1d1d1f;'>{nome}</strong><br>"
                 f"<span style='font-size:14px;color:{cor};font-weight:bold;'>{descricao}</span>"
             )
-            if anterior:
-                html.append(f" <span style='font-size:12px;color:#8e8e93;'>({anterior})</span>")
+            if validade is not None:  # RF18 / RN22
+                cor_validade = "#c1121f" if termina_hoje else "#8e8e93"
+                peso_validade = "bold" if termina_hoje else "normal"
+                html.append(
+                    f" <span style='font-size:12px;color:{cor_validade};"
+                    f"font-weight:{peso_validade};'>({escape(validade)})</span>"
+                )
             if parceiro.pontos_clube is not None:  # RN10
-                clube = escape(f"Clube: {formatar_pontos(parceiro.pontos_clube)} pontos")
+                rotulo_clube = f"Clube: {formatar_pontos(parceiro.pontos_clube)} pontos"
+                if _eh_exclusivo_clube(parceiro):  # RN23
+                    rotulo_clube += " (exclusivo assinantes Clube)"
+                clube = escape(rotulo_clube)
                 html.append(f"<br><span style='font-size:13px;color:#6e6e73;'>{clube}</span>")
 
             if link_confiavel(parceiro.link):  # RN08
@@ -142,10 +181,12 @@ def montar(agrupamento: dict[str, list[Parceiro]]) -> Mensagem:
             html.append("</div>")
 
             linha = f"- {parceiro.nome}: {_descricao(parceiro)}"
-            if anterior:
-                linha += f" ({_texto_anterior(parceiro)})"
+            if validade is not None:
+                linha += f" ({validade})"
             if parceiro.pontos_clube is not None:
                 linha += f" | Clube: {formatar_pontos(parceiro.pontos_clube)} pontos"
+                if _eh_exclusivo_clube(parceiro):
+                    linha += " (exclusivo assinantes Clube)"
             if link_confiavel(parceiro.link):
                 linha += f"\n  {parceiro.link}"
             texto.append(linha)

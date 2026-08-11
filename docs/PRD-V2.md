@@ -230,7 +230,9 @@ Ler o payload é **mais estável** que raspar o card renderizado:
 | Validade indisponível | `dateStart` e `dateEnd` |
 | Quebra se mudarem texto, classe ou estrutura visual | Quebra se mudarem o formato dos dados |
 
-Isso ataca **C04**, que é o maior risco do projeto. A troca é protegida pelos 72 testes existentes: o contrato `extrair_parceiros(html) -> list[Parceiro]` não muda, só a implementação por dentro.
+Isso ataca **C04**, que é o maior risco do projeto. A troca é protegida pelos testes existentes na largada da V2.0 (96, ao final dela): a assinatura pública muda em um ponto só, deliberado.
+
+> **Exceção registrada:** a versão original desta seção dizia que `extrair_parceiros(html) -> list[Parceiro]` não mudaria. Isso deixou de ser exato. RN21 (promoção com `dateEnd` no passado não conta) e RN22 (destaque "termina hoje") precisam saber que dia é hoje — e o núcleo não pode ler o relógio por conta própria sem reintroduzir o não-determinismo escondido que a regra de ouro 1 do `CLAUDE.md` existe para evitar. A solução adotada: `agora: datetime` como parâmetro obrigatório e nomeado em `extrair_parceiros` e em `montador_email.montar`, resolvido uma única vez em `principal.py` (a única camada que já faz I/O) e propagado aos dois. O contrato `html -> list[Parceiro]` continua valendo — só ganhou um segundo parâmetro explícito, não um relógio implícito.
 
 ### 7.3 Infraestrutura
 

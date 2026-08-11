@@ -4,7 +4,7 @@ Monitora as lojas parceiras da Livelo, filtra só as que importam pra você e av
 
 Sem servidor, sem banco de dados, sem custo. Roda inteiro no GitHub Actions.
 
-> **Status: V1.0 funcionando.** Rodou fim a fim contra a página real: 254 parceiros lidos, 22 promoções encontradas. 72 testes verdes, 91% de cobertura. Falta configurar os segredos no GitHub para a primeira execução agendada.
+> **Status: V1.0 em produção.** Rodou fim a fim contra a página real: 254 parceiros lidos, 22 promoções encontradas (medição da V1.0). **V2.0 já implementada** — o extrator passou a ler o payload JSON da página em vez de raspar o HTML (validade da promoção, pontuação base e marcação de Clube), mas ainda não foi verificada contra a página real em produção. 96 testes verdes, 93% de cobertura.
 
 ## Como funciona
 
