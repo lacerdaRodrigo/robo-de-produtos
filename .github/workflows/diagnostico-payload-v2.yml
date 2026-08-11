@@ -104,28 +104,86 @@ jobs:
               chaves = list(dados.keys()) if isinstance(dados, dict) else type(dados)
               print("Chaves de nivel superior:", chaves)
 
-              def procurar_parceiro(obj, caminho=""):
+              print()
+              print("=== Todas as listas 'configPartners' encontradas na arvore (caminho: tamanho) ===")
+
+              def achar_listas_de_parceiros(obj, caminho=""):
+                  resultados = []
                   if isinstance(obj, dict):
-                      if "parityBau" in obj or "dateEnd" in obj:
-                          return obj, caminho
+                      for chave in ("configPartners", "partners", "items", "cards"):
+                          v = obj.get(chave)
+                          if isinstance(v, list) and v and isinstance(v[0], dict):
+                              if "partnerCode" in v[0] or "details" in v[0]:
+                                  resultados.append((f"{caminho}.{chave}", len(v)))
                       for k, v in obj.items():
-                          achado = procurar_parceiro(v, f"{caminho}.{k}")
-                          if achado:
-                              return achado
+                          resultados.extend(achar_listas_de_parceiros(v, f"{caminho}.{k}"))
                   elif isinstance(obj, list):
                       for i, v in enumerate(obj):
-                          achado = procurar_parceiro(v, f"{caminho}[{i}]")
-                          if achado:
-                              return achado
-                  return None
+                          resultados.extend(achar_listas_de_parceiros(v, f"{caminho}[{i}]"))
+                  return resultados
 
-              achado = procurar_parceiro(dados)
-              if not achado:
-                  print("Nenhum objeto com parityBau/dateEnd dentro do __NEXT_DATA__.")
+              listas = achar_listas_de_parceiros(dados)
+              for caminho, tamanho in listas:
+                  print(f"  {caminho}: {tamanho} itens")
+
+              if not listas:
+                  print("  nenhuma lista com partnerCode/details encontrada")
               else:
-                  parceiro, caminho = achado
-                  print(f"Exemplo de parceiro encontrado em: {caminho}")
-                  print(json.dumps(parceiro, indent=2, ensure_ascii=False))
+                  maior_caminho, maior_tamanho = max(listas, key=lambda t: t[1])
+                  print()
+                  print(f"=== Maior lista: {maior_caminho} ({maior_tamanho} itens) ===")
+
+                  def navegar(obj, caminho):
+                      partes = re.findall(r"\.([^.\[\]]+)|\[(\d+)\]", caminho)
+                      atual = obj
+                      for nome, indice in partes:
+                          atual = atual[nome] if nome else atual[int(indice)]
+                      return atual
+
+                  maior_lista = navegar(dados, maior_caminho)
+
+                  print()
+                  print("=== Nomes de todos os itens da maior lista (para conferir contagem/cobertura) ===")
+                  nomes = []
+                  for item in maior_lista:
+                      nome = (item.get("details") or {}).get("name") or item.get("partnerCode")
+                      nomes.append(nome)
+                  print(nomes)
+
+                  print()
+                  print("=== Amostra: primeiro item completo (estrutura crua) ===")
+                  print(json.dumps(maior_lista[0], indent=2, ensure_ascii=False)[:4000])
+
+                  print()
+                  print("=== Amostra: item sem promocao (parity == parityBau), se existir ===")
+                  sem_promo = next(
+                      (
+                          item
+                          for item in maior_lista
+                          if not (item.get("parity") or {}).get("promotion", False)
+                      ),
+                      None,
+                  )
+                  if sem_promo:
+                      print(json.dumps(sem_promo, indent=2, ensure_ascii=False)[:4000])
+                  else:
+                      print("  nenhum item sem promocao encontrado nesta lista")
+
+                  print()
+                  print("=== Amostra: item com activeCampaign diferente de PROMOTION, se existir ===")
+                  outro_campanha = next(
+                      (
+                          item
+                          for item in maior_lista
+                          if (item.get("parity") or {}).get("activeCampaign")
+                          not in (None, "PROMOTION")
+                      ),
+                      None,
+                  )
+                  if outro_campanha:
+                      print(json.dumps(outro_campanha, indent=2, ensure_ascii=False)[:4000])
+                  else:
+                      print("  nenhum item com activeCampaign distinto encontrado")
           PY
           python /tmp/diagnostico.py
 
