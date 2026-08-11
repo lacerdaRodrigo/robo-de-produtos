@@ -39,4 +39,6 @@ Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige
 
 ## Antes de escrever código
 
-O projeto está em fase de planejamento. Se for implementar, comece pela fatia vertical da V1.0 (§11.1): o caminho completo da requisição HTTP até o e-mail entregue. Não construa funcionalidade da lista de candidatos da V2 sem que o gatilho dela tenha acontecido.
+A V1.0 está em produção (§11.1 do PRD). A V2 está planejada em [`docs/PRD-V2.md`](docs/PRD-V2.md) e parcialmente iniciada: o banco no Neon existe e está populado (V2.1), mas o robô ainda lê do TOML — a troca de adaptador ainda não foi feita.
+
+A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Hoje isso começa pela V2.0 (extrator lendo o payload JSON): é a base de que as demais fases da V2 dependem. Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

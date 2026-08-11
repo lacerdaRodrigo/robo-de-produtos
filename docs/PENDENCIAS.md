@@ -4,7 +4,7 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-10. Versão atual: **1.0.0**.
+> Atualizado em 2026-08-10. Versão atual: **1.1.0**.
 
 ---
 
@@ -92,7 +92,7 @@ Base de tudo que vem depois. Não depende de site nem de banco.
 
 - [x] **V1.0** — fatia vertical completa, em produção desde 2026-08-09
 - [x] Catálogo com 132 lojas nas categorias Beleza, Marketplace, Moda e Eletro
-- [x] 73 testes, 94% de cobertura, quality gate no CI
+- [x] 72 testes, 91% de cobertura, quality gate no CI
 - [x] Teste de fronteira garantindo que o núcleo não faz I/O
 - [x] Guarda automática contra o corte de exibição do Gmail
 - [x] Repositório público com CI verde

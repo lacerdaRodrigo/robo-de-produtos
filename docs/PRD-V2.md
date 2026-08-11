@@ -230,7 +230,7 @@ Ler o payload é **mais estável** que raspar o card renderizado:
 | Validade indisponível | `dateStart` e `dateEnd` |
 | Quebra se mudarem texto, classe ou estrutura visual | Quebra se mudarem o formato dos dados |
 
-Isso ataca **C04**, que é o maior risco do projeto. A troca é protegida pelos 71 testes existentes: o contrato `extrair_parceiros(html) -> list[Parceiro]` não muda, só a implementação por dentro.
+Isso ataca **C04**, que é o maior risco do projeto. A troca é protegida pelos 72 testes existentes: o contrato `extrair_parceiros(html) -> list[Parceiro]` não muda, só a implementação por dentro.
 
 ### 7.3 Infraestrutura
 
