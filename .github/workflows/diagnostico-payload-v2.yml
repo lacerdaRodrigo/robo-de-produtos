@@ -1,6 +1,8 @@
 name: diagnostico-payload-v2
 
-# Workflow temporario, so disparo manual. Nao faz parte do robo de producao
+# Workflow temporario, disparado no push desta propria branch (o Actions so
+# aceita workflow_dispatch para arquivos ja presentes na branch default, e
+# esta branch nao e a default). Nao faz parte do robo de producao
 # (robo.yml nao muda). Existe para inspecionar, uma unica vez, a estrutura
 # real do payload JSON embutido na pagina de parceiros da Livelo, antes de
 # reescrever o extrator para a V2.0 (RF14 do docs/PRD-V2.md).
@@ -12,6 +14,8 @@ name: diagnostico-payload-v2
 # Apagar este arquivo depois que a fixture do payload for capturada.
 
 on:
+  push:
+    branches: [claude/documentacao-v2-u7v8wf]
   workflow_dispatch:
 
 permissions:
