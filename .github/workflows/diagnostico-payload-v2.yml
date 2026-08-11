@@ -91,6 +91,42 @@ jobs:
               print(janela)
               print()
 
+          print()
+          qtd_cards = len(re.findall(r'data-testid="div_PartnerCard"', html))
+          print(f"=== Cards div_PartnerCard no HTML renderizado: {qtd_cards} ===")
+
+          m_card = re.search(r'<div[^>]*data-testid="div_PartnerCard"[^>]*>', html)
+          if m_card:
+              print("Atributos do primeiro card (so a tag de abertura):")
+              print(m_card.group(0)[:1500])
+
+          print()
+          print("=== Ocorrencias de 'SearchPartner' no HTML (nome do componente da grade) ===")
+          vistos_sp = set()
+          for mm in re.finditer(r"[A-Za-z_]*SearchPartner[A-Za-z_]*", html):
+              vistos_sp.add(mm.group(0))
+          for nome in sorted(vistos_sp):
+              print(" ", nome)
+
+          print()
+          print("=== Pistas de chamada a API (fetch/graphql/endpoint) perto de SearchPartner ===")
+          pos_sp = html.find("SearchPartner")
+          if pos_sp != -1:
+              for termo in ["/api/", "graphql", "endpoint", "fetch("]:
+                  p = html.find(termo, max(0, pos_sp - 5000), pos_sp + 20000)
+                  print(f"  {termo!r} perto de SearchPartner: {'offset ' + str(p) if p != -1 else 'nao encontrado na janela'}")
+
+          print()
+          print("=== Contagem de 'partnerCode' no __NEXT_DATA__ inteiro ===")
+          m_next = re.search(
+              r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>',
+              html,
+              re.DOTALL,
+          )
+          if m_next:
+              print("  ocorrencias de 'partnerCode':", m_next.group(1).count("partnerCode"))
+
+          print()
           print("=== Tentativa de parse do __NEXT_DATA__ (se existir) ===")
           m = re.search(
               r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>',
@@ -103,6 +139,22 @@ jobs:
               dados = json.loads(m.group(1))
               chaves = list(dados.keys()) if isinstance(dados, dict) else type(dados)
               print("Chaves de nivel superior:", chaves)
+
+              print()
+              print("=== Componentes de props.pageProps.page.components (indice: chaves, titulo) ===")
+              try:
+                  componentes = dados["props"]["pageProps"]["page"]["components"]
+                  print(f"  total de componentes: {len(componentes)}")
+                  for i, comp in enumerate(componentes):
+                      chaves_comp = list(comp.keys()) if isinstance(comp, dict) else type(comp)
+                      props_comp = comp.get("props", {}) if isinstance(comp, dict) else {}
+                      titulo = props_comp.get("title") if isinstance(props_comp, dict) else None
+                      chaves_props = (
+                          list(props_comp.keys()) if isinstance(props_comp, dict) else None
+                      )
+                      print(f"  [{i}] chaves={chaves_comp} titulo={titulo!r} props_keys={chaves_props}")
+              except (KeyError, TypeError) as erro:
+                  print(f"  nao foi possivel navegar page.components: {erro}")
 
               print()
               print("=== Todas as listas 'configPartners' encontradas na arvore (caminho: tamanho) ===")
