@@ -1,8 +1,9 @@
-"""CT-024, CT-040 a CT-046 e CT-069 a CT-073 — orquestracao com fakes."""
+"""CT-024, CT-040 a CT-046, CT-069 a CT-073 e CT-102 — orquestracao com fakes."""
 
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 import pytest
 
@@ -10,35 +11,36 @@ from robo_livelo.adaptadores import NotificadorEmail
 from robo_livelo.montador_email import ASSUNTO_SEM_PROMOCAO
 from robo_livelo.portas import FalhaAoNotificar, FalhaAoObterPagina, SiteMudou
 from robo_livelo.principal import validar_segredos, verificar_promocoes
-from testes.conftest import CatalogoFake, FonteFake, NotificadorFake
+from testes.conftest import (
+    FUSO_BRASILIA,
+    CatalogoFake,
+    FonteFake,
+    NotificadorFake,
+    formatar_data_livelo,
+    monta_html_payload,
+    monta_item_parceiro,
+)
 
-CARD = """
-<a data-testid="a_PartnerCard_card_link" href="{link}">
-  <div data-testid="div_PartnerCard">
-    {tag}
-    <img data-testid="img_PartnerCard_partnerImage" alt="Logo {nome}"/>
-    <div>{texto}</div>
-  </div>
-</a>
-"""
+AGORA_TESTE = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
 
 
 def pagina(*lojas: tuple[str, str, bool]) -> str:
-    cards = "".join(
-        CARD.format(
-            link=f"https://www.livelo.com.br/juntar-pontos/parceiros/{nome.lower()}/XXX",
-            tag='<span data-testid="span_PartnerCard_promotionTag">Promoção</span>'
-            if promo
-            else "",
-            nome=nome,
-            texto=texto,
-        )
-        for nome, texto, promo in lojas
-    )
-    return f"<html><body>{cards}</body></html>"
+    """(nome, pontos, promo) -> payload JSON embrulhado em HTML (RF14)."""
+    itens = [
+        monta_item_parceiro(nome=nome, parity=pontos, promotion=promo)
+        for nome, pontos, promo in lojas
+    ]
+    return monta_html_payload(*itens)
 
 
-def executa(html: str, favoritas, *, limiar: int = 1, notificador=None):
+def executa(
+    html: str,
+    favoritas,
+    *,
+    limiar: int = 1,
+    notificador=None,
+    agora: datetime = AGORA_TESTE,
+):
     notificador = notificador or NotificadorFake()
     fonte = FonteFake(html)
     total = verificar_promocoes(
@@ -46,42 +48,34 @@ def executa(html: str, favoritas, *, limiar: int = 1, notificador=None):
         catalogo=CatalogoFake(favoritas),
         notificador=notificador,
         limiar=limiar,
+        agora=agora,
     )
     return total, notificador, fonte
 
 
 def teste_ct024_alerta_de_quebra(favoritas):
     """RN13: parceiros de menos encerra com falha. Veio do teste_extrator."""
-    html = pagina(("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True))
+    html = pagina(("Natura", "4", True))
     with pytest.raises(SiteMudou, match="abaixo do limiar"):
         executa(html, favoritas, limiar=150)
 
 
 def teste_ct040_filtra_loja_fora_do_catalogo(favoritas):
-    html = pagina(
-        ("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True),
-        ("Loja Aleatoria", "Promoção 9 pontos por R$ 1 Eram 1 ponto", True),
-    )
+    html = pagina(("Natura", "4", True), ("Loja Aleatoria", "9", True))
     total, notificador, _ = executa(html, favoritas)
     assert total == 1
     assert "Loja Aleatoria" not in notificador.enviadas[0].corpo_html
 
 
 def teste_ct041_filtra_loja_sem_promocao(favoritas):
-    html = pagina(
-        ("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True),
-        ("Magalu", "3 pontos por R$ 1", False),
-    )
+    html = pagina(("Natura", "4", True), ("Magalu", "3", False))
     total, notificador, _ = executa(html, favoritas)
     assert total == 1
     assert "Magalu" not in notificador.enviadas[0].corpo_html
 
 
 def teste_ct042_agrupamento_por_categoria(favoritas):
-    html = pagina(
-        ("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True),
-        ("O Boticario", "Promoção 6 pontos por R$ 1 Eram 3 pontos", True),
-    )
+    html = pagina(("Natura", "4", True), ("O Boticario", "6", True))
     total, notificador, _ = executa(html, favoritas)
     assert total == 2
     assert notificador.enviadas[0].corpo_html.count("Beleza") == 1
@@ -89,7 +83,7 @@ def teste_ct042_agrupamento_por_categoria(favoritas):
 
 def teste_ct043_sem_promocoes_envia_mesmo_assim(favoritas):
     """RF10: substitui os antigos CT-043 e CT-044 do SEMPRE_ENVIAR."""
-    html = pagina(("Natura", "3 pontos por R$ 1", False))
+    html = pagina(("Natura", "3", False))
     total, notificador, _ = executa(html, favoritas)
     assert total == 0
     assert notificador.foi_chamado
@@ -170,7 +164,7 @@ def teste_ct069_segredo_faltando_falha_antes_da_rede():
 
 def teste_ct070_favoritas_ausentes_vao_pro_log(favoritas, caplog):
     """RN19: no log, nunca no e-mail."""
-    html = pagina(("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True))
+    html = pagina(("Natura", "4", True))
     with caplog.at_level(logging.WARNING):
         _, notificador, _ = executa(html, favoritas)
 
@@ -180,10 +174,11 @@ def teste_ct070_favoritas_ausentes_vao_pro_log(favoritas, caplog):
 
 def teste_ct071_parceiro_malformado_nao_derruba(favoritas):
     """PRD 6.4: descarta so aquele parceiro e segue."""
-    html = pagina(
-        ("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True),
-        ("Loja Quebrada", "sem pontuacao legivel aqui", True),
-    )
+    item_quebrado = monta_item_parceiro(nome="Loja Quebrada", promotion=True)
+    item_quebrado["parity"]["parity"] = "sem pontuacao legivel"
+    item_bom = monta_item_parceiro(nome="Natura", parity="4", promotion=True)
+
+    html = monta_html_payload(item_quebrado, item_bom)
     total, notificador, _ = executa(html, favoritas)
     assert total == 1
     assert notificador.foi_chamado
@@ -222,7 +217,7 @@ def teste_ct072_destinatario_unico():
 
 def teste_ct073_nenhum_segredo_no_log(favoritas, caplog):
     """RNF05: o log do GitHub Actions e publico."""
-    html = pagina(("Natura", "Promoção 4 pontos por R$ 1 Eram 2 pontos", True))
+    html = pagina(("Natura", "4", True))
     with caplog.at_level(logging.DEBUG):
         executa(html, favoritas)
 
@@ -238,3 +233,35 @@ def teste_falha_de_rede_sobe_como_erro(favoritas):
             catalogo=CatalogoFake(favoritas),
             notificador=NotificadorFake(),
         )
+
+
+def teste_ct102_mesmo_agora_chega_ao_extrator_e_ao_email(favoritas):
+    """Fim a fim: uma promocao que termina hoje aparece destacada no e-mail."""
+    fim_hoje = AGORA_TESTE.replace(hour=23, minute=59)
+    item = monta_item_parceiro(
+        nome="Natura",
+        parity="4",
+        promotion=True,
+        date_start="2026-08-09-00:00:00 GMT-03:00",
+        date_end=formatar_data_livelo(fim_hoje),
+    )
+    html = monta_html_payload(item)
+    _, notificador, _ = executa(html, favoritas, agora=AGORA_TESTE)
+
+    assert "Termina hoje!" in notificador.enviadas[0].corpo_html
+
+
+def teste_rn21_promocao_expirada_nao_entra_no_email_fim_a_fim(favoritas):
+    """RN21 fim a fim: dateEnd no passado nao conta como promocao."""
+    item = monta_item_parceiro(
+        nome="Natura",
+        parity="4",
+        promotion=True,
+        date_start="2026-08-01-00:00:00 GMT-03:00",
+        date_end="2026-08-05-23:59:00 GMT-03:00",  # antes de AGORA_TESTE
+    )
+    html = monta_html_payload(item)
+    total, notificador, _ = executa(html, favoritas, agora=AGORA_TESTE)
+
+    assert total == 0
+    assert "Natura" not in notificador.enviadas[0].corpo_html

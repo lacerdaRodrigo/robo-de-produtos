@@ -39,4 +39,6 @@ Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige
 
 ## Antes de escrever código
 
-O projeto está em fase de planejamento. Se for implementar, comece pela fatia vertical da V1.0 (§11.1): o caminho completo da requisição HTTP até o e-mail entregue. Não construa funcionalidade da lista de candidatos da V2 sem que o gatilho dela tenha acontecido.
+A V1.0 está em produção (§11.1 do PRD). A V2.0 está implementada: o extrator lê o payload `__NEXT_DATA__` da página (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e marca o que é exclusivo do Clube (RN23) — mas **ainda não foi verificada contra a página real em produção**, só contra fixtures. A V2.1 está parcialmente feita: o banco no Neon existe e está populado, mas o robô ainda lê do TOML — a troca de adaptador ainda não foi feita.
+
+A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Hoje isso é: validar a V2.0 contra a página real assim que possível, depois terminar a V2.1 (`principal.py` escolher o adaptador Postgres quando `DATABASE_URL` existir). Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

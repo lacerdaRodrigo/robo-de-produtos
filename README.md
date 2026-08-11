@@ -4,7 +4,7 @@ Monitora as lojas parceiras da Livelo, filtra só as que importam pra você e av
 
 Sem servidor, sem banco de dados, sem custo. Roda inteiro no GitHub Actions.
 
-> **Status: V1.0 funcionando.** Rodou fim a fim contra a página real: 254 parceiros lidos, 22 promoções encontradas. 71 testes verdes, 94% de cobertura. Falta configurar os segredos no GitHub para a primeira execução agendada.
+> **Status: V1.0 em produção.** Rodou fim a fim contra a página real: 254 parceiros lidos, 22 promoções encontradas (medição da V1.0). **V2.0 já implementada** — o extrator passou a ler o payload JSON da página em vez de raspar o HTML (validade da promoção, pontuação base e marcação de Clube), mas ainda não foi verificada contra a página real em produção. 96 testes verdes, 93% de cobertura.
 
 ## Como funciona
 
@@ -21,7 +21,7 @@ Uma requisição HTTP por execução, três execuções por dia. O robô nunca f
 | **[`PRD.md`](docs/PRD.md)** | **Fonte da verdade.** Visão, requisitos, regras de negócio, arquitetura, modelo de dados, segurança e roadmap |
 | [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
-| **[`docs/PRD-V2.md`](docs/PRD-V2.md)** | Planejamento da V2: data de validade, página no GitHub Pages e e-mail condicional |
+| **[`docs/PRD-V2.md`](docs/PRD-V2.md)** | Planejamento da V2: data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional |
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Histórico. Substituído pelo PRD, mantido pelo dicionário de lojas e categorias |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA que trabalhem no projeto |
 

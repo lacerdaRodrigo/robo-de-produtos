@@ -23,21 +23,38 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-007 | String vazia | Nome vazio não pode gerar erro | Chamar `reconhecer("")`, checar `None` sem exceção |
 | CT-008 | Espaços extras | " Natura " (com espaços) deve funcionar igual a "Natura" | Testar com espaços sobrando, comparar resultado |
 
-## `testes/teste_extrator.py` — núcleo puro: HTML → `Parceiro` (fixture de HTML, **nunca** rede)
+## `testes/teste_extrator.py` — núcleo puro: payload JSON → `Parceiro` (fixture do payload, **nunca** rede)
+
+> A V2.0 trocou a raspagem de HTML (`data-testid`, regex sobre texto de card) pela leitura do payload `__NEXT_DATA__` (RF14). CT-015 (nome via atributo `alt`), CT-016 (fallback sem `alt`) e CT-019 (link que não é de parceiro) foram **aposentados**, não adaptados — não existe mais atributo `alt` nem "link solto misturado no HTML" num array JSON, então não há o que testar no lugar. Os números não são reaproveitados.
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-010 | Loja sem promoção | HTML sem a tag "Promoção" deve marcar `em_promocao=False` | Fixture simulando isso, rodar extração |
-| CT-011 | Loja em promoção com "Eram X pontos" | `pontos_atuais`, `pontos_anteriores` e `em_promocao=True` devem sair corretos | Fixture com o padrão completo, validar os 3 campos |
-| CT-012 | Tier Clube Livelo | Valor extra pra assinante deve preencher `pontos_clube` | Fixture com bloco "Clube X pontos", checar campo |
-| CT-013 | Prefixo "Até X pontos" | Extrair o número corretamente, ignorando "Até" | Fixture com esse padrão, validar valor numérico |
-| CT-014 | Moeda em dólar | Parceiros de viagem usam "U$" em vez de "R$" | Fixture tipo Booking/Decolar, checar `moeda == "U$"` |
-| CT-015 | Nome via atributo `alt` da imagem | `alt="Logo Casas Bahia"` deve virar `"Casas Bahia"` | Fixture com essa tag, checar nome limpo |
-| CT-016 | Sem atributo `alt` (fallback) | Sem quebrar mesmo se a imagem não tiver `alt` | Fixture sem `alt`, checar ausência de exceção |
-| CT-017 | Parceiro duplicado | A página às vezes repete o mesmo link — resultado final não pode duplicar | Fixture com parceiro 2x, checar resultado único |
-| CT-018 | Página sem parceiros | HTML fora do padrão deve retornar lista vazia, não erro | HTML sem links de parceiro, checar `len() == 0` |
-| CT-019 | Link que não é de parceiro | Links de menu/rodapé não podem ser capturados como loja | Fixture com link genérico misturado, checar ausência |
-| CT-020 | Nome com caracteres especiais | "Sam's Club", "O.U.i Paris" não podem quebrar o regex | Fixture com esses nomes, checar extração correta |
+| CT-010 | Loja sem promoção | Item com `promotion: false` deve marcar `em_promocao=False` | Item sintético, rodar extração |
+| CT-011 | Promoção preenche `pontos_base` | O antigo "Eram X pontos" vira `pontos_base` a partir de `parityBau`, não mais regex | Item com `parity` e `parityBau` distintos, validar os dois campos |
+| CT-012 | Tier Clube Livelo | `parityClub` distinto de `parity` deve preencher `pontos_clube` | Item com os dois valores diferentes, checar campo |
+| CT-013 | Prefixo "Até X pontos" | `separatorSlug` mapeia para `prefixo_ate` | Item com `separatorSlug` correspondente, validar |
+| CT-014 | Moeda em dólar | Parceiros de viagem usam `currency: "U$"` em vez de `"R$"` | Item tipo Booking, checar `moeda == "U$"` |
+| CT-017 | Parceiro duplicado | Nome repetido no array `configPartners` — resultado final não pode duplicar | Dois itens com o mesmo nome, checar resultado único |
+| CT-018 | Página sem parceiros | `configPartners` vazio deve devolver lista vazia, não erro | Payload com a seção vazia, checar `len() == 0` |
+| CT-020 | Nome com caracteres especiais | "Sam's Club", "O.U.i Paris", "C&A" não podem quebrar o parsing | Itens com esses nomes, checar extração correta |
+| CT-080 | Mapeamento completo (RF14) | `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha` saem corretos a partir de `parityBau`/`dateStart`/`dateEnd`/`activeCampaign` | Item completo, validar os 4 campos novos |
+| CT-081 | Fracionário sem resíduo de `float` | PRD §5.4 — `json.loads` com `parse_float=Decimal` evita `2.9000000000000004` | Item com `parity: 2.9`, checar `Decimal` exato |
+| CT-082 | Localiza a seção por título, não por índice (C06) | A seção de listagem pode vir em qualquer posição de `components` — a Livelo pode reordenar | Seção de destaque (schema diferente) e a de listagem em ordem trocada, checar que só a certa é lida |
+| CT-083 | Seção ausente devolve lista vazia | Sem a seção esperada, não lança exceção — quem falha é o limiar RN13 em `principal.py` | Payload sem nenhuma seção com o título esperado |
+| CT-084 | Sem `dateEnd` não quebra | Item com `promotion: true` mas sem data de fim | Checar `fim_promocao is None` e `em_promocao` preservado |
+| CT-085 | Data malformada vira `None` | `dateEnd` num formato inesperado não derruba o item | Item com data ilegível, checar `fim_promocao is None`, resto válido |
+| CT-086 | RN21 — `dateEnd` no passado desliga `em_promocao` ⚠️ | Promoção com prazo vencido não conta, mesmo com `promotion: true` no payload | Item com `dateEnd` antes do `agora` do teste |
+| CT-087 | RN21 — `dateEnd` no futuro mantém `em_promocao` | Contraprova de CT-086 | Item com `dateEnd` depois do `agora` do teste |
+| CT-088 | Sem pontuação legível é descartado | Descarta só aquele item, os outros seguem (PRD §6.4) | Item com `parity.parity` não numérico entre itens válidos |
+| CT-089 | Sem nome é descartado | Idem, para item sem `name` | Item com `name` vazio entre itens válidos |
+| CT-090 | Dedup por nome (RN06) | Repetido no array conta uma vez só | Dois itens com o mesmo nome |
+| CT-091 | `separatorSlug: "ATE"` (RN12) ⚠️ **hipótese não confirmada** | Sem exemplo real ainda — só `"IGUAL"` foi visto em produção. Implementado e testado, mas precisa validação quando aparecer um caso real | Item com esse `separatorSlug`, checar `prefixo_ate=True` |
+| CT-092 | Moeda preservada (RN11) | Nunca converte, exibe como veio | Item com `currency: "U$"` |
+| CT-093 | `parityClub == parity` não popula `pontos_clube` | Evita ruído de "Clube: N pontos" repetido em toda loja sem distinção real | Item com os dois valores iguais |
+| CT-094 | `parityClub` distinto popula `pontos_clube` | Contraprova de CT-093 | Item com os dois valores diferentes |
+| CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
+
+Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `__NEXT_DATA__` ausente, JSON inválido, payload que não é objeto, componente ou item que não é um objeto, `parity` que não é um objeto, `parityBau`/`parityClub` não numéricos — todos cobertos, contam para o total executado mas não têm CT próprio (mesma convenção dos testes de apoio já existentes no arquivo).
 
 ## `testes/teste_adaptadores.py` — implementações das portas (PRD §4.2)
 
@@ -71,6 +88,12 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-066 | Categoria vazia não aparece | RN14 — categoria sem loja em promoção some do e-mail | Agrupamento com categoria vazia, checar ausência do título |
 | CT-067 | Pontuação fracionada | PRD §5.4 — `Decimal` evita `2.9000000000000004` no corpo | Parceiro com 2,9 pontos, checar o texto exato renderizado |
 | CT-068 | Prefixo "Até" preservado na exibição | RN12 — o sentido de "Até X pontos" não pode se perder | Parceiro com `prefixo_ate=True`, checar que o texto exibe "Até" |
+| CT-096 | Termina hoje recebe destaque (RN22) | `fim_promocao` no mesmo dia do `agora` mostra "Termina hoje!" com destaque próprio | Parceiro com `fim` igual ao dia do `agora` do teste, checar HTML e texto |
+| CT-097 | Validade futura mostra data (RF18) | `fim_promocao` numa data futura mostra "Válido até DD/MM", sem o destaque de RN22 | Parceiro com `fim` alguns dias à frente |
+| CT-098 | Sem `fim_promocao`, sem texto de validade | Não pode gerar texto nem quebrar | Parceiro com `fim=None` |
+| CT-099 | Marca exclusivo Clube (RN23) | Base parada (`pontos_atuais == pontos_base`) com `pontos_clube` maior — o exemplo real do PRD-V2 (O Boticário) | Parceiro com `base` igual a `pontos_atuais` e `clube` maior |
+| CT-100 | Base também turbinada não marca exclusivo | Contraprova de CT-099 — é bônus geral, não só do Clube | Parceiro com `base` menor que `pontos_atuais` e `clube` maior ainda |
+| CT-101 | Sem `pontos_clube`, sem marcação | Regressão de CT-033 | Parceiro sem `clube` |
 
 ## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
@@ -88,6 +111,7 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-071 | Parceiro malformado não derruba | PRD §6.4 — descarta só aquele parceiro e segue | Fake com 1 parceiro de valor inválido entre válidos, checar que o e-mail sai |
 | CT-072 | Destinatário único | RN17/RN18 — envio sem CC e sem BCC | Checar que o notificador recebeu exatamente um destinatário |
 | CT-073 | Nenhum segredo no log ⚠️ | RNF05 — log do Actions é público | Capturar a saída de log da execução completa, checar ausência de senha e de e-mail |
+| CT-102 | `agora` chega ao extrator e ao e-mail, fim a fim | O mesmo `agora` passado a `verificar_promocoes` decide RN21 no extrator e RN22 no montador — uma promoção que termina hoje aparece destacada no e-mail final | Fluxo completo com fakes, checar "Termina hoje!" no resultado |
 
 ## `testes/teste_fronteira.py` — arquitetura (PRD §9.3)
 
@@ -113,12 +137,14 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 11 | 16 |
+| `teste_extrator.py` | 24 | 32 |
 | `teste_adaptadores.py` | 7 | 9 |
-| `teste_montador_email.py` | 14 | 16 |
-| `teste_principal.py` | 12 | 13 |
+| `teste_montador_email.py` | 20 | 23 |
+| `teste_principal.py` | 13 | 15 |
 | `teste_fronteira.py` | 1 | 5 |
-| **Total** | **53** | **71** |
+| **Total** | **73** | **96** |
+
+`teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 
 Manuais: CT-050 e CT-051.
 

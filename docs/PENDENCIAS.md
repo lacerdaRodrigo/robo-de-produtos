@@ -4,7 +4,7 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-10. Versão atual: **1.0.0**.
+> Atualizado em 2026-08-11. Versão atual: **1.1.0**.
 
 ---
 
@@ -26,17 +26,11 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 ## V2.0 — extrator lendo o payload JSON
 
-Base de tudo que vem depois. Não depende de site nem de banco.
+**Estado: concluída.** Ver "Concluído" abaixo pelo detalhamento. Dois pontos ficaram como hipótese não confirmada por falta de exemplo real (registrados em código com comentário e em `docs/TESTES.md`):
 
-- [ ] Reescrever `extrator.py` para ler o payload em vez do texto dos cards (RF14)
-- [ ] `Parceiro` ganha `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha` (PRD V2 §8)
-- [ ] Promoção com `dateEnd` no passado não conta como promoção (RN21)
-- [ ] E-mail passa a mostrar a validade, destacando o que termina hoje (RF18, RN22)
-- [ ] E-mail marca o que é promoção exclusiva do Clube (RN23)
-- [ ] Recortar o payload real para a fixture de teste
-- [ ] Casos CT-080 em diante
-
-**Por que primeiro:** sem `parityBau` as regras de alerta não existem, porque não dá para calcular múltiplo sem conhecer o normal da loja.
+- [ ] Confirmar contra a página real se `separatorSlug: "ATE"` é de fato o valor usado para o prefixo "Até X pontos" (RN12) — só `"IGUAL"` foi visto em produção até agora
+- [ ] Confirmar o valor real de `activeCampaign` para promoção exclusiva do Clube — RN23 hoje decide por comparação numérica (`pontos_atuais == pontos_base`), não pela string, justamente por não haver exemplo confirmado
+- [ ] Recapturar um payload real mais amplo (mais parceiros, mais variedade de campanha) para enriquecer `testes/fixtures/payload_parceiros.json`, hoje majoritariamente construída à mão seguindo o schema confirmado — precisa de acesso de rede à Livelo, que a sessão que fez a V2.0 não tinha
 
 ---
 
@@ -92,9 +86,10 @@ Base de tudo que vem depois. Não depende de site nem de banco.
 
 - [x] **V1.0** — fatia vertical completa, em produção desde 2026-08-09
 - [x] Catálogo com 132 lojas nas categorias Beleza, Marketplace, Moda e Eletro
-- [x] 73 testes, 94% de cobertura, quality gate no CI
 - [x] Teste de fronteira garantindo que o núcleo não faz I/O
 - [x] Guarda automática contra o corte de exibição do Gmail
 - [x] Repositório público com CI verde
 - [x] Secrets de e-mail configurados e primeira execução real confirmada
 - [x] Versionamento semântico automático a partir dos commits
+- [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
+- [x] 96 testes, 93% de cobertura, quality gate no CI

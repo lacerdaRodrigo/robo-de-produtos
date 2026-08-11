@@ -1,165 +1,346 @@
-"""CT-010 a CT-020 — nucleo puro: HTML vira Parceiro. Nunca toca a rede."""
+"""CT-010 a CT-020 e CT-080 a CT-095 — nucleo puro: payload JSON vira Parceiro.
+
+Nunca toca a rede. A V2.0 troca a raspagem de HTML por leitura do
+__NEXT_DATA__ (RF14) — CT-015, CT-016, CT-019 e o antigo
+`teste_link_sem_card_e_ignorado` foram aposentados porque testavam
+mecanismos que deixaram de existir (atributo `alt`, link solto no HTML):
+não existe "card sem alt" nem "link fora de um item" num array JSON.
+"""
 
 from __future__ import annotations
 
+import json
+from datetime import datetime
 from decimal import Decimal
 
-from robo_livelo.extrator import extrair_parceiros
+from robo_livelo.extrator import TITULO_SECAO_PARCEIROS, extrair_parceiros
+from testes.conftest import (
+    FUSO_BRASILIA,
+    TITULO_SECAO_DESTAQUE,
+    envolver_payload_em_html,
+    monta_html_payload,
+    monta_item_parceiro,
+)
 
-CARD = """
-<a data-testid="a_PartnerCard_card_link" href="{link}">
-  <div data-testid="div_PartnerCard">
-    {tag}
-    <img data-testid="img_PartnerCard_partnerImage" {alt}/>
-    <div>{texto}</div>
-  </div>
-</a>
-"""
-TAG_PROMOCAO = '<span data-testid="span_PartnerCard_promotionTag">Promoção</span>'
+AGORA_TESTE = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
 
 
-def monta_html(
-    texto: str,
-    *,
-    nome: str = "Natura",
-    promocao: bool = False,
-    link: str = "https://www.livelo.com.br/juntar-pontos/parceiros/natura/NAT",
-    com_alt: bool = True,
-    extra: str = "",
-) -> str:
-    card = CARD.format(
-        link=link,
-        tag=TAG_PROMOCAO if promocao else "",
-        alt=f'alt="Logo {nome}"' if com_alt else "",
-        texto=texto,
-    )
-    return f"<html><body>{card}{extra}</body></html>"
-
-
-def um(html: str):
-    parceiros = extrair_parceiros(html)
+def um(html: str, *, agora: datetime = AGORA_TESTE):
+    parceiros = extrair_parceiros(html, agora=agora)
     assert len(parceiros) == 1
     return parceiros[0]
 
 
+def pagina(*itens: dict) -> str:
+    return monta_html_payload(*itens)
+
+
+# ── CT-010 a CT-020: adaptados do V1 para o formato JSON ────────────────────
+
+
 def teste_ct010_loja_sem_promocao():
-    parceiro = um(monta_html("2 pontos por R$ 1"))
+    parceiro = um(pagina(monta_item_parceiro(promotion=False)))
     assert parceiro.em_promocao is False
-    assert parceiro.pontos_anteriores is None
 
 
-def teste_ct011_promocao_com_eram_x_pontos():
-    parceiro = um(monta_html("Promoção 4 pontos por R$ 1 Eram 2 pontos", promocao=True))
+def teste_ct011_promocao_preenche_pontos_base():
+    """O "eram X pontos" do V1 vira `pontos_base` (parityBau), nao mais regex."""
+    parceiro = um(pagina(monta_item_parceiro(parity="4", parity_bau="2", promotion=True)))
     assert parceiro.em_promocao is True
     assert parceiro.pontos_atuais == Decimal("4")
-    assert parceiro.pontos_anteriores == Decimal("2")
+    assert parceiro.pontos_base == Decimal("2")
 
 
 def teste_ct012_tier_clube_livelo():
-    parceiro = um(
-        monta_html(
-            "Promoção Até 8 pontos por R$ 1 Eram 2 pontos Clube Até 12 pontos por R$ 1",
-            promocao=True,
-        )
-    )
+    parceiro = um(pagina(monta_item_parceiro(parity="8", parity_club="12", promotion=True)))
     assert parceiro.pontos_clube == Decimal("12")
     assert parceiro.pontos_atuais == Decimal("8")
 
 
 def teste_ct013_prefixo_ate():
-    parceiro = um(monta_html("Até 5 pontos por R$ 1"))
+    parceiro = um(pagina(monta_item_parceiro(parity="5", separator_slug="ATE")))
     assert parceiro.prefixo_ate is True
     assert parceiro.pontos_atuais == Decimal("5")
 
 
 def teste_ct014_moeda_em_dolar():
     """RN11: nunca converte, exibe como veio."""
-    parceiro = um(monta_html("4 pontos por U$ 1", nome="Booking com"))
+    parceiro = um(pagina(monta_item_parceiro(nome="Booking com", currency="U$")))
     assert parceiro.moeda == "U$"
-
-
-def teste_ct015_nome_via_atributo_alt():
-    parceiro = um(monta_html("2 pontos por R$ 1", nome="Casas Bahia"))
-    assert parceiro.nome == "Casas Bahia"
-
-
-def teste_ct016_sem_alt_usa_reserva():
-    """RN15: sem alt, usa o texto do link e nunca quebra."""
-    parceiro = um(monta_html("3 pontos por R$ 1", com_alt=False))
-    assert "3 pontos" in parceiro.nome
 
 
 def teste_ct017_parceiro_duplicado():
     """RN06: repetido conta uma vez so."""
-    extra = CARD.format(
-        link="https://www.livelo.com.br/juntar-pontos/parceiros/natura/NAT",
-        tag="",
-        alt='alt="Logo Natura"',
-        texto="2 pontos por R$ 1",
-    )
-    assert len(extrair_parceiros(monta_html("2 pontos por R$ 1", extra=extra))) == 1
+    itens = [monta_item_parceiro(nome="Natura"), monta_item_parceiro(nome="Natura")]
+    assert len(extrair_parceiros(pagina(*itens), agora=AGORA_TESTE)) == 1
 
 
 def teste_ct018_pagina_sem_parceiros():
-    assert extrair_parceiros("<html><body><p>nada aqui</p></body></html>") == []
-
-
-def teste_ct019_link_que_nao_e_de_parceiro():
-    html = monta_html("2 pontos por R$ 1", extra='<a href="/rodape">Fale conosco</a>')
-    parceiros = extrair_parceiros(html)
-    assert len(parceiros) == 1
-    assert parceiros[0].nome == "Natura"
+    assert extrair_parceiros(pagina(), agora=AGORA_TESTE) == []
 
 
 def teste_ct020_nome_com_caracteres_especiais():
     for nome in ("Sam's Club", "O.U.i Paris", "C&A"):
-        parceiro = um(monta_html("2 pontos por R$ 1", nome=nome))
+        parceiro = um(pagina(monta_item_parceiro(nome=nome)))
         assert parceiro.nome == nome
 
 
-def teste_link_sem_card_e_ignorado():
-    """PRD 6.4: estrutura inesperada nao derruba a extracao."""
-    html = '<a data-testid="a_PartnerCard_card_link" href="/x">sem card dentro</a>'
-    assert extrair_parceiros(html) == []
+# ── CT-080 em diante: novos, especificos do payload JSON (RF14) ─────────────
 
 
-def teste_card_sem_nome_e_descartado():
-    html = """
-    <a data-testid="a_PartnerCard_card_link" href="/x">
-      <div data-testid="div_PartnerCard">
-        <img data-testid="img_PartnerCard_partnerImage" alt=""/>
-      </div>
-    </a>
-    """
-    assert extrair_parceiros(html) == []
-
-
-def teste_parceiro_sem_pontuacao_legivel_e_descartado():
-    """Descarta so aquele card, os outros seguem (PRD 6.4)."""
-    bom = CARD.format(
-        link="https://www.livelo.com.br/x",
-        tag="",
-        alt='alt="Logo Natura"',
-        texto="4 pontos por R$ 1",
+def teste_ct080_mapeamento_completo_rf14():
+    momento_inicio = "2026-08-05-00:00:00 GMT-03:00"
+    momento_fim = "2026-08-20-23:59:00 GMT-03:00"
+    parceiro = um(
+        pagina(
+            monta_item_parceiro(
+                parity="6",
+                parity_bau="4",
+                promotion=True,
+                date_start=momento_inicio,
+                date_end=momento_fim,
+                active_campaign="PROMOTION",
+            )
+        )
     )
-    html = monta_html("texto sem pontuacao nenhuma", nome="Loja Quebrada", extra=bom)
-    parceiros = extrair_parceiros(html)
+    assert parceiro.pontos_base == Decimal("4")
+    assert parceiro.inicio_promocao == datetime(2026, 8, 5, 0, 0, tzinfo=FUSO_BRASILIA)
+    assert parceiro.fim_promocao == datetime(2026, 8, 20, 23, 59, tzinfo=FUSO_BRASILIA)
+    assert parceiro.campanha == "PROMOTION"
+
+
+def teste_ct081_fracionario_sem_residuo_de_float():
+    """PRD 5.4: json.loads com parse_float=Decimal evita 2.9000000000000004."""
+    parceiro = um(pagina(monta_item_parceiro(parity="2.9")))
+    assert parceiro.pontos_atuais == Decimal("2.9")
+    assert str(parceiro.pontos_atuais) == "2.9"
+
+
+def teste_ct082_localiza_secao_por_titulo_nao_por_indice():
+    """C06: a secao de listagem antes da de destaque, ainda assim acha certo."""
+    payload = {
+        "props": {
+            "pageProps": {
+                "page": {
+                    "components": [
+                        {
+                            "type": "listagem",
+                            "props": {
+                                "title": TITULO_SECAO_PARCEIROS,
+                                "configPartners": [monta_item_parceiro(nome="Natura")],
+                            },
+                        },
+                        {
+                            "type": "carrossel",
+                            "props": {
+                                "title": TITULO_SECAO_DESTAQUE,
+                                "configPartners": [
+                                    monta_item_parceiro(id="X", nome="Item Do Carrossel Errado")
+                                ],
+                            },
+                        },
+                    ]
+                }
+            }
+        }
+    }
+    html = envolver_payload_em_html(json.dumps(payload))
+    nomes = {p.nome for p in extrair_parceiros(html, agora=AGORA_TESTE)}
+    assert nomes == {"Natura"}
+
+
+def teste_ct083_secao_ausente_devolve_lista_vazia():
+    payload = {"props": {"pageProps": {"page": {"components": []}}}}
+    html = envolver_payload_em_html(json.dumps(payload))
+    assert extrair_parceiros(html, agora=AGORA_TESTE) == []
+
+
+def teste_ct084_sem_dateend_nao_quebra():
+    parceiro = um(pagina(monta_item_parceiro(promotion=True, date_start=None, date_end=None)))
+    assert parceiro.fim_promocao is None
+    assert parceiro.em_promocao is True
+
+
+def teste_ct085_data_malformada_vira_none():
+    parceiro = um(pagina(monta_item_parceiro(promotion=True, date_end="nao e uma data")))
+    assert parceiro.fim_promocao is None
+    assert parceiro.em_promocao is True  # sem data legivel, RN21 nao desliga
+
+
+def teste_ct086_rn21_dateend_no_passado_desliga_em_promocao():
+    parceiro = um(
+        pagina(
+            monta_item_parceiro(
+                promotion=True,
+                date_start="2026-08-01-00:00:00 GMT-03:00",
+                date_end="2026-08-05-23:59:00 GMT-03:00",  # antes de AGORA_TESTE
+            )
+        )
+    )
+    assert parceiro.em_promocao is False
+
+
+def teste_ct087_rn21_dateend_no_futuro_mantem_em_promocao():
+    parceiro = um(
+        pagina(
+            monta_item_parceiro(
+                promotion=True,
+                date_start="2026-08-10-00:00:00 GMT-03:00",
+                date_end="2026-08-20-23:59:00 GMT-03:00",  # depois de AGORA_TESTE
+            )
+        )
+    )
+    assert parceiro.em_promocao is True
+
+
+def teste_ct088_sem_pontuacao_legivel_e_descartado():
+    """Descarta so aquele item, os outros seguem (PRD 6.4)."""
+    item_quebrado = monta_item_parceiro(nome="Loja Quebrada")
+    item_quebrado["parity"]["parity"] = "nao e numero"
+    item_bom = monta_item_parceiro(nome="Natura")
+
+    parceiros = extrair_parceiros(pagina(item_quebrado, item_bom), agora=AGORA_TESTE)
     assert [p.nome for p in parceiros] == ["Natura"]
 
 
-def teste_valor_fracionado_vira_decimal():
-    parceiro = um(monta_html("2,9 pontos por R$ 1"))
-    assert parceiro.pontos_atuais == Decimal("2.9")
+def teste_ct089_sem_nome_e_descartado():
+    item_sem_nome = monta_item_parceiro(nome="")
+    item_bom = monta_item_parceiro(nome="Natura")
+    parceiros = extrair_parceiros(pagina(item_sem_nome, item_bom), agora=AGORA_TESTE)
+    assert [p.nome for p in parceiros] == ["Natura"]
 
 
-def teste_fixture_real_traz_os_casos_dificeis(html_exemplo):
-    """A fixture e a pagina de verdade, nao HTML inventado."""
-    por_nome = {p.nome: p for p in extrair_parceiros(html_exemplo)}
+def teste_ct090_dedup_por_nome():
+    itens = [monta_item_parceiro(nome="Petlove"), monta_item_parceiro(nome="Petlove")]
+    assert len(extrair_parceiros(pagina(*itens), agora=AGORA_TESTE)) == 1
 
-    assert len(por_nome) == 20
+
+def teste_ct091_separator_slug_ate_hipotese():
+    """RN12: hipotese de mapeamento, sem exemplo real confirmado ainda."""
+    parceiro = um(pagina(monta_item_parceiro(separator_slug="ATE")))
+    assert parceiro.prefixo_ate is True
+
+
+def teste_ct092_moeda_preservada():
+    parceiro = um(pagina(monta_item_parceiro(currency="U$")))
+    assert parceiro.moeda == "U$"
+
+
+def teste_ct093_parity_club_igual_a_parity_nao_popula_clube():
+    parceiro = um(pagina(monta_item_parceiro(parity="4", parity_club="4")))
+    assert parceiro.pontos_clube is None
+
+
+def teste_ct094_parity_club_distinto_popula_clube():
+    parceiro = um(pagina(monta_item_parceiro(parity="4", parity_club="10")))
+    assert parceiro.pontos_clube == Decimal("10")
+
+
+def teste_ct095_fixture_real_traz_os_casos_dificeis(payload_exemplo):
+    """A fixture e o payload de verdade, recortado (nao inventado)."""
+    por_nome = {p.nome: p for p in extrair_parceiros(payload_exemplo, agora=AGORA_TESTE)}
+
+    assert set(por_nome) == {
+        "Mercado Livre",
+        "Booking com",
+        "O Boticário",
+        "Casas Bahia",
+        "Magalu",
+        "Pontofrio",
+        "Petlove",
+        "ABC da Construcao",
+    }
+
     assert por_nome["Casas Bahia"].prefixo_ate is True
     assert por_nome["Booking com"].moeda == "U$"
-    assert por_nome["Beleza na web"].pontos_clube == Decimal("12")
-    assert por_nome["Consórcio Magalu"].em_promocao is True
-    assert por_nome["Petlove"].em_promocao is False
-    assert por_nome["Petlove Saúde"].em_promocao is True
+
+    # RN23: base parada (3 -> 3), boost so no tier Clube.
+    boticario = por_nome["O Boticário"]
+    assert boticario.pontos_atuais == boticario.pontos_base == Decimal("3")
+    assert boticario.pontos_clube == Decimal("10")
+
+    # RN21: dateEnd no passado desliga em_promocao mesmo com promotion:true no payload.
+    assert por_nome["Magalu"].em_promocao is False
+
+    # RN22 candidato: termina no mesmo dia de AGORA_TESTE.
+    assert por_nome["Casas Bahia"].fim_promocao.date() == AGORA_TESTE.date()
+
+    # dateEnd malformado nao derruba o item nem desliga a promocao.
+    assert por_nome["Petlove"].fim_promocao is None
+    assert por_nome["Petlove"].em_promocao is True
+
+    # promotion:true sem dateEnd nenhum tambem nao quebra.
+    assert por_nome["Pontofrio"].fim_promocao is None
+    assert por_nome["Pontofrio"].em_promocao is True
+
+
+# ── Robustez contra payload hostil (RN07: todo dado do site e hostil) ───────
+
+
+def teste_script_next_data_ausente_devolve_lista_vazia():
+    html = "<html><body><p>pagina sem o script esperado</p></body></html>"
+    assert extrair_parceiros(html, agora=AGORA_TESTE) == []
+
+
+def teste_json_invalido_no_script_devolve_lista_vazia():
+    html = envolver_payload_em_html("{isso nao e json valido")
+    assert extrair_parceiros(html, agora=AGORA_TESTE) == []
+
+
+def teste_payload_json_que_nao_e_objeto_devolve_lista_vazia():
+    html = envolver_payload_em_html(json.dumps(["lista", "solta"]))
+    assert extrair_parceiros(html, agora=AGORA_TESTE) == []
+
+
+def teste_componente_que_nao_e_objeto_e_ignorado():
+    payload = {
+        "props": {
+            "pageProps": {
+                "page": {
+                    "components": [
+                        "isso nao e um componente",
+                        None,
+                        {
+                            "type": "listagem",
+                            "props": {
+                                "title": TITULO_SECAO_PARCEIROS,
+                                "configPartners": [monta_item_parceiro(nome="Natura")],
+                            },
+                        },
+                    ]
+                }
+            }
+        }
+    }
+    html = envolver_payload_em_html(json.dumps(payload))
+    nomes = {p.nome for p in extrair_parceiros(html, agora=AGORA_TESTE)}
+    assert nomes == {"Natura"}
+
+
+def teste_item_que_nao_e_objeto_e_descartado():
+    itens = ["isso nao e um item", None, monta_item_parceiro(nome="Natura")]
+    html = pagina(*itens)
+    nomes = {p.nome for p in extrair_parceiros(html, agora=AGORA_TESTE)}
+    assert nomes == {"Natura"}
+
+
+def teste_parity_que_nao_e_objeto_e_item_descartado():
+    item = monta_item_parceiro(nome="Loja Quebrada")
+    item["parity"] = "isso deveria ser um objeto"
+    item_bom = monta_item_parceiro(nome="Natura")
+    parceiros = extrair_parceiros(pagina(item, item_bom), agora=AGORA_TESTE)
+    assert [p.nome for p in parceiros] == ["Natura"]
+
+
+def teste_parity_bau_nao_numerico_vira_none_sem_derrubar_item():
+    item = monta_item_parceiro(nome="Natura")
+    item["parity"]["parityBau"] = "nao e numero"
+    parceiro = um(pagina(item))
+    assert parceiro.pontos_base is None
+
+
+def teste_parity_club_nao_numerico_vira_none_sem_derrubar_item():
+    item = monta_item_parceiro(nome="Natura")
+    item["parity"]["parityClub"] = "nao e numero"
+    parceiro = um(pagina(item))
+    assert parceiro.pontos_clube is None
