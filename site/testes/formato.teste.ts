@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ancora,
+  barraDeProgresso,
   filtrarPorNome,
   idade,
   numeroOuPadrao,
@@ -135,6 +136,42 @@ describe("CT-164 limiar em branco vira null (RN28)", () => {
   it("numero negativo ou texto invalido lanca erro", () => {
     expect(() => numeroOuPadrao("-1")).toThrow();
     expect(() => numeroOuPadrao("abc")).toThrow();
+  });
+});
+
+describe("CT-165 barra de progresso do cartao (RN30)", () => {
+  it("loja nao encontrada nao tem barra, sem dividir por zero", () => {
+    // pontos_atuais e pontos_base ausentes juntos: nao ha o que desenhar.
+    expect(barraDeProgresso(null, null, null)).toBeNull();
+    expect(barraDeProgresso(null, "4", "8")).toBeNull();
+  });
+
+  it("larguras ficam entre 0 e 100, com o limiar visivelmente a frente do normal", () => {
+    const barra = barraDeProgresso("6", "1", "4");
+    expect(barra).not.toBeNull();
+    if (!barra) {
+      return;
+    }
+    for (const valor of [barra.atual, barra.base, barra.limiar]) {
+      expect(valor).toBeGreaterThanOrEqual(0);
+      expect(valor).toBeLessThanOrEqual(100);
+    }
+    expect(barra.limiar).toBeGreaterThan(barra.base);
+  });
+
+  it("sem limiar proprio, usa o dobro da base como referencia", () => {
+    const barra = barraDeProgresso("2", "2", null);
+    expect(barra).not.toBeNull();
+    if (!barra) {
+      return;
+    }
+    // base=2, limiar implicito=4: na mesma escala, o limiar fica na metade do teto.
+    expect(barra.limiar).toBeCloseTo(barra.base * 2, 5);
+  });
+
+  it("teto nunca zera mesmo com todos os valores em zero", () => {
+    const barra = barraDeProgresso("0", "0", "0");
+    expect(barra).toEqual({ atual: 0, base: 0, limiar: 0 });
   });
 });
 

@@ -70,7 +70,7 @@ export default async function PaginaDeAvisos({
         {ok && RECADOS[ok] && <p className="faixa">{RECADOS[ok]}</p>}
         {erro && <p className="faixa ruim">{ERROS[erro] ?? "Não deu para salvar."}</p>}
 
-        <h2>Padrão de todas as lojas</h2>
+        <h2>Padrão global</h2>
         <form action={acaoSalvarPadroes} className="bloco">
           <div className="frase">
             <span>A pontuação precisa ficar</span>
@@ -108,7 +108,7 @@ export default async function PaginaDeAvisos({
           </div>
 
           <div className="campo">
-            <label className="rotulo-campo" htmlFor="assinante_clube">
+            <label className="rotulo-campo opcao-destaque" htmlFor="assinante_clube">
               <input
                 id="assinante_clube"
                 name="assinante_clube"
@@ -125,7 +125,7 @@ export default async function PaginaDeAvisos({
             </label>
           </div>
 
-          <button type="submit">Salvar</button>
+          <button type="submit">Salvar padrão</button>
         </form>
 
         {execucao && (
@@ -136,7 +136,7 @@ export default async function PaginaDeAvisos({
           </p>
         )}
 
-        <h2>Exceções</h2>
+        <h2>Exceções específicas</h2>
         <p className="detalhe">
           Loja com regra própria ignora o padrão acima. A recomendação é começar sem nenhuma e
           só criar as poucas que incomodarem. <Link href="/ajuda#padrao-ou-excecao">Por quê</Link>

@@ -11,9 +11,9 @@ export function Rodape({ versao }: { versao?: string | null }) {
   return (
     <footer className="rodape">
       <nav className="destinos" aria-label="Ir para">
-        <Link href="/">Pontuação</Link>
-        <Link href="/avisos">Quando me avisar</Link>
-        <Link href="/lojas">Cadastrar lojas</Link>
+        <Link href="/">Painel</Link>
+        <Link href="/avisos">Alertas</Link>
+        <Link href="/lojas">Lojas</Link>
         <Link href="/ajuda">Ajuda</Link>
       </nav>
       <p>

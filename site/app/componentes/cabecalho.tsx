@@ -11,13 +11,13 @@ import { acaoSair } from "../acoes";
  * sem sessao, as telas de edicao nem sao anunciadas.
  */
 const PUBLICAS = [
-  { href: "/", nome: "Pontuação" },
+  { href: "/", nome: "Painel" },
   { href: "/ajuda", nome: "Ajuda" },
 ];
 
 const PRIVADAS = [
-  { href: "/avisos", nome: "Quando me avisar" },
-  { href: "/lojas", nome: "Cadastrar lojas" },
+  { href: "/avisos", nome: "Alertas" },
+  { href: "/lojas", nome: "Lojas" },
 ];
 
 export async function Cabecalho({ atual }: { atual: string }) {

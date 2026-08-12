@@ -108,6 +108,30 @@ export function ancora(categoria: string): string {
 }
 
 /**
+ * Larguras (0 a 100) da barra de progresso do cartão de loja: onde fica a
+ * pontuação atual, o normal da loja e o limiar que dispara o aviso (RN30).
+ *
+ * `Number()` aqui é diferente do que o PRD 5.4 proíbe: o resultado nunca
+ * vira texto na tela, só a largura de uma barra — não reabre o problema
+ * do "2.9000000000000004" porque ninguém lê essa casa decimal.
+ */
+export function barraDeProgresso(
+  atual: Numerico,
+  base: Numerico,
+  limiar: Numerico,
+): { atual: number; base: number; limiar: number } | null {
+  if (atual === null || base === null) {
+    return null;
+  }
+  const nAtual = Number(atual);
+  const nBase = Number(base);
+  const nLimiar = limiar !== null ? Number(limiar) : nBase * 2;
+  const teto = Math.max(nAtual, nLimiar) * 1.2 || 1;
+  const larguraDe = (valor: number) => Math.min(100, (valor / teto) * 100);
+  return { atual: larguraDe(nAtual), base: larguraDe(nBase), limiar: larguraDe(nLimiar) };
+}
+
+/**
  * Campo vazio significa "usa o padrao global" (RN28) — mesma semantica do
  * NULL na coluna. Zero e vazio nao podem se confundir, por isso a string
  * vazia vira `null` e nunca `"0"`.

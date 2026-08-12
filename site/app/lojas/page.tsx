@@ -46,7 +46,7 @@ export default async function PaginaDeLojas({
     <>
       <Cabecalho atual="/lojas" />
       <main className="pagina">
-        <h1>Cadastrar lojas</h1>
+        <h1>Suas lojas</h1>
         <p className="carimbo">
           {todas.length} lojas no seu cadastro. Loja nova entra no e-mail e na lista na
           próxima execução do robô.
@@ -92,7 +92,7 @@ export default async function PaginaDeLojas({
           </p>
         )}
 
-        <div className="bloco">
+        <div className="bloco destaque">
           <div className="linha">
             <div>
               <strong>Terminou de mexer?</strong>
@@ -103,44 +103,46 @@ export default async function PaginaDeLojas({
             </div>
             <form action={acaoAtualizarAgora}>
               <button type="submit" disabled={!podeDisparar || falta > 0}>
-                {falta > 0 ? `Aguarde ${falta}s` : "Atualizar agora"}
+                {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
               </button>
             </form>
           </div>
         </div>
 
-        <h2>Adicionar</h2>
+        <h2>Adicionar loja</h2>
         <form action={acaoAdicionarLoja} className="bloco">
-          <div className="campo">
-            <label className="rotulo-campo" htmlFor="nome">
-              Nome exato, como a Livelo escreve
-              <Dica titulo="nome exato" secao="nao-encontrada">
-                O robô só reconhece a loja por correspondência exata. Aceitar pedaço de nome
-                faria “Petlove” capturar “Petlove Saúde”, que é outro parceiro com outra
-                pontuação.
-              </Dica>
-            </label>
-            <input id="nome" name="nome" type="text" required placeholder="Renner" />
-          </div>
+          <div className="grade-2col">
+            <div className="campo">
+              <label className="rotulo-campo" htmlFor="nome">
+                Nome exato, como a Livelo escreve
+                <Dica titulo="nome exato" secao="nao-encontrada">
+                  O robô só reconhece a loja por correspondência exata. Aceitar pedaço de nome
+                  faria “Petlove” capturar “Petlove Saúde”, que é outro parceiro com outra
+                  pontuação.
+                </Dica>
+              </label>
+              <input id="nome" name="nome" type="text" required placeholder="Renner" />
+            </div>
 
-          <div className="campo">
-            <label htmlFor="categoria">Categoria</label>
-            <input
-              id="categoria"
-              name="categoria"
-              type="text"
-              list="categorias"
-              required
-              placeholder="Moda"
-            />
-            <datalist id="categorias">
-              {listaDeCategorias.map((categoria) => (
-                <option key={categoria} value={categoria} />
-              ))}
-            </datalist>
-            <span className="ajuda-do-campo">
-              Serve para agrupar na lista e no e-mail. Pode ser uma existente ou uma nova.
-            </span>
+            <div className="campo">
+              <label htmlFor="categoria">Categoria</label>
+              <input
+                id="categoria"
+                name="categoria"
+                type="text"
+                list="categorias"
+                required
+                placeholder="Moda"
+              />
+              <datalist id="categorias">
+                {listaDeCategorias.map((categoria) => (
+                  <option key={categoria} value={categoria} />
+                ))}
+              </datalist>
+              <span className="ajuda-do-campo">
+                Serve para agrupar na lista e no e-mail. Pode ser uma existente ou uma nova.
+              </span>
+            </div>
           </div>
 
           <div className="campo">
@@ -157,7 +159,7 @@ export default async function PaginaDeLojas({
 
           <div className="campo">
             <span className="rotulo-campo">
-              Avisar quando ficar
+              Regra de aviso opcional
               <Dica titulo="avisar quando ficar" secao="normal-da-loja">
                 O “normal da loja” é a pontuação dela fora de promoção, informada pela própria
                 Livelo. Com <strong>2</strong>, uma loja que dá 3 pontos normalmente só avisa a
@@ -195,7 +197,7 @@ export default async function PaginaDeLojas({
           <button type="submit">Adicionar loja</button>
         </form>
 
-        <h2>Suas lojas</h2>
+        <h2>Lojas cadastradas</h2>
         <form className="busca" action="/lojas" method="get" role="search">
           <input
             type="search"

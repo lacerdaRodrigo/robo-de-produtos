@@ -31,7 +31,7 @@ export default async function PaginaDeAjuda() {
     <>
       <Cabecalho atual="/ajuda" />
       <main className="pagina">
-        <h1>Como este sistema funciona</h1>
+        <h1>Central de ajuda</h1>
         <p className="carimbo">
           Um robô lê a página pública de parceiros da Livelo três vezes por dia, compara com as
           suas lojas e manda um e-mail. Este site mostra o que ele viu na última passada.
