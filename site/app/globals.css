@@ -1,27 +1,49 @@
-/* RN25: nenhuma fonte, imagem ou folha de estilo de terceiro. A identidade
-   e cor e tipografia do proprio sistema, como o e-mail ja faz. */
+/* Sistema visual do site.
+   RN25: nenhuma fonte, imagem ou folha de estilo de terceiro. A identidade e
+   tipografia do sistema, cor e espaco — nada que precise ser baixado.
+
+   Regra do desenho: os neutros carregam a interface e o acento aparece so no
+   que pede acao. Se tudo grita, nada grita. */
 
 :root {
-  --fundo: #f5f5f7;
-  --cartao: #ffffff;
-  --texto: #1d1d1f;
-  --suave: #6e6e73;
-  --borda: #e3e3e8;
-  --destaque: #df0979;
-  --alerta: #c1121f;
+  --fundo: #fafafa;
+  --superficie: #ffffff;
+  --superficie-2: #f2f2f4;
+  --borda: #e4e4e9;
+  --texto: #17171a;
+  --suave: #62626b;
+  --acento: #c1006a;
+  --acento-fraco: #fce8f2;
+  --urgente: #b3261e;
   --ok: #0a7d3c;
+  --sombra: 0 1px 2px rgb(0 0 0 / 6%), 0 1px 3px rgb(0 0 0 / 4%);
+
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+  --e7: 48px;
+
+  --raio: 12px;
+  --raio-p: 8px;
+  --toque: 44px; /* alvo minimo no celular, que e onde este site mais roda */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #121214;
-    --cartao: #1c1c1f;
+    --fundo: #0f0f11;
+    --superficie: #17171a;
+    --superficie-2: #202024;
+    --borda: #2a2a30;
     --texto: #f2f2f5;
-    --suave: #9b9ba3;
-    --borda: #2c2c31;
-    --destaque: #ff4fa3;
-    --alerta: #ff6b6b;
+    --suave: #9a9aa4;
+    --acento: #ff5fb0;
+    --acento-fraco: #2b0f20;
+    --urgente: #ff7a72;
     --ok: #4ade80;
+    --sombra: none;
   }
 }
 
@@ -29,174 +51,591 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--e7);
+}
+
 body {
   margin: 0;
-  padding: 24px 16px 48px;
   background: var(--fundo);
   color: var(--texto);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
 }
 
 .pagina {
-  max-width: 860px;
+  max-width: 780px;
   margin: 0 auto;
+  padding: 0 var(--e4) var(--e7);
+}
+
+/* Numero e o heroi de cada linha: casas alinhadas ou 132 linhas viram ruido. */
+.numero {
+  font-variant-numeric: tabular-nums;
 }
 
 h1 {
-  font-size: 24px;
-  margin: 0 0 4px;
+  font-size: 1.6rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--e1);
 }
 
 h2 {
-  font-size: 15px;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   color: var(--suave);
-  margin: 32px 0 12px;
+  margin: var(--e6) 0 var(--e3);
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: var(--e5) 0 var(--e2);
+}
+
+p {
+  margin: 0 0 var(--e3);
 }
 
 a {
-  color: var(--destaque);
+  color: inherit;
+  text-underline-offset: 3px;
 }
 
-.carimbo {
-  font-size: 13px;
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-radius: var(--raio-p);
+}
+
+/* ── Cabecalho e menu ─────────────────────────────────────────────── */
+
+.topo {
+  border-bottom: 1px solid var(--borda);
+  background: var(--superficie);
+  margin-bottom: var(--e5);
+}
+
+.topo-interno {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--e3) var(--e4) 0;
+}
+
+.topo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+
+.marca {
+  font-weight: 650;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.menu {
+  display: flex;
+  gap: var(--e1);
+  overflow-x: auto;
+  margin-top: var(--e2);
+  scrollbar-width: none;
+}
+
+.menu::-webkit-scrollbar {
+  display: none;
+}
+
+.menu a {
+  padding: var(--e2) var(--e3);
+  font-size: 0.92rem;
   color: var(--suave);
-  margin: 0 0 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  min-height: var(--toque);
+  display: flex;
+  align-items: center;
+}
+
+.menu a:hover {
+  color: var(--texto);
+}
+
+.menu a[aria-current="page"] {
+  color: var(--texto);
+  border-bottom-color: var(--acento);
+  font-weight: 600;
+}
+
+/* ── Botoes ───────────────────────────────────────────────────────── */
+
+.botao,
+button {
+  font: inherit;
+  min-height: var(--toque);
+  padding: var(--e2) var(--e4);
+  border: 1px solid transparent;
+  border-radius: var(--raio-p);
+  background: var(--acento);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  text-decoration: none;
+}
+
+.botao.secundario,
+button.secundario {
+  background: var(--superficie);
+  color: var(--texto);
+  border-color: var(--borda);
+}
+
+.botao.discreto,
+button.discreto {
+  background: transparent;
+  color: var(--suave);
+  border-color: transparent;
+  font-weight: 500;
+  padding: var(--e2);
+}
+
+.botao.discreto:hover,
+button.discreto:hover {
+  color: var(--texto);
+}
+
+.botao.perigo,
+button.perigo {
+  background: var(--urgente);
+  color: #fff;
+}
+
+/* ── Carimbo de atualizacao (RN26) ────────────────────────────────── */
+
+.carimbo {
+  font-size: 0.86rem;
+  color: var(--suave);
+  margin: 0;
 }
 
 .carimbo.velho {
-  color: var(--alerta);
-  font-weight: bold;
+  color: var(--urgente);
+  font-weight: 600;
 }
 
-.cartao {
-  background: var(--cartao);
+/* ── Resumo do topo ───────────────────────────────────────────────── */
+
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e5);
+  padding: var(--e4) 0 var(--e5);
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: var(--e2);
+}
+
+.resumo .item {
+  display: flex;
+  flex-direction: column;
+}
+
+.resumo .valor {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.resumo .valor.destaque {
+  color: var(--acento);
+}
+
+.resumo .rotulo {
+  font-size: 0.8rem;
+  color: var(--suave);
+}
+
+/* ── Busca e indice ───────────────────────────────────────────────── */
+
+.busca {
+  display: flex;
+  gap: var(--e2);
+  margin: var(--e4) 0;
+}
+
+.busca input {
+  flex: 1;
+}
+
+.indice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e1);
+  margin-bottom: var(--e4);
+}
+
+.indice a {
+  font-size: 0.82rem;
+  color: var(--suave);
+  text-decoration: none;
+  padding: var(--e1) var(--e2);
   border: 1px solid var(--borda);
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
+  border-radius: 999px;
+}
+
+.indice a:hover {
+  color: var(--texto);
+  border-color: var(--suave);
+}
+
+/* ── Cartao de loja ───────────────────────────────────────────────── */
+
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--e3) var(--e4);
+  margin-bottom: var(--e2);
+  box-shadow: var(--sombra);
 }
 
 .cartao.alertou {
-  border-left: 4px solid var(--destaque);
+  border-left: 3px solid var(--acento);
 }
 
-.linha {
+.cartao .linha {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: var(--e1) var(--e3);
   align-items: baseline;
   justify-content: space-between;
 }
 
 .nome {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.nome:hover {
+  text-decoration: underline;
 }
 
 .pontos {
-  font-size: 16px;
   font-weight: 700;
-  color: var(--destaque);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.cartao.alertou .pontos {
+  color: var(--acento);
 }
 
 .detalhe {
-  font-size: 13px;
+  font-size: 0.85rem;
   color: var(--suave);
-  margin-top: 4px;
+  margin: var(--e1) 0 0;
 }
 
+.acoes-do-cartao {
+  margin-top: var(--e2);
+  display: flex;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+/* ── Etiquetas ────────────────────────────────────────────────────── */
+
 .etiqueta {
-  display: inline-block;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
+  letter-spacing: 0.05em;
+  padding: 2px var(--e2);
   border-radius: 999px;
   border: 1px solid var(--borda);
   color: var(--suave);
 }
 
 .etiqueta.hoje {
-  color: var(--alerta);
-  border-color: var(--alerta);
-  font-weight: bold;
+  color: var(--urgente);
+  border-color: var(--urgente);
 }
 
 .etiqueta.alerta {
-  color: var(--destaque);
-  border-color: var(--destaque);
+  color: var(--acento);
+  border-color: var(--acento);
+  background: var(--acento-fraco);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
+/* ── Dica: tooltip sem uma linha de JavaScript ────────────────────── */
 
-th,
-td {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--borda);
+.dica {
+  position: relative;
+  display: inline-flex;
   vertical-align: middle;
 }
 
-th {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.dica > button {
+  all: unset;
+  cursor: help;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  border: 1px solid var(--suave);
+  border-radius: 999px;
+  color: var(--suave);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dica > button:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+.dica .balao {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--e1));
+  z-index: 10;
+  width: max(260px, 60vw);
+  max-width: 340px;
+  background: var(--texto);
+  color: var(--fundo);
+  border-radius: var(--raio-p);
+  padding: var(--e3);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+
+  /* `visibility` em vez de `display` para a transicao existir e para o
+     conteudo continuar no DOM — leitor de tela acha pelo aria-describedby. */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+/* Mouse abre por hover, dedo e teclado abrem por foco. Nenhum script. */
+.dica:hover .balao,
+.dica:focus-within .balao {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* No celular o balao ancorado ao `(?)` vazaria a tela sempre que o icone
+   estivesse perto da borda direita. Preso na largura da janela, ele cabe
+   sempre — e e no celular que este site mais roda. */
+@media (max-width: 520px) {
+  .dica .balao {
+    position: fixed;
+    left: var(--e4);
+    right: var(--e4);
+    top: auto;
+    bottom: var(--e4);
+    width: auto;
+    max-width: none;
+  }
+}
+
+.dica .balao a {
+  color: var(--fundo);
+}
+
+/* ── Formularios ──────────────────────────────────────────────────── */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  margin-bottom: var(--e4);
+}
+
+.campo > label,
+.rotulo-campo {
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.ajuda-do-campo {
+  font-size: 0.82rem;
   color: var(--suave);
 }
 
 input[type="text"],
+input[type="search"],
 input[type="password"],
-input[type="number"] {
+input[type="number"],
+select,
+textarea {
   font: inherit;
-  padding: 7px 10px;
+  min-height: var(--toque);
+  padding: var(--e2) var(--e3);
   border: 1px solid var(--borda);
-  border-radius: 7px;
-  background: var(--cartao);
+  border-radius: var(--raio-p);
+  background: var(--superficie);
   color: var(--texto);
+  width: 100%;
   max-width: 100%;
 }
 
-button {
-  font: inherit;
-  padding: 7px 14px;
-  border: 0;
-  border-radius: 7px;
-  background: var(--destaque);
-  color: #fff;
-  cursor: pointer;
+input.curto {
+  max-width: 96px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
-button.discreto {
-  background: transparent;
-  color: var(--suave);
+textarea {
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.frase {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  font-size: 0.98rem;
+  margin-bottom: var(--e3);
+}
+
+/* ── Blocos ───────────────────────────────────────────────────────── */
+
+.bloco {
+  background: var(--superficie);
   border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--e4);
+  margin-bottom: var(--e4);
+  box-shadow: var(--sombra);
 }
 
-.aviso {
-  border: 1px solid var(--alerta);
-  color: var(--alerta);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  margin-bottom: 16px;
+.bloco > :last-child {
+  margin-bottom: 0;
 }
+
+.faixa {
+  border-radius: var(--raio-p);
+  padding: var(--e3) var(--e4);
+  margin-bottom: var(--e4);
+  font-size: 0.92rem;
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  background: transparent;
+}
+
+.faixa.ruim {
+  border-color: var(--urgente);
+  color: var(--urgente);
+}
+
+.vazio {
+  color: var(--suave);
+  font-size: 0.9rem;
+  padding: var(--e4);
+  border: 1px dashed var(--borda);
+  border-radius: var(--raio);
+  text-align: center;
+}
+
+/* ── Perguntas da Ajuda ───────────────────────────────────────────── */
+
+.pergunta {
+  border-bottom: 1px solid var(--borda);
+  padding: var(--e2) 0;
+}
+
+.pergunta summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: var(--e2) 0;
+  min-height: var(--toque);
+  display: flex;
+  align-items: center;
+}
+
+.pergunta[open] summary {
+  color: var(--acento);
+}
+
+.pergunta .resposta {
+  padding: 0 0 var(--e3);
+  color: var(--suave);
+}
+
+.pergunta .resposta strong {
+  color: var(--texto);
+}
+
+/* ── Rodape ───────────────────────────────────────────────────────── */
 
 .rodape {
-  margin-top: 40px;
-  padding-top: 16px;
+  margin-top: var(--e7);
+  padding-top: var(--e4);
   border-top: 1px solid var(--borda);
-  font-size: 12px;
+  font-size: 0.8rem;
+  color: var(--suave);
+}
+
+.rodape .destinos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+  margin-bottom: var(--e3);
+}
+
+.rodape a {
   color: var(--suave);
 }
 
 .rolagem {
   overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: var(--e2) var(--e3);
+  border-bottom: 1px solid var(--borda);
+  vertical-align: middle;
+}
+
+th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--suave);
+  font-weight: 600;
 }

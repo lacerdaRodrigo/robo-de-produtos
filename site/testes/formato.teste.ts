@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { idade, pontos, rotuloDoClube, terminaHoje } from "../lib/formato";
+import { ancora, filtrarPorNome, idade, pontos, rotuloDoClube, terminaHoje } from "../lib/formato";
 
 // CT-151 a CT-155 — formatacao do site. Mesma convencao do robo: o nome do
 // caso cita a regra, e o comentario explica por que ela existe.
@@ -69,5 +69,51 @@ describe("CT-155 pontuacao inteira nao ganha virgula", () => {
   it("6 e 6, nao 6,00", () => {
     expect(pontos("6")).toBe("6");
     expect(pontos("6.000")).toBe("6");
+  });
+});
+
+// CT-156 a CT-158 — busca e ancoras da lista de 132 lojas.
+
+describe("CT-156 busca ignora acento e caixa (RN03)", () => {
+  const lojas = [
+    { nome: "O Boticário", categoria: "Beleza" },
+    { nome: "Renner", categoria: "Moda" },
+    { nome: "Petlove", categoria: "Pet" },
+  ];
+
+  it("acha a loja escrita de qualquer jeito", () => {
+    // Mesma normalizacao do robo: quem digita no celular nao poe acento.
+    expect(filtrarPorNome(lojas, "boticario").map((l) => l.nome)).toEqual(["O Boticário"]);
+    expect(filtrarPorNome(lojas, "BOTICÁRIO").map((l) => l.nome)).toEqual(["O Boticário"]);
+    expect(filtrarPorNome(lojas, "  renner ").map((l) => l.nome)).toEqual(["Renner"]);
+  });
+
+  it("acha tambem pela categoria", () => {
+    expect(filtrarPorNome(lojas, "moda").map((l) => l.nome)).toEqual(["Renner"]);
+  });
+
+  it("termo vazio devolve tudo, nao nada", () => {
+    // Busca sem termo recarrega a lista; esconder tudo seria armadilha.
+    expect(filtrarPorNome(lojas, "")).toHaveLength(3);
+    expect(filtrarPorNome(lojas, "   ")).toHaveLength(3);
+  });
+});
+
+describe("CT-157 busca por pedaco do nome", () => {
+  it("aqui o pedaco vale, ao contrario de RN04", () => {
+    // RN04 proibe substring no *reconhecimento* da loja, porque ali um erro
+    // troca a pontuacao de uma loja pela de outra. Na busca da tela nao ha
+    // esse risco: quem escolhe o resultado e o olho de quem procura.
+    const lojas = [{ nome: "Petlove", categoria: "Pet" }, { nome: "Petz", categoria: "Pet" }];
+    expect(filtrarPorNome(lojas, "pet")).toHaveLength(2);
+    expect(filtrarPorNome(lojas, "petl").map((l) => l.nome)).toEqual(["Petlove"]);
+  });
+});
+
+describe("CT-158 ancora de categoria", () => {
+  it("vira id valido para o indice da pagina", () => {
+    expect(ancora("Marketplace / Varejo Geral")).toBe("marketplace-varejo-geral");
+    expect(ancora("Casa & Construção")).toBe("casa-construcao");
+    expect(ancora("Pet")).toBe("pet");
   });
 });

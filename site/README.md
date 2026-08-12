@@ -63,14 +63,35 @@ Verificar por `curl` não pega isso — o HTML servido está perfeito. Só abrin
 
 O preço do nonce é a página deixar de ser estática: nonce muda a cada requisição e não sobrevive a cache. Com 3 execuções por dia e visitas de uma pessoa, uma consulta por visita é irrelevante — e o carimbo de RN26 passa a nunca mostrar idade de cache.
 
+## Telas
+
+| URL | Nome | Acesso | Faz |
+|---|---|---|---|
+| `/` | Pontuação | público | Todas as suas lojas, turbinadas primeiro, com busca por `?q=` |
+| `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
+| `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
+| `/avisos` | Quando me avisar | sessão | Padrão de todas as lojas e exceções |
+| `/lojas` | Cadastrar lojas | sessão | Adicionar; remover em duas etapas |
+
+**Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
+
+**A linguagem da tela não é a do PRD.** O documento diz *multiplicador*, *piso* e *limiar*, porque são os nomes das colunas; a interface diz "vezes acima do normal" e "mínimo de pontos", e o termo técnico fica dentro do tooltip. Quem usa o site é uma pessoa só, e ela não deveria precisar do PRD aberto.
+
+## Tooltips sem JavaScript
+
+`app/componentes/dica.tsx`: um `<button>` com `?` e um balão irmão. O CSS mostra o balão em `:hover` (mouse) e em `:focus-within` (teclado e toque — clicar dá foco). Nenhum estado, nenhum script, e o texto continua no DOM para leitor de tela achar pelo `aria-describedby`. No celular o balão vira fixo na base da janela, senão vazaria a tela quando o `?` estivesse perto da borda.
+
 ## Estrutura
 
 ```
 site/
 ├── app/
 │   ├── page.tsx          # pública: leitura, sem sessão
+│   ├── ajuda/            # FAQ pública
 │   ├── entrar/           # login por senha única, com limite de tentativas
-│   ├── admin/            # edição (RF17): padrões globais, limiar por loja, catálogo
+│   ├── avisos/           # RF17: régua de alerta, global e por loja
+│   ├── lojas/            # RF17: cadastro, com remoção em duas etapas
+│   ├── componentes/      # cabeçalho com menu, e a dica (tooltip)
 │   └── rodape.tsx        # aviso de não afiliação (PRD-V2 §9.3) e versão
 ├── lib/
 │   ├── banco.ts          # consultas; a única camada que fala com o Postgres

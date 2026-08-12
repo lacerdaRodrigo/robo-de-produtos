@@ -12,9 +12,7 @@ export const metadata: Metadata = {
 export default function RaizDoLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>
-        <div className="pagina">{children}</div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

@@ -82,3 +82,17 @@ export function origemDaRequisicao(cabecalhos: Headers): string {
   const encaminhado = cabecalhos.get("x-forwarded-for");
   return encaminhado?.split(",")[0]?.trim() || "desconhecida";
 }
+
+/**
+ * Barreira das telas de edicao.
+ *
+ * Toda tela e toda Server Action privada chama isto. A pagina ja barraria a
+ * navegacao, mas Server Action e um endpoint: quem souber o caminho pode
+ * chamar direto, sem passar por pagina nenhuma.
+ */
+export async function exigirSessao(): Promise<void> {
+  const { redirect } = await import("next/navigation");
+  if (!(await temSessao())) {
+    redirect("/entrar");
+  }
+}

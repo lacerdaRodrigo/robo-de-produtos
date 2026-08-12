@@ -84,6 +84,33 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
   `) as PontuacaoDeLoja[];
 }
 
+/** Só as lojas com regra própria (RN28). A tela de avisos mostra estas, e
+ *  não as 132 — pedir 132 decisões é o erro que o PRD-V2 §6.1 alerta. */
+export async function lojasComExcecao(): Promise<Loja[]> {
+  const sql = conectar();
+  return (await sql`
+    SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
+           ARRAY[]::TEXT[] AS apelidos
+      FROM loja l
+     WHERE l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL
+     ORDER BY l.nome
+  `) as Loja[];
+}
+
+export async function loja(id: number): Promise<Loja | null> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
+           COALESCE(ARRAY_AGG(a.texto) FILTER (WHERE a.texto IS NOT NULL), ARRAY[]::TEXT[])
+               AS apelidos
+      FROM loja l
+      LEFT JOIN apelido a ON a.loja_id = l.id
+     WHERE l.id = ${id}
+     GROUP BY l.id
+  `) as Loja[];
+  return linhas[0] ?? null;
+}
+
 export async function catalogo(): Promise<Loja[]> {
   const sql = conectar();
   return (await sql`
