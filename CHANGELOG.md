@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-08-12)
+
+### Documentation
+
+- DATABASE_URL cadastrada, V2.1 no ar
+  ([`5b16dda`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5b16dda88aa41b6ef0857a0a354ffa508b0ffedc))
+
+### Features
+
+- V2.2 - alerta por multiplo da base, nao pela etiqueta da Livelo
+  ([`23eb3e7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/23eb3e71e46fd38a72e523d67e668dfae9a90b4f))
+
+
 ## v1.3.0 (2026-08-12)
 
 ### Build System

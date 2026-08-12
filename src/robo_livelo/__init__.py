@@ -4,4 +4,4 @@ A versao e mantida pelo python-semantic-release, a partir dos commits.
 Nao editar a mao.
 """
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
