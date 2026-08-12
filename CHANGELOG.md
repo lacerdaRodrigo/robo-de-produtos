@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.12.0 (2026-08-12)
+
+### Bug Fixes
+
+- Corrige formatação da docstring que quebrava o ruff format
+  ([`e92fa0d`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e92fa0d68a6d3e114e09b0eab475ebafebe4e57b))
+
+### Features
+
+- Exibe a letra miúda da campanha no Painel (RN31)
+  ([`45fc221`](https://github.com/lacerdaRodrigo/robo-livelo/commit/45fc22186ab499b26b6a11de79a17c8810e6dce2))
+
+
 ## v1.11.0 (2026-08-12)
 
 ### Features
