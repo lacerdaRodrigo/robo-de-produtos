@@ -5,10 +5,11 @@ import {
   categorias,
   esperaAteProximoDisparo,
   INTERVALO_MINIMO_MINUTOS,
+  preferencias,
   ultimaExecucao,
 } from "@/lib/banco";
 import { temTokenDeDisparo } from "@/lib/github";
-import { filtrarPorNome } from "@/lib/formato";
+import { filtrarPorNome, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
@@ -31,11 +32,12 @@ export default async function PaginaDeLojas({
   await exigirSessao();
 
   const { ok, erro, nome, q = "", segundos } = await searchParams;
-  const [todas, listaDeCategorias, execucao, falta] = await Promise.all([
+  const [todas, listaDeCategorias, execucao, falta, padroes] = await Promise.all([
     catalogo(),
     categorias(),
     ultimaExecucao().catch(() => null),
     esperaAteProximoDisparo().catch(() => 0),
+    preferencias(),
   ]);
   const podeDisparar = temTokenDeDisparo();
   const lojas = filtrarPorNome(todas, q);
@@ -50,14 +52,7 @@ export default async function PaginaDeLojas({
           próxima execução do robô.
         </p>
 
-        {ok === "adicionada" && (
-          <p className="faixa">
-            {nome} entrou no cadastro.{" "}
-            <Link href={`/avisos?loja=${encodeURIComponent(nome ?? "")}`}>
-              Definir um aviso próprio para ela
-            </Link>
-          </p>
-        )}
+        {ok === "adicionada" && <p className="faixa">{nome} entrou no cadastro.</p>}
         {ok === "removida" && <p className="faixa">{nome} saiu do cadastro.</p>}
         {erro === "nome-e-categoria" && (
           <p className="faixa ruim">Nome e categoria são obrigatórios.</p>
@@ -69,6 +64,9 @@ export default async function PaginaDeLojas({
           </p>
         )}
         {erro === "nao-achei" && <p className="faixa ruim">Essa loja não existe mais.</p>}
+        {erro === "numero" && (
+          <p className="faixa ruim">Só números aqui. Use ponto ou vírgula para o decimal, como 2,5.</p>
+        )}
         {ok === "disparado" && (
           <p className="faixa">
             Pedido enviado. O robô leva cerca de um minuto para ler a Livelo e gravar. Recarregue
@@ -155,6 +153,43 @@ export default async function PaginaDeLojas({
               </Dica>
             </label>
             <textarea id="apelidos" name="apelidos" rows={2} placeholder="Renner Lojas" />
+          </div>
+
+          <div className="campo">
+            <span className="rotulo-campo">
+              Avisar quando ficar
+              <Dica titulo="avisar quando ficar" secao="normal-da-loja">
+                O “normal da loja” é a pontuação dela fora de promoção, informada pela própria
+                Livelo. Com <strong>2</strong>, uma loja que dá 3 pontos normalmente só avisa a
+                partir de 6.
+              </Dica>
+            </span>
+            <div className="frase">
+              <input
+                className="curto"
+                name="multiplicador"
+                type="text"
+                inputMode="decimal"
+                placeholder={pontos(padroes.multiplicador_padrao)}
+                aria-label="Vezes acima do normal"
+              />
+              <span>vezes acima do normal e valer ao menos</span>
+              <input
+                className="curto"
+                name="piso"
+                type="text"
+                inputMode="decimal"
+                placeholder={pontos(padroes.piso_pontos_padrao)}
+                aria-label="Mínimo de pontos por real"
+              />
+              <span>pontos.</span>
+            </div>
+            <span className="ajuda-do-campo">
+              Opcional. Em branco, essa loja segue o padrão de todas as lojas — hoje{" "}
+              {pontos(padroes.multiplicador_padrao)}x, valendo ao menos{" "}
+              {pontos(padroes.piso_pontos_padrao)} pontos. Dá para ajustar por loja depois em{" "}
+              <Link href="/avisos">Quando me avisar</Link>.
+            </span>
           </div>
 
           <button type="submit">Adicionar loja</button>

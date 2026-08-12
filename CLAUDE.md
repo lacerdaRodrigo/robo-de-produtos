@@ -4,7 +4,7 @@ Leia o [`PRD.md`](docs/PRD.md) antes de propor qualquer mudança. Ele é a fonte
 
 ## O que é este projeto
 
-Robô que lê a página pública de parceiros da Livelo, filtra as lojas favoritas do autor e envia um e-mail com as que estão com pontuação turbinada. Roda 3x ao dia no GitHub Actions. Sem servidor, sem banco de dados, sem front-end.
+Robô que lê a página pública de parceiros da Livelo, filtra as lojas favoritas do autor e envia um e-mail com as que estão com pontuação turbinada. Roda 3x ao dia no GitHub Actions. Desde a V2.1 tem um Postgres (Neon) como catálogo principal (TOML como reserva) e desde a V2.3 grava o retrato de cada execução nesse banco; um site em Next.js (`site/`) lê esses dados publicamente e permite editar o catálogo por senha única, inclusive disparando o robô manualmente.
 
 ## Regras de ouro
 
@@ -39,12 +39,12 @@ Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige
 
 ## Antes de escrever código
 
-A V1.0 está em produção (§11.1 do PRD). A V2.0 está em produção e **validada contra a página real** (2026-08-11): o extrator lê o payload `__NEXT_DATA__` (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e distingue `CLUB` de `PROMOTION_CLUB` (RN23). A V2.1 está implementada: `montar_catalogo()` usa o Postgres quando existe `DATABASE_URL` e cai para o TOML se o banco não responder — **mas o secret ainda não foi cadastrado**, então em produção o catálogo continua vindo do arquivo.
+A V1.0 está em produção (§11.1 do PRD). A V2.0 está em produção e **validada contra a página real** (2026-08-11): o extrator lê o payload `__NEXT_DATA__` (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e distingue `CLUB` de `PROMOTION_CLUB` (RN23). A V2.1 está no ar desde 2026-08-11: o `DATABASE_URL` foi cadastrado, `montar_catalogo()` lê o Postgres com o TOML como reserva, e em produção o catálogo já vem do banco (132 lojas, 10 categorias, batendo com o arquivo).
 
-Duas coisas seguem esperando o autor, não código: confirmar o e-mail de falha do MS3 e cadastrar o `DATABASE_URL`.
+A V2.2 está implementada: `alertas.py` decide o alerta por RN27 (múltiplo da base com piso) em vez da etiqueta da Livelo, com régua vinda da tabela `preferencia` (RN28) e suspeita de C07 sem guardar estado (RN29, ver PRD-V2 §6.3). O e-mail continua diário de propósito — cortar isso é RF16, da V2.4, e essa calibragem (ver `docs/PENDENCIAS.md`) ainda está em andamento.
 
-A V2.2 está implementada: `alertas.py` decide o alerta por RN27 (múltiplo da base com piso) em vez da etiqueta da Livelo, com régua vinda da tabela `preferencia` (RN28) e suspeita de C07 sem guardar estado (RN29, ver PRD-V2 §6.3). O e-mail continua diário de propósito — cortar isso é RF16, da V2.4.
+A V2.3 está **fechada nas duas metades**: o robô grava o retrato de cada execução no banco (`retrato.py`, porta `RepositorioDeExecucao`, migração `002`), e o site Next.js em `site/` já lê isso — publicado na Vercel, com leitura pública, edição protegida por senha única e RN24/RN25/RN26/RN30 atendidas. O robô continua sem ler de volta o que grava: nenhuma decisão de alerta consulta o passado, então "stateless" segue valendo onde importa. A V2.3.1 (redesenho: uma tela por tarefa) e a V2.3.2 ("banco manda, e o site dispara": banco vazio agora vale de verdade, e o botão **Atualizar agora** do site dispara o `robo.yml`) também estão feitas — versão atual **1.8.0**.
 
-A V2.3 está pela metade: o robô já grava o retrato de cada execução no banco (`retrato.py` mais a porta `RepositorioDeExecucao`, migração `002`), e falta o site Next.js em `site/` ler isso. O robô escreve e nunca lê de volta — nenhuma decisão de alerta consulta o passado, então "stateless" continua valendo onde importa.
+O que falta da V2.3.2: o `robo.yml` ainda manda e-mail igual tanto no disparo agendado quanto no manual (falta o parâmetro `enviar_email` para o disparo do site rodar em silêncio), e falta cadastrar na Vercel o fine-grained token `GITHUB_TOKEN_DISPARO` — sem ele o botão de disparo fica desabilitado. A V2.4 (e-mail condicional, RF16) segue **bloqueada** até o site estar publicado e verificado pelo autor, para não reabrir o silêncio ambíguo do objetivo O3.
 
 A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

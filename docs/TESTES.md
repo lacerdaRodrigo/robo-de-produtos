@@ -202,6 +202,7 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-156 | Busca ignora acento e caixa (RN03) | Quem digita no celular não põe acento. Mesma normalização do robô | "boticario", "BOTICÁRIO" e " renner " |
 | CT-157 | Busca aceita pedaço do nome ⚠️ | RN04 proíbe substring no **reconhecimento** da loja, onde um erro troca a pontuação de uma pela de outra. Na busca da tela não há esse risco: quem escolhe o resultado é o olho de quem procura | "pet" acha Petlove e Petz; "petl" acha só Petlove |
 | CT-158 | Âncora de categoria | O índice da página pula a rolagem de 130 lojas | "Marketplace / Varejo Geral" → `marketplace-varejo-geral` |
+| CT-164 | Limiar em branco vira `null`, nunca `"0"` (RN28) ⚠️ | Campo vazio e zero são coisas diferentes: um segue o padrão global, o outro é um limiar real de zero pontos. `numeroOuPadrao` é compartilhado entre `/lojas` (cadastro) e `/avisos` (exceção), então o mesmo comportamento vale nas duas telas | `numeroOuPadrao("")` → `null`; `numeroOuPadrao("2,5")` → `"2.5"`; `numeroOuPadrao("-1")` e `numeroOuPadrao("abc")` lançam erro |
 
 Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 

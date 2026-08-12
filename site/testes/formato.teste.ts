@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { ancora, filtrarPorNome, idade, pontos, rotuloDoClube, terminaHoje } from "../lib/formato";
+import {
+  ancora,
+  filtrarPorNome,
+  idade,
+  numeroOuPadrao,
+  pontos,
+  rotuloDoClube,
+  terminaHoje,
+} from "../lib/formato";
 
 // CT-151 a CT-155 — formatacao do site. Mesma convencao do robo: o nome do
 // caso cita a regra, e o comentario explica por que ela existe.
@@ -107,6 +115,26 @@ describe("CT-157 busca por pedaco do nome", () => {
     const lojas = [{ nome: "Petlove", categoria: "Pet" }, { nome: "Petz", categoria: "Pet" }];
     expect(filtrarPorNome(lojas, "pet")).toHaveLength(2);
     expect(filtrarPorNome(lojas, "petl").map((l) => l.nome)).toEqual(["Petlove"]);
+  });
+});
+
+describe("CT-164 limiar em branco vira null (RN28)", () => {
+  it("campo vazio ou so espaco vira null, nao zero", () => {
+    // null e "0" tem significados opostos: um segue o padrao global, o
+    // outro e um limiar real de zero pontos. Confundir os dois quebraria
+    // RN28 tanto no cadastro (/lojas) quanto na excecao (/avisos).
+    expect(numeroOuPadrao("")).toBeNull();
+    expect(numeroOuPadrao("   ")).toBeNull();
+    expect(numeroOuPadrao(null)).toBeNull();
+  });
+
+  it("aceita virgula, que e o que o teclado do celular oferece", () => {
+    expect(numeroOuPadrao("2,5")).toBe("2.5");
+  });
+
+  it("numero negativo ou texto invalido lanca erro", () => {
+    expect(() => numeroOuPadrao("-1")).toThrow();
+    expect(() => numeroOuPadrao("abc")).toThrow();
   });
 });
 
