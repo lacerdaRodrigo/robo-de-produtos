@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.7.0 (2026-08-12)
+
+### Features
+
+- **site**: Uma tela por tarefa, linguagem de gente e ajuda embutida
+  ([`53b72db`](https://github.com/lacerdaRodrigo/robo-livelo/commit/53b72db0d1d08b94120b05c8d04a2ed8bda39534))
+
+
 ## v1.6.1 (2026-08-12)
 
 ### Bug Fixes
