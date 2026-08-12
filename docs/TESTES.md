@@ -55,6 +55,8 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
 | CT-106 | Item sem `parity` não vira `WARNING` | São 11 por execução (produtos da própria Livelo: `LVA`, `CIB`, `XXX`...). Descartar está certo; gritar toda vez afogaria o aviso que importa (RNF06). Vai em `DEBUG` mais um resumo em `INFO` | Item com `parity` ausente entre válidos, checar nível dos registros |
 | CT-107 | `parity` presente mas ilegível continua `WARNING` | Contraprova de CT-106: pontuação que existe e não dá para ler é sintoma de mudança na página | Item com `parity.parity` não numérico, checar `WARNING` |
+| CT-166 | `legalTerms` vira texto puro (RN31) | RN07 — só o texto sai daqui, nunca a marcação HTML crua | Item com `legalTerms: "<p>Campanha válida...</p>"`, checar `descricao_campanha` sem as tags |
+| CT-167 | `legalTerms` vazio vira `None`, não string vazia | `"<p><br></p>"` é o formato mais comum quando a Livelo não publica letra miúda para o parceiro | Item com `legalTerms: "<p><br></p>"`, checar `descricao_campanha is None` |
 
 Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `__NEXT_DATA__` ausente, JSON inválido, payload que não é objeto, componente ou item que não é um objeto, `parity` que não é um objeto, `parityBau`/`parityClub` não numéricos — todos cobertos, contam para o total executado mas não têm CT próprio (mesma convenção dos testes de apoio já existentes no arquivo).
 

@@ -74,6 +74,19 @@ def _para_decimal(valor) -> Decimal:
     return Decimal(str(valor))
 
 
+def _texto_legal(bruto) -> str | None:
+    """`legalTerms` vem em HTML curto, ex.: "<p>Campanha valida...</p>".
+
+    RN07: todo dado do site e hostil, entao so o texto sai daqui, nunca a
+    marcacao crua. Campanha sem letra miuda chega como "<p><br></p>" — texto
+    vazio vira None, nao string vazia, mesma semantica de pontos_base ausente.
+    """
+    if not bruto or not isinstance(bruto, str):
+        return None
+    texto = BeautifulSoup(bruto, "lxml").get_text(separator=" ", strip=True)
+    return texto or None
+
+
 def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
     if not isinstance(item, dict):
         _log.warning("Item do payload nao e um objeto, descartado: %r", item)
@@ -139,6 +152,7 @@ def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
         inicio_promocao=inicio_promocao,
         fim_promocao=fim_promocao,
         campanha=parity.get("activeCampaign"),
+        descricao_campanha=_texto_legal(parity.get("legalTerms")),
     )
 
 

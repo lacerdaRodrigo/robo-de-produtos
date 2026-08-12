@@ -300,14 +300,14 @@ class RepositorioPostgres:
         INSERT INTO pontuacao (
             execucao_id, loja_id, nome, pontos_atuais, pontos_base, pontos_clube,
             valor_de_disparo, moeda, prefixo_ate, em_promocao, alertou, campanha,
-            fim_promocao, link
+            descricao_campanha, fim_promocao, link
         )
         VALUES (
             %(execucao_id)s,
             (SELECT id FROM loja WHERE nome = %(nome)s),
             %(nome)s, %(pontos_atuais)s, %(pontos_base)s, %(pontos_clube)s,
             %(valor_de_disparo)s, %(moeda)s, %(prefixo_ate)s, %(em_promocao)s,
-            %(alertou)s, %(campanha)s, %(fim_promocao)s, %(link)s
+            %(alertou)s, %(campanha)s, %(descricao_campanha)s, %(fim_promocao)s, %(link)s
         )
     """
 
@@ -352,6 +352,7 @@ def _linha_de_pontuacao(pontuacao: PontuacaoDeLoja, execucao_id: int) -> dict:
         "em_promocao": bool(parceiro and parceiro.em_promocao),
         "alertou": pontuacao.alertou,
         "campanha": parceiro.campanha if parceiro else None,
+        "descricao_campanha": parceiro.descricao_campanha if parceiro else None,
         "fim_promocao": parceiro.fim_promocao if parceiro else None,
         # RN08 vale para o site tambem: link que nao e da Livelo nao entra.
         "link": (parceiro.link if parceiro and link_confiavel(parceiro.link) else None),

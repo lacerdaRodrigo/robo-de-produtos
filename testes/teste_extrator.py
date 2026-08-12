@@ -292,6 +292,14 @@ def teste_ct095_fixture_real_traz_os_casos_dificeis(payload_exemplo):
     # propria Livelo, nao parceiro. Sai da lista sem virar WARNING (CT-106).
     assert "Liga Vitória Seguro Auto" not in por_nome
 
+    # CT-166/CT-167: legalTerms real, com e sem letra miuda.
+    assert por_nome["Mercado Livre"].descricao_campanha is None  # "<p><br></p>"
+    assert por_nome["Sephora"].descricao_campanha == (
+        "Campanha válida de 10 a 11/08/2026. Ganhe 10 pontos por real gasto "
+        "exclusivo para assinantes do Clube Livelo e 6 pontos por real para "
+        "demais clientes."
+    )
+
 
 # ── Robustez contra payload hostil (RN07: todo dado do site e hostil) ───────
 
@@ -363,6 +371,28 @@ def teste_parity_club_nao_numerico_vira_none_sem_derrubar_item():
     item["parity"]["parityClub"] = "nao e numero"
     parceiro = um(pagina(item))
     assert parceiro.pontos_clube is None
+
+
+# ── CT-166/CT-167: legalTerms vira descricao_campanha (RF14) ────────────────
+
+
+def teste_ct166_legal_terms_vira_texto_puro():
+    """RN07: so o texto sai daqui, nunca a marcacao HTML crua."""
+    parceiro = um(
+        pagina(
+            monta_item_parceiro(
+                legal_terms="<p>Campanha válida de 11 a 13/08/2026. Ganhe 6 pontos.</p>"
+            )
+        )
+    )
+    assert parceiro.descricao_campanha == "Campanha válida de 11 a 13/08/2026. Ganhe 6 pontos."
+
+
+def teste_ct167_legal_terms_vazio_vira_none():
+    """"<p><br></p>" e o formato mais comum quando a Livelo nao publica letra
+    miuda para o parceiro — precisa virar None, nao string vazia."""
+    parceiro = um(pagina(monta_item_parceiro(legal_terms="<p><br></p>")))
+    assert parceiro.descricao_campanha is None
 
 
 def teste_ct106_item_sem_parity_nao_vira_warning(caplog):

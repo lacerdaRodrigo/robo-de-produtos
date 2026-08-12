@@ -99,7 +99,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 
 | ID | Requisito |
 |---|---|
-| **RF14** | Extrair os dados dos parceiros a partir do payload JSON embutido na página, incluindo `parity`, `parityClub`, `parityBau`, `dateStart`, `dateEnd` e `activeCampaign` |
+| **RF14** | Extrair os dados dos parceiros a partir do payload JSON embutido na página, incluindo `parity`, `parityClub`, `parityBau`, `dateStart`, `dateEnd`, `activeCampaign` e `legalTerms` |
 | **RF15** | Servir um site com todas as lojas favoritas, suas pontuações atuais e as promoções em destaque |
 | **RF16** | Enviar e-mail **somente quando ao menos uma favorita cruzar o próprio limiar de alerta**. **Substitui RF10** |
 | **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja. Uma tela por tarefa: `/avisos` para o padrão global e para editar o limiar de loja já cadastrada, `/lojas` para o cadastro — que também aceita, opcionalmente, o limiar próprio da loja no momento de criá-la (RN28: em branco usa o padrão global). **A tela usa linguagem comum** — "vezes acima do normal" e "mínimo de pontos" — e o termo técnico deste PRD aparece só no tooltip de ajuda |
@@ -141,6 +141,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN28** | Multiplicador e piso têm valor padrão global, sobrescrevível por loja. Loja sem sobrescrita usa o padrão |
 | **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
+| **RN31** | Quando a Livelo publica letra miúda para a campanha (`legalTerms`), o Painel exibe o texto por extenso na loja. É o que permite decidir se a promoção vale para a compra pretendida sem abrir o app da Livelo (O5) |
 
 ### 6.1 O novo critério de alerta
 
@@ -302,7 +303,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 
 ## 8. Modelo de dados
 
-`Parceiro` ganha quatro campos, todos opcionais para não quebrar o que existe:
+`Parceiro` ganha cinco campos, todos opcionais para não quebrar o que existe:
 
 | Campo | Tipo | Regra |
 |---|---|---|
@@ -310,6 +311,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 | `inicio_promocao` | `datetime \| None` | `dateStart` |
 | `fim_promocao` | `datetime \| None` | `dateEnd`, base de RN21 e RN22 |
 | `campanha` | `str \| None` | `activeCampaign`, base de RN23 |
+| `descricao_campanha` | `str \| None` | `legalTerms`, só o texto (HTML removido); `<p><br></p>` (sem letra miúda) vira `None`, base de RN31 |
 
 `LojaFavorita` ganha os campos de alerta:
 

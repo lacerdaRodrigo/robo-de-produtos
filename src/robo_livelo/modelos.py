@@ -28,6 +28,7 @@ class Parceiro:
     inicio_promocao: datetime | None = None
     fim_promocao: datetime | None = None
     campanha: str | None = None
+    descricao_campanha: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

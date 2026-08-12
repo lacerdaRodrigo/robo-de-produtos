@@ -18,6 +18,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 - [ ] Abrir o próximo e-mail e conferir de olho o que nenhum teste vê: validade "Válido até dd/mm" e "Termina hoje!" (RN22), rótulo do Clube (RN23) e o corte de exibição do Gmail (C05). O ensaio local de 2026-08-11 já mostrou o conteúdo correto — 5 "Termina hoje!" e a Sephora com "Clube: 10 pontos (assinantes Clube ganham mais)" — mas ninguém viu ainda como isso fica renderizado no Gmail
 - [ ] Trocar a senha do Neon: a `DATABASE_URL` completa foi colada num chat em 2026-08-11. Rotacionar no painel do Neon e atualizar o secret e o `.env` é mais barato que torcer
 - [x] Revisar e aceitar os PRs do Dependabot — PRs #1 e #2 mesclados em 2026-08-11; `testes.yml` e `robo.yml` estão em `checkout@v7`/`setup-python@v7`
+- [ ] Aplicar `migracoes/005_descricao_campanha.sql` no Neon (mesmo jeito das migrações `003` e `004`): adiciona a coluna `descricao_campanha` em `pontuacao`, usada pelo Painel para mostrar a letra miúda da campanha (RN31). Sem a coluna, o robô não perde o e-mail (CT-150: falha ao gravar vira `WARNING`, não derruba a execução) — só o retrato daquela rodada não é gravado, e o Painel fica sem a letra miúda até a migração rodar
 
 ---
 
