@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) implementada. 112 testes verdes, 96% de cobertura.
+**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) e V2.2 (alerta por múltiplo da base, RN27 a RN29) implementadas. 139 testes verdes, 96% de cobertura.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -193,13 +193,14 @@ A divisão que importa: **baixar** a página é sujo, **interpretar** o HTML é 
 
 ### 4.2 Portas
 
-Três contratos, definidos apenas onde a troca é realmente provável.
+Contratos definidos apenas onde a troca é realmente provável. Eram três na V1; a V2.2 acrescentou a quarta.
 
-| Porta | Responsabilidade | Por que existe | Implementação V1 |
+| Porta | Responsabilidade | Por que existe | Implementação |
 |---|---|---|---|
 | `FonteDePagina` | Devolver o HTML cru da página de parceiros | Torna barata a troca prevista em C04: o Plano B com Playwright substitui só esta peça | `requests` |
 | `Notificador` | Entregar a mensagem montada | Isola o canal de saída da lógica que decide o conteúdo | SMTP via Gmail |
-| `CatalogoFavoritas` | Fornecer lojas favoritas, apelidos e categorias | Atende RNF09: a mudança mais frequente do projeto deixa de exigir edição de código | Arquivo de configuração |
+| `CatalogoFavoritas` | Fornecer lojas favoritas, apelidos e categorias | Atende RNF09: a mudança mais frequente do projeto deixa de exigir edição de código | Arquivo TOML ou Postgres, com o arquivo de reserva |
+| `PreferenciasGlobais` | Fornecer multiplicador padrão, piso padrão e se o leitor assina o Clube | RN28 precisa de uma régua editável sem `git push`. Separada do catálogo porque responde outra pergunta — "com que régua", não "quais lojas" — e vem de outra tabela | Padrões do PRD-V2 §6.1 ou Postgres, com os padrões de reserva |
 
 **Ponto de extensão documentado, não implementado:** persistência de execuções (`RepositorioExecucao`). Histórico está fora do escopo da V1 (Seção 1.4) e criar uma interface no-op para funcionalidade inexistente seria construir o futuro em vez de deixar a porta barata. Quando houver necessidade, o caso de uso ganha uma dependência a mais e nenhuma regra de negócio muda.
 
@@ -212,6 +213,7 @@ flowchart TD
 
     subgraph nucleo["Núcleo puro — sem dependência externa"]
         EXT["extrator<br/>HTML → Parceiro<br/>RN06, RN11, RN12, RN15"]
+        ALE["alertas<br/>o que merece alerta<br/>RN27, RN28, RN29"]
         REG["categorias<br/>filtrar, agrupar, ordenar<br/>RN01, RN04, RN05, RN14"]
         MON["montador_email<br/>Parceiro → mensagem<br/>RN07, RN08, RN10"]
     end
@@ -219,7 +221,8 @@ flowchart TD
     subgraph adaptadores["Adaptadores — falam com o mundo"]
         HTTP["FonteDePagina<br/>requests"]
         SMTP["Notificador<br/>smtplib"]
-        CFG["CatalogoFavoritas<br/>arquivo de config"]
+        CFG["CatalogoFavoritas<br/>TOML ou Postgres"]
+        PRF["PreferenciasGlobais<br/>padrões ou Postgres"]
     end
 
     MAIN --> UC
@@ -249,12 +252,13 @@ robo-livelo/
 │   └── lojas_favoritas.toml    # RNF09 — dado de negócio fora do código ✔
 ├── src/robo_livelo/
 │   ├── __init__.py
-│   ├── modelos.py              # núcleo puro: Parceiro, LojaFavorita, Mensagem
-│   ├── portas.py               # os 3 contratos e as exceções do domínio
+│   ├── modelos.py              # núcleo puro: Parceiro, LojaFavorita, Preferencias, Mensagem
+│   ├── portas.py               # os 4 contratos e as exceções do domínio
 │   ├── extrator.py             # núcleo puro: HTML → Parceiro
 │   ├── categorias.py           # núcleo puro: filtrar, agrupar, ordenar
+│   ├── alertas.py              # núcleo puro: RN27, RN28, RN29
 │   ├── montador_email.py       # núcleo puro: Parceiro → mensagem
-│   ├── adaptadores.py          # requests, smtplib, leitura de config
+│   ├── adaptadores.py          # requests, smtplib, TOML, Postgres
 │   └── principal.py            # composition root + caso de uso
 ├── testes/
 ├── docs/
@@ -381,14 +385,20 @@ Nível de design: contratos e comportamento esperado. Nenhuma implementação.
 FonteDePagina.obter_html() -> str          # levanta erro após esgotar tentativas (RF11)
 Notificador.enviar(mensagem) -> None
 CatalogoFavoritas.listar() -> list[LojaFavorita]
+PreferenciasGlobais.carregar() -> Preferencias        # RN28, RN23
 
 # extrator.py — núcleo puro, nunca toca rede
 extrair_parceiros(html: str) -> list[Parceiro]        # RN06, RN11, RN12, RN15
 
 # categorias.py — núcleo puro
 reconhecer(nome, favoritas) -> LojaFavorita | None    # RN03, RN04, RN05
-agrupar(parceiros, favoritas) -> dict[str, list]      # RN01, RN14, RF06
+agrupar(parceiros, favoritas, criterio) -> dict       # RN01, RN14, RF06
 favoritas_ausentes(parceiros, favoritas) -> list[str] # RN19
+
+# alertas.py — núcleo puro
+merece_alerta(parceiro, loja, preferencias) -> bool   # RN27, RN28, RN23
+valor_de_disparo(parceiro, loja, prefs) -> Decimal    # RN30
+suspeita_de_base_degenerada(parceiros, n) -> str|None # RN29, C07
 
 # montador_email.py — núcleo puro
 montar(agrupamento) -> Mensagem                       # RN07, RN08, RN10, RN12, RF08

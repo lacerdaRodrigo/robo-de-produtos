@@ -4,7 +4,7 @@ Monitora as lojas parceiras da Livelo, filtra só as que importam pra você e av
 
 Sem servidor, sem banco de dados, sem custo. Roda inteiro no GitHub Actions.
 
-> **Status: V2.0 em produção e validada contra a página real** (2026-08-11): 254 parceiros lidos, 31 em promoção. O extrator lê o payload JSON da página em vez de raspar o HTML, e o e-mail mostra validade da promoção, pontuação base e marcação de Clube. O catálogo de lojas pode vir do Postgres (V2.1), com o arquivo como reserva. 112 testes verdes, 96% de cobertura.
+> **Status: V2.0 em produção e validada contra a página real** (2026-08-11): 254 parceiros lidos, 31 em promoção. O extrator lê o payload JSON da página em vez de raspar o HTML, e o e-mail mostra validade da promoção, pontuação base e marcação de Clube. O catálogo de lojas vem do Postgres (V2.1), com o arquivo como reserva, e o alerta é decidido por múltiplo da pontuação base, não pela etiqueta da Livelo (V2.2). 139 testes verdes, 96% de cobertura.
 
 ## Como funciona
 

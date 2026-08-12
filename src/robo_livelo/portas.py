@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from robo_livelo.modelos import LojaFavorita, Mensagem
+from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias
 
 
 class FalhaAoObterPagina(RuntimeError):
@@ -49,3 +49,16 @@ class CatalogoFavoritas(Protocol):
     """Fornece as lojas favoritas, seus apelidos e categorias."""
 
     def listar(self) -> list[LojaFavorita]: ...
+
+
+@runtime_checkable
+class PreferenciasGlobais(Protocol):
+    """Fornece os padroes de alerta e o tier do leitor (RN28, RN23).
+
+    Quarta porta, criada na V2.2. Nao virou metodo de `CatalogoFavoritas`
+    de proposito: o catalogo responde "quais lojas", isto responde "com que
+    regua", e as duas coisas tem origens diferentes na hora de editar pelo
+    site — uma e a tabela `loja`, a outra e a tabela `preferencia`.
+    """
+
+    def carregar(self) -> Preferencias: ...

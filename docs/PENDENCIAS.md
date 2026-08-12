@@ -6,7 +6,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 > Atualizado em 2026-08-11. Versão atual: **1.3.0**.
 
-**Onde estamos:** V2.0 e V2.1 fechadas, mescladas e no ar. A partir da próxima execução agendada o catálogo vem do Neon, com o TOML de reserva. O que sobra é confirmação de e-mail e higiene de conta. A próxima fase de código é a V2.2.
+**Onde estamos:** V2.0, V2.1 e V2.2 fechadas. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado. A próxima fase de código é a V2.3 — e ela precisa que o robô passe a gravar no banco.
 
 ---
 
@@ -73,13 +73,22 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 
 ## V2.2 — regras de alerta
 
-- [ ] Módulo `alertas.py` no núcleo, com RN27 e RN28
-- [ ] Preferências globais `multiplicador_padrao` e `piso_pontos_padrao` vindas do banco
-- [ ] Sobrescrita por loja
-- [ ] Detectar `parityBau` suspeito: ausência prolongada de alerta não é "não teve promoção" (RN29, C07)
-- [ ] E-mail continua diário nesta fase, para permitir calibrar vendo o resultado
+- [x] Módulo `alertas.py` no núcleo, com RN27 e RN28
+- [x] Preferências globais `multiplicador_padrao` e `piso_pontos_padrao` vindas do banco — porta nova `PreferenciasGlobais`, com os padrões do PRD-V2 §6.1 de reserva
+- [x] Sobrescrita por loja
+- [x] Detectar `parityBau` suspeito (RN29, C07) — sem contar dias e sem guardar estado: o sintoma afeta a página inteira de uma vez e é visível numa execução só. Decisão registrada no PRD-V2 §6.3
+- [x] E-mail continua diário nesta fase, para permitir calibrar vendo o resultado
+- [x] Supressão de RN23: `CLUB` não alerta quem não assina; `PROMOTION_CLUB` alerta
 
 **Por que antes da V2.4:** calibrar limiar recebendo e-mail todo dia é fácil. Calibrar quando o e-mail só chega se o limiar já estiver certo é adivinhação.
+
+**Medido contra a página real em 2026-08-11** (régua padrão 2,0x e piso 4): o critério antigo dava 18 lojas, RN27 dá **15**. Saíram `Mercado Livre` 1→2, `Bibi` 1→2 e `Electrolux` 1→2 (dobrou, mas são 2 pontos) e `Booking.com` 4→6 (subiu, mas não dobrou). Entrou `Avon` 2→6, que triplicou **sem etiqueta nenhuma** — o alerta que a V1 nunca mandava.
+
+### Calibragem — a fazer olhando o e-mail chegar
+
+- [ ] Depois de duas ou três semanas recebendo, decidir se 2,0x e piso 4 servem. Sensibilidade medida no mesmo dia: `2,5x piso 4` → 14 lojas, `3,0x piso 4` → 11, `2,0x piso 6` → 7. **O piso é o botão mais sensível**
+- [ ] Só então sobrescrever loja por loja, e só as que incomodarem (PRD-V2 §6.1). Configurar 132 limiares na largada é armadilha
+- [ ] Ajustar direto no banco: `UPDATE preferencia SET valor = '2.5' WHERE chave = 'multiplicador_padrao'`. Vale na execução seguinte, sem `git push`
 
 ---
 
@@ -119,4 +128,5 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
 - [x] **V2.1** — `montar_catalogo()` escolhe Postgres ou arquivo conforme `DATABASE_URL`; `CatalogoComReserva` protege a execução contra o Neon fora do ar; `multiplicador`/`piso_pontos` lidos das duas fontes; `DATABASE_URL` passado ao `robo.yml`
 - [x] Roteiro do smoke manual CT-050 escrito, com os números de 2026-08-11 como linha de base
-- [x] 112 testes, 96% de cobertura, quality gate no CI
+- [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138
+- [x] 139 testes, 96% de cobertura, quality gate no CI

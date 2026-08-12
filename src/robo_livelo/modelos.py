@@ -48,6 +48,20 @@ class LojaFavorita:
 
 
 @dataclass(frozen=True, slots=True)
+class Preferencias:
+    """Padroes globais de alerta (RN28) e o tier do leitor (RN23).
+
+    Os valores default sao os do PRD-V2 §6.1, calibrados contra a medicao de
+    2026-08-09: com 2,0 e piso 4, aquele dia produziria um e-mail com 12
+    lojas de 126 favoritas. Existem aqui para o projeto rodar sem banco.
+    """
+
+    multiplicador_padrao: Decimal = Decimal("2.0")
+    piso_pontos_padrao: Decimal = Decimal("4")
+    assinante_clube: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class Mensagem:
     """O e-mail pronto para envio (RF07, RF08)."""
 

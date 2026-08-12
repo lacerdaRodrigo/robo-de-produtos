@@ -17,7 +17,13 @@ PACOTE = Path(__file__).resolve().parents[1] / "src" / "robo_livelo"
 # O nucleo nao faz entrada e saida: nada de rede, disco, ambiente ou SMTP.
 # beautifulsoup4 e permitido de proposito — transforma texto em estrutura,
 # nao abre conexao nem arquivo (PRD 4.1).
-MODULOS_DO_NUCLEO = ["modelos.py", "extrator.py", "categorias.py", "montador_email.py"]
+MODULOS_DO_NUCLEO = [
+    "modelos.py",
+    "extrator.py",
+    "categorias.py",
+    "montador_email.py",
+    "alertas.py",
+]
 IMPORTS_PROIBIDOS = {"requests", "smtplib", "tomllib", "os", "pathlib", "dotenv", "socket"}
 
 
