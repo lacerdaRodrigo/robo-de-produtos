@@ -224,3 +224,33 @@ export async function registrarTentativa(origem: string, sucesso: boolean): Prom
 
 export const LIMITE_DE_TENTATIVAS = TENTATIVAS_MAXIMAS;
 export const JANELA_DE_BLOQUEIO_MINUTOS = JANELA_MINUTOS;
+
+// --- Disparo manual do robô (RNF02, migração 004) ---
+
+/** RNF02: intervalo mínimo entre pedidos manuais. O projeto se propõe a bater
+ *  na página da Livelo poucas vezes por dia, e um botão sem trava
+ *  transformaria isso em dezenas de requisições numa tarde de cadastro. */
+export const INTERVALO_MINIMO_MINUTOS = 5;
+
+/** Segundos que ainda faltam para o próximo disparo poder acontecer.
+ *  Zero significa liberado. */
+export async function esperaAteProximoDisparo(): Promise<number> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT GREATEST(
+             0,
+             CEIL(EXTRACT(EPOCH FROM (
+               momento + (${INTERVALO_MINIMO_MINUTOS} || ' minutes')::interval - now()
+             )))
+           )::int AS falta
+      FROM disparo_manual
+     ORDER BY momento DESC
+     LIMIT 1
+  `) as { falta: number }[];
+  return linhas[0]?.falta ?? 0;
+}
+
+export async function registrarDisparo(): Promise<void> {
+  const sql = conectar();
+  await sql`INSERT INTO disparo_manual DEFAULT VALUES`;
+}

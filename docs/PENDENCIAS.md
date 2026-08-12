@@ -123,6 +123,15 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] Busca por nome e índice de categorias, que é o que torna 130 lojas navegáveis no celular
 - [x] Nenhuma tela alcançável só digitando URL
 
+### V2.3.2 — o banco manda, e o site dispara (feito)
+
+- [x] Banco vazio deixa de cair no TOML: apagar pelo site passa a valer de verdade. A reserva cobre indisponibilidade, não vontade
+- [x] E-mail de catálogo vazio com assunto próprio, para não se confundir com "nenhuma promoção hoje"
+- [x] Botão **Atualizar agora** em Cadastrar lojas: pede ao GitHub que rode o robô, e a lista sai com as suas mudanças em cerca de um minuto
+- [x] Trava de 5 minutos entre disparos manuais (migração `004`), por causa de RNF02
+- [ ] **Dívida combinada:** hoje o disparo manual manda e-mail igual ao agendado, para você conferir se veio certo. Quando confiar no resultado, o `robo.yml` ganha um parâmetro `enviar_email` e o disparo do site passa a rodar em silêncio — cadastrar dez lojas numa tarde geraria dez e-mails idênticos, e o dia em que você começar a ignorar o e-mail é o dia em que ele deixa de servir de sinal de vida
+- [ ] Criar o **fine-grained token** no GitHub (acesso só a `robo-livelo`, permissão *Actions: read and write*) e cadastrar na Vercel como `GITHUB_TOKEN_DISPARO`. Sem ele o botão fica desabilitado explicando o que falta
+
 ### Só você pode fazer
 
 - [x] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**

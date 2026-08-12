@@ -249,8 +249,14 @@ class CatalogoPostgres:
                 f"Falha ao consultar o catalogo no banco: {type(erro).__name__}"
             ) from None
 
+        # Banco vazio NAO e falha: e o dono tendo apagado o catalogo de
+        # proposito. Levantar aqui faria `CatalogoComReserva` cair no TOML e
+        # ressuscitar as lojas que ele acabou de remover — o banco nunca seria
+        # a fonte da verdade. A excecao fica reservada para o que ela sempre
+        # significou: nao deu para falar com o banco.
         if not linhas:
-            raise ConfiguracaoInvalida("Nenhuma loja favorita cadastrada no banco.")
+            _log.warning("Nenhuma loja cadastrada no banco. Nada a monitorar.")
+            return []
 
         # NUMERIC volta como Decimal do psycopg — nada de float aqui (PRD 5.4).
         return [
@@ -442,6 +448,12 @@ class CatalogoComReserva:
     inteira por um motivo que nao tem nada a ver com a Livelo. O aviso vai
     em WARNING justamente para a queda nao passar despercebida — rodar de
     reserva por semanas sem ninguem notar seria pior do que falhar.
+
+    **A reserva cobre indisponibilidade, nao vontade.** Banco que responde
+    com zero lojas devolve lista vazia e chega ate aqui como resultado
+    legitimo: quem apagou o catalogo quis apagar, e ver o TOML ressuscitar
+    as lojas no dia seguinte foi exatamente o defeito que esta distincao
+    conserta.
     """
 
     def __init__(self, principal: CatalogoFavoritas, reserva: CatalogoFavoritas) -> None:

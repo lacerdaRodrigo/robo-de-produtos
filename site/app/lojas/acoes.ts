@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { adicionarLoja, removerLoja } from "@/lib/banco";
+import {
+  adicionarLoja,
+  esperaAteProximoDisparo,
+  registrarDisparo,
+  removerLoja,
+} from "@/lib/banco";
+import { dispararRobo } from "@/lib/github";
 import { exigirSessao } from "@/lib/sessao";
 
 export async function acaoAdicionarLoja(dados: FormData) {
@@ -45,4 +51,24 @@ export async function acaoRemoverLoja(dados: FormData) {
   revalidatePath("/avisos");
   revalidatePath("/");
   redirect(`/lojas?ok=removida&nome=${encodeURIComponent(nome)}`);
+}
+
+export async function acaoAtualizarAgora() {
+  await exigirSessao();
+
+  // RNF02 antes de qualquer coisa: a trava vale mesmo que o GitHub aceitasse.
+  const falta = await esperaAteProximoDisparo();
+  if (falta > 0) {
+    redirect(`/lojas?erro=espere&segundos=${falta}`);
+  }
+
+  const resultado = await dispararRobo();
+  if (!resultado.ok) {
+    redirect(`/lojas?erro=${resultado.motivo === "sem-token" ? "sem-token" : "disparo"}`);
+  }
+
+  // Registrado depois do sucesso: pedido recusado pelo GitHub não deve
+  // consumir a sua janela de cinco minutos.
+  await registrarDisparo();
+  redirect("/lojas?ok=disparado");
 }

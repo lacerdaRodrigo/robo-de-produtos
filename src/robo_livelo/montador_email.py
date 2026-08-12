@@ -19,6 +19,11 @@ _log = logging.getLogger(__name__)
 
 ASSUNTO_SEM_PROMOCAO = "Livelo: nenhuma promoção nas suas lojas hoje"
 
+# Catalogo vazio nao e "nao teve promocao": e "nao ha o que procurar". Dizer
+# a mesma frase nos dois casos esconderia de voce que o robo esta rodando no
+# vazio (O3: falha nunca e silenciosa).
+ASSUNTO_SEM_CATALOGO = "Livelo: nenhuma loja cadastrada"
+
 _CORES = [
     "#df0979",
     "#7b2ff7",
@@ -114,7 +119,9 @@ def _rotulo_clube(parceiro: Parceiro) -> str | None:
     return ROTULO_EXCLUSIVO_CLUBE if parceiro.pontos_atuais == parceiro.pontos_base else None
 
 
-def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
+def _assunto(agrupamento: dict[str, list[Parceiro]], *, catalogo_vazio: bool = False) -> str:
+    if catalogo_vazio:
+        return ASSUNTO_SEM_CATALOGO
     total = sum(len(lojas) for lojas in agrupamento.values())
     if total == 0:
         return ASSUNTO_SEM_PROMOCAO  # RF10
@@ -122,12 +129,22 @@ def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
     return f"Livelo: {total} {plural} nas suas lojas"
 
 
-def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensagem:
+def montar(
+    agrupamento: dict[str, list[Parceiro]],
+    *,
+    agora: datetime,
+    catalogo_vazio: bool = False,
+) -> Mensagem:
     """Devolve a mensagem pronta, em HTML e em texto simples (RF07).
 
     `agora` decide RN22 (destaque de "termina hoje") e RF18 (texto de
     validade) — passado explicitamente para o nucleo continuar sem ler o
     relogio por conta propria (ver PRD-V2 7.2).
+
+    `catalogo_vazio` separa duas ausencias que pareceriam iguais: "hoje
+    nenhuma das suas lojas subiu" e "voce nao tem loja nenhuma cadastrada".
+    A segunda com a frase da primeira faria o robo parecer trabalhando
+    quando nao ha o que procurar.
     """
     total = sum(len(lojas) for lojas in agrupamento.values())
     html: list[str] = [
@@ -139,7 +156,19 @@ def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensag
     ]
     texto: list[str] = ["PONTUAÇÃO TURBINADA NA LIVELO", ""]
 
-    if total == 0:
+    if catalogo_vazio:
+        # RF10: o e-mail sai mesmo assim, porque e ele o sinal de vida (MS5).
+        # Mas o texto diz a verdade: nao ha catalogo, entao nao houve busca.
+        html.append(
+            "<p style='color:#6e6e73;font-size:14px;'>Você não tem nenhuma loja "
+            "cadastrada, então não há o que procurar. Cadastre suas lojas no site "
+            "para voltar a receber os avisos.</p>"
+        )
+        texto.append(
+            "Você não tem nenhuma loja cadastrada, então não há o que procurar. "
+            "Cadastre suas lojas no site para voltar a receber os avisos."
+        )
+    elif total == 0:
         # RF10: o e-mail sai mesmo assim. O silencio passa a significar
         # uma coisa so: o robo parou (MS5).
         html.append(
@@ -228,7 +257,7 @@ def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensag
     html.append("</div></body></html>")
     texto.append(f"-- robô-livelo v{__version__}")
     return Mensagem(
-        assunto=_assunto(agrupamento),
+        assunto=_assunto(agrupamento, catalogo_vazio=catalogo_vazio),
         corpo_html="".join(html),
         corpo_texto="\n".join(texto).strip() + "\n",
     )
