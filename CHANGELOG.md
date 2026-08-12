@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.11.0 (2026-08-12)
+
+### Features
+
+- **site**: Esconde o aviso opcional no cadastro atrás de uma flag em /configuracoes (V2.3.4)
+  ([`ef366f5`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ef366f541235703f71d0c259021aeaceba7bdc01))
+
+### Refactoring
+
+- **site**: Flag do aviso opcional vira cookie, não banco
+  ([`66a2526`](https://github.com/lacerdaRodrigo/robo-livelo/commit/66a25266868c1f08ab6f35d54053605ca999c3b7))
+
+
 ## v1.10.1 (2026-08-12)
 
 ### Bug Fixes
