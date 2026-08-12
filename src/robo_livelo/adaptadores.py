@@ -15,10 +15,18 @@ from pathlib import Path
 
 import requests
 
-from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias
+from robo_livelo.modelos import (
+    LojaFavorita,
+    Mensagem,
+    PontuacaoDeLoja,
+    Preferencias,
+    RetratoDaExecucao,
+)
+from robo_livelo.montador_email import link_confiavel
 from robo_livelo.portas import (
     CatalogoFavoritas,
     ConfiguracaoInvalida,
+    FalhaAoGuardar,
     FalhaAoNotificar,
     FalhaAoObterPagina,
     PreferenciasGlobais,
@@ -255,6 +263,93 @@ class CatalogoPostgres:
             )
             for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
+
+
+class RepositorioNulo:
+    """Nao guarda nada, e diz isso uma vez no log.
+
+    E o que roda em quem clonou o projeto sem Neon: o robo continua
+    mandando e-mail, so nao alimenta site nenhum.
+    """
+
+    def registrar(self, retrato: RetratoDaExecucao) -> None:
+        _log.info("Sem banco: retrato da execucao nao foi guardado.")
+
+
+class RepositorioPostgres:
+    """Guarda o retrato da execucao (PRD V2 RF15, migracao 002).
+
+    Uma transacao por rodada: ou o retrato inteiro entra, ou nao entra
+    nada. Retrato pela metade no banco viraria pagina mentindo, que e pior
+    que pagina velha — a velha pelo menos se denuncia pelo carimbo (RN26).
+    """
+
+    INSERE_EXECUCAO = """
+        INSERT INTO execucao (momento, parceiros_lidos, alertas, versao)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id
+    """
+
+    INSERE_PONTUACAO = """
+        INSERT INTO pontuacao (
+            execucao_id, loja_id, nome, pontos_atuais, pontos_base, pontos_clube,
+            valor_de_disparo, moeda, prefixo_ate, em_promocao, alertou, campanha,
+            fim_promocao, link
+        )
+        VALUES (
+            %(execucao_id)s,
+            (SELECT id FROM loja WHERE nome = %(nome)s),
+            %(nome)s, %(pontos_atuais)s, %(pontos_base)s, %(pontos_clube)s,
+            %(valor_de_disparo)s, %(moeda)s, %(prefixo_ate)s, %(em_promocao)s,
+            %(alertou)s, %(campanha)s, %(fim_promocao)s, %(link)s
+        )
+    """
+
+    def __init__(self, url: str) -> None:
+        if not url:
+            raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
+        self._url = url
+
+    def registrar(self, retrato: RetratoDaExecucao) -> None:
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(
+                    self.INSERE_EXECUCAO,
+                    (retrato.momento, retrato.parceiros_lidos, retrato.alertas, retrato.versao),
+                )
+                (execucao_id,) = cursor.fetchone()
+                cursor.executemany(
+                    self.INSERE_PONTUACAO,
+                    [_linha_de_pontuacao(p, execucao_id) for p in retrato.pontuacoes],
+                )
+        except psycopg.Error as erro:
+            # Mensagem propria: a original pode carregar a senha da URL.
+            raise FalhaAoGuardar(
+                f"Falha ao guardar o retrato da execucao: {type(erro).__name__}"
+            ) from None
+
+
+def _linha_de_pontuacao(pontuacao: PontuacaoDeLoja, execucao_id: int) -> dict:
+    parceiro = pontuacao.parceiro
+    return {
+        "execucao_id": execucao_id,
+        # RN01: grava o nome canonico do catalogo, nao a grafia do site.
+        "nome": pontuacao.loja.nome,
+        "pontos_atuais": parceiro.pontos_atuais if parceiro else None,
+        "pontos_base": parceiro.pontos_base if parceiro else None,
+        "pontos_clube": parceiro.pontos_clube if parceiro else None,
+        "valor_de_disparo": pontuacao.valor_de_disparo,
+        "moeda": (parceiro.moeda if parceiro else None) or "R$",
+        "prefixo_ate": bool(parceiro and parceiro.prefixo_ate),
+        "em_promocao": bool(parceiro and parceiro.em_promocao),
+        "alertou": pontuacao.alertou,
+        "campanha": parceiro.campanha if parceiro else None,
+        "fim_promocao": parceiro.fim_promocao if parceiro else None,
+        # RN08 vale para o site tambem: link que nao e da Livelo nao entra.
+        "link": (parceiro.link if parceiro and link_confiavel(parceiro.link) else None),
+    }
 
 
 class PreferenciasPadrao:

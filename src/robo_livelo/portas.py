@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias
+from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias, RetratoDaExecucao
 
 
 class FalhaAoObterPagina(RuntimeError):
@@ -20,6 +20,14 @@ class FalhaAoNotificar(RuntimeError):
 
 class ConfiguracaoInvalida(RuntimeError):
     """A configuracao esta ausente, vazia ou malformada (PRD 7.2)."""
+
+
+class FalhaAoGuardar(RuntimeError):
+    """O retrato da execucao nao pode ser gravado (V2.3).
+
+    Excecao propria porque a consequencia e outra: catalogo ausente impede
+    a rodada, retrato nao gravado so deixa o site velho.
+    """
 
 
 class SiteMudou(RuntimeError):
@@ -62,3 +70,18 @@ class PreferenciasGlobais(Protocol):
     """
 
     def carregar(self) -> Preferencias: ...
+
+
+@runtime_checkable
+class RepositorioDeExecucao(Protocol):
+    """Guarda o retrato de cada rodada para o site ler (RF15, RN26).
+
+    Era o "ponto de extensao documentado, nao implementado" do PRD §4.2 da
+    V1. A V2.3 e a necessidade que ele esperava: o site precisa da
+    pontuacao atual, e ela so existe durante a execucao.
+
+    O robo escreve e nunca le de volta — nenhuma regra de negocio consulta
+    o passado, entao PRD §1.4 continua valendo onde importa.
+    """
+
+    def registrar(self, retrato: RetratoDaExecucao) -> None: ...

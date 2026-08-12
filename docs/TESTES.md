@@ -81,6 +81,9 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-131 | Preferências vindas do banco | RN28 — a régua é editável sem `git push` | Fake de `psycopg` devolvendo as três chaves |
 | CT-132 | Preferência ilegível ou ausente cai no padrão | Escolha oposta à do catálogo: existe valor sensato para seguir, então a rodada continua — mas não em silêncio | Chave com texto no lugar de número, checar padrão e `WARNING` |
 | CT-133 | Preferências caem para o padrão quando o banco falha | Mesmo motivo de CT-108 | Principal que levanta `ConfiguracaoInvalida`, checar padrão e `WARNING` |
+| CT-144 | Grava execução e pontuações na mesma transação | Retrato pela metade no banco viraria página mentindo, que é pior que página velha | Fake de `psycopg`, checar a linha de execução e as de pontuação |
+| CT-145 | Link fora do domínio não é gravado ⚠️ | RN08 vale para o site também: link arbitrário não entra na página | Parceiro com link hostil, checar `link is None` |
+| CT-146 | Falha ao gravar não vaza a senha ⚠️ | PRD §9.1 — a exceção do `psycopg` carrega a URL inteira | Fake que falha, checar ausência da senha e `__cause__` cortado |
 
 ## `testes/teste_montador_email.py` — função `montar_email()`
 
@@ -135,6 +138,10 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-136 | O alerta manda no e-mail, não a etiqueta ⚠️ | RN27 fim a fim: a Livelo etiqueta um sem aumento e esquece outro que triplicou | Payload com os dois casos, checar quem sai no e-mail |
 | CT-137 | Preferências do banco mudam o resultado | RN28 fim a fim: a mesma página com três réguas | Fake da porta com piso e multiplicador diferentes |
 | CT-138 | Suspeita de RN29 vai para o log ⚠️ | Silêncio com página parada é suspeita, não dia fraco | Payload com todos os parceiros parados, checar `WARNING` |
+| CT-147 | Sem `DATABASE_URL` não há onde guardar | Quem clonou sem Neon continua recebendo e-mail | `montar_repositorio({})`, checar `RepositorioNulo` |
+| CT-148 | Com `DATABASE_URL` o retrato vai para o banco | RF15 | `montar_repositorio` com a variável |
+| CT-149 | Retrato registrado depois do e-mail | RF15 fim a fim: o site recebe **todas** as favoritas, não só as alertadas (RN24) | Fluxo completo com fake de repositório |
+| CT-150 | Falha ao guardar não derruba a execução ⚠️ | A consequência é site velho, que o carimbo de RN26 denuncia sozinho. Perder o e-mail do dia seria pior | Repositório que levanta `FalhaAoGuardar`, checar e-mail enviado e `WARNING` |
 
 ## `testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 
@@ -157,6 +164,18 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-129 | Havendo alerta não há suspeita | RN29 só olha o silêncio | Mesma página de CT-127 com um alerta |
 
 Sem ID: página que parou de trazer `parityBau` também levanta suspeita, página vazia não (aí quem falha é RN13), e o critério fechado sobre as preferências chega intacto ao `agrupar`.
+
+## `testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-V2 RF15)
+
+> Bloco novo da V2.3. O robô passa a guardar o que viu, para o site ter o que mostrar.
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-139 | Todas as favoritas entram, em promoção ou não ⚠️ | RN24 — se só as promoções entrassem, o site não responderia "quanto a Renner dá hoje?", que é o motivo da fase existir (O5) | Três favoritas, uma só na página sem promoção |
+| CT-140 | Favorita ausente vira linha sem parceiro | RN19 — sumir com a loja faria o leitor achar que ela saiu do catálogo, quando a Livelo é que mudou a grafia | Favorita que não aparece na página, checar `parceiro is None` |
+| CT-141 | Apelido liga à loja certa | RN04 — a Livelo escreve "CEA", o catálogo diz "C&A" | Parceiro com a grafia do site, checar a loja canônica |
+| CT-142 | Valor de disparo acompanha a régua | RN30 — o número é gravado calculado porque a régua muda com o tempo | Mesmo parceiro com duas réguas |
+| CT-143 | Retrato carrega contagem e versão | RN26 — o carimbo do site sai daqui; a versão torna o defeito rastreável | Checar `momento`, `parceiros_lidos`, `versao`, `alertas` |
 
 ## `testes/teste_fronteira.py` — arquitetura (PRD §9.3)
 
@@ -221,12 +240,13 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
 | `teste_extrator.py` | 26 | 34 |
-| `teste_adaptadores.py` | 17 | 21 |
+| `teste_adaptadores.py` | 20 | 25 |
 | `teste_alertas.py` | 13 | 17 |
+| `teste_retrato.py` | 5 | 5 |
 | `teste_montador_email.py` | 23 | 26 |
-| `teste_principal.py` | 21 | 23 |
-| `teste_fronteira.py` | 1 | 6 |
-| **Total** | **109** | **139** |
+| `teste_principal.py` | 25 | 27 |
+| `teste_fronteira.py` | 1 | 7 |
+| **Total** | **121** | **153** |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 

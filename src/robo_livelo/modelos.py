@@ -62,6 +62,40 @@ class Preferencias:
 
 
 @dataclass(frozen=True, slots=True)
+class PontuacaoDeLoja:
+    """Uma favorita como ela estava numa execucao (RF15, RN24, RN30).
+
+    `parceiro is None` significa favorita que nao apareceu na pagina naquela
+    rodada (RN19) — a linha continua existindo para o site dizer "nao
+    encontrada" em vez de sumir com a loja.
+    """
+
+    loja: LojaFavorita
+    parceiro: Parceiro | None = None
+    valor_de_disparo: Decimal | None = None
+    alertou: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class RetratoDaExecucao:
+    """O que a execucao viu, pronto para virar linha no banco e pagina.
+
+    O robo continua sem *ler* estado: ele grava e nunca consulta o proprio
+    passado (PRD 1.4 segue valendo para a decisao de alerta). O historico
+    existe para o site, nao para a regra de negocio.
+    """
+
+    momento: datetime
+    parceiros_lidos: int
+    versao: str
+    pontuacoes: tuple[PontuacaoDeLoja, ...] = field(default_factory=tuple)
+
+    @property
+    def alertas(self) -> int:
+        return sum(1 for p in self.pontuacoes if p.alertou)
+
+
+@dataclass(frozen=True, slots=True)
 class Mensagem:
     """O e-mail pronto para envio (RF07, RF08)."""
 

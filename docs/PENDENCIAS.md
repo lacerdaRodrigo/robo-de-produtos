@@ -6,7 +6,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 > Atualizado em 2026-08-11. Versão atual: **1.3.0**.
 
-**Onde estamos:** V2.0, V2.1 e V2.2 fechadas. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado. A próxima fase de código é a V2.3 — e ela precisa que o robô passe a gravar no banco.
+**Onde estamos:** V2.0, V2.1 e V2.2 fechadas; V2.3 na metade — o robô já grava, falta o site. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado. A próxima fase de código é a V2.3 — e ela precisa que o robô passe a gravar no banco.
 
 ---
 
@@ -94,7 +94,17 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 
 ## V2.3 — site
 
-- [ ] Projeto Next.js na Vercel
+**Metade 1 (feita): o robô virou fonte do site.** Sem isso o site não teria o que mostrar — a pontuação atual só existe durante a execução.
+
+- [x] Migração `002_execucao.sql`: tabelas `execucao` e `pontuacao`, aplicada no Neon em 2026-08-11
+- [x] Porta `RepositorioDeExecucao` — era o "ponto de extensão documentado, não implementado" do PRD §4.2 desde a V1
+- [x] Núcleo `retrato.py`: junta cada favorita com o que a página disse dela (RN24, RN30)
+- [x] Gravar não derruba a execução: falha vira `WARNING`, porque a consequência é site velho e o carimbo de RN26 denuncia isso sozinho
+- [x] Ensaio real: 132 pontuações gravadas, 15 alertas, carimbo e versão na tabela `execucao`
+
+**Metade 2 (a fazer): o site.**
+
+- [ ] Projeto Next.js na Vercel, em `site/`
 - [ ] Leitura pública das promoções e do catálogo com pontuação atual (RF15, RN24)
 - [ ] Edição protegida por senha única (RF17, PRD V2 §9.0)
 - [ ] Mostrar, por loja, pontuação atual, base e o valor que dispara o alerta (RN30)
@@ -129,4 +139,5 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] **V2.1** — `montar_catalogo()` escolhe Postgres ou arquivo conforme `DATABASE_URL`; `CatalogoComReserva` protege a execução contra o Neon fora do ar; `multiplicador`/`piso_pontos` lidos das duas fontes; `DATABASE_URL` passado ao `robo.yml`
 - [x] Roteiro do smoke manual CT-050 escrito, com os números de 2026-08-11 como linha de base
 - [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138
-- [x] 139 testes, 96% de cobertura, quality gate no CI
+- [x] **V2.3, metade 1** — o robô grava o retrato de cada execução: migração `002`, porta `RepositorioDeExecucao`, núcleo `retrato.py`. CT-139 a CT-150
+- [x] 153 testes, 96% de cobertura, quality gate no CI

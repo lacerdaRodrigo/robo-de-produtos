@@ -14,13 +14,21 @@ from robo_livelo.adaptadores import (
     NotificadorEmail,
     PreferenciasComReserva,
     PreferenciasPadrao,
+    RepositorioNulo,
+    RepositorioPostgres,
 )
 from robo_livelo.modelos import Preferencias
 from robo_livelo.montador_email import ASSUNTO_SEM_PROMOCAO
-from robo_livelo.portas import FalhaAoNotificar, FalhaAoObterPagina, SiteMudou
+from robo_livelo.portas import (
+    FalhaAoGuardar,
+    FalhaAoNotificar,
+    FalhaAoObterPagina,
+    SiteMudou,
+)
 from robo_livelo.principal import (
     montar_catalogo,
     montar_preferencias,
+    montar_repositorio,
     validar_segredos,
     verificar_promocoes,
 )
@@ -378,3 +386,67 @@ def teste_ct138_suspeita_de_rn29_vai_para_o_log(favoritas, caplog):
 
     assert total == 0
     assert any("RN29" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct147_sem_database_url_nao_ha_onde_guardar():
+    assert isinstance(montar_repositorio({}), RepositorioNulo)
+
+
+def teste_ct148_com_database_url_o_retrato_vai_para_o_banco():
+    assert isinstance(
+        montar_repositorio({"DATABASE_URL": "postgresql://fake"}), RepositorioPostgres
+    )
+
+
+def teste_ct149_retrato_registrado_apos_o_email(favoritas):
+    """RF15 fim a fim: o site recebe todas as favoritas, nao so as alertadas."""
+
+    class RepositorioFake:
+        def __init__(self):
+            self.retratos = []
+
+        def registrar(self, retrato):
+            self.retratos.append(retrato)
+
+    repositorio = RepositorioFake()
+    notificador = NotificadorFake()
+    html = pagina(("Natura", "4", True), ("Magalu", "3", False))
+
+    verificar_promocoes(
+        fonte=FonteFake(html),
+        catalogo=CatalogoFake(favoritas),
+        notificador=notificador,
+        limiar=1,
+        agora=AGORA_TESTE,
+        repositorio=repositorio,
+    )
+
+    (retrato,) = repositorio.retratos
+    assert notificador.foi_chamado
+    assert len(retrato.pontuacoes) == len(favoritas)  # RN24
+    assert retrato.alertas == 1
+    assert retrato.parceiros_lidos == 2
+
+
+def teste_ct150_falha_ao_guardar_nao_derruba_a_execucao(favoritas, caplog):
+    """A consequencia de nao gravar e o site velho, e o carimbo de RN26
+    denuncia isso sozinho. Perder o e-mail do dia seria pior."""
+
+    class RepositorioFalho:
+        def registrar(self, retrato):
+            raise FalhaAoGuardar("banco inacessivel")
+
+    notificador = NotificadorFake()
+    with caplog.at_level(logging.WARNING, logger="robo_livelo"):
+        total = verificar_promocoes(
+            fonte=FonteFake(pagina(("Natura", "4", True))),
+            catalogo=CatalogoFake(favoritas),
+            notificador=notificador,
+            limiar=1,
+            agora=AGORA_TESTE,
+            repositorio=RepositorioFalho(),
+        )
+
+    assert total == 1
+    assert notificador.foi_chamado
+    assert any("banco inacessivel" in r.getMessage() for r in caplog.records)

@@ -234,6 +234,8 @@ A regra de ouro não muda: núcleo puro, mundo por contrato. A V2 acrescenta **u
 | `montador_email.py` | Núcleo, ajustado | Ganha validade e marcação de Clube |
 | `CatalogoFavoritas` | **Porta existente, nova implementação** | Passa a ler do Postgres em vez do TOML. **O contrato não muda** — é o dividendo da arquitetura da V1 |
 | `PreferenciasGlobais` | **Porta nova** (V2.2) | Entrega a régua de RN28. Separada do catálogo porque vem de outra tabela e responde outra pergunta |
+| `RepositorioDeExecucao` | **Porta nova** (V2.3) | Guarda o retrato de cada rodada. É o que dá dado ao site: a pontuação atual só existe durante a execução |
+| `retrato.py` | Núcleo, **novo** (V2.3) | Junta cada favorita com o que a página disse dela. RF15, RN24, RN30 |
 | `principal.py` | Orquestração, ajustada | Decide envio por RF16 |
 | Site | **Componente novo**, fora do robô | Next.js na Vercel: exibe e edita. Fala com o mesmo banco |
 
@@ -320,7 +322,13 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 loja        id, nome, categoria, multiplicador?, piso_pontos?, criada_em
 apelido     id, loja_id, texto              -- RN04 continua exigindo grafia exata
 preferencia chave, valor                    -- multiplicador e piso padrão, assinante_clube
+execucao    id, momento, parceiros_lidos, alertas, versao          -- V2.3
+pontuacao   id, execucao_id, loja_id?, nome, pontos_*, valor_de_disparo, ...  -- V2.3
 ```
+
+As duas últimas entraram na V2.3 (`migracoes/002_execucao.sql`). Guardam **apenas as 132 favoritas**, não os 254 parceiros: é o mesmo recorte que a página pública exibe (§9.3) e mantém o volume irrelevante diante de C08. `loja_id` nulo significa favorita que não apareceu na página naquela rodada (RN19) — a linha existe para o site dizer "não encontrada" em vez de sumir com a loja.
+
+**Gravar não é crítico.** Falha ao guardar o retrato vira `WARNING` e a execução segue: a consequência é o site ficar velho, e o carimbo de RN26 denuncia isso sozinho na própria página. Perder o e-mail do dia por causa do Neon seria pior — por isso a gravação acontece **depois** do envio, e por isso `FalhaAoGuardar` existe separada de `ConfiguracaoInvalida`.
 
 Três tabelas. Restrições que o banco garante, e não o código — a garantia mora na camada mais baixa possível:
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import sys
 import types
+from datetime import datetime
 from decimal import Decimal
 
 import pytest
@@ -17,9 +18,12 @@ from robo_livelo.adaptadores import (
     PreferenciasComReserva,
     PreferenciasPadrao,
     PreferenciasPostgres,
+    RepositorioNulo,
+    RepositorioPostgres,
 )
-from robo_livelo.modelos import LojaFavorita
-from robo_livelo.portas import ConfiguracaoInvalida, FalhaAoObterPagina
+from robo_livelo.modelos import LojaFavorita, PontuacaoDeLoja, RetratoDaExecucao
+from robo_livelo.portas import ConfiguracaoInvalida, FalhaAoGuardar, FalhaAoObterPagina
+from testes.conftest import FUSO_BRASILIA, faz_parceiro
 
 
 class RespostaFake:
@@ -368,3 +372,154 @@ def teste_ct133_preferencias_caem_para_o_padrao_quando_o_banco_falha(caplog):
     with caplog.at_level(logging.WARNING, logger="robo_livelo.adaptadores"):
         assert com_reserva.carregar().multiplicador_padrao == Decimal("2.0")
     assert [r for r in caplog.records if r.levelno == logging.WARNING]
+
+
+# --- CT-144 a CT-146: gravacao do retrato (RF15, migracao 002) ---
+
+
+class CursorGravador:
+    def __init__(self, erro=None):
+        self.executados = []
+        self.lotes = []
+        self._erro = erro
+
+    def execute(self, consulta, parametros=None):
+        if self._erro:
+            raise self._erro
+        self.executados.append((consulta, parametros))
+
+    def executemany(self, consulta, lote):
+        self.lotes.append((consulta, list(lote)))
+
+    def fetchone(self):
+        return (42,)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+def repositorio_fake(monkeypatch, cursor):
+    class ConexaoFake:
+        def cursor(self):
+            return cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg",
+        types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=RuntimeError),
+    )
+    return RepositorioPostgres("postgresql://fake")
+
+
+def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
+    """Uma linha de execucao e uma por favorita, todas na mesma transacao."""
+    loja_encontrada = LojaFavorita(nome="Natura", categoria="Beleza")
+    loja_ausente = LojaFavorita(nome="Magalu", categoria="Marketplace")
+    parceiro = faz_parceiro("Natura", "8", base="2", clube="12", campanha="PROMOTION")
+
+    momento = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
+    snapshot = RetratoDaExecucao(
+        momento=momento,
+        parceiros_lidos=254,
+        versao="1.4.0",
+        pontuacoes=(
+            PontuacaoDeLoja(
+                loja=loja_encontrada,
+                parceiro=parceiro,
+                valor_de_disparo=Decimal("4"),
+                alertou=True,
+            ),
+            PontuacaoDeLoja(loja=loja_ausente),
+        ),
+    )
+
+    cursor = CursorGravador()
+    repositorio_fake(monkeypatch, cursor).registrar(snapshot)
+
+    _, parametros = cursor.executados[0]
+    assert parametros == (momento, 254, 1, "1.4.0")
+
+    _, linhas = cursor.lotes[0]
+    assert len(linhas) == 2
+    assert linhas[0]["nome"] == "Natura"  # RN01: nome canonico do catalogo
+    assert linhas[0]["pontos_atuais"] == Decimal("8")
+    assert linhas[0]["valor_de_disparo"] == Decimal("4")
+    assert linhas[0]["alertou"] is True
+    # RN19: favorita ausente vira linha vazia, nao desaparece
+    assert linhas[1]["nome"] == "Magalu"
+    assert linhas[1]["pontos_atuais"] is None
+    assert linhas[1]["alertou"] is False
+
+
+def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):
+    """RN08 vale para o site tambem: link arbitrario nao entra na pagina."""
+    hostil = faz_parceiro("Natura", "8", base="2", link="https://site-malicioso.example/x")
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=1,
+        versao="1.4.0",
+        pontuacoes=(
+            PontuacaoDeLoja(loja=LojaFavorita(nome="Natura", categoria="Beleza"), parceiro=hostil),
+        ),
+    )
+
+    cursor = CursorGravador()
+    repositorio_fake(monkeypatch, cursor).registrar(snapshot)
+    assert cursor.lotes[0][1][0]["link"] is None
+
+
+def teste_ct146_falha_ao_gravar_nao_vaza_a_senha(monkeypatch):
+    """PRD 9.1: a excecao do psycopg carrega a URL inteira."""
+
+    class ErroDoBanco(RuntimeError):
+        pass
+
+    cursor = CursorGravador(erro=ErroDoBanco("falhou em postgresql://usuario:senha_secreta@host"))
+
+    class ConexaoFake:
+        def cursor(self):
+            return cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg",
+        types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=ErroDoBanco),
+    )
+
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=1,
+        versao="1.4.0",
+    )
+    with pytest.raises(FalhaAoGuardar) as erro:
+        RepositorioPostgres("postgresql://usuario:senha_secreta@host").registrar(snapshot)
+
+    assert "senha_secreta" not in str(erro.value)
+    assert erro.value.__cause__ is None
+
+
+def teste_repositorio_nulo_nao_quebra_sem_banco(caplog):
+    """Quem clonou o projeto sem Neon continua recebendo e-mail."""
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=1,
+        versao="1.4.0",
+    )
+    with caplog.at_level(logging.INFO, logger="robo_livelo.adaptadores"):
+        RepositorioNulo().registrar(snapshot)
+    assert any("nao foi guardado" in r.getMessage() for r in caplog.records)
