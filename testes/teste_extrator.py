@@ -389,7 +389,7 @@ def teste_ct166_legal_terms_vira_texto_puro():
 
 
 def teste_ct167_legal_terms_vazio_vira_none():
-    """"<p><br></p>" e o formato mais comum quando a Livelo nao publica letra
+    """`<p><br></p>` e o formato mais comum quando a Livelo nao publica letra
     miuda para o parceiro — precisa virar None, nao string vazia."""
     parceiro = um(pagina(monta_item_parceiro(legal_terms="<p><br></p>")))
     assert parceiro.descricao_campanha is None
