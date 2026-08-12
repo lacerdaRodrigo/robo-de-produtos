@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   catalogo,
@@ -7,6 +8,7 @@ import {
   preferencias,
   ultimaExecucao,
 } from "@/lib/banco";
+import { telaDeAlertasEscondida } from "@/lib/flags";
 import { normalizar, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
@@ -34,6 +36,12 @@ export default async function PaginaDeAvisos({
   searchParams: Promise<{ ok?: string; erro?: string; loja?: string }>;
 }) {
   await exigirSessao();
+
+  // Nenhuma tela e alcancavel so digitando a URL: escondida em
+  // /configuracoes, esta rota tambem deixa de responder.
+  if (await telaDeAlertasEscondida()) {
+    redirect("/");
+  }
 
   const { ok, erro, loja: lojaPedida } = await searchParams;
   const [padroes, excecoes, lojas, execucao] = await Promise.all([

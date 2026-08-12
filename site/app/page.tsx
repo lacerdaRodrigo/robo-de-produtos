@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { pontuacoes, ultimaExecucao, type PontuacaoDeLoja } from "@/lib/banco";
+import { telaDeAlertasEscondida } from "@/lib/flags";
 import {
   ancora,
   barraDeProgresso,
@@ -59,7 +60,13 @@ function BarraDeProgresso({ loja }: { loja: PontuacaoDeLoja }) {
   );
 }
 
-function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
+function Loja({
+  loja,
+  podeAjustarAlerta,
+}: {
+  loja: PontuacaoDeLoja;
+  podeAjustarAlerta: boolean;
+}) {
   const rotuloClube = rotuloDoClube(loja.campanha);
   const naoEncontrada = loja.pontos_atuais === null;
 
@@ -117,7 +124,7 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
         )}
       </div>
 
-      {logado && (
+      {podeAjustarAlerta && (
         <div className="acoes-do-cartao">
           <Link
             className="botao secundario"
@@ -137,7 +144,8 @@ export default async function Pagina({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q = "" } = await searchParams;
-  const logado = await temSessao();
+  const [logado, alertasEscondidos] = await Promise.all([temSessao(), telaDeAlertasEscondida()]);
+  const podeAjustarAlerta = logado && !alertasEscondidos;
 
   let execucao: Awaited<ReturnType<typeof ultimaExecucao>> = null;
   let todas: PontuacaoDeLoja[] = [];
@@ -258,7 +266,7 @@ export default async function Pagina({
             <h2>Turbinadas agora</h2>
             <div className="lista-grade">
               {alertadas.map((loja) => (
-                <Loja key={`alerta-${loja.nome}`} loja={loja} logado={logado} />
+                <Loja key={`alerta-${loja.nome}`} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
               ))}
             </div>
           </>
@@ -278,7 +286,7 @@ export default async function Pagina({
             <h2>{categoria}</h2>
             <div className="lista-grade">
               {lojasDaCategoria.map((loja) => (
-                <Loja key={loja.nome} loja={loja} logado={logado} />
+                <Loja key={loja.nome} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
               ))}
             </div>
           </section>

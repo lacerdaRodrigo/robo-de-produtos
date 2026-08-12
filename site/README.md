@@ -71,11 +71,13 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 | `/` | Painel | público | Todas as suas lojas, turbinadas primeiro, com busca por `?q=` |
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
-| `/avisos` | Alertas | sessão | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
+| `/avisos` | Alertas | sessão, escondível | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
 | `/lojas` | Lojas | sessão | Adicionar; remover em duas etapas; **Forçar atualização** |
-| `/configuracoes` | — (ícone de engrenagem) | sessão | Liga/desliga pedaços da interface — hoje só o aviso opcional no cadastro |
+| `/configuracoes` | — (ícone de engrenagem) | sessão | Liga/desliga pedaços da interface |
 
 **O aviso próprio no cadastro é opcional — e está desligado por padrão (V2.3.4).** Existe desde que o limiar por loja virou possível: os campos "vezes acima do normal" e "mínimo de pontos" apareciam direto no formulário de `/lojas`, em branco. Mas a calibragem do limiar global (RN27/28, ver `docs/PENDENCIAS.md`) ainda não fechou, e decidir 132 limiares antes disso é a armadilha que o PRD-V2 §6.1 avisa para evitar. A flag `aviso_opcional_no_cadastro` controla isso — liga em `/configuracoes`, ícone de engrenagem no cabeçalho. Guardada em cookie (`lib/flags.ts`), igual o tema, não no banco: é preferência de quem mexe no site, não dado que o robô lê, então não precisa de tabela nem migração. Desligada, o cadastro fica só com nome, categoria e apelidos; `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada, com ou sem a flag.
+
+**A tela de Alertas inteira pode ficar escondida — e por padrão continua visível, como sempre foi.** É a mesma calibragem pendente de RN27/28 que motivou o aviso opcional acima, só que aplicada à tela inteira em vez de um campo: quem preferir não ver "Quando me avisar" até decidir usar limiar por loja liga `esconder_tela_alertas` em `/configuracoes`. Ligada, some "Alertas" do cabeçalho e do rodapé, some o botão "Ajustar alerta" dos cartões do Painel, e a rota `/avisos` redireciona para `/` mesmo digitada direto — nenhuma tela alcançável só pela URL vale aqui também. Mesmo mecanismo de cookie do `lib/flags.ts`, sem tabela nem migração.
 
 **Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
 
@@ -97,11 +99,14 @@ Botão no cabeçalho, ao lado de Entrar/Sair — cicla **automático → claro �
 
 É um `<form>` de verdade, servido por uma Server Action (`acaoAlternarTema` em `app/acoes.ts`) — funciona com JavaScript desligado (RNF14), igual todo o resto do site. `app/layout.tsx` lê o cookie no servidor e escreve `data-tema` na tag `<html>`; `globals.css` decide a paleta a partir disso, sem nenhuma linha de JavaScript no navegador.
 
-## Configurações (V2.3.4)
+## Configurações (V2.3.4+)
 
-Ícone de engrenagem no cabeçalho, ao lado do de tema — leva para `/configuracoes`. É onde ficam as flags de funcionalidade: hoje só o aviso opcional no cadastro de loja (`/lojas`), desligado por padrão até a calibragem do limiar global fechar (RN27/28, ver `docs/PENDENCIAS.md`).
+Ícone de engrenagem no cabeçalho, ao lado do de tema — leva para `/configuracoes`. É onde ficam as flags de funcionalidade:
 
-Mesma ideia do tema — `lib/flags.ts` guarda a flag em cookie, não no banco. É preferência de quem edita o site, não regra que o robô consulta, então não precisa de tabela nem migração pra existir. Server Action de verdade (`acaoSalvarConfiguracoes` em `app/configuracoes/acoes.ts`), funciona sem JavaScript.
+- **Aviso opcional no cadastro de loja** (`/lojas`) — desligado por padrão, até a calibragem do limiar global fechar (RN27/28, ver `docs/PENDENCIAS.md`).
+- **Esconder a tela de Alertas** — desligado por padrão, a tela continua visível como sempre foi; quem ligar o interruptor esconde "Alertas" do menu, do rodapé e do botão "Ajustar alerta" no Painel, e bloqueia a rota `/avisos`.
+
+Mesma ideia do tema — `lib/flags.ts` guarda cada flag num cookie próprio, não no banco. É preferência de quem edita o site, não regra que o robô consulta, então não precisa de tabela nem migração pra existir. Server Action de verdade (`acaoSalvarConfiguracoes` em `app/configuracoes/acoes.ts`), funciona sem JavaScript.
 
 ## Tooltips sem JavaScript
 

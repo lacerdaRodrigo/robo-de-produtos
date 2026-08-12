@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { telaDeAlertasEscondida } from "@/lib/flags";
 import { temSessao } from "@/lib/sessao";
 import { temaAtual, type Tema } from "@/lib/tema";
 import { acaoAlternarTema, acaoSair } from "../acoes";
@@ -28,10 +29,15 @@ const ROTULO_DO_TEMA: Record<Tema, string> = {
 };
 
 export async function Cabecalho({ atual }: { atual: string }) {
-  const [logado, tema] = await Promise.all([temSessao(), temaAtual()]);
-  const itens = logado
-    ? [PUBLICAS[0], ...PRIVADAS, PUBLICAS[1]]
-    : PUBLICAS;
+  const [logado, tema, alertasEscondidos] = await Promise.all([
+    temSessao(),
+    temaAtual(),
+    telaDeAlertasEscondida(),
+  ]);
+  const privadas = alertasEscondidos
+    ? PRIVADAS.filter((item) => item.href !== "/avisos")
+    : PRIVADAS;
+  const itens = logado ? [PUBLICAS[0], ...privadas, PUBLICAS[1]] : PUBLICAS;
 
   return (
     <header className="topo">
