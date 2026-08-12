@@ -92,23 +92,6 @@ export default async function PaginaDeLojas({
           </p>
         )}
 
-        <div className="bloco destaque">
-          <div className="linha">
-            <div>
-              <strong>Terminou de mexer?</strong>
-              <p className="ajuda-do-campo" style={{ margin: 0 }}>
-                O robô lê a Livelo agora e a lista de pontuação já sai com as suas mudanças.
-                Sem isso, elas entram no próximo horário: 9h, 14h ou 20h.
-              </p>
-            </div>
-            <form action={acaoAtualizarAgora}>
-              <button type="submit" disabled={!podeDisparar || falta > 0}>
-                {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
-              </button>
-            </form>
-          </div>
-        </div>
-
         <h2>Adicionar loja</h2>
         <form action={acaoAdicionarLoja} className="bloco">
           <div className="grade-2col">
@@ -246,6 +229,23 @@ export default async function PaginaDeLojas({
             </table>
           </div>
         )}
+
+        <div className="bloco destaque">
+          <div className="linha">
+            <div>
+              <strong>Terminou de mexer?</strong>
+              <p className="ajuda-do-campo" style={{ margin: 0 }}>
+                O robô lê a Livelo agora e a lista de pontuação já sai com as suas mudanças.
+                Sem isso, elas entram no próximo horário: 9h, 14h ou 20h.
+              </p>
+            </div>
+            <form action={acaoAtualizarAgora}>
+              <button type="submit" disabled={!podeDisparar || falta > 0}>
+                {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
+              </button>
+            </form>
+          </div>
+        </div>
 
         <Rodape versao={execucao?.versao} />
       </main>

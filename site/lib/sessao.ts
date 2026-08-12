@@ -83,6 +83,16 @@ export function origemDaRequisicao(cabecalhos: Headers): string {
   return encaminhado?.split(",")[0]?.trim() || "desconhecida";
 }
 
+/** Só volta para caminho interno. Sem isto, `?voltar=https://outro-site`
+ *  transformaria um redirecionamento num trampolim para fora — RN08
+ *  aplicado a rota. Usado por /entrar e pelo alternador de tema. */
+export function destinoSeguro(bruto: string | undefined | null): string {
+  if (!bruto || !bruto.startsWith("/") || bruto.startsWith("//")) {
+    return "/";
+  }
+  return bruto;
+}
+
 /**
  * Barreira das telas de edicao.
  *

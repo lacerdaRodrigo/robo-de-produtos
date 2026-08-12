@@ -35,8 +35,11 @@
   --toque: 44px; /* alvo minimo no celular, que e onde este site mais roda */
 }
 
+/* Tema (V2.3.3): "auto" nao grava cookie e segue o sistema — e o bloco
+   abaixo. Escolha explicita vira atributo em <html data-tema>, lido por
+   lib/tema.ts a partir do cookie, e vence tanto o claro quanto o escuro. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     --fundo: #0f1115;
     --superficie: #191c24;
     --superficie-2: #242833;
@@ -51,6 +54,22 @@
     --sombra: 0 4px 6px -1px rgb(0 0 0 / 30%);
     --sombra-hover: 0 10px 15px -3px rgb(0 0 0 / 50%);
   }
+}
+
+:root[data-tema="escuro"] {
+  --fundo: #0f1115;
+  --superficie: #191c24;
+  --superficie-2: #242833;
+  --superficie-rgb: 25, 28, 36;
+  --borda: #333845;
+  --texto: #f9fafb;
+  --suave: #9ca3af;
+  --acento: #fb7185;
+  --acento-fraco: #4c1d2e;
+  --urgente: #f87171;
+  --ok: #4ade80;
+  --sombra: 0 4px 6px -1px rgb(0 0 0 / 30%);
+  --sombra-hover: 0 10px 15px -3px rgb(0 0 0 / 50%);
 }
 
 * {
@@ -174,6 +193,19 @@ a:hover {
   height: 12px;
   border-radius: 50%;
   background: var(--acento);
+}
+
+/* Alternador de tema e Entrar/Sair, lado a lado no canto superior direito. */
+.acoes-do-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+}
+
+.botao-tema {
+  padding: 0;
+  width: var(--toque);
+  min-width: 0;
 }
 
 .menu {

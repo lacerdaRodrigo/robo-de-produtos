@@ -87,6 +87,14 @@ Exige `GITHUB_TOKEN_DISPARO` no ambiente: fine-grained, só este repositório, p
 
 **Trava de 5 minutos** entre disparos (tabela `disparo_manual`, migração 004). RNF02 é compromisso de conduta, não detalhe técnico: um botão sem trava viraria dezenas de requisições à Livelo numa tarde de cadastro. Pedido recusado pelo GitHub não consome a janela.
 
+Em `/lojas`, o bloco fica depois da tabela "Lojas cadastradas" — é a última coisa que se faz numa visita à tela, não a primeira, então não precisa competir por atenção com o formulário de cadastro.
+
+## Tema claro/escuro (V2.3.3)
+
+Botão no cabeçalho, ao lado de Entrar/Sair — cicla **automático → claro → escuro → automático** a cada clique. "Automático" segue `prefers-color-scheme` do sistema, sem gravar nada; escolher claro ou escuro grava um cookie (`tema`, `lib/tema.ts`) que vence tanto o claro quanto o escuro do sistema.
+
+É um `<form>` de verdade, servido por uma Server Action (`acaoAlternarTema` em `app/acoes.ts`) — funciona com JavaScript desligado (RNF14), igual todo o resto do site. `app/layout.tsx` lê o cookie no servidor e escreve `data-tema` na tag `<html>`; `globals.css` decide a paleta a partir disso, sem nenhuma linha de JavaScript no navegador.
+
 ## Tooltips sem JavaScript
 
 `app/componentes/dica.tsx`: um `<button>` com `?` e um balão irmão. O CSS mostra o balão em `:hover` (mouse) e em `:focus-within` (teclado e toque — clicar dá foco). Nenhum estado, nenhum script, e o texto continua no DOM para leitor de tela achar pelo `aria-describedby`. No celular o balão vira fixo na base da janela, senão vazaria a tela quando o `?` estivesse perto da borda.
