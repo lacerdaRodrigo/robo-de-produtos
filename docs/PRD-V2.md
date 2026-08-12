@@ -102,7 +102,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF14** | Extrair os dados dos parceiros a partir do payload JSON embutido na página, incluindo `parity`, `parityClub`, `parityBau`, `dateStart`, `dateEnd` e `activeCampaign` |
 | **RF15** | Servir um site com todas as lojas favoritas, suas pontuações atuais e as promoções em destaque |
 | **RF16** | Enviar e-mail **somente quando ao menos uma favorita cruzar o próprio limiar de alerta**. **Substitui RF10** |
-| **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja |
+| **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja. Uma tela por tarefa: `/avisos` para a régua, `/lojas` para o cadastro. **A tela usa linguagem comum** — "vezes acima do normal" e "mínimo de pontos" — e o termo técnico deste PRD aparece só no tooltip de ajuda |
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
 
@@ -163,6 +163,8 @@ O critério passa a comparar com `parityBau`, a pontuação normal declarada pel
 **Prova de que não vaza ruído.** `Claro`, `TIM` e `Decolar` dão 6 pontos com base 6, e `Natura` dá 4 com base 4. São pontuações altas permanentes, não oportunidades — nenhuma dispara. Um limiar absoluto de 5 mandaria `Claro` e `TIM` todo dia.
 
 Com padrão 2,0 e piso 4, a medição de 2026-08-09 produziria **um e-mail com 12 lojas**, de 126 favoritas.
+
+> **Vocabulário na tela:** este documento continua dizendo *multiplicador*, *piso* e *limiar*, porque são os nomes das colunas e dos campos no código. A interface não repete isso: ela diz "a pontuação precisa ficar N vezes acima do normal da loja" e "e valer no mínimo N pontos por real". Quem usa o site é uma pessoa só, e ela não deveria precisar do PRD aberto para ajustar um número.
 
 > **Recomendação de uso:** subir com o padrão global e **nenhuma sobrescrita**. Configurar 132 limiares na largada é armadilha — você chuta todos, erra a maioria e nunca revisa. Depois de duas ou três semanas, sobrescrever apenas as poucas lojas que incomodarem. A capacidade existe desde o primeiro dia; o uso dela deve ser preguiçoso.
 

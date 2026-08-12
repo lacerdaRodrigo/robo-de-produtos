@@ -194,6 +194,9 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-153 | Termina hoje no fuso certo (RN22) | A Vercel roda em UTC. Sem fixar Brasília, promoção que acaba 23h59 apareceria como "amanhã" | Data de hoje e data futura |
 | CT-154 | Idade do carimbo (RN26) | O carimbo só cumpre o papel se der para perceber que envelheceu — é o que sustenta MS6 | 30 min, 3 h, 20 h e 3 dias |
 | CT-155 | Pontuação inteira não ganha vírgula | `6`, não `6,00` | `pontos("6.000")` |
+| CT-156 | Busca ignora acento e caixa (RN03) | Quem digita no celular não põe acento. Mesma normalização do robô | "boticario", "BOTICÁRIO" e " renner " |
+| CT-157 | Busca aceita pedaço do nome ⚠️ | RN04 proíbe substring no **reconhecimento** da loja, onde um erro troca a pontuação de uma pela de outra. Na busca da tela não há esse risco: quem escolhe o resultado é o olho de quem procura | "pet" acha Petlove e Petz; "petl" acha só Petlove |
+| CT-158 | Âncora de categoria | O índice da página pula a rolagem de 130 lojas | "Marketplace / Varejo Geral" → `marketplace-varejo-geral` |
 
 Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 
@@ -240,7 +243,9 @@ O que conferir:
 | Em promoção | 31 | Zero por vários dias seguidos é suspeito (C07) |
 | Valores de `campanha` | `BAU`, `PROMOTION`, `CLUB`, `PROMOTION_CLUB` | Valor novo na lista significa regra nova da Livelo e RN23 desatualizada |
 
-**Passo 2b — o site, no navegador de verdade:** abrir a página publicada **com JavaScript ligado** e confirmar que as lojas aparecem. Parece redundante depois do passo 3 do e-mail, mas não é: em 2026-08-11 a página serviu HTML perfeito e ficou em branco no navegador, porque a CSP recusou os scripts inline do Next e o React apagou o que o servidor tinha mandado. `curl` não pega essa classe de defeito — só o navegador.
+**Passo 2b — o site, no navegador de verdade:** além do que vem abaixo, o passeio sem teclado: partindo da página inicial, chegar a **todas** as telas e voltar usando só cliques. Se alguma exigir digitar URL, é defeito.
+
+ abrir a página publicada **com JavaScript ligado** e confirmar que as lojas aparecem. Parece redundante depois do passo 3 do e-mail, mas não é: em 2026-08-11 a página serviu HTML perfeito e ficou em branco no navegador, porque a CSP recusou os scripts inline do Next e o React apagou o que o servidor tinha mandado. `curl` não pega essa classe de defeito — só o navegador.
 
 **Passo 3 — o e-mail (a parte que só o olho pega):** abrir o último e-mail recebido e conferir que a validade aparece (`Válido até dd/mm` ou `Termina hoje!`), que o rótulo do Clube bate com o caso (`exclusivo assinantes Clube` só quando a base não se moveu), que os pontos não têm cauda de `float` (`2,9`, nunca `2,9000000000000004`) e que o Gmail não cortou o fim da mensagem com "[Mensagem truncada]" (C05).
 
@@ -263,7 +268,7 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 | `teste_principal.py` | 25 | 27 |
 | `teste_fronteira.py` | 1 | 7 |
 | **Total (robô)** | **121** | **153** |
-| `site/testes/formato.teste.ts` | 5 | 7 |
+| `site/testes/formato.teste.ts` | 8 | 12 |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 

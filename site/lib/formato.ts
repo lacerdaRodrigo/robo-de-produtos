@@ -74,3 +74,35 @@ export function idade(iso: string): { texto: string; velho: boolean } {
   const dias = Math.floor(horas / 24);
   return { texto: dias === 1 ? "há 1 dia" : `há ${dias} dias`, velho: true };
 }
+
+/** RN03: mesma normalizacao do robo — acento, caixa e espaco nas bordas nao
+ *  podem separar "Boticário" de "boticario" na busca da pagina. */
+export function normalizar(texto: string): string {
+  return texto
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/** Filtro da busca (`?q=`). Vazio devolve tudo — busca sem termo nao esconde
+ *  nada, so recarrega a lista. */
+export function filtrarPorNome<T extends { nome: string; categoria?: string | null }>(
+  itens: T[],
+  termo: string,
+): T[] {
+  const alvo = normalizar(termo);
+  if (!alvo) {
+    return itens;
+  }
+  return itens.filter(
+    (item) =>
+      normalizar(item.nome).includes(alvo) ||
+      normalizar(item.categoria ?? "").includes(alvo),
+  );
+}
+
+/** Ancora da categoria no indice da pagina (`#beleza`). */
+export function ancora(categoria: string): string {
+  return normalizar(categoria).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}

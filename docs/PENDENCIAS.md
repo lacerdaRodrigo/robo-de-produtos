@@ -113,10 +113,20 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] Sem recurso de terceiros, sem logotipo de parceiro (RN25, PRD V2 §9.2) — verificado no HTML servido
 - [x] Funciona sem JavaScript (RNF14), formulários inclusive — verificado: 147 cartões no HTML com todas as `<script>` removidas
 
+### V2.3.1 — redesenho (feito)
+
+- [x] Uma tela por tarefa: `/` pontuação, `/avisos` régua, `/lojas` cadastro, `/ajuda` FAQ
+- [x] Linguagem comum na tela; o termo técnico do PRD ficou no tooltip
+- [x] Tooltips `(?)` sem JavaScript, funcionando no toque e no teclado
+- [x] Ajuda com nove perguntas, escrita para quem esqueceu como o sistema decide
+- [x] Ícone de entrar no topo; login devolve para a tela de onde saiu
+- [x] Busca por nome e índice de categorias, que é o que torna 130 lojas navegáveis no celular
+- [x] Nenhuma tela alcançável só digitando URL
+
 ### Só você pode fazer
 
-- [ ] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**
-- [ ] Cadastrar `SENHA_SITE` (longa e aleatória) e `SEGREDO_SESSAO` nas Environment Variables, além de `DATABASE_URL`
+- [x] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**
+- [x] Cadastrar `SENHA_SITE` (longa e aleatória) e `SEGREDO_SESSAO` nas Environment Variables, além de `DATABASE_URL`
 - [ ] Abrir a página publicada e conferir o carimbo, RN30 e o comportamento sem JavaScript
 
 ---

@@ -1,11 +1,23 @@
+import Link from "next/link";
+
 import { pontuacoes, ultimaExecucao, type PontuacaoDeLoja } from "@/lib/banco";
-import { dia, idade, dataHora, pontos, rotuloDoClube, terminaHoje } from "@/lib/formato";
+import {
+  ancora,
+  dia,
+  dataHora,
+  filtrarPorNome,
+  idade,
+  pontos,
+  rotuloDoClube,
+  terminaHoje,
+} from "@/lib/formato";
+import { temSessao } from "@/lib/sessao";
+import { Cabecalho } from "./componentes/cabecalho";
+import { Dica } from "./componentes/dica";
 import { Rodape } from "./rodape";
 
-// Renderizada a cada visita, nao servida de cache: o nonce da CSP muda por
-// requisicao (ver middleware.ts) e nonce nao sobrevive a pagina estatica.
-// O custo e uma consulta ao banco por visita — irrelevante no volume deste
-// projeto, e em troca o carimbo de RN26 nunca mostra idade de cache.
+// Renderizada a cada visita: o nonce da CSP muda por requisicao (ver
+// middleware.ts) e nonce nao sobrevive a pagina estatica.
 export const dynamic = "force-dynamic";
 
 function Validade({ fim }: { fim: string | null }) {
@@ -15,47 +27,81 @@ function Validade({ fim }: { fim: string | null }) {
   return terminaHoje(fim) ? (
     <span className="etiqueta hoje">Termina hoje!</span>
   ) : (
-    <span className="etiqueta">Válido até {dia(fim)}</span>
+    <span className="etiqueta">Até {dia(fim)}</span>
   );
 }
 
-function Loja({ loja }: { loja: PontuacaoDeLoja }) {
+function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
   const rotuloClube = rotuloDoClube(loja.campanha);
   const naoEncontrada = loja.pontos_atuais === null;
 
   return (
     <article className={loja.alertou ? "cartao alertou" : "cartao"}>
       <div className="linha">
-        <span className="nome">
-          {loja.link ? <a href={loja.link}>{loja.nome}</a> : loja.nome}
-        </span>
-        <span className="pontos">
+        {loja.link ? (
+          <a className="nome" href={loja.link}>
+            {loja.nome}
+          </a>
+        ) : (
+          <span className="nome">{loja.nome}</span>
+        )}
+        <span className="pontos numero">
           {naoEncontrada
             ? "não encontrada"
             : `${loja.prefixo_ate ? "Até " : ""}${pontos(loja.pontos_atuais)} pontos por ${loja.moeda} 1`}
         </span>
       </div>
 
-      {!naoEncontrada && (
-        // RN30: atual, base e o valor que dispara o alerta, lado a lado.
-        // Sem os tres, o limiar desregula em silencio.
-        <p className="detalhe">
-          base {pontos(loja.pontos_base)} · dispara em {pontos(loja.valor_de_disparo)}
+      {!naoEncontrada ? (
+        // RN30: atual, normal da loja e o valor que dispara o aviso, lado a
+        // lado. Sem os tres, o ajuste desregula sem ninguem perceber.
+        <p className="detalhe numero">
+          normal da loja: {pontos(loja.pontos_base)} · avisa a partir de{" "}
+          {pontos(loja.valor_de_disparo)}
           {loja.pontos_clube !== null && (
-            <> · Clube {pontos(loja.pontos_clube)}{rotuloClube ? ` (${rotuloClube})` : ""}</>
+            <>
+              {" "}
+              · Clube: {pontos(loja.pontos_clube)}
+              {rotuloClube ? ` (${rotuloClube})` : ""}
+            </>
           )}
+        </p>
+      ) : (
+        <p className="detalhe">
+          Não apareceu na página da Livelo nesta execução. Costuma ser mudança de grafia do
+          nome. <Link href="/ajuda#nao-encontrada">Entenda</Link>
         </p>
       )}
 
-      <p className="detalhe">
-        {loja.alertou && <span className="etiqueta alerta">alerta</span>}{" "}
-        <Validade fim={loja.fim_promocao} />
-      </p>
+      {(loja.alertou || loja.fim_promocao) && (
+        <p className="detalhe">
+          {loja.alertou && <span className="etiqueta alerta">avisou</span>}{" "}
+          <Validade fim={loja.fim_promocao} />
+        </p>
+      )}
+
+      {logado && (
+        <div className="acoes-do-cartao">
+          <Link
+            className="botao secundario"
+            href={`/avisos?loja=${encodeURIComponent(loja.nome)}`}
+          >
+            Ajustar aviso desta loja
+          </Link>
+        </div>
+      )}
     </article>
   );
 }
 
-export default async function Pagina() {
+export default async function Pagina({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q = "" } = await searchParams;
+  const logado = await temSessao();
+
   let execucao: Awaited<ReturnType<typeof ultimaExecucao>> = null;
   let falhaNoBanco = false;
   try {
@@ -66,34 +112,25 @@ export default async function Pagina() {
     falhaNoBanco = true;
   }
 
-  if (falhaNoBanco) {
+  if (falhaNoBanco || !execucao) {
     return (
-      <main>
-        <h1>Pontuação Livelo</h1>
-        <p className="aviso">
-          Não deu para ler o banco agora. A página volta sozinha quando ele responder — nada
-          foi perdido, o robô continua registrando cada execução.
-        </p>
-        <Rodape />
-      </main>
+      <>
+        <Cabecalho atual="/" />
+        <main className="pagina">
+          <h1>Pontuação Livelo</h1>
+          <p className="faixa ruim">
+            {falhaNoBanco
+              ? "Não deu para ler o banco agora. A página volta sozinha quando ele responder — nada foi perdido, o robô continua registrando cada execução."
+              : "Nenhuma execução registrada ainda. A página fica assim até o robô rodar pela primeira vez com o banco configurado."}
+          </p>
+          <Rodape />
+        </main>
+      </>
     );
   }
 
-  if (!execucao) {
-    return (
-      <main>
-        <h1>Pontuação Livelo</h1>
-        <p className="aviso">
-          Nenhuma execução registrada ainda. A página fica assim até o robô rodar pela
-          primeira vez com o banco configurado — melhor dizer isso do que mostrar uma lista
-          vazia que parece atualizada.
-        </p>
-        <Rodape />
-      </main>
-    );
-  }
-
-  const lojas = await pontuacoes(execucao.id);
+  const todas = await pontuacoes(execucao.id);
+  const lojas = filtrarPorNome(todas, q);
   const alertadas = lojas.filter((l) => l.alertou);
   const carimbo = idade(execucao.momento);
 
@@ -104,41 +141,106 @@ export default async function Pagina() {
   }
 
   return (
-    <main>
-      <h1>Pontuação Livelo</h1>
-      {/* RN26: o carimbo e obrigatorio e sempre visivel. E o que sustenta MS6
-          — sem ele, pagina velha e pagina mentirosa. */}
-      <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
-        Atualizado {carimbo.texto} · {dataHora(execucao.momento)} · {execucao.parceiros_lidos}{" "}
-        parceiros lidos · {lojas.length} favoritas
-      </p>
-
-      <h2>
-        {alertadas.length > 0
-          ? `${alertadas.length} ${alertadas.length === 1 ? "loja turbinada" : "lojas turbinadas"}`
-          : "Nenhuma loja turbinada agora"}
-      </h2>
-      {alertadas.length === 0 ? (
-        <p className="detalhe">
-          Nenhuma favorita cruzou o próprio limiar nesta execução. A lista completa continua
-          abaixo, com a pontuação de cada uma.
+    <>
+      <Cabecalho atual="/" />
+      <main className="pagina">
+        <h1>Suas lojas hoje</h1>
+        {/* RN26: o carimbo e obrigatorio e sempre visivel. Sem ele, pagina
+            velha e pagina mentirosa. */}
+        <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
+          Atualizado {carimbo.texto}, em {dataHora(execucao.momento)}
+          {carimbo.velho && " — o robô pode estar parado"}
         </p>
-      ) : (
-        alertadas.map((loja) => <Loja key={`alerta-${loja.nome}`} loja={loja} />)
-      )}
 
-      {/* RN24: todas as favoritas, em promocao ou nao. E o motivo do site
-          existir — responder "quanto a Renner da hoje?" sem abrir a Livelo. */}
-      {[...porCategoria.entries()].map(([categoria, lojasDaCategoria]) => (
-        <section key={categoria}>
-          <h2>{categoria}</h2>
-          {lojasDaCategoria.map((loja) => (
-            <Loja key={loja.nome} loja={loja} />
-          ))}
+        <section className="resumo">
+          <div className="item">
+            <span className="valor destaque numero">{alertadas.length}</span>
+            <span className="rotulo">
+              turbinadas{" "}
+              <Dica titulo="loja turbinada" secao="como-decide">
+                Loja cuja pontuação de hoje passou do que você definiu em{" "}
+                <strong>Quando me avisar</strong>: precisa estar algumas vezes acima do
+                normal daquela loja e valer um mínimo de pontos.
+              </Dica>
+            </span>
+          </div>
+          <div className="item">
+            <span className="valor numero">{todas.length}</span>
+            <span className="rotulo">lojas suas</span>
+          </div>
+          <div className="item">
+            <span className="valor numero">{execucao.parceiros_lidos}</span>
+            <span className="rotulo">
+              parceiros lidos{" "}
+              <Dica titulo="parceiros lidos" secao="como-decide">
+                Quantos parceiros a Livelo tinha na página quando o robô passou. Suas lojas
+                são um recorte dessa lista.
+              </Dica>
+            </span>
+          </div>
         </section>
-      ))}
 
-      <Rodape versao={execucao.versao} />
-    </main>
+        <form className="busca" action="/" method="get" role="search">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q}
+            placeholder="Procurar loja ou categoria"
+            aria-label="Procurar loja ou categoria"
+          />
+          <button type="submit" className="secundario">
+            Procurar
+          </button>
+        </form>
+
+        {q && (
+          <p className="detalhe">
+            {lojas.length === 0
+              ? `Nenhuma loja sua combina com "${q}".`
+              : `${lojas.length} de ${todas.length} lojas combinam com "${q}".`}{" "}
+            <Link href="/">Ver todas de novo</Link>
+          </p>
+        )}
+
+        {!q && porCategoria.size > 1 && (
+          <nav className="indice" aria-label="Ir para categoria">
+            {[...porCategoria.keys()].map((categoria) => (
+              <a key={categoria} href={`#${ancora(categoria)}`}>
+                {categoria}
+              </a>
+            ))}
+          </nav>
+        )}
+
+        {alertadas.length > 0 && (
+          <>
+            <h2>Turbinadas agora</h2>
+            {alertadas.map((loja) => (
+              <Loja key={`alerta-${loja.nome}`} loja={loja} logado={logado} />
+            ))}
+          </>
+        )}
+
+        {alertadas.length === 0 && !q && (
+          <p className="vazio">
+            Nenhuma loja sua cruzou o próprio limite nesta execução. A lista completa continua
+            abaixo, com a pontuação de cada uma.
+          </p>
+        )}
+
+        {/* RN24: todas as favoritas, em promocao ou nao. E o motivo do site
+            existir — responder "quanto a Renner da hoje?" sem abrir a Livelo. */}
+        {[...porCategoria.entries()].map(([categoria, lojasDaCategoria]) => (
+          <section key={categoria} id={ancora(categoria)}>
+            <h2>{categoria}</h2>
+            {lojasDaCategoria.map((loja) => (
+              <Loja key={loja.nome} loja={loja} logado={logado} />
+            ))}
+          </section>
+        ))}
+
+        <Rodape versao={execucao.versao} />
+      </main>
+    </>
   );
 }
