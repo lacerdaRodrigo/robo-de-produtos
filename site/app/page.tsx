@@ -3,6 +3,7 @@ import Link from "next/link";
 import { pontuacoes, ultimaExecucao, type PontuacaoDeLoja } from "@/lib/banco";
 import {
   ancora,
+  barraDeProgresso,
   dia,
   dataHora,
   filtrarPorNome,
@@ -31,6 +32,33 @@ function Validade({ fim }: { fim: string | null }) {
   );
 }
 
+function BarraDeProgresso({ loja }: { loja: PontuacaoDeLoja }) {
+  const barra = barraDeProgresso(loja.pontos_atuais, loja.pontos_base, loja.valor_de_disparo);
+  if (!barra) {
+    return null;
+  }
+  return (
+    <div className="barra-progresso">
+      <div className="barra-fundo">
+        <div
+          className={loja.alertou ? "barra-atual alerta" : "barra-atual"}
+          style={{ width: `${barra.atual}%` }}
+        />
+        <div className="marcador-normal" style={{ left: `${barra.base}%` }} title={`Normal: ${pontos(loja.pontos_base)}`} />
+        <div
+          className="marcador-normal alvo"
+          style={{ left: `${barra.limiar}%` }}
+          title={`Avisa a partir de: ${pontos(loja.valor_de_disparo)}`}
+        />
+      </div>
+      <div className="barra-legendas">
+        <span>Normal: {pontos(loja.pontos_base)}</span>
+        <span>Aviso: {pontos(loja.valor_de_disparo)}</span>
+      </div>
+    </div>
+  );
+}
+
 function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
   const rotuloClube = rotuloDoClube(loja.campanha);
   const naoEncontrada = loja.pontos_atuais === null;
@@ -45,27 +73,22 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
         ) : (
           <span className="nome">{loja.nome}</span>
         )}
-        <span className="pontos numero">
-          {naoEncontrada
-            ? "não encontrada"
-            : `${loja.prefixo_ate ? "Até " : ""}${pontos(loja.pontos_atuais)} pontos por ${loja.moeda} 1`}
-        </span>
+        <div className="pontos-container">
+          <span className="pontos numero">
+            {naoEncontrada ? "—" : `${loja.prefixo_ate ? "Até " : ""}${pontos(loja.pontos_atuais)}`}
+          </span>
+          {!naoEncontrada && (
+            <span className="pontos-sub">
+              pontos por {loja.moeda} 1
+            </span>
+          )}
+        </div>
       </div>
 
       {!naoEncontrada ? (
         // RN30: atual, normal da loja e o valor que dispara o aviso, lado a
-        // lado. Sem os tres, o ajuste desregula sem ninguem perceber.
-        <p className="detalhe numero">
-          normal da loja: {pontos(loja.pontos_base)} · avisa a partir de{" "}
-          {pontos(loja.valor_de_disparo)}
-          {loja.pontos_clube !== null && (
-            <>
-              {" "}
-              · Clube: {pontos(loja.pontos_clube)}
-              {rotuloClube ? ` (${rotuloClube})` : ""}
-            </>
-          )}
-        </p>
+        // lado — agora também como barra visual, não só como texto.
+        <BarraDeProgresso loja={loja} />
       ) : (
         <p className="detalhe">
           Não apareceu na página da Livelo nesta execução. Costuma ser mudança de grafia do
@@ -73,12 +96,20 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
         </p>
       )}
 
-      {(loja.alertou || loja.fim_promocao) && (
-        <p className="detalhe">
-          {loja.alertou && <span className="etiqueta alerta">avisou</span>}{" "}
-          <Validade fim={loja.fim_promocao} />
-        </p>
-      )}
+      <div className="detalhe-rodape">
+        {!naoEncontrada && loja.pontos_clube !== null && (
+          <p className="detalhe numero">
+            Clube: {pontos(loja.pontos_clube)}
+            {rotuloClube ? ` (${rotuloClube})` : ""}
+          </p>
+        )}
+        {(loja.alertou || loja.fim_promocao) && (
+          <div className="etiqueta-container">
+            {loja.alertou && <span className="etiqueta alerta">Alerta ativo</span>}
+            <Validade fim={loja.fim_promocao} />
+          </div>
+        )}
+      </div>
 
       {logado && (
         <div className="acoes-do-cartao">
@@ -86,7 +117,7 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
             className="botao secundario"
             href={`/avisos?loja=${encodeURIComponent(loja.nome)}`}
           >
-            Ajustar aviso desta loja
+            Ajustar alerta
           </Link>
         </div>
       )}
@@ -144,39 +175,39 @@ export default async function Pagina({
     <>
       <Cabecalho atual="/" />
       <main className="pagina">
-        <h1>Suas lojas hoje</h1>
+        <h1>Visão Geral</h1>
         {/* RN26: o carimbo e obrigatorio e sempre visivel. Sem ele, pagina
             velha e pagina mentirosa. */}
         <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
-          Atualizado {carimbo.texto}, em {dataHora(execucao.momento)}
+          Sincronizado {carimbo.texto} ({dataHora(execucao.momento)})
           {carimbo.velho && " — o robô pode estar parado"}
         </p>
 
         <section className="resumo">
-          <div className="item">
-            <span className="valor destaque numero">{alertadas.length}</span>
+          <div className="item turbinadas">
             <span className="rotulo">
-              turbinadas{" "}
+              Turbinadas hoje{" "}
               <Dica titulo="loja turbinada" secao="como-decide">
                 Loja cuja pontuação de hoje passou do que você definiu em{" "}
                 <strong>Quando me avisar</strong>: precisa estar algumas vezes acima do
                 normal daquela loja e valer um mínimo de pontos.
               </Dica>
             </span>
+            <span className="valor destaque numero">{alertadas.length}</span>
           </div>
           <div className="item">
+            <span className="rotulo">Lojas monitoradas</span>
             <span className="valor numero">{todas.length}</span>
-            <span className="rotulo">lojas suas</span>
           </div>
           <div className="item">
-            <span className="valor numero">{execucao.parceiros_lidos}</span>
             <span className="rotulo">
-              parceiros lidos{" "}
+              Parceiros lidos{" "}
               <Dica titulo="parceiros lidos" secao="como-decide">
                 Quantos parceiros a Livelo tinha na página quando o robô passou. Suas lojas
                 são um recorte dessa lista.
               </Dica>
             </span>
+            <span className="valor numero">{execucao.parceiros_lidos}</span>
           </div>
         </section>
 
@@ -215,9 +246,11 @@ export default async function Pagina({
         {alertadas.length > 0 && (
           <>
             <h2>Turbinadas agora</h2>
-            {alertadas.map((loja) => (
-              <Loja key={`alerta-${loja.nome}`} loja={loja} logado={logado} />
-            ))}
+            <div className="lista-grade">
+              {alertadas.map((loja) => (
+                <Loja key={`alerta-${loja.nome}`} loja={loja} logado={logado} />
+              ))}
+            </div>
           </>
         )}
 
@@ -233,9 +266,11 @@ export default async function Pagina({
         {[...porCategoria.entries()].map(([categoria, lojasDaCategoria]) => (
           <section key={categoria} id={ancora(categoria)}>
             <h2>{categoria}</h2>
-            {lojasDaCategoria.map((loja) => (
-              <Loja key={loja.nome} loja={loja} logado={logado} />
-            ))}
+            <div className="lista-grade">
+              {lojasDaCategoria.map((loja) => (
+                <Loja key={loja.nome} loja={loja} logado={logado} />
+              ))}
+            </div>
           </section>
         ))}
 

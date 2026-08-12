@@ -65,13 +65,13 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 
 ## Telas
 
-| URL | Nome | Acesso | Faz |
+| URL | Nome no menu | Acesso | Faz |
 |---|---|---|---|
-| `/` | Pontuação | público | Todas as suas lojas, turbinadas primeiro, com busca por `?q=` |
+| `/` | Painel | público | Todas as suas lojas, turbinadas primeiro, com busca por `?q=` |
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
-| `/avisos` | Quando me avisar | sessão | Padrão de todas as lojas e exceções |
-| `/lojas` | Cadastrar lojas | sessão | Adicionar, com aviso próprio opcional; remover em duas etapas; **Atualizar agora** |
+| `/avisos` | Alertas | sessão | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
+| `/lojas` | Lojas | sessão | Adicionar, com aviso próprio opcional; remover em duas etapas; **Forçar atualização** |
 
 **O aviso próprio é opcional no cadastro.** Antes, definir o limiar de uma loja nova exigia passar por `/avisos` numa segunda etapa depois de criá-la. Os campos "vezes acima do normal" e "mínimo de pontos" agora aparecem direto no formulário de `/lojas`, em branco por padrão — deixar em branco segue o padrão global (RN28), então cadastrar uma loja para só testar o sistema não obriga decidir um limiar na hora. `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada.
 
@@ -79,7 +79,7 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 
 **A linguagem da tela não é a do PRD.** O documento diz *multiplicador*, *piso* e *limiar*, porque são os nomes das colunas; a interface diz "vezes acima do normal" e "mínimo de pontos", e o termo técnico fica dentro do tooltip. Quem usa o site é uma pessoa só, e ela não deveria precisar do PRD aberto.
 
-## O botão "Atualizar agora"
+## O botão "Forçar atualização"
 
 Pede ao GitHub que rode o robô na hora, em vez de esperar 9h, 14h ou 20h. Passa pelo Actions (`lib/github.ts`) porque a Vercel roda JavaScript e o robô é Python — reimplementar a leitura da Livelo aqui duplicaria RN21, RN23 e RN27 em duas linguagens, e duas fontes da verdade para a mesma regra é como se cria divergência silenciosa.
 

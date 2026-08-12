@@ -203,6 +203,7 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-157 | Busca aceita pedaço do nome ⚠️ | RN04 proíbe substring no **reconhecimento** da loja, onde um erro troca a pontuação de uma pela de outra. Na busca da tela não há esse risco: quem escolhe o resultado é o olho de quem procura | "pet" acha Petlove e Petz; "petl" acha só Petlove |
 | CT-158 | Âncora de categoria | O índice da página pula a rolagem de 130 lojas | "Marketplace / Varejo Geral" → `marketplace-varejo-geral` |
 | CT-164 | Limiar em branco vira `null`, nunca `"0"` (RN28) ⚠️ | Campo vazio e zero são coisas diferentes: um segue o padrão global, o outro é um limiar real de zero pontos. `numeroOuPadrao` é compartilhado entre `/lojas` (cadastro) e `/avisos` (exceção), então o mesmo comportamento vale nas duas telas | `numeroOuPadrao("")` → `null`; `numeroOuPadrao("2,5")` → `"2.5"`; `numeroOuPadrao("-1")` e `numeroOuPadrao("abc")` lançam erro |
+| CT-165 | Barra de progresso do cartão (RN30, redesenho V2.3.3) | `atual`/`base` ausentes (loja não encontrada) devolvem `null`, sem dividir por zero; a largura nunca passa de 100% mesmo com o limiar bem acima do teto calculado | `barraDeProgresso(null, ...)` → `null`; `barraDeProgresso("6", "1", "4")` com valores dentro de 0–100; teto vindo de zero não gera `NaN`/`Infinity` |
 
 Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 
