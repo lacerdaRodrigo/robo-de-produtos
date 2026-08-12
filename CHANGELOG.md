@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.6.0 (2026-08-12)
+
+### Features
+
+- Site publico com edicao protegida (V2.3, metade 2)
+  ([`2f15a01`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2f15a018bc954b8973680ae3c66bd501afd14c6c))
+
+
 ## v1.5.0 (2026-08-12)
 
 ### Features
