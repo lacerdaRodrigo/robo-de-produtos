@@ -71,9 +71,10 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
 | `/avisos` | Alertas | sessão | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
-| `/lojas` | Lojas | sessão | Adicionar, com aviso próprio opcional; remover em duas etapas; **Forçar atualização** |
+| `/lojas` | Lojas | sessão | Adicionar; remover em duas etapas; **Forçar atualização** |
+| `/configuracoes` | — (ícone de engrenagem) | sessão | Liga/desliga pedaços da interface — hoje só o aviso opcional no cadastro |
 
-**O aviso próprio é opcional no cadastro.** Antes, definir o limiar de uma loja nova exigia passar por `/avisos` numa segunda etapa depois de criá-la. Os campos "vezes acima do normal" e "mínimo de pontos" agora aparecem direto no formulário de `/lojas`, em branco por padrão — deixar em branco segue o padrão global (RN28), então cadastrar uma loja para só testar o sistema não obriga decidir um limiar na hora. `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada.
+**O aviso próprio no cadastro é opcional — e está desligado por padrão (V2.3.4).** Existe desde que o limiar por loja virou possível: os campos "vezes acima do normal" e "mínimo de pontos" apareciam direto no formulário de `/lojas`, em branco. Mas a calibragem do limiar global (RN27/28, ver `docs/PENDENCIAS.md`) ainda não fechou, e decidir 132 limiares antes disso é a armadilha que o PRD-V2 §6.1 avisa para evitar. A flag `aviso_opcional_no_cadastro` (tabela `preferencia`, migração `005`) controla isso — liga em `/configuracoes`, ícone de engrenagem no cabeçalho. Desligada, o cadastro fica só com nome, categoria e apelidos; `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada, com ou sem a flag.
 
 **Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
 

@@ -195,14 +195,15 @@ a:hover {
   background: var(--acento);
 }
 
-/* Alternador de tema e Entrar/Sair, lado a lado no canto superior direito. */
+/* Alternador de tema, engrenagem de configurações e Entrar/Sair, lado a
+   lado no canto superior direito. */
 .acoes-do-topo {
   display: flex;
   align-items: center;
   gap: var(--e1);
 }
 
-.botao-tema {
+.botao-icone {
   padding: 0;
   width: var(--toque);
   min-width: 0;

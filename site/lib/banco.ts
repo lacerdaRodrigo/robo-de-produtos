@@ -56,6 +56,15 @@ export type Preferencias = {
   assinante_clube: boolean;
 };
 
+/** Flags de funcionalidade (V2.3.4) — não são regra de alerta (RN27/28),
+ *  são interruptor de que pedaço da interface aparece. Vivem na mesma
+ *  tabela `preferencia` por serem a mesma forma (chave/valor), mas com
+ *  leitura e escrita próprias: têm tela e ciclo de vida diferentes das
+ *  preferências de alerta. */
+export type Configuracoes = {
+  avisoOpcionalNoCadastro: boolean;
+};
+
 /** RN26: o carimbo da pagina. Sem execucao registrada, a pagina diz isso em
  *  vez de fingir que esta atualizada. */
 export async function ultimaExecucao(): Promise<Execucao | null> {
@@ -138,6 +147,20 @@ export async function preferencias(): Promise<Preferencias> {
   };
 }
 
+/** Sem a linha no banco (ainda não foi ligada nem desligada), o padrão é
+ *  desligado (V2.3.4): a calibragem do limiar global (docs/PENDENCIAS.md)
+ *  ainda está em andamento, e decidir 132 limiares por loja antes disso
+ *  é a armadilha que o PRD-V2 §6.1 já avisa para não cair. */
+export async function configuracoes(): Promise<Configuracoes> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT valor FROM preferencia WHERE chave = 'aviso_opcional_no_cadastro'
+  `) as { valor: string }[];
+  return {
+    avisoOpcionalNoCadastro: (linhas[0]?.valor ?? "false").toLowerCase() === "true",
+  };
+}
+
 // --- Edicao (RF17). Tudo abaixo exige sessao — ver lib/sessao.ts. ---
 
 export async function salvarPreferencias(entrada: {
@@ -151,6 +174,15 @@ export async function salvarPreferencias(entrada: {
       ('multiplicador_padrao', ${entrada.multiplicador}),
       ('piso_pontos_padrao', ${entrada.piso}),
       ('assinante_clube', ${entrada.assinanteClube ? "true" : "false"})
+    ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor
+  `;
+}
+
+export async function salvarConfiguracoes(entrada: Configuracoes): Promise<void> {
+  const sql = conectar();
+  await sql`
+    INSERT INTO preferencia (chave, valor) VALUES
+      ('aviso_opcional_no_cadastro', ${entrada.avisoOpcionalNoCadastro ? "true" : "false"})
     ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor
   `;
 }
