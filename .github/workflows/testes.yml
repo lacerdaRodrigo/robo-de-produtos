@@ -33,3 +33,37 @@ jobs:
       # PRD 8.4: minimo de 90% no nucleo puro.
       - name: Testes e cobertura
         run: pytest --cov --cov-fail-under=90
+
+  site:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tipos (tsc)
+        run: npm run checar
+
+      - name: Testes
+        run: npm run testar
+
+      # Variaveis de mentira: o build so precisa que elas existam. A pagina
+      # publica trata banco indisponivel como aviso, nao como erro 500 — e o
+      # que permite compilar sem tocar no Neon de verdade.
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost/ci
+          SENHA_SITE: ci
+          SEGREDO_SESSAO: ci

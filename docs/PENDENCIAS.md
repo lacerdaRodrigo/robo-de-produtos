@@ -6,7 +6,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 > Atualizado em 2026-08-11. Versão atual: **1.3.0**.
 
-**Onde estamos:** V2.0, V2.1 e V2.2 fechadas; V2.3 na metade — o robô já grava, falta o site. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado. A próxima fase de código é a V2.3 — e ela precisa que o robô passe a gravar no banco.
+**Onde estamos:** V2.0 a V2.3 fechadas do lado do código. O site está pronto em `site/` e falta publicá-lo na Vercel, que é conta sua. Depois disso, e só depois, a V2.4 destrava. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 ---
 
@@ -102,15 +102,22 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] Gravar não derruba a execução: falha vira `WARNING`, porque a consequência é site velho e o carimbo de RN26 denuncia isso sozinho
 - [x] Ensaio real: 132 pontuações gravadas, 15 alertas, carimbo e versão na tabela `execucao`
 
-**Metade 2 (a fazer): o site.**
+**Metade 2 (feita): o site.**
 
-- [ ] Projeto Next.js na Vercel, em `site/`
-- [ ] Leitura pública das promoções e do catálogo com pontuação atual (RF15, RN24)
-- [ ] Edição protegida por senha única (RF17, PRD V2 §9.0)
-- [ ] Mostrar, por loja, pontuação atual, base e o valor que dispara o alerta (RN30)
-- [ ] Carimbo de última atualização sempre visível (RN26) — é o que sustenta MS6
-- [ ] Versão do projeto no rodapé
-- [ ] Sem recurso de terceiros, sem logotipo de parceiro (RN25, PRD V2 §9.2)
+- [x] Projeto Next.js em `site/`, pronto para a Vercel
+- [x] Leitura pública das promoções e do catálogo com pontuação atual (RF15, RN24)
+- [x] Edição protegida por senha única (RF17, PRD V2 §9.0): cookie `httpOnly`+`secure`, comparação em tempo constante, limite de 5 tentativas por 15 min gravado no banco (migração `003`)
+- [x] Mostrar, por loja, pontuação atual, base e o valor que dispara o alerta (RN30)
+- [x] Carimbo de última atualização sempre visível (RN26), que fica vermelho depois de 12 h
+- [x] Versão no rodapé — a que gerou o dado, vinda da tabela `execucao`
+- [x] Sem recurso de terceiros, sem logotipo de parceiro (RN25, PRD V2 §9.2) — verificado no HTML servido
+- [x] Funciona sem JavaScript (RNF14), formulários inclusive — verificado: 147 cartões no HTML com todas as `<script>` removidas
+
+### Só você pode fazer
+
+- [ ] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**
+- [ ] Cadastrar `SENHA_SITE` (longa e aleatória) e `SEGREDO_SESSAO` nas Environment Variables, além de `DATABASE_URL`
+- [ ] Abrir a página publicada e conferir o carimbo, RN30 e o comportamento sem JavaScript
 
 ---
 
@@ -140,4 +147,5 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] Roteiro do smoke manual CT-050 escrito, com os números de 2026-08-11 como linha de base
 - [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138
 - [x] **V2.3, metade 1** — o robô grava o retrato de cada execução: migração `002`, porta `RepositorioDeExecucao`, núcleo `retrato.py`. CT-139 a CT-150
-- [x] 153 testes, 96% de cobertura, quality gate no CI
+- [x] **V2.3, metade 2** — site Next.js em `site/`: leitura pública, edição com senha única e limite de tentativas, RN24/RN25/RN26/RN30 e RNF14 atendidos. CT-151 a CT-155
+- [x] 153 testes no robô e 7 no site, 96% de cobertura, quality gate no CI para os dois

@@ -183,6 +183,20 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 |---|---|---|---|
 | CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py`, falhar se aparecer `requests`, `smtplib`, `tomllib`, `os`, `pathlib` ou `dotenv` |
 
+## `site/testes/formato.teste.ts` — funções puras do site (vitest)
+
+> Bloco novo da V2.3. O site tem pouca lógica de propósito: o que ele faz é ler o banco e desenhar. O que **tem** regra é a formatação — e é onde um `Number()` distraído desfaria o cuidado que o robô tem com `Decimal` desde a V1.
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-151 | Pontuação sem resíduo de `float` ⚠️ | O `NUMERIC` do Postgres chega como string e assim fica. `Number("2.90")` traria de volta o `2.9000000000000004` que o e-mail evita (PRD §5.4) | `pontos("2.90")` → `"2,9"`; `pontos(null)` → `"—"` |
+| CT-152 | Rótulo do Clube (RN23) | Mesma distinção do e-mail: `CLUB` é exclusividade, `PROMOTION_CLUB` é vantagem maior | As duas campanhas mais uma desconhecida |
+| CT-153 | Termina hoje no fuso certo (RN22) | A Vercel roda em UTC. Sem fixar Brasília, promoção que acaba 23h59 apareceria como "amanhã" | Data de hoje e data futura |
+| CT-154 | Idade do carimbo (RN26) | O carimbo só cumpre o papel se der para perceber que envelheceu — é o que sustenta MS6 | 30 min, 3 h, 20 h e 3 dias |
+| CT-155 | Pontuação inteira não ganha vírgula | `6`, não `6,00` | `pontos("6.000")` |
+
+Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
+
 ---
 
 ## Fora dos testes automáticos
@@ -246,7 +260,8 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 | `teste_montador_email.py` | 23 | 26 |
 | `teste_principal.py` | 25 | 27 |
 | `teste_fronteira.py` | 1 | 7 |
-| **Total** | **121** | **153** |
+| **Total (robô)** | **121** | **153** |
+| `site/testes/formato.teste.ts` | 5 | 7 |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 
