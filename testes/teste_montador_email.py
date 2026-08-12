@@ -246,9 +246,9 @@ def teste_ct105_campanha_desconhecida_cai_na_comparacao_numerica():
     """RN23: valor que a Livelo invente nao pode derrubar a marcacao."""
     parada = faz_parceiro("O Boticário", "3", base="3", clube="10", campanha="CAMPANHA_NOVA")
     movida = faz_parceiro("Natura", "6", base="4", clube="10", campanha="CAMPANHA_NOVA")
-    assert "exclusivo assinantes Clube" in montar(
-        {"Beleza": [parada]}, agora=AGORA_TESTE
-    ).corpo_html
-    assert "exclusivo assinantes Clube" not in montar(
-        {"Beleza": [movida]}, agora=AGORA_TESTE
-    ).corpo_html
+
+    com_base_parada = montar({"Beleza": [parada]}, agora=AGORA_TESTE)
+    com_base_movida = montar({"Beleza": [movida]}, agora=AGORA_TESTE)
+
+    assert "exclusivo assinantes Clube" in com_base_parada.corpo_html
+    assert "exclusivo assinantes Clube" not in com_base_movida.corpo_html
