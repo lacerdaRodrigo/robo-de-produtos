@@ -71,9 +71,10 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
 | `/avisos` | Alertas | sessão | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
-| `/lojas` | Lojas | sessão | Adicionar, com aviso próprio opcional; remover em duas etapas; **Forçar atualização** |
+| `/lojas` | Lojas | sessão | Adicionar; remover em duas etapas; **Forçar atualização** |
+| `/configuracoes` | — (ícone de engrenagem) | sessão | Liga/desliga pedaços da interface — hoje só o aviso opcional no cadastro |
 
-**O aviso próprio é opcional no cadastro.** Antes, definir o limiar de uma loja nova exigia passar por `/avisos` numa segunda etapa depois de criá-la. Os campos "vezes acima do normal" e "mínimo de pontos" agora aparecem direto no formulário de `/lojas`, em branco por padrão — deixar em branco segue o padrão global (RN28), então cadastrar uma loja para só testar o sistema não obriga decidir um limiar na hora. `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada.
+**O aviso próprio no cadastro é opcional — e está desligado por padrão (V2.3.4).** Existe desde que o limiar por loja virou possível: os campos "vezes acima do normal" e "mínimo de pontos" apareciam direto no formulário de `/lojas`, em branco. Mas a calibragem do limiar global (RN27/28, ver `docs/PENDENCIAS.md`) ainda não fechou, e decidir 132 limiares antes disso é a armadilha que o PRD-V2 §6.1 avisa para evitar. A flag `aviso_opcional_no_cadastro` controla isso — liga em `/configuracoes`, ícone de engrenagem no cabeçalho. Guardada em cookie (`lib/flags.ts`), igual o tema, não no banco: é preferência de quem mexe no site, não dado que o robô lê, então não precisa de tabela nem migração. Desligada, o cadastro fica só com nome, categoria e apelidos; `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada, com ou sem a flag.
 
 **Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
 
@@ -94,6 +95,12 @@ Em `/lojas`, o bloco fica depois da tabela "Lojas cadastradas" — é a última 
 Botão no cabeçalho, ao lado de Entrar/Sair — cicla **automático → claro → escuro → automático** a cada clique. "Automático" segue `prefers-color-scheme` do sistema, sem gravar nada; escolher claro ou escuro grava um cookie (`tema`, `lib/tema.ts`) que vence tanto o claro quanto o escuro do sistema.
 
 É um `<form>` de verdade, servido por uma Server Action (`acaoAlternarTema` em `app/acoes.ts`) — funciona com JavaScript desligado (RNF14), igual todo o resto do site. `app/layout.tsx` lê o cookie no servidor e escreve `data-tema` na tag `<html>`; `globals.css` decide a paleta a partir disso, sem nenhuma linha de JavaScript no navegador.
+
+## Configurações (V2.3.4)
+
+Ícone de engrenagem no cabeçalho, ao lado do de tema — leva para `/configuracoes`. É onde ficam as flags de funcionalidade: hoje só o aviso opcional no cadastro de loja (`/lojas`), desligado por padrão até a calibragem do limiar global fechar (RN27/28, ver `docs/PENDENCIAS.md`).
+
+Mesma ideia do tema — `lib/flags.ts` guarda a flag em cookie, não no banco. É preferência de quem edita o site, não regra que o robô consulta, então não precisa de tabela nem migração pra existir. Server Action de verdade (`acaoSalvarConfiguracoes` em `app/configuracoes/acoes.ts`), funciona sem JavaScript.
 
 ## Tooltips sem JavaScript
 

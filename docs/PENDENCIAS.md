@@ -4,9 +4,9 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-12. Versão atual: **1.8.0**.
+> Atualizado em 2026-08-12. Versão atual: **1.10.1**.
 
-**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho) e V2.3.2 (banco manda, e o site dispara o robô). O site está publicado na Vercel e lê o retrato de cada execução. Falta o parâmetro `enviar_email` no `robo.yml` para o disparo manual do site rodar em silêncio, e falta cadastrar `GITHUB_TOKEN_DISPARO` na Vercel — sem ele o botão de disparo fica desabilitado. A V2.4 segue bloqueada até você verificar o site publicado (carimbo, RN30, sem JavaScript). O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
+**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flag de funcionalidade: o aviso opcional no cadastro de loja virou opcional-de-verdade, atrás de um interruptor em `/configuracoes`, desligado por padrão). O site está publicado na Vercel e lê o retrato de cada execução. Falta o parâmetro `enviar_email` no `robo.yml` para o disparo manual do site rodar em silêncio, e falta cadastrar `GITHUB_TOKEN_DISPARO` na Vercel — sem ele o botão de disparo fica desabilitado. A V2.4 segue bloqueada até você verificar o site publicado (carimbo, RN30, sem JavaScript). O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 ---
 
