@@ -39,6 +39,8 @@ Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige
 
 ## Antes de escrever código
 
-A V1.0 está em produção (§11.1 do PRD). A V2.0 está implementada: o extrator lê o payload `__NEXT_DATA__` da página (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e marca o que é exclusivo do Clube (RN23) — mas **ainda não foi verificada contra a página real em produção**, só contra fixtures. A V2.1 está parcialmente feita: o banco no Neon existe e está populado, mas o robô ainda lê do TOML — a troca de adaptador ainda não foi feita.
+A V1.0 está em produção (§11.1 do PRD). A V2.0 está em produção e **validada contra a página real** (2026-08-11): o extrator lê o payload `__NEXT_DATA__` (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e distingue `CLUB` de `PROMOTION_CLUB` (RN23). A V2.1 está implementada: `montar_catalogo()` usa o Postgres quando existe `DATABASE_URL` e cai para o TOML se o banco não responder — **mas o secret ainda não foi cadastrado**, então em produção o catálogo continua vindo do arquivo.
 
-A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Hoje isso é: validar a V2.0 contra a página real assim que possível, depois terminar a V2.1 (`principal.py` escolher o adaptador Postgres quando `DATABASE_URL` existir). Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.
+Duas coisas seguem esperando o autor, não código: confirmar o e-mail de falha do MS3 e cadastrar o `DATABASE_URL`.
+
+A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). A próxima fase é a V2.2 (`alertas.py` com RN27 e RN28) — os campos `multiplicador`/`piso_pontos` já chegam em `LojaFavorita` e ninguém os consome ainda. Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

@@ -9,6 +9,7 @@ import logging
 import smtplib
 import time
 import tomllib
+from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -16,6 +17,7 @@ import requests
 
 from robo_livelo.modelos import LojaFavorita, Mensagem
 from robo_livelo.portas import (
+    CatalogoFavoritas,
     ConfiguracaoInvalida,
     FalhaAoNotificar,
     FalhaAoObterPagina,
@@ -83,6 +85,28 @@ class PaginaLiveloHttp:
         ) from ultimo_erro
 
 
+def _limiar_opcional(bruta: dict, chave: str, nome_loja: str) -> Decimal | None:
+    """Le multiplicador/piso_pontos do TOML, se a loja tiver os seus (RN28).
+
+    Ausente e o caso normal: significa "usa o padrao global". Presente e
+    ilegivel e erro de configuracao, nao um None silencioso — limiar errado
+    por engano de digitacao viraria alerta errado depois.
+    """
+    if chave not in bruta:
+        return None
+    try:
+        valor = Decimal(str(bruta[chave]))
+    except InvalidOperation as erro:
+        raise ConfiguracaoInvalida(
+            f"Loja {nome_loja!r}: {chave} nao e um numero: {bruta[chave]!r}"
+        ) from erro
+    if valor <= 0 and chave == "multiplicador":
+        raise ConfiguracaoInvalida(f"Loja {nome_loja!r}: multiplicador precisa ser maior que zero.")
+    if valor < 0:
+        raise ConfiguracaoInvalida(f"Loja {nome_loja!r}: {chave} nao pode ser negativo.")
+    return valor
+
+
 class CatalogoArquivo:
     """Le as lojas favoritas do arquivo de configuracao (RNF09, PRD 5.3)."""
 
@@ -117,7 +141,15 @@ class CatalogoArquivo:
                     )
                 grafias_vistas[chave] = nome
 
-            lojas.append(LojaFavorita(nome=nome, categoria=categoria, apelidos=apelidos))
+            lojas.append(
+                LojaFavorita(
+                    nome=nome,
+                    categoria=categoria,
+                    apelidos=apelidos,
+                    multiplicador=_limiar_opcional(bruta, "multiplicador", nome),
+                    piso_pontos=_limiar_opcional(bruta, "piso_pontos", nome),
+                )
+            )
 
         if not lojas:
             raise ConfiguracaoInvalida("Nenhuma loja favorita configurada.")
@@ -182,10 +214,11 @@ class CatalogoPostgres:
         SELECT l.nome, l.categoria, COALESCE(
                    ARRAY_AGG(a.texto) FILTER (WHERE a.texto IS NOT NULL),
                    ARRAY[]::TEXT[]
-               ) AS apelidos
+               ) AS apelidos,
+               l.multiplicador, l.piso_pontos
           FROM loja l
           LEFT JOIN apelido a ON a.loja_id = l.id
-         GROUP BY l.id, l.nome, l.categoria
+         GROUP BY l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos
          ORDER BY l.categoria, l.nome
     """
 
@@ -210,7 +243,36 @@ class CatalogoPostgres:
         if not linhas:
             raise ConfiguracaoInvalida("Nenhuma loja favorita cadastrada no banco.")
 
+        # NUMERIC volta como Decimal do psycopg — nada de float aqui (PRD 5.4).
         return [
-            LojaFavorita(nome=nome, categoria=categoria, apelidos=tuple(apelidos))
-            for nome, categoria, apelidos in linhas
+            LojaFavorita(
+                nome=nome,
+                categoria=categoria,
+                apelidos=tuple(apelidos),
+                multiplicador=multiplicador,
+                piso_pontos=piso_pontos,
+            )
+            for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
+
+
+class CatalogoComReserva:
+    """Tenta o catalogo principal e cai para a reserva se ele falhar.
+
+    A troca do TOML pelo banco so e segura assim: o Neon e um servico de
+    terceiro num plano gratuito, e ficar sem catalogo derrubaria a execucao
+    inteira por um motivo que nao tem nada a ver com a Livelo. O aviso vai
+    em WARNING justamente para a queda nao passar despercebida — rodar de
+    reserva por semanas sem ninguem notar seria pior do que falhar.
+    """
+
+    def __init__(self, principal: CatalogoFavoritas, reserva: CatalogoFavoritas) -> None:
+        self._principal = principal
+        self._reserva = reserva
+
+    def listar(self) -> list[LojaFavorita]:
+        try:
+            return self._principal.listar()
+        except ConfiguracaoInvalida as erro:
+            _log.warning("Catalogo principal indisponivel (%s). Usando a reserva.", erro)
+            return self._reserva.listar()

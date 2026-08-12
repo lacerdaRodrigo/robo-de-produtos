@@ -15,7 +15,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from robo_livelo import categorias, extrator, montador_email
-from robo_livelo.adaptadores import CatalogoArquivo, NotificadorEmail, PaginaLiveloHttp
+from robo_livelo.adaptadores import (
+    CatalogoArquivo,
+    CatalogoComReserva,
+    CatalogoPostgres,
+    NotificadorEmail,
+    PaginaLiveloHttp,
+)
 from robo_livelo.portas import (
     CatalogoFavoritas,
     FonteDePagina,
@@ -40,6 +46,22 @@ def validar_segredos(ambiente: dict[str, str]) -> None:
     faltando = [nome for nome in _SEGREDOS if not ambiente.get(nome)]
     if faltando:
         raise SystemExit(f"Variaveis obrigatorias ausentes: {', '.join(faltando)}")
+
+
+def montar_catalogo(ambiente: dict[str, str], caminho: Path) -> CatalogoFavoritas:
+    """Escolhe de onde vem o catalogo (PRD V2, secao 7.1.1).
+
+    Com `DATABASE_URL` no ambiente, o banco manda e o arquivo fica de
+    reserva. Sem ela, o arquivo continua sendo a unica fonte — que e o
+    estado de quem clona o projeto e roda na propria maquina, sem Neon.
+    """
+    url = (ambiente.get("DATABASE_URL") or "").strip()
+    if not url:
+        _log.info("Sem DATABASE_URL: catalogo lido de %s.", caminho)
+        return CatalogoArquivo(caminho)
+
+    _log.info("Catalogo lido do banco, com %s de reserva.", caminho)
+    return CatalogoComReserva(CatalogoPostgres(url), CatalogoArquivo(caminho))
 
 
 def verificar_promocoes(
@@ -97,7 +119,7 @@ def principal(argv: list[str] | None = None) -> int:
     try:
         verificar_promocoes(
             fonte=PaginaLiveloHttp(),
-            catalogo=CatalogoArquivo(caminho),
+            catalogo=montar_catalogo(ambiente, caminho),
             notificador=NotificadorEmail(
                 remetente=ambiente["EMAIL_REMETENTE"],
                 senha=ambiente["SENHA_APP_GMAIL"],

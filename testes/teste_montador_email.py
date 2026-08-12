@@ -221,3 +221,34 @@ def teste_ct101_sem_pontos_clube_sem_marcacao():
     parceiro = faz_parceiro("Natura", "5", clube=None, base="5")
     mensagem = montar({"Beleza": [parceiro]}, agora=AGORA_TESTE)
     assert "Clube" not in mensagem.corpo_html
+
+
+def teste_ct103_promocao_do_clube_ganha_rotulo_proprio():
+    """RN23: `PROMOTION_CLUB` — a base subiu tambem, entao nao e exclusivo.
+
+    Numeros reais da Sephora em 2026-08-11: base 1, promocao 6, Clube 10.
+    """
+    parceiro = faz_parceiro("Sephora", "6", base="1", clube="10", campanha="PROMOTION_CLUB")
+    mensagem = montar({"Beleza": [parceiro]}, agora=AGORA_TESTE)
+    assert "assinantes Clube ganham mais" in mensagem.corpo_html
+    assert "assinantes Clube ganham mais" in mensagem.corpo_texto
+    assert "exclusivo assinantes Clube" not in mensagem.corpo_html
+
+
+def teste_ct104_campanha_club_marca_exclusivo_mesmo_sem_base():
+    """RN23: a string confirmada decide sozinha, sem depender de `pontos_base`."""
+    parceiro = faz_parceiro("Aliexpress", "1", base=None, clube="3", campanha="CLUB")
+    mensagem = montar({"Marketplace": [parceiro]}, agora=AGORA_TESTE)
+    assert "exclusivo assinantes Clube" in mensagem.corpo_html
+
+
+def teste_ct105_campanha_desconhecida_cai_na_comparacao_numerica():
+    """RN23: valor que a Livelo invente nao pode derrubar a marcacao."""
+    parada = faz_parceiro("O Boticário", "3", base="3", clube="10", campanha="CAMPANHA_NOVA")
+    movida = faz_parceiro("Natura", "6", base="4", clube="10", campanha="CAMPANHA_NOVA")
+    assert "exclusivo assinantes Clube" in montar(
+        {"Beleza": [parada]}, agora=AGORA_TESTE
+    ).corpo_html
+    assert "exclusivo assinantes Clube" not in montar(
+        {"Beleza": [movida]}, agora=AGORA_TESTE
+    ).corpo_html

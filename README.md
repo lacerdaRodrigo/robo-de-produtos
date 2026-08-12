@@ -4,7 +4,7 @@ Monitora as lojas parceiras da Livelo, filtra só as que importam pra você e av
 
 Sem servidor, sem banco de dados, sem custo. Roda inteiro no GitHub Actions.
 
-> **Status: V1.0 em produção.** Rodou fim a fim contra a página real: 254 parceiros lidos, 22 promoções encontradas (medição da V1.0). **V2.0 já implementada** — o extrator passou a ler o payload JSON da página em vez de raspar o HTML (validade da promoção, pontuação base e marcação de Clube), mas ainda não foi verificada contra a página real em produção. 96 testes verdes, 93% de cobertura.
+> **Status: V2.0 em produção e validada contra a página real** (2026-08-11): 254 parceiros lidos, 31 em promoção. O extrator lê o payload JSON da página em vez de raspar o HTML, e o e-mail mostra validade da promoção, pontuação base e marcação de Clube. O catálogo de lojas pode vir do Postgres (V2.1), com o arquivo como reserva. 112 testes verdes, 96% de cobertura.
 
 ## Como funciona
 
@@ -56,6 +56,10 @@ categoria = "Marketplace / Varejo Geral"
 
 O campo `apelidos` existe porque o reconhecimento é por nome exato: se a Livelo passar a exibir uma variação do nome, ela precisa ser cadastrada aqui, senão a loja some do e-mail.
 
+Opcionalmente, uma loja pode ter limiar próprio de alerta — `multiplicador` e `piso_pontos`. Ausentes, valem os padrões globais.
+
+Com `DATABASE_URL` no ambiente, o catálogo passa a vir do Postgres e este arquivo vira **reserva**: se o banco não responder, a execução continua com o TOML e registra um aviso no log. Sem `DATABASE_URL`, o arquivo é a única fonte — que é o caso de quem clona o projeto e roda na própria máquina.
+
 ## Rodando no GitHub Actions
 
 Em **Settings → Secrets and variables → Actions**, crie:
@@ -63,6 +67,7 @@ Em **Settings → Secrets and variables → Actions**, crie:
 - `EMAIL_REMETENTE`
 - `SENHA_APP_GMAIL`
 - `EMAIL_DESTINO`
+- `DATABASE_URL` (opcional — sem ele, o catálogo vem do TOML)
 
 O workflow roda às 09h, 14h e 20h (horário de Brasília) e também sob disparo manual.
 

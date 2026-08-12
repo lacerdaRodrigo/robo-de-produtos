@@ -10,6 +10,7 @@ não existe "card sem alt" nem "link fora de um item" num array JSON.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 from decimal import Decimal
 
@@ -249,6 +250,9 @@ def teste_ct095_fixture_real_traz_os_casos_dificeis(payload_exemplo):
         "Pontofrio",
         "Petlove",
         "ABC da Construcao",
+        "Sephora",
+        "Coffee Mais",
+        "Aliexpress",
     }
 
     assert por_nome["Casas Bahia"].prefixo_ate is True
@@ -272,6 +276,21 @@ def teste_ct095_fixture_real_traz_os_casos_dificeis(payload_exemplo):
     # promotion:true sem dateEnd nenhum tambem nao quebra.
     assert por_nome["Pontofrio"].fim_promocao is None
     assert por_nome["Pontofrio"].em_promocao is True
+
+    # Os tres casos reais de campanha ligada ao Clube, copiados da pagina de
+    # 2026-08-11 (RN23). Sephora e Coffee Mais tem a base movida; Aliexpress
+    # nao — e a diferenca que separa "ganham mais" de "exclusivo".
+    assert por_nome["Sephora"].campanha == "PROMOTION_CLUB"
+    assert por_nome["Sephora"].pontos_base == Decimal("1")
+    assert por_nome["Sephora"].pontos_atuais == Decimal("6")
+    assert por_nome["Coffee Mais"].campanha == "PROMOTION_CLUB"
+    assert por_nome["Coffee Mais"].prefixo_ate is True
+    assert por_nome["Aliexpress"].campanha == "CLUB"
+    assert por_nome["Aliexpress"].pontos_atuais == por_nome["Aliexpress"].pontos_base
+
+    # "Liga Vitória Seguro Auto" tem `parity: null` na pagina real — produto da
+    # propria Livelo, nao parceiro. Sai da lista sem virar WARNING (CT-106).
+    assert "Liga Vitória Seguro Auto" not in por_nome
 
 
 # ── Robustez contra payload hostil (RN07: todo dado do site e hostil) ───────
@@ -344,3 +363,33 @@ def teste_parity_club_nao_numerico_vira_none_sem_derrubar_item():
     item["parity"]["parityClub"] = "nao e numero"
     parceiro = um(pagina(item))
     assert parceiro.pontos_clube is None
+
+
+def teste_ct106_item_sem_parity_nao_vira_warning(caplog):
+    """Produto da propria Livelo (LVA, XXX...) nao tem pontuacao e nao e erro.
+
+    Sao 11 itens assim em toda execucao. WARNING para caso conhecido e
+    recorrente afoga o aviso que realmente importa (RNF06).
+    """
+    sem_parity = monta_item_parceiro(id="LVA", nome="Livelo Assinatura")
+    del sem_parity["parity"]
+    bom = monta_item_parceiro(nome="Natura")
+
+    with caplog.at_level(logging.DEBUG, logger="robo_livelo.extrator"):
+        parceiros = extrair_parceiros(pagina(sem_parity, bom), agora=AGORA_TESTE)
+
+    assert [p.nome for p in parceiros] == ["Natura"]
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+    assert any(r.levelno == logging.DEBUG and "LVA" in r.getMessage() for r in caplog.records)
+    assert any("ignorados: 1" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct107_item_com_parity_ilegivel_continua_sendo_warning(caplog):
+    """Contraprova de CT-106: pontuacao que existe mas nao da para ler e sintoma."""
+    quebrado = monta_item_parceiro(id="NAT", nome="Natura")
+    quebrado["parity"]["parity"] = "nao e numero"
+
+    with caplog.at_level(logging.DEBUG, logger="robo_livelo.extrator"):
+        extrair_parceiros(pagina(quebrado), agora=AGORA_TESTE)
+
+    assert [r for r in caplog.records if r.levelno == logging.WARNING]

@@ -2,9 +2,20 @@
 
 from __future__ import annotations
 
+import logging
+import sys
+import types
+from decimal import Decimal
+
 import pytest
 
-from robo_livelo.adaptadores import CatalogoArquivo, PaginaLiveloHttp
+from robo_livelo.adaptadores import (
+    CatalogoArquivo,
+    CatalogoComReserva,
+    CatalogoPostgres,
+    PaginaLiveloHttp,
+)
+from robo_livelo.modelos import LojaFavorita
 from robo_livelo.portas import ConfiguracaoInvalida, FalhaAoObterPagina
 
 
@@ -129,3 +140,150 @@ def teste_config_real_do_projeto_e_valida():
     ]:
         if parecido in por_nome:
             assert por_nome[base] != por_nome[parecido]
+
+
+# --- CT-108 a CT-112: catalogo do banco e reserva em arquivo (PRD V2 7.1.1) ---
+
+
+class CatalogoFalho:
+    def __init__(self, erro: Exception) -> None:
+        self._erro = erro
+        self.chamadas = 0
+
+    def listar(self):
+        self.chamadas += 1
+        raise self._erro
+
+
+class CatalogoOk:
+    def __init__(self, lojas) -> None:
+        self._lojas = lojas
+        self.chamadas = 0
+
+    def listar(self):
+        self.chamadas += 1
+        return self._lojas
+
+
+def teste_ct108_reserva_assume_quando_o_principal_falha(caplog):
+    """A troca do TOML pelo banco so e segura com reserva: Neon fora do ar
+    nao pode derrubar a execucao inteira."""
+    lojas = [LojaFavorita(nome="Natura", categoria="Beleza")]
+    principal = CatalogoFalho(ConfiguracaoInvalida("banco inacessivel"))
+    reserva = CatalogoOk(lojas)
+
+    with caplog.at_level(logging.WARNING, logger="robo_livelo.adaptadores"):
+        assert CatalogoComReserva(principal, reserva).listar() == lojas
+
+    assert reserva.chamadas == 1
+    # A queda precisa ser visivel: rodar de reserva por semanas sem ninguem
+    # perceber seria pior do que falhar.
+    assert [r for r in caplog.records if r.levelno == logging.WARNING]
+
+
+def teste_ct109_reserva_nao_e_tocada_quando_o_principal_responde():
+    lojas = [LojaFavorita(nome="Natura", categoria="Beleza")]
+    reserva = CatalogoOk([])
+    assert CatalogoComReserva(CatalogoOk(lojas), reserva).listar() == lojas
+    assert reserva.chamadas == 0
+
+
+def teste_ct110_limiar_por_loja_no_arquivo_vira_decimal(tmp_path):
+    """RN28: limiar proprio da loja. Ausente significa "usa o padrao global"."""
+    config = tmp_path / "lojas.toml"
+    config.write_text(
+        """
+        [[loja]]
+        nome = "Natura"
+        categoria = "Beleza"
+        multiplicador = 2.5
+        piso_pontos = 6
+
+        [[loja]]
+        nome = "Magalu"
+        categoria = "Marketplace"
+        """,
+        encoding="utf-8",
+    )
+
+    natura, magalu = CatalogoArquivo(config).listar()
+    assert natura.multiplicador == Decimal("2.5")
+    assert natura.piso_pontos == Decimal("6")
+    assert magalu.multiplicador is None and magalu.piso_pontos is None
+
+
+@pytest.mark.parametrize(
+    "linha",
+    ["multiplicador = 'muito'", "multiplicador = 0", "piso_pontos = -1"],
+)
+def teste_ct111_limiar_invalido_no_arquivo_e_recusado(tmp_path, linha):
+    """Limiar errado por engano de digitacao viraria alerta errado depois."""
+    config = tmp_path / "lojas.toml"
+    config.write_text(
+        f'[[loja]]\nnome = "Natura"\ncategoria = "Beleza"\n{linha}\n', encoding="utf-8"
+    )
+    with pytest.raises(ConfiguracaoInvalida):
+        CatalogoArquivo(config).listar()
+
+
+def teste_ct112_catalogo_do_banco_mapeia_as_colunas(monkeypatch):
+    """O adaptador le nome, categoria, apelidos, multiplicador e piso_pontos."""
+    linhas = [
+        ("Natura", "Beleza", ["Natura Cosmeticos"], Decimal("2.5"), Decimal("6")),
+        ("Magalu", "Marketplace", [], None, None),
+    ]
+    executadas: list[str] = []
+
+    class CursorFake:
+        def execute(self, consulta):
+            executadas.append(consulta)
+
+        def fetchall(self):
+            return linhas
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    class ConexaoFake:
+        def cursor(self):
+            return CursorFake()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    psycopg_fake = types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=RuntimeError)
+    monkeypatch.setitem(sys.modules, "psycopg", psycopg_fake)
+
+    natura, magalu = CatalogoPostgres("postgresql://fake").listar()
+    assert (natura.nome, natura.categoria, natura.apelidos) == (
+        "Natura",
+        "Beleza",
+        ("Natura Cosmeticos",),
+    )
+    assert natura.multiplicador == Decimal("2.5") and natura.piso_pontos == Decimal("6")
+    assert magalu.multiplicador is None and magalu.piso_pontos is None
+    assert "multiplicador" in executadas[0] and "piso_pontos" in executadas[0]
+
+
+def teste_ct113_senha_da_url_nao_vaza_na_mensagem_de_erro(monkeypatch):
+    """PRD 9.1: o log do Actions e publico. A excecao original carrega a URL."""
+
+    class ErroDoBanco(RuntimeError):
+        pass
+
+    def conectar_falhando(url):
+        raise ErroDoBanco(f"nao conectou em {url}")
+
+    psycopg_fake = types.SimpleNamespace(connect=conectar_falhando, Error=ErroDoBanco)
+    monkeypatch.setitem(sys.modules, "psycopg", psycopg_fake)
+
+    with pytest.raises(ConfiguracaoInvalida) as erro:
+        CatalogoPostgres("postgresql://usuario:senha_secreta@host/banco").listar()
+    assert "senha_secreta" not in str(erro.value)
+    assert erro.value.__cause__ is None

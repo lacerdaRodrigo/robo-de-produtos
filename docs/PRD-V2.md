@@ -133,7 +133,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 |---|---|
 | **RN21** | Promoção com `dateEnd` já passado **não é promoção**. O payload pode conter campanha encerrada ainda não removida da página |
 | **RN22** | Promoção que termina no mesmo dia da execução recebe destaque visual próprio, na página e no e-mail |
-| **RN23** | `activeCampaign` distingue promoção de pontuação base de promoção exclusiva do Clube Livelo. Quem não é assinante não deve ser alertado por promoção que não pode aproveitar |
+| **RN23** | `activeCampaign` distingue três casos: `PROMOTION` (a base subiu), `PROMOTION_CLUB` (a base subiu e o Clube subiu mais) e `CLUB` (só o Clube subiu). Quem não é assinante não deve ser alertado por promoção que não pode aproveitar — mas `PROMOTION_CLUB` ele aproveita, só não pelo número maior |
 | **RN24** | A página exibe **todas** as favoritas, em promoção ou não. É o que permite consultar a pontuação base sem abrir a Livelo (O5) |
 | **RN25** | A página nunca carrega imagem, fonte ou script de domínio externo. Logotipo de parceiro não é hospedado nem apontado por link direto — ver 9.2 |
 | **RN26** | O carimbo de atualização é obrigatório e sempre visível. Sem ele a página não cumpre MS6 |
@@ -170,10 +170,21 @@ Com padrão 2,0 e piso 4, a medição de 2026-08-09 produziria **um e-mail com 1
 
 A V1 tratou como promoção qualquer parceiro com a etiqueta "Promoção", e isso produziu ruído real: `O Boticário` apareceu com base 3 → 3 pontos, ou seja, sem aumento nenhum na base — o boost estava só no tier Clube, de 3 para 10.
 
+Os valores de `activeCampaign` foram confirmados contra a página real em 2026-08-11 (270 itens): `BAU` (221), `PROMOTION` (30), `CLUB` (5), `PROMOTION_CLUB` (3). São dois casos diferentes envolvendo o Clube, e tratá-los igual erraria:
+
+| Campanha | O que acontece | Exemplo real de 2026-08-11 | No e-mail |
+|---|---|---|---|
+| `CLUB` | A base não se move; o ganho existe só para assinante | Aliexpress: base 1, Clube 3 | "exclusivo assinantes Clube" |
+| `PROMOTION_CLUB` | A base sobe para todo mundo e o Clube sobe mais | Sephora: base 1 → 6, Clube 10 | "assinantes Clube ganham mais" |
+
+A distinção importa porque o não assinante **aproveita** uma promoção `PROMOTION_CLUB` — o que ele não aproveita é o número maior que aparece ao lado. Marcá-la como exclusiva esconderia uma promoção boa; não marcá-la nada deixaria o número maior sem explicação.
+
 Passa a existir a configuração `ASSINANTE_CLUBE`, padrão `false`:
 
-- Não assinante: promoção exclusiva do Clube **não** dispara e-mail, mas continua visível na página, marcada como Clube.
-- Assinante: promoção do Clube conta normalmente.
+- Não assinante: promoção `CLUB` **não** dispara e-mail, mas continua visível na página, marcada como Clube. `PROMOTION_CLUB` dispara normalmente, pela pontuação que vale para ele.
+- Assinante: promoção do Clube conta normalmente, pelo valor do tier.
+
+> A **marcação** no e-mail é da V2.0 e já está no ar. A **supressão** do alerta por não ser assinante é do `alertas.py` da V2.2 — hoje nada é suprimido por causa do Clube.
 
 ---
 
