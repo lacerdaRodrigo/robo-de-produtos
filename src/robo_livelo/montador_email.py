@@ -77,16 +77,41 @@ def _texto_validade(parceiro: Parceiro, agora: datetime) -> str | None:
     return f"Válido até {fim_local:%d/%m}"
 
 
-def _eh_exclusivo_clube(parceiro: Parceiro) -> bool:
-    """RN23: o ganho existe so no tier Clube — a base nao se moveu.
+CAMPANHA_CLUBE = "CLUB"
+CAMPANHA_PROMOCAO_CLUBE = "PROMOTION_CLUB"
 
-    Sem `pontos_base` conhecido nao da para provar que a base nao se mexeu,
-    entao o default e nao marcar (evita falso positivo em todo parceiro
-    construido sem essa informacao).
+ROTULO_EXCLUSIVO_CLUBE = "exclusivo assinantes Clube"
+ROTULO_CLUBE_GANHA_MAIS = "assinantes Clube ganham mais"
+
+
+def _rotulo_clube(parceiro: Parceiro) -> str | None:
+    """RN23: separa o que o nao-assinante aproveita do que ele nao aproveita.
+
+    `activeCampaign` foi confirmado contra a pagina real em 2026-08-11 e e a
+    fonte preferida:
+
+    - `CLUB`: a base nao se moveu, o ganho existe so para assinante.
+    - `PROMOTION_CLUB`: a base subiu para todo mundo e o Clube subiu mais.
+      Nao e exclusivo — o alerta serve ao nao-assinante, so nao pelo numero
+      maior que aparece ao lado.
+
+    Payload sem campanha (ou com valor novo que a Livelo invente) cai na
+    comparacao numerica: base parada com Clube distinto e exclusividade.
+    Sem `pontos_base` nao da para provar nada, entao nao marca — o default
+    erra para o lado de nao afirmar.
     """
-    if parceiro.pontos_clube is None or parceiro.pontos_base is None:
-        return False
-    return parceiro.pontos_atuais == parceiro.pontos_base
+    if parceiro.pontos_clube is None:
+        return None
+
+    campanha = (parceiro.campanha or "").strip().upper()
+    if campanha == CAMPANHA_CLUBE:
+        return ROTULO_EXCLUSIVO_CLUBE
+    if campanha == CAMPANHA_PROMOCAO_CLUBE:
+        return ROTULO_CLUBE_GANHA_MAIS
+
+    if parceiro.pontos_base is None:
+        return None
+    return ROTULO_EXCLUSIVO_CLUBE if parceiro.pontos_atuais == parceiro.pontos_base else None
 
 
 def _assunto(agrupamento: dict[str, list[Parceiro]]) -> str:
@@ -163,8 +188,9 @@ def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensag
                 )
             if parceiro.pontos_clube is not None:  # RN10
                 rotulo_clube = f"Clube: {formatar_pontos(parceiro.pontos_clube)} pontos"
-                if _eh_exclusivo_clube(parceiro):  # RN23
-                    rotulo_clube += " (exclusivo assinantes Clube)"
+                observacao = _rotulo_clube(parceiro)  # RN23
+                if observacao is not None:
+                    rotulo_clube += f" ({observacao})"
                 clube = escape(rotulo_clube)
                 html.append(f"<br><span style='font-size:13px;color:#6e6e73;'>{clube}</span>")
 
@@ -185,8 +211,9 @@ def montar(agrupamento: dict[str, list[Parceiro]], *, agora: datetime) -> Mensag
                 linha += f" ({validade})"
             if parceiro.pontos_clube is not None:
                 linha += f" | Clube: {formatar_pontos(parceiro.pontos_clube)} pontos"
-                if _eh_exclusivo_clube(parceiro):
-                    linha += " (exclusivo assinantes Clube)"
+                observacao = _rotulo_clube(parceiro)
+                if observacao is not None:
+                    linha += f" ({observacao})"
             if link_confiavel(parceiro.link):
                 linha += f"\n  {parceiro.link}"
             texto.append(linha)

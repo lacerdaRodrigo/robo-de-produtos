@@ -48,11 +48,13 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-088 | Sem pontuação legível é descartado | Descarta só aquele item, os outros seguem (PRD §6.4) | Item com `parity.parity` não numérico entre itens válidos |
 | CT-089 | Sem nome é descartado | Idem, para item sem `name` | Item com `name` vazio entre itens válidos |
 | CT-090 | Dedup por nome (RN06) | Repetido no array conta uma vez só | Dois itens com o mesmo nome |
-| CT-091 | `separatorSlug: "ATE"` (RN12) ⚠️ **hipótese não confirmada** | Sem exemplo real ainda — só `"IGUAL"` foi visto em produção. Implementado e testado, mas precisa validação quando aparecer um caso real | Item com esse `separatorSlug`, checar `prefixo_ate=True` |
+| CT-091 | `separatorSlug: "ATE"` (RN12) | Confirmado contra a página real em 2026-08-11: 36 dos 270 itens usavam `"ATE"` | Item com esse `separatorSlug`, checar `prefixo_ate=True` |
 | CT-092 | Moeda preservada (RN11) | Nunca converte, exibe como veio | Item com `currency: "U$"` |
 | CT-093 | `parityClub == parity` não popula `pontos_clube` | Evita ruído de "Clube: N pontos" repetido em toda loja sem distinção real | Item com os dois valores iguais |
 | CT-094 | `parityClub` distinto popula `pontos_clube` | Contraprova de CT-093 | Item com os dois valores diferentes |
 | CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
+| CT-106 | Item sem `parity` não vira `WARNING` | São 11 por execução (produtos da própria Livelo: `LVA`, `CIB`, `XXX`...). Descartar está certo; gritar toda vez afogaria o aviso que importa (RNF06). Vai em `DEBUG` mais um resumo em `INFO` | Item com `parity` ausente entre válidos, checar nível dos registros |
+| CT-107 | `parity` presente mas ilegível continua `WARNING` | Contraprova de CT-106: pontuação que existe e não dá para ler é sintoma de mudança na página | Item com `parity.parity` não numérico, checar `WARNING` |
 
 Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `__NEXT_DATA__` ausente, JSON inválido, payload que não é objeto, componente ou item que não é um objeto, `parity` que não é um objeto, `parityBau`/`parityClub` não numéricos — todos cobertos, contam para o total executado mas não têm CT próprio (mesma convenção dos testes de apoio já existentes no arquivo).
 
@@ -69,6 +71,12 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-061 | Config ausente ou vazia | PRD §7.2 — sem favoritas, falha ruidosa | Apontar para arquivo inexistente e para arquivo sem loja, checar erro nos dois |
 | CT-062 | Config malformada | TOML inválido deve dar erro legível, não stack trace cru | Arquivo com sintaxe quebrada, checar mensagem |
 | CT-063 | Apelido repetido entre lojas | Mesmo apelido em duas lojas é erro de configuração, não empate silencioso | Config com apelido duplicado, checar erro |
+| CT-108 | Reserva assume quando o banco falha ⚠️ | O Neon é serviço de terceiro em plano gratuito. Ficar sem catálogo derrubaria a execução por motivo que nada tem a ver com a Livelo | `CatalogoComReserva` com principal que levanta `ConfiguracaoInvalida`, checar resultado da reserva e o `WARNING` |
+| CT-109 | Reserva não é tocada quando o banco responde | Contraprova de CT-108: a reserva não pode virar caminho normal sem ninguém notar | Principal que responde, checar que a reserva não foi chamada |
+| CT-110 | Limiar por loja no arquivo vira `Decimal` | RN28 — `multiplicador`/`piso_pontos` opcionais. Ausente significa "usa o padrão global" | TOML com uma loja com limiar e outra sem, checar `Decimal` e `None` |
+| CT-111 | Limiar inválido é recusado | Limiar errado por erro de digitação viraria alerta errado depois, silenciosamente | TOML com texto, com zero e com negativo, checar `ConfiguracaoInvalida` nos três |
+| CT-112 | Catálogo do banco mapeia as colunas | O adaptador lê nome, categoria, apelidos, `multiplicador` e `piso_pontos` (RN28) | Fake de `psycopg` em `sys.modules`, checar mapeamento e as colunas na consulta |
+| CT-113 | Senha da URL não vaza na mensagem de erro ⚠️ | PRD §9.1 — o log do Actions é público e a exceção original carrega a `DATABASE_URL` inteira | Fake que falha ao conectar, checar ausência da senha no texto e `__cause__` cortado |
 
 ## `testes/teste_montador_email.py` — função `montar_email()`
 
@@ -94,6 +102,9 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-099 | Marca exclusivo Clube (RN23) | Base parada (`pontos_atuais == pontos_base`) com `pontos_clube` maior — o exemplo real do PRD-V2 (O Boticário) | Parceiro com `base` igual a `pontos_atuais` e `clube` maior |
 | CT-100 | Base também turbinada não marca exclusivo | Contraprova de CT-099 — é bônus geral, não só do Clube | Parceiro com `base` menor que `pontos_atuais` e `clube` maior ainda |
 | CT-101 | Sem `pontos_clube`, sem marcação | Regressão de CT-033 | Parceiro sem `clube` |
+| CT-103 | `PROMOTION_CLUB` ganha rótulo próprio | RN23 — a base subiu também, então não é exclusivo: o não assinante aproveita, só não pelo número maior | Sephora real (base 1 → 6, Clube 10), checar "assinantes Clube ganham mais" e ausência de "exclusivo" |
+| CT-104 | `CLUB` marca exclusivo sem depender de `pontos_base` | RN23 — a string confirmada decide sozinha | Parceiro com `campanha="CLUB"` e `pontos_base=None`, checar "exclusivo assinantes Clube" |
+| CT-105 | Campanha desconhecida cai na comparação numérica | Valor novo que a Livelo invente não pode derrubar a marcação | Dois parceiros com campanha inventada, um com base parada e outro não |
 
 ## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
@@ -112,6 +123,9 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-072 | Destinatário único | RN17/RN18 — envio sem CC e sem BCC | Checar que o notificador recebeu exatamente um destinatário |
 | CT-073 | Nenhum segredo no log ⚠️ | RNF05 — log do Actions é público | Capturar a saída de log da execução completa, checar ausência de senha e de e-mail |
 | CT-102 | `agora` chega ao extrator e ao e-mail, fim a fim | O mesmo `agora` passado a `verificar_promocoes` decide RN21 no extrator e RN22 no montador — uma promoção que termina hoje aparece destacada no e-mail final | Fluxo completo com fakes, checar "Termina hoje!" no resultado |
+| CT-114 | Sem `DATABASE_URL`, catálogo vem do arquivo | Quem clona o projeto e roda na própria máquina não tem Neon | `montar_catalogo({})`, checar `CatalogoArquivo` |
+| CT-115 | Com `DATABASE_URL`, o banco manda e o arquivo fica de reserva | PRD V2 §7.1.1 | `montar_catalogo` com a variável, checar `CatalogoComReserva` |
+| CT-116 | `DATABASE_URL` em branco conta como ausente | Secret não configurado no Actions chega como string vazia, não ausente — sem isto o robô tentaria conectar em `""` | `montar_catalogo` com espaços, checar `CatalogoArquivo` |
 
 ## `testes/teste_fronteira.py` — arquitetura (PRD §9.3)
 
@@ -125,8 +139,46 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 
 | ID | Título | Descrição |
 |---|---|---|
-| CT-050 | Smoke test manual periódico | De vez em quando, rodar o robô contra o site real pra confirmar que a Livelo não mudou a estrutura. Manual, não entra no `pytest` — é uma checagem de sanidade quando algo parecer estranho no e-mail. |
-| CT-051 | Falha injetada uma vez | PRD MS3 — forçar uma falha proposital na V1 e confirmar que a notificação do GitHub chega. Feito uma vez, não repetido. |
+| CT-050 | Smoke test manual periódico | Rodar o robô contra o site real e conferir com o olho o que nenhum teste automático vê. Roteiro abaixo. |
+| CT-051 | Falha injetada uma vez | PRD MS3 — forçar uma falha proposital e confirmar que a notificação do GitHub chega. Feito uma vez, não repetido. |
+
+### Roteiro do CT-050
+
+**Quando rodar:** depois de mexer no `extrator.py` ou no `montador_email.py`, quando o e-mail parecer estranho, e uma vez por mês sem motivo nenhum. A suíte automática usa fixture: ela prova que o código faz o que foi combinado, nunca que a Livelo continua entregando o que combinou.
+
+**Passo 1 — a página ainda tem o payload:**
+
+```bash
+curl -sL -A "Mozilla/5.0" https://www.livelo.com.br/juntar-pontos/todos-os-parceiros -o /tmp/livelo.html
+grep -c '__NEXT_DATA__' /tmp/livelo.html   # espera 1
+```
+
+Zero aqui significa que a Livelo trocou a tecnologia da página. É o cenário de C04, não um bug do robô.
+
+**Passo 2 — a extração ainda funciona:**
+
+```bash
+python - <<'PY'
+from datetime import datetime, timedelta, timezone
+from robo_livelo.extrator import extrair_parceiros
+agora = datetime.now(timezone(timedelta(hours=-3)))
+p = extrair_parceiros(open('/tmp/livelo.html', encoding='utf-8').read(), agora=agora)
+print(len(p), 'parceiros |', sum(x.em_promocao for x in p), 'em promoção')
+print(sorted({x.campanha for x in p}))
+PY
+```
+
+O que conferir:
+
+| Sinal | Esperado em 2026-08-11 | O que significa se mudar |
+|---|---|---|
+| Total de parceiros | ~254 | Abaixo de 150 o robô falha sozinho por RN13. Entre 150 e 200, ninguém avisa — é justamente o que este passo pega |
+| Em promoção | 31 | Zero por vários dias seguidos é suspeito (C07) |
+| Valores de `campanha` | `BAU`, `PROMOTION`, `CLUB`, `PROMOTION_CLUB` | Valor novo na lista significa regra nova da Livelo e RN23 desatualizada |
+
+**Passo 3 — o e-mail (a parte que só o olho pega):** abrir o último e-mail recebido e conferir que a validade aparece (`Válido até dd/mm` ou `Termina hoje!`), que o rótulo do Clube bate com o caso (`exclusivo assinantes Clube` só quando a base não se moveu), que os pontos não têm cauda de `float` (`2,9`, nunca `2,9000000000000004`) e que o Gmail não cortou o fim da mensagem com "[Mensagem truncada]" (C05).
+
+**Passo 4 — registrar:** anotar a data e os números em `docs/PENDENCIAS.md`. Sem registro, a comparação do mês seguinte não tem contra o quê comparar.
 
 ---
 
@@ -137,12 +189,12 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 24 | 32 |
-| `teste_adaptadores.py` | 7 | 9 |
-| `teste_montador_email.py` | 20 | 23 |
-| `teste_principal.py` | 13 | 15 |
+| `teste_extrator.py` | 26 | 34 |
+| `teste_adaptadores.py` | 13 | 17 |
+| `teste_montador_email.py` | 23 | 26 |
+| `teste_principal.py` | 16 | 18 |
 | `teste_fronteira.py` | 1 | 5 |
-| **Total** | **73** | **96** |
+| **Total** | **87** | **112** |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 

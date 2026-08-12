@@ -7,10 +7,10 @@ from datetime import datetime
 
 import pytest
 
-from robo_livelo.adaptadores import NotificadorEmail
+from robo_livelo.adaptadores import CatalogoArquivo, CatalogoComReserva, NotificadorEmail
 from robo_livelo.montador_email import ASSUNTO_SEM_PROMOCAO
 from robo_livelo.portas import FalhaAoNotificar, FalhaAoObterPagina, SiteMudou
-from robo_livelo.principal import validar_segredos, verificar_promocoes
+from robo_livelo.principal import montar_catalogo, validar_segredos, verificar_promocoes
 from testes.conftest import (
     FUSO_BRASILIA,
     CatalogoFake,
@@ -265,3 +265,20 @@ def teste_rn21_promocao_expirada_nao_entra_no_email_fim_a_fim(favoritas):
 
     assert total == 0
     assert "Natura" not in notificador.enviadas[0].corpo_html
+
+
+def teste_ct114_sem_database_url_o_catalogo_vem_do_arquivo(tmp_path):
+    """Quem clona o projeto e roda na propria maquina nao tem Neon."""
+    catalogo = montar_catalogo({}, tmp_path / "lojas.toml")
+    assert isinstance(catalogo, CatalogoArquivo)
+
+
+def teste_ct115_com_database_url_o_banco_manda_e_o_arquivo_fica_de_reserva(tmp_path):
+    catalogo = montar_catalogo({"DATABASE_URL": "postgresql://fake"}, tmp_path / "lojas.toml")
+    assert isinstance(catalogo, CatalogoComReserva)
+
+
+def teste_ct116_database_url_em_branco_conta_como_ausente(tmp_path):
+    """Secret nao configurado no Actions chega como string vazia, nao ausente."""
+    catalogo = montar_catalogo({"DATABASE_URL": "   "}, tmp_path / "lojas.toml")
+    assert isinstance(catalogo, CatalogoArquivo)

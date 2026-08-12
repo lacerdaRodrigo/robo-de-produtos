@@ -34,5 +34,9 @@ jobs:
           EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
           SENHA_APP_GMAIL: ${{ secrets.SENHA_APP_GMAIL }}
           EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
+          # Ausente enquanto o secret nao existir: nesse caso o catalogo vem
+          # do TOML, que continua versionado. Presente, o banco manda e o
+          # arquivo vira reserva (PRD V2 7.1.1).
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           LIMIAR_PARCEIROS: "150"
         run: python -m robo_livelo.principal

@@ -22,8 +22,8 @@ _log = logging.getLogger(__name__)
 # achada pelo titulo, nunca por indice fixo em `components`.
 TITULO_SECAO_PARCEIROS = "C&P - Site - Listagem de Parceiros"
 
-# separatorSlug "ATE" para o prefixo "Ate X pontos" (RN12): hipotese, sem
-# exemplo real confirmado ainda. So "IGUAL" foi observado em producao.
+# separatorSlug "ATE" para o prefixo "Ate X pontos" (RN12). Confirmado contra
+# a pagina real em 2026-08-11: 36 dos 270 itens usavam "ATE", 223 "IGUAL".
 _ATE_SEPARATOR_SLUG = "ATE"
 
 
@@ -80,7 +80,8 @@ def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
         return None
 
     nome = item.get("name")
-    parity = item.get("parity") or {}
+    parity_bruta = item.get("parity")
+    parity = parity_bruta or {}
     if not isinstance(parity, dict):
         parity = {}
 
@@ -89,9 +90,18 @@ def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
             raise KeyError("name")
         pontos_atuais = _para_decimal(parity["parity"])
     except (KeyError, TypeError, InvalidOperation):
-        _log.warning(
-            "Item do payload sem nome ou pontuacao legivel, descartado: %r", item.get("id")
-        )
+        # Item sem `parity` nenhuma e caso conhecido e esperado: sao os
+        # produtos da propria Livelo (LVA, LVM, LVR...) e as entradas de
+        # teste dela (XXX, SSG), que nao tem pontuacao por nao serem
+        # parceiro. Gritar WARNING a cada execucao por isso afogaria o
+        # aviso que importa, entao esses caem em DEBUG e o resumo vai em
+        # uma linha so, ao fim da extracao.
+        if not parity_bruta:
+            _log.debug("Item do payload sem pontuacao (nao e parceiro): %r", item.get("id"))
+        else:
+            _log.warning(
+                "Item do payload sem nome ou pontuacao legivel, descartado: %r", item.get("id")
+            )
         return None
 
     pontos_base = None
@@ -155,13 +165,18 @@ def extrair_parceiros(html: str, *, agora: datetime) -> list[Parceiro]:
 
     parceiros: list[Parceiro] = []
     vistos: set[str] = set()
+    descartados = 0
     for item in _config_partners(dados):
         parceiro = _para_parceiro(item, agora=agora)
         if parceiro is None:
+            descartados += 1
             continue
         if parceiro.nome in vistos:  # RN06
             continue
         vistos.add(parceiro.nome)
         parceiros.append(parceiro)
+
+    if descartados:
+        _log.info("Itens do payload sem pontuacao, ignorados: %d", descartados)
 
     return parceiros

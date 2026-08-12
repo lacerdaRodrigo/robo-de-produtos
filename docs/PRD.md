@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) também implementada. 96 testes verdes, 93% de cobertura.
+**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) implementada. 112 testes verdes, 96% de cobertura.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
