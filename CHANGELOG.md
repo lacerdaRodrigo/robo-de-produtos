@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.10.1 (2026-08-12)
+
+### Bug Fixes
+
+- **site**: Move o botão de forçar atualização para o fim de /lojas e adiciona tema claro/escuro
+  ([`5194cd6`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5194cd6ffc8099262aa44393ca549bfb5ad80caa))
+
+
 ## v1.10.0 (2026-08-12)
 
 ### Features
