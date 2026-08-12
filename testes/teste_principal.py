@@ -450,3 +450,22 @@ def teste_ct150_falha_ao_guardar_nao_derruba_a_execucao(favoritas, caplog):
     assert total == 1
     assert notificador.foi_chamado
     assert any("banco inacessivel" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct163_catalogo_vazio_avisa_no_email_e_no_log(caplog):
+    """Fim a fim: banco sem loja nenhuma nao vira 'dia sem promocao'."""
+    from robo_livelo.montador_email import ASSUNTO_SEM_CATALOGO
+
+    notificador = NotificadorFake()
+    with caplog.at_level(logging.WARNING, logger="robo_livelo"):
+        total = verificar_promocoes(
+            fonte=FonteFake(pagina(("Natura", "4", True))),
+            catalogo=CatalogoFake([]),
+            notificador=notificador,
+            limiar=1,
+            agora=AGORA_TESTE,
+        )
+
+    assert total == 0
+    assert notificador.enviadas[0].assunto == ASSUNTO_SEM_CATALOGO
+    assert any("Nenhuma loja cadastrada" in r.getMessage() for r in caplog.records)

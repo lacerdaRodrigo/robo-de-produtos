@@ -84,6 +84,8 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-144 | Grava execução e pontuações na mesma transação | Retrato pela metade no banco viraria página mentindo, que é pior que página velha | Fake de `psycopg`, checar a linha de execução e as de pontuação |
 | CT-145 | Link fora do domínio não é gravado ⚠️ | RN08 vale para o site também: link arbitrário não entra na página | Parceiro com link hostil, checar `link is None` |
 | CT-146 | Falha ao gravar não vaza a senha ⚠️ | PRD §9.1 — a exceção do `psycopg` carrega a URL inteira | Fake que falha, checar ausência da senha e `__cause__` cortado |
+| CT-159 | Banco vazio não é falha ⚠️ | Levantar aqui faria a reserva cair no TOML e ressuscitar as lojas que o dono acabou de apagar pelo site. A reserva cobre indisponibilidade, não vontade | Consulta que devolve zero linhas, checar `[]` e `WARNING` |
+| CT-160 | Banco vazio não aciona a reserva | Contraprova de CT-108: só falha de verdade chega na reserva | Principal vazio com reserva cheia, checar que a reserva não foi chamada |
 
 ## `testes/teste_montador_email.py` — função `montar_email()`
 
@@ -112,6 +114,8 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-103 | `PROMOTION_CLUB` ganha rótulo próprio | RN23 — a base subiu também, então não é exclusivo: o não assinante aproveita, só não pelo número maior | Sephora real (base 1 → 6, Clube 10), checar "assinantes Clube ganham mais" e ausência de "exclusivo" |
 | CT-104 | `CLUB` marca exclusivo sem depender de `pontos_base` | RN23 — a string confirmada decide sozinha | Parceiro com `campanha="CLUB"` e `pontos_base=None`, checar "exclusivo assinantes Clube" |
 | CT-105 | Campanha desconhecida cai na comparação numérica | Valor novo que a Livelo invente não pode derrubar a marcação | Dois parceiros com campanha inventada, um com base parada e outro não |
+| CT-161 | Catálogo vazio tem assunto próprio ⚠️ | "Não teve promoção" e "você não tem loja nenhuma" não podem ler igual — a segunda com a frase da primeira faria o robô parecer trabalhando quando não há o que procurar | `montar({}, catalogo_vazio=True)`, checar assunto e corpo |
+| CT-162 | Sem promoção continua com a frase de sempre | Contraprova de CT-161 | `montar({})` sem a marca |
 
 ## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
@@ -142,6 +146,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-148 | Com `DATABASE_URL` o retrato vai para o banco | RF15 | `montar_repositorio` com a variável |
 | CT-149 | Retrato registrado depois do e-mail | RF15 fim a fim: o site recebe **todas** as favoritas, não só as alertadas (RN24) | Fluxo completo com fake de repositório |
 | CT-150 | Falha ao guardar não derruba a execução ⚠️ | A consequência é site velho, que o carimbo de RN26 denuncia sozinho. Perder o e-mail do dia seria pior | Repositório que levanta `FalhaAoGuardar`, checar e-mail enviado e `WARNING` |
+| CT-163 | Catálogo vazio avisa no e-mail e no log ⚠️ | Fim a fim: banco sem loja nenhuma não vira "dia sem promoção" | `CatalogoFake([])`, checar assunto próprio e `WARNING` |
 
 ## `testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 
@@ -261,13 +266,13 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
 | `teste_extrator.py` | 26 | 34 |
-| `teste_adaptadores.py` | 20 | 25 |
+| `teste_adaptadores.py` | 22 | 27 |
 | `teste_alertas.py` | 13 | 17 |
 | `teste_retrato.py` | 5 | 5 |
-| `teste_montador_email.py` | 23 | 26 |
-| `teste_principal.py` | 25 | 27 |
+| `teste_montador_email.py` | 25 | 28 |
+| `teste_principal.py` | 26 | 28 |
 | `teste_fronteira.py` | 1 | 7 |
-| **Total (robô)** | **121** | **153** |
+| **Total (robô)** | **126** | **158** |
 | `site/testes/formato.teste.ts` | 8 | 12 |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.

@@ -102,7 +102,7 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | ID | Requisito | Alvo verificável |
 |---|---|---|
 | **RNF01** | Custo zero de operação | Somente free tier do GitHub Actions, em repositório público |
-| **RNF02** | Cortesia de rede | No máximo 3 requisições por dia ao site; timeout explícito; User-Agent honesto |
+| **RNF02** | Cortesia de rede | Três execuções agendadas por dia, mais disparos manuais com **intervalo mínimo de 5 minutos** entre eles (V2.3.2); timeout explícito; User-Agent honesto |
 | **RNF03** | Execução rápida | Menos de 60 segundos por execução |
 | **RNF04** | Decisão sem memória | Nenhuma decisão do robô consulta execução anterior; duas execuções seguidas sobre a mesma página produzem o mesmo e-mail. **Revisado na V2.3:** o robô passou a *escrever* o retrato de cada rodada para alimentar o site (RF15). Ele grava e nunca lê de volta — o histórico é subproduto, não entrada de regra |
 | **RNF05** | Segredo fora do código **e fora do log** | Nenhum valor sensível impresso — o log do Actions é público |

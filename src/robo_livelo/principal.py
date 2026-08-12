@@ -125,6 +125,13 @@ def verificar_promocoes(
     favoritas = catalogo.listar()
     _log.info("Lojas favoritas carregadas: %d", len(favoritas))
 
+    # Catalogo vazio e estado valido — alguem apagou tudo pelo site — mas
+    # anormal o bastante para o e-mail dizer isso com todas as letras, em vez
+    # de mandar o "nenhuma promocao hoje" de sempre (O3).
+    catalogo_vazio = not favoritas
+    if catalogo_vazio:
+        _log.warning("Nenhuma loja cadastrada. O e-mail vai avisar, e nada sera monitorado.")
+
     html = fonte.obter_html()
     parceiros = extrator.extrair_parceiros(html, agora=agora)
     _log.info("Parceiros extraidos: %d", len(parceiros))
@@ -149,7 +156,7 @@ def verificar_promocoes(
     if suspeita:
         _log.warning("%s", suspeita)
 
-    mensagem = montador_email.montar(agrupamento, agora=agora)
+    mensagem = montador_email.montar(agrupamento, agora=agora, catalogo_vazio=catalogo_vazio)
     notificador.enviar(mensagem)  # RF10: envia em toda execucao
     _log.info("E-mail enviado. Alertas: %d em %d categorias.", total, len(agrupamento))
 

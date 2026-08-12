@@ -71,11 +71,19 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
 | `/avisos` | Quando me avisar | sessão | Padrão de todas as lojas e exceções |
-| `/lojas` | Cadastrar lojas | sessão | Adicionar; remover em duas etapas |
+| `/lojas` | Cadastrar lojas | sessão | Adicionar; remover em duas etapas; **Atualizar agora** |
 
 **Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
 
 **A linguagem da tela não é a do PRD.** O documento diz *multiplicador*, *piso* e *limiar*, porque são os nomes das colunas; a interface diz "vezes acima do normal" e "mínimo de pontos", e o termo técnico fica dentro do tooltip. Quem usa o site é uma pessoa só, e ela não deveria precisar do PRD aberto.
+
+## O botão "Atualizar agora"
+
+Pede ao GitHub que rode o robô na hora, em vez de esperar 9h, 14h ou 20h. Passa pelo Actions (`lib/github.ts`) porque a Vercel roda JavaScript e o robô é Python — reimplementar a leitura da Livelo aqui duplicaria RN21, RN23 e RN27 em duas linguagens, e duas fontes da verdade para a mesma regra é como se cria divergência silenciosa.
+
+Exige `GITHUB_TOKEN_DISPARO` no ambiente: fine-grained, só este repositório, permissão *Actions: read and write*. Sem ele o botão aparece desabilitado explicando o que falta.
+
+**Trava de 5 minutos** entre disparos (tabela `disparo_manual`, migração 004). RNF02 é compromisso de conduta, não detalhe técnico: um botão sem trava viraria dezenas de requisições à Livelo numa tarde de cadastro. Pedido recusado pelo GitHub não consome a janela.
 
 ## Tooltips sem JavaScript
 

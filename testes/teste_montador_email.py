@@ -252,3 +252,27 @@ def teste_ct105_campanha_desconhecida_cai_na_comparacao_numerica():
 
     assert "exclusivo assinantes Clube" in com_base_parada.corpo_html
     assert "exclusivo assinantes Clube" not in com_base_movida.corpo_html
+
+
+def teste_ct161_catalogo_vazio_tem_assunto_proprio():
+    """ "Nao teve promocao" e "voce nao tem loja nenhuma" nao podem ler igual.
+
+    A segunda com a frase da primeira faria o robo parecer trabalhando
+    quando nao ha o que procurar (O3).
+    """
+    from robo_livelo.montador_email import ASSUNTO_SEM_CATALOGO
+
+    mensagem = montar({}, agora=AGORA_TESTE, catalogo_vazio=True)
+
+    assert mensagem.assunto == ASSUNTO_SEM_CATALOGO
+    assert mensagem.assunto != ASSUNTO_SEM_PROMOCAO
+    assert "nenhuma loja cadastrada" in mensagem.corpo_texto.lower()
+    assert "turbinada agora" not in mensagem.corpo_texto
+
+
+def teste_ct162_sem_promocao_continua_com_a_frase_de_sempre():
+    """Contraprova de CT-161: catalogo cheio e dia fraco nao mudam de texto."""
+    mensagem = montar({}, agora=AGORA_TESTE)
+
+    assert mensagem.assunto == ASSUNTO_SEM_PROMOCAO
+    assert "Nenhuma das suas lojas" in mensagem.corpo_texto

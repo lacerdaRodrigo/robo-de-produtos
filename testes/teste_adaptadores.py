@@ -523,3 +523,58 @@ def teste_repositorio_nulo_nao_quebra_sem_banco(caplog):
     with caplog.at_level(logging.INFO, logger="robo_livelo.adaptadores"):
         RepositorioNulo().registrar(snapshot)
     assert any("nao foi guardado" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct159_banco_vazio_nao_e_falha(monkeypatch, caplog):
+    """A reserva cobre indisponibilidade, nao vontade.
+
+    Levantar aqui faria `CatalogoComReserva` cair no TOML e ressuscitar as
+    lojas que o dono acabou de apagar pelo site — o banco nunca seria a
+    fonte da verdade.
+    """
+    with caplog.at_level(logging.WARNING, logger="robo_livelo.adaptadores"):
+        lojas = repositorio_de_catalogo_fake(monkeypatch, []).listar()
+
+    assert lojas == []
+    assert any("Nenhuma loja cadastrada" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct160_banco_vazio_nao_aciona_a_reserva(monkeypatch):
+    """Contraprova de CT-108: so falha de verdade chega na reserva."""
+    reserva = CatalogoOk([LojaFavorita(nome="Do arquivo", categoria="Beleza")])
+    principal = repositorio_de_catalogo_fake(monkeypatch, [])
+
+    assert CatalogoComReserva(principal, reserva).listar() == []
+    assert reserva.chamadas == 0
+
+
+def repositorio_de_catalogo_fake(monkeypatch, linhas):
+    class CursorFake:
+        def execute(self, consulta, parametros=None):
+            return None
+
+        def fetchall(self):
+            return linhas
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    class ConexaoFake:
+        def cursor(self):
+            return CursorFake()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg",
+        types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=RuntimeError),
+    )
+    return CatalogoPostgres("postgresql://fake")

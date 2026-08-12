@@ -1,28 +1,43 @@
 import Link from "next/link";
 
-import { catalogo, categorias, ultimaExecucao } from "@/lib/banco";
+import {
+  catalogo,
+  categorias,
+  esperaAteProximoDisparo,
+  INTERVALO_MINIMO_MINUTOS,
+  ultimaExecucao,
+} from "@/lib/banco";
+import { temTokenDeDisparo } from "@/lib/github";
 import { filtrarPorNome } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
 import { Rodape } from "../rodape";
-import { acaoAdicionarLoja } from "./acoes";
+import { acaoAdicionarLoja, acaoAtualizarAgora } from "./acoes";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaDeLojas({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; erro?: string; nome?: string; q?: string }>;
+  searchParams: Promise<{
+    ok?: string;
+    erro?: string;
+    nome?: string;
+    q?: string;
+    segundos?: string;
+  }>;
 }) {
   await exigirSessao();
 
-  const { ok, erro, nome, q = "" } = await searchParams;
-  const [todas, listaDeCategorias, execucao] = await Promise.all([
+  const { ok, erro, nome, q = "", segundos } = await searchParams;
+  const [todas, listaDeCategorias, execucao, falta] = await Promise.all([
     catalogo(),
     categorias(),
     ultimaExecucao().catch(() => null),
+    esperaAteProximoDisparo().catch(() => 0),
   ]);
+  const podeDisparar = temTokenDeDisparo();
   const lojas = filtrarPorNome(todas, q);
 
   return (
@@ -54,6 +69,47 @@ export default async function PaginaDeLojas({
           </p>
         )}
         {erro === "nao-achei" && <p className="faixa ruim">Essa loja não existe mais.</p>}
+        {ok === "disparado" && (
+          <p className="faixa">
+            Pedido enviado. O robô leva cerca de um minuto para ler a Livelo e gravar. Recarregue
+            esta página ou veja o resultado em <Link href="/">Pontuação</Link>.
+          </p>
+        )}
+        {erro === "espere" && (
+          <p className="faixa ruim">
+            Espere mais {segundos ?? "alguns"} segundos. O robô só pode ser chamado de{" "}
+            {INTERVALO_MINIMO_MINUTOS} em {INTERVALO_MINIMO_MINUTOS} minutos — é o combinado
+            de não bater na página da Livelo mais do que o necessário.
+          </p>
+        )}
+        {erro === "sem-token" && (
+          <p className="faixa ruim">
+            Falta o token do GitHub no ambiente do site (`GITHUB_TOKEN_DISPARO`). Sem ele o
+            site não consegue pedir uma execução.
+          </p>
+        )}
+        {erro === "disparo" && (
+          <p className="faixa ruim">
+            O GitHub recusou o pedido. O robô continua rodando nos horários de sempre.
+          </p>
+        )}
+
+        <div className="bloco">
+          <div className="linha">
+            <div>
+              <strong>Terminou de mexer?</strong>
+              <p className="ajuda-do-campo" style={{ margin: 0 }}>
+                O robô lê a Livelo agora e a lista de pontuação já sai com as suas mudanças.
+                Sem isso, elas entram no próximo horário: 9h, 14h ou 20h.
+              </p>
+            </div>
+            <form action={acaoAtualizarAgora}>
+              <button type="submit" disabled={!podeDisparar || falta > 0}>
+                {falta > 0 ? `Aguarde ${falta}s` : "Atualizar agora"}
+              </button>
+            </form>
+          </div>
+        </div>
 
         <h2>Adicionar</h2>
         <form action={acaoAdicionarLoja} className="bloco">

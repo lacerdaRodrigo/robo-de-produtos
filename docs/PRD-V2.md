@@ -330,6 +330,8 @@ pontuacao   id, execucao_id, loja_id?, nome, pontos_*, valor_de_disparo, ...  --
 
 As duas últimas entraram na V2.3 (`migracoes/002_execucao.sql`). Guardam **apenas as 132 favoritas**, não os 254 parceiros: é o mesmo recorte que a página pública exibe (§9.3) e mantém o volume irrelevante diante de C08. `loja_id` nulo significa favorita que não apareceu na página naquela rodada (RN19) — a linha existe para o site dizer "não encontrada" em vez de sumir com a loja.
 
+**A reserva cobre indisponibilidade, não vontade.** Banco que responde com zero lojas devolve lista vazia, e isso chega ao caso de uso como resultado legítimo — não como falha. A distinção existe porque a primeira versão não a fazia: apagar o catálogo pelo site fazia o TOML ressuscitar as 132 lojas na execução seguinte, e o banco nunca era de fato a fonte da verdade. Catálogo vazio gera e-mail com assunto próprio ("nenhuma loja cadastrada"), que é diferente de "nenhuma promoção hoje" — dizer a mesma frase nos dois casos esconderia que o robô está rodando no vazio.
+
 **Gravar não é crítico.** Falha ao guardar o retrato vira `WARNING` e a execução segue: a consequência é o site ficar velho, e o carimbo de RN26 denuncia isso sozinho na própria página. Perder o e-mail do dia por causa do Neon seria pior — por isso a gravação acontece **depois** do envio, e por isso `FalhaAoGuardar` existe separada de `ConfiguracaoInvalida`.
 
 Três tabelas. Restrições que o banco garante, e não o código — a garantia mora na camada mais baixa possível:
