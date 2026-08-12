@@ -4,18 +4,19 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-11. Versão atual: **1.2.0** — a V2.1 sobe a versão quando este trabalho entrar na `main`.
+> Atualizado em 2026-08-11. Versão atual: **1.3.0**.
 
-**Onde estamos:** V2.0 e V2.1 fechadas do lado do código. O que sobra nelas depende de você — cadastrar o `DATABASE_URL` e confirmar dois e-mails. A próxima fase de código é a V2.2.
+**Onde estamos:** V2.0 e V2.1 fechadas, mescladas e no ar. A partir da próxima execução agendada o catálogo vem do Neon, com o TOML de reserva. O que sobra é confirmação de e-mail e higiene de conta. A próxima fase de código é a V2.2.
 
 ---
 
 ## Só você pode fazer (exige conta ou credencial)
 
-- [ ] Cadastrar `DATABASE_URL` como secret no GitHub — necessário antes de o robô ler o catálogo do banco. Conferido em 2026-08-11: os secrets do repositório hoje são só `EMAIL_DESTINO`, `EMAIL_REMETENTE` e `SENHA_APP_GMAIL`
+- [x] Cadastrar `DATABASE_URL` como secret no GitHub — feito em 2026-08-11. Ensaio geral local no mesmo dia, com a página real e o catálogo vindo do banco: 132 lojas em 10 categorias (idênticas às do TOML), 254 parceiros extraídos, 18 promoções em 7 categorias, e-mail de 12 KB — folgado ante o corte de 102 KB do Gmail (C05)
 - [ ] Criar a regra de filtro no Gmail que arquiva os e-mails "sem promoção" (PRD §11.4)
 - [ ] Confirmar que a senha de aplicativo antiga do Gmail foi revogada e o secret atualizado
-- [ ] Abrir o e-mail das 23h27 de 2026-08-11 (primeiro enviado pela V2.0) e conferir de olho: validade "Válido até dd/mm" e "Termina hoje!" (RN22), rótulo do Clube (RN23) e o corte de exibição do Gmail (C05). O robô rodou e enviou; o que ninguém verificou ainda é como o e-mail ficou
+- [ ] Abrir o próximo e-mail e conferir de olho o que nenhum teste vê: validade "Válido até dd/mm" e "Termina hoje!" (RN22), rótulo do Clube (RN23) e o corte de exibição do Gmail (C05). O ensaio local de 2026-08-11 já mostrou o conteúdo correto — 5 "Termina hoje!" e a Sephora com "Clube: 10 pontos (assinantes Clube ganham mais)" — mas ninguém viu ainda como isso fica renderizado no Gmail
+- [ ] Trocar a senha do Neon: a `DATABASE_URL` completa foi colada num chat em 2026-08-11. Rotacionar no painel do Neon e atualizar o secret e o `.env` é mais barato que torcer
 - [x] Revisar e aceitar os PRs do Dependabot — PRs #1 e #2 mesclados em 2026-08-11; `testes.yml` e `robo.yml` estão em `checkout@v7`/`setup-python@v7`
 
 ---
@@ -62,7 +63,7 @@ O que sobrou disso:
 - [x] Passar `DATABASE_URL` ao workflow `robo.yml`
 - [x] Colunas `multiplicador` e `piso_pontos` sendo lidas pelo adaptador — e também pelo TOML, para as duas fontes serem equivalentes. `LojaFavorita` ganhou os dois campos, `None` significando "usa o padrão global" (RN28). CT-110 a CT-112
 
-**Estado: código pronto, aguardando o secret.** O robô já sabe ler do banco; enquanto `DATABASE_URL` não existir no GitHub, ele continua lendo o TOML e diz isso no log (`Sem DATABASE_URL: catalogo lido de ...`). Assim que o secret entrar, a troca acontece sozinha na execução seguinte, com o arquivo de reserva.
+**Estado: no ar desde 2026-08-11.** Secret cadastrado, código mesclado (PR #4, versão 1.3.0). O ensaio local com a página real e o catálogo do banco fechou nos mesmos números do TOML: 132 lojas, 10 categorias, 3 com apelido, nenhuma com limiar próprio ainda.
 
 Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles são lidos e ficam parados. Foi a ordem escolhida: o adaptador entrega o dado antes de existir quem consome, não o contrário.
 
