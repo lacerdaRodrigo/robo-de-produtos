@@ -1,0 +1,29 @@
+name: ms3-falha-proposital
+
+# TEMPORARIO. Existe para validar MS3 (PRD secao 11.3, objetivo O3): provar
+# que o GitHub avisa por e-mail quando uma execucao AGENDADA falha, sem
+# ninguem estar olhando o painel do Actions.
+#
+# Precisa ser `schedule` na branch padrao porque e exatamente esse o caminho
+# de notificacao em duvida — o robo roda por cron, nao por clique.
+#
+# APAGAR assim que o e-mail de falha for confirmado.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  falhar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Falhar de proposito
+        run: |
+          echo "Falha proposital para validar MS3. Nao ha nada quebrado no robo."
+          exit 1
