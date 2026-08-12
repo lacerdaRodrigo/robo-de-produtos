@@ -81,6 +81,10 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 
 `app/componentes/dica.tsx`: um `<button>` com `?` e um balão irmão. O CSS mostra o balão em `:hover` (mouse) e em `:focus-within` (teclado e toque — clicar dá foco). Nenhum estado, nenhum script, e o texto continua no DOM para leitor de tela achar pelo `aria-describedby`. No celular o balão vira fixo na base da janela, senão vazaria a tela quando o `?` estivesse perto da borda.
 
+Cada balão tem **uma frase dizendo o que é e um exemplo com número de verdade**, separados — é o exemplo que faz a ficha cair, e ele só funciona visivelmente apartado da definição. O texto evita o vocabulário do PRD: nada de "limiar", "piso" ou "correspondência exata".
+
+Os dois números que se repetem em cada uma das 131 lojas — *normal da loja* e *avisa a partir de* — são explicados **uma vez, numa legenda acima da lista**, e não por cartão. Um `?` por cartão daria mais de 200 ícones na mesma página, e o que deveria chamar atenção viraria textura de fundo.
+
 ## Estrutura
 
 ```

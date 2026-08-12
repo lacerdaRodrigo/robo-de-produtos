@@ -83,10 +83,12 @@ export default async function PaginaDeAvisos({
               aria-label="Quantas vezes acima do normal"
             />
             <span>vezes acima do normal da loja</span>
-            <Dica titulo="vezes acima do normal" secao="normal-da-loja">
-              O “normal da loja” é a pontuação dela fora de promoção, informada pela própria
-              Livelo. Com <strong>2</strong>, uma loja que dá 3 pontos normalmente só avisa a
-              partir de 6.
+            <Dica
+              titulo="vezes acima do normal"
+              secao="normal-da-loja"
+              exemplo="Exemplo: a Renner paga 3 no dia a dia. Com 2, ela só te avisa se chegar a 6 — o dobro."
+            >
+              Quantas vezes melhor que o normal a loja precisa ficar.
             </Dica>
           </div>
 
@@ -101,9 +103,12 @@ export default async function PaginaDeAvisos({
               aria-label="Mínimo de pontos por real"
             />
             <span>pontos por real.</span>
-            <Dica titulo="mínimo de pontos" secao="como-decide">
-              Segura o alarme falso das lojas de pontuação baixa: sair de 1 para 2 pontos
-              dobra, mas continuam sendo 2 pontos. Sem esse mínimo, elas avisariam sempre.
+            <Dica
+              titulo="mínimo de pontos"
+              secao="como-decide"
+              exemplo="Exemplo: com 4, uma loja que subiu de 1 para 2 pontos não te avisa. Dobrou, mas 2 pontos é pouco."
+            >
+              O menor valor que vale um e-mail.
             </Dica>
           </div>
 
@@ -117,10 +122,13 @@ export default async function PaginaDeAvisos({
                 style={{ width: "auto", minHeight: 0 }}
               />
               Eu assino o Clube Livelo
-              <Dica titulo="assinante do Clube" secao="clube">
-                Marcado, o robô passa a contar a pontuação do Clube e avisa também das
-                promoções exclusivas de assinante. Desmarcado, ele ignora o que você não pode
-                aproveitar.
+              <Dica
+                titulo="assinar o Clube"
+                secao="clube"
+                exemplo="Marque se você assina: aí o robô avisa dessas também. Desmarcado, ele só mostra o que dá para você aproveitar."
+              >
+                O Clube é a assinatura paga da Livelo, e algumas promoções são só para quem
+                assina.
               </Dica>
             </label>
           </div>

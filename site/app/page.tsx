@@ -62,7 +62,15 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
             <>
               {" "}
               · Clube: {pontos(loja.pontos_clube)}
-              {rotuloClube ? ` (${rotuloClube})` : ""}
+              {rotuloClube ? ` (${rotuloClube})` : ""}{" "}
+              <Dica
+                titulo="a pontuação do Clube"
+                secao="clube"
+                exemplo="“Exclusivo assinantes Clube”: o ganho é só de quem paga a assinatura, e por isso não te avisa. “Assinantes Clube ganham mais”: a promoção vale para você também; quem assina só ganha mais."
+              >
+                O Clube é a assinatura paga da Livelo. Esse número é o que ela paga a quem
+                assina.
+              </Dica>
             </>
           )}
         </p>
@@ -149,7 +157,14 @@ export default async function Pagina({
             velha e pagina mentirosa. */}
         <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
           Atualizado {carimbo.texto}, em {dataHora(execucao.momento)}
-          {carimbo.velho && " — o robô pode estar parado"}
+          {carimbo.velho && " — o robô pode estar parado"}{" "}
+          <Dica
+            titulo="a hora da atualização"
+            secao="carimbo"
+            exemplo="Se ficar vermelho, faz mais de 12 horas — provavelmente ele parou."
+          >
+            Hora em que o robô olhou a Livelo pela última vez. Ele passa três vezes por dia.
+          </Dica>
         </p>
 
         <section className="resumo">
@@ -157,10 +172,12 @@ export default async function Pagina({
             <span className="valor destaque numero">{alertadas.length}</span>
             <span className="rotulo">
               turbinadas{" "}
-              <Dica titulo="loja turbinada" secao="como-decide">
-                Loja cuja pontuação de hoje passou do que você definiu em{" "}
-                <strong>Quando me avisar</strong>: precisa estar algumas vezes acima do
-                normal daquela loja e valer um mínimo de pontos.
+              <Dica
+                titulo="loja turbinada"
+                secao="como-decide"
+                exemplo="Exemplo: a Avon paga 2 pontos de sempre e hoje está pagando 6."
+              >
+                Lojas que hoje estão pagando bem mais pontos que o normal delas.
               </Dica>
             </span>
           </div>
@@ -172,9 +189,12 @@ export default async function Pagina({
             <span className="valor numero">{execucao.parceiros_lidos}</span>
             <span className="rotulo">
               parceiros lidos{" "}
-              <Dica titulo="parceiros lidos" secao="como-decide">
-                Quantos parceiros a Livelo tinha na página quando o robô passou. Suas lojas
-                são um recorte dessa lista.
+              <Dica
+                titulo="parceiros lidos"
+                secao="como-decide"
+                exemplo={`As suas são uma parte disso: ${todas.length} de ${execucao.parceiros_lidos}.`}
+              >
+                Quantas lojas a Livelo tinha no site quando o robô olhou.
               </Dica>
             </span>
           </div>
@@ -211,6 +231,29 @@ export default async function Pagina({
             ))}
           </nav>
         )}
+
+        {/* Os dois numeros que se repetem em cada cartao, explicados uma vez
+            aqui. Um `?` por cartao daria mais de 200 icones na mesma pagina, e
+            o que deveria chamar atencao viraria textura de fundo. */}
+        <p className="legenda">
+          Em cada loja: quanto ela paga hoje, o normal dela{" "}
+          <Dica
+            titulo="o normal da loja"
+            secao="normal-da-loja"
+            exemplo="Exemplo: a Sephora paga 1 ponto por real de sempre."
+          >
+            Quanto a loja paga num dia comum, sem promoção. Quem informa esse número é a
+            própria Livelo.
+          </Dica>{" "}
+          e a partir de quanto você é avisado{" "}
+          <Dica
+            titulo="a partir de quanto você é avisado"
+            secao="como-decide"
+            exemplo="Exemplo: normal 1, sua regra de 2 vezes e mínimo de 4 → avisa a partir de 4."
+          >
+            Quando a pontuação chega nesse número, você recebe e-mail.
+          </Dica>
+        </p>
 
         {alertadas.length > 0 && (
           <>

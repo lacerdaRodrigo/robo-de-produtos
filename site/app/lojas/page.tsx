@@ -60,10 +60,12 @@ export default async function PaginaDeLojas({
           <div className="campo">
             <label className="rotulo-campo" htmlFor="nome">
               Nome exato, como a Livelo escreve
-              <Dica titulo="nome exato" secao="nao-encontrada">
-                O robô só reconhece a loja por correspondência exata. Aceitar pedaço de nome
-                faria “Petlove” capturar “Petlove Saúde”, que é outro parceiro com outra
-                pontuação.
+              <Dica
+                titulo="o nome exato"
+                secao="nao-encontrada"
+                exemplo="O robô compara letra por letra: “Petlove” e “Petlove Saúde” são lojas diferentes, com pontuações diferentes."
+              >
+                Escreva igual aparece no site da Livelo, com acento e tudo.
               </Dica>
             </label>
             <input id="nome" name="nome" type="text" required placeholder="Renner" />
@@ -92,10 +94,12 @@ export default async function PaginaDeLojas({
           <div className="campo">
             <label className="rotulo-campo" htmlFor="apelidos">
               Apelidos, um por linha
-              <Dica titulo="apelidos" secao="nao-encontrada">
-                Outras grafias que a Livelo usa para a mesma loja — “CEA” para C&amp;A,
-                “Booking com” para Booking.com. Sem isso, a loja some da lista no dia em que
-                eles mudarem o nome.
+              <Dica
+                titulo="os apelidos"
+                secao="nao-encontrada"
+                exemplo="Exemplo: a C&A aparece lá como “CEA”. Sem esse apelido, ela sumiria da sua lista."
+              >
+                Outros jeitos que a Livelo escreve o nome dessa mesma loja. Um por linha.
               </Dica>
             </label>
             <textarea id="apelidos" name="apelidos" rows={2} placeholder="Renner Lojas" />

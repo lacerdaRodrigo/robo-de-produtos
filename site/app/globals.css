@@ -463,6 +463,29 @@ button.perigo {
   color: var(--fundo);
 }
 
+/* O exemplo precisa se destacar da definicao, senao vira um paragrafo so e
+   perde a funcao — e ele que faz a ficha cair. */
+.dica .balao .exemplo {
+  display: block;
+  margin-top: var(--e2);
+  opacity: 0.75;
+  font-size: 0.95em;
+}
+
+/* Legenda dos numeros que se repetem em toda a lista. Explicados uma vez
+   aqui em vez de um `?` por cartao: 131 cartoes dariam 262 icones, e o que
+   deveria chamar atencao viraria textura de fundo. */
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e1) var(--e2);
+  font-size: 0.85rem;
+  color: var(--suave);
+  padding: var(--e3) 0 0;
+  margin: 0;
+}
+
 /* ── Formularios ──────────────────────────────────────────────────── */
 
 .campo {
