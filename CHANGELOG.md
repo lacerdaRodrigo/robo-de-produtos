@@ -2,6 +2,40 @@
 
 <!-- version list -->
 
+## v1.3.0 (2026-08-12)
+
+### Build System
+
+- **deps**: Bump actions/checkout from 4 to 7
+  ([`c6a0169`](https://github.com/lacerdaRodrigo/robo-livelo/commit/c6a0169e258d8c2e21526fa924af30ffccd36f49))
+
+- **deps**: Bump actions/setup-python from 5 to 7
+  ([`b94eed0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/b94eed0a08d6372e7ba64e27f7b3f850461f22ec))
+
+### Chores
+
+- MS3 falha de hora em hora, nao a cada 5 minutos
+  ([`094c0ae`](https://github.com/lacerdaRodrigo/robo-livelo/commit/094c0ae51d9a612e1c7368472bc7e031ac371120))
+
+- Workflow temporario que falha de proposito para validar MS3
+  ([`db80db0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/db80db0d7e43bfb40d94039b01e4927312e74560))
+
+### Code Style
+
+- Quebra o CT-105 em variaveis para o ruff format aceitar
+  ([`4e1655c`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4e1655c276e6aa426c78e1dd4e5b04261b27c76a))
+
+### Documentation
+
+- Registra o run da falha proposital e a cadencia horaria do MS3
+  ([`fe0423a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/fe0423aaf8521110d5796c5e6db9582080e66b83))
+
+### Features
+
+- V2.1 - catalogo do banco com o arquivo de reserva, e RN23 com dois rotulos
+  ([`e226fbc`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e226fbc7ef7e5848e2d1dfa4d6983e00815a4743))
+
+
 ## v1.2.0 (2026-08-11)
 
 ### Bug Fixes
