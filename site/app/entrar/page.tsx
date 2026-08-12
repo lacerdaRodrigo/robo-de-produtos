@@ -7,20 +7,17 @@ import {
   registrarTentativa,
   tentativasRecentes,
 } from "@/lib/banco";
-import { abrirSessao, origemDaRequisicao, senhaConfere, temSessao } from "@/lib/sessao";
+import {
+  abrirSessao,
+  destinoSeguro,
+  origemDaRequisicao,
+  senhaConfere,
+  temSessao,
+} from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Rodape } from "../rodape";
 
 export const dynamic = "force-dynamic";
-
-/** Só volta para caminho interno. Sem isto, `?voltar=https://outro-site`
- *  transformaria o login num trampolim para fora — RN08 aplicado a rota. */
-function destinoSeguro(bruto: string | undefined): string {
-  if (!bruto || !bruto.startsWith("/") || bruto.startsWith("//")) {
-    return "/";
-  }
-  return bruto;
-}
 
 // Server Action: o formulario funciona com JavaScript desligado (RNF14).
 async function entrar(dadosDoFormulario: FormData) {

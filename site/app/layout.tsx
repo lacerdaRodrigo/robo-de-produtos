@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { temaAtual } from "@/lib/tema";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,9 +11,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RaizDoLayout({ children }: { children: React.ReactNode }) {
+export default async function RaizDoLayout({ children }: { children: React.ReactNode }) {
+  const tema = await temaAtual();
   return (
-    <html lang="pt-BR">
+    // "auto" nao vira atributo: sem ele, o CSS segue prefers-color-scheme
+    // do sistema, que e o padrao quando ninguem escolheu nada.
+    <html lang="pt-BR" data-tema={tema === "auto" ? undefined : tema}>
       <body>{children}</body>
     </html>
   );
