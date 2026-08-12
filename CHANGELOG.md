@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.12.1 (2026-08-12)
+
+### Bug Fixes
+
+- **site**: Protege pontuacoes() contra falha do banco no Painel
+  ([`e8dacc2`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e8dacc200fa5812a915fdbcf2bec7cdaf3523788))
+
+
 ## v1.12.0 (2026-08-12)
 
 ### Bug Fixes
