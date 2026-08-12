@@ -22,7 +22,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 ## V1.1 — fechar o que a V1.0 deixou aberto
 
-- [~] **Validar MS3**: workflow `ms3-falha-proposital.yml` no ar em 2026-08-11, agendado a cada 5 min e falhando de propósito. **Falta você confirmar se o e-mail de falha do GitHub chegou** — é a metade que só você enxerga. Confirmado, o workflow sai do repositório
+- [~] **Validar MS3**: workflow `ms3-falha-proposital.yml` na `main` desde 2026-08-11, falhando de propósito de hora em hora (minuto 7) e também sob disparo manual. Já falhou uma vez por disparo manual (run `31550859062`). **Falta você confirmar se o e-mail de falha do GitHub chegou** — é a metade que só você enxerga. Confirmado, o workflow sai do repositório na hora; enquanto ele existir, gera um alarme falso por hora
 - [x] Escrever o roteiro do smoke manual (CT-050) em `docs/TESTES.md` — passo a passo com os números esperados de 2026-08-11 como base de comparação
 - [x] `versao.yml` atualizado para `actions/checkout@v7` e `actions/setup-python@v7`
 
