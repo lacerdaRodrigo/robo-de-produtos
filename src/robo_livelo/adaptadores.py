@@ -15,12 +15,13 @@ from pathlib import Path
 
 import requests
 
-from robo_livelo.modelos import LojaFavorita, Mensagem
+from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias
 from robo_livelo.portas import (
     CatalogoFavoritas,
     ConfiguracaoInvalida,
     FalhaAoNotificar,
     FalhaAoObterPagina,
+    PreferenciasGlobais,
 )
 
 _log = logging.getLogger(__name__)
@@ -254,6 +255,88 @@ class CatalogoPostgres:
             )
             for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
+
+
+class PreferenciasPadrao:
+    """Os padroes do PRD-V2 §6.1, sem banco nenhum.
+
+    E o que roda em quem clonou o projeto e nao tem Neon, e a reserva de
+    quem tem.
+    """
+
+    def carregar(self) -> Preferencias:
+        return Preferencias()
+
+
+class PreferenciasPostgres:
+    """Le os padroes globais da tabela `preferencia` (PRD V2 §8.1)."""
+
+    CONSULTA = "SELECT chave, valor FROM preferencia"
+
+    def __init__(self, url: str) -> None:
+        if not url:
+            raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
+        self._url = url
+
+    def carregar(self) -> Preferencias:
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(self.CONSULTA)
+                linhas = dict(cursor.fetchall())
+        except psycopg.Error as erro:
+            # Mensagem propria: a original pode carregar a senha da URL.
+            raise ConfiguracaoInvalida(
+                f"Falha ao consultar as preferencias no banco: {type(erro).__name__}"
+            ) from None
+
+        padrao = Preferencias()
+        return Preferencias(
+            multiplicador_padrao=_decimal_de_preferencia(
+                linhas, "multiplicador_padrao", padrao.multiplicador_padrao
+            ),
+            piso_pontos_padrao=_decimal_de_preferencia(
+                linhas, "piso_pontos_padrao", padrao.piso_pontos_padrao
+            ),
+            assinante_clube=str(linhas.get("assinante_clube", "")).strip().lower() == "true",
+        )
+
+
+def _decimal_de_preferencia(linhas: dict, chave: str, reserva: Decimal) -> Decimal:
+    """Preferencia ausente ou ilegivel cai no padrao, com aviso no log.
+
+    Aqui a escolha e o contrario da do catalogo: uma preferencia quebrada
+    nao pode derrubar a execucao inteira, porque existe um valor sensato
+    para seguir. Ficar em silencio e que nao pode.
+    """
+    if chave not in linhas:
+        return reserva
+    try:
+        return Decimal(str(linhas[chave]))
+    except InvalidOperation:
+        _log.warning(
+            "Preferencia %r ilegivel no banco (%r). Usando o padrao %s.",
+            chave,
+            linhas[chave],
+            reserva,
+        )
+        return reserva
+
+
+class PreferenciasComReserva:
+    """Mesmo motivo de `CatalogoComReserva`: o Neon nao pode derrubar a rodada."""
+
+    def __init__(self, principal: PreferenciasGlobais, reserva: PreferenciasGlobais) -> None:
+        self._principal = principal
+        self._reserva = reserva
+
+    def carregar(self) -> Preferencias:
+        try:
+            return self._principal.carregar()
+        except ConfiguracaoInvalida as erro:
+            _log.warning("Preferencias do banco indisponiveis (%s). Usando os padroes.", erro)
+            return self._reserva.carregar()
 
 
 class CatalogoComReserva:

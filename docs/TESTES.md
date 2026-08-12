@@ -77,6 +77,10 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-111 | Limiar inválido é recusado | Limiar errado por erro de digitação viraria alerta errado depois, silenciosamente | TOML com texto, com zero e com negativo, checar `ConfiguracaoInvalida` nos três |
 | CT-112 | Catálogo do banco mapeia as colunas | O adaptador lê nome, categoria, apelidos, `multiplicador` e `piso_pontos` (RN28) | Fake de `psycopg` em `sys.modules`, checar mapeamento e as colunas na consulta |
 | CT-113 | Senha da URL não vaza na mensagem de erro ⚠️ | PRD §9.1 — o log do Actions é público e a exceção original carrega a `DATABASE_URL` inteira | Fake que falha ao conectar, checar ausência da senha no texto e `__cause__` cortado |
+| CT-130 | Preferências padrão sem banco | Quem não tem Neon roda com 2,0x e piso 4 (PRD-V2 §6.1) | `PreferenciasPadrao().carregar()` |
+| CT-131 | Preferências vindas do banco | RN28 — a régua é editável sem `git push` | Fake de `psycopg` devolvendo as três chaves |
+| CT-132 | Preferência ilegível ou ausente cai no padrão | Escolha oposta à do catálogo: existe valor sensato para seguir, então a rodada continua — mas não em silêncio | Chave com texto no lugar de número, checar padrão e `WARNING` |
+| CT-133 | Preferências caem para o padrão quando o banco falha | Mesmo motivo de CT-108 | Principal que levanta `ConfiguracaoInvalida`, checar padrão e `WARNING` |
 
 ## `testes/teste_montador_email.py` — função `montar_email()`
 
@@ -126,12 +130,39 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-114 | Sem `DATABASE_URL`, catálogo vem do arquivo | Quem clona o projeto e roda na própria máquina não tem Neon | `montar_catalogo({})`, checar `CatalogoArquivo` |
 | CT-115 | Com `DATABASE_URL`, o banco manda e o arquivo fica de reserva | PRD V2 §7.1.1 | `montar_catalogo` com a variável, checar `CatalogoComReserva` |
 | CT-116 | `DATABASE_URL` em branco conta como ausente | Secret não configurado no Actions chega como string vazia, não ausente — sem isto o robô tentaria conectar em `""` | `montar_catalogo` com espaços, checar `CatalogoArquivo` |
+| CT-134 | Sem `DATABASE_URL`, preferências são os padrões | Simétrico a CT-114 | `montar_preferencias({})` |
+| CT-135 | Com `DATABASE_URL`, preferências vêm do banco com reserva | Simétrico a CT-115 | `montar_preferencias` com a variável |
+| CT-136 | O alerta manda no e-mail, não a etiqueta ⚠️ | RN27 fim a fim: a Livelo etiqueta um sem aumento e esquece outro que triplicou | Payload com os dois casos, checar quem sai no e-mail |
+| CT-137 | Preferências do banco mudam o resultado | RN28 fim a fim: a mesma página com três réguas | Fake da porta com piso e multiplicador diferentes |
+| CT-138 | Suspeita de RN29 vai para o log ⚠️ | Silêncio com página parada é suspeita, não dia fraco | Payload com todos os parceiros parados, checar `WARNING` |
+
+## `testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
+
+> Bloco novo da V2.2. Os números dos casos vêm da medição real de 2026-08-09 e 2026-08-11 registrada no PRD-V2 — são exatamente os exemplos que a V1 errava.
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-117 | Cruza multiplicador e piso dispara | RN27 — `Crocs` 2 → 7 | Parceiro com base 2 e 7 pontos, régua padrão |
+| CT-118 | Dobrou mas não passa do piso | RN27 — `Mercado Livre` 1 → 2. Dobrou, mas são 2 pontos | Base 1 e 2 pontos, checar recusa |
+| CT-119 | Pontuação alta permanente não dispara ⚠️ | RN27 — `Claro` dá 6 com base 6 e `Natura` 4 com base 4. Um limiar absoluto de 5 mandaria a Claro todo dia | Base igual à pontuação atual, checar recusa |
+| CT-120 | Aumento sem etiqueta dispara ⚠️ | RN27 invertendo RN02 — `Avon` 2 → 6 sem etiqueta nenhuma. Era o falso negativo da V1 | Parceiro com `em_promocao=False` e base 3x menor |
+| CT-121 | Etiqueta sem aumento não dispara ⚠️ | RN27 — `O Boticário` 3 → 3 etiquetado. Era o falso positivo da V1 | Parceiro com `em_promocao=True` e base igual |
+| CT-122 | Sobrescrita da loja vence o padrão global | RN28 — `None` na loja usa o padrão; valor na loja manda | Mesma loja com três réguas: padrão, multiplicador frouxo, piso alto |
+| CT-123 | `CLUB` não alerta quem não assina | RN23 — o ganho é de outra pessoa. `PROMOTION_CLUB` passa, porque nesse a base subiu para todos | Dois parceiros, um de cada campanha |
+| CT-124 | Assinante enxerga o tier do Clube | RN23 — para quem assina, a pontuação que vale é `parityClub` | Mesmo parceiro com `assinante_clube` false e true |
+| CT-125 | Sem base, cai no critério da V1 mais o piso | Sem `parityBau` não dá para provar aumento, mas sumir em silêncio é pior | Três parceiros sem base: com etiqueta, sem etiqueta, e abaixo do piso |
+| CT-126 | Valor de disparo é o maior entre múltiplo e piso | RN30 — é o número que o site exibe ao lado da loja | Base baixa (manda o piso), base alta (manda o múltiplo), sem base (`None`) |
+| CT-127 | Silêncio com página degenerada vira suspeita ⚠️ | RN29/C07 — `parityBau` chegar igual ao valor promocional zera todos os alertas sem nada quebrar | 20 parceiros com base igual à pontuação, zero alertas |
+| CT-128 | Silêncio com página normal não vira suspeita | Contraprova de CT-127: dia fraco de verdade não pode virar alarme | 20 parceiros com base menor, zero alertas |
+| CT-129 | Havendo alerta não há suspeita | RN29 só olha o silêncio | Mesma página de CT-127 com um alerta |
+
+Sem ID: página que parou de trazer `parityBau` também levanta suspeita, página vazia não (aí quem falha é RN13), e o critério fechado sobre as preferências chega intacto ao `agrupar`.
 
 ## `testes/teste_fronteira.py` — arquitetura (PRD §9.3)
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `extrator.py`, `categorias.py` e `montador_email.py`, falhar se aparecer `requests`, `bs4` ou `smtplib` |
+| CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py`, falhar se aparecer `requests`, `smtplib`, `tomllib`, `os`, `pathlib` ou `dotenv` |
 
 ---
 
@@ -190,11 +221,12 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
 | `teste_extrator.py` | 26 | 34 |
-| `teste_adaptadores.py` | 13 | 17 |
+| `teste_adaptadores.py` | 17 | 21 |
+| `teste_alertas.py` | 13 | 17 |
 | `teste_montador_email.py` | 23 | 26 |
-| `teste_principal.py` | 16 | 18 |
-| `teste_fronteira.py` | 1 | 5 |
-| **Total** | **87** | **112** |
+| `teste_principal.py` | 21 | 23 |
+| `teste_fronteira.py` | 1 | 6 |
+| **Total** | **109** | **139** |
 
 `teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
 

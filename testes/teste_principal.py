@@ -4,13 +4,26 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from decimal import Decimal
 
 import pytest
 
-from robo_livelo.adaptadores import CatalogoArquivo, CatalogoComReserva, NotificadorEmail
+from robo_livelo.adaptadores import (
+    CatalogoArquivo,
+    CatalogoComReserva,
+    NotificadorEmail,
+    PreferenciasComReserva,
+    PreferenciasPadrao,
+)
+from robo_livelo.modelos import Preferencias
 from robo_livelo.montador_email import ASSUNTO_SEM_PROMOCAO
 from robo_livelo.portas import FalhaAoNotificar, FalhaAoObterPagina, SiteMudou
-from robo_livelo.principal import montar_catalogo, validar_segredos, verificar_promocoes
+from robo_livelo.principal import (
+    montar_catalogo,
+    montar_preferencias,
+    validar_segredos,
+    verificar_promocoes,
+)
 from testes.conftest import (
     FUSO_BRASILIA,
     CatalogoFake,
@@ -25,9 +38,21 @@ AGORA_TESTE = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
 
 
 def pagina(*lojas: tuple[str, str, bool]) -> str:
-    """(nome, pontos, promo) -> payload JSON embrulhado em HTML (RF14)."""
+    """(nome, pontos, promo) -> payload JSON embrulhado em HTML (RF14).
+
+    Desde a V2.2 quem decide o alerta e RN27, nao a etiqueta da Livelo:
+    `promo=True` monta o item com base 1, para a pontuacao de fato cruzar
+    o limiar (2x a base e piso 4). `promo=False` deixa base igual a
+    pontuacao atual — parceiro parado, que e o que a etiqueta ausente
+    costuma significar.
+    """
     itens = [
-        monta_item_parceiro(nome=nome, parity=pontos, promotion=promo)
+        monta_item_parceiro(
+            nome=nome,
+            parity=pontos,
+            parity_bau="1" if promo else None,
+            promotion=promo,
+        )
         for nome, pontos, promo in lojas
     ]
     return monta_html_payload(*itens)
@@ -176,7 +201,7 @@ def teste_ct071_parceiro_malformado_nao_derruba(favoritas):
     """PRD 6.4: descarta so aquele parceiro e segue."""
     item_quebrado = monta_item_parceiro(nome="Loja Quebrada", promotion=True)
     item_quebrado["parity"]["parity"] = "sem pontuacao legivel"
-    item_bom = monta_item_parceiro(nome="Natura", parity="4", promotion=True)
+    item_bom = monta_item_parceiro(nome="Natura", parity="4", parity_bau="1", promotion=True)
 
     html = monta_html_payload(item_quebrado, item_bom)
     total, notificador, _ = executa(html, favoritas)
@@ -241,6 +266,7 @@ def teste_ct102_mesmo_agora_chega_ao_extrator_e_ao_email(favoritas):
     item = monta_item_parceiro(
         nome="Natura",
         parity="4",
+        parity_bau="1",
         promotion=True,
         date_start="2026-08-09-00:00:00 GMT-03:00",
         date_end=formatar_data_livelo(fim_hoje),
@@ -282,3 +308,73 @@ def teste_ct116_database_url_em_branco_conta_como_ausente(tmp_path):
     """Secret nao configurado no Actions chega como string vazia, nao ausente."""
     catalogo = montar_catalogo({"DATABASE_URL": "   "}, tmp_path / "lojas.toml")
     assert isinstance(catalogo, CatalogoArquivo)
+
+
+def teste_ct134_sem_database_url_as_preferencias_sao_os_padroes():
+    assert isinstance(montar_preferencias({}), PreferenciasPadrao)
+
+
+def teste_ct135_com_database_url_as_preferencias_vem_do_banco_com_reserva():
+    assert isinstance(
+        montar_preferencias({"DATABASE_URL": "postgresql://fake"}), PreferenciasComReserva
+    )
+
+
+def teste_ct136_alerta_manda_no_email_nao_a_etiqueta(favoritas):
+    """RN27 fim a fim: a Livelo etiqueta um e esquece o outro, e o e-mail
+    sai com o que realmente subiu."""
+    etiquetado_sem_aumento = monta_item_parceiro(
+        nome="O Boticario", parity="3", parity_bau="3", promotion=True
+    )
+    aumento_sem_etiqueta = monta_item_parceiro(
+        nome="Natura", parity="6", parity_bau="2", promotion=False
+    )
+    html = monta_html_payload(etiquetado_sem_aumento, aumento_sem_etiqueta)
+
+    total, notificador, _ = executa(html, favoritas)
+
+    assert total == 1
+    corpo = notificador.enviadas[0].corpo_html
+    assert "Natura" in corpo
+    assert "Boticário" not in corpo and "Boticario" not in corpo
+
+
+def teste_ct137_preferencias_do_banco_mudam_o_resultado(favoritas):
+    """RN28 fim a fim: a mesma pagina com reguas diferentes."""
+
+    class PreferenciasFake:
+        def __init__(self, preferencias):
+            self._preferencias = preferencias
+
+        def carregar(self):
+            return self._preferencias
+
+    html = pagina(("Natura", "4", True))  # base 1: dispara com 2,0x e piso 4
+
+    def roda(preferencias):
+        notificador = NotificadorFake()
+        return verificar_promocoes(
+            fonte=FonteFake(html),
+            catalogo=CatalogoFake(favoritas),
+            notificador=notificador,
+            limiar=1,
+            agora=AGORA_TESTE,
+            preferencias=PreferenciasFake(preferencias),
+        )
+
+    assert roda(Preferencias()) == 1
+    assert roda(Preferencias(piso_pontos_padrao=Decimal("10"))) == 0
+    assert roda(Preferencias(multiplicador_padrao=Decimal("9"))) == 0
+
+
+def teste_ct138_suspeita_de_rn29_vai_para_o_log(favoritas, caplog):
+    """RN29: silencio com a pagina inteira parada e suspeita, nao dia fraco."""
+    itens = [
+        monta_item_parceiro(nome=nome, parity="3", parity_bau="3", promotion=True)
+        for nome in ("Natura", "O Boticario", "Magalu")
+    ]
+    with caplog.at_level(logging.WARNING, logger="robo_livelo"):
+        total, _, _ = executa(monta_html_payload(*itens), favoritas)
+
+    assert total == 0
+    assert any("RN29" in r.getMessage() for r in caplog.records)

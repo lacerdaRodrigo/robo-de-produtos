@@ -6,6 +6,7 @@ Regras aplicadas aqui: RN01, RN03, RN04, RN05, RN14, RF06.
 from __future__ import annotations
 
 import unicodedata
+from collections.abc import Callable
 from dataclasses import replace
 
 from robo_livelo.modelos import LojaFavorita, Parceiro
@@ -42,21 +43,35 @@ def reconhecer(nome: str, favoritas: list[LojaFavorita]) -> LojaFavorita | None:
     return _indice(favoritas).get(normalizar(nome))
 
 
-def agrupar(parceiros: list[Parceiro], favoritas: list[LojaFavorita]) -> dict[str, list[Parceiro]]:
-    """Agrupa por categoria as favoritas que estao em promocao.
+def em_promocao(parceiro: Parceiro, loja: LojaFavorita) -> bool:
+    """Criterio da V1: vale a etiqueta que a Livelo pendurou (RF04).
 
-    Descarta quem nao e favorita (RN05) e quem nao esta em promocao (RF04).
-    Ordena categorias por nome e lojas por pontuacao decrescente (RF06).
-    Categoria sem loja nao aparece (RN14).
+    Continua aqui como default porque agrupar nao precisa saber de limiar
+    para agrupar. Quem roda o robo passa o criterio de RN27, montado em
+    `alertas.criterio_de_alerta` — este e o piso, nao a regra em producao.
+    """
+    return parceiro.em_promocao
+
+
+def agrupar(
+    parceiros: list[Parceiro],
+    favoritas: list[LojaFavorita],
+    criterio: Callable[[Parceiro, LojaFavorita], bool] = em_promocao,
+) -> dict[str, list[Parceiro]]:
+    """Agrupa por categoria as favoritas que o criterio aprovar.
+
+    Descarta quem nao e favorita (RN05) e quem o criterio recusar. Ordena
+    categorias por nome e lojas por pontuacao decrescente (RF06). Categoria
+    sem loja nao aparece (RN14).
     """
     indice = _indice(favoritas)
     agrupado: dict[str, list[Parceiro]] = {}
 
     for parceiro in parceiros:
-        if not parceiro.em_promocao:
-            continue
         loja = indice.get(normalizar(parceiro.nome))
         if loja is None:
+            continue
+        if not criterio(parceiro, loja):
             continue
         # RN01: categoria fixa por loja. O nome exibido passa a ser o canonico
         # do catalogo, nao o do site: a Livelo escreve "CEA", "Booking com" e

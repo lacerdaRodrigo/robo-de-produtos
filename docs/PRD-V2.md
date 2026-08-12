@@ -139,7 +139,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN26** | O carimbo de atualização é obrigatório e sempre visível. Sem ele a página não cumpre MS6 |
 | **RN27** | **Uma loja gera alerta quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** Substitui e inverte RN02 |
 | **RN28** | Multiplicador e piso têm valor padrão global, sobrescrevível por loja. Loja sem sobrescrita usa o padrão |
-| **RN29** | Se nenhuma favorita cruzar o limiar por muitos dias seguidos, o fato é registrado como suspeita — é o sintoma de C07 |
+| **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
 
 ### 6.1 O novo critério de alerta
@@ -184,7 +184,40 @@ Passa a existir a configuração `ASSINANTE_CLUBE`, padrão `false`:
 - Não assinante: promoção `CLUB` **não** dispara e-mail, mas continua visível na página, marcada como Clube. `PROMOTION_CLUB` dispara normalmente, pela pontuação que vale para ele.
 - Assinante: promoção do Clube conta normalmente, pelo valor do tier.
 
-> A **marcação** no e-mail é da V2.0 e já está no ar. A **supressão** do alerta por não ser assinante é do `alertas.py` da V2.2 — hoje nada é suprimido por causa do Clube.
+> A **marcação** no e-mail é da V2.0. A **supressão** do alerta por não ser assinante entrou na V2.2: `CLUB` não dispara para quem não assina, `PROMOTION_CLUB` dispara normalmente, e para quem assina a pontuação que vale é a do tier.
+
+### 6.3 RN29 sem guardar estado
+
+A redação original de RN29 falava em "muitos dias seguidos", o que exigiria histórico — e o robô é stateless por decisão (PRD §1.4). A regra foi implementada sem contador de dias, porque **o sintoma de C07 é visível numa execução só**: se a Livelo passar a preencher `parityBau` com o próprio valor promocional, isso não acontece numa loja, acontece na página inteira de uma vez.
+
+A checagem dispara quando **nenhuma favorita cruzou o limiar** e ao menos 90% dos parceiros com base conhecida vieram com `pontos_atuais == pontos_base`. Uma loja parada é normal; a página parada não é. Há ainda o caso extremo do payload deixar de trazer `parityBau`: aí a suspeita é levantada sem conta nenhuma.
+
+```
+WARNING RN29: nenhuma favorita cruzou o limiar e 251 de 254 parceiros
+vieram com base igual a pontuacao atual. Suspeita de parityBau
+degenerado (C07), nao de "nao teve promocao hoje".
+```
+
+A versão com contagem de dias volta à mesa na V2.3, quando o robô passar a gravar cada execução no banco para alimentar o site — aí o histórico existe como subproduto, e não como estado criado só para esta regra.
+
+### 6.4 Medição da régua contra a página real
+
+Ensaio de 2026-08-11 com a página real, o catálogo do Neon e a régua padrão (2,0x, piso 4):
+
+| Critério | Lojas no e-mail |
+|---|---|
+| V1 — etiqueta "Promoção" da Livelo | 18 |
+| RN27 — múltiplo da base com piso | 15 |
+
+As trocas mostram a regra funcionando nos dois sentidos que a V1 errava:
+
+| Loja | Situação | Veredito |
+|---|---|---|
+| `Mercado Livre` 1 → 2, `Bibi` 1 → 2, `Electrolux` 1 → 2 | Dobrou, mas são 2 pontos | Saiu — é o piso trabalhando |
+| `Booking.com` 4 → 6 | Subiu, mas não dobrou | Saiu — é o multiplicador trabalhando |
+| `Avon` 2 → 6 | Triplicou **sem etiqueta nenhuma** | Entrou — é o falso negativo da V1 sendo corrigido |
+
+Sensibilidade medida no mesmo dia, para calibrar depois de algumas semanas: `2,0x piso 4` → 15 lojas; `2,5x piso 4` → 14; `3,0x piso 4` → 11; `2,0x piso 6` → 7. O piso é o botão mais sensível dos dois.
 
 ---
 
@@ -200,6 +233,7 @@ A regra de ouro não muda: núcleo puro, mundo por contrato. A V2 acrescenta **u
 | `alertas.py` | Núcleo, **novo** | Aplica RN27 e RN28: decide o que merece alerta. Função pura, sem I/O |
 | `montador_email.py` | Núcleo, ajustado | Ganha validade e marcação de Clube |
 | `CatalogoFavoritas` | **Porta existente, nova implementação** | Passa a ler do Postgres em vez do TOML. **O contrato não muda** — é o dividendo da arquitetura da V1 |
+| `PreferenciasGlobais` | **Porta nova** (V2.2) | Entrega a régua de RN28. Separada do catálogo porque vem de outra tabela e responde outra pergunta |
 | `principal.py` | Orquestração, ajustada | Decide envio por RF16 |
 | Site | **Componente novo**, fora do robô | Next.js na Vercel: exibe e edita. Fala com o mesmo banco |
 

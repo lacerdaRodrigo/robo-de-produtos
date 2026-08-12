@@ -14,6 +14,9 @@ from robo_livelo.adaptadores import (
     CatalogoComReserva,
     CatalogoPostgres,
     PaginaLiveloHttp,
+    PreferenciasComReserva,
+    PreferenciasPadrao,
+    PreferenciasPostgres,
 )
 from robo_livelo.modelos import LojaFavorita
 from robo_livelo.portas import ConfiguracaoInvalida, FalhaAoObterPagina
@@ -287,3 +290,81 @@ def teste_ct113_senha_da_url_nao_vaza_na_mensagem_de_erro(monkeypatch):
         CatalogoPostgres("postgresql://usuario:senha_secreta@host/banco").listar()
     assert "senha_secreta" not in str(erro.value)
     assert erro.value.__cause__ is None
+
+
+# --- CT-130 a CT-133: preferencias globais (RN28, PRD V2 8.1) ---
+
+
+def teste_ct130_preferencias_padrao_sem_banco():
+    """Quem nao tem Neon roda com os padroes do PRD-V2 6.1."""
+    padrao = PreferenciasPadrao().carregar()
+    assert padrao.multiplicador_padrao == Decimal("2.0")
+    assert padrao.piso_pontos_padrao == Decimal("4")
+    assert padrao.assinante_clube is False
+
+
+def preferencias_fake(monkeypatch, linhas):
+    class CursorFake:
+        def execute(self, consulta):
+            return None
+
+        def fetchall(self):
+            return linhas
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    class ConexaoFake:
+        def cursor(self):
+            return CursorFake()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg",
+        types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=RuntimeError),
+    )
+    return PreferenciasPostgres("postgresql://fake").carregar()
+
+
+def teste_ct131_preferencias_do_banco(monkeypatch):
+    linhas = [
+        ("multiplicador_padrao", "2.5"),
+        ("piso_pontos_padrao", "6"),
+        ("assinante_clube", "true"),
+    ]
+    lidas = preferencias_fake(monkeypatch, linhas)
+    assert lidas.multiplicador_padrao == Decimal("2.5")
+    assert lidas.piso_pontos_padrao == Decimal("6")
+    assert lidas.assinante_clube is True
+
+
+def teste_ct132_preferencia_ilegivel_ou_ausente_cai_no_padrao(monkeypatch, caplog):
+    """Aqui a escolha e o contrario da do catalogo: existe valor sensato para
+    seguir, entao a rodada continua — mas nao em silencio."""
+    with caplog.at_level(logging.WARNING, logger="robo_livelo.adaptadores"):
+        lidas = preferencias_fake(monkeypatch, [("multiplicador_padrao", "dois")])
+
+    assert lidas.multiplicador_padrao == Decimal("2.0")
+    assert lidas.piso_pontos_padrao == Decimal("4")  # ausente da tabela
+    assert lidas.assinante_clube is False
+    assert [r for r in caplog.records if r.levelno == logging.WARNING]
+
+
+def teste_ct133_preferencias_caem_para_o_padrao_quando_o_banco_falha(caplog):
+    class PreferenciasFalhas:
+        def carregar(self):
+            raise ConfiguracaoInvalida("banco inacessivel")
+
+    com_reserva = PreferenciasComReserva(PreferenciasFalhas(), PreferenciasPadrao())
+    with caplog.at_level(logging.WARNING, logger="robo_livelo.adaptadores"):
+        assert com_reserva.carregar().multiplicador_padrao == Decimal("2.0")
+    assert [r for r in caplog.records if r.levelno == logging.WARNING]
