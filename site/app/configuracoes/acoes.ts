@@ -3,15 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { salvarConfiguracoes } from "@/lib/banco";
+import { definirAvisoOpcionalNoCadastro } from "@/lib/flags";
 import { exigirSessao } from "@/lib/sessao";
 
 export async function acaoSalvarConfiguracoes(dados: FormData) {
   await exigirSessao();
 
-  await salvarConfiguracoes({
-    avisoOpcionalNoCadastro: dados.get("aviso_opcional_no_cadastro") === "on",
-  });
+  await definirAvisoOpcionalNoCadastro(dados.get("aviso_opcional_no_cadastro") === "on");
 
   // /lojas muda de formato conforme a flag — precisa recalcular.
   revalidatePath("/lojas");

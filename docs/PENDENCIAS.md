@@ -12,7 +12,6 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 ## Só você pode fazer (exige conta ou credencial)
 
-- [ ] Aplicar a migração `migracoes/005_flag_aviso_opcional.sql` no Neon de produção — cria a linha `aviso_opcional_no_cadastro = 'false'` na tabela `preferencia`. Sem ela, `/configuracoes` mostra o interruptor desligado (o padrão já é esse), mas ligá-lo e salvar cria a linha na hora; a migração só documenta o valor inicial, não é bloqueante para o site funcionar
 - [x] Cadastrar `DATABASE_URL` como secret no GitHub — feito em 2026-08-11. Ensaio geral local no mesmo dia, com a página real e o catálogo vindo do banco: 132 lojas em 10 categorias (idênticas às do TOML), 254 parceiros extraídos, 18 promoções em 7 categorias, e-mail de 12 KB — folgado ante o corte de 102 KB do Gmail (C05)
 - [ ] Criar a regra de filtro no Gmail que arquiva os e-mails "sem promoção" (PRD §11.4)
 - [ ] Confirmar que a senha de aplicativo antiga do Gmail foi revogada e o secret atualizado

@@ -1,4 +1,5 @@
-import { configuracoes, ultimaExecucao } from "@/lib/banco";
+import { ultimaExecucao } from "@/lib/banco";
+import { avisoOpcionalNoCadastroLigado } from "@/lib/flags";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Rodape } from "../rodape";
@@ -8,10 +9,13 @@ export const dynamic = "force-dynamic";
 
 /**
  * V2.3.4: interruptores de interface, separados das regras de alerta
- * (que moram em /avisos). O primeiro é o campo de aviso opcional no
- * cadastro — desligado por padrão até a calibragem do limiar global
- * fechar (docs/PENDENCIAS.md). A ideia não é apagar a funcionalidade,
- * só não empurrá-la para quem ainda não decidiu se vai usar.
+ * (que moram em /avisos). Guardados em cookie (lib/flags.ts), não no
+ * banco — é preferência de quem mexe no site, não dado que o robô lê.
+ *
+ * O primeiro é o campo de aviso opcional no cadastro — desligado por
+ * padrão até a calibragem do limiar global fechar (docs/PENDENCIAS.md).
+ * A ideia não é apagar a funcionalidade, só não empurrá-la para quem
+ * ainda não decidiu se vai usar.
  */
 export default async function PaginaDeConfiguracoes({
   searchParams,
@@ -21,8 +25,8 @@ export default async function PaginaDeConfiguracoes({
   await exigirSessao();
 
   const { ok } = await searchParams;
-  const [config, execucao] = await Promise.all([
-    configuracoes(),
+  const [avisoOpcionalLigado, execucao] = await Promise.all([
+    avisoOpcionalNoCadastroLigado(),
     ultimaExecucao().catch(() => null),
   ]);
 
@@ -48,7 +52,7 @@ export default async function PaginaDeConfiguracoes({
                 id="aviso_opcional_no_cadastro"
                 name="aviso_opcional_no_cadastro"
                 type="checkbox"
-                defaultChecked={config.avisoOpcionalNoCadastro}
+                defaultChecked={avisoOpcionalLigado}
                 style={{ width: "auto", minHeight: 0 }}
               />
               Aviso opcional no cadastro de loja

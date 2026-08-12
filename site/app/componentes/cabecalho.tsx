@@ -45,7 +45,7 @@ export async function Cabecalho({ atual }: { atual: string }) {
               <input type="hidden" name="voltar" value={atual} />
               <button
                 type="submit"
-                className="discreto botao-icone"
+                className="discreto botao-tema"
                 aria-label={`${ROTULO_DO_TEMA[tema]} — clique para trocar`}
                 title={`${ROTULO_DO_TEMA[tema]} — clique para trocar`}
               >
@@ -55,7 +55,7 @@ export async function Cabecalho({ atual }: { atual: string }) {
             {logado && (
               <Link
                 href="/configuracoes"
-                className="botao discreto botao-icone"
+                className="botao discreto botao-tema"
                 aria-label="Configurações"
                 title="Configurações"
               >

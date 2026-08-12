@@ -3,12 +3,12 @@ import Link from "next/link";
 import {
   catalogo,
   categorias,
-  configuracoes,
   esperaAteProximoDisparo,
   INTERVALO_MINIMO_MINUTOS,
   preferencias,
   ultimaExecucao,
 } from "@/lib/banco";
+import { avisoOpcionalNoCadastroLigado } from "@/lib/flags";
 import { temTokenDeDisparo } from "@/lib/github";
 import { filtrarPorNome, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
@@ -33,14 +33,15 @@ export default async function PaginaDeLojas({
   await exigirSessao();
 
   const { ok, erro, nome, q = "", segundos } = await searchParams;
-  const [todas, listaDeCategorias, execucao, falta, padroes, config] = await Promise.all([
-    catalogo(),
-    categorias(),
-    ultimaExecucao().catch(() => null),
-    esperaAteProximoDisparo().catch(() => 0),
-    preferencias(),
-    configuracoes(),
-  ]);
+  const [todas, listaDeCategorias, execucao, falta, padroes, avisoOpcionalLigado] =
+    await Promise.all([
+      catalogo(),
+      categorias(),
+      ultimaExecucao().catch(() => null),
+      esperaAteProximoDisparo().catch(() => 0),
+      preferencias(),
+      avisoOpcionalNoCadastroLigado(),
+    ]);
   const podeDisparar = temTokenDeDisparo();
   const lojas = filtrarPorNome(todas, q);
 
@@ -142,7 +143,7 @@ export default async function PaginaDeLojas({
             <textarea id="apelidos" name="apelidos" rows={2} placeholder="Renner Lojas" />
           </div>
 
-          {config.avisoOpcionalNoCadastro && (
+          {avisoOpcionalLigado && (
             <div className="campo">
               <span className="rotulo-campo">
                 Regra de aviso opcional
