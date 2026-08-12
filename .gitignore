@@ -20,3 +20,10 @@ htmlcov/
 .vscode/
 .idea/
 .DS_Store
+
+# Site (Next.js)
+site/node_modules/
+site/.next/
+site/next-env.d.ts
+site/.vercel/
+site/tsconfig.tsbuildinfo
