@@ -240,6 +240,8 @@ O que conferir:
 | Em promoção | 31 | Zero por vários dias seguidos é suspeito (C07) |
 | Valores de `campanha` | `BAU`, `PROMOTION`, `CLUB`, `PROMOTION_CLUB` | Valor novo na lista significa regra nova da Livelo e RN23 desatualizada |
 
+**Passo 2b — o site, no navegador de verdade:** abrir a página publicada **com JavaScript ligado** e confirmar que as lojas aparecem. Parece redundante depois do passo 3 do e-mail, mas não é: em 2026-08-11 a página serviu HTML perfeito e ficou em branco no navegador, porque a CSP recusou os scripts inline do Next e o React apagou o que o servidor tinha mandado. `curl` não pega essa classe de defeito — só o navegador.
+
 **Passo 3 — o e-mail (a parte que só o olho pega):** abrir o último e-mail recebido e conferir que a validade aparece (`Válido até dd/mm` ou `Termina hoje!`), que o rótulo do Clube bate com o caso (`exclusivo assinantes Clube` só quando a base não se moveu), que os pontos não têm cauda de `float` (`2,9`, nunca `2,9000000000000004`) e que o Gmail não cortou o fim da mensagem com "[Mensagem truncada]" (C05).
 
 **Passo 4 — registrar:** anotar a data e os números em `docs/PENDENCIAS.md`. Sem registro, a comparação do mês seguinte não tem contra o quê comparar.

@@ -53,6 +53,16 @@ Esse erro significa Root Directory errado, não problema no site. Duas armadilha
 
 Manter robô e site no mesmo repositório é decisão registrada: a fonte da verdade (`docs/PRD.md`) precisa ser uma só. O preço é este campo, uma vez.
 
+## Content-Security-Policy e o nonce
+
+A política tem nonce por requisição (`middleware.ts`), e não cabeçalho estático. Motivo registrado porque custou um deploy quebrado:
+
+`script-src 'self'` parece certo e não é. O Next embute o payload de dados da página em `<script>` **inline** — 43 deles. Com a política estrita sem nonce, o navegador recusa todos, o React encontra um stream vazio, dispara `Error: Connection closed` e **apaga o HTML que o servidor mandou correto**. O sintoma é cruel: com JavaScript desligado a página funciona; com JavaScript ligado, fica em branco.
+
+Verificar por `curl` não pega isso — o HTML servido está perfeito. Só abrindo no navegador.
+
+O preço do nonce é a página deixar de ser estática: nonce muda a cada requisição e não sobrevive a cache. Com 3 execuções por dia e visitas de uma pessoa, uma consulta por visita é irrelevante — e o carimbo de RN26 passa a nunca mostrar idade de cache.
+
 ## Estrutura
 
 ```

@@ -2,9 +2,11 @@ import { pontuacoes, ultimaExecucao, type PontuacaoDeLoja } from "@/lib/banco";
 import { dia, idade, dataHora, pontos, rotuloDoClube, terminaHoje } from "@/lib/formato";
 import { Rodape } from "./rodape";
 
-// O robo roda 3x ao dia; revalidar de 5 em 5 minutos deixa a pagina fresca
-// sem transformar cada visita numa consulta ao banco (C08).
-export const revalidate = 300;
+// Renderizada a cada visita, nao servida de cache: o nonce da CSP muda por
+// requisicao (ver middleware.ts) e nonce nao sobrevive a pagina estatica.
+// O custo e uma consulta ao banco por visita — irrelevante no volume deste
+// projeto, e em troca o carimbo de RN26 nunca mostra idade de cache.
+export const dynamic = "force-dynamic";
 
 function Validade({ fim }: { fim: string | null }) {
   if (!fim) {
