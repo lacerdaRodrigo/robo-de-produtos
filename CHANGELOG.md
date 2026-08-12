@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.10.0 (2026-08-12)
+
+### Features
+
+- **site**: Redesenho visual V2.3.3 — cartões em grade, barra de progresso, cabeçalho fixo
+  ([`ca2fdbe`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ca2fdbed7bc232d0569eb820e12e3fb74211e662))
+
+
 ## v1.9.0 (2026-08-12)
 
 ### Documentation
