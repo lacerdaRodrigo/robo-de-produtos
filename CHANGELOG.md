@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.6.1 (2026-08-12)
+
+### Bug Fixes
+
+- CSP com nonce — a politica anterior apagava a pagina no navegador
+  ([`68e15c7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/68e15c7c052e1ca38cea19b8524f184455ef9cfb))
+
+### Documentation
+
+- Root Directory da Vercel e a armadilha do Redeploy
+  ([`ea71978`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ea719789c2285e3bd7021bc8b835fc1597d089bf))
+
+
 ## v1.6.0 (2026-08-12)
 
 ### Features
