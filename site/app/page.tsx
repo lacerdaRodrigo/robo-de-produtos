@@ -140,12 +140,17 @@ export default async function Pagina({
   const logado = await temSessao();
 
   let execucao: Awaited<ReturnType<typeof ultimaExecucao>> = null;
+  let todas: PontuacaoDeLoja[] = [];
   let falhaNoBanco = false;
   try {
     execucao = await ultimaExecucao();
+    if (execucao) {
+      todas = await pontuacoes(execucao.id);
+    }
   } catch {
-    // Banco fora do ar vira pagina que diz isso, nao erro 500 mudo. Mesma
-    // linha do robo: falha nunca e silenciosa (O3).
+    // Banco fora do ar (ou coluna nova que ainda nao existe, ex.: migracao
+    // pendente) vira pagina que diz isso, nao erro 500 mudo. Mesma linha do
+    // robo: falha nunca e silenciosa (O3).
     falhaNoBanco = true;
   }
 
@@ -166,7 +171,6 @@ export default async function Pagina({
     );
   }
 
-  const todas = await pontuacoes(execucao.id);
   const lojas = filtrarPorNome(todas, q);
   const alertadas = lojas.filter((l) => l.alertou);
   const carimbo = idade(execucao.momento);
