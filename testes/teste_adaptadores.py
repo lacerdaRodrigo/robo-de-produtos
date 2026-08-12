@@ -424,7 +424,14 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     """Uma linha de execucao e uma por favorita, todas na mesma transacao."""
     loja_encontrada = LojaFavorita(nome="Natura", categoria="Beleza")
     loja_ausente = LojaFavorita(nome="Magalu", categoria="Marketplace")
-    parceiro = faz_parceiro("Natura", "8", base="2", clube="12", campanha="PROMOTION")
+    parceiro = faz_parceiro(
+        "Natura",
+        "8",
+        base="2",
+        clube="12",
+        campanha="PROMOTION",
+        descricao_campanha="Campanha válida de 11 a 13/08/2026.",
+    )
 
     momento = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
     snapshot = RetratoDaExecucao(
@@ -454,10 +461,12 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     assert linhas[0]["pontos_atuais"] == Decimal("8")
     assert linhas[0]["valor_de_disparo"] == Decimal("4")
     assert linhas[0]["alertou"] is True
+    assert linhas[0]["descricao_campanha"] == "Campanha válida de 11 a 13/08/2026."
     # RN19: favorita ausente vira linha vazia, nao desaparece
     assert linhas[1]["nome"] == "Magalu"
     assert linhas[1]["pontos_atuais"] is None
     assert linhas[1]["alertou"] is False
+    assert linhas[1]["descricao_campanha"] is None
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):

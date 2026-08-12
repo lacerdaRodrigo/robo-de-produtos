@@ -570,6 +570,12 @@ button:disabled {
   margin: 0 0 var(--e1);
 }
 
+.descricao-campanha {
+  font-style: italic;
+  padding-left: var(--e2);
+  border-left: 2px solid var(--superficie-2);
+}
+
 .detalhe-rodape {
   margin-top: auto;
   padding-top: var(--e2);

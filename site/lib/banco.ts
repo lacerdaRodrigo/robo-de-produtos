@@ -35,6 +35,7 @@ export type PontuacaoDeLoja = {
   em_promocao: boolean;
   alertou: boolean;
   campanha: string | null;
+  descricao_campanha: string | null;
   fim_promocao: string | null;
   link: string | null;
   multiplicador: Numerico;
@@ -76,7 +77,8 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
   return (await sql`
     SELECT p.nome, l.categoria, p.pontos_atuais, p.pontos_base, p.pontos_clube,
            p.valor_de_disparo, p.moeda, p.prefixo_ate, p.em_promocao, p.alertou,
-           p.campanha, p.fim_promocao, p.link, l.multiplicador, l.piso_pontos
+           p.campanha, p.descricao_campanha, p.fim_promocao, p.link,
+           l.multiplicador, l.piso_pontos
       FROM pontuacao p
       LEFT JOIN loja l ON l.id = p.loja_id
      WHERE p.execucao_id = ${execucaoId}

@@ -69,6 +69,7 @@ def faz_parceiro(
     inicio: datetime | None = None,
     fim: datetime | None = None,
     campanha: str | None = None,
+    descricao_campanha: str | None = None,
 ) -> Parceiro:
     return Parceiro(
         nome=nome,
@@ -83,6 +84,7 @@ def faz_parceiro(
         inicio_promocao=inicio,
         fim_promocao=fim,
         campanha=campanha,
+        descricao_campanha=descricao_campanha,
     )
 
 
@@ -118,6 +120,7 @@ def monta_item_parceiro(
     date_end: str | None = None,
     active_campaign: str = "BAU",
     separator_slug: str = "IGUAL",
+    legal_terms: str = "",
 ) -> dict:
     """Item sintetico no formato real de `configPartners` (RF14)."""
     bloco_parity: dict = {
@@ -126,7 +129,7 @@ def monta_item_parceiro(
         "parity": float(parity),
         "parityClub": float(parity_club) if parity_club is not None else float(parity),
         "parityBau": float(parity_bau) if parity_bau is not None else float(parity),
-        "legalTerms": "",
+        "legalTerms": legal_terms,
         "separator": "=" if separator_slug == "IGUAL" else "<",
         "promotion": promotion,
         "separatorSlug": separator_slug,

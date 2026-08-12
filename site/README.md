@@ -8,6 +8,7 @@ O **porquê** de cada decisão está no [`PRD-V2.md`](../docs/PRD-V2.md) — aqu
 
 - Todas as 132 favoritas, em promoção ou não (RN24). É o que responde "quanto a Renner dá hoje?" sem abrir a Livelo
 - Por loja: pontuação atual, base e o valor que dispara o alerta (RN30)
+- A letra miúda da campanha, quando a própria Livelo publica uma (RN31) — dá para decidir se a promoção vale para a compra pretendida sem abrir o app dela
 - Carimbo de atualização sempre visível, que fica vermelho quando envelhece (RN26)
 - Nenhuma imagem, fonte ou script de terceiro (RN25) — a identidade é cor e tipografia do sistema
 - Funciona com JavaScript desligado (RNF14), inclusive os formulários de edição

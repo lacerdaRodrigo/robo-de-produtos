@@ -96,6 +96,12 @@ function Loja({ loja, logado }: { loja: PontuacaoDeLoja; logado: boolean }) {
         </p>
       )}
 
+      {!naoEncontrada && loja.descricao_campanha && (
+        // Letra miúda da própria Livelo (legalTerms) — dá para decidir se a
+        // promoção serve sem abrir o app dela.
+        <p className="detalhe descricao-campanha">{loja.descricao_campanha}</p>
+      )}
+
       <div className="detalhe-rodape">
         {!naoEncontrada && loja.pontos_clube !== null && (
           <p className="detalhe numero">
