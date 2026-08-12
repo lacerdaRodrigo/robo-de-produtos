@@ -8,8 +8,8 @@ Robô que lê a página pública de parceiros da Livelo, filtra as lojas favorit
 
 ## Regras de ouro
 
-1. **O núcleo não faz I/O.** `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py` não podem importar `requests`, `smtplib`, `tomllib`, `os` nem `pathlib`. Existe um teste que falha se isso acontecer (CT-074). `beautifulsoup4` é permitido: transforma texto em estrutura, não abre conexão nem arquivo.
-2. **O mundo entra por contrato.** Quatro portas em `portas.py`: `FonteDePagina`, `Notificador`, `CatalogoFavoritas` e `PreferenciasGlobais`. Nada de acesso externo fora dos adaptadores.
+1. **O núcleo não faz I/O.** `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py`, `retrato.py` e `montador_email.py` não podem importar `requests`, `smtplib`, `tomllib`, `os` nem `pathlib`. Existe um teste que falha se isso acontecer (CT-074). `beautifulsoup4` é permitido: transforma texto em estrutura, não abre conexão nem arquivo.
+2. **O mundo entra por contrato.** Cinco portas em `portas.py`: `FonteDePagina`, `Notificador`, `CatalogoFavoritas`, `PreferenciasGlobais` e `RepositorioDeExecucao`. Nada de acesso externo fora dos adaptadores.
 3. **Todo dado vindo do site é hostil.** Escapar antes de renderizar (RN07) e validar o domínio do link antes de colocá-lo no e-mail (§9.2).
 4. **Falha nunca é silenciosa.** Erro encerra com código de saída diferente de zero (RNF06). "Sem promoção" e "robô quebrado" precisam ser distinguíveis (RN13).
 
@@ -45,4 +45,6 @@ Duas coisas seguem esperando o autor, não código: confirmar o e-mail de falha 
 
 A V2.2 está implementada: `alertas.py` decide o alerta por RN27 (múltiplo da base com piso) em vez da etiqueta da Livelo, com régua vinda da tabela `preferencia` (RN28) e suspeita de C07 sem guardar estado (RN29, ver PRD-V2 §6.3). O e-mail continua diário de propósito — cortar isso é RF16, da V2.4.
 
-A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). A próxima fase é a V2.3 (site na Vercel), e ela precisa que o robô passe a gravar no banco. Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.
+A V2.3 está pela metade: o robô já grava o retrato de cada execução no banco (`retrato.py` mais a porta `RepositorioDeExecucao`, migração `002`), e falta o site Next.js em `site/` ler isso. O robô escreve e nunca lê de volta — nenhuma decisão de alerta consulta o passado, então "stateless" continua valendo onde importa.
+
+A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

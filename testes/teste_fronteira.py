@@ -23,6 +23,7 @@ MODULOS_DO_NUCLEO = [
     "categorias.py",
     "montador_email.py",
     "alertas.py",
+    "retrato.py",
 ]
 IMPORTS_PROIBIDOS = {"requests", "smtplib", "tomllib", "os", "pathlib", "dotenv", "socket"}
 

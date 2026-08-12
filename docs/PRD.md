@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) e V2.2 (alerta por múltiplo da base, RN27 a RN29) implementadas. 139 testes verdes, 96% de cobertura.
+**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) e V2.2 (alerta por múltiplo da base, RN27 a RN29) implementadas. V2.3 pela metade: o robô já grava o retrato de cada execução (RF15), falta o site. 153 testes verdes, 96% de cobertura.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -32,6 +32,7 @@ Promoção de pontuação turbinada na Livelo é efêmera, não tem aviso prévi
 - Banco de dados e qualquer serviço hospedado além do GitHub.
 - Histórico entre execuções, comparação de execuções e gráfico de tendência.
   *(O robô é stateless: cada execução mostra tudo que está ativo naquele momento, mesmo que repita o e-mail do dia anterior. A arquitetura deixa um contrato de repositório no-op como ponto de extensão — ver Seção 4.)*
+  **Continua fora do escopo como entrada de decisão.** A V2.3 passou a gravar o retrato de cada execução para o site ter o que exibir, mas nenhuma regra lê esse histórico de volta — ver RNF04.
 - Data de validade da promoção. **A justificativa original desta exclusão era falsa** e está registrada em 11.2: acreditava-se que exigiria ~40 requisições extras, mas a página já traz `dateStart` e `dateEnd` no mesmo payload. Segue fora da V1.0 apenas porque a V1.0 já estava fechada quando isso foi descoberto.
 - Login na conta Livelo, compra automática ou clique automático. **O robô nunca autentica** — lê apenas página pública.
 - Multiusuário, cadastro ou preferências por usuário.
@@ -103,7 +104,7 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | **RNF01** | Custo zero de operação | Somente free tier do GitHub Actions, em repositório público |
 | **RNF02** | Cortesia de rede | No máximo 3 requisições por dia ao site; timeout explícito; User-Agent honesto |
 | **RNF03** | Execução rápida | Menos de 60 segundos por execução |
-| **RNF04** | Stateless e idempotente | Nenhuma escrita de estado; duas execuções seguidas produzem o mesmo resultado |
+| **RNF04** | Decisão sem memória | Nenhuma decisão do robô consulta execução anterior; duas execuções seguidas sobre a mesma página produzem o mesmo e-mail. **Revisado na V2.3:** o robô passou a *escrever* o retrato de cada rodada para alimentar o site (RF15). Ele grava e nunca lê de volta — o histórico é subproduto, não entrada de regra |
 | **RNF05** | Segredo fora do código **e fora do log** | Nenhum valor sensível impresso — o log do Actions é público |
 | **RNF06** | Falha sempre visível | Qualquer erro encerra o processo com código de saída diferente de zero |
 | **RNF07** | Portabilidade | O mesmo código roda localmente e no Actions; só variáveis de ambiente mudam |
@@ -193,7 +194,7 @@ A divisão que importa: **baixar** a página é sujo, **interpretar** o HTML é 
 
 ### 4.2 Portas
 
-Contratos definidos apenas onde a troca é realmente provável. Eram três na V1; a V2.2 acrescentou a quarta.
+Contratos definidos apenas onde a troca é realmente provável. Eram três na V1; a V2.2 acrescentou a quarta e a V2.3 a quinta.
 
 | Porta | Responsabilidade | Por que existe | Implementação |
 |---|---|---|---|
@@ -201,8 +202,11 @@ Contratos definidos apenas onde a troca é realmente provável. Eram três na V1
 | `Notificador` | Entregar a mensagem montada | Isola o canal de saída da lógica que decide o conteúdo | SMTP via Gmail |
 | `CatalogoFavoritas` | Fornecer lojas favoritas, apelidos e categorias | Atende RNF09: a mudança mais frequente do projeto deixa de exigir edição de código | Arquivo TOML ou Postgres, com o arquivo de reserva |
 | `PreferenciasGlobais` | Fornecer multiplicador padrão, piso padrão e se o leitor assina o Clube | RN28 precisa de uma régua editável sem `git push`. Separada do catálogo porque responde outra pergunta — "com que régua", não "quais lojas" — e vem de outra tabela | Padrões do PRD-V2 §6.1 ou Postgres, com os padrões de reserva |
+| `RepositorioDeExecucao` | Guardar o retrato de cada rodada | RF15: o site precisa da pontuação atual, que só existe durante a execução | Postgres, ou nenhum lugar quando não há banco |
 
-**Ponto de extensão documentado, não implementado:** persistência de execuções (`RepositorioExecucao`). Histórico está fora do escopo da V1 (Seção 1.4) e criar uma interface no-op para funcionalidade inexistente seria construir o futuro em vez de deixar a porta barata. Quando houver necessidade, o caso de uso ganha uma dependência a mais e nenhuma regra de negócio muda.
+**O ponto de extensão previsto virou necessidade.** Este PRD registrava `RepositorioExecucao` como "documentado, não implementado", porque histórico estava fora do escopo da V1 (Seção 1.4) e criar interface no-op para funcionalidade inexistente seria construir o futuro. A V2.3 é a necessidade que ele esperava, e a previsão se confirmou: o caso de uso ganhou uma dependência a mais e **nenhuma regra de negócio mudou**.
+
+O robô escreve e nunca lê de volta. Nenhuma decisão de alerta consulta o passado, então a Seção 1.4 continua valendo onde ela importa — o que existe agora é subproduto para o site, não estado que muda o comportamento.
 
 ### 4.3 Desenho
 
@@ -241,6 +245,8 @@ flowchart TD
 
 Estrutura plana, com um arquivo dedicado aos contratos. O projeto deve ficar abaixo de 500 linhas de código — hierarquia de pastas custaria mais do que entrega.
 
+> **Exceção aberta na V2.3:** o site vive em `site/`, e isso não fere a regra acima. A regra vale para o **robô**, que continua plano dentro de `src/robo_livelo/`. `site/` é outro runtime, outra linguagem e outro deploy — misturá-lo na raiz é que seria confusão. Mora no mesmo repositório porque a fonte da verdade (este PRD) precisa ser uma só.
+
 ```
 robo-livelo/
 ├── .github/
@@ -250,6 +256,8 @@ robo-livelo/
 │   └── dependabot.yml
 ├── config/
 │   └── lojas_favoritas.toml    # RNF09 — dado de negócio fora do código ✔
+├── migracoes/                  # esquema do Postgres, em SQL versionado
+├── site/                       # Next.js na Vercel (V2.3) — fora do robô
 ├── src/robo_livelo/
 │   ├── __init__.py
 │   ├── modelos.py              # núcleo puro: Parceiro, LojaFavorita, Preferencias, Mensagem
@@ -257,6 +265,7 @@ robo-livelo/
 │   ├── extrator.py             # núcleo puro: HTML → Parceiro
 │   ├── categorias.py           # núcleo puro: filtrar, agrupar, ordenar
 │   ├── alertas.py              # núcleo puro: RN27, RN28, RN29
+│   ├── retrato.py              # núcleo puro: o que a execução viu (RF15)
 │   ├── montador_email.py       # núcleo puro: Parceiro → mensagem
 │   ├── adaptadores.py          # requests, smtplib, TOML, Postgres
 │   └── principal.py            # composition root + caso de uso
@@ -386,6 +395,7 @@ FonteDePagina.obter_html() -> str          # levanta erro após esgotar tentativ
 Notificador.enviar(mensagem) -> None
 CatalogoFavoritas.listar() -> list[LojaFavorita]
 PreferenciasGlobais.carregar() -> Preferencias        # RN28, RN23
+RepositorioDeExecucao.registrar(retrato) -> None      # RF15
 
 # extrator.py — núcleo puro, nunca toca rede
 extrair_parceiros(html: str) -> list[Parceiro]        # RN06, RN11, RN12, RN15
@@ -399,6 +409,9 @@ favoritas_ausentes(parceiros, favoritas) -> list[str] # RN19
 merece_alerta(parceiro, loja, preferencias) -> bool   # RN27, RN28, RN23
 valor_de_disparo(parceiro, loja, prefs) -> Decimal    # RN30
 suspeita_de_base_degenerada(parceiros, n) -> str|None # RN29, C07
+
+# retrato.py — núcleo puro
+montar_retrato(parceiros, favoritas, prefs, ...)      # RF15, RN24, RN30
 
 # montador_email.py — núcleo puro
 montar(agrupamento) -> Mensagem                       # RN07, RN08, RN10, RN12, RF08

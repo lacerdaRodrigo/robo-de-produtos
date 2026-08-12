@@ -14,7 +14,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from robo_livelo import alertas, categorias, extrator, montador_email
+from robo_livelo import __version__, alertas, categorias, extrator, montador_email, retrato
 from robo_livelo.adaptadores import (
     CatalogoArquivo,
     CatalogoComReserva,
@@ -24,12 +24,17 @@ from robo_livelo.adaptadores import (
     PreferenciasComReserva,
     PreferenciasPadrao,
     PreferenciasPostgres,
+    RepositorioNulo,
+    RepositorioPostgres,
 )
+from robo_livelo.modelos import RetratoDaExecucao
 from robo_livelo.portas import (
     CatalogoFavoritas,
+    FalhaAoGuardar,
     FonteDePagina,
     Notificador,
     PreferenciasGlobais,
+    RepositorioDeExecucao,
     SiteMudou,
 )
 
@@ -81,6 +86,18 @@ def montar_preferencias(ambiente: dict[str, str]) -> PreferenciasGlobais:
     return PreferenciasComReserva(PreferenciasPostgres(url), PreferenciasPadrao())
 
 
+def montar_repositorio(ambiente: dict[str, str]) -> RepositorioDeExecucao:
+    """Onde o retrato da execucao e guardado (RF15).
+
+    Sem `DATABASE_URL` nao ha onde guardar, e isso nao e erro: o robo
+    continua mandando e-mail, so nao alimenta site nenhum.
+    """
+    url = (ambiente.get("DATABASE_URL") or "").strip()
+    if not url:
+        return RepositorioNulo()
+    return RepositorioPostgres(url)
+
+
 def verificar_promocoes(
     fonte: FonteDePagina,
     catalogo: CatalogoFavoritas,
@@ -88,6 +105,7 @@ def verificar_promocoes(
     limiar: int = LIMIAR_PADRAO,
     agora: datetime | None = None,
     preferencias: PreferenciasGlobais | None = None,
+    repositorio: RepositorioDeExecucao | None = None,
 ) -> int:
     """Executa a fatia vertical completa e devolve quantos alertas achou.
 
@@ -134,7 +152,28 @@ def verificar_promocoes(
     mensagem = montador_email.montar(agrupamento, agora=agora)
     notificador.enviar(mensagem)  # RF10: envia em toda execucao
     _log.info("E-mail enviado. Alertas: %d em %d categorias.", total, len(agrupamento))
+
+    # Depois do e-mail, de proposito: o e-mail e o produto, o site e o
+    # subproduto. Banco fora do ar nao pode custar o aviso do dia.
+    _guardar_retrato(
+        repositorio or RepositorioNulo(),
+        retrato.montar_retrato(parceiros, favoritas, regua, agora=agora, versao=__version__),
+    )
     return total
+
+
+def _guardar_retrato(repositorio: RepositorioDeExecucao, snapshot: RetratoDaExecucao) -> None:
+    """RF15: alimenta o site. Falhar aqui nao derruba a execucao.
+
+    A consequencia de nao gravar e o site ficar velho, e o carimbo de RN26
+    denuncia isso sozinho na propria pagina — diferente de um catalogo
+    ausente, que impediria a rodada inteira. Por isso `WARNING` e nao erro,
+    e por isso `FalhaAoGuardar` existe separada.
+    """
+    try:
+        repositorio.registrar(snapshot)
+    except FalhaAoGuardar as erro:
+        _log.warning("%s O site vai continuar mostrando o retrato anterior.", erro)
 
 
 def principal(argv: list[str] | None = None) -> int:
@@ -152,6 +191,7 @@ def principal(argv: list[str] | None = None) -> int:
             fonte=PaginaLiveloHttp(),
             catalogo=montar_catalogo(ambiente, caminho),
             preferencias=montar_preferencias(ambiente),
+            repositorio=montar_repositorio(ambiente),
             notificador=NotificadorEmail(
                 remetente=ambiente["EMAIL_REMETENTE"],
                 senha=ambiente["SENHA_APP_GMAIL"],
