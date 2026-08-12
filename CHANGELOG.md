@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.9.0 (2026-08-12)
+
+### Documentation
+
+- Atualiza CLAUDE.md, README e PENDENCIAS pro estado real (V2.3 fechada, v1.8.0)
+  ([`a29518b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/a29518b000dd355bd38bf57ebcd592fa22d0a09f))
+
+### Features
+
+- **site**: Aviso opcional já no cadastro de loja
+  ([`8866d90`](https://github.com/lacerdaRodrigo/robo-livelo/commit/8866d900d083f182c5bf3a40231878eafa76c7f5))
+
+
 ## v1.8.0 (2026-08-12)
 
 ### Features
