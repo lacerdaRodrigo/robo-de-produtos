@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-08-12)
+
+### Features
+
+- Robo grava o retrato de cada execucao (V2.3, metade 1)
+  ([`103863a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/103863a481fca1490fb53854bdca18d9d3721baa))
+
+
 ## v1.4.0 (2026-08-12)
 
 ### Documentation
