@@ -32,10 +32,26 @@ npm run build
 ## Deploy na Vercel
 
 1. **New Project** apontando para este repositório
-2. **Root Directory**: `site`
-3. Environment Variables: `DATABASE_URL`, `SENHA_SITE`, `SEGREDO_SESSAO`
+2. **Root Directory**: `site` — defina ainda na tela de import, antes do primeiro Deploy
+3. Environment Variables: `DATABASE_URL`, `SENHA_SITE`, `SEGREDO_SESSAO`, em Production e Preview
 
-`SENHA_SITE` é credencial de vida longa, sem segundo fator e sem revogação individual — o trade-off está aceito no PRD-V2 §9.0, e é por isso que ela precisa ser longa e aleatória. `SEGREDO_SESSAO` é independente: trocá-lo derruba as sessões abertas sem trocar a senha.
+`SENHA_SITE` é credencial de vida longa, sem segundo fator e sem revogação individual — o trade-off está aceito no PRD-V2 §9.0, e é por isso que ela precisa ser longa e aleatória. `SEGREDO_SESSAO` é independente: assina o cookie de sessão, e trocá-lo derruba as sessões abertas sem trocar a senha.
+
+### Root Directory não é opcional aqui
+
+A raiz do repositório é um projeto Python. Apontando o projeto da Vercel para ela, a detecção acha o `pyproject.toml` primeiro e falha antes de olhar qualquer subpasta:
+
+```
+Error: No python entrypoint found. Set "tool.vercel.entrypoint" in
+pyproject.toml or define an entrypoint in one of: app.py, index.py, ...
+```
+
+Esse erro significa Root Directory errado, não problema no site. Duas armadilhas:
+
+- **Redeploy não relê a configuração do projeto.** Depois de corrigir Root Directory, um push novo é o que dispara build com a configuração nova; Redeploy repete o snapshot do build anterior.
+- Se o projeto foi criado apontando para a raiz e continua falhando mesmo com o campo certo, apagar e importar de novo — com Root Directory definido **na criação** — sai mais barato que investigar.
+
+Manter robô e site no mesmo repositório é decisão registrada: a fonte da verdade (`docs/PRD.md`) precisa ser uma só. O preço é este campo, uma vez.
 
 ## Estrutura
 
