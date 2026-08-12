@@ -71,7 +71,9 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
 | `/avisos` | Quando me avisar | sessão | Padrão de todas as lojas e exceções |
-| `/lojas` | Cadastrar lojas | sessão | Adicionar; remover em duas etapas; **Atualizar agora** |
+| `/lojas` | Cadastrar lojas | sessão | Adicionar, com aviso próprio opcional; remover em duas etapas; **Atualizar agora** |
+
+**O aviso próprio é opcional no cadastro.** Antes, definir o limiar de uma loja nova exigia passar por `/avisos` numa segunda etapa depois de criá-la. Os campos "vezes acima do normal" e "mínimo de pontos" agora aparecem direto no formulário de `/lojas`, em branco por padrão — deixar em branco segue o padrão global (RN28), então cadastrar uma loja para só testar o sistema não obriga decidir um limiar na hora. `/avisos` continua sendo o lugar para o padrão global e para editar o limiar de uma loja já cadastrada.
 
 **Nenhuma tela é alcançável só digitando a URL.** O cabeçalho aparece em todas, o menu muda conforme haja sessão, cada loja da lista tem atalho para ajustar o aviso dela, e toda ação redireciona de volta com um recado. Se alguma tela passar a exigir digitar endereço, é defeito.
 

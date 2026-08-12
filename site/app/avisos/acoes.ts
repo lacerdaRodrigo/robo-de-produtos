@@ -4,26 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { salvarLimiarDaLoja, salvarPreferencias } from "@/lib/banco";
+import { numeroOuPadrao } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
-
-/**
- * Campo vazio significa "usa o padrao global" (RN28) — mesma semantica do
- * NULL na coluna. Zero e vazio nao podem se confundir, por isso a string
- * vazia vira `null` e nunca `"0"`.
- *
- * Aceita virgula porque teclado de celular em portugues oferece virgula.
- */
-function numeroOuPadrao(valor: FormDataEntryValue | null): string | null {
-  const texto = String(valor ?? "").trim().replace(",", ".");
-  if (!texto) {
-    return null;
-  }
-  const numero = Number(texto);
-  if (Number.isNaN(numero) || numero < 0) {
-    throw new Error(`valor invalido: ${texto}`);
-  }
-  return texto;
-}
 
 export async function acaoSalvarPadroes(dados: FormData) {
   await exigirSessao();

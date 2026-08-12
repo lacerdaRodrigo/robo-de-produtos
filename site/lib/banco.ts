@@ -173,7 +173,7 @@ export async function adicionarLoja(
   nome: string,
   categoria: string,
   apelidos: string[],
-): Promise<void> {
+): Promise<number> {
   const sql = conectar();
   const linhas = (await sql`
     INSERT INTO loja (nome, categoria) VALUES (${nome}, ${categoria})
@@ -185,6 +185,8 @@ export async function adicionarLoja(
   for (const apelido of apelidos) {
     await sql`INSERT INTO apelido (loja_id, texto) VALUES (${linhas[0].id}, ${apelido})`;
   }
+
+  return linhas[0].id;
 }
 
 export async function removerLoja(id: number): Promise<void> {

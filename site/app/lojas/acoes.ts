@@ -8,8 +8,10 @@ import {
   esperaAteProximoDisparo,
   registrarDisparo,
   removerLoja,
+  salvarLimiarDaLoja,
 } from "@/lib/banco";
 import { dispararRobo } from "@/lib/github";
+import { numeroOuPadrao } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
 
 export async function acaoAdicionarLoja(dados: FormData) {
@@ -28,10 +30,29 @@ export async function acaoAdicionarLoja(dados: FormData) {
     .map((linha) => linha.trim())
     .filter(Boolean);
 
+  // Aviso proprio e opcional (RN28): campo vazio segue o padrao global, sem
+  // forcar quem so quer testar o cadastro a decidir um limiar agora.
+  let multiplicador: string | null;
+  let piso: string | null;
   try {
-    await adicionarLoja(nome, categoria, apelidos);
+    multiplicador = numeroOuPadrao(dados.get("multiplicador"));
+    piso = numeroOuPadrao(dados.get("piso"));
+  } catch {
+    redirect("/lojas?erro=numero");
+  }
+  if (multiplicador !== null && Number(multiplicador) <= 0) {
+    redirect("/lojas?erro=numero");
+  }
+
+  let id: number;
+  try {
+    id = await adicionarLoja(nome, categoria, apelidos);
   } catch {
     redirect("/lojas?erro=repetido");
+  }
+
+  if (multiplicador !== null || piso !== null) {
+    await salvarLimiarDaLoja(id, multiplicador, piso);
   }
 
   revalidatePath("/lojas");
