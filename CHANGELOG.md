@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.13.0 (2026-08-12)
+
+### Features
+
+- **site**: Permite esconder a tela de Alertas inteira em /configuracoes
+  ([`886f827`](https://github.com/lacerdaRodrigo/robo-livelo/commit/886f827c02abee94e8ba7cd32632076e088c169c))
+
+
 ## v1.12.1 (2026-08-12)
 
 ### Bug Fixes
