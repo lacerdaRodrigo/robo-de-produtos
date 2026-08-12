@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.8.0 (2026-08-12)
+
+### Features
+
+- Banco vazio vale, e o site pode disparar o robo
+  ([`ef8395a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ef8395aebfcdbce4d2eb7340600da70facb25824))
+
+
 ## v1.7.0 (2026-08-12)
 
 ### Features
