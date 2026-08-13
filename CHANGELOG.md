@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.16.0 (2026-08-13)
+
+### Features
+
+- **site**: Redesenha navegação como barra lateral (V4.6, 1/3)
+  ([`8e81cb1`](https://github.com/lacerdaRodrigo/robo-livelo/commit/8e81cb1ef147c1ebe4f8ef256399006de83dfe0e))
+
+
 ## v1.15.3 (2026-08-13)
 
 ### Bug Fixes
