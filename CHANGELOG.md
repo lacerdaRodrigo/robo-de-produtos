@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.15.0 (2026-08-13)
+
+### Features
+
+- Redesenha o e-mail e cria a marca "Pontuação Livelo"
+  ([`5d34517`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5d34517b2ccb0c9c5b25fff5e73262e65391da12))
+
+
 ## v1.14.0 (2026-08-13)
 
 ### Documentation
