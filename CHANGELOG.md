@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.13.1 (2026-08-13)
+
+### Bug Fixes
+
+- **site**: Inverte logica do toggle de aviso opcional e remove apelidos do cadastro
+  ([`2d30e54`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2d30e54c84734c3613b91f3cbae3284a969f1ed5))
+
+
 ## v1.13.0 (2026-08-12)
 
 ### Features
