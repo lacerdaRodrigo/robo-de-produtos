@@ -3,9 +3,11 @@
    tipografia do sistema, cor e espaco — nada que precise ser baixado.
 
    V2.3.3 (redesenho visual): cartoes em grade com barra de progresso por
-   loja, cabecalho fixo com desfoque, sombra e elevacao no hover. Mesma
-   regra de sempre: os neutros carregam a interface e o acento aparece so
-   no que pede acao ou alerta. */
+   loja, sombra e elevacao no hover. V4.6 (redesenho de navegacao): o
+   cabecalho fixo virou barra lateral (topo compacto no celular, coluna
+   fixa a partir de 768px), e a cor de acao geral separou de alerta —
+   `--marca` (indigo) e botao/link/foco; `--acento` (rosa) fica exclusivo
+   de "isso pede atencao" (cartao alertou, etiqueta de alerta). */
 
 :root {
   --fundo: #f4f4f8;
@@ -17,10 +19,21 @@
   --suave: #6b7280;
   --acento: #e11d48;
   --acento-fraco: #ffe4e6;
+  --marca: #4f46e5;
+  --marca-forte: #4338ca;
+  --marca-fraco: #eef2ff;
   --urgente: #dc2626;
   --ok: #16a34a;
   --sombra: 0 4px 6px -1px rgb(0 0 0 / 5%), 0 2px 4px -2px rgb(0 0 0 / 5%);
   --sombra-hover: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 5%);
+
+  /* Barra lateral: identidade de marca, sempre escura — nao segue o tema
+     claro/escuro do resto da pagina, igual a logomarca nao trocaria de cor. */
+  --lateral-fundo: #0f172a;
+  --lateral-superficie: #1e293b;
+  --lateral-borda: #1e293b;
+  --lateral-texto: #f8fafc;
+  --lateral-suave: #94a3b8;
 
   --e1: 4px;
   --e2: 8px;
@@ -49,6 +62,9 @@
     --suave: #9ca3af;
     --acento: #fb7185;
     --acento-fraco: #4c1d2e;
+    --marca: #818cf8;
+    --marca-forte: #a5b4fc;
+    --marca-fraco: #1e1b4b;
     --urgente: #f87171;
     --ok: #4ade80;
     --sombra: 0 4px 6px -1px rgb(0 0 0 / 30%);
@@ -66,6 +82,9 @@
   --suave: #9ca3af;
   --acento: #fb7185;
   --acento-fraco: #4c1d2e;
+  --marca: #818cf8;
+  --marca-forte: #a5b4fc;
+  --marca-fraco: #1e1b4b;
   --urgente: #f87171;
   --ok: #4ade80;
   --sombra: 0 4px 6px -1px rgb(0 0 0 / 30%);
@@ -96,6 +115,14 @@ body {
   max-width: 860px;
   margin: 0 auto;
   padding: 0 var(--e4) var(--e7);
+}
+
+@media (min-width: 768px) {
+  .pagina {
+    max-width: 900px;
+    margin: 0 auto 0 272px;
+    padding: var(--e5) var(--e4) var(--e7);
+  }
 }
 
 /* Numero e o heroi de cada linha: casas alinhadas ou 132 linhas viram ruido. */
@@ -141,103 +168,174 @@ a {
 }
 
 a:hover {
-  text-decoration-color: var(--acento);
+  text-decoration-color: var(--marca);
 }
 
 :focus-visible {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--marca);
   outline-offset: 2px;
   border-radius: var(--raio-p);
 }
 
-/* ── Cabecalho e menu ─────────────────────────────────────────────── */
+/* ── Barra lateral (V4.6) ─────────────────────────────────────────── */
 
-.topo {
+.barra-lateral {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--e2);
+  background: var(--lateral-fundo);
+  color: var(--lateral-texto);
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(var(--superficie-rgb), 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--borda);
-  margin-bottom: var(--e5);
-}
-
-.topo-interno {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: var(--e3) var(--e4) 0;
-}
-
-.topo-linha {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--e3);
-}
-
-.marca {
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: var(--e2);
-}
-
-.marca img {
-  display: block;
-  border-radius: 6px;
-}
-
-/* Alternador de tema e Entrar/Sair, lado a lado no canto superior direito. */
-.acoes-do-topo {
-  display: flex;
-  align-items: center;
-  gap: var(--e1);
-}
-
-.botao-tema {
-  padding: 0;
-  width: var(--toque);
-  min-width: 0;
-}
-
-.menu {
-  display: flex;
-  gap: var(--e1);
+  padding: var(--e2) var(--e3);
   overflow-x: auto;
-  margin-top: var(--e2);
   scrollbar-width: none;
 }
 
-.menu::-webkit-scrollbar {
+.barra-lateral::-webkit-scrollbar {
   display: none;
 }
 
-.menu a {
-  padding: var(--e2) var(--e3);
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--suave);
-  text-decoration: none;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  min-height: var(--toque);
+.bl-marca {
   display: flex;
   align-items: center;
-  transition: color 0.2s, border-color 0.2s;
+  gap: var(--e2);
+  text-decoration: none;
+  color: var(--lateral-texto);
+  flex-shrink: 0;
 }
 
-.menu a:hover {
-  color: var(--texto);
+.bl-marca-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: var(--raio-p);
+  background: #fff;
+  padding: 4px;
 }
 
-.menu a[aria-current="page"] {
-  color: var(--acento);
-  border-bottom-color: var(--acento);
+.bl-marca-icone img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bl-marca-nome {
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.bl-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.bl-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.bl-item {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e3);
+  border-radius: var(--raio-p);
+  color: var(--lateral-suave);
+  font-size: 0.85rem;
   font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: var(--toque);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.bl-item:hover {
+  color: var(--lateral-texto);
+  background: var(--lateral-superficie);
+}
+
+.bl-item[aria-current="page"] {
+  color: #fff;
+  background: var(--marca);
+}
+
+.bl-form {
+  display: contents;
+}
+
+.bl-rodape {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  flex-shrink: 0;
+}
+
+/* No topo (mobile) so o icone cabe; na lateral (desktop) o texto some so
+   nas acoes de rodape, pra caber tema+config+sair sem apertar. */
+.bl-item-texto {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .bl-nav .bl-item-texto {
+    display: inline;
+  }
+}
+
+@media (min-width: 768px) {
+  .barra-lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 256px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--e4);
+    overflow-x: visible;
+    overflow-y: auto;
+    border-right: 1px solid var(--lateral-borda);
+  }
+
+  .bl-marca {
+    padding: var(--e2) var(--e2) var(--e5);
+  }
+
+  .bl-nav {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+  }
+
+  .bl-item {
+    width: 100%;
+  }
+
+  .bl-rodape {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: var(--e3);
+    margin-top: var(--e3);
+    border-top: 1px solid var(--lateral-borda);
+  }
+
+  .bl-rodape .bl-item-texto {
+    display: inline;
+  }
 }
 
 /* ── Botoes ───────────────────────────────────────────────────────── */
@@ -249,7 +347,7 @@ button {
   padding: 0 var(--e4);
   border: 1px solid transparent;
   border-radius: var(--raio-p);
-  background: var(--acento);
+  background: var(--marca);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -263,7 +361,7 @@ button {
 
 .botao:hover,
 button:hover {
-  background: color-mix(in srgb, var(--acento) 85%, black);
+  background: var(--marca-forte);
 }
 
 .botao:active,
@@ -482,7 +580,7 @@ button:disabled {
 
 .nome:hover {
   text-decoration: underline;
-  text-decoration-color: var(--acento);
+  text-decoration-color: var(--marca);
 }
 
 .pontos-container {
@@ -654,7 +752,7 @@ button:disabled {
 }
 
 .dica > button:focus-visible {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--marca);
   outline-offset: 2px;
 }
 
@@ -723,7 +821,7 @@ button:disabled {
 }
 
 .dica .balao a {
-  color: var(--acento);
+  color: var(--marca);
   font-weight: 600;
 }
 
@@ -772,9 +870,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--acento);
+  border-color: var(--marca);
   outline: none;
-  box-shadow: 0 0 0 3px var(--acento-fraco);
+  box-shadow: 0 0 0 3px var(--marca-fraco);
 }
 
 input.curto {
@@ -870,7 +968,7 @@ textarea {
 }
 
 .interruptor input:focus-visible + .trilho {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--marca);
   outline-offset: 2px;
 }
 
@@ -906,8 +1004,8 @@ textarea {
 /* Bloco em destaque: usado no "terminou de mexer" de Lojas, onde a acao
    e a tela inteira gira em torno dela merece se diferenciar do resto. */
 .bloco.destaque {
-  background: var(--acento-fraco);
-  border-color: var(--acento);
+  background: var(--marca-fraco);
+  border-color: var(--marca);
 }
 
 .faixa {
@@ -969,11 +1067,11 @@ textarea {
 
 .pergunta[open] summary::before {
   transform: rotate(180deg);
-  color: var(--acento);
+  color: var(--marca);
 }
 
 .pergunta[open] summary {
-  color: var(--acento);
+  color: var(--marca);
 }
 
 .pergunta .resposta {
