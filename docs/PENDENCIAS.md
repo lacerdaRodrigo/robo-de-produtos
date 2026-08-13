@@ -4,9 +4,9 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-12. Versão atual: **1.12.x**.
+> Atualizado em 2026-08-13. Versão atual: **1.15.x**.
 
-**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, só ainda não começou. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
+**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: por ora só a barra lateral e a cor de ação (indigo) entraram, o resto do mockup (Painel, Lojas, Central de Alertas) fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 ---
 
@@ -139,6 +139,28 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [x] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**
 - [x] Cadastrar `SENHA_SITE` (longa e aleatória) e `SEGREDO_SESSAO` nas Environment Variables, além de `DATABASE_URL`
 - [x] Abrir a página publicada e conferir o carimbo, RN30 e o comportamento sem JavaScript — conferido em 2026-08-13 em `robo-livelo.vercel.app`: carimbo "Sincronizado há 21 min (12/08/2026, 21:51)" com bolinha verde; cada card mostra pontuação atual, "Normal: X" (base) e "Aviso: X" (limiar do alerta), RN30 atendida; HTML servido pelo Vercel já vem com os 36 cartões e barras de progresso prontos sem nenhum `<script>`, funciona sem JavaScript
+
+---
+
+## V4.6 — redesenho de navegação (sidebar)
+
+> "V4.6" é o nome que o próprio mockup usa (não é a versão do projeto, que segue solta via `semantic-release` — hoje 1.15.x). Guardado aqui só para achar o design de origem: HTML estático completo (sidebar escura, cards, toggles) mandado no chat em 2026-08-13, com uma versão em PDF idêntica.
+
+**Feito (primeira fatia, madrugada de 2026-08-12 para 13):**
+
+- [x] Cabeçalho fixo virou barra lateral: coluna fixa a partir de 768px (Painel/Alertas/Lojas/Ajuda no corpo; Configurações/Tema/Sair no rodapé), barra superior compacta no celular. Mesmo componente (`componentes/cabecalho.tsx`), chamado do mesmo jeito nas 8 páginas — nada mudou fora dele e de `globals.css`
+- [x] Cor de ação virou indigo (`--marca`, novo token) e o rosa (`--acento`) ficou reservado só para alerta — separa "isso é um botão" de "isso pede atenção" — com variantes de tema claro/escuro
+- [x] Ícones do menu são SVG inline, escritos à mão (RN25 — nenhum ícone de CDN, ao contrário do mockup original que usa `unpkg.com/lucide`)
+- [x] O logo real (`/public/logo.png`, "R$ vira ponto") entrou na barra lateral — precisou de um chip branco atrás dele: o quadrado "R$" da marca usa um tom quase branco pensado pro fundo claro do resto do site, e sumia de contraste no fundo escuro da lateral
+
+**Pendente, na ordem do mockup:**
+
+- [ ] Painel: hero escuro com "Top 3 Oportunidade", controles de ordenar (Maior Pontuação / Em Alerta / Nome A-Z — dá para fazer por `?ordenar=` sem JavaScript, RNF14) e botão "Ir para a Livelo" em cada cartão
+- [ ] Lojas: cadastro existente reestilizado como tabela de linha única por loja, com ações à direita
+- [ ] Central de Alertas: **funcionalidade nova de verdade, não só reskin.** O mockup mostra histórico de e-mails enviados com "Ver Payload" — hoje o site só sabe "quem alertou nesta execução" (RN27, uma foto só). Um histórico de verdade (quem foi avisado, quando, o que tinha no e-mail) exige tabela nova e mudança em `principal.py`/`montador_email.py` para gravar cada envio, não só o retrato. Fica pendente de desenho — não é para fazer sem pensar no esquema primeiro
+- [ ] Toggle "Disparo de e-mails automático" do mockup: **decidido não implementar por enquanto.** Controlar se o robô manda e-mail é literalmente RF16/V2.4 (ver abaixo), que só destravou em 2026-08-13 e ainda não começou — reabrir isso por atalho, com um toggle vistoso que não muda nada de verdade no robô, seria pior que não ter o toggle
+
+Nota de convivência com o resto do trabalho que aconteceu na mesma noite (redesenho do e-mail, disparo silencioso, V2.4 destravada — ver "Concluído" abaixo): a barra lateral foi construída **por cima** dessas mudanças, não substituindo nada — o toggle bonito (`.interruptor`/`.linha-interruptor`) de `/configuracoes`, a lógica corrigida da flag de aviso opcional e o logo em `/public` continuam exatamente como estavam.
 
 ---
 

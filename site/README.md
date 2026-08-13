@@ -108,6 +108,14 @@ Botão no cabeçalho, ao lado de Entrar/Sair — cicla **automático → claro �
 
 Mesma ideia do tema — `lib/flags.ts` guarda cada flag num cookie próprio, não no banco. É preferência de quem edita o site, não regra que o robô consulta, então não precisa de tabela nem migração pra existir. Server Action de verdade (`acaoSalvarConfiguracoes` em `app/configuracoes/acoes.ts`), funciona sem JavaScript.
 
+## Barra lateral e cor de ação (V4.6)
+
+O cabeçalho fixo virou barra lateral: coluna fixa à esquerda a partir de 768px (Painel/Alertas/Lojas/Ajuda, com Configurações/Tema/Sair no rodapé da coluna), e uma barra superior compacta, com só os ícones, no celular. É sempre escura — não segue o tema claro/escuro do resto da página, do mesmo jeito que uma logomarca não trocaria de cor sozinha. O logo (`/public/logo.png`) ganhou um chip branco atrás dele ali: o quadrado "R$" da marca é quase branco, pensado pro fundo claro do resto do site, e sumia de contraste no fundo escuro da lateral sem isso.
+
+A cor de ação geral (botões, links, foco de campo) virou indigo (`--marca`, em `globals.css`), e o rosa (`--acento`) ficou reservado só para o que pede atenção de verdade: cartão com `alertou`, etiqueta "Alerta ativo", o item "Turbinadas hoje" do resumo. Antes um só tom fazia as duas coisas; separar deixa "isso é um botão" e "isso é um alerta" visualmente distintos.
+
+Ícones são SVG escritos à mão dentro de `componentes/cabecalho.tsx` — RN25 continua valendo, nenhum ícone vem de CDN. O restante do redesenho (Painel em destaque, tabela de Lojas, histórico de alertas) está em aberto — ver `docs/PENDENCIAS.md`.
+
 ## Tooltips sem JavaScript
 
 `app/componentes/dica.tsx`: um `<button>` com `?` e um balão irmão. O CSS mostra o balão em `:hover` (mouse) e em `:focus-within` (teclado e toque — clicar dá foco). Nenhum estado, nenhum script, e o texto continua no DOM para leitor de tela achar pelo `aria-describedby`. No celular o balão vira fixo na base da janela, senão vazaria a tela quando o `?` estivesse perto da borda.
@@ -122,7 +130,7 @@ site/
 │   ├── entrar/           # login por senha única, com limite de tentativas
 │   ├── avisos/           # RF17: régua de alerta, global e por loja
 │   ├── lojas/            # RF17: cadastro, com remoção em duas etapas
-│   ├── componentes/      # cabeçalho com menu, e a dica (tooltip)
+│   ├── componentes/      # barra lateral com menu, e a dica (tooltip)
 │   └── rodape.tsx        # aviso de não afiliação (PRD-V2 §9.3) e versão
 ├── lib/
 │   ├── banco.ts          # consultas; a única camada que fala com o Postgres
