@@ -86,6 +86,13 @@ _LOGO_PNG_BASE64 = (
 # aplicada por classe, deixa o mesmo visual pesando bem menos por loja — e
 # por isso as classes sao curtas (.bk, .ib...): cada letra a menos e menos
 # um byte multiplicado por ate 132 lojas no pior caso.
+#
+# Cor por categoria NAO pode virar custom property (`--c`) num `style=`
+# inline: confirmado ao vivo em 2026-08-13, o Gmail remove `--c` do
+# atributo `style` na sanitizacao (embora aceite `background`/`color`
+# normalmente), entao `var(--c)` cai no vazio e o bloco fica sem cor. Por
+# isso `background`/`color` aparecem inline em cada elemento que precisa
+# da cor da categoria, em vez de herdar de um `--c` no ancestral.
 _ESTILO = """
 .mc{max-width:540px;margin:0 auto;background:#ffffff;border-radius:18px;
   padding:26px 22px;color:#18131d;font-family:Arial,Helvetica,sans-serif}
@@ -104,8 +111,7 @@ _ESTILO = """
   box-shadow:0 2px 8px -4px rgba(0,0,0,.14)}
 .rw{display:flex;align-items:stretch}
 .bk{flex:none;width:74px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;background:var(--c);color:#fff;font-weight:800;padding:10px 4px;
-  text-align:center}
+  justify-content:center;color:#fff;font-weight:800;padding:10px 4px;text-align:center}
 .bk b{font-size:22px;line-height:1;display:block}
 .bk small{display:block;font-size:8.5px;font-weight:700;opacity:.9;letter-spacing:.03em;
   margin-top:2px}
@@ -118,13 +124,13 @@ _ESTILO = """
 .bh{background:#fde2e1;color:#c81e1e}
 .bv{background:#e9e6ea;color:#726b79}
 .bc{background:#e9e6ea;color:#726b79}
-.cta{font-size:12px;font-weight:800;text-decoration:none;color:var(--c)}
+.cta{font-size:12px;font-weight:800;text-decoration:none}
 .ds{background:#f7f5f8;padding:0 14px 10px;border-top:1px solid #ece7ef}
 .ds summary{list-style:none;cursor:pointer;font-size:11.5px;color:#847d8c;line-height:1.5;
   padding-top:8px}
 .ds summary::-webkit-details-marker{display:none}
 .ds summary .tg{font-weight:700;white-space:nowrap}
-.ds:not([open]) summary .tg{color:var(--c,#e11d48)}
+.ds:not([open]) summary .tg{color:#e11d48}
 .ds:not([open]) summary .tg::before{content:"… mais"}
 .ds[open] summary .tg{color:#847d8c}
 .ds[open] summary .tg::before{content:"▲ menos"}
@@ -290,9 +296,9 @@ def _bloco_descricao_html(descricao: str) -> str:
 
     So esconde algo quando ha algo a esconder — descricao de frase unica
     (sem ponto final seguido de mais texto) nao ganha "mais" nenhum, porque
-    nao faria sentido clicar para nao ver nada de novo. A cor do "…mais"
-    vem do `--c` do `.bw` ancestral (CSS herda custom property sozinho —
-    nao precisa repetir aqui).
+    nao faria sentido clicar para nao ver nada de novo. O "…mais" usa a cor
+    de acento fixa (nao a da categoria): custom property por card nao
+    sobrevive a sanitizacao do Gmail, ver comentario de `_ESTILO`.
     """
     primeira, resto = _resumo_descricao(descricao)
     if not resto:
@@ -378,8 +384,8 @@ def montar(
             termina_hoje = _termina_hoje(parceiro, agora)
 
             html.append(
-                f"<div class='bw' style='--c:{cor}'><div class='rw'>"
-                "<div class='bk'>"
+                f"<div class='bw'><div class='rw'>"
+                f"<div class='bk' style='background:{cor}'>"
                 f"<b>{escape(formatar_pontos(parceiro.pontos_atuais))}</b>"
                 f"<small>{escape(_legenda_bloco(parceiro))}</small></div>"
                 "<div class='ib'>"
@@ -398,7 +404,8 @@ def montar(
                 html.append(f"<span class='bd bc'>{escape(rotulo_clube)}</span>")
             if link_confiavel(parceiro.link):  # RN08
                 html.append(
-                    f"<a href='{escape(parceiro.link, quote=True)}' class='cta'>Ver oferta →</a>"
+                    f"<a href='{escape(parceiro.link, quote=True)}' class='cta' "
+                    f"style='color:{cor}'>Ver oferta →</a>"
                 )
             elif parceiro.link:
                 _log.warning("Link fora do dominio da Livelo descartado: %r", parceiro.link)
