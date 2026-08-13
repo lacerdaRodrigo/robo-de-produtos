@@ -15,7 +15,6 @@ import {
 } from "@/lib/formato";
 import { temSessao } from "@/lib/sessao";
 import { Cabecalho } from "./componentes/cabecalho";
-import { Dica } from "./componentes/dica";
 import { Rodape } from "./rodape";
 
 // Renderizada a cada visita: o nonce da CSP muda por requisicao (ver
@@ -124,17 +123,82 @@ function Loja({
         )}
       </div>
 
-      {podeAjustarAlerta && (
+      {(loja.link || podeAjustarAlerta) && (
         <div className="acoes-do-cartao">
-          <Link
-            className="botao secundario"
-            href={`/avisos?loja=${encodeURIComponent(loja.nome)}`}
-          >
-            Ajustar alerta
-          </Link>
+          {loja.link && (
+            <a className="botao secundario" href={loja.link}>
+              Ir para a Livelo
+            </a>
+          )}
+          {podeAjustarAlerta && (
+            <Link
+              className="botao secundario"
+              href={`/avisos?loja=${encodeURIComponent(loja.nome)}`}
+            >
+              Ajustar alerta
+            </Link>
+          )}
         </div>
       )}
     </article>
+  );
+}
+
+/** Painel: hero escuro com o resumo da execução e as lojas de maior
+ *  pontuação agora — "Top 3 Oportunidade" no mockup V4.6. Ordenar so
+ *  para escolher as 3 primeiras, nunca para exibir texto (PRD 5.4) —
+ *  mesma ressalva de `barraDeProgresso` em lib/formato.ts. */
+function HeroDoPainel({
+  alertadas,
+  todas,
+  parceirosLidos,
+}: {
+  alertadas: PontuacaoDeLoja[];
+  todas: PontuacaoDeLoja[];
+  parceirosLidos: number;
+}) {
+  const top3 = todas
+    .filter((l) => l.pontos_atuais !== null)
+    .sort((a, b) => Number(b.pontos_atuais) - Number(a.pontos_atuais))
+    .slice(0, 3);
+
+  return (
+    <div className="hero-painel">
+      <div className="hero-cabecalho">
+        <div>
+          <span className="hero-rotulo">Visão do extrator</span>
+          <h1>Visão Geral</h1>
+        </div>
+        {alertadas.length > 0 && (
+          <span className="hero-badge-alerta">
+            <span className="hero-badge-ponto" aria-hidden="true" />
+            {alertadas.length} {alertadas.length === 1 ? "alerta ativo" : "alertas ativos"}
+          </span>
+        )}
+      </div>
+
+      <div className="hero-metricas">
+        <span>{todas.length} lojas monitoradas</span>
+        <span>{parceirosLidos} parceiros lidos</span>
+      </div>
+
+      {top3.length > 0 && (
+        <div className="hero-top3">
+          {top3.map((loja, indice) => (
+            <div key={loja.nome} className="hero-top3-item">
+              <span className="hero-rotulo">Top {indice + 1} oportunidade</span>
+              <div className="hero-top3-linha">
+                <span className="hero-top3-nome">{loja.nome}</span>
+                <span className="hero-top3-pontos numero">
+                  {loja.prefixo_ate ? "Até " : ""}
+                  {pontos(loja.pontos_atuais)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -193,7 +257,6 @@ export default async function Pagina({
     <>
       <Cabecalho atual="/" />
       <main className="pagina">
-        <h1>Visão Geral</h1>
         {/* RN26: o carimbo e obrigatorio e sempre visivel. Sem ele, pagina
             velha e pagina mentirosa. */}
         <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
@@ -201,33 +264,11 @@ export default async function Pagina({
           {carimbo.velho && " — o robô pode estar parado"}
         </p>
 
-        <section className="resumo">
-          <div className="item turbinadas">
-            <span className="rotulo">
-              Turbinadas hoje{" "}
-              <Dica titulo="loja turbinada" secao="como-decide">
-                Loja cuja pontuação de hoje passou do que você definiu em{" "}
-                <strong>Quando me avisar</strong>: precisa estar algumas vezes acima do
-                normal daquela loja e valer um mínimo de pontos.
-              </Dica>
-            </span>
-            <span className="valor destaque numero">{alertadas.length}</span>
-          </div>
-          <div className="item">
-            <span className="rotulo">Lojas monitoradas</span>
-            <span className="valor numero">{todas.length}</span>
-          </div>
-          <div className="item">
-            <span className="rotulo">
-              Parceiros lidos{" "}
-              <Dica titulo="parceiros lidos" secao="como-decide">
-                Quantos parceiros a Livelo tinha na página quando o robô passou. Suas lojas
-                são um recorte dessa lista.
-              </Dica>
-            </span>
-            <span className="valor numero">{execucao.parceiros_lidos}</span>
-          </div>
-        </section>
+        <HeroDoPainel
+          alertadas={alertadas}
+          todas={todas}
+          parceirosLidos={execucao.parceiros_lidos}
+        />
 
         <form className="busca" action="/" method="get" role="search">
           <input
