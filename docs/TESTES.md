@@ -118,6 +118,11 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-105 | Campanha desconhecida cai na comparação numérica | Valor novo que a Livelo invente não pode derrubar a marcação | Dois parceiros com campanha inventada, um com base parada e outro não |
 | CT-161 | Catálogo vazio tem assunto próprio ⚠️ | "Não teve promoção" e "você não tem loja nenhuma" não podem ler igual — a segunda com a frase da primeira faria o robô parecer trabalhando quando não há o que procurar | `montar({}, catalogo_vazio=True)`, checar assunto e corpo |
 | CT-162 | Sem promoção continua com a frase de sempre | Contraprova de CT-161 | `montar({})` sem a marca |
+| CT-169 | Descrição com mais de uma frase ganha "…mais" (redesign 2026-08-13) | `<details>/<summary>` sem JavaScript — primeira frase sempre visível, resto atrás do clique | Descrição com duas frases, checar `<details` e as duas frases presentes |
+| CT-170 | Descrição de frase única não ganha "…mais" | Sem segunda frase não há o que esconder — clicar não revelaria nada novo | Descrição com uma frase só, checar ausência de `<details` |
+| CT-171 | Sem `descricao_campanha`, sem bloco de descrição | Card sem descrição não ganha rodapé nenhum, nem vazio | Parceiro com `descricao_campanha=None` |
+| CT-172 | Descrição longa corta sem quebrar palavra (C05) | O "resto" atrás do "…mais" tem teto, para o pior caso (132 lojas) caber no limite do Gmail | Descrição com "resto" bem acima do limite, checar corte em fronteira de palavra |
+| CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto em base64, assinando as duas pontas do e-mail | `montar(...)`, contar duas ocorrências de `data:image/png;base64,` |
 
 ## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
@@ -149,7 +154,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-149 | Retrato registrado depois do e-mail | RF15 fim a fim: o site recebe **todas** as favoritas, não só as alertadas (RN24) | Fluxo completo com fake de repositório |
 | CT-150 | Falha ao guardar não derruba a execução ⚠️ | A consequência é site velho, que o carimbo de RN26 denuncia sozinho. Perder o e-mail do dia seria pior | Repositório que levanta `FalhaAoGuardar`, checar e-mail enviado e `WARNING` |
 | CT-163 | Catálogo vazio avisa no e-mail e no log ⚠️ | Fim a fim: banco sem loja nenhuma não vira "dia sem promoção" | `CatalogoFake([])`, checar assunto próprio e `WARNING` |
-| CT-166 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
+| CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
 
 ## `testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 

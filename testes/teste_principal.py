@@ -471,7 +471,7 @@ def teste_ct163_catalogo_vazio_avisa_no_email_e_no_log(caplog):
     assert any("Nenhuma loja cadastrada" in r.getMessage() for r in caplog.records)
 
 
-def teste_ct166_enviar_email_falso_cala_o_notificador_mas_nao_o_retrato(favoritas):
+def teste_ct168_enviar_email_falso_cala_o_notificador_mas_nao_o_retrato(favoritas):
     """Disparo manual do site (RF13): total e retrato seguem normais, so o
     e-mail fica quieto. Nao e RF16 — nao depende de ter promocao ou nao."""
 

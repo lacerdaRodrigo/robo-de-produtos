@@ -26,7 +26,10 @@ export async function Rodape({ versao }: { versao?: string | null }) {
         <a href="https://www.livelo.com.br/juntar-pontos/todos-os-parceiros">Livelo</a> antes
         de comprar.
       </p>
-      <p>robô-livelo {versao ? `v${versao}` : ""}</p>
+      <p className="marca-rodape">
+        <img src="/logo.png" alt="" width={16} height={16} />
+        robô-livelo {versao ? `v${versao}` : ""}
+      </p>
     </footer>
   );
 }

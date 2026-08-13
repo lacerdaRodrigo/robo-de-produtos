@@ -137,6 +137,11 @@ def teste_pior_caso_cabe_no_limite_do_gmail():
     limite_do_gmail = 102 * 1024
     favoritas = CatalogoArquivo("config/lojas_favoritas.toml").listar()
 
+    descricao_longa = (
+        "Campanha válida de 11 a 13/08/2026, em produtos participantes selecionados. "
+        "Ganhe pontos por real gasto, exceto em vale-presente e recarga de celular. "
+        "Consulte o regulamento completo no site da Livelo antes de comprar."
+    )
     agrupamento: dict[str, list] = {}
     for loja in favoritas:
         agrupamento.setdefault(loja.categoria, []).append(
@@ -147,6 +152,7 @@ def teste_pior_caso_cabe_no_limite_do_gmail():
                 prefixo_ate=True,
                 base="80",
                 fim=AGORA_TESTE + timedelta(days=3),
+                descricao_campanha=descricao_longa,
             )
         )
 
@@ -276,3 +282,49 @@ def teste_ct162_sem_promocao_continua_com_a_frase_de_sempre():
 
     assert mensagem.assunto == ASSUNTO_SEM_PROMOCAO
     assert "Nenhuma das suas lojas" in mensagem.corpo_texto
+
+
+# ── CT-169 em diante: redesign 2026-08-13 (marca e descricao expansivel) ────
+
+
+def teste_ct169_descricao_com_mais_de_uma_frase_ganha_expandir():
+    """ "…mais" so aparece quando ha algo a mais atras dele."""
+    parceiro = faz_parceiro(
+        "Fast Shop", "5", descricao_campanha="Campanha valida ate 14/08. Consulte condicoes."
+    )
+    html = montar({"Eletronico": [parceiro]}, agora=AGORA_TESTE).corpo_html
+    assert "<details" in html
+    assert "Campanha valida ate 14/08." in html
+    assert "Consulte condicoes." in html
+
+
+def teste_ct170_descricao_de_frase_unica_nao_ganha_expandir():
+    """Sem segunda frase, nao ha o que esconder — nao faz sentido um "mais"."""
+    parceiro = faz_parceiro("Acer", "2", descricao_campanha="Ganhe 2 pontos por real gasto.")
+    html = montar({"Eletronico": [parceiro]}, agora=AGORA_TESTE).corpo_html
+    assert "<details" not in html
+    assert "Ganhe 2 pontos por real gasto." in html
+
+
+def teste_ct171_sem_descricao_campanha_sem_bloco_de_descricao():
+    parceiro = faz_parceiro("Natura", "4", descricao_campanha=None)
+    html = montar({"Beleza": [parceiro]}, agora=AGORA_TESTE).corpo_html
+    assert "<details" not in html
+    assert "class='dp'" not in html
+
+
+def teste_ct172_descricao_longa_corta_sem_quebrar_palavra():
+    """C05: o "resto" tem teto, pro pior caso caber no limite do Gmail."""
+    resto_longo = "palavra " * 40  # bem alem do limite, sempre com espacos
+    parceiro = faz_parceiro("Fast Shop", "5", descricao_campanha=f"Primeira frase. {resto_longo}")
+    html = montar({"Eletronico": [parceiro]}, agora=AGORA_TESTE).corpo_html
+    assert "…" in html
+    assert resto_longo.strip() not in html  # cortado, nao reproduzido inteiro
+    assert "palav…" not in html  # corte nao quebra a palavra no meio
+
+
+def teste_ct173_marca_aparece_no_topo_e_no_rodape():
+    """Redesign 2026-08-13: a marca R$→ponto assina o topo e o rodape."""
+    mensagem = montar({"Beleza": [faz_parceiro("Natura", "5")]}, agora=AGORA_TESTE)
+    assert mensagem.corpo_html.count("data:image/png;base64,") == 2
+    assert "Pontuação Livelo" in mensagem.corpo_html

@@ -47,4 +47,6 @@ A V2.3 está **fechada nas duas metades**: o robô grava o retrato de cada execu
 
 A V2.3.2 está fechada: `robo.yml` ganhou o input `enviar_email` do `workflow_dispatch` (padrão `true`), o disparo manual do site manda `enviar_email: "false"` e `verificar_promocoes` pula só o notificador — o retrato continua gravado igual, o agendado continua mandando e-mail sempre. `GITHUB_TOKEN_DISPARO` está cadastrado na Vercel. A V2.4 (e-mail condicional, RF16) está **destravada** desde que o autor verificou o site publicado em 2026-08-13, mas ainda não começou — é regra de negócio diferente de `enviar_email`: RF16 decide por ter promoção ou não, `enviar_email` decide por quem pediu a execução.
 
+O e-mail foi redesenhado em 2026-08-13 (bloco de cor sólida por oferta, descrição de campanha expansível sem JavaScript, marca "Pontuação Livelo" no topo e no rodapé) e o site ganhou logo própria no cabeçalho, rodapé e título do navegador — raciocínio completo, incluindo o orçamento de bytes contra o corte do Gmail (C05) e como regenerar os PNGs, em [`docs/EMAIL.md`](docs/EMAIL.md).
+
 A ordem do que falta, e por quê essa ordem importa, está em [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Não pule fase nem construa algo de uma fase posterior antes do gatilho dela ter acontecido.

@@ -44,6 +44,7 @@ export async function Cabecalho({ atual }: { atual: string }) {
       <div className="topo-interno">
         <div className="topo-linha">
           <Link href="/" className="marca">
+            <img src="/logo.png" alt="" width={22} height={22} />
             Pontuação Livelo
           </Link>
           <div className="acoes-do-topo">
