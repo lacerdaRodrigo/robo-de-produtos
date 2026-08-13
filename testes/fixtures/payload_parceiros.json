@@ -22,7 +22,7 @@
           {
             "type": "listagem",
             "props": {
-              "title": "C&P - Site - Listagem de Parceiros",
+              "title": "C&P - Site/App - Listagem de Parceiros",
               "configPartners": [
                 {
                   "id": "MCL",

@@ -19,8 +19,10 @@ from robo_livelo.modelos import Parceiro
 _log = logging.getLogger(__name__)
 
 # A Livelo pode reordenar as secoes da pagina (C06) — por isso a secao e
-# achada pelo titulo, nunca por indice fixo em `components`.
-TITULO_SECAO_PARCEIROS = "C&P - Site - Listagem de Parceiros"
+# achada pelo titulo, nunca por indice fixo em `components`. Titulo mudou de
+# "C&P - Site - Listagem de Parceiros" para "C&P - Site/App - Listagem de
+# Parceiros" em 2026-08-12, confirmado contra a pagina real.
+TITULO_SECAO_PARCEIROS = "C&P - Site/App - Listagem de Parceiros"
 
 # separatorSlug "ATE" para o prefixo "Ate X pontos" (RN12). Confirmado contra
 # a pagina real em 2026-08-11: 36 dos 270 itens usavam "ATE", 223 "IGUAL".

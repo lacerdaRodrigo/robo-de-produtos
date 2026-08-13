@@ -45,18 +45,17 @@ export default async function PaginaDeConfiguracoes({
 
         <form action={acaoSalvarConfiguracoes} className="bloco">
           <div className="campo">
-            <label
-              className="rotulo-campo opcao-destaque"
-              htmlFor="aviso_opcional_no_cadastro"
-            >
-              <input
-                id="aviso_opcional_no_cadastro"
-                name="aviso_opcional_no_cadastro"
-                type="checkbox"
-                defaultChecked={avisoOpcionalLigado}
-                style={{ width: "auto", minHeight: 0 }}
-              />
-              Aviso opcional no cadastro de loja
+            <label className="linha-interruptor" htmlFor="aviso_opcional_no_cadastro">
+              <span>Aviso opcional no cadastro de loja</span>
+              <span className="interruptor">
+                <input
+                  id="aviso_opcional_no_cadastro"
+                  name="aviso_opcional_no_cadastro"
+                  type="checkbox"
+                  defaultChecked={avisoOpcionalLigado}
+                />
+                <span className="trilho" aria-hidden="true" />
+              </span>
             </label>
             <span className="ajuda-do-campo">
               Mostra os campos “vezes acima do normal” e “mínimo de pontos” direto no
@@ -67,15 +66,17 @@ export default async function PaginaDeConfiguracoes({
           </div>
 
           <div className="campo">
-            <label className="rotulo-campo opcao-destaque" htmlFor="esconder_tela_alertas">
-              <input
-                id="esconder_tela_alertas"
-                name="esconder_tela_alertas"
-                type="checkbox"
-                defaultChecked={alertasEscondidos}
-                style={{ width: "auto", minHeight: 0 }}
-              />
-              Esconder a tela de Alertas
+            <label className="linha-interruptor" htmlFor="esconder_tela_alertas">
+              <span>Esconder a tela de Alertas</span>
+              <span className="interruptor">
+                <input
+                  id="esconder_tela_alertas"
+                  name="esconder_tela_alertas"
+                  type="checkbox"
+                  defaultChecked={alertasEscondidos}
+                />
+                <span className="trilho" aria-hidden="true" />
+              </span>
             </label>
             <span className="ajuda-do-campo">
               Tira “Alertas” do menu e o botão “Ajustar alerta” dos cartões do Painel. A tela

@@ -24,7 +24,8 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 ## V1.1 — fechar o que a V1.0 deixou aberto
 
-- [~] **Validar MS3**: workflow `ms3-falha-proposital.yml` na `main` desde 2026-08-11, falhando de propósito de hora em hora (minuto 7) e também sob disparo manual. Já falhou uma vez por disparo manual (run `31550859062`). **Falta você confirmar se o e-mail de falha do GitHub chegou** — é a metade que só você enxerga. Confirmado, o workflow sai do repositório na hora; enquanto ele existir, gera um alarme falso por hora
+- [x] **Validar MS3**: workflow `ms3-falha-proposital.yml` na `main` desde 2026-08-11, falhando de propósito de hora em hora (minuto 7) e também sob disparo manual. E-mail de falha do GitHub confirmado recebido em 2026-08-12 — workflow apagado do repositório
+- [x] **C06 aconteceu de verdade**: em 2026-08-12 a Livelo renomeou a seção de `"C&P - Site - Listagem de Parceiros"` para `"C&P - Site/App - Listagem de Parceiros"`, zerando a extração em produção (`SiteMudou`, RN13 fez o job falhar como esperado, sem e-mail de "sem promoção" mascarando o problema). `TITULO_SECAO_PARCEIROS` em `extrator.py` e a fixture `payload_parceiros.json` atualizados; 253 parceiros extraídos de novo contra a página real
 - [x] Escrever o roteiro do smoke manual (CT-050) em `docs/TESTES.md` — passo a passo com os números esperados de 2026-08-11 como base de comparação
 - [x] `versao.yml` atualizado para `actions/checkout@v7` e `actions/setup-python@v7`
 

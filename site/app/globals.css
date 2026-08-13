@@ -813,6 +813,71 @@ textarea {
   border-radius: var(--raio-p);
 }
 
+/* Linha com interruptor (V2.3.4+ em /configuracoes): texto de um lado,
+   liga/desliga do outro — em vez de checkbox solto, que confunde qual
+   direcao ativa o que. Ligado = verde, mesma cor de "ok" no resto do site. */
+.linha-interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  background: var(--superficie-2);
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.interruptor {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  width: 44px;
+  height: 26px;
+}
+
+.interruptor input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.interruptor .trilho {
+  position: absolute;
+  inset: 0;
+  background: var(--borda);
+  border-radius: 999px;
+  transition: background-color 0.15s ease;
+}
+
+.interruptor .trilho::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  transition: transform 0.15s ease;
+}
+
+.interruptor input:checked + .trilho {
+  background: var(--ok);
+}
+
+.interruptor input:checked + .trilho::before {
+  transform: translateX(18px);
+}
+
+.interruptor input:focus-visible + .trilho {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
 /* Par nome/categoria lado a lado no formulario de cadastro — empilha
    sozinho em telas estreitas porque e grid, nao flex fixo. */
 .grade-2col {
