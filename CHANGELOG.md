@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.20.0 (2026-08-13)
+
+### Features
+
+- **site**: "Forçar atualização" vai pro menu, abaixo de Lojas
+  ([`2d4b70a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2d4b70a7402cf4b61f0d6f76cbd17353ac3b2359))
+
+
 ## v1.19.0 (2026-08-13)
 
 ### Features
