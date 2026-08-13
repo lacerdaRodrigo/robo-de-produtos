@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.17.0 (2026-08-13)
+
+### Features
+
+- **site**: Painel ganha hero com Top 3 Oportunidade (V4.6, 2/3)
+  ([`47985d5`](https://github.com/lacerdaRodrigo/robo-livelo/commit/47985d5b700ff196cdf36c4f068f4e8d98d45e12))
+
+
 ## v1.16.0 (2026-08-13)
 
 ### Features
