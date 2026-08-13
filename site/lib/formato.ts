@@ -1,4 +1,4 @@
-import type { Numerico } from "./banco";
+import type { Numerico, PontuacaoDeLoja } from "./banco";
 
 /**
  * Formatacao pt-BR sem converter para `number` em momento algum.
@@ -129,6 +129,38 @@ export function barraDeProgresso(
   const teto = Math.max(nAtual, nLimiar) * 1.2 || 1;
   const larguraDe = (valor: number) => Math.min(100, (valor / teto) * 100);
   return { atual: larguraDe(nAtual), base: larguraDe(nBase), limiar: larguraDe(nLimiar) };
+}
+
+export type Ordenacao = "pontos" | "alerta" | "nome";
+
+export const ORDENACOES: readonly Ordenacao[] = ["pontos", "alerta", "nome"];
+
+/**
+ * Ordem do Painel (redesenho V4.6): maior pontuação primeiro, só as em
+ * alerta, ou A-Z — substitui o agrupamento por categoria por uma grade
+ * única, igual ao mockup.
+ *
+ * `Number()` aqui é a mesma ressalva de `barraDeProgresso`: decide a
+ * posição na lista, nunca vira texto na tela (PRD 5.4).
+ */
+export function ordenarLojas(lojas: PontuacaoDeLoja[], ordenar: Ordenacao): PontuacaoDeLoja[] {
+  if (ordenar === "alerta") {
+    return lojas.filter((loja) => loja.alertou);
+  }
+  if (ordenar === "nome") {
+    return [...lojas].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }
+  // "pontos": quem nao apareceu na Livelo (pontos_atuais nulo) vai por
+  // ultimo, nao pro topo nem pro meio da lista.
+  return [...lojas].sort((a, b) => {
+    if (a.pontos_atuais === null) {
+      return b.pontos_atuais === null ? 0 : 1;
+    }
+    if (b.pontos_atuais === null) {
+      return -1;
+    }
+    return Number(b.pontos_atuais) - Number(a.pontos_atuais);
+  });
 }
 
 /**
