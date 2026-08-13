@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.19.0 (2026-08-13)
+
+### Features
+
+- **site**: Painel vira grade única com ordenar, igual ao mockup V4.6
+  ([`0eeb93e`](https://github.com/lacerdaRodrigo/robo-livelo/commit/0eeb93efc7ae39aa798e0093cb255030d57e9efc))
+
+
 ## v1.18.0 (2026-08-13)
 
 ### Features
