@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.15.3 (2026-08-13)
+
+### Bug Fixes
+
+- Logo do e-mail vira URL hospedada, nao base64
+  ([`2fcde74`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2fcde74a5a6e89cbb7dd3779858c25cc6e359c95))
+
+
 ## v1.15.2 (2026-08-13)
 
 ### Bug Fixes
