@@ -8,7 +8,7 @@ import {
   preferencias,
   ultimaExecucao,
 } from "@/lib/banco";
-import { avisoOpcionalNoCadastroLigado } from "@/lib/flags";
+import { avisoOpcionalNoCadastroEscondido } from "@/lib/flags";
 import { temTokenDeDisparo } from "@/lib/github";
 import { filtrarPorNome, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
@@ -33,14 +33,14 @@ export default async function PaginaDeLojas({
   await exigirSessao();
 
   const { ok, erro, nome, q = "", segundos } = await searchParams;
-  const [todas, listaDeCategorias, execucao, falta, padroes, avisoOpcionalLigado] =
+  const [todas, listaDeCategorias, execucao, falta, padroes, avisoOpcionalEscondido] =
     await Promise.all([
       catalogo(),
       categorias(),
       ultimaExecucao().catch(() => null),
       esperaAteProximoDisparo().catch(() => 0),
       preferencias(),
-      avisoOpcionalNoCadastroLigado(),
+      avisoOpcionalNoCadastroEscondido(),
     ]);
   const podeDisparar = temTokenDeDisparo();
   const lojas = filtrarPorNome(todas, q);
@@ -131,19 +131,7 @@ export default async function PaginaDeLojas({
             </div>
           </div>
 
-          <div className="campo">
-            <label className="rotulo-campo" htmlFor="apelidos">
-              Apelidos, um por linha
-              <Dica titulo="apelidos" secao="nao-encontrada">
-                Outras grafias que a Livelo usa para a mesma loja — “CEA” para C&amp;A,
-                “Booking com” para Booking.com. Sem isso, a loja some da lista no dia em que
-                eles mudarem o nome.
-              </Dica>
-            </label>
-            <textarea id="apelidos" name="apelidos" rows={2} placeholder="Renner Lojas" />
-          </div>
-
-          {avisoOpcionalLigado && (
+          {!avisoOpcionalEscondido && (
             <div className="campo">
               <span className="rotulo-campo">
                 Regra de aviso opcional

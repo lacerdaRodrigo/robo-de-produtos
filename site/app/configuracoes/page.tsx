@@ -1,5 +1,5 @@
 import { ultimaExecucao } from "@/lib/banco";
-import { avisoOpcionalNoCadastroLigado, telaDeAlertasEscondida } from "@/lib/flags";
+import { avisoOpcionalNoCadastroEscondido, telaDeAlertasEscondida } from "@/lib/flags";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Rodape } from "../rodape";
@@ -12,10 +12,10 @@ export const dynamic = "force-dynamic";
  * (que moram em /avisos). Guardados em cookie (lib/flags.ts), não no
  * banco — é preferência de quem mexe no site, não dado que o robô lê.
  *
- * O aviso opcional no cadastro começa desligado, até a calibragem do
- * limiar global fechar (docs/PENDENCIAS.md). Esconder a tela de Alertas
- * começa desligado também — a tela continua visível, que é o comportamento
- * de sempre —, e quem quiser escondê-la liga aqui.
+ * Os dois começam desligados (cinza): os campos do aviso opcional e a tela
+ * de Alertas ficam visíveis, que é o comportamento de sempre. Ligar (verde)
+ * esconde — mesmo sentido nos dois toggles, então verde sempre significa
+ * "sumiu da tela".
  */
 export default async function PaginaDeConfiguracoes({
   searchParams,
@@ -25,8 +25,8 @@ export default async function PaginaDeConfiguracoes({
   await exigirSessao();
 
   const { ok } = await searchParams;
-  const [avisoOpcionalLigado, alertasEscondidos, execucao] = await Promise.all([
-    avisoOpcionalNoCadastroLigado(),
+  const [avisoOpcionalEscondido, alertasEscondidos, execucao] = await Promise.all([
+    avisoOpcionalNoCadastroEscondido(),
     telaDeAlertasEscondida(),
     ultimaExecucao().catch(() => null),
   ]);
@@ -46,22 +46,22 @@ export default async function PaginaDeConfiguracoes({
         <form action={acaoSalvarConfiguracoes} className="bloco">
           <div className="campo">
             <label className="linha-interruptor" htmlFor="aviso_opcional_no_cadastro">
-              <span>Aviso opcional no cadastro de loja</span>
+              <span>Esconder regra de aviso opcional no cadastro de loja</span>
               <span className="interruptor">
                 <input
                   id="aviso_opcional_no_cadastro"
                   name="aviso_opcional_no_cadastro"
                   type="checkbox"
-                  defaultChecked={avisoOpcionalLigado}
+                  defaultChecked={avisoOpcionalEscondido}
                 />
                 <span className="trilho" aria-hidden="true" />
               </span>
             </label>
             <span className="ajuda-do-campo">
-              Mostra os campos “vezes acima do normal” e “mínimo de pontos” direto no
-              formulário de Adicionar loja, em Lojas. Desligado — o padrão agora —, o
-              cadastro fica só com nome, categoria e apelidos. Não afeta o que já existe: as
-              exceções por loja continuam em Alertas, para editar quando fizer sentido.
+              Tira os campos “vezes acima do normal” e “mínimo de pontos” do formulário de
+              Adicionar loja, em Lojas — fica só nome e categoria. Desligado — o padrão —,
+              os campos continuam visíveis. Não afeta o que já existe: as exceções por loja
+              continuam em Alertas, para editar quando fizer sentido.
             </span>
           </div>
 

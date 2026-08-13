@@ -19,14 +19,18 @@ async function definirCookie(nome: string, ligado: boolean): Promise<void> {
   }
 }
 
-const COOKIE_AVISO_OPCIONAL = "aviso_opcional_no_cadastro";
+/** Esconde os campos "vezes acima do normal" e "mínimo de pontos" no
+ *  formulário de Adicionar loja, em Lojas. Ausente = campos visíveis, que
+ *  é o comportamento de sempre — só quem ligar explicitamente em
+ *  /configuracoes deixa de ver, mesmo padrão do toggle de Alertas abaixo. */
+const COOKIE_AVISO_OPCIONAL = "esconder_aviso_opcional_no_cadastro";
 
-export async function avisoOpcionalNoCadastroLigado(): Promise<boolean> {
+export async function avisoOpcionalNoCadastroEscondido(): Promise<boolean> {
   return cookieLigado(COOKIE_AVISO_OPCIONAL);
 }
 
-export async function definirAvisoOpcionalNoCadastro(ligado: boolean): Promise<void> {
-  return definirCookie(COOKIE_AVISO_OPCIONAL, ligado);
+export async function definirAvisoOpcionalNoCadastroEscondido(escondido: boolean): Promise<void> {
+  return definirCookie(COOKIE_AVISO_OPCIONAL, escondido);
 }
 
 /** Esconde a tela de Alertas (menu, rota e o botão "Ajustar alerta" no
