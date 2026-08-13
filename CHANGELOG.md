@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.15.2 (2026-08-13)
+
+### Bug Fixes
+
+- Cor por categoria volta a ser inline, nao custom property
+  ([`c87a313`](https://github.com/lacerdaRodrigo/robo-livelo/commit/c87a313393946b0d2a77e1bfd32771b6ff7a53cb))
+
+
 ## v1.15.1 (2026-08-13)
 
 ### Bug Fixes
