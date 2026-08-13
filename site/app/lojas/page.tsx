@@ -193,11 +193,12 @@ export default async function PaginaDeLojas({
           </p>
         ) : (
           <div className="rolagem">
-            <table>
+            <table className="tabela-lojas">
               <thead>
                 <tr>
                   <th>Loja</th>
                   <th>Categoria</th>
+                  <th>Limiar</th>
                   <th />
                 </tr>
               </thead>
@@ -211,9 +212,24 @@ export default async function PaginaDeLojas({
                       )}
                     </td>
                     <td className="ajuda-do-campo">{loja.categoria}</td>
+                    <td className="ajuda-do-campo">
+                      {loja.multiplicador || loja.piso_pontos ? (
+                        <>
+                          {loja.multiplicador ? `${pontos(loja.multiplicador)}x` : "padrão"}, mín{" "}
+                          {loja.piso_pontos ? pontos(loja.piso_pontos) : "padrão"}
+                        </>
+                      ) : (
+                        "Padrão de todas"
+                      )}
+                    </td>
                     <td>
-                      <Link href={`/lojas/remover?id=${loja.id}`} className="botao discreto">
-                        Remover
+                      <Link
+                        href={`/lojas/remover?id=${loja.id}`}
+                        className="botao discreto"
+                        aria-label={`Remover ${loja.nome}`}
+                        title={`Remover ${loja.nome}`}
+                      >
+                        <IconeLixeira />
                       </Link>
                     </td>
                   </tr>
@@ -243,5 +259,20 @@ export default async function PaginaDeLojas({
         <Rodape versao={execucao?.versao} />
       </main>
     </>
+  );
+}
+
+/** RN25: icone e SVG no proprio HTML, nunca arquivo de terceiro. */
+function IconeLixeira() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6h14Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

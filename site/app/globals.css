@@ -1196,3 +1196,28 @@ th {
   font-weight: 700;
   background: var(--superficie-2);
 }
+
+/* Lojas cadastradas (V4.6): linha destaca no hover, e o botao de remover
+   vira so o icone — texto "Remover" repetido em 132 linhas era ruido. */
+.tabela-lojas tbody tr {
+  transition: background-color 0.15s;
+}
+
+.tabela-lojas tbody tr:hover {
+  background: var(--superficie-2);
+}
+
+.tabela-lojas td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-lojas .botao.discreto {
+  padding: 0;
+  width: var(--toque);
+  min-width: 0;
+}
+
+.tabela-lojas .botao.discreto:hover {
+  color: var(--urgente);
+}
