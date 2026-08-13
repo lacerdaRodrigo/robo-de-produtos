@@ -434,54 +434,105 @@ button:disabled {
   color: var(--urgente);
 }
 
-/* ── Resumo do topo ───────────────────────────────────────────────── */
+/* ── Hero do Painel (V4.6) ────────────────────────────────────────── */
 
-.resumo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--e4);
+/* Sempre escuro, igual a barra lateral — e o unico bloco fora dela com
+   essa paleta, entao usa as mesmas variaveis `--lateral-*` em vez de
+   inventar um terceiro conjunto de cores. */
+.hero-painel {
+  background: var(--lateral-fundo);
+  color: var(--lateral-texto);
+  border-radius: var(--raio);
+  padding: var(--e5);
   margin-bottom: var(--e6);
 }
 
-.resumo .item {
-  background: var(--superficie);
-  padding: var(--e5);
-  border-radius: var(--raio);
-  border: 1px solid var(--borda);
-  box-shadow: var(--sombra);
+.hero-cabecalho {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--e1);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding-bottom: var(--e4);
+  margin-bottom: var(--e4);
+  border-bottom: 1px solid var(--lateral-superficie);
 }
 
-/* A loja que precisa de atencao merece um sinal antes mesmo de ler o
-   numero — a mesma logica do "alertou" no cartao, aplicada ao resumo. */
-.resumo .item.turbinadas {
-  border-top: 4px solid var(--acento);
+.hero-cabecalho h1 {
+  color: #fff;
+  margin: 0;
 }
 
-.resumo .valor {
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: var(--texto);
-}
-
-.resumo .valor.destaque {
-  color: var(--acento);
-}
-
-.resumo .rotulo {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--suave);
+.hero-rotulo {
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
+  letter-spacing: 0.08em;
+  color: var(--marca-forte);
+  display: block;
+  margin-bottom: var(--e1);
+}
+
+.hero-badge-alerta {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--e2);
+  background: rgba(225, 29, 72, 0.15);
+  border: 1px solid rgba(225, 29, 72, 0.3);
+  color: var(--acento);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px var(--e3);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.hero-badge-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--acento);
+}
+
+.hero-metricas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+  font-size: 0.85rem;
+  color: var(--lateral-suave);
+  font-weight: 600;
+  margin-bottom: var(--e4);
+}
+
+.hero-top3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--e3);
+}
+
+.hero-top3-item {
+  background: var(--lateral-superficie);
+  border: 1px solid rgba(225, 29, 72, 0.3);
+  border-radius: var(--raio-p);
+  padding: var(--e3);
+}
+
+.hero-top3-linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e2);
+}
+
+.hero-top3-nome {
+  font-weight: 700;
+  color: #fff;
+}
+
+.hero-top3-pontos {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--acento);
 }
 
 /* ── Busca e indice ───────────────────────────────────────────────── */
