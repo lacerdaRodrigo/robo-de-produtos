@@ -2,6 +2,31 @@
 
 <!-- version list -->
 
+## v1.14.0 (2026-08-13)
+
+### Documentation
+
+- Confirma conferência visual do e-mail real (RN22/RN23/C05)
+  ([`ed962bd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ed962bd62236c3b35e37086a7bfeae1f4ceb92c4))
+
+- Confirma verificação do site publicado, destrava V2.4
+  ([`93fecc6`](https://github.com/lacerdaRodrigo/robo-livelo/commit/93fecc62b6dc6a903474e35479e14bb03a8d477d))
+
+- Marca filtro do Gmail de e-mail sem promoção como feito
+  ([`2fe42bf`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2fe42bf2b54dda80ce9f480acfd6695a1164c4a8))
+
+- Marca senha de app do Gmail como revogada e secret atualizado
+  ([`f854106`](https://github.com/lacerdaRodrigo/robo-livelo/commit/f8541060045acfc44e74925b01e6d91250a3ccb8))
+
+- Marca senha do Neon rotacionada e GITHUB_TOKEN_DISPARO confirmado
+  ([`f34d99b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/f34d99b250cb1ee5eedfc23c807aac50af183bf0))
+
+### Features
+
+- Dispara robo em silencio quando o site pede atualizacao
+  ([`ea7a2b5`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ea7a2b5644a451b618ce35dc4263277db704b610))
+
+
 ## v1.13.1 (2026-08-13)
 
 ### Bug Fixes
