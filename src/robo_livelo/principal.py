@@ -106,12 +106,18 @@ def verificar_promocoes(
     agora: datetime | None = None,
     preferencias: PreferenciasGlobais | None = None,
     repositorio: RepositorioDeExecucao | None = None,
+    enviar_email: bool = True,
 ) -> int:
     """Executa a fatia vertical completa e devolve quantos alertas achou.
 
     `agora` e resolvido aqui (unica camada que le o relogio) e propagado
     para o extrator e o montador de e-mail, para os dois concordarem sobre
     "hoje" mesmo que a execucao atravesse a meia-noite (RN21, RN22).
+
+    `enviar_email` separa o disparo manual do site do agendado (RF13): o
+    retrato ainda e gravado e o total ainda e devolvido, so o notificador
+    fica quieto. Nao e RF16 — nao depende de ter promocao ou nao, e sim de
+    quem pediu a execucao.
     """
     agora = agora or datetime.now(FUSO_BRASILIA)
     regua = (preferencias or PreferenciasPadrao()).carregar()
@@ -156,9 +162,16 @@ def verificar_promocoes(
     if suspeita:
         _log.warning("%s", suspeita)
 
-    mensagem = montador_email.montar(agrupamento, agora=agora, catalogo_vazio=catalogo_vazio)
-    notificador.enviar(mensagem)  # RF10: envia em toda execucao
-    _log.info("E-mail enviado. Alertas: %d em %d categorias.", total, len(agrupamento))
+    if enviar_email:
+        mensagem = montador_email.montar(agrupamento, agora=agora, catalogo_vazio=catalogo_vazio)
+        notificador.enviar(mensagem)  # RF10: envia em toda execucao, quando enviar_email pede
+        _log.info("E-mail enviado. Alertas: %d em %d categorias.", total, len(agrupamento))
+    else:
+        _log.info(
+            "E-mail suprimido (disparo manual silencioso). Alertas: %d em %d categorias.",
+            total,
+            len(agrupamento),
+        )
 
     # Depois do e-mail, de proposito: o e-mail e o produto, o site e o
     # subproduto. Banco fora do ar nao pode custar o aviso do dia.
@@ -192,6 +205,9 @@ def principal(argv: list[str] | None = None) -> int:
 
     limiar = int(ambiente.get("LIMIAR_PARCEIROS", LIMIAR_PADRAO))
     caminho = Path(ambiente.get("CAMINHO_CONFIG", CAMINHO_CONFIG_PADRAO))
+    # Ausente (agendado) ou "true" (workflow_dispatch sem marcar a caixa)
+    # mandam e-mail; so "false" explicito, vindo do botao do site, cala.
+    enviar_email = ambiente.get("ENVIAR_EMAIL", "true").strip().lower() != "false"
 
     try:
         verificar_promocoes(
@@ -205,6 +221,7 @@ def principal(argv: list[str] | None = None) -> int:
                 destino=ambiente["EMAIL_DESTINO"],
             ),
             limiar=limiar,
+            enviar_email=enviar_email,
         )
     except Exception as erro:
         # RNF06: qualquer falha e ruidosa e sai com codigo diferente de zero.

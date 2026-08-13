@@ -469,3 +469,34 @@ def teste_ct163_catalogo_vazio_avisa_no_email_e_no_log(caplog):
     assert total == 0
     assert notificador.enviadas[0].assunto == ASSUNTO_SEM_CATALOGO
     assert any("Nenhuma loja cadastrada" in r.getMessage() for r in caplog.records)
+
+
+def teste_ct166_enviar_email_falso_cala_o_notificador_mas_nao_o_retrato(favoritas):
+    """Disparo manual do site (RF13): total e retrato seguem normais, so o
+    e-mail fica quieto. Nao e RF16 — nao depende de ter promocao ou nao."""
+
+    class RepositorioFake:
+        def __init__(self):
+            self.retratos = []
+
+        def registrar(self, retrato):
+            self.retratos.append(retrato)
+
+    repositorio = RepositorioFake()
+    notificador = NotificadorFake()
+    html = pagina(("Natura", "4", True))
+
+    total = verificar_promocoes(
+        fonte=FonteFake(html),
+        catalogo=CatalogoFake(favoritas),
+        notificador=notificador,
+        limiar=1,
+        agora=AGORA_TESTE,
+        repositorio=repositorio,
+        enviar_email=False,
+    )
+
+    assert total == 1
+    assert not notificador.foi_chamado
+    (retrato,) = repositorio.retratos
+    assert retrato.alertas == 1

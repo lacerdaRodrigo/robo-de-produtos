@@ -8,6 +8,11 @@
  *
  * O token vive so no servidor, como a DATABASE_URL. Nada aqui tem prefixo
  * NEXT_PUBLIC_, entao nada chega ao navegador.
+ *
+ * `enviar_email: "false"` cala o notificador so nesta execucao — o
+ * agendado continua mandando e-mail sempre. Cadastrar dez lojas numa tarde
+ * geraria dez e-mails identicos, e o robo ja grava o retrato de qualquer
+ * forma; o site le o resultado direto do banco.
  */
 
 const REPOSITORIO = "lacerdaRodrigo/robo-livelo";
@@ -36,7 +41,9 @@ export async function dispararRobo(): Promise<ResultadoDoDisparo> {
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ref: RAMO }),
+      // "false" como string: a API de dispatch so aceita valores de input
+      // como texto, mesmo quando o workflow declara `type: boolean`.
+      body: JSON.stringify({ ref: RAMO, inputs: { enviar_email: "false" } }),
     },
   );
 
