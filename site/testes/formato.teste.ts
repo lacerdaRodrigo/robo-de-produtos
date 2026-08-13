@@ -6,6 +6,7 @@ import {
   filtrarPorNome,
   idade,
   numeroOuPadrao,
+  ordenarLojas,
   pontos,
   rotuloDoClube,
   terminaHoje,
@@ -180,5 +181,66 @@ describe("CT-158 ancora de categoria", () => {
     expect(ancora("Marketplace / Varejo Geral")).toBe("marketplace-varejo-geral");
     expect(ancora("Casa & Construção")).toBe("casa-construcao");
     expect(ancora("Pet")).toBe("pet");
+  });
+});
+
+describe("CT-170 ordenação do Painel (redesenho V4.6)", () => {
+  function loja(parcial: Partial<Parameters<typeof ordenarLojas>[0][number]>) {
+    return {
+      nome: "",
+      categoria: null,
+      pontos_atuais: null,
+      pontos_base: null,
+      pontos_clube: null,
+      valor_de_disparo: null,
+      moeda: "R$",
+      prefixo_ate: false,
+      em_promocao: false,
+      alertou: false,
+      campanha: null,
+      descricao_campanha: null,
+      fim_promocao: null,
+      link: null,
+      multiplicador: null,
+      piso_pontos: null,
+      ...parcial,
+    };
+  }
+
+  const lojas = [
+    loja({ nome: "Renner", pontos_atuais: "1", alertou: false }),
+    loja({ nome: "Netshoes", pontos_atuais: "15", alertou: true }),
+    loja({ nome: "Amazon", pontos_atuais: null, alertou: false }),
+    loja({ nome: "Acer", pontos_atuais: "12", alertou: true }),
+  ];
+
+  it("'pontos' poe maior primeiro e quem nao apareceu na Livelo por ultimo", () => {
+    // Number() so decide posicao na lista, nunca vira texto — mesma
+    // ressalva de barraDeProgresso (PRD 5.4).
+    expect(ordenarLojas(lojas, "pontos").map((l) => l.nome)).toEqual([
+      "Netshoes",
+      "Acer",
+      "Renner",
+      "Amazon",
+    ]);
+  });
+
+  it("'alerta' filtra, nao ordena — só quem cruzou o próprio limite", () => {
+    expect(ordenarLojas(lojas, "alerta").map((l) => l.nome)).toEqual(["Netshoes", "Acer"]);
+  });
+
+  it("'nome' e alfabetica, A-Z", () => {
+    expect(ordenarLojas(lojas, "nome").map((l) => l.nome)).toEqual([
+      "Acer",
+      "Amazon",
+      "Netshoes",
+      "Renner",
+    ]);
+  });
+
+  it("nao muda a lista original (imutavel)", () => {
+    const copia = [...lojas];
+    ordenarLojas(lojas, "nome");
+    expect(lojas).toEqual(copia);
   });
 });

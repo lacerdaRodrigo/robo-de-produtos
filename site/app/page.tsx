@@ -3,15 +3,17 @@ import Link from "next/link";
 import { pontuacoes, ultimaExecucao, type PontuacaoDeLoja } from "@/lib/banco";
 import { telaDeAlertasEscondida } from "@/lib/flags";
 import {
-  ancora,
   barraDeProgresso,
   dia,
   dataHora,
   filtrarPorNome,
   idade,
+  ordenarLojas,
+  ORDENACOES,
   pontos,
   rotuloDoClube,
   terminaHoje,
+  type Ordenacao,
 } from "@/lib/formato";
 import { temSessao } from "@/lib/sessao";
 import { Cabecalho } from "./componentes/cabecalho";
@@ -72,13 +74,16 @@ function Loja({
   return (
     <article className={loja.alertou ? "cartao alertou" : "cartao"}>
       <div className="linha">
-        {loja.link ? (
-          <a className="nome" href={loja.link}>
-            {loja.nome}
-          </a>
-        ) : (
-          <span className="nome">{loja.nome}</span>
-        )}
+        <div className="cartao-titulo">
+          {loja.link ? (
+            <a className="nome" href={loja.link}>
+              {loja.nome}
+            </a>
+          ) : (
+            <span className="nome">{loja.nome}</span>
+          )}
+          {loja.categoria && <span className="etiqueta">{loja.categoria}</span>}
+        </div>
         <div className="pontos-container">
           <span className="pontos numero">
             {naoEncontrada ? "—" : `${loja.prefixo_ate ? "Até " : ""}${pontos(loja.pontos_atuais)}`}
@@ -202,12 +207,21 @@ function HeroDoPainel({
   );
 }
 
+const ROTULO_DA_ORDENACAO: Record<Ordenacao, string> = {
+  pontos: "Maior pontuação",
+  alerta: "Em alerta",
+  nome: "Nome A-Z",
+};
+
 export default async function Pagina({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; ordenar?: string }>;
 }) {
-  const { q = "" } = await searchParams;
+  const { q = "", ordenar: ordenarBruto } = await searchParams;
+  const ordenar: Ordenacao = (ORDENACOES as readonly string[]).includes(ordenarBruto ?? "")
+    ? (ordenarBruto as Ordenacao)
+    : "pontos";
   const [logado, alertasEscondidos] = await Promise.all([temSessao(), telaDeAlertasEscondida()]);
   const podeAjustarAlerta = logado && !alertasEscondidos;
 
@@ -247,11 +261,11 @@ export default async function Pagina({
   const alertadas = lojas.filter((l) => l.alertou);
   const carimbo = idade(execucao.momento);
 
-  const porCategoria = new Map<string, PontuacaoDeLoja[]>();
-  for (const loja of lojas) {
-    const categoria = loja.categoria ?? "Sem categoria";
-    porCategoria.set(categoria, [...(porCategoria.get(categoria) ?? []), loja]);
-  }
+  // Grade unica, ordenavel — substitui o agrupamento por categoria do
+  // redesenho anterior (redesenho V4.6, mockup enviado em 2026-08-13).
+  const lojasOrdenadas = ordenarLojas(lojas, ordenar);
+  const semResultadoDeBusca = q !== "" && lojas.length === 0;
+  const semLojasEmAlerta = ordenar === "alerta" && lojasOrdenadas.length === 0 && lojas.length > 0;
 
   return (
     <>
@@ -283,55 +297,56 @@ export default async function Pagina({
           </button>
         </form>
 
-        {q && (
+        {semResultadoDeBusca && (
           <p className="detalhe">
-            {lojas.length === 0
-              ? `Nenhuma loja sua combina com "${q}".`
-              : `${lojas.length} de ${todas.length} lojas combinam com "${q}".`}{" "}
+            Nenhuma loja sua combina com &quot;{q}&quot;. <Link href="/">Ver todas de novo</Link>
+          </p>
+        )}
+
+        {q && !semResultadoDeBusca && (
+          <p className="detalhe">
+            {lojas.length} de {todas.length} lojas combinam com &quot;{q}&quot;.{" "}
             <Link href="/">Ver todas de novo</Link>
           </p>
         )}
 
-        {!q && porCategoria.size > 1 && (
-          <nav className="indice" aria-label="Ir para categoria">
-            {[...porCategoria.keys()].map((categoria) => (
-              <a key={categoria} href={`#${ancora(categoria)}`}>
-                {categoria}
-              </a>
-            ))}
-          </nav>
-        )}
-
-        {alertadas.length > 0 && (
+        {!semResultadoDeBusca && (
           <>
-            <h2>Turbinadas agora</h2>
-            <div className="lista-grade">
-              {alertadas.map((loja) => (
-                <Loja key={`alerta-${loja.nome}`} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
-              ))}
+            <div className="controles-ordenacao">
+              <span className="rotulo-ordenacao">Ordenar:</span>
+              {ORDENACOES.map((opcao) => {
+                const parametros = new URLSearchParams();
+                if (q) {
+                  parametros.set("q", q);
+                }
+                parametros.set("ordenar", opcao);
+                return (
+                  <Link
+                    key={opcao}
+                    href={`/?${parametros.toString()}`}
+                    className="botao-ordena"
+                    aria-current={ordenar === opcao ? "true" : undefined}
+                  >
+                    {ROTULO_DA_ORDENACAO[opcao]}
+                  </Link>
+                );
+              })}
             </div>
+
+            {semLojasEmAlerta ? (
+              <p className="vazio">Nenhuma loja sua cruzou o próprio limite nesta execução.</p>
+            ) : (
+              // RN24: todas as favoritas, em promocao ou nao. E o motivo do
+              // site existir — responder "quanto a Renner da hoje?" sem
+              // abrir a Livelo.
+              <div className="lista-grade">
+                {lojasOrdenadas.map((loja) => (
+                  <Loja key={loja.nome} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
+                ))}
+              </div>
+            )}
           </>
         )}
-
-        {alertadas.length === 0 && !q && (
-          <p className="vazio">
-            Nenhuma loja sua cruzou o próprio limite nesta execução. A lista completa continua
-            abaixo, com a pontuação de cada uma.
-          </p>
-        )}
-
-        {/* RN24: todas as favoritas, em promocao ou nao. E o motivo do site
-            existir — responder "quanto a Renner da hoje?" sem abrir a Livelo. */}
-        {[...porCategoria.entries()].map(([categoria, lojasDaCategoria]) => (
-          <section key={categoria} id={ancora(categoria)}>
-            <h2>{categoria}</h2>
-            <div className="lista-grade">
-              {lojasDaCategoria.map((loja) => (
-                <Loja key={loja.nome} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
-              ))}
-            </div>
-          </section>
-        ))}
 
         <Rodape versao={execucao.versao} />
       </main>

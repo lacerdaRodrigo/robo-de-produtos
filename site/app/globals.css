@@ -547,16 +547,28 @@ button:disabled {
   flex: 1;
 }
 
-.indice {
+/* ── Controles de ordenacao do Painel (redesenho V4.6) ───────────────── */
+
+.controles-ordenacao {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--e2);
   margin-bottom: var(--e5);
 }
 
-.indice a {
-  font-size: 0.85rem;
-  font-weight: 500;
+.rotulo-ordenacao {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--suave);
+  margin-right: 2px;
+}
+
+.botao-ordena {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--suave);
   text-decoration: none;
   padding: 6px var(--e3);
@@ -566,10 +578,15 @@ button:disabled {
   transition: all 0.2s;
 }
 
-.indice a:hover {
+.botao-ordena:hover {
   color: var(--texto);
-  border-color: var(--suave);
-  background: var(--superficie-2);
+  border-color: var(--marca);
+}
+
+.botao-ordena[aria-current="true"] {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: #fff;
 }
 
 /* ── Cartao de loja ───────────────────────────────────────────────── */
@@ -620,6 +637,14 @@ button:disabled {
   justify-content: space-between;
   gap: var(--e2);
   margin-bottom: var(--e2);
+}
+
+.cartao-titulo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
 }
 
 .nome {

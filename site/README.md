@@ -68,7 +68,7 @@ O preço do nonce é a página deixar de ser estática: nonce muda a cada requis
 
 | URL | Nome no menu | Acesso | Faz |
 |---|---|---|---|
-| `/` | Painel | público | Todas as suas lojas, turbinadas primeiro, com busca por `?q=` |
+| `/` | Painel | público | Todas as suas lojas em grade única, com busca por `?q=` e ordenar por `?ordenar=pontos\|alerta\|nome` (redesenho V4.6, 2026-08-13) |
 | `/ajuda` | Ajuda | público | Perguntas e respostas sobre como o sistema decide |
 | `/entrar` | — | público | Login. `?voltar=` devolve para a tela de origem |
 | `/avisos` | Alertas | sessão, escondível | Padrão de todas as lojas e exceções (título da tela: "Quando me avisar") |
