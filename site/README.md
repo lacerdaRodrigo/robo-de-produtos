@@ -91,7 +91,7 @@ Exige `GITHUB_TOKEN_DISPARO` no ambiente: fine-grained, só este repositório, p
 
 **Trava de 5 minutos** entre disparos (tabela `disparo_manual`, migração 004). RNF02 é compromisso de conduta, não detalhe técnico: um botão sem trava viraria dezenas de requisições à Livelo numa tarde de cadastro. Pedido recusado pelo GitHub não consome a janela.
 
-Em `/lojas`, o bloco fica depois da tabela "Lojas cadastradas" — é a última coisa que se faz numa visita à tela, não a primeira, então não precisa competir por atenção com o formulário de cadastro.
+Desde o redesenho V4.6 (2026-08-13), o botão mora na barra lateral, logo abaixo de "Lojas" — visível (quando logado) em qualquer tela, não só em `/lojas`. `Cabecalho` (`componentes/cabecalho.tsx`) busca a trava e o token só quando há sessão, pra não pagar consulta extra ao banco em visita anônima; o clique sempre volta pra `/lojas`, onde o recado (sucesso, espera, sem token) aparece.
 
 ## Tema claro/escuro (V2.3.3)
 

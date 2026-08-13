@@ -277,6 +277,25 @@ a:hover {
   display: contents;
 }
 
+/* Disparo manual (RNF02): unico item do menu que e uma acao, nao um link —
+   ganha a cor de acao (--marca) pra se destacar dos demais, mesmo esquema
+   de indigo-para-agir/rosa-so-pra-alerta do resto do site. */
+.bl-acao-primaria {
+  background: var(--marca);
+  color: #fff;
+  font-weight: 700;
+}
+
+.bl-acao-primaria:hover:not(:disabled) {
+  background: var(--marca-forte);
+  color: #fff;
+}
+
+.bl-acao-primaria:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .bl-rodape {
   display: flex;
   align-items: center;
@@ -288,6 +307,16 @@ a:hover {
    nas acoes de rodape, pra caber tema+config+sair sem apertar. */
 .bl-item-texto {
   display: none;
+}
+
+/* Abaixo de 480px, logado, a barra de topo tem ate 5 icones de nav
+   competindo com 3 de rodape — o nome ao lado do logo cede lugar pra
+   nao empurrar a lista pra dentro de uma rolagem quase invisivel
+   (~77px de largura visivel antes desse ajuste). */
+@media (max-width: 479px) {
+  .bl-marca-nome {
+    display: none;
+  }
 }
 
 @media (min-width: 480px) {
@@ -1075,13 +1104,6 @@ textarea {
 
 .bloco > :last-child {
   margin-bottom: 0;
-}
-
-/* Bloco em destaque: usado no "terminou de mexer" de Lojas, onde a acao
-   e a tela inteira gira em torno dela merece se diferenciar do resto. */
-.bloco.destaque {
-  background: var(--marca-fraco);
-  border-color: var(--marca);
 }
 
 .faixa {

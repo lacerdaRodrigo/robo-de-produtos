@@ -172,6 +172,11 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [ ] "+X% avanço" do mockup (crescimento sobre o normal da loja, como texto): **decidido não fazer.** É `Number()` virando texto na tela, o que PRD 5.4 proíbe fora da ressalva de ordenação/geometria — o mesmo cuidado que já existe pra não devolver "2,9000000000000004"
 - [ ] Pílula "Monitorando" em todo cartão sem alerta (mockup mostra status em todos): **decidido não fazer.** Cartão sem alerta já se distingue visualmente (sem borda rosa, sem etiqueta "Alerta ativo") — uma pílula cinza a mais em ~130 cartões seria ruído sem contraste com nada
 
+**Feito (quinta fatia, 2026-08-13):**
+
+- [x] Botão "Forçar atualização" saiu do fim de `/lojas` e foi para a barra lateral, logo abaixo de "Lojas" — igual ao mockup, que tem "Executar Robô" fixo no menu, não escondido no fim de uma tela. `Cabecalho` busca a trava de 5 minutos (RNF02) e o token só quando há sessão, pra não gastar consulta ao banco em visita anônima; o clique continua voltando pra `/lojas`, onde o recado de sucesso/espera/sem-token aparece. O bloco "Terminou de mexer?" (`.bloco.destaque`, agora sem uso) saiu junto
+- [x] **Bug de verdade encontrado nessa mudança, não só reskin**: com sessão, a barra compacta do celular (abaixo de 768px) tinha 5 itens de menu + 3 de rodapé competindo por ~360px — o nome "Pontuação Livelo" ao lado do logo mais o rodapé cheio deixavam só ~77px pra navegação, que precisava rolar quase sem indício visual disso. É provavelmente a causa real do "veio quebrado" relatado no celular que não tinha sido reproduzido antes (a investigação anterior só cobriu telas com menos itens). Corrigido escondendo `.bl-marca-nome` abaixo de 480px — sobra ~206px pra navegação, cabe quase tudo, só "Ajuda" fica parcialmente visível na borda (rolagem com indício, não escondida)
+
 **Pendente, na ordem do mockup:**
 
 - [ ] Central de Alertas: **funcionalidade nova de verdade, não só reskin.** O mockup mostra histórico de e-mails enviados com "Ver Payload" — hoje o site só sabe "quem alertou nesta execução" (RN27, uma foto só). Um histórico de verdade (quem foi avisado, quando, o que tinha no e-mail) exige tabela nova e mudança em `principal.py`/`montador_email.py` para gravar cada envio, não só o retrato. Fica pendente de desenho — não é para fazer sem pensar no esquema primeiro

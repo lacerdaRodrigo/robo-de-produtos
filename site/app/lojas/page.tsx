@@ -3,19 +3,17 @@ import Link from "next/link";
 import {
   catalogo,
   categorias,
-  esperaAteProximoDisparo,
   INTERVALO_MINIMO_MINUTOS,
   preferencias,
   ultimaExecucao,
 } from "@/lib/banco";
 import { avisoOpcionalNoCadastroEscondido } from "@/lib/flags";
-import { temTokenDeDisparo } from "@/lib/github";
 import { filtrarPorNome, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
 import { Rodape } from "../rodape";
-import { acaoAdicionarLoja, acaoAtualizarAgora } from "./acoes";
+import { acaoAdicionarLoja } from "./acoes";
 
 export const dynamic = "force-dynamic";
 
@@ -33,16 +31,13 @@ export default async function PaginaDeLojas({
   await exigirSessao();
 
   const { ok, erro, nome, q = "", segundos } = await searchParams;
-  const [todas, listaDeCategorias, execucao, falta, padroes, avisoOpcionalEscondido] =
-    await Promise.all([
-      catalogo(),
-      categorias(),
-      ultimaExecucao().catch(() => null),
-      esperaAteProximoDisparo().catch(() => 0),
-      preferencias(),
-      avisoOpcionalNoCadastroEscondido(),
-    ]);
-  const podeDisparar = temTokenDeDisparo();
+  const [todas, listaDeCategorias, execucao, padroes, avisoOpcionalEscondido] = await Promise.all([
+    catalogo(),
+    categorias(),
+    ultimaExecucao().catch(() => null),
+    preferencias(),
+    avisoOpcionalNoCadastroEscondido(),
+  ]);
   const lojas = filtrarPorNome(todas, q);
 
   return (
@@ -238,23 +233,6 @@ export default async function PaginaDeLojas({
             </table>
           </div>
         )}
-
-        <div className="bloco destaque">
-          <div className="linha">
-            <div>
-              <strong>Terminou de mexer?</strong>
-              <p className="ajuda-do-campo" style={{ margin: 0 }}>
-                O robô lê a Livelo agora e a lista de pontuação já sai com as suas mudanças.
-                Sem isso, elas entram no próximo horário: 9h, 14h ou 20h.
-              </p>
-            </div>
-            <form action={acaoAtualizarAgora}>
-              <button type="submit" disabled={!podeDisparar || falta > 0}>
-                {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
-              </button>
-            </form>
-          </div>
-        </div>
 
         <Rodape versao={execucao?.versao} />
       </main>

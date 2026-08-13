@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
+import { esperaAteProximoDisparo } from "@/lib/banco";
 import { telaDeAlertasEscondida } from "@/lib/flags";
+import { temTokenDeDisparo } from "@/lib/github";
 import { temSessao } from "@/lib/sessao";
 import { temaAtual, type Tema } from "@/lib/tema";
 import { acaoAlternarTema, acaoSair } from "../acoes";
+import { acaoAtualizarAgora } from "../lojas/acoes";
 
 /**
  * Barra lateral de todas as telas (V4.6: redesenho de navegação, ver
@@ -41,6 +45,12 @@ export async function Cabecalho({ atual }: { atual: string }) {
     : PRIVADAS;
   const itens = logado ? [PUBLICAS[0], ...privadas, PUBLICAS[1]] : PUBLICAS;
 
+  // "Forçar atualização" (RNF02) mora no menu, logo abaixo de Lojas — so
+  // faz sentido pra quem tem sessao, entao so busca o cooldown nesse caso:
+  // visitante anonimo nao paga o preco de uma consulta a mais no banco.
+  const podeDisparar = logado && temTokenDeDisparo();
+  const falta = logado ? await esperaAteProximoDisparo().catch(() => 0) : 0;
+
   return (
     <aside className="barra-lateral">
       <Link href="/" className="bl-marca">
@@ -55,15 +65,38 @@ export async function Cabecalho({ atual }: { atual: string }) {
 
       <nav className="bl-nav" aria-label="Seções">
         {itens.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="bl-item"
-            aria-current={item.href === atual ? "page" : undefined}
-          >
-            <item.icone />
-            <span className="bl-item-texto">{item.nome}</span>
-          </Link>
+          <Fragment key={item.href}>
+            <Link
+              href={item.href}
+              className="bl-item"
+              aria-current={item.href === atual ? "page" : undefined}
+            >
+              <item.icone />
+              <span className="bl-item-texto">{item.nome}</span>
+            </Link>
+
+            {item.href === "/lojas" && logado && (
+              <form action={acaoAtualizarAgora} className="bl-form">
+                <button
+                  type="submit"
+                  className="bl-item bl-acao-primaria"
+                  disabled={!podeDisparar || falta > 0}
+                  title={
+                    !podeDisparar
+                      ? "Token de disparo não configurado no site"
+                      : falta > 0
+                        ? `Espere mais ${falta}s antes de tentar de novo`
+                        : "O robô lê a Livelo agora e grava a pontuação atualizada"
+                  }
+                >
+                  <IconeExecutar />
+                  <span className="bl-item-texto">
+                    {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
+                  </span>
+                </button>
+              </form>
+            )}
+          </Fragment>
         ))}
       </nav>
 
@@ -173,6 +206,16 @@ function IconeAjuda() {
         strokeLinejoin="round"
       />
       <circle cx="12" cy="17" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Disparo manual do robô (RNF02) — triângulo de "play", mesmo peso visual
+ *  dos demais ícones do menu. */
+function IconeExecutar() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 4.5v15l13-7.5-13-7.5Z" fill="currentColor" />
     </svg>
   );
 }
