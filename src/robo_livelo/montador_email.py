@@ -324,9 +324,13 @@ def montar(
     """
     total = sum(len(lojas) for lojas in agrupamento.values())
     html: list[str] = [
-        "<html><body style='font-family:Arial,Helvetica,sans-serif;"
+        # RN-visual: <style> precisa morar dentro de <head> — sem head
+        # explicito o Gmail (e outros clientes) descarta a folha inteira
+        # na sanitizacao e o e-mail vira texto corrido, sem cor nem layout
+        # nenhum. Confirmado ao vivo em 2026-08-13.
+        f"<html><head><style>{_ESTILO}</style></head>"
+        "<body style='font-family:Arial,Helvetica,sans-serif;"
         "background:#f5f5f7;margin:0;padding:24px;'>",
-        f"<style>{_ESTILO}</style>",
         "<div class='mc'>",
         _cabecalho_marca(),
         "<p class='h1'>Pontuação turbinada</p>",
