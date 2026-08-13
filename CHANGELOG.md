@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.18.0 (2026-08-13)
+
+### Features
+
+- **site**: Tabela de Lojas ganha coluna Limiar e ícone de remover (V4.6, 3/3)
+  ([`9ac2578`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9ac257892e04638861bebc0f490c0542685c8e2d))
+
+
 ## v1.17.0 (2026-08-13)
 
 ### Features
