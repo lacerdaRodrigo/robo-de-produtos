@@ -13,7 +13,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 ## Só você pode fazer (exige conta ou credencial)
 
 - [x] Cadastrar `DATABASE_URL` como secret no GitHub — feito em 2026-08-11. Ensaio geral local no mesmo dia, com a página real e o catálogo vindo do banco: 132 lojas em 10 categorias (idênticas às do TOML), 254 parceiros extraídos, 18 promoções em 7 categorias, e-mail de 12 KB — folgado ante o corte de 102 KB do Gmail (C05)
-- [ ] Criar a regra de filtro no Gmail que arquiva os e-mails "sem promoção" (PRD §11.4)
+- [x] Criar a regra de filtro no Gmail que arquiva os e-mails "sem promoção" (PRD §11.4) — feito em 2026-08-13: filtro por `subject:(Livelo: nenhuma promoção nas suas lojas hoje)`, ação "Ignorar caixa de entrada", aplicado retroativamente aos 2 e-mails que já estavam na caixa
 - [x] Confirmar que a senha de aplicativo antiga do Gmail foi revogada e o secret atualizado — feito em 2026-08-13
 - [ ] Abrir o próximo e-mail e conferir de olho o que nenhum teste vê: validade "Válido até dd/mm" e "Termina hoje!" (RN22), rótulo do Clube (RN23) e o corte de exibição do Gmail (C05). O ensaio local de 2026-08-11 já mostrou o conteúdo correto — 5 "Termina hoje!" e a Sephora com "Clube: 10 pontos (assinantes Clube ganham mais)" — mas ninguém viu ainda como isso fica renderizado no Gmail
 - [ ] Trocar a senha do Neon: a `DATABASE_URL` completa foi colada num chat em 2026-08-11. Rotacionar no painel do Neon e atualizar o secret e o `.env` é mais barato que torcer
