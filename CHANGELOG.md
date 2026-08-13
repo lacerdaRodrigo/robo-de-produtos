@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.15.1 (2026-08-13)
+
+### Bug Fixes
+
+- Move o <style> do e-mail para dentro de <head>
+  ([`6f0f5bc`](https://github.com/lacerdaRodrigo/robo-livelo/commit/6f0f5bc7cd130e11803831129fad03d73248be16))
+
+
 ## v1.15.0 (2026-08-13)
 
 ### Features
