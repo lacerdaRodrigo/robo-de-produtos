@@ -6,7 +6,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 
 > Atualizado em 2026-08-12. Versão atual: **1.12.x**.
 
-**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. Falta o parâmetro `enviar_email` no `robo.yml` para o disparo manual do site rodar em silêncio. A V2.4 segue bloqueada até você verificar o site publicado (carimbo, RN30, sem JavaScript). O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
+**Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. Falta o parâmetro `enviar_email` no `robo.yml` para o disparo manual do site rodar em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, só ainda não começou. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 ---
 
@@ -138,7 +138,7 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 
 - [x] Criar o projeto na Vercel apontando para este repositório, com **Root Directory = `site`**
 - [x] Cadastrar `SENHA_SITE` (longa e aleatória) e `SEGREDO_SESSAO` nas Environment Variables, além de `DATABASE_URL`
-- [ ] Abrir a página publicada e conferir o carimbo, RN30 e o comportamento sem JavaScript
+- [x] Abrir a página publicada e conferir o carimbo, RN30 e o comportamento sem JavaScript — conferido em 2026-08-13 em `robo-livelo.vercel.app`: carimbo "Sincronizado há 21 min (12/08/2026, 21:51)" com bolinha verde; cada card mostra pontuação atual, "Normal: X" (base) e "Aviso: X" (limiar do alerta), RN30 atendida; HTML servido pelo Vercel já vem com os 36 cartões e barras de progresso prontos sem nenhum `<script>`, funciona sem JavaScript
 
 ---
 
@@ -147,7 +147,7 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 - [ ] Enviar somente quando alguma favorita cruzar o próprio limiar (RF16)
 - [ ] Revogar RF10 no PRD
 
-**Bloqueada até a V2.3 estar no ar e verificada.** Sem o site publicado, cortar o e-mail diário deixa o silêncio ambíguo de novo e reabre o buraco do objetivo O3.
+**Destravada em 2026-08-13.** Estava bloqueada até a V2.3 estar no ar e verificada — sem o site publicado, cortar o e-mail diário deixaria o silêncio ambíguo de novo e reabriria o buraco do objetivo O3. Você conferiu o site publicado (carimbo, RN30, sem JavaScript) nessa data, então o gatilho aconteceu. Ainda não iniciada.
 
 ---
 
