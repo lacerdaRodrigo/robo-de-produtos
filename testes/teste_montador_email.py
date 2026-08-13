@@ -324,7 +324,12 @@ def teste_ct172_descricao_longa_corta_sem_quebrar_palavra():
 
 
 def teste_ct173_marca_aparece_no_topo_e_no_rodape():
-    """Redesign 2026-08-13: a marca R$→ponto assina o topo e o rodape."""
+    """Redesign 2026-08-13: a marca R$→ponto assina o topo e o rodape.
+
+    URL hospedada, nao base64: o Gmail descarta `data:` URI no corpo de
+    um e-mail recebido, confirmado ao vivo em 2026-08-13.
+    """
     mensagem = montar({"Beleza": [faz_parceiro("Natura", "5")]}, agora=AGORA_TESTE)
-    assert mensagem.corpo_html.count("data:image/png;base64,") == 2
+    assert mensagem.corpo_html.count("src='https://robo-livelo.vercel.app/logo.png'") == 2
+    assert "data:image" not in mensagem.corpo_html
     assert "Pontuação Livelo" in mensagem.corpo_html

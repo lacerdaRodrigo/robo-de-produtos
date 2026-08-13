@@ -37,48 +37,13 @@ _CORES = [
     "#059669",
 ]
 
-# Marca "R$ vira ponto" (redesign 2026-08-13, ver docs/EMAIL.md): PNG 96x96
-# com fundo transparente, embutido em base64 porque o Gmail nao renderiza
-# <svg> inline em e-mail de forma confiavel. Peso unico (nao e por card),
-# gerado a partir de site/public/logo.svg — mesmo arquivo do cabecalho do
-# site, so que rasterizado.
-_LOGO_PNG_BASE64 = (
-    "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"
-    "9C/bJIYAAAAASUVORK5CYII="
-)
+# Marca "R$ vira ponto" (redesign 2026-08-13, ver docs/EMAIL.md), hospedada
+# no site em vez de base64: confirmado ao vivo que o Gmail descarta
+# `<img src="data:...">` no corpo de um e-mail recebido (funciona em
+# pagina web, nao em e-mail — e por isso nenhum template de e-mail do
+# mercado embute logo em base64, todos hospedam). URL fixa, nao e I/O —
+# e uma string, igual DOMINIO_LIVELO.
+_LOGO_URL = "https://robo-livelo.vercel.app/logo.png"
 
 # CSS unico no <head>: repetir estilo inline em cada cartao e o que fazia o
 # HTML antigo pesar quase todo o orcamento do Gmail so com 132 lojas em
@@ -275,7 +240,7 @@ def _cabecalho_marca() -> str:
     """Assinatura no topo do e-mail — logo + nome, redesign 2026-08-13."""
     return (
         "<div class='mb'>"
-        f"<img src='data:image/png;base64,{_LOGO_PNG_BASE64}' width='30' height='30' alt='' />"
+        f"<img src='{_LOGO_URL}' width='30' height='30' alt='' />"
         "<b>Pontuação Livelo</b>"
         "</div>"
     )
@@ -285,7 +250,7 @@ def _rodape_marca() -> str:
     """Mesma marca no rodapé, apagada — assina sem competir com a versão."""
     return (
         "<div class='bf'>"
-        f"<img src='data:image/png;base64,{_LOGO_PNG_BASE64}' width='16' height='16' alt='' />"
+        f"<img src='{_LOGO_URL}' width='16' height='16' alt='' />"
         f"<span>robô-livelo v{escape(__version__)}</span>"
         "</div>"
     )

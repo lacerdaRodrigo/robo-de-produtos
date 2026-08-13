@@ -50,26 +50,25 @@ Pedido: um PNG "pra dar mais ar profissional", pro e-mail e pro site. A primeira
 - **Fonte vetorial**: `site/public/logo.svg` (112×112, mesma arte usada pra gerar todo o resto).
 - **Site**: `<img src="/logo.png">` no cabeçalho (`site/app/componentes/cabecalho.tsx`, 22px) e no rodapé (`site/app/rodape.tsx`, 16px, opacidade reduzida), presentes em toda tela porque `Cabecalho`/`Rodape` são compartilhados.
 - **Título do navegador**: `site/app/icon.png` e `site/app/apple-icon.png` (180×180) — convenção do Next.js App Router (`app/icon.png`), que gera sozinho as tags `<link rel="icon">`/`apple-touch-icon` no `<head>`. Não precisou de `favicon.ico` nem configuração manual.
-- **E-mail**: `_LOGO_PNG_BASE64` em `montador_email.py`, um PNG 96×96 com fundo transparente, embutido como `data:image/png;base64,...` — assina o topo (30×30) e, apagada, o rodapé (16×16, ao lado da versão).
+- **E-mail**: `_LOGO_URL` em `montador_email.py`, apontando pra `https://robo-livelo.vercel.app/logo.png` — assina o topo (30×30) e, apagada, o rodapé (16×16, ao lado da versão).
 
-### Por que PNG em base64 no e-mail, e não `<img src="/logo.png">` nem `<svg>` inline
+### Por que URL hospedada no e-mail, e não base64 nem `<svg>` inline
 
-Duas armadilhas que valem registrar:
+A primeira versão embutia o PNG em base64 (`data:image/png;base64,...`), pensando em evitar o "Exibir imagens abaixo" que o Gmail mostra pra imagem remota. **Errado, confirmado ao vivo em 2026-08-13**: o Gmail simplesmente descarta `<img src="data:...">` no corpo de um e-mail recebido — sem aviso, sem placeholder de "mostrar imagem", a tag some. Funciona perfeitamente numa página web (é assim que os protótipos deste redesign foram revisados), não funciona em e-mail. É por isso que nenhum template de e-mail marketing do mercado embute logo em base64 — todos hospedam a imagem e apontam uma URL, que é exatamente o padrão que este e-mail usa agora.
 
-1. **Não é `<img src="https://.../logo.png">`.** Apontar pra uma URL faria o Gmail (e a maioria dos clientes) esconder a imagem atrás de "Exibir imagens" por padrão, no primeiro carregamento — o oposto de "dar ar profissional" seria a marca aparecer quebrada. Embutir em base64 elimina a requisição externa: a imagem chega junto com o HTML, sem depender de nada carregar depois.
-2. **Não é `<svg>` inline.** O Gmail não renderiza SVG dentro do corpo do e-mail de forma confiável (funciona bem em página web, não em e-mail) — por isso o `.svg` fonte é rasterizado pra PNG antes de virar base64.
+`<svg>` inline também não é opção: o Gmail não renderiza SVG dentro do corpo do e-mail de forma confiável — por isso `site/public/logo.svg` é rasterizado pra PNG antes de qualquer uso fora do site.
 
-O peso é fixo — **~3,2 KB de base64**, uma vez por e-mail, não por card — então não compete com o orçamento do C05 do jeito que a descrição de campanha compete.
+Efeito colateral bom: tirar o base64 (~3,2 KB fixos, repetidos nos dois usos) devolveu ~6,3 KB de folga no orçamento do C05 — o pior caso (132 lojas, Clube, descrição de campanha longa em todas) caiu pra ~93 KB, **~11 KB de folga** antes do corte do Gmail.
 
 ### Como gerar os PNGs de novo, se a arte mudar
 
-`site/public/logo.svg` é a fonte. Os PNGs (site e e-mail) foram gerados com [cairosvg](https://cairosvg.org/) — não é dependência do projeto (o núcleo não faz I/O e o site não precisa rasterizar nada em runtime), só uma ferramenta usada uma vez pra gerar os arquivos:
+`site/public/logo.svg` é a fonte. Os PNGs foram gerados com [cairosvg](https://cairosvg.org/) — não é dependência do projeto (o núcleo não faz I/O e o site não precisa rasterizar nada em runtime), só uma ferramenta usada uma vez pra gerar os arquivos:
 
 ```bash
 pip install cairosvg
 python3 -c "
 import cairosvg
-for tamanho in (512, 180, 96, 32, 16):
+for tamanho in (512, 180):
     cairosvg.svg2png(
         url='site/public/logo.svg',
         write_to=f'logo-{tamanho}.png',
@@ -79,9 +78,18 @@ for tamanho in (512, 180, 96, 32, 16):
 "
 ```
 
-- `logo-180.png` → copiar pra `site/app/icon.png`, `site/app/apple-icon.png` e `site/public/logo.png`.
-- `logo-96.png` → `base64 -w0 logo-96.png` e colar em `_LOGO_PNG_BASE64` (`src/robo_livelo/montador_email.py`), quebrado em linhas de até 92 caracteres pra não estourar o `line-length` do ruff.
+`logo-180.png` → copiar pra `site/app/icon.png`, `site/app/apple-icon.png` e `site/public/logo.png` (redeployar o site publica a nova `/logo.png`, que é a URL fixa que o e-mail já aponta — nada muda em `montador_email.py`).
 
 ## Testes
 
-`testes/teste_montador_email.py`, CT-169 a CT-173: descrição com/sem "…mais", card sem descrição não ganha rodapé, corte no "resto" respeita fronteira de palavra, marca presente no topo e no rodapé. O guarda de peso (`teste_pior_caso_cabe_no_limite_do_gmail`) ganhou uma descrição de campanha longa em todas as 132 lojas — antes do redesign ele não testava esse campo, e era a maior fatia de peso do e-mail novo.
+`testes/teste_montador_email.py`, CT-169 a CT-173: descrição com/sem "…mais", card sem descrição não ganha rodapé, corte no "resto" respeita fronteira de palavra, marca presente no topo e no rodapé (URL, nunca `data:`). O guarda de peso (`teste_pior_caso_cabe_no_limite_do_gmail`) ganhou uma descrição de campanha longa em todas as 132 lojas — antes do redesign ele não testava esse campo, e era a maior fatia de peso do e-mail novo.
+
+## Duas lições do Gmail que valem para qualquer mudança futura no e-mail
+
+Descobertas ao vivo em 2026-08-13, testando o e-mail de verdade na caixa de entrada — não dá pra confiar só no preview de navegador:
+
+1. **`<style>` precisa morar dentro de `<head>`.** Sem head explícito, o Gmail descarta a folha de estilo inteira na sanitização e o e-mail vira texto corrido, sem cor nem layout nenhum.
+2. **`<img src="data:...">` não sobrevive.** Vira PNG hospedado (ver acima).
+3. **Custom property CSS (`--x`) num `style=` inline também não sobrevive.** A primeira versão deste redesign definia a cor da categoria uma vez (`style='--c:#e11d48'` no card) e deixava os filhos lerem `var(--c)`, pra economizar bytes. O Gmail remove `--c` do atributo `style` na sanitização (mas aceita `background`/`color` normalmente), então `var(--c)` caía no vazio e os blocos ficavam sem cor. A cor da categoria volta a ser `style='background:...'`/`style='color:...'` explícito em cada elemento que precisa dela.
+
+Regra prática: **qualquer mudança de HTML/CSS no e-mail precisa ser confirmada abrindo o e-mail de verdade no Gmail** (disparar `gh workflow run robo.yml --ref main` e checar a caixa de entrada), não só olhando um preview em navegador — o Gmail sanitiza de um jeito que só aparece na entrega real.
