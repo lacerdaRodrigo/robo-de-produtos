@@ -184,7 +184,7 @@ describe("CT-158 ancora de categoria", () => {
   });
 });
 
-describe("CT-170 ordenação do Painel (redesenho V4.6)", () => {
+describe("CT-174 ordenação do Painel (redesenho V4.6)", () => {
   function loja(parcial: Partial<Parameters<typeof ordenarLojas>[0][number]>) {
     return {
       nome: "",

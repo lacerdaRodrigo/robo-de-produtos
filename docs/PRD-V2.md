@@ -1,7 +1,7 @@
 # PRD V2 — Robô de Pontuação Turbinada (Livelo)
 
-**Versão:** v2.1 (planejamento)
-**Status:** planejado, não implementado. A V1.0 continua em produção e não é interrompida.
+**Versão:** v2.x (documento vivo)
+**Status:** V2.0 a V2.3 implementadas e em produção. V2.4 (e-mail condicional/RF16) segue planejada e pendente.
 
 > A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
 
@@ -66,7 +66,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 
 | Onde | O que muda |
 |---|---|
-| §1.4 "Fora do escopo: front-end" | **Revogado.** Passa a existir uma página estática. O canal de saída deixa de ser único |
+| §1.4 "Fora do escopo: front-end" | **Revogado.** Passa a existir um site próprio. O canal de saída deixa de ser único |
 | §1.4 "Fora do escopo: data de validade" | **Revogado.** A justificativa era falsa |
 | §11.3 "Fora do roadmap: front-end" | **Revogado** pelo mesmo motivo |
 | **RF10** (enviar sempre) | **Substituído** por RF16 — ver Seção 5 |
@@ -439,7 +439,7 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 |---|---|
 | O formato do payload muda (C06) | RN13 continua: poucos parceiros extraídos derruba a execução com erro ruidoso |
 | O e-mail perder relevância diante do site | **Não é risco, é o desenho.** Cada canal ganha um trabalho só: o site é consulta, o e-mail é alarme. O e-mail para de ser catálogo |
-| `parityBau` deixar de ser confiável (C07) | RN29: ausência prolongada de alerta é tratada como suspeita, não como "não teve promoção" |
+| `parityBau` deixar de ser confiável (C07) | RN29: silêncio de alerta acompanhado de página degenerada é tratado como suspeita, não como "não teve promoção" |
 | Senha única vazar | 9.0: senha aleatória, limite de tentativas, sessão protegida. Estrago limitado a este projeto |
 | Free tier de Neon ou Vercel mudar (C08) | Uso medido é ~1% do limite. Se mudar, a configuração volta para arquivo — o contrato `CatalogoFavoritas` torna a volta barata |
 | Deixar de abrir a página e não perceber que o robô morreu | Limitação declarada em MS6. Se virar problema real, o candidato é um e-mail semanal de resumo, mesmo sem promoção |

@@ -16,6 +16,7 @@ import pytest
 
 from robo_livelo.extrator import TITULO_SECAO_PARCEIROS
 from robo_livelo.modelos import LojaFavorita, Mensagem, Parceiro
+from robo_livelo.modelos_inter import LojaInter
 
 PASTA_FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -39,6 +40,12 @@ def payload_exemplo() -> str:
     """Payload JSON real da Livelo, recortado (schema confirmado ao vivo em 2026-08)."""
     texto = (PASTA_FIXTURES / "payload_parceiros.json").read_text(encoding="utf-8")
     return envolver_payload_em_html(texto)
+
+
+@pytest.fixture
+def json_inter_exemplo() -> str:
+    """Cinco formatos reais do endpoint do Inter, recortados e sanitizados."""
+    return (PASTA_FIXTURES / "lojas_inter.json").read_text(encoding="utf-8")
 
 
 @pytest.fixture
@@ -85,6 +92,24 @@ def faz_parceiro(
         fim_promocao=fim,
         campanha=campanha,
         descricao_campanha=descricao_campanha,
+    )
+
+
+def faz_loja_inter(
+    nome: str = "C&A",
+    valor: str | None = "12",
+    *,
+    id_externo: str | None = None,
+    slug: str | None = None,
+    texto: str | None = None,
+) -> LojaInter:
+    identificador = id_externo or nome.casefold().replace(" ", "-")
+    return LojaInter(
+        id_externo=identificador,
+        slug=slug or identificador,
+        nome=nome,
+        cashback_principal_texto=texto or (f"Até {valor}%" if valor is not None else "Oferta"),
+        cashback_principal_valor=Decimal(valor) if valor is not None else None,
     )
 
 

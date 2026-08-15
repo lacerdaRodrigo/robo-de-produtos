@@ -1,0 +1,33 @@
+name: shopping-inter
+
+on:
+  schedule:
+    # 12h/17h/23h UTC = 09h/14h/20h de Brasilia (UTC-3).
+    - cron: "0 12,17,23 * * *"
+  workflow_dispatch:
+
+# PRD-V3 §15.6: o coletor nunca escreve no repositorio.
+permissions:
+  contents: read
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e .
+
+      - name: Atualizar cashback do Shopping Inter
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          LIMIAR_LOJAS_INTER: "100"
+        run: python -m robo_livelo.principal_inter

@@ -775,6 +775,42 @@ button:disabled {
   border-left: 2px solid var(--superficie-2);
 }
 
+.cashback-texto {
+  max-width: 190px;
+  text-align: right;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  color: var(--marca);
+}
+
+.descricao-inter {
+  white-space: pre-line;
+  font-style: normal;
+  padding-left: var(--e2);
+  border-left: 2px solid var(--marca);
+  margin-top: var(--e3);
+}
+
+.condicoes-inter {
+  margin-top: var(--e3);
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--superficie-2);
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.condicoes-inter summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.condicoes-inter p {
+  white-space: pre-line;
+  margin-bottom: 0;
+}
+
 .detalhe-rodape {
   margin-top: auto;
   padding-top: var(--e2);

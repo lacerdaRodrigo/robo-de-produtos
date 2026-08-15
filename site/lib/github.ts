@@ -16,7 +16,6 @@
  */
 
 const REPOSITORIO = "lacerdaRodrigo/robo-livelo";
-const WORKFLOW = "robo.yml";
 const RAMO = "main";
 
 export function temTokenDeDisparo(): boolean {
@@ -26,13 +25,28 @@ export function temTokenDeDisparo(): boolean {
 export type ResultadoDoDisparo = { ok: true } | { ok: false; motivo: string };
 
 export async function dispararRobo(): Promise<ResultadoDoDisparo> {
+  return dispararWorkflow("robo.yml", { enviar_email: "false" });
+}
+
+export function temTokenDeDisparoInter(): boolean {
+  return temTokenDeDisparo();
+}
+
+export async function dispararRoboInter(): Promise<ResultadoDoDisparo> {
+  return dispararWorkflow("inter.yml", {});
+}
+
+async function dispararWorkflow(
+  workflow: string,
+  inputs: Record<string, string>,
+): Promise<ResultadoDoDisparo> {
   const token = process.env.GITHUB_TOKEN_DISPARO;
   if (!token) {
     return { ok: false, motivo: "sem-token" };
   }
 
   const resposta = await fetch(
-    `https://api.github.com/repos/${REPOSITORIO}/actions/workflows/${WORKFLOW}/dispatches`,
+    `https://api.github.com/repos/${REPOSITORIO}/actions/workflows/${workflow}/dispatches`,
     {
       method: "POST",
       headers: {
@@ -43,7 +57,7 @@ export async function dispararRobo(): Promise<ResultadoDoDisparo> {
       },
       // "false" como string: a API de dispatch so aceita valores de input
       // como texto, mesmo quando o workflow declara `type: boolean`.
-      body: JSON.stringify({ ref: RAMO, inputs: { enviar_email: "false" } }),
+      body: JSON.stringify({ ref: RAMO, inputs }),
     },
   );
 

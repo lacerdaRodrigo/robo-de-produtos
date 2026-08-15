@@ -17,7 +17,7 @@ PACOTE = Path(__file__).resolve().parents[1] / "src" / "robo_livelo"
 # O nucleo nao faz entrada e saida: nada de rede, disco, ambiente ou SMTP.
 # beautifulsoup4 e permitido de proposito — transforma texto em estrutura,
 # nao abre conexao nem arquivo (PRD 4.1).
-MODULOS_DO_NUCLEO = [
+MODULOS_LIVELO = [
     "modelos.py",
     "extrator.py",
     "categorias.py",
@@ -25,6 +25,13 @@ MODULOS_DO_NUCLEO = [
     "alertas.py",
     "retrato.py",
 ]
+MODULOS_INTER = [
+    "modelos_inter.py",
+    "extrator_inter.py",
+    "ranking_inter.py",
+    "retrato_inter.py",
+]
+MODULOS_DO_NUCLEO = [*MODULOS_LIVELO, *MODULOS_INTER]
 IMPORTS_PROIBIDOS = {"requests", "smtplib", "tomllib", "os", "pathlib", "dotenv", "socket"}
 
 
@@ -39,8 +46,14 @@ def imports_de(caminho: Path) -> set[str]:
     return encontrados
 
 
-@pytest.mark.parametrize("modulo", MODULOS_DO_NUCLEO)
+@pytest.mark.parametrize("modulo", MODULOS_LIVELO)
 def teste_ct074_nucleo_nao_faz_io(modulo):
+    proibidos = imports_de(PACOTE / modulo) & IMPORTS_PROIBIDOS
+    assert not proibidos, f"{modulo} importa {sorted(proibidos)}, que fazem I/O"
+
+
+@pytest.mark.parametrize("modulo", MODULOS_INTER)
+def teste_ct188_nucleo_inter_nao_faz_io(modulo):
     proibidos = imports_de(PACOTE / modulo) & IMPORTS_PROIBIDOS
     assert not proibidos, f"{modulo} importa {sorted(proibidos)}, que fazem I/O"
 

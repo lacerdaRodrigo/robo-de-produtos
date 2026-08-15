@@ -1,18 +1,19 @@
-# Robô de Pontuação Turbinada — Livelo
+# Radar de Benefícios — Livelo e Shopping Inter
 
-Monitora as lojas parceiras da Livelo, filtra só as que importam pra você e avisa por e-mail, 3x ao dia, quando alguma está com pontuação turbinada.
+Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja favorita está com pontuação turbinada na Livelo e mostra o cashback e as condições das lojas escolhidas no Shopping Inter.
 
-Sem servidor próprio, sem custo. O robô roda inteiro no GitHub Actions; um Postgres (Neon) guarda o catálogo e o retrato de cada execução, e um site em Next.js lê isso.
+Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
 
-> **Status: V2.0 em produção e validada contra a página real** (2026-08-11): 254 parceiros lidos, 31 em promoção. O extrator lê o payload JSON da página em vez de raspar o HTML, e o e-mail mostra validade da promoção, pontuação base e marcação de Clube. O catálogo de lojas vem do Postgres (V2.1), com o arquivo como reserva, e o alerta é decidido por múltiplo da pontuação base, não pela etiqueta da Livelo (V2.2). O robô guarda o retrato de cada execução no banco, e o site em [`site/`](site/) mostra isso — todas as favoritas, com base e limiar de alerta, funcionando sem JavaScript. 153 testes verdes no robô e 7 no site, 96% de cobertura.
+> **Status:** a integração Livelo V2.0–V2.3 está em produção. A V3 do Shopping Inter está implementada e validada no workspace; a migração `006` foi aplicada e a primeira sincronização real, em 2026-08-14, cadastrou 381 lojas. A publicação do novo código no GitHub/Vercel ainda depende de enviar estas mudanças ao repositório remoto. Suíte atual: 189 testes no robô e 31 no site, com 91,85% de cobertura Python.
 
 ## Como funciona
 
-```
-página da Livelo → extrator → filtro por loja favorita → montador → e-mail
+```text
+Livelo         → extrator próprio → favoritas → alerta e retrato → e-mail + site
+Shopping Inter → extrator próprio → catálogo → favoritas e retrato → site
 ```
 
-Uma requisição HTTP por execução, três execuções por dia. O robô nunca faz login na Livelo — lê apenas a página pública de parceiros.
+Cada coletor faz uma consulta lógica por execução e roda três vezes ao dia. Nenhum deles faz login: só leem fontes públicas.
 
 ## Documentação
 
@@ -22,6 +23,8 @@ Uma requisição HTTP por execução, três execuções por dia. O robô nunca f
 | [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
 | **[`docs/PRD-V2.md`](docs/PRD-V2.md)** | Planejamento da V2: data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional |
+| **[`docs/PRD-V3.md`](docs/PRD-V3.md)** | Fonte da verdade da V3: Shopping Inter separado da Livelo, com cashback e condições da promoção |
+| [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md) | Cola para escolher modelo e esforço antes de mudar o projeto |
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Histórico. Substituído pelo PRD, mantido pelo dicionário de lojas e categorias |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA que trabalhem no projeto |
 
@@ -35,15 +38,16 @@ source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 cp .env.example .env           # preencha com seus dados
 python -m robo_livelo.principal
+python -m robo_livelo.principal_inter
 ```
 
-Você vai precisar de uma **Senha de Aplicativo** do Gmail — não é a senha da conta:
+O coletor do Inter exige `DATABASE_URL`. Para o e-mail da Livelo, você também vai precisar de uma **Senha de Aplicativo** do Gmail — não é a senha da conta:
 
 1. Ative a verificação em 2 etapas na conta Google
 2. Gere a senha em https://myaccount.google.com/apppasswords
 3. Cole o código de 16 caracteres no `.env`
 
-### Escolhendo suas lojas
+### Escolhendo lojas da Livelo
 
 As lojas monitoradas ficam em `config/lojas_favoritas.toml`, fora do código:
 
@@ -60,6 +64,10 @@ Opcionalmente, uma loja pode ter limiar próprio de alerta — `multiplicador` e
 
 Com `DATABASE_URL` no ambiente, o catálogo passa a vir do Postgres e este arquivo vira **reserva**: se o banco não responder, a execução continua com o TOML e registra um aviso no log. Sem `DATABASE_URL`, o arquivo é a única fonte — que é o caso de quem clona o projeto e roda na própria máquina.
 
+### Escolhendo lojas do Shopping Inter
+
+Depois da primeira execução de `principal_inter`, entre no site, abra **Lojas Inter**, procure por nome e clique em **Acompanhar**. A página pública **Shopping Inter** passa a mostrar o cashback principal, a condição para não-correntista quando existir e a descrição completa da promoção. Todos os cartões usam o link genérico aprovado do Shopping Inter.
+
 ## Rodando no GitHub Actions
 
 Em **Settings → Secrets and variables → Actions**, crie:
@@ -67,21 +75,25 @@ Em **Settings → Secrets and variables → Actions**, crie:
 - `EMAIL_REMETENTE`
 - `SENHA_APP_GMAIL`
 - `EMAIL_DESTINO`
-- `DATABASE_URL` (opcional — sem ele, o catálogo vem do TOML)
+- `DATABASE_URL` (opcional para a Livelo; obrigatório para o Shopping Inter)
 
-O workflow roda às 09h, 14h e 20h (horário de Brasília) e também sob disparo manual.
+Os workflows `robo.yml` e `inter.yml` rodam separadamente às 09h, 14h e 20h (horário de Brasília) e também aceitam disparo manual.
 
 ## Testes
 
 ```bash
-pytest
+pytest --cov --cov-fail-under=90
+cd site
+npm run checar
+npm run testar
+npm run build
 ```
 
 ## Uso responsável
 
-Projeto pessoal e educacional, **sem qualquer afiliação com a Livelo**. Faz uma requisição por execução à página pública de parceiros, três vezes ao dia, identificando-se honestamente.
+Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz uma consulta lógica por fonte e execução, três vezes ao dia, identificando-se honestamente.
 
-Se a Livelo bloquear o acesso ou pedir para parar, o projeto para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD.
+Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD e no PRD V3.
 
 ## Licença
 

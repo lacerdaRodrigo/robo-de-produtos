@@ -1,6 +1,6 @@
 # Plano de Testes
 
-Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`, usando `pytest`.
+Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o site usa `vitest`.
 
 A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD.md`](PRD.md)**. Este documento é só o catálogo de casos.
 
@@ -122,7 +122,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-170 | Descrição de frase única não ganha "…mais" | Sem segunda frase não há o que esconder — clicar não revelaria nada novo | Descrição com uma frase só, checar ausência de `<details` |
 | CT-171 | Sem `descricao_campanha`, sem bloco de descrição | Card sem descrição não ganha rodapé nenhum, nem vazio | Parceiro com `descricao_campanha=None` |
 | CT-172 | Descrição longa corta sem quebrar palavra (C05) | O "resto" atrás do "…mais" tem teto, para o pior caso (132 lojas) caber no limite do Gmail | Descrição com "resto" bem acima do limite, checar corte em fronteira de palavra |
-| CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto em base64, assinando as duas pontas do e-mail | `montar(...)`, contar duas ocorrências de `data:image/png;base64,` |
+| CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto hospedado em URL, assinando as duas pontas do e-mail. Não pode usar `data:` URI, que o Gmail descarta | `montar(...)`, contar duas ocorrências de `https://robo-livelo.vercel.app/logo.png` e checar ausência de `data:image` |
 
 ## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
@@ -212,8 +212,74 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-158 | Âncora de categoria | O índice da página pula a rolagem de 130 lojas | "Marketplace / Varejo Geral" → `marketplace-varejo-geral` |
 | CT-164 | Limiar em branco vira `null`, nunca `"0"` (RN28) ⚠️ | Campo vazio e zero são coisas diferentes: um segue o padrão global, o outro é um limiar real de zero pontos. `numeroOuPadrao` é compartilhado entre `/lojas` (cadastro) e `/avisos` (exceção), então o mesmo comportamento vale nas duas telas | `numeroOuPadrao("")` → `null`; `numeroOuPadrao("2,5")` → `"2.5"`; `numeroOuPadrao("-1")` e `numeroOuPadrao("abc")` lançam erro |
 | CT-165 | Barra de progresso do cartão (RN30, redesenho V2.3.3) | `atual`/`base` ausentes (loja não encontrada) devolvem `null`, sem dividir por zero; a largura nunca passa de 100% mesmo com o limiar bem acima do teto calculado | `barraDeProgresso(null, ...)` → `null`; `barraDeProgresso("6", "1", "4")` com valores dentro de 0–100; teto vindo de zero não gera `NaN`/`Infinity` |
+| CT-174 | Ordenação do Painel (redesenho V4.6) | A grade única do Painel troca o agrupamento por categoria por ordenação explícita, sem `Number()` virar texto exibido | Ordenar por maior pontuação, em alerta e nome A-Z, preservando casos sem pontuação |
 
 Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
+
+## Shopping Inter — V3
+
+> Casos da V3 definidos no [`PRD-V3.md`](PRD-V3.md). A suíte padrão usa a
+> fixture sanitizada `testes/fixtures/lojas_inter.json` e nunca toca a rede.
+
+### `testes/teste_extrator_inter.py` — JSON público → `LojaInter`
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-175 | Fixture recortada sem rede | Os cinco formatos representativos da fonte viram cinco lojas | Extrair `lojas_inter.json` e comparar total, IDs e nomes |
+| CT-176 | Oferta principal usa `Decimal` | Texto e número principal não se confundem nem passam por `float` | Magalu → `"Até 20% de cashback"` e `Decimal("20")` |
+| CT-177 | Oferta secundária fica separada | A condição de não-correntista nunca sobrescreve a principal | Magalu → 14 no campo secundário e 20 no principal |
+| CT-178 | Zero pode ser “Ofertas disponíveis” | Zero não significa loja ausente | Amazon → texto preservado, valor `Decimal("0")` |
+| CT-179 | Descrição multilinha e vazia | Condições são preservadas; string vazia vira `None` | Magalu mantém as faixas; C&A fica sem descrição |
+| CT-180 | Identidade por ID e slug | Mudança de nome não muda a identidade da favorita | Mesmo ID/slug com outro nome continua a mesma loja |
+| CT-182 | Catálogo pequeno falha | RN43 protege o último retrato de resposta parcial | Validar cinco lojas com limiar 100 → `SiteInterMudou` |
+| CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
+| CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
+
+### `testes/teste_ranking_inter.py` — ordenação pura
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
+
+### `testes/teste_retrato_inter.py` — favoritas da execução
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-184 | Favorita ausente permanece | Fonte não devolver a loja não remove a escolha | Favorita sem loja correspondente vira `encontrada=false` |
+
+### `testes/teste_adaptadores_inter.py` — HTTP e Postgres
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-185 | Transação é atômica | Falha entre catálogo e snapshot não deixa meia execução visível | Fake de conexão falha e verifica rollback |
+| CT-187 | Uma consulta lógica | Sucesso chama HTTP uma vez; retry só ocorre em falha transitória | Injetar respostas e contar chamadas |
+
+### `testes/teste_fronteira.py` — núcleo do Inter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-188 | Núcleo do Inter não faz I/O | Modelos, extrator, ranking e retrato não importam rede, banco, arquivo ou ambiente | Varrer AST dos módulos novos |
+
+### `testes/teste_principal_inter.py` — orquestração com fakes
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-189 | Falha isolada da Livelo | Processo do Inter usa somente suas portas e devolve código diferente de zero na falha | Fakes do Inter; nenhum módulo da Livelo é chamado |
+
+### `site/testes/formato-inter.teste.ts` — regras puras do Inter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-190 | Busca normalizada | “C&A”, “c&a” e `slug=ca` encontram a mesma loja; resultado não é selecionado sozinho | Testar normalização e filtro |
+| CT-191 | Ordenação do cashback | Positivos descem, zero fica depois e ausente vai ao final | Lista com todos os estados |
+| CT-192 | Condições da Magalu | Card recebe 20%, 11% e 2% do mesmo snapshot | Fixture da Magalu |
+| CT-193 | Ausência de descrição | Texto neutro aparece sem inventar promoção | Descrição `null` |
+| CT-194 | Link genérico | O único destino é a constante aprovada | Comparar URL do card |
+| CT-195 | Texto hostil é escapado | Tags vindas da fonte aparecem como texto | Renderizar nome/descrição com HTML |
+| CT-196 | Estados não se confundem | Sem execução, falha recente, atraso e favorita ausente têm rótulos distintos | Função de estado com quatro entradas |
+| CT-197 | Mutação exige sessão | Ações de selecionar, remover e disparar rejeitam visitante | Teste das guards das server actions |
+| CT-198 | Sem imagem externa | Tipo e card não usam `imageUrl` | Inspeção do resultado renderizado |
+| CT-199 | Livelo não regride | Formatação e rotas atuais continuam com o contrato anterior | Rodar toda a suíte existente junto com a V3 |
 
 ---
 
@@ -275,17 +341,24 @@ Os casos com identificador CT são os planejados. A implementação acrescentou 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 26 | 34 |
+| `teste_extrator.py` | 28 | 36 |
 | `teste_adaptadores.py` | 22 | 27 |
 | `teste_alertas.py` | 13 | 17 |
 | `teste_retrato.py` | 5 | 5 |
-| `teste_montador_email.py` | 25 | 28 |
-| `teste_principal.py` | 26 | 28 |
-| `teste_fronteira.py` | 1 | 7 |
-| **Total (robô)** | **126** | **158** |
-| `site/testes/formato.teste.ts` | 8 | 12 |
+| `teste_montador_email.py` | 31 | 33 |
+| `teste_principal.py` | 27 | 29 |
+| `teste_extrator_inter.py` | 9 | 10 |
+| `teste_adaptadores_inter.py` | 2 | 4 |
+| `teste_ranking_inter.py` | 1 | 1 |
+| `teste_retrato_inter.py` | 1 | 1 |
+| `teste_principal_inter.py` | 1 | 3 |
+| `teste_fronteira.py` | 2 | 11 |
+| **Total (robô)** | **150** | **189** |
+| `site/testes/formato.teste.ts` | 11 | 23 |
+| `site/testes/formato-inter.teste.ts` | 10 | 8 |
+| **Total (site)** | **21** | **31** |
 
-`teste_extrator.py` conta 24, não 27: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número.
+`teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
 Manuais: CT-050 e CT-051.
 

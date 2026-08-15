@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 implementada e em produção. Fatia vertical rodando fim a fim. V2.0 (extrator lendo o payload JSON, ver [`PRD-V2.md`](PRD-V2.md)) implementada e validada contra a página real em 2026-08-11. V2.1 (catálogo no Postgres, com o arquivo como reserva) e V2.2 (alerta por múltiplo da base, RN27 a RN29) implementadas. V2.3 implementada: o robô grava o retrato de cada execução (RF15) e o site em `site/` lê isso — falta publicá-lo na Vercel. 153 testes verdes no robô e 7 no site, 96% de cobertura.
+**Status:** V1.0 e V2.0–V2.3 da Livelo implementadas e em produção. A V3 do Shopping Inter, especificada no [`PRD-V3.md`](PRD-V3.md), está implementada e validada no workspace; a migração `006` e a primeira sincronização de 381 lojas foram concluídas em 2026-08-14. A publicação do código da V3 ainda depende do envio ao repositório remoto. 189 testes verdes no robô e 31 no site, com 91,85% de cobertura Python.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 

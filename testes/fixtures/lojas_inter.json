@@ -1,0 +1,63 @@
+[
+  {
+    "id": "4a2f061e-2997-490a-b52a-11c508adfedc",
+    "slug": "magazine-luiza",
+    "name": "Magazine Luiza",
+    "fullCashback": "Até 20% de cashback",
+    "fullCashbackValue": 20,
+    "partialCashback": "Até 14% de cashback",
+    "partialCashbackValue": 14,
+    "imageUrl": "https://images.shopping.inter.co/exemplo-magalu.webp",
+    "promotionTag": "Ofertas especiais",
+    "redirectWarning": "Oferta Especial para Clientes Inter Shopping:\n\n20% de cashback: Cashback válido para Smartphone OPPO Reno16 F 256GB.\n11% de cashback: Cashback válido para itens vendidos e entregues pela Magalu.\n\n2% de cashback nas demais condições.",
+    "redirectWarningBasicAccount": "Oferta Especial para Clientes não-correntistas:\n\n14% de cashback: Cashback válido para Smartphone OPPO Reno16 F 256GB.\n7.7% de cashback: Cashback válido para itens vendidos e entregues pela Magalu.\n\n1.4% de cashback nas demais condições."
+  },
+  {
+    "id": "1a1c1e1f-4001-4c8f-b53b-98c00cf5f663",
+    "slug": "riachuelo",
+    "name": "Riachuelo",
+    "fullCashback": "15% de Cashback",
+    "fullCashbackValue": 15,
+    "partialCashback": "10.5% de Cashback",
+    "partialCashbackValue": 10.5,
+    "promotionTag": "Cupons e ofertas",
+    "redirectWarning": "15% de cashback: Categoria Masculino.\n15% de cashback: Categoria Feminino e Beleza e Perfume.\n\n4% de cashback nas demais condições.",
+    "redirectWarningBasicAccount": "10.5% de cashback nas categorias indicadas.\n\n2.8% de cashback nas demais condições."
+  },
+  {
+    "id": "d4bb2c85-5f9a-4fc7-89e0-78b2899a9b5e",
+    "slug": "ca",
+    "name": "C&A",
+    "fullCashback": "Até 12% de cashback",
+    "fullCashbackValue": 12,
+    "partialCashback": "Até 8.4% de cashback",
+    "partialCashbackValue": 8.4,
+    "promotionTag": null,
+    "redirectWarning": "",
+    "redirectWarningBasicAccount": ""
+  },
+  {
+    "id": "ee86e624-5535-41a9-b9d3-a2562e00812d",
+    "slug": "amazon",
+    "name": "Amazon",
+    "fullCashback": "Ofertas disponíveis",
+    "fullCashbackValue": 0,
+    "partialCashback": "Ofertas disponíveis",
+    "partialCashbackValue": 0,
+    "promotionTag": null,
+    "redirectWarning": "",
+    "redirectWarningBasicAccount": ""
+  },
+  {
+    "id": "468db197-1429-4e99-8c10-3422644c7f59",
+    "slug": "pague-menos",
+    "name": "Pague Menos",
+    "fullCashback": "3% de Cashback",
+    "fullCashbackValue": 3,
+    "partialCashback": "2.1% de Cashback",
+    "partialCashbackValue": 2.1,
+    "promotionTag": null,
+    "redirectWarning": "Compre pelo site da loja; compras feitas pelo aplicativo podem não gerar cashback.",
+    "redirectWarningBasicAccount": "Compre pelo site da loja; compras feitas pelo aplicativo podem não gerar cashback."
+  }
+]

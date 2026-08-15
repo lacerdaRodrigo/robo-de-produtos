@@ -2,11 +2,13 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 import { esperaAteProximoDisparo } from "@/lib/banco";
+import { esperaAteProximoDisparoInter } from "@/lib/banco-inter";
 import { telaDeAlertasEscondida } from "@/lib/flags";
-import { temTokenDeDisparo } from "@/lib/github";
+import { temTokenDeDisparo, temTokenDeDisparoInter } from "@/lib/github";
 import { temSessao } from "@/lib/sessao";
 import { temaAtual, type Tema } from "@/lib/tema";
 import { acaoAlternarTema, acaoSair } from "../acoes";
+import { acaoAtualizarInter } from "../inter/lojas/acoes";
 import { acaoAtualizarAgora } from "../lojas/acoes";
 
 /**
@@ -19,13 +21,15 @@ import { acaoAtualizarAgora } from "../lojas/acoes";
  * sem sessao, as telas de edicao nem sao anunciadas.
  */
 const PUBLICAS = [
-  { href: "/", nome: "Painel", icone: IconePainel },
+  { href: "/", nome: "Livelo", icone: IconePainel },
+  { href: "/inter", nome: "Shopping Inter", icone: IconeLojas },
   { href: "/ajuda", nome: "Ajuda", icone: IconeAjuda },
 ];
 
 const PRIVADAS = [
-  { href: "/avisos", nome: "Alertas", icone: IconeAlertas },
-  { href: "/lojas", nome: "Lojas", icone: IconeLojas },
+  { href: "/avisos", nome: "Alertas Livelo", icone: IconeAlertas },
+  { href: "/lojas", nome: "Lojas Livelo", icone: IconeLojas },
+  { href: "/inter/lojas", nome: "Lojas Inter", icone: IconeLojas },
 ];
 
 const ROTULO_DO_TEMA: Record<Tema, string> = {
@@ -43,13 +47,15 @@ export async function Cabecalho({ atual }: { atual: string }) {
   const privadas = alertasEscondidos
     ? PRIVADAS.filter((item) => item.href !== "/avisos")
     : PRIVADAS;
-  const itens = logado ? [PUBLICAS[0], ...privadas, PUBLICAS[1]] : PUBLICAS;
+  const itens = logado ? [PUBLICAS[0], PUBLICAS[1], ...privadas, PUBLICAS[2]] : PUBLICAS;
 
   // "Forçar atualização" (RNF02) mora no menu, logo abaixo de Lojas — so
   // faz sentido pra quem tem sessao, entao so busca o cooldown nesse caso:
   // visitante anonimo nao paga o preco de uma consulta a mais no banco.
   const podeDisparar = logado && temTokenDeDisparo();
+  const podeDispararInter = logado && temTokenDeDisparoInter();
   const falta = logado ? await esperaAteProximoDisparo().catch(() => 0) : 0;
+  const faltaInter = logado ? await esperaAteProximoDisparoInter().catch(() => 0) : 0;
 
   return (
     <aside className="barra-lateral">
@@ -60,7 +66,7 @@ export async function Cabecalho({ atual }: { atual: string }) {
         <span className="bl-marca-icone">
           <img src="/logo.png" alt="" width={22} height={22} />
         </span>
-        <span className="bl-marca-nome">Pontuação Livelo</span>
+        <span className="bl-marca-nome">Radar de Benefícios</span>
       </Link>
 
       <nav className="bl-nav" aria-label="Seções">
@@ -92,6 +98,28 @@ export async function Cabecalho({ atual }: { atual: string }) {
                   <IconeExecutar />
                   <span className="bl-item-texto">
                     {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
+                  </span>
+                </button>
+              </form>
+            )}
+
+            {item.href === "/inter/lojas" && logado && (
+              <form action={acaoAtualizarInter} className="bl-form">
+                <button
+                  type="submit"
+                  className="bl-item bl-acao-primaria"
+                  disabled={!podeDispararInter || faltaInter > 0}
+                  title={
+                    !podeDispararInter
+                      ? "Token de disparo não configurado no site"
+                      : faltaInter > 0
+                        ? `Espere mais ${faltaInter}s antes de tentar de novo`
+                        : "O robô lê o Shopping Inter e grava o cashback atual"
+                  }
+                >
+                  <IconeExecutar />
+                  <span className="bl-item-texto">
+                    {faltaInter > 0 ? `Aguarde ${faltaInter}s` : "Atualizar Inter"}
                   </span>
                 </button>
               </form>

@@ -2,11 +2,13 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
-O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V2.md) — aqui fica só o que fazer e em que ordem.
+O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md) ou no [`PRD-V3.md`](PRD-V3.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-13. Versão atual: **1.18.x**.
+> Atualizado em 2026-08-14. Versão técnica atual: **1.20.0**.
 
 **Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: a barra lateral, a cor de ação (indigo), o Painel (hero com Top 3, botão "Ir para a Livelo") e a tabela de Lojas (coluna Limiar, ícone de remover) já entraram. Em 2026-08-13, pela manhã, você mandou `novo.html` direto na `main` (fora de PR) — mesmo mockup que já estava em mãos, confirmado byte a byte igual ao HTML colado no chat — e cobrou que o Painel estava "totalmente diferente". Comparação lado a lado (prints do Painel e de Lojas logado contra a leitura do mockup, já que o CDN do Tailwind não carrega neste ambiente) mostrou que a barra lateral, o hero, os cartões e os toggles já batiam; a diferença de verdade era estrutural: o mockup ordena numa grade única, o site ainda agrupava por categoria. Resolvido na quarta fatia (ver abaixo) — os controles de ordenar entraram e o agrupamento por categoria saiu, com busca cobrindo o que o índice de categoria fazia antes. O modal de cadastro do mockup segue de fora por não ganhar nada sobre o formulário inline que já funciona sem JavaScript; só a Central de Alertas fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
+
+**V3 do Shopping Inter:** implementação concluída no workspace em 2026-08-14. A migração `006` está aplicada no Neon e a primeira execução real terminou com sucesso, cadastrando 381 lojas. O envio do código à `main` e a conferência visual na Vercel ainda são etapas de publicação, não pendências de regra ou implementação.
 
 ---
 
@@ -19,6 +21,20 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md) ou no [`PRD-V2.md`](PRD-V
 - [x] Trocar a senha do Neon: a `DATABASE_URL` completa foi colada num chat em 2026-08-11. Rotacionar no painel do Neon e atualizar o secret e o `.env` é mais barato que torcer — feito em 2026-08-13
 - [x] Revisar e aceitar os PRs do Dependabot — PRs #1 e #2 mesclados em 2026-08-11; `testes.yml` e `robo.yml` estão em `checkout@v7`/`setup-python@v7`
 - [x] Aplicar `migracoes/005_descricao_campanha.sql` no Neon — feito em 2026-08-12, coluna `descricao_campanha` existe em `pontuacao`
+- [x] Aplicar `migracoes/006_inter.sql` no Neon e fazer a primeira sincronização — feito em 2026-08-14: 381 lojas, execução em `sucesso`, nenhuma favorita ainda
+
+---
+
+## V3 — Shopping Inter
+
+- [x] **V3.0:** modelos, extrator JSON, ranking, fixture sanitizada e núcleo sem I/O
+- [x] **V3.1:** migração `006`, catálogo e snapshot transacionais, identidade por ID externo/slug e primeira sincronização real
+- [x] **V3.2:** páginas `/inter` e `/inter/lojas`, busca, seleção, remoção, ranking, descrições e link genérico aprovado
+- [x] **V3.3:** workflow independente `inter.yml`, três horários, disparo manual separado, cooldown, carimbo de atraso e preservação do último sucesso após falha
+- [x] Validar o endpoint real: 381 lidas e 381 válidas em 2026-08-14, com C&A, Riachuelo e Magalu presentes
+- [x] Rodar todos os gates locais: 189 testes Python, 31 testes do site, 91,85% de cobertura, Ruff, TypeScript e build verdes
+- [ ] Enviar as mudanças à `main`, habilitando `inter.yml` no GitHub Actions e publicando as páginas novas pela Vercel
+- [ ] No site publicado, entrar em **Lojas Inter**, acompanhar as primeiras lojas desejadas e forçar uma atualização para conferir os cartões reais
 
 ---
 
@@ -168,7 +184,7 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 
 - [x] Painel: agrupamento por categoria (títulos `<h2>` + índice `#âncora` do topo) saiu, deu lugar a uma grade única — igual ao mockup. Ordenar (`?ordenar=pontos|alerta|nome`, links comuns, funciona sem JavaScript) troca entre "Maior pontuação" (padrão — quem não apareceu na Livelo vai por último, nunca pro topo), "Em alerta" (filtra, só quem cruzou o próprio limite) e "Nome A-Z". A busca (`?q=`) continua cobrindo nome e categoria, então procurar "moda" ainda acha as lojas de Moda — o que o índice fazia por clique, a busca faz por texto
 - [x] Cada cartão de loja ganhou uma etiqueta de categoria (reaproveitando `.etiqueta`, mesmo componente visual do "Alerta ativo"), já que a categoria não aparece mais como título de seção
-- [x] Lógica de ordenação extraída para `ordenarLojas()` em `lib/formato.ts` (`Number()` só decide posição na lista, nunca vira texto — mesma ressalva de `barraDeProgresso`, PRD 5.4), com testes próprios (CT-170, `testes/formato.teste.ts`) — a pedido explícito de focar em testes nesta rodada, já que muita coisa mudou
+- [x] Lógica de ordenação extraída para `ordenarLojas()` em `lib/formato.ts` (`Number()` só decide posição na lista, nunca vira texto — mesma ressalva de `barraDeProgresso`, PRD 5.4), com testes próprios (CT-174, `testes/formato.teste.ts`) — a pedido explícito de focar em testes nesta rodada, já que muita coisa mudou
 - [ ] "+X% avanço" do mockup (crescimento sobre o normal da loja, como texto): **decidido não fazer.** É `Number()` virando texto na tela, o que PRD 5.4 proíbe fora da ressalva de ordenação/geometria — o mesmo cuidado que já existe pra não devolver "2,9000000000000004"
 - [ ] Pílula "Monitorando" em todo cartão sem alerta (mockup mostra status em todos): **decidido não fazer.** Cartão sem alerta já se distingue visualmente (sem borda rosa, sem etiqueta "Alerta ativo") — uma pílula cinza a mais em ~130 cartões seria ruído sem contraste com nada
 
@@ -213,5 +229,5 @@ Nota de convivência com o resto do trabalho que aconteceu na mesma noite (redes
 - [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138
 - [x] **V2.3, metade 1** — o robô grava o retrato de cada execução: migração `002`, porta `RepositorioDeExecucao`, núcleo `retrato.py`. CT-139 a CT-150
 - [x] **V2.3, metade 2** — site Next.js em `site/`: leitura pública, edição com senha única e limite de tentativas, RN24/RN25/RN26/RN30 e RNF14 atendidos. CT-151 a CT-155
-- [x] 153 testes no robô e 7 no site, 96% de cobertura, quality gate no CI para os dois
+- [x] 189 testes no robô e 31 no site, 91,85% de cobertura Python, quality gate local para os dois
 - [x] **Redesign do e-mail e marca "Pontuação Livelo"** (2026-08-13) — `montador_email.py` reescrito: bloco de cor sólida por oferta em vez de card com borda fina, categoria vira selo com contador, descrição de campanha (`descricao_campanha`, RN31) expansível via `<details>/<summary>` sem JavaScript ("…mais"/"▲ menos"). CSS movido pra um único `<style>` no `<head>` e nomes de classe encurtados — o pior caso (132 lojas, Clube, descrição longa em todas) cabe em ~93 KB, ~11 KB de folga antes do corte do Gmail (C05). Marca "R$ vira ponto" criada a partir do que o sistema faz (dinheiro→pontos, não um ícone genérico), vetor em `site/public/logo.svg`, rasterizada em PNG: cabeçalho e rodapé do site (todas as telas), título do navegador via convenção `app/icon.png` do Next.js, e topo/rodapé do e-mail apontando pra `https://robo-livelo.vercel.app/logo.png` (não base64 — confirmado ao vivo que o Gmail descarta `data:` URI em e-mail, só página web aceita). Confirmado disparando e-mail real duas vezes: primeira tentativa tinha `<style>` fora do `<head>` (Gmail descarta a folha inteira) e cor por categoria via custom property CSS num `style=` inline (Gmail remove `--x` do atributo, só `background`/`color` direto sobrevivem) — os dois corrigidos no mesmo dia. Detalhes completos, incluindo as três lições do Gmail, em [`docs/EMAIL.md`](EMAIL.md). CT-168 a CT-173
