@@ -6,14 +6,17 @@ Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Po
 
 > **Status:** a integração Livelo V2.0–V2.3 está em produção. A V3 do Shopping Inter está implementada e validada no workspace; a migração `006` foi aplicada e a primeira sincronização real, em 2026-08-14, cadastrou 381 lojas. A publicação do novo código no GitHub/Vercel ainda depende de enviar estas mudanças ao repositório remoto. Suíte atual: 189 testes no robô e 31 no site, com 91,85% de cobertura Python.
 
+> **Planejamento:** a V4 está especificada, mas não implementada. Ela adicionará o catálogo de produtos da área **Compre direto no Inter**, coletando todas as páginas expostas somente das lojas escolhidas, com busca local e histórico de 30 dias. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
+
 ## Como funciona
 
 ```text
 Livelo         → extrator próprio → favoritas → alerta e retrato → e-mail + site
 Shopping Inter → extrator próprio → catálogo → favoritas e retrato → site
+Produtos Inter → planejado: lojas escolhidas → catálogo paginado → busca + histórico
 ```
 
-Cada coletor faz uma consulta lógica por execução e roda três vezes ao dia. Nenhum deles faz login: só leem fontes públicas.
+Os dois coletores implementados fazem uma consulta lógica por execução e rodam três vezes ao dia. A V4 planejada será diferente: por conter produtos, paginará somente as lojas escolhidas, com ritmo e isolamento próprios. Nenhuma integração faz login; todas leem apenas fontes públicas.
 
 ## Documentação
 
@@ -24,6 +27,7 @@ Cada coletor faz uma consulta lógica por execução e roda três vezes ao dia. 
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
 | **[`docs/PRD-V2.md`](docs/PRD-V2.md)** | Planejamento da V2: data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional |
 | **[`docs/PRD-V3.md`](docs/PRD-V3.md)** | Fonte da verdade da V3: Shopping Inter separado da Livelo, com cashback e condições da promoção |
+| **[`docs/PRD-V4.md`](docs/PRD-V4.md)** | Especificação da V4: catálogo completo exposto das lojas diretas escolhidas, busca local e histórico de 30 dias |
 | [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md) | Cola para escolher modelo e esforço antes de mudar o projeto |
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Histórico. Substituído pelo PRD, mantido pelo dicionário de lojas e categorias |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA que trabalhem no projeto |
@@ -93,7 +97,7 @@ npm run build
 
 Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz uma consulta lógica por fonte e execução, três vezes ao dia, identificando-se honestamente.
 
-Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD e no PRD V3.
+Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD e nos PRDs V3 e V4.
 
 ## Licença
 

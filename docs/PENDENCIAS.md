@@ -2,13 +2,15 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
-O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md) ou no [`PRD-V3.md`](PRD-V3.md) — aqui fica só o que fazer e em que ordem.
+O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md), no [`PRD-V3.md`](PRD-V3.md) ou no [`PRD-V4.md`](PRD-V4.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-14. Versão técnica atual: **1.20.0**.
+> Atualizado em 2026-08-16. Versão técnica atual: **1.20.0**.
 
 **Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: a barra lateral, a cor de ação (indigo), o Painel (hero com Top 3, botão "Ir para a Livelo") e a tabela de Lojas (coluna Limiar, ícone de remover) já entraram. Em 2026-08-13, pela manhã, você mandou `novo.html` direto na `main` (fora de PR) — mesmo mockup que já estava em mãos, confirmado byte a byte igual ao HTML colado no chat — e cobrou que o Painel estava "totalmente diferente". Comparação lado a lado (prints do Painel e de Lojas logado contra a leitura do mockup, já que o CDN do Tailwind não carrega neste ambiente) mostrou que a barra lateral, o hero, os cartões e os toggles já batiam; a diferença de verdade era estrutural: o mockup ordena numa grade única, o site ainda agrupava por categoria. Resolvido na quarta fatia (ver abaixo) — os controles de ordenar entraram e o agrupamento por categoria saiu, com busca cobrindo o que o índice de categoria fazia antes. O modal de cadastro do mockup segue de fora por não ganhar nada sobre o formulário inline que já funciona sem JavaScript; só a Central de Alertas fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 **V3 do Shopping Inter:** implementação concluída no workspace em 2026-08-14. A migração `006` está aplicada no Neon e a primeira execução real terminou com sucesso, cadastrando 381 lojas. O envio do código à `main` e a conferência visual na Vercel ainda são etapas de publicação, não pendências de regra ou implementação.
+
+**V4 de produtos diretos:** especificação funcional concluída em 2026-08-16 no `PRD-V4.md`. Nenhum código, workflow, tabela ou rota foi criado. O próximo gate é medir uma coleta completa e fechar volume, schema, staging e custo antes da implementação.
 
 ---
 
@@ -35,6 +37,21 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 - [x] Rodar todos os gates locais: 189 testes Python, 31 testes do site, 91,85% de cobertura, Ruff, TypeScript e build verdes
 - [ ] Enviar as mudanças à `main`, habilitando `inter.yml` no GitHub Actions e publicando as páginas novas pela Vercel
 - [ ] No site publicado, entrar em **Lojas Inter**, acompanhar as primeiras lojas desejadas e forçar uma atualização para conferir os cartões reais
+
+---
+
+## V4 — catálogo de produtos do Compre direto no Inter
+
+- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-V4.md`
+- [x] Registrar CT-200 em diante como catálogo de testes planejados
+- [ ] **V4.1 — gate físico:** medir bytes, duração, duplicatas e paginação de uma loja completa
+- [ ] Projetar volume para 3, 10 e 111 lojas, com três rodadas diárias e retenção de 30 dias
+- [ ] Fechar schema, índices, área de preparação, publicação atômica, expurgo e rollback
+- [ ] **V4.2:** implementar domínio puro, fixture multipágina, extrator, deduplicação e adaptador HTTP
+- [ ] **V4.3:** implementar seleção de lojas, coleta por loja, snapshot atual e histórico
+- [ ] **V4.4:** implementar `/inter/produtos`, seleção administrativa e histórico público
+- [ ] **V4.5:** criar workflow matricial, `max-parallel: 2`, cooldown e observabilidade
+- [ ] Validar primeiro uma loja; depois Casas Bahia + Ponto; só então ampliar a seleção
 
 ---
 

@@ -283,6 +283,85 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 
 ---
 
+## Produtos do Shopping Inter — V4 (planejado)
+
+> Casos definidos no [`PRD-V4.md`](PRD-V4.md). Ainda não existem módulos,
+> fixtures, tabelas ou testes da V4; os nomes de arquivo abaixo são destinos
+> planejados e só ficam definitivos depois do gate físico da V4.1. Nenhum CT
+> desta seção entra nos totais executados no fim do documento.
+
+### `testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-200 | Catálogo de vendedores diretos | A fonte de Compre direto vira lojas com ID, slug e nome, separadas da V3 | Fixture com Casas Bahia, Ponto e outra loja |
+| CT-201 | Campos comerciais usam `Decimal` | Preço cheio, atual, desconto, cashback e líquido não passam por `float` | Extrair produto com todos os valores e comparar `Decimal` |
+| CT-202 | Texto e número permanecem separados | “R$ 3.688,89” e `Decimal("3688.89")` preservam papéis diferentes | Fixture com texto localizado e valor numérico |
+| CT-203 | Campo opcional ausente | Marca, categoria, parcelamento ou etiqueta ausente não derruba produto válido nem vira zero | Remover cada opcional isoladamente |
+| CT-204 | Item inválido é descartado | Produto sem ID, nome ou preço atual válido não contamina o catálogo | Misturar válidos e inválidos e conferir contagens |
+| CT-205 | Raiz inválida falha | JSON quebrado, objeto inesperado ou paginação ausente não viram catálogo vazio | Entradas inválidas levantam erro controlado |
+| CT-206 | Imagens e SKUs ficam fora | `image`, `images`, `thumbnails` e detalhes de `skus` não entram no modelo | Inspecionar produto extraído |
+| CT-207 | Link individual seguro | Caminho relativo vira HTTPS em `shopping.inter.co`; URL externa e `javascript:` são rejeitados | Testar destinos válidos e hostis |
+| CT-208 | Identidade por loja + produto | Mesmo ID em Casas Bahia e Ponto representa dois produtos distintos | Inserir ID igual sob duas lojas |
+| CT-209 | Textos hostis continuam texto | Nome e etiquetas com HTML não são interpretados | Extrair tags maliciosas e renderizar escapado |
+| CT-210 | Vendedor incompatível falha | Página pedida para Casas Bahia não aceita silenciosamente produto de outro vendedor | Fixture com `sellerId` inesperado |
+
+### `testes/teste_paginacao_produtos_inter.py` — catálogo completo exposto
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-211 | Avança até a última página | Offsets crescem pelo limite retornado e param somente em `isLastPage=true` | Fixture de três páginas com última parcial |
+| CT-212 | Sem teto artificial de 3.000 | Um total declarado de 5.000 continua sendo paginado até o fim | Fonte fake com mais de 84 páginas |
+| CT-213 | `searchId` estável por tentativa | Todas as páginas de uma loja usam o mesmo UUID; nova tentativa usa outro | Fonte fake registra argumentos |
+| CT-214 | Produto repetido é deduplicado | ID repetido entre páginas gera um produto e incrementa duplicatas | Repetir o mesmo ID em duas páginas |
+| CT-215 | Página repetida interrompe | Fingerprint repetido não causa loop infinito nem publica catálogo parcial | Fonte retorna a mesma página para offsets diferentes |
+| CT-216 | Offset sem avanço interrompe | Limite zero ou próximo offset igual ao anterior vira falha de paginação | Página malformada com `limit=0` |
+| CT-217 | Total divergente é observável | Total declarado, lidos, únicos e duplicados permanecem separados | Fixture com total 5, seis ocorrências e quatro IDs |
+
+### `testes/teste_adaptadores_produtos_inter.py` — HTTP responsável
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-218 | Identificação honesta | Requisição usa User-Agent do projeto, JSON e nenhum cookie/token do Inter | Inspecionar chamada da sessão fake |
+| CT-219 | Páginas sequenciais por loja | A próxima página só começa depois da anterior | Fonte controlada registra início e fim |
+| CT-220 | Retry só em falha transitória | Timeout, 429 e 5xx respeitam limite; 401/403 encerram imediatamente | Parametrizar status e contar tentativas |
+| CT-221 | Resposta grande é recusada | Limite de bytes impede carregar payload sem controle | Stream fake acima do máximo definido na V4.1 |
+
+### `testes/teste_principal_produtos_inter.py` — seleção e isolamento
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-222 | Somente lojas selecionadas | Loja não selecionada nunca gera consulta de produto | Catálogo com dez lojas e seleção de Casas Bahia/Ponto |
+| CT-223 | Quantidade de tarefas acompanha seleção | Zero, três e dez selecionadas produzem zero, três e dez tarefas, sem teto funcional | Repositório fake parametrizado |
+| CT-224 | Falha de uma loja preserva as outras | Ponto falha e Casas Bahia publica normalmente; rodada geral fica parcial | Duas fontes fake com resultados diferentes |
+| CT-225 | Catálogo parcial não é publicado | Falha na página 80 mantém o último sucesso da loja | Repositório fake verifica ausência de `publicar` |
+| CT-226 | Publicação por loja é atômica | Produtos, inativações, medições e conclusão entram juntos ou sofrem rollback | Falhar entre etapas da transação |
+| CT-227 | Produto ausente fica inativo | Produto do sucesso anterior que não veio no novo catálogo completo sai da busca atual | Dois snapshots sucessivos |
+| CT-228 | Loja removida deixa de coletar | Desmarcar loja impede nova tarefa e esconde seu catálogo sem apagar histórico imediatamente | Alternar seleção entre rodadas |
+| CT-229 | Retenção de 30 dias | Medição no limite permanece; mais antiga é removida sem tocar no catálogo atual | Relógio fixo e datas de fronteira |
+| CT-230 | Log não vaza conteúdo sensível | Erro registra código e contagens, nunca payload, token ou `DATABASE_URL` | Exceções fake com segredos sentinela |
+| CT-231 | Núcleo novo não faz I/O | Modelos, normalização, paginação e deduplicação não importam rede, banco ou ambiente | Ampliar o teste AST de fronteira |
+
+### Site V4 — busca e histórico
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-232 | Busca normaliza celular/smartphone | “celular Motorola Edge 60 Pro” encontra nome iniciado por “Smartphone” | Função pura com os dois textos |
+| CT-233 | Todos os termos significativos são exigidos | Edge 60 Pro entra; Moto G06 e Edge 60 Neo ficam fora | Lista com modelos próximos |
+| CT-234 | Loja Ponto tem aliases de busca | “Ponto”, “Ponto Frio” e “Pontofrio” localizam `slug=ponto` sem mudar sua identidade | Normalização do cadastro de lojas |
+| CT-235 | Busca pública respeita seleção | Produto de loja removida não aparece mesmo permanecendo armazenado | Consulta com duas lojas e uma ativa |
+| CT-236 | Ordem usa preço numérico | Menor preço atual vem primeiro sem converter o texto exibido em `number` | Valores localizados e strings decimais |
+| CT-237 | Card usa uma medição | Preço cheio, desconto, atual, cashback e líquido têm o mesmo ID de medição | Misturar dados de duas rodadas e rejeitar combinação |
+| CT-238 | Ausente não vira zero | Campo monetário `null` some ou ganha rótulo neutro | Renderizar card incompleto |
+| CT-239 | Histórico calcula mínimo e máximo | Resumo usa preço atual de medições dos últimos 30 dias com precisão decimal | Série com fronteira de retenção |
+| CT-240 | Histórico informa desaparecimento | Produto inativo conserva tabela e não aparece como oferta atual | Estado atual ausente com medições anteriores |
+| CT-241 | Mutação exige sessão | Selecionar, remover e disparar rejeitam visitante; busca e histórico são públicos | Guards das Server Actions e páginas |
+| CT-242 | Sem imagem ou HTML externo | Cards não usam URLs de imagem nem `dangerouslySetInnerHTML` | Inspeção da renderização |
+| CT-243 | Funciona sem JavaScript | Busca por `?q=`, seleção, remoção e histórico possuem HTML e formulários reais | Renderização de servidor e navegação manual |
+| CT-244 | Integrações anteriores não regridem | V4 ausente, vazia ou falhando não muda Livelo nem V3 | Rodar todas as suítes e builds existentes |
+
+---
+
 ## Fora dos testes automáticos
 
 | ID | Título | Descrição |
@@ -336,7 +415,7 @@ O que conferir:
 
 ## Totais
 
-Os casos com identificador CT são os planejados. A implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado.
+Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. CT-200 a CT-244 pertencem à V4 planejada e não entram nesta tabela enquanto seus arquivos ainda não existirem.
 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
