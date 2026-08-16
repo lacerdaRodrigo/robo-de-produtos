@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.21.0 (2026-08-15)
+
+### Features
+
+- **inter**: Adiciona integração do Shopping Inter V3
+  ([`25adb2e`](https://github.com/lacerdaRodrigo/robo-livelo/commit/25adb2ee37f0c42d0a78db02bba61153d08412af))
+
+
 ## v1.20.0 (2026-08-13)
 
 ### Features
