@@ -17,7 +17,6 @@ import {
   ordenarCashbacksPorNome,
 } from "@/lib/formato-inter";
 import { Cabecalho } from "../componentes/cabecalho";
-import { SeletorDeRobos } from "../componentes/seletor-robos";
 import { Rodape } from "../rodape";
 import { BuscaInter } from "./busca-inter";
 
@@ -109,7 +108,6 @@ export default async function PaginaInter({
       <>
         <Cabecalho atual="/inter" />
         <main className="pagina">
-          <SeletorDeRobos atual="/inter" />
           <h1>Shopping Inter</h1>
           <p className="faixa ruim">
             {falhaNoBanco
@@ -147,7 +145,6 @@ export default async function PaginaInter({
     <>
       <Cabecalho atual="/inter" />
       <main className="pagina">
-          <SeletorDeRobos atual="/inter" />
         <section className="cabecalho-vitrine">
           <div>
             <span className="hero-rotulo">Oportunidades selecionadas</span>
