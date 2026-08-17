@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.22.1 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Valida contrato real do catalogo V4
+  ([`a6800a1`](https://github.com/lacerdaRodrigo/robo-livelo/commit/a6800a1fb86e41b3d4bd36c5752691d9b74b9f9a))
+
+
 ## v1.22.0 (2026-08-17)
 
 ### Bug Fixes
