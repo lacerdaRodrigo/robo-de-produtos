@@ -90,6 +90,19 @@ export async function buscarProdutosDiretos(termo: string): Promise<ProdutoDiret
   `) as ProdutoDireto[];
 }
 
+export async function totalProdutosDiretos(): Promise<number> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT count(*)::int AS total
+      FROM produto_direto_inter p
+      JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
+     WHERE p.ativo = TRUE
+       AND l.selecionada = TRUE
+       AND l.ativa = TRUE
+  `) as Array<{ total: number }>;
+  return Number(linhas[0]?.total ?? 0);
+}
+
 export async function buscarLojasDiretas(
   termo: string,
   pagina = 1,
