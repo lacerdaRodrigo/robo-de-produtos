@@ -34,9 +34,15 @@ export function BuscaProgressiva({
   const roteador = useRouter();
   const [valor, definirValor] = useState(valorInicial);
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ultimaBuscaEnviada = useRef(valorInicial);
 
   useEffect(() => {
-    definirValor(valorInicial);
+    // Sincroniza navegacao externa (voltar/avancar) sem sobrescrever o que a
+    // pessoa ainda esta digitando enquanto uma busca anterior responde.
+    if (valorInicial !== ultimaBuscaEnviada.current) {
+      definirValor(valorInicial);
+      ultimaBuscaEnviada.current = valorInicial;
+    }
   }, [valorInicial]);
 
   useEffect(
@@ -61,9 +67,10 @@ export function BuscaProgressiva({
       } else {
         parametros.delete("q");
       }
+      ultimaBuscaEnviada.current = busca;
       const consulta = parametros.toString();
       roteador.replace(consulta ? `${acao}?${consulta}` : acao, { scroll: false });
-    }, 350);
+    }, novoValor.trim() ? 350 : 0);
   }
 
   const campo = (
@@ -80,7 +87,17 @@ export function BuscaProgressiva({
   );
 
   return (
-    <form className={classeFormulario} action={acao} method="get" role="search">
+    <form
+      className={classeFormulario}
+      action={acao}
+      method="get"
+      role="search"
+      onSubmit={() => {
+        if (temporizador.current) {
+          clearTimeout(temporizador.current);
+        }
+      }}
+    >
       {Object.entries(parametrosFixos).map(([nome, conteudo]) => (
         <input key={nome} type="hidden" name={nome} value={conteudo} />
       ))}
