@@ -132,3 +132,6 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
 .bl-executar{color:#08765f;background:#e7f8f2;box-shadow:none}.bl-executar:hover{color:#075f4e;background:#d8f3ea}.bl-executar:disabled{color:#98a09e;background:#f2f4f3}
 @media(min-width:768px){.bl-nav-simples{overflow-y:auto}.bl-grupo>summary{grid-template-columns:34px 1fr 20px;padding:9px 10px}.bl-grupo-icone{width:34px;height:34px}.bl-subitem{padding-inline:9px}}
 @media(max-width:760px){.bl-nav-simples{flex:0 0 auto}.bl-grupo{border-color:#e3e6ef;border-radius:15px}.bl-grupo>summary{min-height:66px}.bl-grupo-itens{padding:6px 8px 10px}.bl-subitem{min-height:56px}.bl-item-conteudo strong{font-size:.88rem}.bl-item-conteudo small{font-size:.7rem}}
+
+.seletor-areas{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:760px){.seletor-areas .seletor-robo{flex:1 0 150px}}
