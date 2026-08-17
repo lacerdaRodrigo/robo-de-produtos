@@ -2,6 +2,56 @@
 
 <!-- version list -->
 
+## v1.25.0 (2026-08-17)
+
+### Bug Fixes
+
+- **site**: Restaura listas ao limpar a busca
+  ([`a419e2b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/a419e2be50d760bf4585224da80dedd06555f10e))
+
+- **site**: Usa tokens visuais da paginacao
+  ([`ef0fc65`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ef0fc652d2ff34f4fa09f18aebd5028e45d4a41e))
+
+### Features
+
+- **site**: Adiciona busca progressiva reutilizavel
+  ([`07a45fb`](https://github.com/lacerdaRodrigo/robo-livelo/commit/07a45fb64dfc1ca9995d3a4c8c301127633a8941))
+
+- **site**: Adiciona paginacao segura
+  ([`bb732f9`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bb732f9388573f12192e97965e23ef118e89eea4))
+
+- **site**: Ativa busca progressiva nas lojas de produtos
+  ([`bf39672`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bf39672a6f0b4070f906fd7853b7fbb4384c8230))
+
+- **site**: Ativa busca progressiva nas lojas Livelo
+  ([`7a283cd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/7a283cd6f9634feda7ad8c02ff31e595c48ce1fe))
+
+- **site**: Ativa busca progressiva nos produtos Inter
+  ([`b12576a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/b12576a1bff4ac07b5996d4e6c22e6f4904a4707))
+
+- **site**: Estiliza paginacao responsiva
+  ([`5ef7e48`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5ef7e48e4dbc0c67914bea27ca233819b0164521))
+
+- **site**: Simplifica pontos e pagina lojas
+  ([`3f990f6`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3f990f6ebf33ae4035d8c9ce03c205a936be53ab))
+
+### Refactoring
+
+- **site**: Remove busca duplicada do Inter
+  ([`2c1f874`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2c1f8743aa3c9d173d73a318e9d6092f4d3f2e44))
+
+- **site**: Reutiliza busca progressiva nas lojas Inter
+  ([`6e69773`](https://github.com/lacerdaRodrigo/robo-livelo/commit/6e697733001cc6f7af52d6401ca8b4a08a8ff7c1))
+
+- **site**: Reutiliza busca progressiva no cashback
+  ([`c099010`](https://github.com/lacerdaRodrigo/robo-livelo/commit/c0990107d20dca64014a8137e6c584a7a4af217d))
+
+### Testing
+
+- **site**: Cobre paginacao de lojas
+  ([`9b0d6e1`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9b0d6e1160508d64cd8ae46903817a0007df6bba))
+
+
 ## v1.24.0 (2026-08-17)
 
 ### Bug Fixes
