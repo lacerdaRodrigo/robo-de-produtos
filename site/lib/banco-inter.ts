@@ -86,9 +86,16 @@ export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[
   `) as CashbackInter[];
 }
 
-export async function buscarLojasInter(termo: string): Promise<LojaCatalogoInter[]> {
+export async function buscarLojasInter(
+  termo: string,
+  pagina = 1,
+  porPagina = 10,
+): Promise<LojaCatalogoInter[]> {
   const sql = conectar();
   const busca = `%${normalizarBuscaInter(termo)}%`;
+  const limite = Math.min(50, Math.max(1, Math.floor(porPagina)));
+  const numeroDaPagina = Math.max(1, Math.floor(pagina));
+  const deslocamento = (numeroDaPagina - 1) * limite;
   return (await sql`
     SELECT l.id, l.id_externo, l.slug, l.nome,
            l.cashback_principal_texto, l.cashback_principal_valor, l.ativa,
@@ -97,15 +104,19 @@ export async function buscarLojasInter(termo: string): Promise<LojaCatalogoInter
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
      WHERE l.nome_busca LIKE ${busca} OR l.slug_busca LIKE ${busca}
      ORDER BY l.nome
-     LIMIT 50
+     LIMIT ${limite}
+    OFFSET ${deslocamento}
   `) as LojaCatalogoInter[];
 }
 
-export async function totalLojasInter(): Promise<number> {
+export async function totalLojasInter(termo = ""): Promise<number> {
   const sql = conectar();
-  const linhas = (await sql`SELECT count(*)::int AS total FROM loja_inter`) as {
-    total: number;
-  }[];
+  const busca = `%${normalizarBuscaInter(termo)}%`;
+  const linhas = (await sql`
+    SELECT count(*)::int AS total
+      FROM loja_inter
+     WHERE nome_busca LIKE ${busca} OR slug_busca LIKE ${busca}
+  `) as { total: number }[];
   return linhas[0]?.total ?? 0;
 }
 
