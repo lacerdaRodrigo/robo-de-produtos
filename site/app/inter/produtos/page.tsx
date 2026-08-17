@@ -3,6 +3,7 @@ import Link from "next/link";
 import { buscarProdutosDiretos, resumoLojasDiretas, type ProdutoDireto } from "@/lib/banco-produtos-inter";
 import { moeda, percentual } from "@/lib/formato-produtos-inter";
 import { dataHora } from "@/lib/formato";
+import { BuscaProgressiva } from "../../componentes/busca-progressiva";
 import { Cabecalho } from "../../componentes/cabecalho";
 import { Rodape } from "../../rodape";
 
@@ -60,10 +61,18 @@ export default async function PaginaProdutosInter({ searchParams }: { searchPara
       <h1>Produtos do Shopping Inter</h1>
       <p className="carimbo">Busca local em produtos das {resumo.selecionadas} lojas diretas selecionadas. Nenhuma busca consulta o Inter.</p>
       {falhaNoBanco ? <p className="faixa ruim">Não foi possível consultar o catálogo agora.</p> : <>
-        <form id="busca-principal" className="busca-produtos" action="/inter/produtos" method="get">
-          <label htmlFor="busca-produtos">Produto, marca ou categoria</label>
-          <div><input id="busca-produtos" name="q" defaultValue={q} placeholder="celular Motorola Edge 60 Pro" /><button className="botao" type="submit">Buscar</button></div>
-        </form>
+        <div id="busca-principal">
+          <BuscaProgressiva
+            acao="/inter/produtos"
+            valorInicial={q}
+            placeholder="celular Motorola Edge 60 Pro"
+            rotulo="Procurar produto, marca ou categoria"
+            classeFormulario="busca-produtos"
+            idDoCampo="busca-produtos"
+            tituloDoCampo="Produto, marca ou categoria"
+            textoDoBotao="Buscar"
+          />
+        </div>
         {!q ? <p className="vazio">Digite o produto que procura. <Link href="/inter/produtos/lojas">Escolher lojas</Link></p> : produtos.length === 0 ? <p className="vazio">Nenhum produto atual combina com “{q}”.</p> : Object.entries(grupos).map(([loja, itens]) => <section key={loja} className="grupo-produtos"><h2>{loja} <span>{itens.length} resultado(s)</span></h2><p className="detalhe">Atualizado em {dataHora(itens[0].atualizada_em)}</p><div className="lista-grade">{itens.map((produto) => <CartaoProduto key={`${produto.loja_slug}-${produto.id_externo}`} produto={produto} />)}</div></section>)}
       </>}
       <Rodape fonte="inter" />
