@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { buscarLojasInter, totalLojasInter } from "@/lib/banco-inter";
+import { ITENS_POR_PAGINA, paginasVisiveis } from "@/lib/paginacao";
 import { exigirSessao } from "@/lib/sessao";
 import { BuscaProgressiva } from "../../componentes/busca-progressiva";
 import { Cabecalho } from "../../componentes/cabecalho";
@@ -18,19 +19,40 @@ export default async function PaginaLojasInter({
     erro?: string;
     nome?: string;
     segundos?: string;
+    pagina?: string;
   }>;
 }) {
   await exigirSessao();
-  const { q = "", ok, erro, nome, segundos } = await searchParams;
+  const { q = "", ok, erro, nome, segundos, pagina: paginaBruta } = await searchParams;
 
   let lojas: Awaited<ReturnType<typeof buscarLojasInter>> = [];
   let total = 0;
+  let totalFiltrado = 0;
+  let pagina = 1;
+  let totalPaginas = 1;
   let falhaNoBanco = false;
   try {
-    [lojas, total] = await Promise.all([buscarLojasInter(q), totalLojasInter()]);
+    [total, totalFiltrado] = await Promise.all([totalLojasInter(), totalLojasInter(q)]);
+    totalPaginas = Math.max(1, Math.ceil(totalFiltrado / ITENS_POR_PAGINA));
+    const paginaSolicitada = Number.parseInt(paginaBruta ?? "", 10);
+    pagina =
+      Number.isFinite(paginaSolicitada) && paginaSolicitada > 0
+        ? Math.min(paginaSolicitada, totalPaginas)
+        : 1;
+    lojas = await buscarLojasInter(q, pagina, ITENS_POR_PAGINA);
   } catch {
     falhaNoBanco = true;
   }
+
+  const numerosDePagina = paginasVisiveis(pagina, totalPaginas);
+  const linkDaPagina = (numero: number) => {
+    const parametros = new URLSearchParams();
+    if (q) {
+      parametros.set("q", q);
+    }
+    parametros.set("pagina", String(numero));
+    return `/inter/lojas?${parametros.toString()}`;
+  };
 
   return (
     <>
@@ -82,40 +104,79 @@ export default async function PaginaLojasInter({
               : `Nenhuma loja combina com “${q}”.`}
           </p>
         ) : (
-          <div className="lista-grade">
-            {lojas.map((loja) => (
-              <article className="cartao" key={loja.id_externo}>
-                <div className="linha">
-                  <div className="cartao-titulo">
-                    <span className="nome">{loja.nome}</span>
-                    <span className="ajuda-do-campo">{loja.slug}</span>
+          <>
+            <div className="lista-grade">
+              {lojas.map((loja) => (
+                <article className="cartao" key={loja.id_externo}>
+                  <div className="linha">
+                    <div className="cartao-titulo">
+                      <span className="nome">{loja.nome}</span>
+                      <span className="ajuda-do-campo">{loja.slug}</span>
+                    </div>
+                    <div className="pontos-container">
+                      <span className="pontos cashback-texto">
+                        {loja.cashback_principal_texto}
+                      </span>
+                      <span className="pontos-sub">Cliente Inter Shopping</span>
+                    </div>
                   </div>
-                  <div className="pontos-container">
-                    <span className="pontos cashback-texto">
-                      {loja.cashback_principal_texto}
-                    </span>
-                    <span className="pontos-sub">Cliente Inter Shopping</span>
+                  {!loja.ativa && (
+                    <p className="faixa ruim">Não encontrada na última consulta.</p>
+                  )}
+                  <div className="acoes-do-cartao">
+                    <form action={loja.favorita ? acaoRemoverInter : acaoAcompanharInter}>
+                      <input type="hidden" name="id" value={loja.id} />
+                      <input type="hidden" name="nome" value={loja.nome} />
+                      <button
+                        type="submit"
+                        className={loja.favorita ? "secundario" : undefined}
+                        disabled={!loja.ativa && !loja.favorita}
+                      >
+                        {loja.favorita ? "Remover das favoritas" : "Acompanhar"}
+                      </button>
+                    </form>
                   </div>
-                </div>
-                {!loja.ativa && (
-                  <p className="faixa ruim">Não encontrada na última consulta.</p>
+                </article>
+              ))}
+            </div>
+
+            <nav className="paginacao" aria-label="Paginação das lojas do Shopping Inter">
+              <p className="paginacao-resumo">
+                Mostrando {(pagina - 1) * ITENS_POR_PAGINA + 1}–
+                {Math.min(pagina * ITENS_POR_PAGINA, totalFiltrado)} de {totalFiltrado} lojas
+              </p>
+              <div className="paginacao-botoes">
+                {pagina > 1 ? (
+                  <Link className="botao-paginacao navegacao" href={linkDaPagina(pagina - 1)}>
+                    Anterior
+                  </Link>
+                ) : (
+                  <span className="botao-paginacao navegacao desabilitado" aria-disabled="true">
+                    Anterior
+                  </span>
                 )}
-                <div className="acoes-do-cartao">
-                  <form action={loja.favorita ? acaoRemoverInter : acaoAcompanharInter}>
-                    <input type="hidden" name="id" value={loja.id} />
-                    <input type="hidden" name="nome" value={loja.nome} />
-                    <button
-                      type="submit"
-                      className={loja.favorita ? "secundario" : undefined}
-                      disabled={!loja.ativa && !loja.favorita}
-                    >
-                      {loja.favorita ? "Remover das favoritas" : "Acompanhar"}
-                    </button>
-                  </form>
-                </div>
-              </article>
-            ))}
-          </div>
+                {numerosDePagina.map((numero) => (
+                  <Link
+                    key={numero}
+                    className="botao-paginacao numero"
+                    href={linkDaPagina(numero)}
+                    aria-current={numero === pagina ? "page" : undefined}
+                  >
+                    {numero}
+                  </Link>
+                ))}
+                {pagina < totalPaginas ? (
+                  <Link className="botao-paginacao navegacao" href={linkDaPagina(pagina + 1)}>
+                    Próxima
+                  </Link>
+                ) : (
+                  <span className="botao-paginacao navegacao desabilitado" aria-disabled="true">
+                    Próxima
+                  </span>
+                )}
+              </div>
+            </nav>
+          </>
         )}
         <Rodape fonte="inter" />
       </main>

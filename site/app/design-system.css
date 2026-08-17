@@ -213,3 +213,46 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
   }
 }
 
+/* V4.10 — resumo Inter sem texto cortado em larguras estreitas */
+.resumo-vitrine article {
+  overflow: hidden;
+}
+
+.resumo-vitrine article div {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.resumo-vitrine strong,
+.resumo-vitrine small {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.resumo-vitrine strong {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.resumo-vitrine small {
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .resumo-vitrine {
+    grid-template-columns: 1fr;
+    overflow: visible;
+    margin-inline: 0;
+    padding: 0;
+    scroll-snap-type: none;
+  }
+
+  .resumo-vitrine article {
+    width: 100%;
+    min-height: 84px;
+    scroll-snap-align: none;
+  }
+}
+
