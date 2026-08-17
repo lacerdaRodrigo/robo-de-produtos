@@ -19,3 +19,99 @@ input[type="text"],input[type="search"],input[type="password"],input[type="numbe
 @media(max-width:900px){.pagina-entrada{grid-template-columns:1fr}.entrada-visual{min-height:390px}.entrada-formulario{padding:36px}.pagina-entrada>.rodape{grid-column:auto}}
 @media(max-width:760px){.pagina>h1{margin-top:22px;font-size:2.15rem}.hero-painel{padding:26px 20px;border-radius:24px}.hero-top3{grid-template-columns:1fr}.busca,.busca-produtos{align-items:stretch}.lista-grade:not(.grade-cashback){grid-template-columns:1fr}.bloco{padding:20px}.entrada-visual,.entrada-formulario{border-radius:22px}.entrada-visual{min-height:340px;padding:30px 24px}.entrada-visual h1{font-size:2.75rem}.entrada-beneficios{margin-top:26px}.entrada-formulario{padding:28px 22px}}
 @media(max-width:520px){.busca,.busca-produtos{flex-direction:column}.busca button,.busca-produtos button{width:100%}.resumo-historico{grid-template-columns:1fr}}
+
+/* V4.9.1 — drawer mobile e contenção responsiva */
+html,body{max-width:100%;overflow-x:clip}.pagina,.pagina>*,.lista-grade>*,.grade-cashback>*{min-width:0}
+img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
+@media(max-width:760px){
+  .barra-lateral{
+    position:fixed;
+    inset:0 auto 0 0;
+    z-index:90;
+    width:min(88vw,360px);
+    height:100dvh;
+    max-height:none;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:12px;
+    padding:20px 16px 24px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    background:#fff;
+    border:0;
+    border-right:1px solid var(--borda);
+    border-radius:0;
+  }
+  .bl-marca{
+    width:100%;
+    min-height:52px;
+    padding:0 52px 14px 6px;
+    border-bottom:1px solid #eceef4;
+  }
+  .bl-marca-icone{width:38px;height:38px;min-width:38px;border:1px solid #eceef4;border-radius:12px}
+  .bl-marca-nome{display:block;font-size:1rem}
+  .bl-nav{
+    width:100%;
+    display:flex;
+    flex:1 0 auto;
+    flex-direction:column;
+    align-items:stretch;
+    gap:4px;
+    overflow:visible;
+  }
+  .bl-item{
+    width:100%;
+    min-height:50px;
+    justify-content:flex-start;
+    padding:12px 14px;
+    border-radius:13px;
+    color:var(--suave);
+    font-size:.92rem;
+  }
+  .bl-item svg{flex:none;width:20px;height:20px}
+  .bl-item-texto{display:inline!important;overflow:hidden;text-overflow:ellipsis}
+  .bl-item[aria-current="page"]{
+    color:var(--marca-forte);
+    background:var(--marca-fraco);
+    box-shadow:inset 3px 0 0 var(--marca);
+  }
+  .bl-form{width:100%}
+  .bl-form .bl-item{width:100%}
+  .bl-rodape{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:4px;
+    margin-top:auto;
+    padding-top:14px;
+    border-top:1px solid #eceef4;
+  }
+  .menu-fechar{
+    top:14px;
+    left:min(calc(88vw - 58px),302px);
+    width:44px;
+    height:44px;
+    min-height:44px;
+    border:0;
+    border-radius:13px;
+    background:var(--marca-fraco);
+    color:var(--marca-forte);
+    box-shadow:none;
+  }
+  .menu-fundo{inset:0;width:100vw;height:100dvh}
+  .pagina{width:100%;max-width:100%;margin-left:0}
+  .pagina-entrada{width:100%;grid-template-columns:minmax(0,1fr)}
+  .entrada-visual,.entrada-formulario{width:100%}
+  .cabecalho-vitrine,.hero-painel,.bloco,.cartao{max-width:100%}
+  .grade-2col{grid-template-columns:minmax(0,1fr)}
+  .resumo-historico{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:380px){
+  .barra-lateral{width:92vw}
+  .menu-fechar{left:calc(92vw - 58px)}
+  .cabecalho-marca span{font-size:.84rem}
+  .grade-cashback{grid-template-columns:minmax(0,1fr)}
+}
