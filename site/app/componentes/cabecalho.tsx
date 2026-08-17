@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { Fragment } from "react";
-
 import { esperaAteProximoDisparo } from "@/lib/banco";
 import { esperaAteProximoDisparoInter } from "@/lib/banco-inter";
 import { telaDeAlertasEscondida } from "@/lib/flags";
@@ -11,155 +9,42 @@ import { acaoAtualizarInter } from "../inter/lojas/acoes";
 import { acaoAtualizarAgora } from "../lojas/acoes";
 import { MolduraNavegacao } from "./moldura-navegacao";
 
-/**
- * Barra lateral de todas as telas (V4.6: redesenho de navegação, ver
- * docs/PENDENCIAS.md). A navegação acompanha a experiência clara do conteúdo
- * para formar uma única interface coerente.
- *
- * Regra deste site: nenhuma tela e alcancavel so digitando a URL. O menu
- * completo aparece em toda pagina, e o que voce ve depende de estar logado:
- * sem sessao, as telas de edicao nem sao anunciadas.
- */
-const PUBLICAS = [
-  { href: "/", nome: "Robô Livelo", icone: IconePainel },
-  { href: "/inter", nome: "Cashback Inter", icone: IconeLojas },
-  { href: "/inter/produtos", nome: "Produtos Inter", icone: IconeProdutos },
-  { href: "/versoes", nome: "Histórico de versões", icone: IconePainel },
-  { href: "/ajuda", nome: "Ajuda", icone: IconeAjuda },
-];
+type ItemDoMenu={href:string;nome:string;descricao:string;icone:()=>React.ReactNode};
+function ItemMenu({item,atual}:{item:ItemDoMenu;atual:string}){return <Link href={item.href} className="bl-item bl-subitem" aria-current={item.href===atual?"page":undefined}><item.icone/><span className="bl-item-conteudo"><strong>{item.nome}</strong><small>{item.descricao}</small></span></Link>}
 
-const PRIVADAS = [
-  { href: "/avisos", nome: "Alertas Livelo", icone: IconeAlertas },
-  { href: "/lojas", nome: "Lojas Livelo", icone: IconeLojas },
-  { href: "/inter/lojas", nome: "Lojas Inter", icone: IconeLojas },
-  { href: "/inter/produtos/lojas", nome: "Produtos: lojas", icone: IconeProdutos },
-];
-
-export async function Cabecalho({ atual }: { atual: string }) {
-  const [logado, alertasEscondidos] = await Promise.all([
-    temSessao(),
-    telaDeAlertasEscondida(),
-  ]);
-  const privadas = alertasEscondidos
-    ? PRIVADAS.filter((item) => item.href !== "/avisos")
-    : PRIVADAS;
-  const itens = logado
-    ? [PUBLICAS[0], PUBLICAS[1], PUBLICAS[2], ...privadas, PUBLICAS[3], PUBLICAS[4]]
-    : PUBLICAS;
-
-  // "Forçar atualização" (RNF02) mora no menu, logo abaixo de Lojas — so
-  // faz sentido pra quem tem sessao, entao so busca o cooldown nesse caso:
-  // visitante anonimo nao paga o preco de uma consulta a mais no banco.
-  const podeDisparar = logado && temTokenDeDisparo();
-  const podeDispararInter = logado && temTokenDeDisparoInter();
-  const falta = logado ? await esperaAteProximoDisparo().catch(() => 0) : 0;
-  const faltaInter = logado ? await esperaAteProximoDisparoInter().catch(() => 0) : 0;
-
-  return (
-    <MolduraNavegacao atual={atual}>
-      <aside className="barra-lateral">
-      <Link href="/" className="bl-marca">
-        {/* Chip claro atras do logo: o quadrado "R$" da marca usa um tom
-            quase branco (pensado pra fundo claro do resto do site) e
-            sumiria de contraste no fundo escuro da barra lateral. */}
-        <span className="bl-marca-icone">
-          <img src="/logo.png" alt="" width={22} height={22} />
-        </span>
-        <span className="bl-marca-nome">Radar de Benefícios</span>
-      </Link>
-
-      <nav className="bl-nav" aria-label="Seções">
-        {itens.map((item) => (
-          <Fragment key={item.href}>
-            <Link
-              href={item.href}
-              className="bl-item"
-              aria-current={item.href === atual ? "page" : undefined}
-            >
-              <item.icone />
-              <span className="bl-item-texto">{item.nome}</span>
-            </Link>
-
-            {item.href === "/lojas" && logado && (
-              <form action={acaoAtualizarAgora} className="bl-form">
-                <button
-                  type="submit"
-                  className="bl-item bl-acao-primaria"
-                  disabled={!podeDisparar || falta > 0}
-                  title={
-                    !podeDisparar
-                      ? "Token de disparo não configurado no site"
-                      : falta > 0
-                        ? `Espere mais ${falta}s antes de tentar de novo`
-                        : "O robô lê a Livelo agora e grava a pontuação atualizada"
-                  }
-                >
-                  <IconeExecutar />
-                  <span className="bl-item-texto">
-                    {falta > 0 ? `Aguarde ${falta}s` : "Forçar atualização"}
-                  </span>
-                </button>
-              </form>
-            )}
-
-            {item.href === "/inter/lojas" && logado && (
-              <form action={acaoAtualizarInter} className="bl-form">
-                <button
-                  type="submit"
-                  className="bl-item bl-acao-primaria"
-                  disabled={!podeDispararInter || faltaInter > 0}
-                  title={
-                    !podeDispararInter
-                      ? "Token de disparo não configurado no site"
-                      : faltaInter > 0
-                        ? `Espere mais ${faltaInter}s antes de tentar de novo`
-                        : "O robô lê o Shopping Inter e grava o cashback atual"
-                  }
-                >
-                  <IconeExecutar />
-                  <span className="bl-item-texto">
-                    {faltaInter > 0 ? `Aguarde ${faltaInter}s` : "Atualizar Inter"}
-                  </span>
-                </button>
-              </form>
-            )}
-          </Fragment>
-        ))}
-      </nav>
-
-      <div className="bl-rodape">
-        {logado && (
-          <Link
-            href="/configuracoes"
-            className="bl-item bl-acao"
-            aria-current={atual === "/configuracoes" ? "page" : undefined}
-            aria-label="Configurações"
-            title="Configurações"
-          >
-            <IconeDeEngrenagem />
-            <span className="bl-item-texto">Configurações</span>
-          </Link>
-        )}
-
-        {logado ? (
-          <form action={acaoSair} className="bl-form">
-            <button type="submit" className="bl-item bl-acao">
-              <IconeSair />
-              <span className="bl-item-texto">Sair</span>
-            </button>
-          </form>
-        ) : (
-          // O simbolo de entrar leva junto a tela atual, para o login
-          // devolver voce exatamente de onde saiu.
-          <Link href={`/entrar?voltar=${encodeURIComponent(atual)}`} className="bl-item bl-acao">
-            <SetaDeEntrada />
-            <span className="bl-item-texto">Entrar</span>
-          </Link>
-        )}
-      </div>
-      </aside>
-    </MolduraNavegacao>
-  );
+export async function Cabecalho({atual}:{atual:string}){
+ const[logado,alertasEscondidos]=await Promise.all([temSessao(),telaDeAlertasEscondida()]);
+ const livelo:ItemDoMenu[]=[
+  {href:"/",nome:"Consultar pontos",descricao:"Veja as melhores ofertas",icone:IconePainel},
+  ...(logado?[{href:"/lojas",nome:"Escolher minhas lojas",descricao:"Cadastre o que quer acompanhar",icone:IconeLojas},...(!alertasEscondidos?[{href:"/avisos",nome:"Configurar alertas",descricao:"Defina quando ser avisado",icone:IconeAlertas}]:[])]:[])
+ ];
+ const inter:ItemDoMenu[]=[
+  {href:"/inter",nome:"Consultar cashback",descricao:"Compare suas lojas favoritas",icone:IconeLojas},
+  ...(logado?[{href:"/inter/lojas",nome:"Escolher lojas de cashback",descricao:"Monte sua lista de interesse",icone:IconeLojas}]:[]),
+  {href:"/inter/produtos",nome:"Consultar produtos",descricao:"Busque preços e histórico",icone:IconeProdutos},
+  ...(logado?[{href:"/inter/produtos/lojas",nome:"Escolher lojas de produtos",descricao:"Defina onde o robô pesquisa",icone:IconeProdutos}]:[])
+ ];
+ const podeDisparar=logado&&temTokenDeDisparo(),podeDispararInter=logado&&temTokenDeDisparoInter();
+ const falta=logado?await esperaAteProximoDisparo().catch(()=>0):0,faltaInter=logado?await esperaAteProximoDisparoInter().catch(()=>0):0;
+ const liveloAtivo=atual==="/"||atual.startsWith("/lojas")||atual.startsWith("/avisos"),interAtivo=atual.startsWith("/inter");
+ return <MolduraNavegacao atual={atual}><aside className="barra-lateral">
+  <Link href="/" className="bl-marca"><span className="bl-marca-icone"><img src="/logo.png" alt="" width={22} height={22}/></span><span className="bl-marca-nome">Radar de Benefícios</span></Link>
+  <nav className="bl-nav bl-nav-simples" aria-label="Benefícios">
+   <details className="bl-grupo" open={liveloAtivo}><summary><span className="bl-grupo-icone"><IconePainel/></span><span><strong>Livelo</strong><small>Pontos e alertas</small></span><span className="bl-grupo-seta">⌄</span></summary><div className="bl-grupo-itens">
+    {livelo.map(item=><ItemMenu key={item.href} item={item} atual={atual}/>)}
+    {logado&&<form action={acaoAtualizarAgora} className="bl-form"><button type="submit" className="bl-item bl-subitem bl-executar" disabled={!podeDisparar||falta>0}><IconeExecutar/><span className="bl-item-conteudo"><strong>{falta>0?`Disponível em ${falta}s`:"Atualizar dados agora"}</strong><small>Executa uma nova consulta Livelo</small></span></button></form>}
+   </div></details>
+   <details className="bl-grupo" open={interAtivo}><summary><span className="bl-grupo-icone"><IconeLojas/></span><span><strong>Banco Inter</strong><small>Cashback e produtos</small></span><span className="bl-grupo-seta">⌄</span></summary><div className="bl-grupo-itens">
+    {inter.map(item=><ItemMenu key={item.href} item={item} atual={atual}/>)}
+    {logado&&<form action={acaoAtualizarInter} className="bl-form"><button type="submit" className="bl-item bl-subitem bl-executar" disabled={!podeDispararInter||faltaInter>0}><IconeExecutar/><span className="bl-item-conteudo"><strong>{faltaInter>0?`Disponível em ${faltaInter}s`:"Atualizar cashback agora"}</strong><small>Executa uma nova consulta Inter</small></span></button></form>}
+   </div></details>
+  </nav>
+  <div className="bl-rodape">
+   <Link href="/ajuda" className="bl-item bl-acao"><IconeAjuda/><span className="bl-item-texto">Ajuda</span></Link><Link href="/versoes" className="bl-item bl-acao"><IconePainel/><span className="bl-item-texto">Versões</span></Link>
+   {logado&&<Link href="/configuracoes" className="bl-item bl-acao"><IconeDeEngrenagem/><span className="bl-item-texto">Configurações</span></Link>}
+   {logado?<form action={acaoSair} className="bl-form"><button type="submit" className="bl-item bl-acao"><IconeSair/><span className="bl-item-texto">Sair</span></button></form>:<Link href={`/entrar?voltar=${encodeURIComponent(atual)}`} className="bl-item bl-acao"><SetaDeEntrada/><span className="bl-item-texto">Entrar</span></Link>}
+  </div>
+ </aside></MolduraNavegacao>;
 }
 
 /** RN25: icone e SVG no proprio HTML, nunca arquivo nem CDN de terceiro. */
