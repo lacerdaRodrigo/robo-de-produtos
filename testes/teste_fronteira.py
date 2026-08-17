@@ -30,6 +30,8 @@ MODULOS_INTER = [
     "extrator_inter.py",
     "ranking_inter.py",
     "retrato_inter.py",
+    "modelos_produtos_inter.py",
+    "extrator_produtos_inter.py",
 ]
 MODULOS_DO_NUCLEO = [*MODULOS_LIVELO, *MODULOS_INTER]
 IMPORTS_PROIBIDOS = {"requests", "smtplib", "tomllib", "os", "pathlib", "dotenv", "socket"}

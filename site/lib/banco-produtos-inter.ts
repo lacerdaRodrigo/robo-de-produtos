@@ -1,0 +1,143 @@
+import { neon } from "@neondatabase/serverless";
+
+import { correspondeBuscaProdutos, normalizarBuscaProdutosInter } from "./formato-produtos-inter";
+
+function conectar() {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL nao configurada no ambiente do site.");
+  return neon(url);
+}
+
+export type ProdutoDireto = {
+  id_externo: string;
+  nome: string;
+  marca: string | null;
+  categoria: string | null;
+  caminho: string;
+  preco_cheio_texto: string | null;
+  preco_cheio_valor: string | null;
+  preco_atual_texto: string | null;
+  preco_atual_valor: string | null;
+  desconto_texto: string | null;
+  desconto_percentual_texto: string | null;
+  cashback_texto: string | null;
+  cashback_percentual_texto: string | null;
+  preco_liquido_texto: string | null;
+  parcelamento: string | null;
+  estoque: string | null;
+  etiquetas: string[];
+  loja_slug: string;
+  loja_nome: string;
+  atualizada_em: string;
+};
+
+export type LojaDireta = {
+  id: string;
+  id_externo: string;
+  slug: string;
+  nome: string;
+  selecionada: boolean;
+  ativa: boolean;
+  ultima_execucao: string | null;
+  ultimo_estado: string | null;
+  paginas: number | null;
+};
+
+export type HistoricoProduto = {
+  produto: ProdutoDireto & { ativo: boolean };
+  minimo: string | null;
+  maximo: string | null;
+  medicoes: Array<{
+    momento: string;
+    preco_atual_valor: string | null;
+    cashback_valor: string | null;
+    preco_liquido_valor: string | null;
+  }>;
+};
+
+export async function buscarProdutosDiretos(termo: string): Promise<ProdutoDireto[]> {
+  if (!normalizarBuscaProdutosInter(termo)) return [];
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT p.id_externo, p.nome, p.nome_busca, p.marca, p.categoria, p.caminho,
+           p.preco_cheio_texto, p.preco_cheio_valor, p.preco_atual_texto, p.preco_atual_valor,
+           p.desconto_texto, p.desconto_percentual_texto, p.cashback_texto,
+           p.cashback_percentual_texto, p.preco_liquido_texto, p.parcelamento, p.estoque,
+           p.etiquetas, p.atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome
+      FROM produto_direto_inter p
+      JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
+     WHERE p.ativo = TRUE AND l.selecionada = TRUE AND l.ativa = TRUE
+     ORDER BY p.preco_atual_valor ASC NULLS LAST, p.nome, p.id_externo
+     LIMIT 5000
+  `) as Array<ProdutoDireto & { nome_busca: string }>;
+  return linhas.filter((linha) => correspondeBuscaProdutos(linha.nome_busca, termo));
+}
+
+export async function buscarLojasDiretas(termo: string): Promise<LojaDireta[]> {
+  const sql = conectar();
+  const busca = normalizarBuscaProdutosInter(termo);
+  const linhas = (await sql`
+    SELECT l.id, l.id_externo, l.slug, l.nome, l.selecionada, l.ativa,
+           e.concluida_em AS ultima_execucao, e.estado AS ultimo_estado, e.paginas
+      FROM loja_direta_inter l
+      LEFT JOIN LATERAL (
+        SELECT concluida_em, estado, paginas
+          FROM execucao_loja_produtos_inter
+         WHERE loja_direta_inter_id = l.id
+         ORDER BY iniciada_em DESC LIMIT 1
+      ) e ON TRUE
+     WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`} OR l.slug_busca LIKE ${`%${busca}%`})
+     ORDER BY l.nome LIMIT 100
+  `) as LojaDireta[];
+  return linhas;
+}
+
+export async function selecionarLojaDireta(id: string, selecionar: boolean): Promise<void> {
+  const sql = conectar();
+  await sql`
+    UPDATE loja_direta_inter
+       SET selecionada = ${selecionar}, atualizada_em = now()
+     WHERE id = ${id} AND (${selecionar} = FALSE OR ativa = TRUE)
+  `;
+}
+
+export async function resumoLojasDiretas(): Promise<{ selecionadas: number; total: number }> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT count(*) FILTER (WHERE selecionada = TRUE AND ativa = TRUE)::int AS selecionadas,
+           count(*)::int AS total
+      FROM loja_direta_inter
+  `) as Array<{ selecionadas: number; total: number }>;
+  return linhas[0] ?? { selecionadas: 0, total: 0 };
+}
+
+export async function historicoProdutoDireto(
+  lojaSlug: string,
+  produtoId: string,
+): Promise<HistoricoProduto | null> {
+  const sql = conectar();
+  const produtos = (await sql`
+    SELECT p.id, p.id_externo, p.nome, p.marca, p.categoria, p.caminho,
+           p.preco_cheio_texto, p.preco_cheio_valor, p.preco_atual_texto, p.preco_atual_valor,
+           p.desconto_texto, p.desconto_percentual_texto, p.cashback_texto,
+           p.cashback_percentual_texto, p.preco_liquido_texto, p.parcelamento, p.estoque,
+           p.etiquetas, p.atualizada_em, p.ativo, l.slug AS loja_slug, l.nome AS loja_nome
+      FROM produto_direto_inter p
+      JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
+     WHERE l.slug = ${lojaSlug} AND l.selecionada = TRUE AND p.id_externo = ${produtoId}
+     LIMIT 1
+  `) as Array<ProdutoDireto & { id: string; ativo: boolean }>;
+  const produto = produtos[0];
+  if (!produto) return null;
+  const [resumo] = (await sql`
+    SELECT min(preco_atual_valor) AS minimo, max(preco_atual_valor) AS maximo
+      FROM medicao_produto_inter WHERE produto_direto_inter_id = ${produto.id}
+  `) as Array<{ minimo: string | null; maximo: string | null }>;
+  const medicoes = (await sql`
+    SELECT momento, preco_atual_valor, cashback_valor, preco_liquido_valor
+      FROM medicao_produto_inter
+     WHERE produto_direto_inter_id = ${produto.id}
+     ORDER BY momento DESC
+  `) as HistoricoProduto["medicoes"];
+  return { produto, minimo: resumo?.minimo ?? null, maximo: resumo?.maximo ?? null, medicoes };
+}

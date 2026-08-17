@@ -10,7 +10,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 
 **V3 do Shopping Inter:** implementação concluída no workspace em 2026-08-14. A migração `006` está aplicada no Neon e a primeira execução real terminou com sucesso, cadastrando 381 lojas. O envio do código à `main` e a conferência visual na Vercel ainda são etapas de publicação, não pendências de regra ou implementação.
 
-**V4 de produtos diretos:** especificação funcional concluída em 2026-08-16 no `PRD-V4.md`. Nenhum código, workflow, tabela ou rota foi criado. O próximo gate é medir uma coleta completa e fechar volume, schema, staging e custo antes da implementação.
+**V4 de produtos diretos:** V4.1–V4.4 estão implementadas no código: medidor sem escrita, migração `007`, coleta paginada e atômica por loja, busca local, seleção administrativa e histórico. Ainda não há workflow da V4.5 nem aceite contra a fonte; a primeira execução deve ser uma loja, depois Casas Bahia + Ponto.
 
 ---
 
@@ -44,12 +44,13 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 
 - [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-V4.md`
 - [x] Registrar CT-200 em diante como catálogo de testes planejados
+- [x] **V4.1 de código:** medidor `scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
 - [ ] **V4.1 — gate físico:** medir bytes, duração, duplicatas e paginação de uma loja completa
 - [ ] Projetar volume para 3, 10 e 111 lojas, com três rodadas diárias e retenção de 30 dias
-- [ ] Fechar schema, índices, área de preparação, publicação atômica, expurgo e rollback
-- [ ] **V4.2:** implementar domínio puro, fixture multipágina, extrator, deduplicação e adaptador HTTP
-- [ ] **V4.3:** implementar seleção de lojas, coleta por loja, snapshot atual e histórico
-- [ ] **V4.4:** implementar `/inter/produtos`, seleção administrativa e histórico público
+- [x] Fechar em código schema, índices, área de preparação em memória, publicação atômica e expurgo de 30 dias
+- [x] **V4.2:** domínio puro, fixture multipágina sintética, extrator, deduplicação e adaptador HTTP
+- [x] **V4.3:** seleção de lojas, coleta por loja, snapshot atual e histórico
+- [x] **V4.4:** `/inter/produtos`, seleção administrativa e histórico público
 - [ ] **V4.5:** criar workflow matricial, `max-parallel: 2`, cooldown e observabilidade
 - [ ] Validar primeiro uma loja; depois Casas Bahia + Ponto; só então ampliar a seleção
 

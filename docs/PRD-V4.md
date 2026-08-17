@@ -1,7 +1,7 @@
 # PRD V4 — Catálogo de produtos do Shopping Inter
 
 **Versão:** V4.0 planejada
-**Status:** especificação funcional concluída em 2026-08-16; fonte real levantada. Nenhum código, workflow, tabela ou rota da V4 foi implementado. O desenho físico do banco e o dimensionamento do histórico continuam como gate obrigatório antes da implementação.
+**Status:** especificação funcional concluída em 2026-08-16; fonte real levantada. A implementação V4.1–V4.4 versiona o medidor sem escrita, a migração `007`, o domínio paginado, a publicação atômica por loja e as rotas públicas/administrativas. A medição real, o dimensionamento observado, a primeira carga gradual e o workflow matricial da V4.5 continuam como gates obrigatórios antes de considerar a V4 aceita em produção.
 **Levantamento da fonte:** 16 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
@@ -575,13 +575,13 @@ O primeiro aceite usa uma loja, depois Casas Bahia + Ponto, antes de ampliar:
 | Fase | Entrega | Estado |
 |---|---|---|
 | **V4.0** | PRD, levantamento da fonte e casos CT-200+ | Este documento |
-| **V4.1** | Gate de volume, schema, migração e contratos de persistência | Pendente |
-| **V4.2** | Domínio puro, extrator paginado, adaptador HTTP e fixture | Pendente |
-| **V4.3** | Coleta por loja, publicação atômica, retenção e primeira carga | Pendente |
-| **V4.4** | Busca pública, seleção administrativa e histórico | Pendente |
+| **V4.1** | Medidor sem escrita, schema, migração e contratos de persistência | Implementada; falta medição real e dimensionamento |
+| **V4.2** | Domínio puro, extrator paginado, adaptador HTTP e fixture | Implementada e coberta por testes; falta aceite contra a fonte |
+| **V4.3** | Coleta por loja, publicação atômica, retenção e primeira carga | Implementada; falta primeira carga gradual no Neon |
+| **V4.4** | Busca pública, seleção administrativa e histórico | Implementada; falta deploy e smoke visual |
 | **V4.5** | Workflow matricial, disparo manual, observabilidade e aceite real | Pendente |
 
-O código não começa pela interface. Primeiro fecha-se o volume e prova-se uma coleta completa de uma loja com fixture e ensaio controlado.
+O aceite não começa pela interface: primeiro mede-se uma coleta completa de uma loja e fecha-se o volume observado antes de habilitar mais seleções.
 
 ---
 
@@ -658,4 +658,4 @@ Esses gates não reabrem o comportamento de produto. Eles definem como cumprir o
 
 Em 2026-08-16, a fonte pública respondeu sem autenticação e com identificação honesta. O levantamento encontrou 111 vendedores diretos, confirmou Casas Bahia e Ponto e validou busca paginada de produtos com campos monetários e caminhos individuais. Casas Bahia e Ponto declararam 3.000 produtos e 84 páginas de 36 itens numa busca vazia. Também foi observada repetição de produto entre páginas, justificando RN61.
 
-Não houve coleta completa, escrita no Neon, criação de arquivo, workflow ou rota da V4 durante o levantamento. O próximo passo é executar V4.1 e fechar os gates físicos antes de implementar o coletor.
+No momento do levantamento não houve coleta completa, escrita no Neon, criação de arquivo, workflow ou rota da V4. A implementação posterior preserva essa evidência: o aceite ainda deve executar o medidor, aplicar a migração quando necessário e validar gradualmente uma loja antes de ampliar a seleção.
