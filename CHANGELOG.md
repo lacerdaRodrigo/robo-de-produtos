@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.22.0 (2026-08-17)
+
+### Bug Fixes
+
+- **ci**: Mede cobertura apenas do nucleo puro
+  ([`9d68d5a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9d68d5ae42a6a3a987cd22a7d5e83e8792940214))
+
+### Features
+
+- **inter**: Adiciona catalogo de produtos V4
+  ([`ffd86c4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ffd86c47eca71bf11fc7df8a1a5879dd50368476))
+
+
 ## v1.21.0 (2026-08-15)
 
 ### Features
