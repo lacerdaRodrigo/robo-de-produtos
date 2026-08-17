@@ -2,6 +2,44 @@
 
 <!-- version list -->
 
+## v1.24.0 (2026-08-17)
+
+### Bug Fixes
+
+- Remove seletor de areas do Inter
+  ([`4330d70`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4330d70b3c60f6da73fc703dcf30ba334c8d4e8b))
+
+- Remove seletor de areas duplicado
+  ([`117f538`](https://github.com/lacerdaRodrigo/robo-livelo/commit/117f5389df01f656959622d94551f25735104b57))
+
+- Remove seletor de areas duplicado
+  ([`468d932`](https://github.com/lacerdaRodrigo/robo-livelo/commit/468d932b19413f5d4ff228c6286777c58f00465f))
+
+- Remove seletor de areas duplicado
+  ([`922bbb7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/922bbb7ff91cdac566886c41a26894b373b21b6f))
+
+### Code Style
+
+- **ux**: Alinha seletor de duas areas
+  ([`2b2ed24`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2b2ed2447bad3a5ff5059975b79ae956c8e0b695))
+
+- **ux**: Apresenta fluxos em grupos simples
+  ([`338f582`](https://github.com/lacerdaRodrigo/robo-livelo/commit/338f58257e7d3e245b4dddd86df7ec0bb67b5c23))
+
+### Features
+
+- **ux**: Organiza menu por Livelo e Banco Inter
+  ([`ec9b81d`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ec9b81d05d51c467e07857d215bdb058550def9d))
+
+- **ux**: Reduz seletor para Livelo e Banco Inter
+  ([`576e3d7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/576e3d76d3f29ef11bd2ee7e7daf9ba3a4ba0e4a))
+
+### Refactoring
+
+- Remove seletor de areas sem uso
+  ([`9d73933`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9d73933f4983938430d072b03c7da5127e43c956))
+
+
 ## v1.23.0 (2026-08-17)
 
 ### Features
