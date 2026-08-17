@@ -25,6 +25,7 @@ const PUBLICAS = [
   { href: "/", nome: "Robô Livelo", icone: IconePainel },
   { href: "/inter", nome: "Cashback Inter", icone: IconeLojas },
   { href: "/inter/produtos", nome: "Produtos Inter", icone: IconeProdutos },
+  { href: "/versoes", nome: "Histórico de versões", icone: IconePainel },
   { href: "/ajuda", nome: "Ajuda", icone: IconeAjuda },
 ];
 
@@ -51,7 +52,7 @@ export async function Cabecalho({ atual }: { atual: string }) {
     ? PRIVADAS.filter((item) => item.href !== "/avisos")
     : PRIVADAS;
   const itens = logado
-    ? [PUBLICAS[0], PUBLICAS[1], PUBLICAS[2], ...privadas, PUBLICAS[3]]
+    ? [PUBLICAS[0], PUBLICAS[1], PUBLICAS[2], ...privadas, PUBLICAS[3], PUBLICAS[4]]
     : PUBLICAS;
 
   // "Forçar atualização" (RNF02) mora no menu, logo abaixo de Lojas — so
