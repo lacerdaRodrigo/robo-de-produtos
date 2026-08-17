@@ -17,6 +17,7 @@ import {
   ordenarCashbacksPorNome,
 } from "@/lib/formato-inter";
 import { Cabecalho } from "../componentes/cabecalho";
+import { SeletorDeRobos } from "../componentes/seletor-robos";
 import { Rodape } from "../rodape";
 import { BuscaInter } from "./busca-inter";
 
@@ -31,7 +32,7 @@ function CartaoInter({
 }) {
   if (!loja.encontrada) {
     return (
-      <article className="cartao">
+      <article className="cartao cartao-inter">
         <span className="nome">{loja.nome}</span>
         <p className="detalhe">
           Não encontrada nesta consulta. Ela continua nas suas favoritas.
@@ -41,13 +42,14 @@ function CartaoInter({
   }
 
   return (
-    <article className="cartao">
-      <div className="linha">
+    <article className="cartao cartao-inter">
+      <div className="cartao-inter-topo">
+        <span className="logo-loja" aria-hidden="true">{loja.nome.slice(0, 1).toUpperCase()}</span>
         <div className="cartao-titulo">
           <span className="nome">{loja.nome}</span>
           {loja.etiqueta && <span className="etiqueta">{loja.etiqueta}</span>}
         </div>
-        <div className="pontos-container">
+        <div className="pontos-container cashback-destaque">
           <span className="pontos cashback-texto">{loja.cashback_principal_texto}</span>
           <span className="pontos-sub">Cliente Inter Shopping</span>
         </div>
@@ -109,6 +111,7 @@ export default async function PaginaInter({
       <>
         <Cabecalho atual="/inter" />
         <main className="pagina">
+          <SeletorDeRobos atual="/inter" />
           <h1>Shopping Inter</h1>
           <p className="faixa ruim">
             {falhaNoBanco
@@ -146,6 +149,7 @@ export default async function PaginaInter({
     <>
       <Cabecalho atual="/inter" />
       <main className="pagina">
+          <SeletorDeRobos atual="/inter" />
         <p className={idade.atrasado ? "carimbo velho" : "carimbo"}>
           Sincronizado {idade.texto} ({dataHora(concluidaEm)})
           {idade.atrasado && " — dados atrasados"}
@@ -174,6 +178,7 @@ export default async function PaginaInter({
           </div>
         </div>
 
+        <div id="busca-principal">
         <BuscaInter
           acao="/inter"
           valorInicial={q}
@@ -181,6 +186,7 @@ export default async function PaginaInter({
           rotulo="Procurar nas favoritas do Shopping Inter"
           parametrosFixos={{ ordenar }}
         />
+        </div>
 
         <div className="controles-ordenacao">
           <span className="rotulo-ordenacao">Ordenar:</span>
@@ -214,7 +220,7 @@ export default async function PaginaInter({
             <Link href="/inter/lojas">Escolher lojas</Link>
           </p>
         ) : (
-          <div className="lista-grade">
+          <div className="lista-grade grade-cashback">
             {lojas.map((loja) => (
               <CartaoInter key={loja.id_externo} loja={loja} coletadoEm={concluidaEm} />
             ))}
