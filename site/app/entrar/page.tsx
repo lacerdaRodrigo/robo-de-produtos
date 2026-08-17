@@ -57,35 +57,43 @@ export default async function PaginaDeEntrada({
   return (
     <>
       <Cabecalho atual="/entrar" />
-      <main className="pagina">
-        <h1>Entrar para editar</h1>
-        <p className="carimbo">
-          Ver a pontuação não pede senha. Ela existe para que só você mude o que o robô faz.
-        </p>
-
-        {erro === "senha" && <p className="faixa ruim">Senha incorreta.</p>}
-        {erro === "bloqueado" && (
-          <p className="faixa ruim">
-            Tentativas demais. Espere {JANELA_DE_BLOQUEIO_MINUTOS} minutos e tente de novo —
-            é o que impede alguém de descobrir a senha no chute.
-          </p>
-        )}
-
-        <form action={entrar} className="bloco">
-          <input type="hidden" name="voltar" value={destino} />
-          <div className="campo">
-            <label htmlFor="senha">Senha</label>
-            <input
-              id="senha"
-              name="senha"
-              type="password"
-              required
-              autoComplete="current-password"
-              autoFocus
-            />
+      <main className="pagina pagina-entrada">
+        <section className="entrada-visual">
+          <span className="hero-rotulo">Área de controle</span>
+          <h1>Bem-vindo de volta</h1>
+          <p>Entre para configurar lojas, alertas e execuções. A consulta pública continua livre.</p>
+          <div className="entrada-beneficios">
+            <span><strong>01</strong> Seus dados protegidos</span>
+            <span><strong>02</strong> Controle dos três robôs</span>
+            <span><strong>03</strong> Histórico sempre disponível</span>
           </div>
-          <button type="submit">Entrar</button>
-        </form>
+        </section>
+
+        <section className="entrada-formulario">
+          <div>
+            <span className="hero-rotulo">Acesso seguro</span>
+            <h2>Entrar para editar</h2>
+            <p>Use a senha administrativa do Radar.</p>
+          </div>
+
+          {erro === "senha" && <p className="faixa ruim">Senha incorreta.</p>}
+          {erro === "bloqueado" && (
+            <p className="faixa ruim">
+              Tentativas demais. Espere {JANELA_DE_BLOQUEIO_MINUTOS} minutos e tente de novo —
+              é o que impede alguém de descobrir a senha no chute.
+            </p>
+          )}
+
+          <form action={entrar}>
+            <input type="hidden" name="voltar" value={destino} />
+            <div className="campo">
+              <label htmlFor="senha">Senha</label>
+              <input id="senha" name="senha" type="password" required autoComplete="current-password" autoFocus placeholder="Digite sua senha" />
+            </div>
+            <button type="submit">Acessar painel</button>
+          </form>
+          <small>A visualização dos benefícios não exige login.</small>
+        </section>
 
         <Rodape />
       </main>
