@@ -256,3 +256,110 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
   }
 }
 
+/* V4.11 — confirmação clara para ações destrutivas */
+.dialogo-confirmacao {
+  width: min(92vw, 470px);
+  max-width: 470px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+  color: var(--texto);
+}
+
+.dialogo-confirmacao::backdrop {
+  background: rgb(17 24 39 / 52%);
+  backdrop-filter: blur(5px);
+}
+
+.dialogo-confirmacao-conteudo {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 18px;
+  padding: 26px;
+  border: 1px solid #e6e8f0;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgb(17 24 39 / 28%);
+}
+
+.dialogo-confirmacao-icone {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #fff0ef;
+  color: #c43d34;
+  font-size: 1.4rem;
+  font-weight: 850;
+}
+
+.dialogo-confirmacao-rotulo {
+  margin: 0 0 5px;
+  color: #c43d34;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dialogo-confirmacao h2 {
+  margin: 0;
+  color: var(--texto);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+  text-transform: none;
+}
+
+.dialogo-confirmacao-mensagem {
+  margin: 10px 0 0;
+  color: var(--suave);
+  line-height: 1.55;
+}
+
+.dialogo-confirmacao-acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.dialogo-confirmacao-acoes form {
+  margin: 0;
+}
+
+.dialogo-confirmacao-acoes .botao {
+  min-width: 132px;
+}
+
+@media (max-width: 520px) {
+  .dialogo-confirmacao {
+    width: calc(100vw - 28px);
+  }
+
+  .dialogo-confirmacao-conteudo {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 14px;
+    padding: 22px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .dialogo-confirmacao-icone {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .dialogo-confirmacao-acoes {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .dialogo-confirmacao-acoes form,
+  .dialogo-confirmacao-acoes .botao {
+    width: 100%;
+  }
+}
