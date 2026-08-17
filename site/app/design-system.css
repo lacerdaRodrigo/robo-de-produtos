@@ -135,3 +135,81 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
 
 .seletor-areas{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:760px){.seletor-areas .seletor-robo{flex:1 0 150px}}
+
+/* Paginação compacta e confortável no toque */
+.paginacao {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  margin: 28px 0 10px;
+}
+
+.paginacao-resumo {
+  margin: 0;
+  color: var(--suave);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.paginacao-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.botao-paginacao {
+  min-width: 42px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 13px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 750;
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.botao-paginacao:hover {
+  border-color: var(--marca);
+  color: var(--marca);
+  transform: translateY(-1px);
+}
+
+.botao-paginacao[aria-current="page"] {
+  border-color: var(--marca);
+  background: var(--marca);
+  color: #fff;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--marca) 24%, transparent);
+}
+
+.botao-paginacao.desabilitado {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .paginacao {
+    margin-top: 22px;
+  }
+
+  .paginacao-botoes {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .botao-paginacao {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 7px 10px;
+  }
+
+  .botao-paginacao.navegacao {
+    flex: 1 1 90px;
+  }
+}
+

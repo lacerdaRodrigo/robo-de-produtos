@@ -10,6 +10,7 @@ import {
 import { avisoOpcionalNoCadastroEscondido } from "@/lib/flags";
 import { filtrarPorNome, pontos } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
+import { BuscaProgressiva } from "../componentes/busca-progressiva";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
 import { Rodape } from "../rodape";
@@ -169,18 +170,12 @@ export default async function PaginaDeLojas({
         </form>
 
         <h2>Lojas cadastradas</h2>
-        <form className="busca" action="/lojas" method="get" role="search">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Procurar no cadastro"
-            aria-label="Procurar no cadastro"
-          />
-          <button type="submit" className="secundario">
-            Procurar
-          </button>
-        </form>
+        <BuscaProgressiva
+          acao="/lojas"
+          valorInicial={q}
+          placeholder="Procurar no cadastro"
+          rotulo="Procurar no cadastro"
+        />
 
         {lojas.length === 0 ? (
           <p className="vazio">

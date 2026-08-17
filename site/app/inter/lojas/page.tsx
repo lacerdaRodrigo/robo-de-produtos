@@ -2,9 +2,9 @@ import Link from "next/link";
 
 import { buscarLojasInter, totalLojasInter } from "@/lib/banco-inter";
 import { exigirSessao } from "@/lib/sessao";
+import { BuscaProgressiva } from "../../componentes/busca-progressiva";
 import { Cabecalho } from "../../componentes/cabecalho";
 import { Rodape } from "../../rodape";
-import { BuscaInter } from "../busca-inter";
 import { acaoAcompanharInter, acaoRemoverInter } from "./acoes";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +68,7 @@ export default async function PaginaLojasInter({
           </p>
         )}
 
-        <BuscaInter
+        <BuscaProgressiva
           acao="/inter/lojas"
           valorInicial={q}
           placeholder="C&A, Riachuelo, Magazine Luiza…"

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { buscarLojasDiretas, resumoLojasDiretas } from "@/lib/banco-produtos-inter";
 import { exigirSessao } from "@/lib/sessao";
+import { BuscaProgressiva } from "../../../componentes/busca-progressiva";
 import { Cabecalho } from "../../../componentes/cabecalho";
 import { Rodape } from "../../../rodape";
 import { acaoRemoverLojaDireta, acaoSelecionarLojaDireta } from "../acoes";
@@ -23,10 +24,15 @@ export default async function PaginaLojasProdutos({ searchParams }: { searchPara
       {ok === "adicionada" && <p className="faixa">{nome} entrou na coleta de produtos.</p>}
       {ok === "removida" && <p className="faixa">{nome} deixou de receber novas coletas; o histórico expira em 30 dias.</p>}
       {(erro === "nao-achei" || falhaNoBanco) && <p className="faixa ruim">{falhaNoBanco ? "Não foi possível consultar as lojas agora." : "A loja escolhida não foi encontrada."}</p>}
-      <form className="busca-produtos" action="/inter/produtos/lojas" method="get">
-        <label htmlFor="busca-lojas-diretas">Procurar vendedor direto</label>
-        <div><input id="busca-lojas-diretas" name="q" defaultValue={q} placeholder="Casas Bahia, Ponto, Pontofrio…" /><button className="botao" type="submit">Procurar</button></div>
-      </form>
+      <BuscaProgressiva
+        acao="/inter/produtos/lojas"
+        valorInicial={q}
+        placeholder="Casas Bahia, Ponto, Pontofrio…"
+        rotulo="Procurar vendedor direto"
+        classeFormulario="busca-produtos"
+        idDoCampo="busca-lojas-diretas"
+        tituloDoCampo="Procurar vendedor direto"
+      />
       {!falhaNoBanco && lojas.length === 0 ? <p className="vazio">{resumo.total === 0 ? "Ainda não há vendedores sincronizados." : `Nenhuma loja combina com “${q}”.`}</p> : <div className="lista-grade">{lojas.map((loja) => <article className="cartao" key={loja.id_externo}>
         <div className="linha"><div className="cartao-titulo"><span className="nome">{loja.nome}</span><span className="ajuda-do-campo">{loja.slug}</span></div>{loja.selecionada && <span className="etiqueta">Selecionada</span>}</div>
         <p className="detalhe">{loja.ultima_execucao ? `${loja.paginas ?? 0} página(s) na última tentativa (${loja.ultimo_estado}).` : "Ainda não coletada."}</p>
