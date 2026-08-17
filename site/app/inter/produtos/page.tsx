@@ -1,6 +1,11 @@
 import Link from "next/link";
 
-import { buscarProdutosDiretos, resumoLojasDiretas, type ProdutoDireto } from "@/lib/banco-produtos-inter";
+import {
+  buscarProdutosDiretos,
+  resumoLojasDiretas,
+  totalProdutosDiretos,
+  type ProdutoDireto,
+} from "@/lib/banco-produtos-inter";
 import { moeda, percentual } from "@/lib/formato-produtos-inter";
 import { dataHora } from "@/lib/formato";
 import { BuscaProgressiva } from "../../componentes/busca-progressiva";
@@ -47,9 +52,14 @@ export default async function PaginaProdutosInter({ searchParams }: { searchPara
   const { q = "" } = await searchParams;
   let produtos: ProdutoDireto[] = [];
   let resumo = { selecionadas: 0, total: 0 };
+  let totalProdutos = 0;
   let falhaNoBanco = false;
   try {
-    [produtos, resumo] = await Promise.all([buscarProdutosDiretos(q), resumoLojasDiretas()]);
+    [produtos, resumo, totalProdutos] = await Promise.all([
+      buscarProdutosDiretos(q),
+      resumoLojasDiretas(),
+      totalProdutosDiretos(),
+    ]);
   } catch { falhaNoBanco = true; }
   const grupos = produtos.reduce<Record<string, ProdutoDireto[]>>((resultado, produto) => {
     (resultado[produto.loja_nome] ??= []).push(produto);
@@ -59,7 +69,11 @@ export default async function PaginaProdutosInter({ searchParams }: { searchPara
     <Cabecalho atual="/inter/produtos" />
     <main className="pagina">
       <h1>Produtos do Shopping Inter</h1>
-      <p className="carimbo">Busca local em produtos das {resumo.selecionadas} lojas diretas selecionadas. Nenhuma busca consulta o Inter.</p>
+      <p className="carimbo">
+        {totalProdutos.toLocaleString("pt-BR")} {totalProdutos === 1 ? "produto disponível" : "produtos disponíveis"} em{" "}
+        {resumo.selecionadas} {resumo.selecionadas === 1 ? "loja direta selecionada" : "lojas diretas selecionadas"}.
+        Nenhuma busca consulta o Inter.
+      </p>
       {falhaNoBanco ? <p className="faixa ruim">Não foi possível consultar o catálogo agora.</p> : <>
         <div id="busca-principal">
           <BuscaProgressiva
