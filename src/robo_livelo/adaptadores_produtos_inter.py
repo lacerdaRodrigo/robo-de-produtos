@@ -105,11 +105,19 @@ class FonteProdutosInterHttp:
         self._dormir = dormir
         self._postar = postar
 
-    def pagina(self, loja: LojaDiretaInter, search_id: str, offset: int, limite: int) -> str:
+    def pagina(
+        self,
+        loja: LojaDiretaInter,
+        search_id: str,
+        offset: int,
+        limite: int,
+        *,
+        busca: str = "",
+    ) -> str:
         corpo = {
             "aggregate": True,
             "slug": loja.slug,
-            "searchText": "",
+            "searchText": busca,
             "sort": "NAME_ASCENDENT",
             "pagination": {"offset": offset, "limit": limite},
             "featureFilters": [],
@@ -168,15 +176,15 @@ def _validar_resposta(resposta: requests.Response, tamanho_maximo: int) -> None:
 
 
 class RepositorioProdutosInterPostgres:
-    """Selecao, snapshots e historico de 30 dias em transacao por loja."""
+    """Rodadas, staging, snapshots e historico transacionais por loja."""
 
     SINCRONIZA_LOJA = """
         INSERT INTO loja_direta_inter (
-            id_externo, slug, nome, nome_busca, slug_busca, ativa, vista_em
-        ) VALUES (%(id_externo)s, %(slug)s, %(nome)s, %(nome_busca)s, %(slug_busca)s, TRUE, now())
+            id_externo, slug, nome, nome_busca, ativa, vista_em
+        ) VALUES (%(id_externo)s, %(slug)s, %(nome)s, %(nome_busca)s, TRUE, now())
         ON CONFLICT (id_externo) DO UPDATE SET
             slug = EXCLUDED.slug, nome = EXCLUDED.nome,
-            nome_busca = EXCLUDED.nome_busca, slug_busca = EXCLUDED.slug_busca,
+            nome_busca = EXCLUDED.nome_busca,
             ativa = TRUE, vista_em = now(), atualizada_em = now()
     """
     MARCA_LOJAS_AUSENTES = "UPDATE loja_direta_inter SET ativa = FALSE"
@@ -186,65 +194,116 @@ class RepositorioProdutosInterPostgres:
          WHERE selecionada = TRUE AND ativa = TRUE
          ORDER BY nome
     """
-    INICIA_LOJA = """
-        INSERT INTO execucao_loja_produtos_inter (
-            loja_direta_inter_id, iniciada_em, estado, versao
-        ) VALUES (
-            (SELECT id FROM loja_direta_inter WHERE id_externo = %s AND selecionada = TRUE),
-            %s, 'iniciada', %s
-        ) RETURNING id
+    OBTEM_SELECIONADA = """
+        SELECT id_externo, slug, nome, selecionada, ativa
+          FROM loja_direta_inter
+         WHERE id_externo = %s AND selecionada = TRUE AND ativa = TRUE
     """
-    INATIVA_PRODUTOS = """
-        UPDATE produto_direto_inter
-           SET ativo = FALSE, atualizado_em = now()
-         WHERE loja_direta_inter_id = %s AND ativo = TRUE
-    """
-    UPSERT_PRODUTO = """
-        INSERT INTO produto_direto_inter (
-            loja_direta_inter_id, id_externo, nome, nome_busca, marca, categoria, caminho,
-            preco_cheio_texto, preco_cheio_valor, preco_atual_texto, preco_atual_valor,
-            desconto_texto, desconto_valor, desconto_percentual_texto, desconto_percentual_valor,
-            cashback_texto, cashback_valor, cashback_percentual_texto, cashback_percentual_valor,
-            preco_liquido_texto, preco_liquido_valor, parcelamento, estoque, etiquetas,
-            ativo, atualizado_em
-        ) VALUES (
-            %(loja_id)s, %(id_externo)s, %(nome)s, %(nome_busca)s, %(marca)s, %(categoria)s,
-            %(caminho)s, %(preco_cheio_texto)s, %(preco_cheio_valor)s,
-            %(preco_atual_texto)s, %(preco_atual_valor)s, %(desconto_texto)s, %(desconto_valor)s,
-            %(desconto_percentual_texto)s, %(desconto_percentual_valor)s,
-            %(cashback_texto)s, %(cashback_valor)s, %(cashback_percentual_texto)s,
-            %(cashback_percentual_valor)s, %(preco_liquido_texto)s, %(preco_liquido_valor)s,
-            %(parcelamento)s, %(estoque)s, %(etiquetas)s, TRUE, now()
-        ) ON CONFLICT (loja_direta_inter_id, id_externo) DO UPDATE SET
-            nome = EXCLUDED.nome, nome_busca = EXCLUDED.nome_busca, marca = EXCLUDED.marca,
-            categoria = EXCLUDED.categoria, caminho = EXCLUDED.caminho,
-            preco_cheio_texto = EXCLUDED.preco_cheio_texto,
-            preco_cheio_valor = EXCLUDED.preco_cheio_valor,
-            preco_atual_texto = EXCLUDED.preco_atual_texto,
-            preco_atual_valor = EXCLUDED.preco_atual_valor,
-            desconto_texto = EXCLUDED.desconto_texto, desconto_valor = EXCLUDED.desconto_valor,
-            desconto_percentual_texto = EXCLUDED.desconto_percentual_texto,
-            desconto_percentual_valor = EXCLUDED.desconto_percentual_valor,
-            cashback_texto = EXCLUDED.cashback_texto, cashback_valor = EXCLUDED.cashback_valor,
-            cashback_percentual_texto = EXCLUDED.cashback_percentual_texto,
-            cashback_percentual_valor = EXCLUDED.cashback_percentual_valor,
-            preco_liquido_texto = EXCLUDED.preco_liquido_texto,
-            preco_liquido_valor = EXCLUDED.preco_liquido_valor,
-            parcelamento = EXCLUDED.parcelamento, estoque = EXCLUDED.estoque,
-            etiquetas = EXCLUDED.etiquetas, ativo = TRUE, atualizado_em = now()
+    INICIA_RODADA = """
+        INSERT INTO execucao_produtos_inter (
+            iniciada_em, estado, lojas_planejadas, versao
+        ) VALUES (%s, 'iniciada', %s, %s)
         RETURNING id
     """
-    INSERE_MEDICAO = """
-        INSERT INTO medicao_produto_inter (
+    INICIA_LOJA = """
+        INSERT INTO execucao_loja_produtos_inter (
+            execucao_produtos_inter_id, loja_direta_inter_id, iniciada_em, estado
+        ) VALUES (
+            %s,
+            (SELECT id FROM loja_direta_inter
+              WHERE id_externo = %s AND selecionada = TRUE AND ativa = TRUE),
+            %s,
+            'iniciada'
+        ) RETURNING id
+    """
+    INSERE_ESTAGIO = """
+        INSERT INTO estagio_produto_inter (
+            execucao_loja_produtos_inter_id, id_externo, nome, nome_busca, caminho,
+            marca, categoria, parcelamento, estoque, etiquetas,
+            preco_lista_texto, preco_lista, desconto_texto, desconto_valor,
+            desconto_percentual_texto, desconto_percentual,
+            preco_atual_texto, preco_atual, cashback_texto, cashback_valor,
+            cashback_percentual_texto, cashback_percentual,
+            preco_liquido_texto, preco_liquido
+        ) VALUES (
+            %(execucao_id)s, %(id_externo)s, %(nome)s, %(nome_busca)s, %(caminho)s,
+            %(marca)s, %(categoria)s, %(parcelamento)s, %(estoque)s, %(etiquetas)s,
+            %(preco_lista_texto)s, %(preco_lista)s, %(desconto_texto)s, %(desconto_valor)s,
+            %(desconto_percentual_texto)s, %(desconto_percentual)s,
+            %(preco_atual_texto)s, %(preco_atual)s, %(cashback_texto)s, %(cashback_valor)s,
+            %(cashback_percentual_texto)s, %(cashback_percentual)s,
+            %(preco_liquido_texto)s, %(preco_liquido)s
+        )
+        ON CONFLICT (execucao_loja_produtos_inter_id, id_externo) DO UPDATE SET
+            nome = EXCLUDED.nome, nome_busca = EXCLUDED.nome_busca,
+            caminho = EXCLUDED.caminho, marca = EXCLUDED.marca,
+            categoria = EXCLUDED.categoria, parcelamento = EXCLUDED.parcelamento,
+            estoque = EXCLUDED.estoque, etiquetas = EXCLUDED.etiquetas,
+            preco_lista_texto = EXCLUDED.preco_lista_texto,
+            preco_lista = EXCLUDED.preco_lista,
+            desconto_texto = EXCLUDED.desconto_texto,
+            desconto_valor = EXCLUDED.desconto_valor,
+            desconto_percentual_texto = EXCLUDED.desconto_percentual_texto,
+            desconto_percentual = EXCLUDED.desconto_percentual,
+            preco_atual_texto = EXCLUDED.preco_atual_texto,
+            preco_atual = EXCLUDED.preco_atual,
+            cashback_texto = EXCLUDED.cashback_texto,
+            cashback_valor = EXCLUDED.cashback_valor,
+            cashback_percentual_texto = EXCLUDED.cashback_percentual_texto,
+            cashback_percentual = EXCLUDED.cashback_percentual,
+            preco_liquido_texto = EXCLUDED.preco_liquido_texto,
+            preco_liquido = EXCLUDED.preco_liquido
+    """
+    PUBLICA_IDENTIDADES = """
+        INSERT INTO produto_direto_inter (
+            loja_direta_inter_id, id_externo, nome, nome_busca, caminho,
+            marca, categoria, ativo, atualizado_em
+        )
+        SELECT %s, s.id_externo, s.nome, s.nome_busca, s.caminho,
+               s.marca, s.categoria, TRUE, now()
+          FROM estagio_produto_inter s
+         WHERE s.execucao_loja_produtos_inter_id = %s
+        ON CONFLICT (loja_direta_inter_id, id_externo) DO UPDATE SET
+            nome = EXCLUDED.nome, nome_busca = EXCLUDED.nome_busca,
+            caminho = EXCLUDED.caminho, marca = EXCLUDED.marca,
+            categoria = EXCLUDED.categoria, ativo = TRUE, atualizado_em = now()
+    """
+    INATIVA_AUSENTES = """
+        UPDATE produto_direto_inter p
+           SET ativo = FALSE, atualizado_em = now()
+         WHERE p.loja_direta_inter_id = %s
+           AND p.ativo = TRUE
+           AND NOT EXISTS (
+                SELECT 1 FROM estagio_produto_inter s
+                 WHERE s.execucao_loja_produtos_inter_id = %s
+                   AND s.id_externo = p.id_externo
+           )
+    """
+    INSERE_MEDICOES = """
+        INSERT INTO medicao_produto_direto_inter (
             produto_direto_inter_id, execucao_loja_produtos_inter_id, momento,
-            preco_atual_valor, cashback_valor, preco_liquido_valor
-        ) VALUES (%s, %s, %s, %s, %s, %s)
+            preco_lista_texto, preco_lista, desconto_texto, desconto_valor,
+            desconto_percentual_texto, desconto_percentual,
+            preco_atual_texto, preco_atual, cashback_texto, cashback_valor,
+            cashback_percentual_texto, cashback_percentual,
+            preco_liquido_texto, preco_liquido, parcelamento, estoque, etiquetas
+        )
+        SELECT p.id, s.execucao_loja_produtos_inter_id, %s,
+               s.preco_lista_texto, s.preco_lista, s.desconto_texto, s.desconto_valor,
+               s.desconto_percentual_texto, s.desconto_percentual,
+               s.preco_atual_texto, s.preco_atual, s.cashback_texto, s.cashback_valor,
+               s.cashback_percentual_texto, s.cashback_percentual,
+               s.preco_liquido_texto, s.preco_liquido, s.parcelamento, s.estoque, s.etiquetas
+          FROM estagio_produto_inter s
+          JOIN produto_direto_inter p
+            ON p.loja_direta_inter_id = %s AND p.id_externo = s.id_externo
+         WHERE s.execucao_loja_produtos_inter_id = %s
     """
     CONCLUI_LOJA = """
         UPDATE execucao_loja_produtos_inter
            SET concluida_em = %s, estado = 'sucesso', total_declarado = %s,
-               paginas = %s, itens_lidos = %s, itens_unicos = %s, duplicados = %s,
-               codigo_falha = NULL
+               paginas = %s, produtos_lidos = %s, produtos_unicos = %s,
+               duplicados = %s, codigo_falha = NULL
          WHERE id = %s AND estado = 'iniciada'
     """
     FALHA_LOJA = """
@@ -252,8 +311,23 @@ class RepositorioProdutosInterPostgres:
            SET concluida_em = now(), estado = 'falha', codigo_falha = %s
          WHERE id = %s AND estado = 'iniciada'
     """
+    RESUMO_RODADA = """
+        SELECT r.lojas_planejadas,
+               count(l.id) FILTER (WHERE l.estado = 'sucesso')::int AS sucessos
+          FROM execucao_produtos_inter r
+          LEFT JOIN execucao_loja_produtos_inter l
+            ON l.execucao_produtos_inter_id = r.id
+         WHERE r.id = %s
+         GROUP BY r.id, r.lojas_planejadas
+    """
+    CONCLUI_RODADA = """
+        UPDATE execucao_produtos_inter
+           SET concluida_em = %s, estado = %s,
+               lojas_sucesso = %s, lojas_falha = %s, codigo_falha = %s
+         WHERE id = %s AND estado = 'iniciada'
+    """
     EXPURGA_MEDICOES = (
-        "DELETE FROM medicao_produto_inter WHERE momento < now() - interval '30 days'"
+        "DELETE FROM medicao_produto_direto_inter WHERE momento < now() - interval '30 days'"
     )
 
     def __init__(self, url: str) -> None:
@@ -287,12 +361,53 @@ class RepositorioProdutosInterPostgres:
                 f"Falha ao ler lojas selecionadas: {type(erro).__name__}.", codigo="banco"
             ) from None
 
-    def iniciar_loja(self, loja: LojaDiretaInter, momento: datetime, versao: str) -> int:
+    def obter_loja_selecionada(self, id_externo: str) -> LojaDiretaInter:
         import psycopg
 
         try:
             with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
-                cursor.execute(self.INICIA_LOJA, (loja.id_externo, momento, versao))
+                cursor.execute(self.OBTEM_SELECIONADA, (id_externo,))
+                linha = cursor.fetchone()
+                if not linha:
+                    raise RuntimeError("Loja direta nao esta selecionada")
+                return LojaDiretaInter(*linha)
+        except (psycopg.Error, RuntimeError) as erro:
+            raise FalhaAoGuardarProdutosInter(
+                f"Falha ao obter loja selecionada: {type(erro).__name__}.", codigo="banco"
+            ) from None
+
+    def iniciar_rodada(self, momento: datetime, versao: str, lojas_planejadas: int) -> int:
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(self.INICIA_RODADA, (momento, lojas_planejadas, versao))
+                linha = cursor.fetchone()
+                if not linha:
+                    raise RuntimeError("Rodada sem RETURNING")
+                return int(linha[0])
+        except (psycopg.Error, RuntimeError) as erro:
+            raise FalhaAoGuardarProdutosInter(
+                f"Falha ao iniciar rodada de produtos: {type(erro).__name__}.", codigo="banco"
+            ) from None
+
+    def iniciar_loja(
+        self,
+        loja: LojaDiretaInter,
+        momento: datetime,
+        versao: str,
+        *,
+        rodada_id: int | None = None,
+    ) -> int:
+        import psycopg
+
+        if rodada_id is None:
+            raise ConfiguracaoProdutosInterInvalida(
+                "A coleta persistente exige uma rodada coordenadora.", codigo="banco"
+            )
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(self.INICIA_LOJA, (rodada_id, loja.id_externo, momento))
                 linha = cursor.fetchone()
                 if not linha:
                     raise RuntimeError("Loja direta nao esta selecionada")
@@ -312,6 +427,7 @@ class RepositorioProdutosInterPostgres:
         import psycopg
 
         try:
+            linhas = [_linha_estagio(execucao_id, produto) for produto in produtos]
             with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
                 cursor.execute(
                     "SELECT id FROM loja_direta_inter WHERE id_externo = %s", (loja.id_externo,)
@@ -320,25 +436,14 @@ class RepositorioProdutosInterPostgres:
                 if not linha_loja:
                     raise RuntimeError("Loja direta ausente")
                 loja_id = int(linha_loja[0])
-                # A preparacao inteira vive em memoria ate aqui. Dentro desta
-                # transacao, inativacao, snapshot e medicoes entram ou saem juntas.
-                cursor.execute(self.INATIVA_PRODUTOS, (loja_id,))
-                for produto in produtos:
-                    cursor.execute(self.UPSERT_PRODUTO, _linha_produto(loja_id, produto))
-                    linha_produto = cursor.fetchone()
-                    if not linha_produto:
-                        raise RuntimeError("Produto sem RETURNING")
-                    cursor.execute(
-                        self.INSERE_MEDICAO,
-                        (
-                            int(linha_produto[0]),
-                            execucao_id,
-                            resumo.concluida_em,
-                            produto.preco_atual_valor,
-                            produto.cashback_valor,
-                            produto.preco_liquido_valor,
-                        ),
-                    )
+                if linhas:
+                    cursor.executemany(self.INSERE_ESTAGIO, linhas)
+                cursor.execute(self.PUBLICA_IDENTIDADES, (loja_id, execucao_id))
+                cursor.execute(self.INATIVA_AUSENTES, (loja_id, execucao_id))
+                cursor.execute(
+                    self.INSERE_MEDICOES,
+                    (resumo.concluida_em, loja_id, execucao_id),
+                )
                 cursor.execute(
                     self.CONCLUI_LOJA,
                     (
@@ -351,8 +456,14 @@ class RepositorioProdutosInterPostgres:
                         execucao_id,
                     ),
                 )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("Execucao da loja nao estava iniciada")
+                cursor.execute(
+                    "DELETE FROM estagio_produto_inter WHERE execucao_loja_produtos_inter_id = %s",
+                    (execucao_id,),
+                )
                 cursor.execute(self.EXPURGA_MEDICOES)
-        except (psycopg.Error, RuntimeError) as erro:
+        except (psycopg.Error, RuntimeError, ValueError) as erro:
             raise FalhaAoGuardarProdutosInter(
                 f"Falha ao publicar catalogo de produtos: {type(erro).__name__}.", codigo="banco"
             ) from None
@@ -368,43 +479,77 @@ class RepositorioProdutosInterPostgres:
                 f"Falha ao registrar erro de produtos: {type(erro).__name__}.", codigo="banco"
             ) from None
 
+    def concluir_rodada(self, rodada_id: int, momento: datetime) -> str:
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(self.RESUMO_RODADA, (rodada_id,))
+                linha = cursor.fetchone()
+                if not linha:
+                    raise RuntimeError("Rodada nao encontrada")
+                planejadas, sucessos = (int(linha[0]), int(linha[1]))
+                falhas = max(0, planejadas - sucessos)
+                if falhas == 0:
+                    estado = "sucesso"
+                elif sucessos > 0:
+                    estado = "parcial"
+                else:
+                    estado = "falha"
+                codigo = None if estado == "sucesso" else "inesperada"
+                cursor.execute(
+                    self.CONCLUI_RODADA,
+                    (momento, estado, sucessos, falhas, codigo, rodada_id),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("Rodada nao estava iniciada")
+                return estado
+        except (psycopg.Error, RuntimeError) as erro:
+            raise FalhaAoGuardarProdutosInter(
+                f"Falha ao concluir rodada de produtos: {type(erro).__name__}.", codigo="banco"
+            ) from None
+
 
 def _linha_loja(loja: LojaDiretaInter) -> dict[str, object]:
+    partes = [loja.nome, loja.slug]
+    if loja.slug == "ponto":
+        partes.extend(["Ponto Frio", "Pontofrio"])
     return {
         "id_externo": loja.id_externo,
         "slug": loja.slug,
         "nome": loja.nome,
-        "nome_busca": normalizar_busca_produtos(loja.nome),
-        "slug_busca": normalizar_busca_produtos(loja.slug),
+        "nome_busca": normalizar_busca_produtos(" ".join(partes)),
     }
 
 
-def _linha_produto(loja_id: int, produto: ProdutoDiretoInter) -> dict[str, object]:
+def _linha_estagio(execucao_id: int, produto: ProdutoDiretoInter) -> dict[str, object]:
+    if produto.preco_atual_texto is None or produto.preco_atual_valor is None:
+        raise ValueError("Produto sem preco atual")
     return {
-        "loja_id": loja_id,
+        "execucao_id": execucao_id,
         "id_externo": produto.id_externo,
         "nome": produto.nome,
         "nome_busca": normalizar_busca_produtos(
             " ".join(parte for parte in (produto.nome, produto.marca, produto.categoria) if parte)
         ),
+        "caminho": produto.caminho,
         "marca": produto.marca,
         "categoria": produto.categoria,
-        "caminho": produto.caminho,
-        "preco_cheio_texto": produto.preco_cheio_texto,
-        "preco_cheio_valor": produto.preco_cheio_valor,
-        "preco_atual_texto": produto.preco_atual_texto,
-        "preco_atual_valor": produto.preco_atual_valor,
-        "desconto_texto": produto.desconto_texto,
-        "desconto_valor": produto.desconto_valor,
-        "desconto_percentual_texto": produto.desconto_percentual_texto,
-        "desconto_percentual_valor": produto.desconto_percentual_valor,
-        "cashback_texto": produto.cashback_texto,
-        "cashback_valor": produto.cashback_valor,
-        "cashback_percentual_texto": produto.cashback_percentual_texto,
-        "cashback_percentual_valor": produto.cashback_percentual_valor,
-        "preco_liquido_texto": produto.preco_liquido_texto,
-        "preco_liquido_valor": produto.preco_liquido_valor,
         "parcelamento": produto.parcelamento,
         "estoque": produto.estoque,
         "etiquetas": list(produto.etiquetas),
+        "preco_lista_texto": produto.preco_cheio_texto,
+        "preco_lista": produto.preco_cheio_valor,
+        "desconto_texto": produto.desconto_texto,
+        "desconto_valor": produto.desconto_valor,
+        "desconto_percentual_texto": produto.desconto_percentual_texto,
+        "desconto_percentual": produto.desconto_percentual_valor,
+        "preco_atual_texto": produto.preco_atual_texto,
+        "preco_atual": produto.preco_atual_valor,
+        "cashback_texto": produto.cashback_texto,
+        "cashback_valor": produto.cashback_valor,
+        "cashback_percentual_texto": produto.cashback_percentual_texto,
+        "cashback_percentual": produto.cashback_percentual_valor,
+        "preco_liquido_texto": produto.preco_liquido_texto,
+        "preco_liquido": produto.preco_liquido_valor,
     }

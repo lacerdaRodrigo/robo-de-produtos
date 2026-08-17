@@ -1,0 +1,93 @@
+name: produtos-shopping-inter
+
+on:
+  schedule:
+    # Meia hora depois dos outros coletores para reduzir sobreposicao de rede.
+    # 12h30/17h30/23h30 UTC = 09h30/14h30/20h30 de Brasilia (UTC-3).
+    - cron: "30 12,17,23 * * *"
+  workflow_dispatch:
+
+# Uma rodada termina antes da proxima comecar; snapshot parcial nunca e publicado.
+concurrency:
+  group: produtos-shopping-inter
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      execucao_id: ${{ steps.preparar.outputs.execucao_id }}
+      lojas: ${{ steps.preparar.outputs.lojas }}
+      tem_lojas: ${{ steps.preparar.outputs.tem_lojas }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e .
+
+      - name: Sincronizar vendedores e preparar matriz
+        id: preparar
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m robo_livelo.principal_produtos_inter preparar >> "$GITHUB_OUTPUT"
+
+  coletar:
+    needs: preparar
+    if: needs.preparar.outputs.tem_lojas == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        loja: ${{ fromJSON(needs.preparar.outputs.lojas) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e .
+
+      - name: Coletar loja selecionada
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: >-
+          python -m robo_livelo.principal_produtos_inter coletar
+          --execucao-id "${{ needs.preparar.outputs.execucao_id }}"
+          --loja-id "${{ matrix.loja }}"
+
+  concluir:
+    needs: [preparar, coletar]
+    if: always() && needs.preparar.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -e .
+
+      - name: Consolidar resultado da rodada
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: >-
+          python -m robo_livelo.principal_produtos_inter concluir
+          --execucao-id "${{ needs.preparar.outputs.execucao_id }}"

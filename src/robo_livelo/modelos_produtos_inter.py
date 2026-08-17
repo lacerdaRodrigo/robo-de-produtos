@@ -42,7 +42,7 @@ class ProdutoDiretoInter:
     preco_liquido_texto: str | None = None
     preco_liquido_valor: Decimal | None = None
     parcelamento: str | None = None
-    estoque: str | None = None
+    estoque: int | None = None
     etiquetas: tuple[str, ...] = field(default_factory=tuple)
 
 

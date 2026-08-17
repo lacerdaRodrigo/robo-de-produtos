@@ -25,5 +25,6 @@ export function moeda(texto: string | null): string | null {
 
 export function percentual(texto: string | null): string | null {
   if (texto === null) return null;
-  return `${texto.replace(".", ",")}%`;
+  const localizado = texto.replace(".", ",");
+  return localizado.includes("%") ? localizado : `${localizado}%`;
 }

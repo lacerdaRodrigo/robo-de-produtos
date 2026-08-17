@@ -15,7 +15,7 @@ Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde q
 
 ## O que é este projeto
 
-Radar pessoal de benefícios com duas integrações implementadas e uma terceira planejada. A Livelo filtra as lojas favoritas e envia e-mail quando a pontuação cruza a régua de alerta. O Shopping Inter mantém catálogo próprio, permite selecionar lojas e mostra cashback e condições no site, sem e-mail. A V4 planeja coletar o catálogo de produtos da área Compre direto somente para lojas escolhidas, com busca local e histórico de 30 dias. Os domínios permanecem separados e usam o mesmo Postgres (Neon) somente como infraestrutura.
+Radar pessoal de benefícios com três integrações. A Livelo filtra lojas favoritas e envia e-mail quando a pontuação cruza a régua. O Shopping Inter mantém o catálogo de Sites parceiros. A V4 coleta produtos da área Compre direto somente para lojas escolhidas, com busca local e histórico de 30 dias. Os domínios permanecem separados e usam o mesmo Postgres (Neon) somente como infraestrutura.
 
 ## Regras de ouro
 
@@ -60,7 +60,7 @@ A V2.3.2 está fechada: `robo.yml` ganhou o input `enviar_email` do `workflow_di
 
 A V3.0–V3.3 do Shopping Inter está **implementada e validada no workspace** desde 2026-08-14. O coletor usa o endpoint público fixo, mantém domínio/portas/tabelas/workflow separados da Livelo e não envia e-mail. A migração `006` foi aplicada no Neon e a primeira sincronização real gravou 381 lojas com estado `sucesso`; nenhuma favorita foi escolhida ainda. As rotas novas são `/inter` e `/inter/lojas`. O código ainda precisa ser enviado à `main` para o workflow `inter.yml` existir no GitHub e a Vercel publicar essas páginas. A fonte da verdade desta integração é o [`docs/PRD-V3.md`](docs/PRD-V3.md).
 
-A V4 implementa a área Compre direto no Inter como terceira integração: seleciona qualquer quantidade de lojas, pagina todo o catálogo exposto de cada uma, busca somente no banco e guarda 30 dias de histórico. V4.1–V4.4 possuem o domínio puro, medidor sem escrita, migração `007`, publicação atômica por loja e rotas `/inter/produtos`, `/inter/produtos/lojas` e histórico. A validação real progressiva (uma loja, depois Casas Bahia + Ponto), o dimensionamento observado e o workflow matricial continuam pendentes; este último é V4.5 e não pode ser adiantado pelo site.
+A V4 implementa a área Compre direto no Inter como terceira integração: seleciona qualquer quantidade de lojas, pagina o catálogo exposto, busca somente no banco e guarda 30 dias de histórico. Em 2026-08-17 o contrato real foi corrigido (`sellers` na raiz, caminhos relativos com `?v=`, tags como objetos e marca/categoria/estoque em `skus`), a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos. A janela vazia termina na letra M; por isso a coleta une uma partição fixa `smartphone`, que trouxe o Edge 60 Pro sem transformar o site em proxy. O workflow V4.5 usa matriz dinâmica, `max-parallel: 2` e pausa de 1,5 s. Ponto e o dimensionamento para mais lojas continuam pendentes.
 
 O e-mail foi redesenhado em 2026-08-13 (bloco de cor sólida por oferta, descrição de campanha expansível sem JavaScript, marca "Pontuação Livelo" no topo e no rodapé) e o site ganhou logo própria no cabeçalho, rodapé e título do navegador — raciocínio completo, incluindo o orçamento de bytes contra o corte do Gmail (C05) e como regenerar os PNGs, em [`docs/EMAIL.md`](docs/EMAIL.md).
 
