@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.28.0 (2026-08-17)
+
+### Features
+
+- **inter**: Contabiliza produtos ativos das lojas
+  ([`79512c4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/79512c49004fa2154fa4328d6bd1a695d4bbdd5b))
+
+- **inter**: Exibe total de produtos coletados
+  ([`0eceadd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/0eceadd2f3e33baf6904c4353d57e6d03f37498f))
+
+
 ## v1.27.0 (2026-08-17)
 
 ### Bug Fixes
