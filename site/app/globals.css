@@ -10,30 +10,29 @@
    de "isso pede atencao" (cartao alertou, etiqueta de alerta). */
 
 :root {
-  --fundo: #f4f4f8;
+  --fundo: #f7f8fc;
   --superficie: #ffffff;
-  --superficie-2: #f3f4f6;
+  --superficie-2: #f0f4ff;
   --superficie-rgb: 255, 255, 255;
-  --borda: #e5e7eb;
-  --texto: #111827;
-  --suave: #6b7280;
-  --acento: #e11d48;
-  --acento-fraco: #ffe4e6;
-  --marca: #4f46e5;
-  --marca-forte: #4338ca;
-  --marca-fraco: #eef2ff;
-  --urgente: #dc2626;
-  --ok: #16a34a;
-  --sombra: 0 4px 6px -1px rgb(0 0 0 / 5%), 0 2px 4px -2px rgb(0 0 0 / 5%);
-  --sombra-hover: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 5%);
+  --borda: #dfe4ef;
+  --texto: #172033;
+  --suave: #667085;
+  --acento: #ef5b5b;
+  --acento-fraco: #fff0ed;
+  --marca: #5b5ce2;
+  --marca-forte: #4344c5;
+  --marca-fraco: #eeefff;
+  --urgente: #d92d20;
+  --ok: #07966f;
+  --sombra: 0 8px 24px rgb(23 32 51 / 7%);
+  --sombra-hover: 0 16px 38px rgb(23 32 51 / 12%);
 
-  /* Barra lateral: identidade de marca, sempre escura — nao segue o tema
-     claro/escuro do resto da pagina, igual a logomarca nao trocaria de cor. */
-  --lateral-fundo: #0f172a;
-  --lateral-superficie: #1e293b;
-  --lateral-borda: #1e293b;
-  --lateral-texto: #f8fafc;
-  --lateral-suave: #94a3b8;
+  /* Navegação clara: confortável no celular e separada por borda/sombra. */
+  --lateral-fundo: #ffffff;
+  --lateral-superficie: #f0f4ff;
+  --lateral-borda: #dfe4ef;
+  --lateral-texto: #172033;
+  --lateral-suave: #667085;
 
   --e1: 4px;
   --e2: 8px;
@@ -51,27 +50,6 @@
 /* Tema (V2.3.3): "auto" nao grava cookie e segue o sistema — e o bloco
    abaixo. Escolha explicita vira atributo em <html data-tema>, lido por
    lib/tema.ts a partir do cookie, e vence tanto o claro quanto o escuro. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]) {
-    --fundo: #0f1115;
-    --superficie: #191c24;
-    --superficie-2: #242833;
-    --superficie-rgb: 25, 28, 36;
-    --borda: #333845;
-    --texto: #f9fafb;
-    --suave: #9ca3af;
-    --acento: #fb7185;
-    --acento-fraco: #4c1d2e;
-    --marca: #818cf8;
-    --marca-forte: #a5b4fc;
-    --marca-fraco: #1e1b4b;
-    --urgente: #f87171;
-    --ok: #4ade80;
-    --sombra: 0 4px 6px -1px rgb(0 0 0 / 30%);
-    --sombra-hover: 0 10px 15px -3px rgb(0 0 0 / 50%);
-  }
-}
-
 :root[data-tema="escuro"] {
   --fundo: #0f1115;
   --superficie: #191c24;
@@ -1758,3 +1736,78 @@ th {
   }
 }
 
+
+
+/* V4.7 — acabamento claro e arejado */
+body {
+  background:
+    radial-gradient(circle at 88% 2%, rgb(91 92 226 / 9%), transparent 28rem),
+    var(--fundo);
+}
+
+.barra-lateral {
+  border-right: 1px solid var(--lateral-borda);
+}
+
+.bl-marca,
+.bl-item[aria-current="page"] {
+  color: var(--lateral-texto);
+}
+
+.bl-item[aria-current="page"] {
+  background: var(--marca-fraco);
+  box-shadow: inset 3px 0 0 var(--marca);
+}
+
+.bl-item:hover {
+  color: var(--marca-forte);
+}
+
+.cartao,
+.marco-versao,
+.seletor-robos {
+  border-color: color-mix(in srgb, var(--marca) 10%, var(--borda));
+}
+
+.cartao:hover {
+  border-color: color-mix(in srgb, var(--marca) 35%, var(--borda));
+}
+
+@media (max-width: 760px) {
+  .cabecalho-movel {
+    background: rgb(255 255 255 / 94%);
+    color: var(--texto);
+    border-bottom: 1px solid var(--borda);
+    box-shadow: 0 8px 28px rgb(23 32 51 / 9%);
+    backdrop-filter: blur(14px);
+  }
+
+  .cabecalho-marca,
+  .cabecalho-icone {
+    color: var(--texto);
+  }
+
+  .cabecalho-icone:hover {
+    color: var(--marca);
+    background: var(--marca-fraco);
+  }
+
+  .barra-lateral {
+    border-right: 1px solid var(--borda);
+    box-shadow: 16px 0 45px rgb(23 32 51 / 16%);
+  }
+
+  .menu-fechar {
+    background: var(--marca-fraco);
+    color: var(--marca-forte);
+  }
+
+  .menu-fundo {
+    background: rgb(23 32 51 / 38%);
+    backdrop-filter: blur(2px);
+  }
+
+  .seletor-robos {
+    background: transparent;
+  }
+}
