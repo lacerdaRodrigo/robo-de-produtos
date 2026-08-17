@@ -16,9 +16,9 @@ import {
   ordenarCashbacksInter,
   ordenarCashbacksPorNome,
 } from "@/lib/formato-inter";
+import { BuscaProgressiva } from "../componentes/busca-progressiva";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Rodape } from "../rodape";
-import { BuscaInter } from "./busca-inter";
 
 export const dynamic = "force-dynamic";
 
@@ -185,7 +185,7 @@ export default async function PaginaInter({
             <Link href="/inter/lojas">Gerenciar lojas</Link>
           </div>
           <div id="busca-principal" className="busca-vitrine">
-        <BuscaInter
+        <BuscaProgressiva
           acao="/inter"
           valorInicial={q}
           placeholder="Procurar nas suas lojas"
