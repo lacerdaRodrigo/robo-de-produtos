@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 export default async function RaizDoLayout({ children }: { children: React.ReactNode }) {
   const tema = await temaAtual();
   return (
-    // "auto" nao vira atributo: sem ele, o CSS segue prefers-color-scheme
-    // do sistema, que e o padrao quando ninguem escolheu nada.
-    <html lang="pt-BR" data-tema={tema === "auto" ? undefined : tema}>
+    // O modo automático prioriza o tema claro para manter conforto e
+    // consistência no celular. O escuro só aparece quando escolhido.
+    <html lang="pt-BR" data-tema={tema === "auto" ? "claro" : tema}>
       <body>{children}</body>
     </html>
   );
