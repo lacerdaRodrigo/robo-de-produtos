@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { temaAtual } from "@/lib/tema";
 import "./globals.css";
+import "./design-system.css";
 
 export const metadata: Metadata = {
   title: "Radar de Benefícios — Livelo e Shopping Inter",
@@ -11,12 +11,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function RaizDoLayout({ children }: { children: React.ReactNode }) {
-  const tema = await temaAtual();
+export default function RaizDoLayout({ children }: { children: React.ReactNode }) {
   return (
-    // "auto" nao vira atributo: sem ele, o CSS segue prefers-color-scheme
-    // do sistema, que e o padrao quando ninguem escolheu nada.
-    <html lang="pt-BR" data-tema={tema === "auto" ? undefined : tema}>
+    // Interface deliberadamente clara: evita misturar superfícies quando
+    // existir um cookie antigo de preferência escura no navegador.
+    <html lang="pt-BR" data-tema="claro">
       <body>{children}</body>
     </html>
   );

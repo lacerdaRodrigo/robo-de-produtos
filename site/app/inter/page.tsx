@@ -17,6 +17,7 @@ import {
   ordenarCashbacksPorNome,
 } from "@/lib/formato-inter";
 import { Cabecalho } from "../componentes/cabecalho";
+import { SeletorDeRobos } from "../componentes/seletor-robos";
 import { Rodape } from "../rodape";
 import { BuscaInter } from "./busca-inter";
 
@@ -31,7 +32,7 @@ function CartaoInter({
 }) {
   if (!loja.encontrada) {
     return (
-      <article className="cartao">
+      <article className="cartao cartao-inter">
         <span className="nome">{loja.nome}</span>
         <p className="detalhe">
           Não encontrada nesta consulta. Ela continua nas suas favoritas.
@@ -41,31 +42,30 @@ function CartaoInter({
   }
 
   return (
-    <article className="cartao">
-      <div className="linha">
+    <article className="cartao cartao-inter">
+      <div className="cartao-inter-topo">
+        <span className="logo-loja" aria-hidden="true">{loja.nome.slice(0, 1).toUpperCase()}</span>
         <div className="cartao-titulo">
           <span className="nome">{loja.nome}</span>
           {loja.etiqueta && <span className="etiqueta">{loja.etiqueta}</span>}
         </div>
-        <div className="pontos-container">
+        <div className="pontos-container cashback-destaque">
           <span className="pontos cashback-texto">{loja.cashback_principal_texto}</span>
           <span className="pontos-sub">Cliente Inter Shopping</span>
         </div>
       </div>
 
-      <p className="detalhe descricao-inter">{descricaoInter(loja.descricao_principal)}</p>
-
-      <p className="detalhe">Coletado em {dataHora(coletadoEm)}</p>
-
-      {(loja.cashback_secundario_texto || loja.descricao_secundaria) && (
-        <details className="condicoes-inter">
-          <summary>Oferta para não-correntista</summary>
-          {loja.cashback_secundario_texto && (
-            <strong>{loja.cashback_secundario_texto}</strong>
-          )}
-          {loja.descricao_secundaria && <p>{loja.descricao_secundaria}</p>}
-        </details>
-      )}
+      <details className="detalhes-oferta">
+        <summary>Ver condições da oferta</summary>
+        <p className="detalhe descricao-inter">{descricaoInter(loja.descricao_principal)}</p>
+        <p className="detalhe">Atualizado em {dataHora(coletadoEm)}</p>
+        {(loja.cashback_secundario_texto || loja.descricao_secundaria) && (
+          <div className="condicoes-inter">
+            <strong>Para não-correntista: {loja.cashback_secundario_texto ?? "consulte as condições"}</strong>
+            {loja.descricao_secundaria && <p>{loja.descricao_secundaria}</p>}
+          </div>
+        )}
+      </details>
 
       <div className="acoes-do-cartao">
         <a className="botao secundario" href={LINK_SHOPPING_INTER}>
@@ -109,6 +109,7 @@ export default async function PaginaInter({
       <>
         <Cabecalho atual="/inter" />
         <main className="pagina">
+          <SeletorDeRobos atual="/inter" />
           <h1>Shopping Inter</h1>
           <p className="faixa ruim">
             {falhaNoBanco
@@ -146,10 +147,18 @@ export default async function PaginaInter({
     <>
       <Cabecalho atual="/inter" />
       <main className="pagina">
-        <p className={idade.atrasado ? "carimbo velho" : "carimbo"}>
-          Sincronizado {idade.texto} ({dataHora(concluidaEm)})
-          {idade.atrasado && " — dados atrasados"}
-        </p>
+          <SeletorDeRobos atual="/inter" />
+        <section className="cabecalho-vitrine">
+          <div>
+            <span className="hero-rotulo">Oportunidades selecionadas</span>
+            <h1>Cashback que vale a pena</h1>
+            <p>Compare suas lojas favoritas e encontre o melhor retorno sem perder tempo.</p>
+          </div>
+          <span className={idade.atrasado ? "status-dados atrasado" : "status-dados"}>
+            <span aria-hidden="true" />
+            Atualizado {idade.texto}
+          </span>
+        </section>
 
         {tentativa?.estado === "falha" && tentativa.id !== sucesso.id && (
           <p className="faixa ruim">
@@ -158,22 +167,27 @@ export default async function PaginaInter({
           </p>
         )}
 
-        <div className="hero-painel">
-          <div className="hero-cabecalho">
-            <div>
-              <span className="hero-rotulo">Radar de Benefícios</span>
-              <h1>Shopping Inter</h1>
-            </div>
-          </div>
-          <div className="hero-metricas">
-            <span>{todas.length} lojas acompanhadas</span>
-            <span>{sucesso.lojas_validas} lojas lidas no catálogo</span>
-            <span>
-              Maior cashback: {maiorCashback?.cashback_principal_texto ?? "sem valor numérico"}
-            </span>
-          </div>
-        </div>
+        <section className="resumo-vitrine" aria-label="Resumo do cashback">
+          <article>
+            <span className="resumo-icone" aria-hidden="true">★</span>
+            <div><strong>{maiorCashback?.cashback_principal_texto ?? "—"}</strong><small>melhor cashback</small></div>
+          </article>
+          <article>
+            <span className="resumo-icone lojas" aria-hidden="true">⌂</span>
+            <div><strong>{todas.length}</strong><small>lojas acompanhadas</small></div>
+          </article>
+          <article>
+            <span className="resumo-icone catalogo" aria-hidden="true">✓</span>
+            <div><strong>{sucesso.lojas_validas}</strong><small>lojas verificadas</small></div>
+          </article>
+        </section>
 
+        <section className="explorar-vitrine">
+          <div className="titulo-explorar">
+            <div><span className="hero-rotulo">Suas favoritas</span><h2>Explore as ofertas</h2></div>
+            <Link href="/inter/lojas">Gerenciar lojas</Link>
+          </div>
+          <div id="busca-principal" className="busca-vitrine">
         <BuscaInter
           acao="/inter"
           valorInicial={q}
@@ -181,6 +195,7 @@ export default async function PaginaInter({
           rotulo="Procurar nas favoritas do Shopping Inter"
           parametrosFixos={{ ordenar }}
         />
+          </div>
 
         <div className="controles-ordenacao">
           <span className="rotulo-ordenacao">Ordenar:</span>
@@ -206,6 +221,8 @@ export default async function PaginaInter({
           })}
         </div>
 
+        </section>
+
         {lojas.length === 0 ? (
           <p className="vazio">
             {todas.length === 0
@@ -214,7 +231,7 @@ export default async function PaginaInter({
             <Link href="/inter/lojas">Escolher lojas</Link>
           </p>
         ) : (
-          <div className="lista-grade">
+          <div className="lista-grade grade-cashback">
             {lojas.map((loja) => (
               <CartaoInter key={loja.id_externo} loja={loja} coletadoEm={concluidaEm} />
             ))}

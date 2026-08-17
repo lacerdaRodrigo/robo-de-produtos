@@ -62,7 +62,10 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.semantic_release]
 # Versao vem dos commits: fix -> patch, feat -> minor, feat! -> major.
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/robo_livelo/__init__.py:__version__"]
+version_variables = [
+    "src/robo_livelo/__init__.py:__version__",
+    "site/lib/versao.ts:VERSAO_ATUAL",
+]
 commit_message = "chore(release): {version}"
 changelog_file = "CHANGELOG.md"
 build_command = ""

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { telaDeAlertasEscondida } from "@/lib/flags";
 import { temSessao } from "@/lib/sessao";
+import { VERSAO_ATUAL } from "@/lib/versao";
 
 /**
  * PRD-V2 9.3: aviso de nao afiliacao em toda pagina, mais a versao que gerou
@@ -30,6 +31,7 @@ export async function Rodape({
         {logado && !alertasEscondidos && <Link href="/avisos">Alertas Livelo</Link>}
         {logado && <Link href="/lojas">Lojas Livelo</Link>}
         {logado && <Link href="/inter/lojas">Lojas Inter</Link>}
+        <Link href="/versoes">Versões</Link>
         <Link href="/ajuda">Ajuda</Link>
       </nav>
       {fonte === "inter" ? (
@@ -49,7 +51,7 @@ export async function Rodape({
       )}
       <p className="marca-rodape">
         <img src="/logo.png" alt="" width={16} height={16} />
-        Radar de Benefícios {versao ? `v${versao}` : ""}
+        Radar de Benefícios v{versao ?? VERSAO_ATUAL}
       </p>
     </footer>
   );
