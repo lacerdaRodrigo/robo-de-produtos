@@ -190,6 +190,16 @@ class FonteFakeProdutos:
         return self.respostas[chave] if chave in self.respostas else self.respostas[offset]
 
 
+class FonteSequencialProdutos:
+    def __init__(self, respostas: list[str]):
+        self.respostas = iter(respostas)
+        self.chamadas: list[tuple[str, int, int, str]] = []
+
+    def pagina(self, loja, search_id, offset, limite, *, busca=""):
+        self.chamadas.append((search_id, offset, limite, busca))
+        return next(self.respostas)
+
+
 class RepositorioFakeProdutos:
     def __init__(self):
         self.publicadas = []
@@ -300,3 +310,64 @@ def teste_ct205_total_positivo_sem_produto_valido_preserva_snapshot():
 def teste_ct205_resposta_sem_raiz_paginada_falha(conteudo):
     with pytest.raises(RespostaProdutosInterInvalida):
         extrair_pagina_produtos(conteudo, id_loja="loja-1")
+
+
+def teste_ct209_total_muda_reinicia_segmento_sem_publicar_tentativa_parcial():
+    fonte = FonteSequencialProdutos(
+        [
+            pagina(0, False, produto("tentativa-antiga"), total=72),
+            pagina(36, True, produto("mudou"), total=73),
+            pagina(0, True, produto("novo-1"), produto("novo-2"), total=2),
+        ]
+    )
+    repositorio = RepositorioFakeProdutos()
+    ids = iter(("uuid-instavel", "uuid-estavel"))
+
+    resumo = coletar_produtos_de_loja(
+        fonte,
+        repositorio,
+        LOJA,
+        agora=AGORA,
+        gerar_uuid=lambda: next(ids),
+    )
+
+    assert [chamada[:2] for chamada in fonte.chamadas] == [
+        ("uuid-instavel", 0),
+        ("uuid-instavel", 36),
+        ("uuid-estavel", 0),
+    ]
+    assert resumo.total_declarado == 2
+    assert resumo.paginas == 1
+    assert resumo.itens_lidos == 2
+    assert [item.id_externo for item in repositorio.publicadas[0][2]] == [
+        "novo-1",
+        "novo-2",
+    ]
+    assert repositorio.falhas == []
+
+
+def teste_ct209_total_continua_mudando_falha_apos_tres_tentativas():
+    respostas = []
+    for indice in range(3):
+        respostas.extend(
+            [
+                pagina(0, False, produto(f"inicio-{indice}"), total=72),
+                pagina(36, True, produto(f"mudou-{indice}"), total=73),
+            ]
+        )
+    fonte = FonteSequencialProdutos(respostas)
+    repositorio = RepositorioFakeProdutos()
+    ids = iter(("uuid-1", "uuid-2", "uuid-3"))
+
+    with pytest.raises(PaginacaoProdutosInterInvalida, match="mudou o total"):
+        coletar_produtos_de_loja(
+            fonte,
+            repositorio,
+            LOJA,
+            agora=AGORA,
+            gerar_uuid=lambda: next(ids),
+        )
+
+    assert len(fonte.chamadas) == 6
+    assert repositorio.publicadas == []
+    assert repositorio.falhas == [(77, "total_incoerente")]
