@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { temaAtual } from "@/lib/tema";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,12 +10,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function RaizDoLayout({ children }: { children: React.ReactNode }) {
-  const tema = await temaAtual();
+export default function RaizDoLayout({ children }: { children: React.ReactNode }) {
   return (
-    // O modo automático prioriza o tema claro para manter conforto e
-    // consistência no celular. O escuro só aparece quando escolhido.
-    <html lang="pt-BR" data-tema={tema === "auto" ? "claro" : tema}>
+    // Interface deliberadamente clara: evita misturar superfícies quando
+    // existir um cookie antigo de preferência escura no navegador.
+    <html lang="pt-BR" data-tema="claro">
       <body>{children}</body>
     </html>
   );
