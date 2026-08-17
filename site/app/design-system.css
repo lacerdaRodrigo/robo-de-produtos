@@ -115,3 +115,20 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
   .cabecalho-marca span{font-size:.84rem}
   .grade-cashback{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* V4.10 — navegação orientada a tarefas */
+.bl-nav-simples{display:flex;flex-direction:column;align-items:stretch;gap:10px;overflow:visible}
+.bl-grupo{width:100%;border:1px solid #e6e8f0;border-radius:16px;background:#fff;overflow:hidden}
+.bl-grupo>summary{min-height:62px;display:grid;grid-template-columns:38px 1fr 24px;align-items:center;gap:10px;padding:11px 12px;list-style:none;cursor:pointer;color:var(--texto);transition:background .15s}
+.bl-grupo>summary::-webkit-details-marker{display:none}.bl-grupo>summary:hover{background:#f8f8fc}
+.bl-grupo>summary>span:nth-child(2){display:flex;min-width:0;flex-direction:column}.bl-grupo>summary strong{font-size:.95rem}.bl-grupo>summary small{color:var(--suave);font-size:.7rem}
+.bl-grupo-icone{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;color:var(--marca-forte);background:var(--marca-fraco)}
+.bl-grupo-seta{color:var(--suave);font-size:1.15rem;transition:transform .18s}.bl-grupo[open] .bl-grupo-seta{transform:rotate(180deg)}
+.bl-grupo-itens{display:grid;gap:3px;padding:4px 8px 9px;border-top:1px solid #eff0f5}
+.bl-subitem{min-height:52px;padding:8px 10px;border-radius:11px}.bl-subitem svg{width:17px;height:17px}
+.bl-item-conteudo{min-width:0;display:flex;flex-direction:column;text-align:left}.bl-item-conteudo strong{overflow:hidden;font-size:.8rem;text-overflow:ellipsis;white-space:nowrap}.bl-item-conteudo small{overflow:hidden;color:var(--suave);font-size:.66rem;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
+.bl-subitem[aria-current="page"]{color:var(--marca-forte);background:var(--marca-fraco);box-shadow:none}
+.bl-executar{color:#08765f;background:#e7f8f2;box-shadow:none}.bl-executar:hover{color:#075f4e;background:#d8f3ea}.bl-executar:disabled{color:#98a09e;background:#f2f4f3}
+@media(min-width:768px){.bl-nav-simples{overflow-y:auto}.bl-grupo>summary{grid-template-columns:34px 1fr 20px;padding:9px 10px}.bl-grupo-icone{width:34px;height:34px}.bl-subitem{padding-inline:9px}}
+@media(max-width:760px){.bl-nav-simples{flex:0 0 auto}.bl-grupo{border-color:#e3e6ef;border-radius:15px}.bl-grupo>summary{min-height:66px}.bl-grupo-itens{padding:6px 8px 10px}.bl-subitem{min-height:56px}.bl-item-conteudo strong{font-size:.88rem}.bl-item-conteudo small{font-size:.7rem}}
