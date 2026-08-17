@@ -146,7 +146,7 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
 
 .paginacao-resumo {
   margin: 0;
-  color: var(--texto-suave);
+  color: var(--suave);
   font-size: 0.92rem;
   text-align: center;
 }
@@ -175,16 +175,16 @@ img,svg{max-width:100%}.rolagem,.tabela-rolavel{max-width:100%;overflow-x:auto}
 }
 
 .botao-paginacao:hover {
-  border-color: var(--primaria);
-  color: var(--primaria);
+  border-color: var(--marca);
+  color: var(--marca);
   transform: translateY(-1px);
 }
 
 .botao-paginacao[aria-current="page"] {
-  border-color: var(--primaria);
-  background: var(--primaria);
+  border-color: var(--marca);
+  background: var(--marca);
   color: #fff;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--primaria) 24%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--marca) 24%, transparent);
 }
 
 .botao-paginacao.desabilitado {
