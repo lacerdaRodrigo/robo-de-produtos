@@ -1673,3 +1673,88 @@ th {
   }
 }
 
+/* ── Histórico público de versões ────────────────────────────────── */
+.hero-versoes p {
+  color: var(--lateral-suave);
+  max-width: 680px;
+}
+
+.versao-atual {
+  display: inline-flex;
+  margin-top: var(--e3);
+  padding: var(--e2) var(--e3);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--marca);
+  font-variant-numeric: tabular-nums;
+}
+
+.semver-explicacao {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--e3);
+}
+
+.semver-explicacao div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  background: var(--superficie-2);
+}
+
+.semver-explicacao strong {
+  color: var(--marca);
+  letter-spacing: 0.08em;
+}
+
+.semver-explicacao span {
+  color: var(--suave);
+  font-size: 0.85rem;
+}
+
+.linha-do-tempo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: var(--e4);
+  margin: var(--e5) 0;
+}
+
+.marco-versao {
+  padding: var(--e4);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+}
+
+.marco-versao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  color: var(--marca);
+}
+
+.marco-versao h2 {
+  margin: var(--e3) 0 var(--e2);
+  font-size: 1.05rem;
+}
+
+.marco-versao p,
+.marco-versao time {
+  color: var(--suave);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .semver-explicacao {
+    grid-template-columns: 1fr;
+  }
+
+  .linha-do-tempo {
+    grid-template-columns: 1fr;
+  }
+}
+
