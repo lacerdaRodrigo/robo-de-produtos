@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { VERSAO_ATUAL } from "@/lib/versao";
 import { Cabecalho } from "../componentes/cabecalho";
-import { SeletorDeRobos } from "../componentes/seletor-robos";
 import { Rodape } from "../rodape";
 
 const MARCOS = [
@@ -55,7 +54,6 @@ export default function PaginaDeVersoes() {
     <>
       <Cabecalho atual="/versoes" />
       <main className="pagina">
-        <SeletorDeRobos atual="" />
 
         <section className="hero-painel hero-versoes">
           <span className="hero-rotulo">Engenharia do projeto</span>
