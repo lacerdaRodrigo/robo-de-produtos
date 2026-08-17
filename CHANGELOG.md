@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.26.0 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Corrige resumo responsivo
+  ([`58c260a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/58c260a0fcd74746801d41d4bd1fd2c3029e697c))
+
+- **inter**: Pagina catalogo completo no banco
+  ([`9be5f98`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9be5f98dcbb4c3fb30f78a50dd24490d9aedd235))
+
+### Features
+
+- **inter**: Pagina todas as lojas de dez em dez
+  ([`203fb8b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/203fb8b7a8f780848cd7baa2d3f837edf822b617))
+
+
 ## v1.25.0 (2026-08-17)
 
 ### Bug Fixes
