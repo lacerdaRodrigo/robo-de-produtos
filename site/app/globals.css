@@ -1352,3 +1352,324 @@ th {
 .tabela-lojas .botao.discreto:hover {
   color: var(--urgente);
 }
+
+/* ── Navegação responsiva e seletor de robôs ─────────────────────── */
+.cabecalho-movel,
+.menu-fundo,
+.menu-fechar {
+  display: none;
+}
+
+.seletor-robos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--e2);
+  margin-bottom: var(--e5);
+  padding: var(--e1);
+  border: 1px solid var(--borda);
+  border-radius: calc(var(--raio) + 2px);
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+}
+
+.seletor-robo {
+  min-width: 0;
+  min-height: var(--toque);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--e3);
+  border-radius: var(--raio-p);
+  color: var(--suave);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.seletor-robo:hover {
+  color: var(--texto);
+  background: var(--superficie-2);
+  transform: translateY(-1px);
+}
+
+.seletor-robo[aria-current="page"] {
+  color: #fff;
+  background: var(--marca);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--marca) 28%, transparent);
+}
+
+.seletor-robo span {
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.seletor-robo small {
+  color: inherit;
+  opacity: 0.78;
+  font-size: 0.72rem;
+}
+
+/* ── Grade visual de cashback ─────────────────────────────────────── */
+.grade-cashback {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.cartao-inter {
+  min-height: 310px;
+  text-align: center;
+  padding: var(--e5) var(--e4) var(--e4);
+}
+
+.cartao-inter-topo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+
+.cartao-inter .cartao-titulo {
+  align-items: center;
+}
+
+.cartao-inter .nome {
+  font-size: 1.15rem;
+}
+
+.logo-loja {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--marca-fraco);
+  color: var(--marca);
+  border: 1px solid color-mix(in srgb, var(--marca) 22%, var(--borda));
+  font-size: 1.7rem;
+  font-weight: 900;
+  box-shadow: var(--sombra);
+}
+
+.cashback-destaque {
+  align-items: center;
+}
+
+.cartao-inter .cashback-texto {
+  max-width: none;
+  text-align: center;
+  color: var(--ok);
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.cartao-inter .descricao-inter {
+  border-left: 0;
+  padding: 0;
+  margin: var(--e2) 0;
+}
+
+.cartao-inter .acoes-do-cartao {
+  margin-top: auto;
+}
+
+.cartao-inter .acoes-do-cartao .botao {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding-top: 76px;
+  }
+
+  .cabecalho-movel {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 70;
+    min-height: 68px;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: var(--e2);
+    padding: 10px var(--e3);
+    background: var(--lateral-fundo);
+    color: var(--lateral-texto);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  }
+
+  .cabecalho-marca {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--e2);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 800;
+  }
+
+  .cabecalho-marca img {
+    border-radius: 7px;
+  }
+
+  .cabecalho-marca span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cabecalho-icone {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #fff;
+  }
+
+  .cabecalho-icone:hover {
+    background: var(--lateral-superficie);
+  }
+
+  .barra-lateral {
+    z-index: 90;
+    width: min(86vw, 390px);
+    transform: translateX(-105%);
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 16px 0 45px rgb(0 0 0 / 25%);
+  }
+
+  .menu-aberto .barra-lateral {
+    transform: translateX(0);
+  }
+
+  .menu-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    width: 100%;
+    min-height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgb(0 0 0 / 55%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .menu-aberto .menu-fundo {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-fechar {
+    position: fixed;
+    top: 14px;
+    left: min(calc(86vw - 56px), 334px);
+    z-index: 100;
+    width: 42px;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--lateral-superficie);
+    color: #fff;
+  }
+
+  .menu-aberto .menu-fechar {
+    display: inline-flex;
+  }
+
+  .pagina {
+    margin-left: 0;
+    width: 100%;
+    padding: var(--e4);
+  }
+
+  .seletor-robos {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-inline: calc(var(--e4) * -1);
+    padding: var(--e2) var(--e4);
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .seletor-robos::-webkit-scrollbar {
+    display: none;
+  }
+
+  .seletor-robo {
+    flex: 0 0 158px;
+    scroll-snap-align: start;
+  }
+
+  .grade-cashback {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--e3);
+  }
+
+  .cartao-inter {
+    min-height: 285px;
+    padding: var(--e4) var(--e3) var(--e3);
+  }
+
+  .cartao-inter .descricao-inter,
+  .cartao-inter .condicoes-inter {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .cabecalho-marca span {
+    font-size: 0.92rem;
+  }
+
+  .grade-cashback {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--e2);
+  }
+
+  .cartao-inter {
+    padding: var(--e3);
+    border-radius: var(--raio-p);
+  }
+
+  .logo-loja {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 1.35rem;
+  }
+
+  .cartao-inter .nome {
+    font-size: 0.95rem;
+  }
+
+  .cartao-inter .cashback-texto {
+    font-size: 1.05rem;
+  }
+
+  .cartao-inter .pontos-sub {
+    font-size: 0.66rem;
+  }
+
+  .cartao-inter .acoes-do-cartao .botao {
+    font-size: 0.75rem;
+    padding-inline: var(--e2);
+  }
+}
+
