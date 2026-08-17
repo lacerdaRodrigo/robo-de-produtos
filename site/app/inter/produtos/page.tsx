@@ -4,7 +4,6 @@ import { buscarProdutosDiretos, resumoLojasDiretas, type ProdutoDireto } from "@
 import { moeda, percentual } from "@/lib/formato-produtos-inter";
 import { dataHora } from "@/lib/formato";
 import { Cabecalho } from "../../componentes/cabecalho";
-import { SeletorDeRobos } from "../../componentes/seletor-robos";
 import { Rodape } from "../../rodape";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +57,6 @@ export default async function PaginaProdutosInter({ searchParams }: { searchPara
   return <>
     <Cabecalho atual="/inter/produtos" />
     <main className="pagina">
-      <SeletorDeRobos atual="/inter/produtos" />
       <h1>Produtos do Shopping Inter</h1>
       <p className="carimbo">Busca local em produtos das {resumo.selecionadas} lojas diretas selecionadas. Nenhuma busca consulta o Inter.</p>
       {falhaNoBanco ? <p className="faixa ruim">Não foi possível consultar o catálogo agora.</p> : <>
