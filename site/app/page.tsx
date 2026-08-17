@@ -17,7 +17,6 @@ import {
 } from "@/lib/formato";
 import { temSessao } from "@/lib/sessao";
 import { Cabecalho } from "./componentes/cabecalho";
-import { SeletorDeRobos } from "./componentes/seletor-robos";
 import { Rodape } from "./rodape";
 
 // Renderizada a cada visita: o nonce da CSP muda por requisicao (ver
@@ -246,7 +245,6 @@ export default async function Pagina({
       <>
         <Cabecalho atual="/" />
         <main className="pagina">
-          <SeletorDeRobos atual="/" />
           <h1>Pontuação Livelo</h1>
           <p className="faixa ruim">
             {falhaNoBanco
@@ -273,7 +271,6 @@ export default async function Pagina({
     <>
       <Cabecalho atual="/" />
       <main className="pagina">
-          <SeletorDeRobos atual="/" />
         {/* RN26: o carimbo e obrigatorio e sempre visivel. Sem ele, pagina
             velha e pagina mentirosa. */}
         <p className={carimbo.velho ? "carimbo velho" : "carimbo"}>
