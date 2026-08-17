@@ -2,6 +2,30 @@
 
 <!-- version list -->
 
+## v1.27.0 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Preserva busca após selecionar loja
+  ([`ff7884b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ff7884b9c00906582e5457abb6f6048167780030))
+
+### Code Style
+
+- **inter**: Redesenha diálogo de remoção
+  ([`61f5f35`](https://github.com/lacerdaRodrigo/robo-livelo/commit/61f5f353afb3066b1f92eefeaf925cc628fd73c2))
+
+### Features
+
+- **inter**: Adiciona confirmação segura em tela
+  ([`e6b5c09`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e6b5c095c4cc127775a4c8b6eff5db611c19bb9c))
+
+- **inter**: Melhora gestão das lojas de produtos
+  ([`72718af`](https://github.com/lacerdaRodrigo/robo-livelo/commit/72718af120a16437872d0b6aef9614857c394241))
+
+- **inter**: Pagina todas as lojas de produtos
+  ([`5fb1add`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5fb1add289fc35bf47ddff09095cd65631ce2e3f))
+
+
 ## v1.26.0 (2026-08-17)
 
 ### Bug Fixes
