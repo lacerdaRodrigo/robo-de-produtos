@@ -32,7 +32,7 @@ def extrair_lojas_diretas(conteudo: str) -> tuple[LojaDiretaInter, ...]:
         bruto = json.loads(conteudo)
     except (json.JSONDecodeError, TypeError) as erro:
         raise RespostaProdutosInterInvalida("JSON de lojas diretas invalido.") from erro
-    itens = bruto.get("data") if isinstance(bruto, dict) else bruto
+    itens = bruto.get("sellers", bruto.get("data")) if isinstance(bruto, dict) else bruto
     if not isinstance(itens, list):
         raise RespostaProdutosInterInvalida("O catalogo de lojas diretas nao e uma lista.")
 
@@ -130,16 +130,18 @@ def _extrair_produto(item: dict[str, object], id_loja: str) -> ProdutoDiretoInte
     vendedor = item.get("sellerId")
     if vendedor is not None and str(vendedor).strip() != id_loja:
         return None
+    skus = item.get("skus")
+    sku = next((sku for sku in skus if isinstance(sku, dict)), {}) if isinstance(skus, list) else {}
     return ProdutoDiretoInter(
         id_externo=_texto_obrigatorio(item, "id", MAX_ID),
         nome=_texto_obrigatorio(item, "name", MAX_NOME),
         caminho=_caminho_seguro(_texto_obrigatorio(item, "slug", MAX_NOME)),
-        marca=_texto_opcional(item.get("brand"), MAX_TEXTO),
-        categoria=_texto_opcional(item.get("categoryName"), MAX_TEXTO),
+        marca=_texto_opcional(item.get("brand") or sku.get("brand"), MAX_TEXTO),
+        categoria=_texto_opcional(item.get("categoryName") or sku.get("categoryName"), MAX_TEXTO),
         preco_cheio_texto=_texto_opcional(item.get("listPrice"), MAX_TEXTO),
         preco_cheio_valor=_decimal(item.get("listPriceValue")),
-        preco_atual_texto=_texto_opcional(item.get("price"), MAX_TEXTO),
-        preco_atual_valor=_decimal(item.get("priceValue")),
+        preco_atual_texto=_texto_obrigatorio(item, "price", MAX_TEXTO),
+        preco_atual_valor=_decimal_obrigatorio(item.get("priceValue")),
         desconto_texto=_texto_opcional(item.get("discountPrice"), MAX_TEXTO),
         desconto_valor=_decimal(item.get("discountPriceValue")),
         desconto_percentual_texto=_texto_opcional(item.get("discountPercentage"), MAX_TEXTO),
@@ -153,7 +155,7 @@ def _extrair_produto(item: dict[str, object], id_loja: str) -> ProdutoDiretoInte
         preco_liquido_texto=_texto_opcional(item.get("fullLiquidPrice"), MAX_TEXTO),
         preco_liquido_valor=_decimal(item.get("fullLiquidPriceValue")),
         parcelamento=_texto_opcional(item.get("fullInstallmentsDescription"), MAX_TEXTO),
-        estoque=_texto_opcional(item.get("stock"), MAX_TEXTO),
+        estoque=_inteiro_opcional(item.get("stock", sku.get("stock")), "stock"),
         etiquetas=_etiquetas(item.get("tags")),
     )
 
@@ -167,6 +169,15 @@ def _inteiro(valor: object, campo: str) -> int:
         raise RespostaProdutosInterInvalida(f"{campo} nao e inteiro.") from erro
     if str(inteiro) != str(valor).strip() and not isinstance(valor, int):
         raise RespostaProdutosInterInvalida(f"{campo} nao e inteiro.")
+    return inteiro
+
+
+def _inteiro_opcional(valor: object, campo: str) -> int | None:
+    if valor is None:
+        return None
+    inteiro = _inteiro(valor, campo)
+    if inteiro < 0:
+        raise RespostaProdutosInterInvalida(f"{campo} nao pode ser negativo.")
     return inteiro
 
 
@@ -209,15 +220,28 @@ def _decimal(valor: object, *, percentual: bool = False) -> Decimal | None:
     return numero
 
 
+def _decimal_obrigatorio(valor: object) -> Decimal:
+    numero = _decimal(valor)
+    if numero is None:
+        raise ValueError("valor monetario obrigatorio ausente")
+    return numero
+
+
 def _etiquetas(valor: object) -> tuple[str, ...]:
     if valor is None:
         return ()
     if not isinstance(valor, list) or len(valor) > MAX_ETIQUETAS:
         raise TypeError("etiquetas invalidas")
-    etiquetas = tuple(
-        texto for item in valor if (texto := _texto_opcional(item, MAX_TEXTO)) is not None
-    )
-    return etiquetas
+    etiquetas: list[str] = []
+    for item in valor:
+        bruto = item.get("text") if isinstance(item, dict) else item
+        try:
+            texto = _texto_opcional(bruto, MAX_TEXTO)
+        except (TypeError, ValueError):
+            continue
+        if texto is not None:
+            etiquetas.append(texto)
+    return tuple(etiquetas)
 
 
 def _caminho_seguro(caminho: str) -> str:
@@ -225,9 +249,14 @@ def _caminho_seguro(caminho: str) -> str:
     if (
         partes.scheme
         or partes.netloc
-        or not caminho.startswith("/")
+        or partes.fragment
         or caminho.startswith("//")
+        or "\\" in caminho
         or ".." in partes.path.split("/")
+        or (partes.query and not re.fullmatch(r"v=[0-9]{1,200}", partes.query))
     ):
         raise ValueError("caminho de produto inseguro")
-    return caminho
+    if not partes.path:
+        raise ValueError("caminho de produto vazio")
+    consulta = f"?{partes.query}" if partes.query else ""
+    return f"/{partes.path.lstrip('/')}{consulta}"

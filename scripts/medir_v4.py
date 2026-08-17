@@ -17,7 +17,7 @@ from robo_livelo.modelos_produtos_inter import (
     ProdutoDiretoInter,
     ResumoColetaProdutosInter,
 )
-from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja
+from robo_livelo.principal_produtos_inter import BUSCAS_SUPLEMENTARES, coletar_produtos_de_loja
 
 
 class RepositorioSomenteMedicao:
@@ -26,7 +26,14 @@ class RepositorioSomenteMedicao:
     def __init__(self) -> None:
         self.resumo: ResumoColetaProdutosInter | None = None
 
-    def iniciar_loja(self, loja: LojaDiretaInter, momento: datetime, versao: str) -> int:
+    def iniciar_loja(
+        self,
+        loja: LojaDiretaInter,
+        momento: datetime,
+        versao: str,
+        *,
+        rodada_id: int | None = None,
+    ) -> int:
         return 1
 
     def publicar_loja(
@@ -61,6 +68,8 @@ def principal() -> int:
         repositorio,
         loja,
         agora=datetime.now(UTC),
+        buscas_suplementares=BUSCAS_SUPLEMENTARES,
+        intervalo_paginas=1.5,
     )
     print(
         json.dumps(

@@ -38,17 +38,36 @@ class PaginacaoProdutosInterInvalida(FalhaProdutosInter):
 
 @runtime_checkable
 class FonteProdutosInter(Protocol):
-    def pagina(self, loja: LojaDiretaInter, search_id: str, offset: int, limite: int) -> str: ...
+    def pagina(
+        self,
+        loja: LojaDiretaInter,
+        search_id: str,
+        offset: int,
+        limite: int,
+        *,
+        busca: str = "",
+    ) -> str: ...
 
 
 @runtime_checkable
 class CatalogoLojasDiretasInter(Protocol):
     def listar_selecionadas(self) -> list[LojaDiretaInter]: ...
 
+    def obter_loja_selecionada(self, id_externo: str) -> LojaDiretaInter: ...
+
 
 @runtime_checkable
 class RepositorioProdutosInter(Protocol):
-    def iniciar_loja(self, loja: LojaDiretaInter, momento: datetime, versao: str) -> int: ...
+    def iniciar_rodada(self, momento: datetime, versao: str, lojas_planejadas: int) -> int: ...
+
+    def iniciar_loja(
+        self,
+        loja: LojaDiretaInter,
+        momento: datetime,
+        versao: str,
+        *,
+        rodada_id: int | None = None,
+    ) -> int: ...
 
     def publicar_loja(
         self,
@@ -59,3 +78,5 @@ class RepositorioProdutosInter(Protocol):
     ) -> None: ...
 
     def falhar_loja(self, execucao_id: int, codigo: str) -> None: ...
+
+    def concluir_rodada(self, rodada_id: int, momento: datetime) -> str: ...

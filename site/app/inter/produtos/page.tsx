@@ -32,7 +32,7 @@ function CartaoProduto({ produto }: { produto: ProdutoDireto }) {
       )}
       {produto.preco_liquido_texto && <p className="detalhe"><strong>Após cashback:</strong> {produto.preco_liquido_texto}</p>}
       {produto.parcelamento && <p className="detalhe">{produto.parcelamento}</p>}
-      {produto.estoque && <p className="detalhe">{produto.estoque}</p>}
+      {produto.estoque !== null && <p className="detalhe">Estoque: {produto.estoque}</p>}
       {produto.etiquetas?.length > 0 && <p className="etiquetas-produto">{produto.etiquetas.map((etiqueta) => <span className="etiqueta" key={etiqueta}>{etiqueta}</span>)}</p>}
       <div className="acoes-do-cartao">
         <a className="botao secundario" href={`https://shopping.inter.co${produto.caminho}`}>Abrir no Shopping Inter</a>

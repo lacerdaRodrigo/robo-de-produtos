@@ -1,8 +1,8 @@
 # PRD V4 — Catálogo de produtos do Shopping Inter
 
-**Versão:** V4.0 planejada
-**Status:** especificação funcional concluída em 2026-08-16; fonte real levantada. A implementação V4.1–V4.4 versiona o medidor sem escrita, a migração `007`, o domínio paginado, a publicação atômica por loja e as rotas públicas/administrativas. A medição real, o dimensionamento observado, a primeira carga gradual e o workflow matricial da V4.5 continuam como gates obrigatórios antes de considerar a V4 aceita em produção.
-**Levantamento da fonte:** 16 de agosto de 2026
+**Versão:** V4.5 em aceite progressivo
+**Status:** schema, coletor, site e workflow matricial implementados. Em 2026-08-17, a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos; a busca local confirmou o Motorola Edge 60 Pro. Ponto, bytes totais e projeções para mais lojas continuam como gates antes de ampliar o rollout.
+**Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
 
@@ -45,7 +45,7 @@ GET  https://marketplace-api.web.bancointer.com.br/site/affiliate/inter/v1/ecomm
 POST https://marketplace-api.web.bancointer.com.br/site/affiliate/inter/v1/ecommerce/products/search
 ```
 
-A requisição de catálogo planejada replica somente o contrato de dados observado, com termo vazio e ordenação estável:
+A requisição de catálogo replica somente o contrato de dados observado, com ordenação estável:
 
 ```json
 {
@@ -61,6 +61,8 @@ A requisição de catálogo planejada replica somente o contrato de dados observ
 
 O próximo offset usa o limite efetivamente devolvido pela fonte, não presume que ela respeitou o valor pedido.
 
+O GET de vendedores responde com a lista sob a chave `sellers`. Produtos usam caminhos relativos sem barra inicial e podem acrescentar somente a variante segura `?v=<ID numérico>`. Etiquetas chegam como objetos com campo `text`; marca, categoria e estoque podem estar no primeiro item de `skus`.
+
 Na medição de 2026-08-16:
 
 - o catálogo direto retornou 111 vendedores;
@@ -74,6 +76,8 @@ Na medição de 2026-08-16:
 - a API respondeu com o User-Agent honesto do projeto e um `searchId` UUID, sem cookie, token ou cabeçalhos que fingissem navegação humana.
 
 Os números e preços são voláteis. “3.000” é uma medição e pode ser um teto de consulta da fonte; não é promessa de que toda loja tenha exatamente 3.000 produtos. A V4 coleta todas as páginas que a fonte disponibilizar até `isLastPage = true`. Se a fonte expuser 5.000 itens, os 5.000 entram; se encerrar em 3.000, o sistema não afirma conhecer itens além disso.
+
+No aceite de 2026-08-17, a janela vazia da Casas Bahia terminou em 84 páginas e 3.024 itens, alfabeticamente entre A e M, sem incluir “Smartphone”. A partição fixa `smartphone` declarou 339 itens em 10 páginas. A união publicou 3.310 IDs únicos, contou 53 sobreposições e trouxe o Edge 60 Pro. Com pausa de 0,5 s houve HTTP 429 recuperado por retry; com 1,5 s a rodada final terminou sem limitação em 199,1 s.
 
 ### 1.2 Relação com as integrações existentes
 
@@ -247,6 +251,7 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **RN81** | A V4 não envia e-mail nem decide se um preço é “bom” |
 | **RN82** | HTTP 401/403 não recebe retry; timeout, 429 e 5xx respeitam no máximo três tentativas e o intervalo definido pelo adaptador |
 | **RN83** | Se a fonte bloquear o acesso ou pedir interrupção, workflow e rotas da V4 são desativados; Livelo e V3 permanecem ativos |
+| **RN84** | Quando a janela vazia truncar uma família necessária ao aceite, o coletor pode unir partições suplementares fixas e versionadas. O site nunca envia termos arbitrários à fonte; cada partição pagina integralmente e a união deduplica por ID |
 
 ### 6.1 Campos da listagem
 
@@ -255,7 +260,7 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | `id` | Identidade do produto dentro da loja |
 | `name` | Nome pesquisável e exibido |
 | `sellerId`, `sellerName` | Conferência de pertencimento à loja consultada |
-| `brand`, `categoryName` | Informação e busca auxiliar quando presentes |
+| `brand`, `categoryName` | Informação e busca auxiliar; podem vir do primeiro `sku` |
 | `listPriceValue`, `listPrice` | Preço cheio numérico e texto da fonte |
 | `priceValue`, `price` | Preço atual numérico e texto da fonte |
 | `discountPriceValue`, `discountPrice` | Desconto absoluto |
@@ -264,11 +269,11 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | `fullCashbackPercentageValue`, `fullCashbackPercentage` | Cashback percentual |
 | `fullLiquidPriceValue`, `fullLiquidPrice` | Estimativa após cashback |
 | `fullInstallmentsDescription` | Parcelamento publicado |
-| `stock` | Estoque informado, sem promessa de reserva |
-| `tags` | Etiquetas editoriais, sempre como texto |
-| `slug` | Caminho relativo do produto, sujeito a RN75 |
+| `stock` | Estoque informado no primeiro `sku`, sem promessa de reserva |
+| `tags` | Objetos editoriais; somente o campo `text` é preservado |
+| `slug` | Caminho relativo, com variante numérica opcional, sujeito a RN75 |
 | `image`, `images`, `thumbnails` | Ignorados por RN76 |
-| `skus` | Não expandidos na primeira entrega |
+| `skus` | Somente o primeiro fornece marca, categoria e estoque; imagens e links são ignorados |
 
 Texto e número são preservados separadamente. O texto mantém “Até”, moeda e forma editorial; o número permite ordenação e histórico sem passar por `float`.
 
@@ -291,9 +296,9 @@ A V4 não mescla automaticamente Edge 60 Pro de 256 GB com 512 GB. Cada card man
 
 ### 6.3 Catálogo completo significa catálogo exposto
 
-O sistema percorre todas as páginas disponibilizadas até `isLastPage`. Ele não fixa 3.000, não para após a primeira categoria e não coleta somente destaques.
+O sistema percorre todas as páginas disponibilizadas até `isLastPage` em cada partição. Ele não fixa 3.000, não para após a primeira categoria e não coleta somente destaques.
 
-Isso não autoriza afirmar que o Radar conhece todos os produtos reais da varejista. Se a API encerrar a janela em 3.000, o texto correto é “3.000 produtos expostos pelo Inter nesta coleta”. A única forma de tentar superar um teto por categorias multiplicaria consultas e duplicatas; essa estratégia fica fora até nova decisão.
+Isso não autoriza afirmar que o Radar conhece todos os produtos reais da varejista. A janela-base e a partição fixa `smartphone` representam o catálogo exposto nessas consultas. Novas partições exigem evidência real, termo versionado e revisão de volume; nunca nascem da caixa de busca do usuário.
 
 ### 6.4 Histórico
 
@@ -342,8 +347,8 @@ O site nunca chama a API do Inter. O coletor nunca importa componentes do site. 
 3. Lê do banco os IDs/slugs das lojas selecionadas.
 4. Produz uma matriz de tarefas, uma por loja.
 5. O workflow executa no máximo duas tarefas ao mesmo tempo.
-6. Cada tarefa gera um `searchId`, solicita a primeira página e registra o total declarado.
-7. Avança offsets sequencialmente até `isLastPage`.
+6. Cada tarefa gera um `searchId` por partição, solicita a primeira página e registra o total declarado.
+7. Avança offsets sequencialmente até `isLastPage`, primeiro na janela-base e depois nas partições fixas.
 8. Valida itens, vendedor, decimais, links e paginação.
 9. Deduplica por ID e monta o catálogo completo em área invisível.
 10. Em transação, publica o novo catálogo, marca ausentes como inativos, grava medições e conclui a loja.
@@ -354,7 +359,7 @@ O site nunca chama a API do Inter. O coletor nunca importa componentes do site. 
 
 ```text
 FonteDeLojasDiretas.listar() -> catálogo de vendedores
-FonteDeProdutos.pagina(slug, search_id, offset, limite) -> página de produtos
+FonteDeProdutos.pagina(slug, search_id, offset, limite, busca_fixa) -> página de produtos
 CatalogoDeLojasDiretas.listar_selecionadas() -> lojas
 RepositorioDeProdutos.iniciar_loja(...) -> execução
 RepositorioDeProdutos.publicar_loja(...) -> catálogo + medições
@@ -365,7 +370,7 @@ As assinaturas definitivas e o esquema físico serão fechados no gate de persis
 
 ### 7.4 Workflow e escala
 
-O workflow planejado é exclusivo da V4. Um job coordenador gera JSON para uma matriz dinâmica. O job por loja usa `max-parallel: 2`, `permissions: contents: read` e timeout próprio maior que o da V3.
+O workflow `produtos-inter.yml` é exclusivo da V4. Um job coordenador gera JSON para uma matriz dinâmica. O job por loja usa `max-parallel: 2`, `permissions: contents: read`, timeout de 30 minutos e pausa de 1,5 s entre páginas.
 
 Não há limite de lojas na interface. Selecionar dez lojas cria dez tarefas; selecionar três cria três. Concorrência baixa controla pressão sobre a fonte sem serializar todas num único processo sujeito ao timeout global.
 
@@ -575,11 +580,11 @@ O primeiro aceite usa uma loja, depois Casas Bahia + Ponto, antes de ampliar:
 | Fase | Entrega | Estado |
 |---|---|---|
 | **V4.0** | PRD, levantamento da fonte e casos CT-200+ | Este documento |
-| **V4.1** | Medidor sem escrita, schema, migração e contratos de persistência | Implementada; falta medição real e dimensionamento |
-| **V4.2** | Domínio puro, extrator paginado, adaptador HTTP e fixture | Implementada e coberta por testes; falta aceite contra a fonte |
-| **V4.3** | Coleta por loja, publicação atômica, retenção e primeira carga | Implementada; falta primeira carga gradual no Neon |
-| **V4.4** | Busca pública, seleção administrativa e histórico | Implementada; falta deploy e smoke visual |
-| **V4.5** | Workflow matricial, disparo manual, observabilidade e aceite real | Pendente |
+| **V4.1** | Medidor sem escrita, schema, migração e contratos de persistência | Implementada; falta fechar bytes e projeções |
+| **V4.2** | Domínio puro, extrator paginado, adaptador HTTP e fixture | Implementada e validada contra a fonte real |
+| **V4.3** | Coleta por loja, publicação atômica, retenção e primeira carga | Casas Bahia publicada no Neon; Ponto pendente |
+| **V4.4** | Busca pública, seleção administrativa e histórico | Implementada; Edge 60 Pro confirmado no banco, smoke visual pendente |
+| **V4.5** | Workflow matricial, disparo manual, observabilidade e aceite real | Implementada; deploy do follow-up pendente |
 
 O aceite não começa pela interface: primeiro mede-se uma coleta completa de uma loja e fecha-se o volume observado antes de habilitar mais seleções.
 
@@ -590,7 +595,7 @@ O aceite não começa pela interface: primeiro mede-se uma coleta completa de um
 | Risco | Impacto | Mitigação |
 |---|---|---|
 | Endpoint ou schema mudar | Catálogo para de atualizar | Adaptador isolado, fixture, validação e último sucesso |
-| `total = 3000` ser teto | Cobertura parcial não óbvia | Texto “exposto pelo Inter”, nunca “todos da loja real” |
+| `total = 3000` ser teto | Cobertura parcial não óbvia | Janela-base + partições fixas justificadas; nunca prometer catálogo universal |
 | Muitas lojas selecionadas | Workflow longo e alto volume | Matriz por loja, `max-parallel: 2`, páginas sequenciais e rollout gradual |
 | Produtos repetidos entre páginas | Contagem e histórico duplicados | Deduplicação por loja + ID, métrica de duplicatas |
 | Produto mudar durante paginação | Snapshot mistura instantes | Horário por conclusão e sem promessa de simultaneidade |
@@ -608,7 +613,7 @@ A V4 só pode ser marcada implementada quando:
 
 1. O catálogo de lojas diretas vem da fonte real e Ponto/Casas Bahia podem ser selecionadas.
 2. Loja não selecionada não recebe nenhuma consulta de produto.
-3. Uma loja é percorrida até `isLastPage`, sem teto fixo de 3.000.
+3. Cada partição de uma loja é percorrida até `isLastPage`, sem teto fixo no código.
 4. Duplicatas são removidas por ID e contabilizadas.
 5. Falha parcial não publica catálogo incompleto nem apaga o sucesso anterior.
 6. Dez lojas selecionadas geram dez tarefas sem limite funcional e com no máximo duas simultâneas.
@@ -641,16 +646,16 @@ A V4 só pode ser marcada implementada quando:
 | Alertas | Nenhum e-mail ou alerta de preço na primeira entrega |
 | Falha | Atomicidade e último sucesso por loja; rodada geral pode ser parcial |
 
-### 15.2 Aberto antes da implementação
+### 15.2 Aberto antes de ampliar o rollout
 
 | Gate | Precisa fechar |
 |---|---|
 | Volume | Medir bytes e tempo de uma coleta completa real |
-| Persistência | Schema, índices, staging, troca atômica e expurgo |
+| Persistência | Validada para Casas Bahia; observar crescimento após novas rodadas |
 | Custo | Projetar 3, 10 e 111 lojas por 30 dias no Neon |
-| Timeout | Definir timeout do job por loja a partir da medição |
-| Ritmo | Definir intervalo entre páginas sem violar RNF30 |
-| Primeira carga | Planejar ativação gradual: uma loja, duas, depois quantidade escolhida |
+| Timeout | Validar os 30 minutos com duas lojas simultâneas |
+| Ritmo | 1,5 s funcionou para uma loja; revalidar ao habilitar Ponto |
+| Primeira carga | Casas Bahia concluída; Ponto é o próximo gate antes de ampliar |
 
 Esses gates não reabrem o comportamento de produto. Eles definem como cumprir o volume com segurança.
 
@@ -658,4 +663,4 @@ Esses gates não reabrem o comportamento de produto. Eles definem como cumprir o
 
 Em 2026-08-16, a fonte pública respondeu sem autenticação e com identificação honesta. O levantamento encontrou 111 vendedores diretos, confirmou Casas Bahia e Ponto e validou busca paginada de produtos com campos monetários e caminhos individuais. Casas Bahia e Ponto declararam 3.000 produtos e 84 páginas de 36 itens numa busca vazia. Também foi observada repetição de produto entre páginas, justificando RN61.
 
-No momento do levantamento não houve coleta completa, escrita no Neon, criação de arquivo, workflow ou rota da V4. A implementação posterior preserva essa evidência: o aceite ainda deve executar o medidor, aplicar a migração quando necessário e validar gradualmente uma loja antes de ampliar a seleção.
+No levantamento inicial não houve coleta completa nem escrita. Em 2026-08-17, o contrato real revelou três diferenças que as fixtures antigas escondiam: raiz `sellers`, tags como objetos e caminhos relativos com variante `?v=`. Depois da correção, a migração `008` foi aplicada e a rodada 3 da Casas Bahia terminou em `sucesso`: 94 páginas, 3.363 itens lidos, 3.310 únicos, 53 sobreposições e Edge 60 Pro presente com preço de R$ 3.688,89 e 9% de cashback naquele momento. Ponto continua desmarcada até o próximo gate.

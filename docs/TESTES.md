@@ -288,8 +288,9 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 > Casos definidos no [`PRD-V4.md`](PRD-V4.md). A primeira implementação usa
 > `testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
 > `site/testes/formato-produtos-inter.teste.ts` para a busca local e a migração
-> `007` para a persistência. Os casos de integração real continuam pendentes do
-> gate físico e não são substituídos por fixture.
+> `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia
+> confirmou 111 vendedores, 94 páginas, 3.310 produtos únicos e o Edge 60 Pro
+> na busca local. Fixtures continuam obrigatórias para o CI não tocar a rede.
 
 ### `testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
 
@@ -302,7 +303,7 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-204 | Item inválido é descartado | Produto sem ID, nome ou preço atual válido não contamina o catálogo | Misturar válidos e inválidos e conferir contagens |
 | CT-205 | Raiz inválida falha | JSON quebrado, objeto inesperado ou paginação ausente não viram catálogo vazio | Entradas inválidas levantam erro controlado |
 | CT-206 | Imagens e SKUs ficam fora | `image`, `images`, `thumbnails` e detalhes de `skus` não entram no modelo | Inspecionar produto extraído |
-| CT-207 | Link individual seguro | Caminho relativo vira HTTPS em `shopping.inter.co`; URL externa e `javascript:` são rejeitados | Testar destinos válidos e hostis |
+| CT-207 | Link individual seguro | Caminho relativo, com `?v=<ID>` opcional, vira HTTPS em `shopping.inter.co`; URL externa e query arbitrária são rejeitadas | Testar destinos válidos e hostis |
 | CT-208 | Identidade por loja + produto | Mesmo ID em Casas Bahia e Ponto representa dois produtos distintos | Inserir ID igual sob duas lojas |
 | CT-209 | Textos hostis continuam texto | Nome e etiquetas com HTML não são interpretados | Extrair tags maliciosas e renderizar escapado |
 | CT-210 | Vendedor incompatível falha | Página pedida para Casas Bahia não aceita silenciosamente produto de outro vendedor | Fixture com `sellerId` inesperado |
@@ -313,11 +314,11 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 |---|---|---|---|
 | CT-211 | Avança até a última página | Offsets crescem pelo limite retornado e param somente em `isLastPage=true` | Fixture de três páginas com última parcial |
 | CT-212 | Sem teto artificial de 3.000 | Um total declarado de 5.000 continua sendo paginado até o fim | Fonte fake com mais de 84 páginas |
-| CT-213 | `searchId` estável por tentativa | Todas as páginas de uma loja usam o mesmo UUID; nova tentativa usa outro | Fonte fake registra argumentos |
+| CT-213 | `searchId` estável por partição | Todas as páginas da mesma partição usam o mesmo UUID; janela-base e suplemento usam IDs diferentes | Fonte fake registra argumentos |
 | CT-214 | Produto repetido é deduplicado | ID repetido entre páginas gera um produto e incrementa duplicatas | Repetir o mesmo ID em duas páginas |
 | CT-215 | Página repetida interrompe | Fingerprint repetido não causa loop infinito nem publica catálogo parcial | Fonte retorna a mesma página para offsets diferentes |
 | CT-216 | Offset sem avanço interrompe | Limite zero ou próximo offset igual ao anterior vira falha de paginação | Página malformada com `limit=0` |
-| CT-217 | Total divergente é observável | Total declarado, lidos, únicos e duplicados permanecem separados | Fixture com total 5, seis ocorrências e quatro IDs |
+| CT-217 | União de partições é observável | Totais declarados, lidos, únicos e sobreposições permanecem separados | Janela-base + `smartphone` com ID repetido e Edge só no suplemento |
 
 ### `testes/teste_adaptadores_produtos_inter.py` — HTTP responsável
 
@@ -432,13 +433,13 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
-| `teste_produtos_inter.py` | 6 | 8 |
+| `teste_produtos_inter.py` | 6 | 14 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **156** | **199** |
+| **Total (robô)** | **156** | **205** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
-| `site/testes/formato-produtos-inter.teste.ts` | 2 | 1 |
-| **Total (site)** | **23** | **32** |
+| `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
+| **Total (site)** | **23** | **33** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

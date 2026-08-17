@@ -4,19 +4,19 @@ Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja 
 
 Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
 
-> **Status:** a integração Livelo V2.0–V2.3 está em produção. A V3 do Shopping Inter está implementada e validada no workspace; a migração `006` foi aplicada e a primeira sincronização real, em 2026-08-14, cadastrou 381 lojas. A publicação do novo código no GitHub/Vercel ainda depende de enviar estas mudanças ao repositório remoto. Suíte atual: 189 testes no robô e 31 no site, com 91,85% de cobertura Python.
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 205 testes no robô e 33 no site, com 94,13% de cobertura do núcleo puro.
 
-> **Planejamento:** a V4 está especificada, mas não implementada. Ela adicionará o catálogo de produtos da área **Compre direto no Inter**, coletando todas as páginas expostas somente das lojas escolhidas, com busca local e histórico de 30 dias. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
+> **Aceite em andamento:** a V4 possui coletor, persistência, site e workflow matricial. Casas Bahia é a única loja de produtos selecionada; Ponto e o dimensionamento para mais lojas continuam como próximos gates. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
 
 ## Como funciona
 
 ```text
 Livelo         → extrator próprio → favoritas → alerta e retrato → e-mail + site
 Shopping Inter → extrator próprio → catálogo → favoritas e retrato → site
-Produtos Inter → planejado: lojas escolhidas → catálogo paginado → busca + histórico
+Produtos Inter → lojas escolhidas → catálogo paginado + partição segura → busca + histórico
 ```
 
-Os dois coletores implementados fazem uma consulta lógica por execução e rodam três vezes ao dia. A V4 planejada será diferente: por conter produtos, paginará somente as lojas escolhidas, com ritmo e isolamento próprios. Nenhuma integração faz login; todas leem apenas fontes públicas.
+Os coletores rodam três vezes ao dia e permanecem isolados. A V4 pagina somente lojas escolhidas, com no máximo duas em paralelo e pausa de 1,5 s entre páginas. Nenhuma integração faz login; todas leem apenas fontes públicas.
 
 ## Documentação
 
@@ -43,6 +43,7 @@ pip install -e ".[dev]"
 cp .env.example .env           # preencha com seus dados
 python -m robo_livelo.principal
 python -m robo_livelo.principal_inter
+python -m robo_livelo.principal_produtos_inter
 ```
 
 O coletor do Inter exige `DATABASE_URL`. Para o e-mail da Livelo, você também vai precisar de uma **Senha de Aplicativo** do Gmail — não é a senha da conta:
@@ -72,6 +73,10 @@ Com `DATABASE_URL` no ambiente, o catálogo passa a vir do Postgres e este arqui
 
 Depois da primeira execução de `principal_inter`, entre no site, abra **Lojas Inter**, procure por nome e clique em **Acompanhar**. A página pública **Shopping Inter** passa a mostrar o cashback principal, a condição para não-correntista quando existir e a descrição completa da promoção. Todos os cartões usam o link genérico aprovado do Shopping Inter.
 
+### Escolhendo lojas de produtos do Shopping Inter
+
+Depois do job de preparação da V4, entre em **Produtos → Lojas de produtos** e selecione os vendedores desejados. O site nunca consulta o Inter durante uma busca: ele lê o último snapshot válido no Neon. A primeira loja validada é a Casas Bahia; amplie a seleção gradualmente.
+
 ## Rodando no GitHub Actions
 
 Em **Settings → Secrets and variables → Actions**, crie:
@@ -81,7 +86,7 @@ Em **Settings → Secrets and variables → Actions**, crie:
 - `EMAIL_DESTINO`
 - `DATABASE_URL` (opcional para a Livelo; obrigatório para o Shopping Inter)
 
-Os workflows `robo.yml` e `inter.yml` rodam separadamente às 09h, 14h e 20h (horário de Brasília) e também aceitam disparo manual.
+Os workflows `robo.yml` e `inter.yml` rodam às 09h, 14h e 20h. `produtos-inter.yml` começa às 09h30, 14h30 e 20h30, gera uma matriz somente com lojas selecionadas e limita a concorrência a duas. Todos também aceitam disparo manual.
 
 ## Testes
 
@@ -95,7 +100,7 @@ npm run build
 
 ## Uso responsável
 
-Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz uma consulta lógica por fonte e execução, três vezes ao dia, identificando-se honestamente.
+Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz consultas públicas controladas três vezes ao dia, com paginação e cooldown quando necessários, identificando-se honestamente.
 
 Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD e nos PRDs V3 e V4.
 
