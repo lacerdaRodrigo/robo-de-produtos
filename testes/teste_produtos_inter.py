@@ -311,6 +311,7 @@ def teste_ct205_resposta_sem_raiz_paginada_falha(conteudo):
     with pytest.raises(RespostaProdutosInterInvalida):
         extrair_pagina_produtos(conteudo, id_loja="loja-1")
 
+
 def teste_ct209_total_muda_reinicia_segmento_sem_publicar_tentativa_parcial():
     fonte = FonteSequencialProdutos(
         [
@@ -370,4 +371,3 @@ def teste_ct209_total_continua_mudando_falha_apos_tres_tentativas():
     assert len(fonte.chamadas) == 6
     assert repositorio.publicadas == []
     assert repositorio.falhas == [(77, "total_incoerente")]
-
