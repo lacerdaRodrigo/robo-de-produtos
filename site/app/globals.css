@@ -1811,3 +1811,60 @@ body {
     background: transparent;
   }
 }
+
+
+/* V4.8 — linguagem visual Radar: vitrine de oportunidades */
+:root { --fundo:#f6f7fb; --marca:#6257e5; --marca-forte:#4438c7; --marca-fraco:#efedff; --ok:#008b6d; --raio:22px; --raio-p:12px; }
+.pagina { max-width:1180px; }
+@media (min-width:768px){.pagina{max-width:1180px;margin-left:272px;padding:40px 36px 64px}}
+.seletor-robos{padding:6px;border:0;border-radius:18px;background:#ebeef5;box-shadow:none}
+.seletor-robo{min-height:62px;padding:12px 18px;border-radius:14px}
+.seletor-robo[aria-current="page"]{background:linear-gradient(135deg,#6257e5,#8178f2);box-shadow:0 10px 24px rgb(98 87 229/24%)}
+
+.cabecalho-vitrine{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:space-between;gap:28px;overflow:hidden;margin:30px 0 20px;padding:36px;border-radius:28px;color:#fff;background:radial-gradient(circle at 85% 15%,rgb(255 255 255/22%),transparent 13rem),linear-gradient(135deg,#4438c7 0%,#6257e5 55%,#20a48a 145%);box-shadow:0 24px 55px rgb(68 56 199/20%)}
+.cabecalho-vitrine::after{content:"";position:absolute;z-index:-1;right:-54px;bottom:-82px;width:230px;height:230px;border:38px solid rgb(255 255 255/9%);border-radius:50%}
+.cabecalho-vitrine .hero-rotulo{color:rgb(255 255 255/72%)}
+.cabecalho-vitrine h1{max-width:620px;margin:8px 0 10px;font-size:clamp(2rem,5vw,3.4rem);line-height:1;letter-spacing:-.055em}
+.cabecalho-vitrine p{max-width:600px;margin:0;color:rgb(255 255 255/82%)}
+.status-dados{flex:none;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid rgb(255 255 255/22%);border-radius:999px;background:rgb(255 255 255/13%);color:#fff;font-size:.78rem;font-weight:700;backdrop-filter:blur(10px)}
+.status-dados>span{width:8px;height:8px;border-radius:50%;background:#6ff0c8;box-shadow:0 0 0 5px rgb(111 240 200/15%)}
+.status-dados.atrasado>span{background:#ffd166}
+
+.resumo-vitrine{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+.resumo-vitrine article{display:flex;align-items:center;gap:14px;min-width:0;padding:18px;border:1px solid #e7e9f2;border-radius:18px;background:rgb(255 255 255/88%);box-shadow:0 10px 28px rgb(23 32 51/6%)}
+.resumo-vitrine article div{min-width:0;display:flex;flex-direction:column}
+.resumo-vitrine strong{overflow:hidden;font-size:1.15rem;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.resumo-vitrine small{margin-top:3px;color:var(--suave)}
+.resumo-icone{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:14px;color:#5b4ed5;background:#efedff;font-size:1.15rem}
+.resumo-icone.lojas{color:#c76b21;background:#fff2e7}.resumo-icone.catalogo{color:#008b6d;background:#e4f8f2}
+
+.explorar-vitrine{margin-bottom:22px}.titulo-explorar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.titulo-explorar h2{margin:3px 0 0;color:var(--texto);font-size:1.45rem;text-transform:none;letter-spacing:-.025em}
+.titulo-explorar>a{color:var(--marca-forte);font-size:.85rem;font-weight:750;text-decoration:none}
+.busca-vitrine .busca,.busca-vitrine form{margin:0;padding:7px;border:1px solid #e3e6ef;border-radius:17px;background:#fff;box-shadow:0 8px 22px rgb(23 32 51/5%)}
+.busca-vitrine input[type="search"]{border:0;background:transparent;box-shadow:none}
+.controles-ordenacao{margin:12px 0 0}.botao-ordena{min-height:36px;padding:7px 13px;border:1px solid #e1e4ed;border-radius:999px;background:#fff;font-size:.78rem}
+.botao-ordena[aria-current="true"]{border-color:var(--marca);background:var(--marca-fraco);color:var(--marca-forte);box-shadow:none}
+
+.grade-cashback{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.cartao-inter{position:relative;min-height:340px;overflow:hidden;padding:26px 22px 18px;border:1px solid #e5e8f1;border-radius:22px;background:#fff;box-shadow:0 12px 32px rgb(23 32 51/7%);transition:transform .2s,box-shadow .2s,border-color .2s}
+.cartao-inter::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#6257e5,#20a48a);opacity:0;transition:opacity .2s}
+.cartao-inter:hover{transform:translateY(-4px);border-color:rgb(98 87 229/28%);box-shadow:0 20px 44px rgb(23 32 51/12%)}.cartao-inter:hover::before{opacity:1}
+.cartao-inter-topo{gap:10px;margin-bottom:14px}.logo-loja{width:58px;height:58px;border:0;border-radius:18px;background:linear-gradient(145deg,#f2f0ff,#e4f8f2);color:var(--marca-forte);box-shadow:inset 0 0 0 1px rgb(98 87 229/12%)}
+.cartao-inter .cartao-titulo{min-height:48px;justify-content:center}.cartao-inter .nome{font-size:1.05rem;letter-spacing:-.015em}.cartao-inter .etiqueta{color:#685c1e;background:#fff6c8}
+.cartao-inter .cashback-texto{color:var(--ok);font-size:1.55rem;letter-spacing:-.035em}.cartao-inter .pontos-sub{color:var(--suave);font-size:.7rem}
+.detalhes-oferta{margin:4px 0 16px;text-align:left}.detalhes-oferta summary{min-height:38px;display:flex;align-items:center;justify-content:center;list-style:none;cursor:pointer;border-radius:10px;color:var(--suave);background:#f7f8fb;font-size:.75rem;font-weight:700}
+.detalhes-oferta summary::-webkit-details-marker{display:none}.detalhes-oferta summary::after{content:"+";margin-left:7px;color:var(--marca);font-size:1rem}.detalhes-oferta[open] summary::after{content:"−"}
+.detalhes-oferta>p,.detalhes-oferta>div{margin:10px 4px 0;font-size:.76rem}
+.cartao-inter .acoes-do-cartao .botao{min-height:42px;border-color:var(--marca);border-radius:12px;color:var(--marca-forte);background:#fff;font-size:.8rem}.cartao-inter .acoes-do-cartao .botao:hover{color:#fff;background:var(--marca)}
+.botao,button{border-radius:12px}
+
+@media (max-width:760px){
+ .pagina{padding:18px 16px 48px}.seletor-robos{margin-inline:-16px;padding:8px 16px;border-radius:0;background:transparent}.seletor-robo{flex-basis:154px;border:1px solid #e3e6ef;background:#fff}
+ .cabecalho-vitrine{align-items:flex-start;flex-direction:column;gap:20px;margin-top:20px;padding:28px 22px;border-radius:24px}.cabecalho-vitrine h1{font-size:2.35rem}
+ .resumo-vitrine{grid-template-columns:repeat(3,minmax(150px,1fr));overflow-x:auto;margin-inline:-16px;padding:0 16px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}.resumo-vitrine::-webkit-scrollbar{display:none}.resumo-vitrine article{scroll-snap-align:start}
+}
+@media (max-width:520px){
+ .grade-cashback{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cartao-inter{min-height:300px;padding:18px 12px 12px}.cartao-inter .cartao-titulo{min-height:42px}.cartao-inter .cashback-texto{font-size:1.12rem}
+ .detalhes-oferta summary{padding:7px;font-size:.66rem}.cartao-inter .acoes-do-cartao .botao{min-height:40px;padding-inline:8px;font-size:.7rem}
+}
