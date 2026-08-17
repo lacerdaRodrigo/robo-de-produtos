@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.23.0 (2026-08-17)
+
+### Features
+
+- **site**: Publica novo front responsivo e estabiliza coleta Inter
+  ([`67deb39`](https://github.com/lacerdaRodrigo/robo-livelo/commit/67deb39f8c26a6eaae15ef0735d1c8be87eb591a))
+
+
 ## v1.22.1 (2026-08-17)
 
 ### Bug Fixes
