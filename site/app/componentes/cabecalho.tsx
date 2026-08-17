@@ -10,6 +10,7 @@ import { temaAtual, type Tema } from "@/lib/tema";
 import { acaoAlternarTema, acaoSair } from "../acoes";
 import { acaoAtualizarInter } from "../inter/lojas/acoes";
 import { acaoAtualizarAgora } from "../lojas/acoes";
+import { MolduraNavegacao } from "./moldura-navegacao";
 
 /**
  * Barra lateral de todas as telas (V4.6: redesenho de navegação, ver
@@ -21,8 +22,8 @@ import { acaoAtualizarAgora } from "../lojas/acoes";
  * sem sessao, as telas de edicao nem sao anunciadas.
  */
 const PUBLICAS = [
-  { href: "/", nome: "Livelo", icone: IconePainel },
-  { href: "/inter", nome: "Shopping Inter", icone: IconeLojas },
+  { href: "/", nome: "Robô Livelo", icone: IconePainel },
+  { href: "/inter", nome: "Cashback Inter", icone: IconeLojas },
   { href: "/inter/produtos", nome: "Produtos Inter", icone: IconeProdutos },
   { href: "/ajuda", nome: "Ajuda", icone: IconeAjuda },
 ];
@@ -62,7 +63,8 @@ export async function Cabecalho({ atual }: { atual: string }) {
   const faltaInter = logado ? await esperaAteProximoDisparoInter().catch(() => 0) : 0;
 
   return (
-    <aside className="barra-lateral">
+    <MolduraNavegacao atual={atual}>
+      <aside className="barra-lateral">
       <Link href="/" className="bl-marca">
         {/* Chip claro atras do logo: o quadrado "R$" da marca usa um tom
             quase branco (pensado pra fundo claro do resto do site) e
@@ -175,7 +177,8 @@ export async function Cabecalho({ atual }: { atual: string }) {
           </Link>
         )}
       </div>
-    </aside>
+      </aside>
+    </MolduraNavegacao>
   );
 }
 
