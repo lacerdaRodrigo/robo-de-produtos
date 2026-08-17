@@ -34,7 +34,23 @@ python_classes = ["Teste*"]
 addopts = "-q"
 
 [tool.coverage.run]
-source = ["robo_livelo"]
+# PRD 8.4: a meta de 90% vale apenas para o nucleo puro. Adaptadores e
+# orquestradores fazem I/O e sao exercitados por testes de componente, sem
+# entrarem nesta metrica.
+include = [
+    "*/robo_livelo/modelos.py",
+    "*/robo_livelo/extrator.py",
+    "*/robo_livelo/categorias.py",
+    "*/robo_livelo/montador_email.py",
+    "*/robo_livelo/alertas.py",
+    "*/robo_livelo/retrato.py",
+    "*/robo_livelo/modelos_inter.py",
+    "*/robo_livelo/extrator_inter.py",
+    "*/robo_livelo/ranking_inter.py",
+    "*/robo_livelo/retrato_inter.py",
+    "*/robo_livelo/modelos_produtos_inter.py",
+    "*/robo_livelo/extrator_produtos_inter.py",
+]
 
 [tool.ruff]
 line-length = 100
