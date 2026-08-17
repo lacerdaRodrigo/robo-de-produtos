@@ -6,16 +6,15 @@ import { esperaAteProximoDisparoInter } from "@/lib/banco-inter";
 import { telaDeAlertasEscondida } from "@/lib/flags";
 import { temTokenDeDisparo, temTokenDeDisparoInter } from "@/lib/github";
 import { temSessao } from "@/lib/sessao";
-import { temaAtual, type Tema } from "@/lib/tema";
-import { acaoAlternarTema, acaoSair } from "../acoes";
+import { acaoSair } from "../acoes";
 import { acaoAtualizarInter } from "../inter/lojas/acoes";
 import { acaoAtualizarAgora } from "../lojas/acoes";
 import { MolduraNavegacao } from "./moldura-navegacao";
 
 /**
  * Barra lateral de todas as telas (V4.6: redesenho de navegação, ver
- * docs/PENDENCIAS.md). Sempre escura, independente do tema claro/escuro do
- * resto da página — é identidade de marca, não conteúdo.
+ * docs/PENDENCIAS.md). A navegação acompanha a experiência clara do conteúdo
+ * para formar uma única interface coerente.
  *
  * Regra deste site: nenhuma tela e alcancavel so digitando a URL. O menu
  * completo aparece em toda pagina, e o que voce ve depende de estar logado:
@@ -36,16 +35,9 @@ const PRIVADAS = [
   { href: "/inter/produtos/lojas", nome: "Produtos: lojas", icone: IconeProdutos },
 ];
 
-const ROTULO_DO_TEMA: Record<Tema, string> = {
-  auto: "Tema: automático (segue o sistema)",
-  claro: "Tema: claro",
-  escuro: "Tema: escuro",
-};
-
 export async function Cabecalho({ atual }: { atual: string }) {
-  const [logado, tema, alertasEscondidos] = await Promise.all([
+  const [logado, alertasEscondidos] = await Promise.all([
     temSessao(),
-    temaAtual(),
     telaDeAlertasEscondida(),
   ]);
   const privadas = alertasEscondidos
@@ -148,19 +140,6 @@ export async function Cabecalho({ atual }: { atual: string }) {
             <span className="bl-item-texto">Configurações</span>
           </Link>
         )}
-
-        <form action={acaoAlternarTema} className="bl-form">
-          <input type="hidden" name="voltar" value={atual} />
-          <button
-            type="submit"
-            className="bl-item bl-acao"
-            aria-label={`${ROTULO_DO_TEMA[tema]} — clique para trocar`}
-            title={`${ROTULO_DO_TEMA[tema]} — clique para trocar`}
-          >
-            <IconeDoTema tema={tema} />
-            <span className="bl-item-texto">Tema</span>
-          </button>
-        </form>
 
         {logado ? (
           <form action={acaoSair} className="bl-form">
@@ -290,43 +269,6 @@ function SetaDeEntrada() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  );
-}
-
-/** Sol (claro), lua (escuro) ou meio-a-meio (automático) — o botão mostra
- *  o tema em vigor agora, e o título diz para onde o clique leva. */
-function IconeDoTema({ tema }: { tema: Tema }) {
-  if (tema === "claro") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
-        <path
-          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-  if (tema === "escuro") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-      <path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" />
     </svg>
   );
 }
