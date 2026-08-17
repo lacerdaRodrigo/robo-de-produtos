@@ -90,9 +90,17 @@ export async function buscarProdutosDiretos(termo: string): Promise<ProdutoDiret
   `) as ProdutoDireto[];
 }
 
-export async function buscarLojasDiretas(termo: string): Promise<LojaDireta[]> {
+export async function buscarLojasDiretas(
+  termo: string,
+  pagina = 1,
+  porPagina = 10,
+): Promise<LojaDireta[]> {
   const sql = conectar();
   const busca = normalizarBuscaProdutosInter(termo);
+  const paginaSegura = Number.isFinite(pagina) && pagina > 0 ? Math.floor(pagina) : 1;
+  const tamanhoSeguro =
+    Number.isFinite(porPagina) && porPagina > 0 ? Math.floor(porPagina) : 10;
+  const deslocamento = (paginaSegura - 1) * tamanhoSeguro;
   const linhas = (await sql`
     SELECT l.id, l.id_externo, l.slug, l.nome, l.selecionada, l.ativa,
            e.concluida_em AS ultima_execucao, e.estado AS ultimo_estado, e.paginas
@@ -104,9 +112,22 @@ export async function buscarLojasDiretas(termo: string): Promise<LojaDireta[]> {
          ORDER BY iniciada_em DESC LIMIT 1
       ) e ON TRUE
      WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`})
-     ORDER BY l.nome LIMIT 100
+     ORDER BY l.nome, l.id_externo
+     LIMIT ${tamanhoSeguro}
+    OFFSET ${deslocamento}
   `) as LojaDireta[];
   return linhas;
+}
+
+export async function totalLojasDiretas(termo = ""): Promise<number> {
+  const sql = conectar();
+  const busca = normalizarBuscaProdutosInter(termo);
+  const linhas = (await sql`
+    SELECT count(*)::int AS total
+      FROM loja_direta_inter l
+     WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`})
+  `) as Array<{ total: number }>;
+  return Number(linhas[0]?.total ?? 0);
 }
 
 export async function selecionarLojaDireta(id: string, selecionar: boolean): Promise<void> {
