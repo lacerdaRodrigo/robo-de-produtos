@@ -40,6 +40,7 @@ LIMITE_PAGINA = 36
 LIMIAR_LOJAS_DIRETAS = 100
 INTERVALO_ENTRE_PAGINAS = 1.5
 BUSCAS_SUPLEMENTARES = ("smartphone",)
+MAX_TENTATIVAS_TOTAL_INCOERENTE = 3
 
 
 def montar_repositorio_produtos_inter(ambiente: dict[str, str]) -> RepositorioProdutosInterPostgres:
@@ -59,6 +60,7 @@ def coletar_produtos_de_loja(
     buscas_suplementares: tuple[str, ...] = (),
     intervalo_paginas: float = 0.0,
     dormir=time.sleep,
+    tentativas_total_incoerente: int = MAX_TENTATIVAS_TOTAL_INCOERENTE,
 ) -> ResumoColetaProdutosInter:
     """Coleta uma loja inteira; qualquer falha preserva o ultimo snapshot."""
 
@@ -75,79 +77,108 @@ def coletar_produtos_de_loja(
         itens_lidos = 0
         duplicados = 0
         por_id = {}
-        fingerprints: set[tuple[str, int, tuple[str, ...]]] = set()
-
         for indice_segmento, busca in enumerate(("", *buscas_suplementares)):
             if indice_segmento and intervalo_paginas > 0:
                 dormir(intervalo_paginas)
-            search_id = str(gerar_uuid())
-            offset = 0
-            total_segmento: int | None = None
-            paginas_segmento = 0
-            validos_segmento = 0
+            limite_tentativas = max(1, tentativas_total_incoerente)
+            for tentativa in range(1, limite_tentativas + 1):
+                search_id = str(gerar_uuid())
+                offset = 0
+                total_segmento: int | None = None
+                paginas_segmento = 0
+                itens_lidos_segmento = 0
+                validos_segmento = 0
+                duplicados_segmento = 0
+                produtos_segmento = {}
+                fingerprints_segmento: set[tuple[str, int, tuple[str, ...]]] = set()
 
-            while True:
-                pagina = extrair_pagina_produtos(
-                    fonte.pagina(
-                        loja,
-                        search_id,
-                        offset,
-                        limite,
-                        busca=busca,
-                    ),
-                    id_loja=loja.id_externo,
-                )
-                if pagina.offset != offset:
-                    raise PaginacaoProdutosInterInvalida(
-                        "A fonte devolveu offset diferente do solicitado.",
-                        codigo="offset_incoerente",
-                    )
-                if total_segmento is None:
-                    total_segmento = pagina.total
-                elif pagina.total != total_segmento:
-                    raise PaginacaoProdutosInterInvalida(
-                        "A fonte mudou o total declarado durante a coleta.",
-                        codigo="total_incoerente",
-                    )
+                try:
+                    while True:
+                        pagina = extrair_pagina_produtos(
+                            fonte.pagina(
+                                loja,
+                                search_id,
+                                offset,
+                                limite,
+                                busca=busca,
+                            ),
+                            id_loja=loja.id_externo,
+                        )
+                        if pagina.offset != offset:
+                            raise PaginacaoProdutosInterInvalida(
+                                "A fonte devolveu offset diferente do solicitado.",
+                                codigo="offset_incoerente",
+                            )
+                        if total_segmento is None:
+                            total_segmento = pagina.total
+                        elif pagina.total != total_segmento:
+                            raise PaginacaoProdutosInterInvalida(
+                                "A fonte mudou o total declarado durante a coleta.",
+                                codigo="total_incoerente",
+                            )
 
-                fingerprint = (
-                    busca,
-                    pagina.offset,
-                    tuple(produto.id_externo for produto in pagina.produtos),
-                )
-                if fingerprint in fingerprints:
-                    raise PaginacaoProdutosInterInvalida(
-                        "A fonte repetiu uma pagina de produtos.", codigo="pagina_repetida"
-                    )
-                fingerprints.add(fingerprint)
-                paginas += 1
-                paginas_segmento += 1
-                itens_lidos += pagina.itens_lidos
-                validos_segmento += len(pagina.produtos)
-                for produto in pagina.produtos:
-                    if produto.id_externo in por_id:
-                        duplicados += 1
-                    else:
-                        por_id[produto.id_externo] = produto
+                        fingerprint = (
+                            busca,
+                            pagina.offset,
+                            tuple(produto.id_externo for produto in pagina.produtos),
+                        )
+                        if fingerprint in fingerprints_segmento:
+                            raise PaginacaoProdutosInterInvalida(
+                                "A fonte repetiu uma pagina de produtos.",
+                                codigo="pagina_repetida",
+                            )
+                        fingerprints_segmento.add(fingerprint)
+                        paginas_segmento += 1
+                        itens_lidos_segmento += pagina.itens_lidos
+                        validos_segmento += len(pagina.produtos)
+                        for produto in pagina.produtos:
+                            if produto.id_externo in produtos_segmento:
+                                duplicados_segmento += 1
+                            else:
+                                produtos_segmento[produto.id_externo] = produto
 
-                if pagina.ultima:
+                        if pagina.ultima:
+                            break
+                        proximo_offset = offset + pagina.limite
+                        if proximo_offset <= offset or not pagina.produtos:
+                            raise PaginacaoProdutosInterInvalida(
+                                "A fonte nao avancou uma pagina utilizavel.",
+                                codigo="offset_incoerente",
+                            )
+                        maximo_paginas = (
+                            math.ceil((total_segmento or 0) / max(1, pagina.limite)) + 2
+                        )
+                        if paginas_segmento >= maximo_paginas:
+                            raise PaginacaoProdutosInterInvalida(
+                                "A fonte excedeu a margem de paginas declarada.",
+                                codigo="limite_paginacao",
+                            )
+                        offset = proximo_offset
+                        if intervalo_paginas > 0:
+                            dormir(intervalo_paginas)
                     break
-                proximo_offset = offset + pagina.limite
-                if proximo_offset <= offset or not pagina.produtos:
-                    raise PaginacaoProdutosInterInvalida(
-                        "A fonte nao avancou uma pagina utilizavel.", codigo="offset_incoerente"
+                except PaginacaoProdutosInterInvalida as erro:
+                    if erro.codigo != "total_incoerente" or tentativa >= limite_tentativas:
+                        raise
+                    _log.warning(
+                        "Total mudou na coleta de %s; reiniciando segmento %r (%d/%d).",
+                        loja.slug,
+                        busca,
+                        tentativa + 1,
+                        limite_tentativas,
                     )
-                maximo_paginas = math.ceil((total_segmento or 0) / max(1, pagina.limite)) + 2
-                if paginas_segmento >= maximo_paginas:
-                    raise PaginacaoProdutosInterInvalida(
-                        "A fonte excedeu a margem de paginas declarada.",
-                        codigo="limite_paginacao",
-                    )
-                offset = proximo_offset
-                if intervalo_paginas > 0:
-                    dormir(intervalo_paginas)
+                    if intervalo_paginas > 0:
+                        dormir(intervalo_paginas)
 
             total_declarado_soma += total_segmento or 0
+            paginas += paginas_segmento
+            itens_lidos += itens_lidos_segmento
+            duplicados += duplicados_segmento
+            for produto in produtos_segmento.values():
+                if produto.id_externo in por_id:
+                    duplicados += 1
+                else:
+                    por_id[produto.id_externo] = produto
             if total_segmento and not validos_segmento:
                 raise RespostaProdutosInterInvalida(
                     "A fonte declarou produtos, mas nenhum item passou pela validacao."
