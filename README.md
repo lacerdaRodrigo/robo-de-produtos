@@ -98,6 +98,25 @@ npm run testar
 npm run build
 ```
 
+
+## Versionamento e rastreabilidade
+
+O projeto usa [Semantic Versioning](https://semver.org/lang/pt-BR/) e
+[Conventional Commits](https://www.conventionalcommits.org/pt-br/). A versão não é editada
+manualmente: o workflow `versao.yml` analisa os commits na `main`, atualiza
+`pyproject.toml`, `src/robo_livelo/__init__.py`, `site/lib/versao.ts` e
+`CHANGELOG.md`, cria a tag e publica uma GitHub Release.
+
+| Prefixo | Impacto |
+|---|---|
+| `fix:` | patch — correção compatível |
+| `feat:` | minor — funcionalidade compatível |
+| `feat!:` ou `BREAKING CHANGE` | major — mudança incompatível |
+| `docs:`, `test:`, `style:`, `chore:` | não cria versão sozinho |
+
+O histórico público fica em [Releases](https://github.com/lacerdaRodrigo/robo-livelo/releases)
+e no [CHANGELOG](CHANGELOG.md). O site também possui a tela **Histórico de versões**.
+
 ## Uso responsável
 
 Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz consultas públicas controladas três vezes ao dia, com paginação e cooldown quando necessários, identificando-se honestamente.
