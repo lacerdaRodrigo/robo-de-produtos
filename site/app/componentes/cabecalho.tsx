@@ -23,6 +23,7 @@ import { acaoAtualizarAgora } from "../lojas/acoes";
 const PUBLICAS = [
   { href: "/", nome: "Livelo", icone: IconePainel },
   { href: "/inter", nome: "Shopping Inter", icone: IconeLojas },
+  { href: "/inter/produtos", nome: "Produtos Inter", icone: IconeProdutos },
   { href: "/ajuda", nome: "Ajuda", icone: IconeAjuda },
 ];
 
@@ -30,6 +31,7 @@ const PRIVADAS = [
   { href: "/avisos", nome: "Alertas Livelo", icone: IconeAlertas },
   { href: "/lojas", nome: "Lojas Livelo", icone: IconeLojas },
   { href: "/inter/lojas", nome: "Lojas Inter", icone: IconeLojas },
+  { href: "/inter/produtos/lojas", nome: "Produtos: lojas", icone: IconeProdutos },
 ];
 
 const ROTULO_DO_TEMA: Record<Tema, string> = {
@@ -47,7 +49,9 @@ export async function Cabecalho({ atual }: { atual: string }) {
   const privadas = alertasEscondidos
     ? PRIVADAS.filter((item) => item.href !== "/avisos")
     : PRIVADAS;
-  const itens = logado ? [PUBLICAS[0], PUBLICAS[1], ...privadas, PUBLICAS[2]] : PUBLICAS;
+  const itens = logado
+    ? [PUBLICAS[0], PUBLICAS[1], PUBLICAS[2], ...privadas, PUBLICAS[3]]
+    : PUBLICAS;
 
   // "Forçar atualização" (RNF02) mora no menu, logo abaixo de Lojas — so
   // faz sentido pra quem tem sessao, entao so busca o cooldown nesse caso:
@@ -198,6 +202,15 @@ function IconeLojas() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function IconeProdutos() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      <path d="m4 7.5 8 4.5 8-4.5M12 12v9" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }

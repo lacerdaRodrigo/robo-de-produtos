@@ -171,6 +171,54 @@ a:hover {
   text-decoration-color: var(--marca);
 }
 
+/* V4: catalogo de produtos locais. Sem imagem, script ou recurso do Inter. */
+.busca-produtos {
+  margin: var(--e5) 0;
+}
+
+.busca-produtos label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: var(--e2);
+}
+
+.busca-produtos > div {
+  display: flex;
+  gap: var(--e2);
+}
+
+.busca-produtos input {
+  min-width: 0;
+  flex: 1;
+  min-height: var(--toque);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-p);
+  background: var(--superficie);
+  color: var(--texto);
+  padding: 0 var(--e3);
+  font: inherit;
+}
+
+.produto-cartao { display: flex; flex-direction: column; }
+.produto-precos { display: flex; align-items: baseline; gap: var(--e2); margin: var(--e3) 0; }
+.produto-antigo { color: var(--suave); text-decoration: line-through; }
+.produto-atual { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.etiquetas-produto { display: flex; flex-wrap: wrap; gap: var(--e1); }
+.grupo-produtos h2 span { color: var(--suave); font-size: 0.8rem; font-weight: 500; text-transform: none; letter-spacing: normal; }
+.confirmacao { display: inline-block; }
+.confirmacao summary { color: var(--acento); cursor: pointer; font-weight: 700; min-height: var(--toque); padding: var(--e2) 0; }
+.confirmacao form { margin-top: var(--e2); }
+.perigoso { background: var(--acento); }
+.resumo-historico { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); margin: var(--e5) 0; }
+.resumo-historico div { background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio-p); padding: var(--e3); }
+.resumo-historico span { display: block; color: var(--suave); font-size: 0.8rem; }
+.resumo-historico strong { display: block; font-variant-numeric: tabular-nums; margin-top: var(--e1); }
+.tabela-rolavel { overflow-x: auto; border: 1px solid var(--borda); border-radius: var(--raio-p); }
+.tabela-rolavel table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.tabela-rolavel th, .tabela-rolavel td { padding: var(--e2) var(--e3); text-align: left; border-bottom: 1px solid var(--borda); font-variant-numeric: tabular-nums; }
+.tabela-rolavel th { color: var(--suave); font-size: 0.8rem; }
+@media (max-width: 520px) { .busca-produtos > div { flex-direction: column; } .resumo-historico { grid-template-columns: 1fr; } }
+
 :focus-visible {
   outline: 2px solid var(--marca);
   outline-offset: 2px;

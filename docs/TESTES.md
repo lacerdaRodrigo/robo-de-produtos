@@ -283,12 +283,13 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 
 ---
 
-## Produtos do Shopping Inter — V4 (planejado)
+## Produtos do Shopping Inter — V4
 
-> Casos definidos no [`PRD-V4.md`](PRD-V4.md). Ainda não existem módulos,
-> fixtures, tabelas ou testes da V4; os nomes de arquivo abaixo são destinos
-> planejados e só ficam definitivos depois do gate físico da V4.1. Nenhum CT
-> desta seção entra nos totais executados no fim do documento.
+> Casos definidos no [`PRD-V4.md`](PRD-V4.md). A primeira implementação usa
+> `testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
+> `site/testes/formato-produtos-inter.teste.ts` para a busca local e a migração
+> `007` para a persistência. Os casos de integração real continuam pendentes do
+> gate físico e não são substituídos por fixture.
 
 ### `testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
 
@@ -415,7 +416,7 @@ O que conferir:
 
 ## Totais
 
-Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. CT-200 a CT-244 pertencem à V4 planejada e não entram nesta tabela enquanto seus arquivos ainda não existirem.
+Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. A V4 inicia a cobertura automatizada em `teste_produtos_inter.py`; os demais CT-200 a CT-244 continuam como roteiro de expansão e aceite real.
 
 | Arquivo | Casos CT | Executados |
 |---|---|---|
@@ -431,11 +432,13 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
-| `teste_fronteira.py` | 2 | 11 |
-| **Total (robô)** | **150** | **189** |
+| `teste_produtos_inter.py` | 6 | 8 |
+| `teste_fronteira.py` | 2 | 13 |
+| **Total (robô)** | **156** | **199** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
-| **Total (site)** | **21** | **31** |
+| `site/testes/formato-produtos-inter.teste.ts` | 2 | 1 |
+| **Total (site)** | **23** | **32** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
