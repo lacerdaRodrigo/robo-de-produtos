@@ -15,7 +15,9 @@ import {
   terminaHoje,
   type Ordenacao,
 } from "@/lib/formato";
+import { paginar, paginasVisiveis } from "@/lib/paginacao";
 import { temSessao } from "@/lib/sessao";
+import { BuscaProgressiva } from "./componentes/busca-progressiva";
 import { Cabecalho } from "./componentes/cabecalho";
 import { Rodape } from "./rodape";
 
@@ -149,64 +151,6 @@ function Loja({
   );
 }
 
-/** Painel: hero escuro com o resumo da execução e as lojas de maior
- *  pontuação agora — "Top 3 Oportunidade" no mockup V4.6. Ordenar so
- *  para escolher as 3 primeiras, nunca para exibir texto (PRD 5.4) —
- *  mesma ressalva de `barraDeProgresso` em lib/formato.ts. */
-function HeroDoPainel({
-  alertadas,
-  todas,
-  parceirosLidos,
-}: {
-  alertadas: PontuacaoDeLoja[];
-  todas: PontuacaoDeLoja[];
-  parceirosLidos: number;
-}) {
-  const top3 = todas
-    .filter((l) => l.pontos_atuais !== null)
-    .sort((a, b) => Number(b.pontos_atuais) - Number(a.pontos_atuais))
-    .slice(0, 3);
-
-  return (
-    <div className="hero-painel">
-      <div className="hero-cabecalho">
-        <div>
-          <span className="hero-rotulo">Visão do extrator</span>
-          <h1>Visão Geral</h1>
-        </div>
-        {alertadas.length > 0 && (
-          <span className="hero-badge-alerta">
-            <span className="hero-badge-ponto" aria-hidden="true" />
-            {alertadas.length} {alertadas.length === 1 ? "alerta ativo" : "alertas ativos"}
-          </span>
-        )}
-      </div>
-
-      <div className="hero-metricas">
-        <span>{todas.length} lojas monitoradas</span>
-        <span>{parceirosLidos} parceiros lidos</span>
-      </div>
-
-      {top3.length > 0 && (
-        <div className="hero-top3">
-          {top3.map((loja, indice) => (
-            <div key={loja.nome} className="hero-top3-item">
-              <span className="hero-rotulo">Top {indice + 1} oportunidade</span>
-              <div className="hero-top3-linha">
-                <span className="hero-top3-nome">{loja.nome}</span>
-                <span className="hero-top3-pontos numero">
-                  {loja.prefixo_ate ? "Até " : ""}
-                  {pontos(loja.pontos_atuais)}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const ROTULO_DA_ORDENACAO: Record<Ordenacao, string> = {
   pontos: "Maior pontuação",
   alerta: "Em alerta",
@@ -216,9 +160,9 @@ const ROTULO_DA_ORDENACAO: Record<Ordenacao, string> = {
 export default async function Pagina({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; ordenar?: string }>;
+  searchParams: Promise<{ q?: string; ordenar?: string; pagina?: string }>;
 }) {
-  const { q = "", ordenar: ordenarBruto } = await searchParams;
+  const { q = "", ordenar: ordenarBruto, pagina: paginaBruta } = await searchParams;
   const ordenar: Ordenacao = (ORDENACOES as readonly string[]).includes(ordenarBruto ?? "")
     ? (ordenarBruto as Ordenacao)
     : "pontos";
@@ -258,12 +202,22 @@ export default async function Pagina({
   }
 
   const lojas = filtrarPorNome(todas, q);
-  const alertadas = lojas.filter((l) => l.alertou);
   const carimbo = idade(execucao.momento);
 
   // Grade unica, ordenavel — substitui o agrupamento por categoria do
   // redesenho anterior (redesenho V4.6, mockup enviado em 2026-08-13).
   const lojasOrdenadas = ordenarLojas(lojas, ordenar);
+  const paginacao = paginar(lojasOrdenadas, paginaBruta);
+  const numerosDePagina = paginasVisiveis(paginacao.pagina, paginacao.totalPaginas);
+  const linkDaPagina = (numero: number) => {
+    const parametros = new URLSearchParams();
+    if (q) {
+      parametros.set("q", q);
+    }
+    parametros.set("ordenar", ordenar);
+    parametros.set("pagina", String(numero));
+    return `/?${parametros.toString()}`;
+  };
   const semResultadoDeBusca = q !== "" && lojas.length === 0;
   const semLojasEmAlerta = ordenar === "alerta" && lojasOrdenadas.length === 0 && lojas.length > 0;
 
@@ -278,24 +232,16 @@ export default async function Pagina({
           {carimbo.velho && " — o robô pode estar parado"}
         </p>
 
-        <HeroDoPainel
-          alertadas={alertadas}
-          todas={todas}
-          parceirosLidos={execucao.parceiros_lidos}
-        />
 
-        <form id="busca-principal" className="busca" action="/" method="get" role="search">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
+        <div id="busca-principal">
+          <BuscaProgressiva
+            acao="/"
+            valorInicial={q}
             placeholder="Procurar loja ou categoria"
-            aria-label="Procurar loja ou categoria"
+            rotulo="Procurar loja ou categoria"
+            parametrosFixos={{ ordenar }}
           />
-          <button type="submit" className="secundario">
-            Procurar
-          </button>
-        </form>
+        </div>
 
         {semResultadoDeBusca && (
           <p className="detalhe">
@@ -339,11 +285,51 @@ export default async function Pagina({
               // RN24: todas as favoritas, em promocao ou nao. E o motivo do
               // site existir — responder "quanto a Renner da hoje?" sem
               // abrir a Livelo.
-              <div className="lista-grade">
-                {lojasOrdenadas.map((loja) => (
-                  <Loja key={loja.nome} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
-                ))}
-              </div>
+              <>
+                <div className="lista-grade">
+                  {paginacao.itens.map((loja) => (
+                    <Loja key={loja.nome} loja={loja} podeAjustarAlerta={podeAjustarAlerta} />
+                  ))}
+                </div>
+
+                {paginacao.totalItens > 0 && (
+                  <nav className="paginacao" aria-label="Paginação das lojas">
+                    <p className="paginacao-resumo">
+                      Mostrando {paginacao.primeiroItem}–{paginacao.ultimoItem} de {paginacao.totalItens} lojas
+                    </p>
+                    <div className="paginacao-botoes">
+                      {paginacao.pagina > 1 ? (
+                        <Link className="botao-paginacao navegacao" href={linkDaPagina(paginacao.pagina - 1)}>
+                          Anterior
+                        </Link>
+                      ) : (
+                        <span className="botao-paginacao navegacao desabilitado" aria-disabled="true">
+                          Anterior
+                        </span>
+                      )}
+                      {numerosDePagina.map((numero) => (
+                        <Link
+                          key={numero}
+                          className="botao-paginacao numero"
+                          href={linkDaPagina(numero)}
+                          aria-current={numero === paginacao.pagina ? "page" : undefined}
+                        >
+                          {numero}
+                        </Link>
+                      ))}
+                      {paginacao.pagina < paginacao.totalPaginas ? (
+                        <Link className="botao-paginacao navegacao" href={linkDaPagina(paginacao.pagina + 1)}>
+                          Próxima
+                        </Link>
+                      ) : (
+                        <span className="botao-paginacao navegacao desabilitado" aria-disabled="true">
+                          Próxima
+                        </span>
+                      )}
+                    </div>
+                  </nav>
+                )}
+              </>
             )}
           </>
         )}
