@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.28.1 (2026-08-18)
+
+### Bug Fixes
+
+- **produtos-inter**: Preserve best catalog on unstable totals
+  ([`4141e5b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4141e5bbb986b27d1b80eff3cc55f724bb71c5f9))
+
+
 ## v1.28.0 (2026-08-17)
 
 ### Features

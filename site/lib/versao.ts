@@ -1,3 +1,3 @@
 // Atualizado automaticamente pelo python-semantic-release.
 // Nunca editar manualmente.
-export const VERSAO_ATUAL = "1.28.0";
+export const VERSAO_ATUAL = "1.28.1";
