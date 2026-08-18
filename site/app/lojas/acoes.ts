@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import {
   adicionarLoja,
-  adicionarLojaDescoberta,
   esperaAteProximoDisparo,
   registrarDisparo,
   removerLoja,
@@ -60,16 +59,6 @@ export async function acaoAdicionarLoja(dados: FormData) {
   revalidatePath("/avisos");
   revalidatePath("/");
   redirect(`/lojas?ok=adicionada&nome=${encodeURIComponent(nome)}`);
-}
-
-export async function acaoAdicionarLojaDescoberta(dados: FormData) {
-  await exigirSessao();
-  const id = Number(dados.get("id"));
-  if (!Number.isInteger(id) || id <= 0) redirect("/lojas?erro=nao-achei");
-  await adicionarLojaDescoberta(id);
-  revalidatePath("/lojas");
-  revalidatePath("/");
-  redirect("/lojas?ok=adicionada");
 }
 
 export async function acaoRemoverLoja(dados: FormData) {

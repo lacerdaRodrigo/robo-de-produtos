@@ -9,6 +9,7 @@ import logging
 import smtplib
 import time
 import tomllib
+from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
 from pathlib import Path
@@ -227,9 +228,24 @@ class CatalogoPostgres:
                l.multiplicador, l.piso_pontos
           FROM loja l
           LEFT JOIN apelido a ON a.loja_id = l.id
-         WHERE l.favorita = TRUE
          GROUP BY l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos
          ORDER BY l.categoria, l.nome
+    """
+
+    INSERE_LOJA = """
+        INSERT INTO loja (nome, categoria, multiplicador, piso_pontos)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (nome) DO UPDATE SET
+            categoria = EXCLUDED.categoria,
+            multiplicador = EXCLUDED.multiplicador,
+            piso_pontos = EXCLUDED.piso_pontos
+        RETURNING id
+    """
+
+    INSERE_APELIDO = """
+        INSERT INTO apelido (loja_id, texto)
+        VALUES (%s, %s)
+        ON CONFLICT (texto) DO UPDATE SET loja_id = EXCLUDED.loja_id
     """
 
     def __init__(self, url: str) -> None:
@@ -251,7 +267,7 @@ class CatalogoPostgres:
             ) from None
 
         if not linhas:
-            _log.warning("Nenhuma loja favorita cadastrada no banco. Nada a monitorar.")
+            _log.warning("Nenhuma loja cadastrada no banco. O catalogo sera reidratado.")
             return []
 
         # NUMERIC volta como Decimal do psycopg — nada de float aqui (PRD 5.4).
@@ -265,6 +281,28 @@ class CatalogoPostgres:
             )
             for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
+
+    def restaurar(self, lojas: list[LojaFavorita]) -> None:
+        """Recria o catalogo padrao depois de uma limpeza da Livelo."""
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                for loja in lojas:
+                    cursor.execute(
+                        self.INSERE_LOJA,
+                        (loja.nome, loja.categoria, loja.multiplicador, loja.piso_pontos),
+                    )
+                    (loja_id,) = cursor.fetchone()
+                    cursor.executemany(
+                        self.INSERE_APELIDO,
+                        [(loja_id, apelido) for apelido in loja.apelidos],
+                    )
+        except psycopg.Error as erro:
+            raise ConfiguracaoInvalida(
+                f"Falha ao reidratar o catalogo no banco: {type(erro).__name__}"
+            ) from None
+
 
 class RepositorioNulo:
     """Nao guarda nada, e diz isso uma vez no log.
@@ -306,12 +344,6 @@ class RepositorioPostgres:
         )
     """
 
-    INSERE_DESCOBERTA = """
-        INSERT INTO loja (nome, categoria, favorita)
-        VALUES (%s, 'Livelo', FALSE)
-        ON CONFLICT (nome) DO NOTHING
-    """
-
     def __init__(self, url: str) -> None:
         if not url:
             raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
@@ -330,10 +362,6 @@ class RepositorioPostgres:
                 cursor.executemany(
                     self.INSERE_PONTUACAO,
                     [_linha_de_pontuacao(p, execucao_id) for p in retrato.pontuacoes],
-                )
-                cursor.executemany(
-                    self.INSERE_DESCOBERTA,
-                    [(parceiro.nome,) for parceiro in retrato.parceiros],
                 )
         except psycopg.Error as erro:
             # Mensagem propria: a original pode carregar a senha da URL.
@@ -455,18 +483,20 @@ class CatalogoComReserva:
     em WARNING justamente para a queda nao passar despercebida — rodar de
     reserva por semanas sem ninguem notar seria pior do que falhar.
 
-    Banco vazio apos uma limpeza continua vazio para as favoritas; a proxima
-    rodada grava as lojas encontradas como descobertas, sem transforma-las em
-    favoritas. A reserva cobre indisponibilidade do banco sem interromper o robo.
+    Banco vazio apos uma limpeza e recuperado a partir da reserva TOML, para
+    que a proxima rodada volte a mostrar as lojas monitoradas. A reserva ainda
+    cobre indisponibilidade do banco sem interromper o robo.
     """
 
     def __init__(
         self,
         principal: CatalogoFavoritas,
         reserva: CatalogoFavoritas,
+        restaurar: Callable[[list[LojaFavorita]], None] | None = None,
     ) -> None:
         self._principal = principal
         self._reserva = reserva
+        self._restaurar = restaurar
 
     def listar(self) -> list[LojaFavorita]:
         try:
@@ -475,4 +505,16 @@ class CatalogoComReserva:
             _log.warning("Catalogo principal indisponivel (%s). Usando a reserva.", erro)
             return self._reserva.listar()
 
-        return lojas
+        if lojas or self._restaurar is None:
+            return lojas
+
+        reservas = self._reserva.listar()
+        try:
+            self._restaurar(reservas)
+            reidratadas = self._principal.listar()
+            if reidratadas:
+                _log.info("Catalogo reidratado com %d lojas da reserva.", len(reidratadas))
+                return reidratadas
+        except ConfiguracaoInvalida as erro:
+            _log.warning("Nao foi possivel reidratar o catalogo (%s). Usando a reserva.", erro)
+        return reservas

@@ -62,5 +62,4 @@ def montar_retrato(
         parceiros_lidos=len(parceiros),
         versao=versao,
         pontuacoes=tuple(pontuacoes),
-        parceiros=tuple(parceiros),
     )

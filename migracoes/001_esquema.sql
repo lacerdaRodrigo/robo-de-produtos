@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS loja (
     id            SERIAL PRIMARY KEY,
     nome          TEXT NOT NULL UNIQUE,
     categoria     TEXT NOT NULL,
-    favorita      BOOLEAN NOT NULL DEFAULT TRUE,
     -- NULL significa "usa o padrao global" (RN28).
     multiplicador NUMERIC(5, 2) CHECK (multiplicador > 0),
     piso_pontos   NUMERIC(6, 2) CHECK (piso_pontos >= 0),

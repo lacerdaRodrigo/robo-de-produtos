@@ -69,8 +69,9 @@ def montar_catalogo(ambiente: dict[str, str], caminho: Path) -> CatalogoFavorita
         _log.info("Sem DATABASE_URL: catalogo lido de %s.", caminho)
         return CatalogoArquivo(caminho)
 
-    _log.info("Catalogo lido do banco, com %s de reserva.", caminho)
-    return CatalogoComReserva(CatalogoPostgres(url), CatalogoArquivo(caminho))
+    _log.info("Catalogo lido do banco, com %s de reserva e reidratacao.", caminho)
+    principal = CatalogoPostgres(url)
+    return CatalogoComReserva(principal, CatalogoArquivo(caminho), restaurar=principal.restaurar)
 
 
 def montar_preferencias(ambiente: dict[str, str]) -> PreferenciasGlobais:
@@ -131,8 +132,8 @@ def verificar_promocoes(
     favoritas = catalogo.listar()
     _log.info("Lojas favoritas carregadas: %d", len(favoritas))
 
-    # Banco vazio significa que ainda nao ha favoritas; as lojas encontradas
-    # nesta rodada entram como descobertas, sem serem monitoradas (O3).
+    # Um banco vazio e reidratado pelo CatalogoComReserva antes de chegar aqui.
+    # Este aviso cobre apenas quem roda sem banco e sem lojas no TOML (O3).
     catalogo_vazio = not favoritas
     if catalogo_vazio:
         _log.warning("Nenhuma loja cadastrada. O e-mail vai avisar, e nada sera monitorado.")

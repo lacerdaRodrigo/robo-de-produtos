@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   catalogo,
   categorias,
-  lojasDescobertas,
   INTERVALO_MINIMO_MINUTOS,
   preferencias,
   ultimaExecucao,
@@ -15,7 +14,7 @@ import { BuscaProgressiva } from "../componentes/busca-progressiva";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
 import { Rodape } from "../rodape";
-import { acaoAdicionarLoja, acaoAdicionarLojaDescoberta } from "./acoes";
+import { acaoAdicionarLoja } from "./acoes";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +32,8 @@ export default async function PaginaDeLojas({
   await exigirSessao();
 
   const { ok, erro, nome, q = "", segundos } = await searchParams;
-  const [todas, descobertas, listaDeCategorias, execucao, padroes, avisoOpcionalEscondido] = await Promise.all([
+  const [todas, listaDeCategorias, execucao, padroes, avisoOpcionalEscondido] = await Promise.all([
     catalogo(),
-    lojasDescobertas(),
     categorias(),
     ultimaExecucao().catch(() => null),
     preferencias(),
@@ -91,33 +89,6 @@ export default async function PaginaDeLojas({
           <p className="faixa ruim">
             O GitHub recusou o pedido. O robô continua rodando nos horários de sempre.
           </p>
-        )}
-
-        {descobertas.length > 0 && (
-          <>
-            <h2>Lojas encontradas na Livelo</h2>
-            <p className="ajuda-do-campo">
-              Estas lojas vieram da última busca, mas ainda não são suas. Adicione somente as que quiser monitorar.
-            </p>
-            <div className="rolagem">
-              <table className="tabela-lojas">
-                <tbody>
-                  {descobertas.map((loja) => (
-                    <tr key={loja.id}>
-                      <td>{loja.nome}</td>
-                      <td className="ajuda-do-campo">{loja.categoria}</td>
-                      <td>
-                        <form action={acaoAdicionarLojaDescoberta}>
-                          <input type="hidden" name="id" value={loja.id} />
-                          <button className="botao discreto" type="submit">Adicionar às minhas lojas</button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
         )}
 
         <h2>Adicionar loja</h2>

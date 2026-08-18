@@ -90,7 +90,6 @@ class RetratoDaExecucao:
     parceiros_lidos: int
     versao: str
     pontuacoes: tuple[PontuacaoDeLoja, ...] = field(default_factory=tuple)
-    parceiros: tuple[Parceiro, ...] = field(default_factory=tuple)
 
     @property
     def alertas(self) -> int:
