@@ -69,9 +69,8 @@ def montar_catalogo(ambiente: dict[str, str], caminho: Path) -> CatalogoFavorita
         _log.info("Sem DATABASE_URL: catalogo lido de %s.", caminho)
         return CatalogoArquivo(caminho)
 
-    _log.info("Catalogo lido do banco, com %s de reserva e reidratacao.", caminho)
-    principal = CatalogoPostgres(url)
-    return CatalogoComReserva(principal, CatalogoArquivo(caminho), restaurar=principal.restaurar)
+    _log.info("Catalogo lido do banco, com %s de reserva.", caminho)
+    return CatalogoComReserva(CatalogoPostgres(url), CatalogoArquivo(caminho))
 
 
 def montar_preferencias(ambiente: dict[str, str]) -> PreferenciasGlobais:
