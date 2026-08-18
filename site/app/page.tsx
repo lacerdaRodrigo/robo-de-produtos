@@ -231,6 +231,7 @@ export default async function Pagina({
           Sincronizado {carimbo.texto} ({dataHora(execucao.momento)})
           {carimbo.velho && " — o robô pode estar parado"}
         </p>
+        <p className="detalhe">{execucao.parceiros_lidos} lojas encontradas na última consulta.</p>
 
 
         <div id="busca-principal">
