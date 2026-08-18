@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.0 (2026-08-18)
+
+### Features
+
+- **livelo**: Separa descobertas de lojas favoritas
+  ([`d574ddd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d574ddde70689b6634d57db1ee71c82de65bb0f5))
+
+
 ## v1.28.4 (2026-08-18)
 
 ### Bug Fixes
