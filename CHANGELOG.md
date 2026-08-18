@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.28.2 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Inclui oferta atual no reset do Inter
+  ([`8084f82`](https://github.com/lacerdaRodrigo/robo-livelo/commit/8084f8245f402a6ccbdf6a633502374e7c7ee649))
+
+
 ## v1.28.1 (2026-08-18)
 
 ### Bug Fixes
