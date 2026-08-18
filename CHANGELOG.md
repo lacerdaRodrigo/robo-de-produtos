@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.1 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Mostra total de lojas encontradas
+  ([`e12225e`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e12225e4a22ab60fd14e4d5ab1ec29fc68813550))
+
+
 ## v1.29.0 (2026-08-18)
 
 ### Features
