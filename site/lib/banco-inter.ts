@@ -83,7 +83,7 @@ export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[
            COALESCE(c.etiqueta, l.etiqueta) AS etiqueta,
            COALESCE(c.descricao_principal, l.descricao_principal) AS descricao_principal,
            COALESCE(c.descricao_secundaria, l.descricao_secundaria) AS descricao_secundaria,
-           COALESCE(c.encontrada, FALSE) AS encontrada
+           COALESCE(c.encontrada, TRUE) AS encontrada
       FROM loja_inter l
       JOIN favorita_inter f ON f.loja_inter_id = l.id
       LEFT JOIN cashback_inter c
