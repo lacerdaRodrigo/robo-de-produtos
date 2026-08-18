@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.5 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Adiciona botao de atualizacao da livelo
+  ([`12cb627`](https://github.com/lacerdaRodrigo/robo-livelo/commit/12cb627dfb2bbf9c53ae93926c039e53052617a7))
+
+
 ## v1.29.4 (2026-08-18)
 
 ### Bug Fixes
