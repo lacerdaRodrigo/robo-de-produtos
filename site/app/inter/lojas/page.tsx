@@ -18,12 +18,13 @@ export default async function PaginaLojasInter({
     ok?: string;
     erro?: string;
     nome?: string;
+    atualizacao?: string;
     segundos?: string;
     pagina?: string;
   }>;
 }) {
   await exigirSessao();
-  const { q = "", ok, erro, nome, segundos, pagina: paginaBruta } = await searchParams;
+  const { q = "", ok, erro, nome, atualizacao, segundos, pagina: paginaBruta } = await searchParams;
 
   let lojas: Awaited<ReturnType<typeof buscarLojasInter>> = [];
   let total = 0;
@@ -66,6 +67,18 @@ export default async function PaginaLojasInter({
         </p>
 
         {ok === "adicionada" && <p className="faixa">{nome} entrou nas suas favoritas.</p>}
+        {ok === "adicionada" && atualizacao === "solicitada" && (
+          <p className="faixa">A consulta do Inter foi solicitada. Confira em breve na tela de cashback.</p>
+        )}
+        {ok === "adicionada" && atualizacao === "pendente" && (
+          <p className="faixa">A loja foi salva. A próxima atualização automática respeitará o intervalo mínimo.</p>
+        )}
+        {ok === "adicionada" && atualizacao === "sem-token" && (
+          <p className="faixa ruim">A loja foi salva, mas falta configurar o token para atualizar o Inter automaticamente.</p>
+        )}
+        {ok === "adicionada" && atualizacao === "falhou" && (
+          <p className="faixa ruim">A loja foi salva, mas o pedido de atualização do Inter falhou.</p>
+        )}
         {ok === "removida" && <p className="faixa">{nome} saiu das suas favoritas.</p>}
         {ok === "disparado" && (
           <p className="faixa">
