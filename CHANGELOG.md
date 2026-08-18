@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.3 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Reflete selecao nas consultas imediatamente
+  ([`71ad5e2`](https://github.com/lacerdaRodrigo/robo-livelo/commit/71ad5e2aa4016c74c91b8f291da29824788c58c2))
+
+
 ## v1.29.2 (2026-08-18)
 
 ### Bug Fixes
