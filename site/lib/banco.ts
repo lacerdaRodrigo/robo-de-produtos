@@ -93,8 +93,9 @@ export async function lojasComExcecao(): Promise<Loja[]> {
   return (await sql`
     SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
            ARRAY[]::TEXT[] AS apelidos
-      FROM loja l
-     WHERE l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL
+     FROM loja l
+     WHERE l.favorita = TRUE
+       AND (l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL)
      ORDER BY l.nome
   `) as Loja[];
 }
@@ -105,9 +106,9 @@ export async function loja(id: number): Promise<Loja | null> {
     SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
            COALESCE(ARRAY_AGG(a.texto) FILTER (WHERE a.texto IS NOT NULL), ARRAY[]::TEXT[])
                AS apelidos
-      FROM loja l
-      LEFT JOIN apelido a ON a.loja_id = l.id
-     WHERE l.id = ${id}
+     FROM loja l
+     LEFT JOIN apelido a ON a.loja_id = l.id
+     WHERE l.id = ${id} AND l.favorita = TRUE
      GROUP BY l.id
   `) as Loja[];
   return linhas[0] ?? null;
@@ -121,9 +122,25 @@ export async function catalogo(): Promise<Loja[]> {
                AS apelidos
       FROM loja l
       LEFT JOIN apelido a ON a.loja_id = l.id
+     WHERE l.favorita = TRUE
      GROUP BY l.id
      ORDER BY l.categoria, l.nome
   `) as Loja[];
+}
+
+export async function lojasDescobertas(): Promise<Loja[]> {
+  const sql = conectar();
+  return (await sql`
+    SELECT id, nome, categoria, multiplicador, piso_pontos, ARRAY[]::TEXT[] AS apelidos
+      FROM loja
+     WHERE favorita = FALSE
+     ORDER BY nome
+  `) as Loja[];
+}
+
+export async function adicionarLojaDescoberta(id: number): Promise<void> {
+  const sql = conectar();
+  await sql`UPDATE loja SET favorita = TRUE WHERE id = ${id}`;
 }
 
 export async function preferencias(): Promise<Preferencias> {
@@ -199,7 +216,7 @@ export async function removerLoja(id: number): Promise<void> {
 export async function categorias(): Promise<string[]> {
   const sql = conectar();
   const linhas = (await sql`
-    SELECT DISTINCT categoria FROM loja ORDER BY categoria
+      SELECT DISTINCT categoria FROM loja WHERE favorita = TRUE ORDER BY categoria
   `) as { categoria: string }[];
   return linhas.map((l) => l.categoria);
 }

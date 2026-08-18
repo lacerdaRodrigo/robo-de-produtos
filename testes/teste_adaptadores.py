@@ -545,7 +545,7 @@ def teste_ct159_banco_vazio_nao_e_falha(monkeypatch, caplog):
         lojas = repositorio_de_catalogo_fake(monkeypatch, []).listar()
 
     assert lojas == []
-    assert any("Nenhuma loja cadastrada" in r.getMessage() for r in caplog.records)
+    assert any("Nenhuma loja favorita" in r.getMessage() for r in caplog.records)
 
 
 def teste_ct160_banco_vazio_nao_aciona_a_reserva(monkeypatch):
@@ -557,17 +557,12 @@ def teste_ct160_banco_vazio_nao_aciona_a_reserva(monkeypatch):
     assert reserva.chamadas == 0
 
 
-def teste_ct161_banco_vazio_reidrata_catalogo_e_tenta_novamente():
-    lojas = [LojaFavorita(nome="Natura", categoria="Beleza")]
+def teste_ct161_banco_vazio_nao_reidrata_favoritas():
     principal = CatalogoOk([])
-    reserva = CatalogoOk(lojas)
+    reserva = CatalogoOk([LojaFavorita(nome="Do arquivo", categoria="Beleza")])
 
-    def restaurar(catalogo):
-        principal._lojas = catalogo
-
-    assert CatalogoComReserva(principal, reserva, restaurar=restaurar).listar() == lojas
-    assert principal.chamadas == 2
-    assert reserva.chamadas == 1
+    assert CatalogoComReserva(principal, reserva).listar() == []
+    assert reserva.chamadas == 0
 
 
 def repositorio_de_catalogo_fake(monkeypatch, linhas):
