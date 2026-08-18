@@ -75,14 +75,20 @@ export async function ultimaExecucaoInterValida(): Promise<TentativaInter | null
 export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[]> {
   const sql = conectar();
   return (await sql`
-    SELECT l.id_externo, l.slug, c.nome,
-           c.cashback_principal_texto, c.cashback_principal_valor,
-           c.cashback_secundario_texto, c.cashback_secundario_valor,
-           c.etiqueta, c.descricao_principal, c.descricao_secundaria,
-           c.encontrada
-      FROM cashback_inter c
-      JOIN loja_inter l ON l.id = c.loja_inter_id
-     WHERE c.execucao_inter_id = ${execucaoId}
+    SELECT l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
+           COALESCE(c.cashback_principal_texto, l.cashback_principal_texto) AS cashback_principal_texto,
+           COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) AS cashback_principal_valor,
+           COALESCE(c.cashback_secundario_texto, l.cashback_secundario_texto) AS cashback_secundario_texto,
+           COALESCE(c.cashback_secundario_valor, l.cashback_secundario_valor) AS cashback_secundario_valor,
+           COALESCE(c.etiqueta, l.etiqueta) AS etiqueta,
+           COALESCE(c.descricao_principal, l.descricao_principal) AS descricao_principal,
+           COALESCE(c.descricao_secundaria, l.descricao_secundaria) AS descricao_secundaria,
+           COALESCE(c.encontrada, FALSE) AS encontrada
+      FROM loja_inter l
+      JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN cashback_inter c
+        ON c.loja_inter_id = l.id AND c.execucao_inter_id = ${execucaoId}
+     WHERE l.ativa = TRUE
   `) as CashbackInter[];
 }
 

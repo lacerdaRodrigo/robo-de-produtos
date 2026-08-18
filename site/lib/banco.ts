@@ -75,13 +75,14 @@ export async function ultimaExecucao(): Promise<Execucao | null> {
 export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]> {
   const sql = conectar();
   return (await sql`
-    SELECT p.nome, l.categoria, p.pontos_atuais, p.pontos_base, p.pontos_clube,
+    SELECT l.nome, l.categoria, p.pontos_atuais, p.pontos_base, p.pontos_clube,
            p.valor_de_disparo, p.moeda, p.prefixo_ate, p.em_promocao, p.alertou,
            p.campanha, p.descricao_campanha, p.fim_promocao, p.link,
            l.multiplicador, l.piso_pontos
-      FROM pontuacao p
-      LEFT JOIN loja l ON l.id = p.loja_id
-     WHERE p.execucao_id = ${execucaoId}
+      FROM loja l
+      LEFT JOIN pontuacao p
+        ON p.loja_id = l.id AND p.execucao_id = ${execucaoId}
+     WHERE l.favorita = TRUE
      ORDER BY l.categoria NULLS LAST, p.alertou DESC, p.pontos_atuais DESC NULLS LAST, p.nome
   `) as PontuacaoDeLoja[];
 }

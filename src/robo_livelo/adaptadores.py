@@ -281,6 +281,7 @@ class CatalogoPostgres:
             for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
 
+
 class RepositorioNulo:
     """Nao guarda nada, e diz isso uma vez no log.
 
