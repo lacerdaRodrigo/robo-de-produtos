@@ -93,6 +93,7 @@ O reset cobre as duas integrações:
     medicao_produto_direto_inter
     estagio_produto_inter
     produto_direto_inter
+    oferta_direta_inter_atual
     execucao_loja_produtos_inter
     execucao_produtos_inter
     loja_direta_inter

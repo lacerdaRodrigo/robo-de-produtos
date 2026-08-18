@@ -28,6 +28,7 @@ export type ResumoDadosInter = {
   vendedoresDiretos: number;
   selecionadas: number;
   produtos: number;
+  ofertasAtuais: number;
   medicoes: number;
   execucoesProdutos: number;
 };
@@ -54,6 +55,7 @@ export async function resumoDadosInter(): Promise<ResumoDadosInter> {
       '(SELECT count(*)::int FROM loja_direta_inter) AS "vendedoresDiretos", ' +
       "(SELECT count(*)::int FROM loja_direta_inter WHERE selecionada = TRUE) AS selecionadas, " +
       "(SELECT count(*)::int FROM produto_direto_inter) AS produtos, " +
+      "(SELECT count(*)::int FROM oferta_direta_inter_atual) AS \"ofertasAtuais\", " +
       "(SELECT count(*)::int FROM medicao_produto_direto_inter) AS medicoes, " +
       '(SELECT count(*)::int FROM execucao_produtos_inter) AS "execucoesProdutos"',
   )) as ResumoDadosInter[];
@@ -66,6 +68,7 @@ export async function resumoDadosInter(): Promise<ResumoDadosInter> {
       vendedoresDiretos: 0,
       selecionadas: 0,
       produtos: 0,
+      ofertasAtuais: 0,
       medicoes: 0,
       execucoesProdutos: 0,
     }
@@ -90,6 +93,7 @@ const TABELAS_INTER = [
   "medicao_produto_direto_inter",
   "estagio_produto_inter",
   "produto_direto_inter",
+  "oferta_direta_inter_atual",
   "execucao_loja_produtos_inter",
   "execucao_produtos_inter",
   "loja_direta_inter",

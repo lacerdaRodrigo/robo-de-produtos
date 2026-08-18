@@ -50,6 +50,7 @@ function ResumoInter({ resumo }: { resumo: ResumoDadosInter }) {
       <LinhaResumo nome="Vendedores diretos" valor={resumo.vendedoresDiretos} />
       <LinhaResumo nome="Vendedores selecionados" valor={resumo.selecionadas} />
       <LinhaResumo nome="Produtos" valor={resumo.produtos} />
+      <LinhaResumo nome="Ofertas atuais" valor={resumo.ofertasAtuais} />
       <LinhaResumo nome="Medições de produtos" valor={resumo.medicoes} />
       <LinhaResumo nome="Execuções de produtos" valor={resumo.execucoesProdutos} />
     </ul>
