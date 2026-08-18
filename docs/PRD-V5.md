@@ -79,7 +79,7 @@ Na mesma transação, recriar as preferências padrão:
     piso_pontos_padrao   = 4
     assinante_clube      = false
 
-tentativa_login, sessão, tema e flags de interface permanecem intactos. O próximo processamento da Livelo continua agendado, mas o catálogo permanece vazio até novo cadastro manual.
+tentativa_login, sessão, tema e flags de interface permanecem intactos. O próximo processamento da Livelo continua agendado e, se o catálogo estiver vazio, reidrata as lojas padrão do TOML antes de gravar o novo retrato.
 
 ### 4.2 Inter
 

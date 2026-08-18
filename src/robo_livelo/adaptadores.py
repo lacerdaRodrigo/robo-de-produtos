@@ -9,6 +9,7 @@ import logging
 import smtplib
 import time
 import tomllib
+from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
 from pathlib import Path
@@ -231,6 +232,22 @@ class CatalogoPostgres:
          ORDER BY l.categoria, l.nome
     """
 
+    INSERE_LOJA = """
+        INSERT INTO loja (nome, categoria, multiplicador, piso_pontos)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (nome) DO UPDATE SET
+            categoria = EXCLUDED.categoria,
+            multiplicador = EXCLUDED.multiplicador,
+            piso_pontos = EXCLUDED.piso_pontos
+        RETURNING id
+    """
+
+    INSERE_APELIDO = """
+        INSERT INTO apelido (loja_id, texto)
+        VALUES (%s, %s)
+        ON CONFLICT (texto) DO UPDATE SET loja_id = EXCLUDED.loja_id
+    """
+
     def __init__(self, url: str) -> None:
         if not url:
             raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
@@ -249,13 +266,8 @@ class CatalogoPostgres:
                 f"Falha ao consultar o catalogo no banco: {type(erro).__name__}"
             ) from None
 
-        # Banco vazio NAO e falha: e o dono tendo apagado o catalogo de
-        # proposito. Levantar aqui faria `CatalogoComReserva` cair no TOML e
-        # ressuscitar as lojas que ele acabou de remover — o banco nunca seria
-        # a fonte da verdade. A excecao fica reservada para o que ela sempre
-        # significou: nao deu para falar com o banco.
         if not linhas:
-            _log.warning("Nenhuma loja cadastrada no banco. Nada a monitorar.")
+            _log.warning("Nenhuma loja cadastrada no banco. O catalogo sera reidratado.")
             return []
 
         # NUMERIC volta como Decimal do psycopg — nada de float aqui (PRD 5.4).
@@ -269,6 +281,27 @@ class CatalogoPostgres:
             )
             for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
         ]
+
+    def restaurar(self, lojas: list[LojaFavorita]) -> None:
+        """Recria o catalogo padrao depois de uma limpeza da Livelo."""
+        import psycopg
+
+        try:
+            with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                for loja in lojas:
+                    cursor.execute(
+                        self.INSERE_LOJA,
+                        (loja.nome, loja.categoria, loja.multiplicador, loja.piso_pontos),
+                    )
+                    (loja_id,) = cursor.fetchone()
+                    cursor.executemany(
+                        self.INSERE_APELIDO,
+                        [(loja_id, apelido) for apelido in loja.apelidos],
+                    )
+        except psycopg.Error as erro:
+            raise ConfiguracaoInvalida(
+                f"Falha ao reidratar o catalogo no banco: {type(erro).__name__}"
+            ) from None
 
 
 class RepositorioNulo:
@@ -450,20 +483,38 @@ class CatalogoComReserva:
     em WARNING justamente para a queda nao passar despercebida — rodar de
     reserva por semanas sem ninguem notar seria pior do que falhar.
 
-    **A reserva cobre indisponibilidade, nao vontade.** Banco que responde
-    com zero lojas devolve lista vazia e chega ate aqui como resultado
-    legitimo: quem apagou o catalogo quis apagar, e ver o TOML ressuscitar
-    as lojas no dia seguinte foi exatamente o defeito que esta distincao
-    conserta.
+    Banco vazio apos uma limpeza e recuperado a partir da reserva TOML, para
+    que a proxima rodada volte a mostrar as lojas monitoradas. A reserva ainda
+    cobre indisponibilidade do banco sem interromper o robo.
     """
 
-    def __init__(self, principal: CatalogoFavoritas, reserva: CatalogoFavoritas) -> None:
+    def __init__(
+        self,
+        principal: CatalogoFavoritas,
+        reserva: CatalogoFavoritas,
+        restaurar: Callable[[list[LojaFavorita]], None] | None = None,
+    ) -> None:
         self._principal = principal
         self._reserva = reserva
+        self._restaurar = restaurar
 
     def listar(self) -> list[LojaFavorita]:
         try:
-            return self._principal.listar()
+            lojas = self._principal.listar()
         except ConfiguracaoInvalida as erro:
             _log.warning("Catalogo principal indisponivel (%s). Usando a reserva.", erro)
             return self._reserva.listar()
+
+        if lojas or self._restaurar is None:
+            return lojas
+
+        reservas = self._reserva.listar()
+        try:
+            self._restaurar(reservas)
+            reidratadas = self._principal.listar()
+            if reidratadas:
+                _log.info("Catalogo reidratado com %d lojas da reserva.", len(reidratadas))
+                return reidratadas
+        except ConfiguracaoInvalida as erro:
+            _log.warning("Nao foi possivel reidratar o catalogo (%s). Usando a reserva.", erro)
+        return reservas

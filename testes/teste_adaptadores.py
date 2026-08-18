@@ -549,12 +549,25 @@ def teste_ct159_banco_vazio_nao_e_falha(monkeypatch, caplog):
 
 
 def teste_ct160_banco_vazio_nao_aciona_a_reserva(monkeypatch):
-    """Contraprova de CT-108: so falha de verdade chega na reserva."""
+    """Sem callback de reidratacao, o adaptador generico preserva o vazio."""
     reserva = CatalogoOk([LojaFavorita(nome="Do arquivo", categoria="Beleza")])
     principal = repositorio_de_catalogo_fake(monkeypatch, [])
 
     assert CatalogoComReserva(principal, reserva).listar() == []
     assert reserva.chamadas == 0
+
+
+def teste_ct161_banco_vazio_reidrata_catalogo_e_tenta_novamente():
+    lojas = [LojaFavorita(nome="Natura", categoria="Beleza")]
+    principal = CatalogoOk([])
+    reserva = CatalogoOk(lojas)
+
+    def restaurar(catalogo):
+        principal._lojas = catalogo
+
+    assert CatalogoComReserva(principal, reserva, restaurar=restaurar).listar() == lojas
+    assert principal.chamadas == 2
+    assert reserva.chamadas == 1
 
 
 def repositorio_de_catalogo_fake(monkeypatch, linhas):
