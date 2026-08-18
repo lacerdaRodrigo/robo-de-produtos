@@ -1,7 +1,7 @@
 # PRD V5 — Limpeza administrativa por domínio
 
 **Versão:** V5.0 — planejamento  
-**Status:** planejado
+**Status:** implementado no site; aceite destrutivo em banco descartável pendente
 
 > A V5 adiciona uma operação administrativa destrutiva ao Radar de Benefícios. Ela não coleta uma nova fonte e não muda as regras dos robôs: permite apagar separadamente os dados da Livelo ou resetar todos os dados do Shopping Inter, sempre dentro da área autenticada.
 
@@ -173,10 +173,10 @@ O primeiro teste destrutivo não deve usar o banco de produção.
 
 | Fase | Entrega |
 |---|---|
-| V5.0 | Este PRD e mapa de dados por domínio |
-| V5.1 | Resumos, validação de frases e transações |
-| V5.2 | Zona de perigo e páginas protegidas |
-| V5.3 | Testes descartáveis, regressão e smoke controlado |
+| V5.0 | Este PRD e mapa de dados por domínio | concluída |
+| V5.1 | Resumos, validação de frases e transações | concluída |
+| V5.2 | Zona de perigo e páginas protegidas | concluída |
+| V5.3 | Testes descartáveis, regressão e smoke controlado | pendente |
 
 ## 10. Critérios de aceite
 

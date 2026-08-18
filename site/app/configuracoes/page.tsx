@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ultimaExecucao } from "@/lib/banco";
 import { avisoOpcionalNoCadastroEscondido, telaDeAlertasEscondida } from "@/lib/flags";
 import { exigirSessao } from "@/lib/sessao";
@@ -42,6 +44,12 @@ export default async function PaginaDeConfiguracoes({
         </p>
 
         {ok === "salvo" && <p className="faixa">Salvo. Vale a partir de agora.</p>}
+        {ok === "livelo-apagada" && (
+          <p className="faixa">Os dados da Livelo foram apagados. O catálogo está vazio para novo cadastro.</p>
+        )}
+        {ok === "inter-resetado" && (
+          <p className="faixa">Os dados do Inter foram resetados. Os catálogos serão refeitos no próximo workflow.</p>
+        )}
 
         <form action={acaoSalvarConfiguracoes} className="bloco">
           <div className="campo">
@@ -87,6 +95,36 @@ export default async function PaginaDeConfiguracoes({
 
           <button type="submit">Salvar</button>
         </form>
+
+        <section className="bloco">
+          <h2>Zona de perigo</h2>
+          <p className="ajuda-do-campo">
+            Estas ações são irreversíveis e apagam somente o domínio escolhido. Login,
+            tentativas de acesso, tema e preferências visuais permanecem.
+          </p>
+          <div className="lista-grade">
+            <article className="cartao">
+              <h3>Apagar dados da Livelo</h3>
+              <p className="detalhe">
+                Remove lojas, regras de alerta, retratos de pontuação e disparos manuais.
+                As preferências de alerta voltam ao padrão.
+              </p>
+              <Link className="botao perigo" href="/configuracoes/limpeza/livelo">
+                Apagar dados da Livelo
+              </Link>
+            </article>
+            <article className="cartao">
+              <h3>Resetar dados do Inter</h3>
+              <p className="detalhe">
+                Remove Sites parceiros, Compre direto, seleções, catálogos, produtos e
+                histórico do Inter.
+              </p>
+              <Link className="botao perigo" href="/configuracoes/limpeza/inter">
+                Resetar dados do Inter
+              </Link>
+            </article>
+          </div>
+        </section>
 
         <Rodape versao={execucao?.versao} />
       </main>
