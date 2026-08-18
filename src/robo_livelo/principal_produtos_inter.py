@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
@@ -25,7 +26,11 @@ from robo_livelo.extrator_produtos_inter import (
     extrair_lojas_diretas,
     extrair_pagina_produtos,
 )
-from robo_livelo.modelos_produtos_inter import LojaDiretaInter, ResumoColetaProdutosInter
+from robo_livelo.modelos_produtos_inter import (
+    LojaDiretaInter,
+    ProdutoDiretoInter,
+    ResumoColetaProdutosInter,
+)
 from robo_livelo.portas_produtos_inter import (
     FalhaAoGuardarProdutosInter,
     FalhaProdutosInter,
@@ -41,6 +46,40 @@ LIMIAR_LOJAS_DIRETAS = 100
 INTERVALO_ENTRE_PAGINAS = 1.5
 BUSCAS_SUPLEMENTARES = ("smartphone",)
 MAX_TENTATIVAS_TOTAL_INCOERENTE = 3
+
+
+@dataclass(frozen=True, slots=True)
+class _CandidatoSegmento:
+    """Tentativa que chegou ao fim da paginacao e pode disputar a publicacao."""
+
+    tentativa: int
+    total_minimo: int
+    total_maximo: int
+    paginas: int
+    itens_lidos: int
+    duplicados: int
+    produtos: tuple[ProdutoDiretoInter, ...]
+
+    @property
+    def coerente(self) -> bool:
+        return self.total_minimo == self.total_maximo
+
+    @property
+    def itens_unicos(self) -> int:
+        return len(self.produtos)
+
+
+def _melhor_candidato(candidatos: list[_CandidatoSegmento]) -> _CandidatoSegmento:
+    """Prefere mais produtos validos; desempata por itens lidos e recencia."""
+
+    return max(
+        candidatos,
+        key=lambda candidato: (
+            candidato.itens_unicos,
+            candidato.itens_lidos,
+            candidato.tentativa,
+        ),
+    )
 
 
 def montar_repositorio_produtos_inter(ambiente: dict[str, str]) -> RepositorioProdutosInterPostgres:
@@ -73,113 +112,141 @@ def coletar_produtos_de_loja(
     )
     try:
         total_declarado_soma = 0
+        total_declarado_minimo_soma = 0
+        total_declarado_maximo_soma = 0
         paginas = 0
         itens_lidos = 0
         duplicados = 0
+        tentativas_executadas = 0
+        degradada = False
         por_id = {}
         for indice_segmento, busca in enumerate(("", *buscas_suplementares)):
             if indice_segmento and intervalo_paginas > 0:
                 dormir(intervalo_paginas)
             limite_tentativas = max(1, tentativas_total_incoerente)
+            candidatos: list[_CandidatoSegmento] = []
+            escolhido: _CandidatoSegmento | None = None
             for tentativa in range(1, limite_tentativas + 1):
                 search_id = str(gerar_uuid())
                 offset = 0
-                total_segmento: int | None = None
                 paginas_segmento = 0
                 itens_lidos_segmento = 0
-                validos_segmento = 0
                 duplicados_segmento = 0
                 produtos_segmento = {}
+                totais_segmento: list[int] = []
                 fingerprints_segmento: set[tuple[str, int, tuple[str, ...]]] = set()
 
-                try:
-                    while True:
-                        pagina = extrair_pagina_produtos(
-                            fonte.pagina(
-                                loja,
-                                search_id,
-                                offset,
-                                limite,
-                                busca=busca,
-                            ),
-                            id_loja=loja.id_externo,
-                        )
-                        if pagina.offset != offset:
-                            raise PaginacaoProdutosInterInvalida(
-                                "A fonte devolveu offset diferente do solicitado.",
-                                codigo="offset_incoerente",
-                            )
-                        if total_segmento is None:
-                            total_segmento = pagina.total
-                        elif pagina.total != total_segmento:
-                            raise PaginacaoProdutosInterInvalida(
-                                "A fonte mudou o total declarado durante a coleta.",
-                                codigo="total_incoerente",
-                            )
-
-                        fingerprint = (
-                            busca,
-                            pagina.offset,
-                            tuple(produto.id_externo for produto in pagina.produtos),
-                        )
-                        if fingerprint in fingerprints_segmento:
-                            raise PaginacaoProdutosInterInvalida(
-                                "A fonte repetiu uma pagina de produtos.",
-                                codigo="pagina_repetida",
-                            )
-                        fingerprints_segmento.add(fingerprint)
-                        paginas_segmento += 1
-                        itens_lidos_segmento += pagina.itens_lidos
-                        validos_segmento += len(pagina.produtos)
-                        for produto in pagina.produtos:
-                            if produto.id_externo in produtos_segmento:
-                                duplicados_segmento += 1
-                            else:
-                                produtos_segmento[produto.id_externo] = produto
-
-                        if pagina.ultima:
-                            break
-                        proximo_offset = offset + pagina.limite
-                        if proximo_offset <= offset or not pagina.produtos:
-                            raise PaginacaoProdutosInterInvalida(
-                                "A fonte nao avancou uma pagina utilizavel.",
-                                codigo="offset_incoerente",
-                            )
-                        maximo_paginas = (
-                            math.ceil((total_segmento or 0) / max(1, pagina.limite)) + 2
-                        )
-                        if paginas_segmento >= maximo_paginas:
-                            raise PaginacaoProdutosInterInvalida(
-                                "A fonte excedeu a margem de paginas declarada.",
-                                codigo="limite_paginacao",
-                            )
-                        offset = proximo_offset
-                        if intervalo_paginas > 0:
-                            dormir(intervalo_paginas)
-                    break
-                except PaginacaoProdutosInterInvalida as erro:
-                    if erro.codigo != "total_incoerente" or tentativa >= limite_tentativas:
-                        raise
-                    _log.warning(
-                        "Total mudou na coleta de %s; reiniciando segmento %r (%d/%d).",
-                        loja.slug,
-                        busca,
-                        tentativa + 1,
-                        limite_tentativas,
+                while True:
+                    pagina = extrair_pagina_produtos(
+                        fonte.pagina(
+                            loja,
+                            search_id,
+                            offset,
+                            limite,
+                            busca=busca,
+                        ),
+                        id_loja=loja.id_externo,
                     )
+                    if pagina.offset != offset:
+                        raise PaginacaoProdutosInterInvalida(
+                            "A fonte devolveu offset diferente do solicitado.",
+                            codigo="offset_incoerente",
+                        )
+                    totais_segmento.append(pagina.total)
+
+                    fingerprint = (
+                        busca,
+                        pagina.offset,
+                        tuple(produto.id_externo for produto in pagina.produtos),
+                    )
+                    if fingerprint in fingerprints_segmento:
+                        raise PaginacaoProdutosInterInvalida(
+                            "A fonte repetiu uma pagina de produtos.",
+                            codigo="pagina_repetida",
+                        )
+                    fingerprints_segmento.add(fingerprint)
+                    paginas_segmento += 1
+                    itens_lidos_segmento += pagina.itens_lidos
+                    for produto in pagina.produtos:
+                        if produto.id_externo in produtos_segmento:
+                            duplicados_segmento += 1
+                        else:
+                            produtos_segmento[produto.id_externo] = produto
+
+                    if pagina.ultima:
+                        break
+                    proximo_offset = offset + pagina.limite
+                    if proximo_offset <= offset or not pagina.produtos:
+                        raise PaginacaoProdutosInterInvalida(
+                            "A fonte nao avancou uma pagina utilizavel.",
+                            codigo="offset_incoerente",
+                        )
+                    maximo_paginas = math.ceil(max(totais_segmento) / max(1, pagina.limite)) + 2
+                    if paginas_segmento >= maximo_paginas:
+                        raise PaginacaoProdutosInterInvalida(
+                            "A fonte excedeu a margem de paginas declarada.",
+                            codigo="limite_paginacao",
+                        )
+                    offset = proximo_offset
                     if intervalo_paginas > 0:
                         dormir(intervalo_paginas)
 
-            total_declarado_soma += total_segmento or 0
-            paginas += paginas_segmento
-            itens_lidos += itens_lidos_segmento
-            duplicados += duplicados_segmento
-            for produto in produtos_segmento.values():
+                candidato = _CandidatoSegmento(
+                    tentativa=tentativa,
+                    total_minimo=min(totais_segmento),
+                    total_maximo=max(totais_segmento),
+                    paginas=paginas_segmento,
+                    itens_lidos=itens_lidos_segmento,
+                    duplicados=duplicados_segmento,
+                    produtos=tuple(produtos_segmento.values()),
+                )
+                candidatos.append(candidato)
+                if candidato.coerente:
+                    escolhido = candidato
+                    break
+                _log.warning(
+                    "Total variou na coleta de %s, segmento %r, tentativa %d/%d: "
+                    "%d-%d; %d produtos unicos.",
+                    loja.slug,
+                    busca,
+                    tentativa,
+                    limite_tentativas,
+                    candidato.total_minimo,
+                    candidato.total_maximo,
+                    candidato.itens_unicos,
+                )
+                if tentativa < limite_tentativas and intervalo_paginas > 0:
+                    dormir(intervalo_paginas)
+
+            tentativas_executadas += len(candidatos)
+            if escolhido is None:
+                escolhido = _melhor_candidato(candidatos)
+                degradada = True
+                _log.warning(
+                    "Usando melhor tentativa de %s, segmento %r, como coleta degradada: "
+                    "tentativa %d/%d, %d paginas, %d produtos unicos, totais %d-%d.",
+                    loja.slug,
+                    busca,
+                    escolhido.tentativa,
+                    limite_tentativas,
+                    escolhido.paginas,
+                    escolhido.itens_unicos,
+                    escolhido.total_minimo,
+                    escolhido.total_maximo,
+                )
+
+            total_declarado_soma += escolhido.total_maximo
+            total_declarado_minimo_soma += escolhido.total_minimo
+            total_declarado_maximo_soma += escolhido.total_maximo
+            paginas += escolhido.paginas
+            itens_lidos += escolhido.itens_lidos
+            duplicados += escolhido.duplicados
+            for produto in escolhido.produtos:
                 if produto.id_externo in por_id:
                     duplicados += 1
                 else:
                     por_id[produto.id_externo] = produto
-            if total_segmento and not validos_segmento:
+            if escolhido.total_maximo and not escolhido.itens_unicos:
                 raise RespostaProdutosInterInvalida(
                     "A fonte declarou produtos, mas nenhum item passou pela validacao."
                 )
@@ -193,8 +260,18 @@ def coletar_produtos_de_loja(
             itens_lidos=itens_lidos,
             itens_unicos=len(por_id),
             duplicados=duplicados,
+            degradada=degradada,
+            tentativas=tentativas_executadas,
+            total_declarado_minimo=total_declarado_minimo_soma,
+            total_declarado_maximo=total_declarado_maximo_soma,
         )
-        repositorio.publicar_loja(execucao_id, loja, tuple(por_id.values()), resumo)
+        repositorio.publicar_loja(
+            execucao_id,
+            loja,
+            tuple(por_id.values()),
+            resumo,
+            catalogo_completo=not resumo.degradada,
+        )
     except Exception as erro:
         falha = _falha_controlada(erro)
         try:

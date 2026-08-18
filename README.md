@@ -4,7 +4,7 @@ Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja 
 
 Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 205 testes no robô e 33 no site, com 94,13% de cobertura do núcleo puro.
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 210 testes no robô e 38 no site, com 94,16% de cobertura do núcleo puro.
 
 > **Aceite em andamento:** a V4 possui coletor, persistência, site e workflow matricial. Casas Bahia é a única loja de produtos selecionada; Ponto e o dimensionamento para mais lojas continuam como próximos gates. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
 

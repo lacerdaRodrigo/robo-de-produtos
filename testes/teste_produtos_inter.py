@@ -3,20 +3,29 @@
 from __future__ import annotations
 
 import json
+import sys
+import types
 from dataclasses import fields
 from datetime import datetime
 from decimal import Decimal
 
 import pytest
 
-from robo_livelo.adaptadores_produtos_inter import FonteProdutosInterHttp
+from robo_livelo.adaptadores_produtos_inter import (
+    FonteProdutosInterHttp,
+    RepositorioProdutosInterPostgres,
+)
 from robo_livelo.extrator_produtos_inter import (
     RespostaProdutosInterInvalida,
     extrair_lojas_diretas,
     extrair_pagina_produtos,
     normalizar_busca_produtos,
 )
-from robo_livelo.modelos_produtos_inter import LojaDiretaInter, ProdutoDiretoInter
+from robo_livelo.modelos_produtos_inter import (
+    LojaDiretaInter,
+    ProdutoDiretoInter,
+    ResumoColetaProdutosInter,
+)
 from robo_livelo.portas_produtos_inter import FalhaProdutosInter, PaginacaoProdutosInterInvalida
 from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja
 from testes.conftest import FUSO_BRASILIA
@@ -208,8 +217,16 @@ class RepositorioFakeProdutos:
     def iniciar_loja(self, loja, momento, versao, *, rodada_id=None):
         return 77
 
-    def publicar_loja(self, execucao_id, loja, produtos, resumo):
-        self.publicadas.append((execucao_id, loja, produtos, resumo))
+    def publicar_loja(
+        self,
+        execucao_id,
+        loja,
+        produtos,
+        resumo,
+        *,
+        catalogo_completo=True,
+    ):
+        self.publicadas.append((execucao_id, loja, produtos, resumo, catalogo_completo))
 
     def falhar_loja(self, execucao_id, codigo):
         self.falhas.append((execucao_id, codigo))
@@ -312,7 +329,7 @@ def teste_ct205_resposta_sem_raiz_paginada_falha(conteudo):
         extrair_pagina_produtos(conteudo, id_loja="loja-1")
 
 
-def teste_ct209_total_muda_reinicia_segmento_sem_publicar_tentativa_parcial():
+def teste_ct245_total_muda_reinicia_segmento_sem_publicar_tentativa_parcial():
     fonte = FonteSequencialProdutos(
         [
             pagina(0, False, produto("tentativa-antiga"), total=72),
@@ -339,35 +356,155 @@ def teste_ct209_total_muda_reinicia_segmento_sem_publicar_tentativa_parcial():
     assert resumo.total_declarado == 2
     assert resumo.paginas == 1
     assert resumo.itens_lidos == 2
+    assert resumo.degradada is False
+    assert resumo.tentativas == 2
+    assert resumo.total_declarado_minimo == 2
+    assert resumo.total_declarado_maximo == 2
     assert [item.id_externo for item in repositorio.publicadas[0][2]] == [
         "novo-1",
         "novo-2",
     ]
+    assert repositorio.publicadas[0][4] is True
     assert repositorio.falhas == []
 
 
-def teste_ct209_total_continua_mudando_falha_apos_tres_tentativas():
-    respostas = []
-    for indice in range(3):
-        respostas.extend(
-            [
-                pagina(0, False, produto(f"inicio-{indice}"), total=72),
-                pagina(36, True, produto(f"mudou-{indice}"), total=73),
-            ]
-        )
+def teste_ct246_total_continua_mudando_publica_maior_tentativa_como_degradada():
+    respostas = [
+        pagina(0, False, produto("a-1"), total=72),
+        pagina(36, True, produto("a-2"), total=73),
+        pagina(0, False, produto("b-1"), produto("b-2"), total=72),
+        pagina(36, True, produto("b-3"), total=74),
+        pagina(0, False, produto("c-1"), total=72),
+        pagina(36, True, produto("c-2"), total=75),
+    ]
     fonte = FonteSequencialProdutos(respostas)
     repositorio = RepositorioFakeProdutos()
     ids = iter(("uuid-1", "uuid-2", "uuid-3"))
 
-    with pytest.raises(PaginacaoProdutosInterInvalida, match="mudou o total"):
-        coletar_produtos_de_loja(
-            fonte,
-            repositorio,
-            LOJA,
-            agora=AGORA,
-            gerar_uuid=lambda: next(ids),
-        )
+    resumo = coletar_produtos_de_loja(
+        fonte,
+        repositorio,
+        LOJA,
+        agora=AGORA,
+        gerar_uuid=lambda: next(ids),
+    )
 
     assert len(fonte.chamadas) == 6
-    assert repositorio.publicadas == []
-    assert repositorio.falhas == [(77, "total_incoerente")]
+    assert [item.id_externo for item in repositorio.publicadas[0][2]] == [
+        "b-1",
+        "b-2",
+        "b-3",
+    ]
+    assert repositorio.publicadas[0][4] is False
+    assert resumo.itens_unicos == 3
+    assert resumo.degradada is True
+    assert resumo.tentativas == 3
+    assert resumo.total_declarado == 74
+    assert resumo.total_declarado_minimo == 72
+    assert resumo.total_declarado_maximo == 74
+    assert repositorio.falhas == []
+
+
+def teste_ct245_tentativa_estavel_vence_candidata_instavel_maior():
+    fonte = FonteSequencialProdutos(
+        [
+            pagina(0, False, produto("instavel-1"), produto("instavel-2"), total=72),
+            pagina(36, True, produto("instavel-3"), total=73),
+            pagina(0, True, produto("estavel"), total=1),
+        ]
+    )
+    repositorio = RepositorioFakeProdutos()
+    ids = iter(("uuid-instavel", "uuid-estavel"))
+
+    resumo = coletar_produtos_de_loja(
+        fonte,
+        repositorio,
+        LOJA,
+        agora=AGORA,
+        gerar_uuid=lambda: next(ids),
+    )
+
+    assert [item.id_externo for item in repositorio.publicadas[0][2]] == ["estavel"]
+    assert repositorio.publicadas[0][4] is True
+    assert resumo.degradada is False
+    assert resumo.tentativas == 2
+
+
+@pytest.mark.parametrize(
+    ("catalogo_completo", "deve_inativar"),
+    [(False, False), (True, True)],
+)
+def teste_ct247_publicacao_respeita_completude(
+    monkeypatch,
+    catalogo_completo,
+    deve_inativar,
+):
+    class CursorFake:
+        def __init__(self):
+            self.comandos = []
+            self.rowcount = 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def execute(self, comando, parametros=None):
+            self.comandos.append((comando, parametros))
+            self.rowcount = 1
+
+        def executemany(self, comando, parametros):
+            self.comandos.append((comando, list(parametros)))
+
+        def fetchone(self):
+            return (9,)
+
+    class ConexaoFake:
+        def __init__(self, cursor):
+            self._cursor = cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def cursor(self):
+            return self._cursor
+
+    cursor = CursorFake()
+    psycopg_fake = types.SimpleNamespace(
+        connect=lambda url: ConexaoFake(cursor),
+        Error=RuntimeError,
+    )
+    monkeypatch.setitem(sys.modules, "psycopg", psycopg_fake)
+    repositorio = RepositorioProdutosInterPostgres("postgresql://teste")
+    item = extrair_pagina_produtos(pagina(0, True, produto("mantido")), id_loja="loja-1")
+    resumo = ResumoColetaProdutosInter(
+        iniciada_em=AGORA,
+        concluida_em=AGORA,
+        total_declarado=2,
+        paginas=2,
+        itens_lidos=2,
+        itens_unicos=1,
+        duplicados=0,
+        degradada=True,
+        tentativas=3,
+        total_declarado_minimo=1,
+        total_declarado_maximo=2,
+    )
+
+    repositorio.publicar_loja(
+        77,
+        LOJA,
+        item.produtos,
+        resumo,
+        catalogo_completo=catalogo_completo,
+    )
+
+    comandos = [comando for comando, _ in cursor.comandos]
+    assert repositorio.PUBLICA_IDENTIDADES in comandos
+    assert repositorio.INSERE_MEDICOES in comandos
+    assert repositorio.CONCLUI_LOJA in comandos
+    assert (repositorio.INATIVA_AUSENTES in comandos) is deve_inativar

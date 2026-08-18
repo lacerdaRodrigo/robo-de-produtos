@@ -69,3 +69,7 @@ class ResumoColetaProdutosInter:
     itens_lidos: int
     itens_unicos: int
     duplicados: int
+    degradada: bool = False
+    tentativas: int = 1
+    total_declarado_minimo: int | None = None
+    total_declarado_maximo: int | None = None

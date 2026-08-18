@@ -303,7 +303,9 @@ class RepositorioProdutosInterPostgres:
         UPDATE execucao_loja_produtos_inter
            SET concluida_em = %s, estado = 'sucesso', total_declarado = %s,
                paginas = %s, produtos_lidos = %s, produtos_unicos = %s,
-               duplicados = %s, codigo_falha = NULL
+               duplicados = %s, qualidade = %s, tentativas = %s,
+               total_declarado_minimo = %s, total_declarado_maximo = %s,
+               codigo_falha = NULL
          WHERE id = %s AND estado = 'iniciada'
     """
     FALHA_LOJA = """
@@ -423,6 +425,8 @@ class RepositorioProdutosInterPostgres:
         loja: LojaDiretaInter,
         produtos: tuple[ProdutoDiretoInter, ...],
         resumo: ResumoColetaProdutosInter,
+        *,
+        catalogo_completo: bool = True,
     ) -> None:
         import psycopg
 
@@ -439,7 +443,8 @@ class RepositorioProdutosInterPostgres:
                 if linhas:
                     cursor.executemany(self.INSERE_ESTAGIO, linhas)
                 cursor.execute(self.PUBLICA_IDENTIDADES, (loja_id, execucao_id))
-                cursor.execute(self.INATIVA_AUSENTES, (loja_id, execucao_id))
+                if catalogo_completo:
+                    cursor.execute(self.INATIVA_AUSENTES, (loja_id, execucao_id))
                 cursor.execute(
                     self.INSERE_MEDICOES,
                     (resumo.concluida_em, loja_id, execucao_id),
@@ -453,6 +458,10 @@ class RepositorioProdutosInterPostgres:
                         resumo.itens_lidos,
                         resumo.itens_unicos,
                         resumo.duplicados,
+                        "degradada" if resumo.degradada else "completa",
+                        resumo.tentativas,
+                        resumo.total_declarado_minimo,
+                        resumo.total_declarado_maximo,
                         execucao_id,
                     ),
                 )

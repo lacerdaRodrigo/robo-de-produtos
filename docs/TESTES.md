@@ -343,6 +343,9 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-229 | Retenção de 30 dias | Medição no limite permanece; mais antiga é removida sem tocar no catálogo atual | Relógio fixo e datas de fronteira |
 | CT-230 | Log não vaza conteúdo sensível | Erro registra código e contagens, nunca payload, token ou `DATABASE_URL` | Exceções fake com segredos sentinela |
 | CT-231 | Núcleo novo não faz I/O | Modelos, normalização, paginação e deduplicação não importam rede, banco ou ambiente | Ampliar o teste AST de fronteira |
+| CT-245 | Tentativa estável vence | Total variável reinicia a partição; uma tentativa posterior estável é publicada e descarta candidatas instáveis, mesmo maiores | Fonte sequencial com tentativa variável e tentativa estável |
+| CT-246 | Melhor tentativa degradada | Depois de três tentativas completas com total variável, publica a que contém mais produtos únicos válidos | Três candidatas com tamanhos distintos e inspeção do resumo |
+| CT-247 | Ausentes são preservados | Publicação degradada grava encontrados e medições sem executar a inativação; publicação completa continua inativando | Adaptador Postgres com cursor fake nos dois modos |
 
 ### Site V4 — busca e histórico
 
@@ -433,13 +436,14 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
-| `teste_produtos_inter.py` | 6 | 14 |
+| `teste_produtos_inter.py` | 9 | 19 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **156** | **205** |
+| **Total (robô)** | **159** | **210** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
 | `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
-| **Total (site)** | **23** | **33** |
+| `site/testes/paginacao.teste.ts` | 0 | 5 |
+| **Total (site)** | **23** | **38** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

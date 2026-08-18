@@ -1,7 +1,7 @@
 # PRD V4 — Catálogo de produtos do Shopping Inter
 
-**Versão:** V4.5 em aceite progressivo
-**Status:** schema, coletor, site e workflow matricial implementados. Em 2026-08-17, a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos; a busca local confirmou o Motorola Edge 60 Pro. Ponto, bytes totais e projeções para mais lojas continuam como gates antes de ampliar o rollout.
+**Versão:** V4.5.1 em aceite progressivo
+**Status:** schema, coletor, site e workflow matricial implementados. Em 2026-08-17, a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos; a busca local confirmou o Motorola Edge 60 Pro. A migração `009`, que registra e publica com segurança a melhor tentativa diante de total variável, está pronta e ainda precisa ser aplicada. Ponto, bytes totais e projeções para mais lojas continuam como gates antes de ampliar o rollout.
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
@@ -225,12 +225,12 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **RN55** | Não existe limite funcional para a quantidade de lojas selecionadas |
 | **RN56** | Uma tarefa recebe exatamente uma loja; sucesso ou falha dessa tarefa não altera o resultado das demais |
 | **RN57** | O `searchId` é novo por tentativa de loja e permanece igual em todas as suas páginas |
-| **RN58** | A primeira página define o total declarado; offsets avançam pelo limite retornado até `isLastPage` |
-| **RN59** | Não existe teto fixo de produtos. A coleta termina pela sinalização da fonte ou falha por paginação incoerente |
+| **RN58** | Cada página registra o total declarado; offsets avançam pelo limite retornado até `isLastPage`, mesmo quando esse total varia durante a tentativa |
+| **RN59** | Não existe teto fixo de produtos. A coleta termina pela sinalização da fonte; offset, repetição ou margem de páginas incoerentes continuam sendo falhas estruturais |
 | **RN60** | Offset sem avanço, fingerprint de página repetido ou páginas além da margem derivada do total declarado encerram a tentativa como falha de paginação |
 | **RN61** | Produto repetido na mesma loja conta uma vez, pelo ID externo; valores da primeira ocorrência válida são preservados e a duplicata é contabilizada |
 | **RN62** | IDs iguais em lojas diferentes são produtos distintos |
-| **RN63** | Somente conclusão integral publica o novo catálogo. Até lá, dados ficam invisíveis em área de preparação |
+| **RN63** | Somente uma tentativa que alcançou `isLastPage` pode publicar. Até lá, dados ficam invisíveis em área de preparação |
 | **RN64** | Falha preserva o último sucesso da loja e registra código controlado |
 | **RN65** | Produto ausente de um novo catálogo completo fica inativo; não é apresentado com preço antigo como se estivesse disponível |
 | **RN66** | Remover uma loja da seleção interrompe novas coletas e esconde seus produtos da busca pública; histórico expira normalmente em 30 dias |
@@ -252,6 +252,8 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **RN82** | HTTP 401/403 não recebe retry; timeout, 429 e 5xx respeitam no máximo três tentativas e o intervalo definido pelo adaptador |
 | **RN83** | Se a fonte bloquear o acesso ou pedir interrupção, workflow e rotas da V4 são desativados; Livelo e V3 permanecem ativos |
 | **RN84** | Quando a janela vazia truncar uma família necessária ao aceite, o coletor pode unir partições suplementares fixas e versionadas. O site nunca envia termos arbitrários à fonte; cada partição pagina integralmente e a união deduplica por ID |
+| **RN85** | Total declarado variável gera até três tentativas completas por partição. Uma tentativa com total estável vence imediatamente; sem estabilidade, vence a candidata com mais produtos únicos válidos, depois mais itens lidos e, por fim, a mais recente |
+| **RN86** | A melhor tentativa instável é publicada com qualidade `degradada`: atualiza produtos encontrados e medições, mas não inativa ausentes. Somente qualidade `completa` confirma desaparecimentos |
 
 ### 6.1 Campos da listagem
 
@@ -347,13 +349,14 @@ O site nunca chama a API do Inter. O coletor nunca importa componentes do site. 
 3. Lê do banco os IDs/slugs das lojas selecionadas.
 4. Produz uma matriz de tarefas, uma por loja.
 5. O workflow executa no máximo duas tarefas ao mesmo tempo.
-6. Cada tarefa gera um `searchId` por partição, solicita a primeira página e registra o total declarado.
+6. Cada tarefa gera um `searchId` por tentativa de partição e registra os totais declarados por página.
 7. Avança offsets sequencialmente até `isLastPage`, primeiro na janela-base e depois nas partições fixas.
-8. Valida itens, vendedor, decimais, links e paginação.
-9. Deduplica por ID e monta o catálogo completo em área invisível.
-10. Em transação, publica o novo catálogo, marca ausentes como inativos, grava medições e conclui a loja.
-11. Limpa medições com mais de 30 dias.
-12. O coordenador resume sucessos e falhas; qualquer falha torna a rodada geral `parcial` ou `falha` e o workflow sai diferente de zero depois de preservar os sucessos.
+8. Valida itens, vendedor, decimais, links e paginação; total variável guarda a candidata e inicia outra tentativa, até três.
+9. Uma candidata estável vence imediatamente; sem estabilidade, vence a tentativa completa com mais produtos únicos válidos.
+10. Deduplica por ID e monta o catálogo escolhido em área invisível.
+11. Em transação, publica produtos e medições; somente catálogo completo marca ausentes como inativos.
+12. Registra qualidade, tentativas, intervalo dos totais e limpa medições com mais de 30 dias.
+13. O coordenador resume sucessos e falhas; qualquer falha torna a rodada geral `parcial` ou `falha` e o workflow sai diferente de zero depois de preservar os sucessos.
 
 ### 7.3 Portas conceituais
 
@@ -398,7 +401,8 @@ PaginaProdutosInter
 
 ExecucaoLojaProdutos
   loja, início, conclusão, estado,
-  total_declarado, páginas, lidos, únicos, duplicados, código_falha
+  qualidade, tentativas, total_declarado, intervalo dos totais,
+  páginas, lidos, únicos, duplicados, código_falha
 ```
 
 Objetos monetários usam `Decimal`. Coleções publicadas são imutáveis. Conteúdo externo nunca transporta HTML confiável.
@@ -501,7 +505,7 @@ A primeira entrega usa resumo + tabela, sem gráfico e sem JavaScript obrigatór
 - User-Agent honesto do projeto.
 - Sem login, cookie, token, proxy, CAPTCHA ou rotação de identidade.
 - Uma página por vez dentro da loja e no máximo duas lojas simultâneas.
-- Até três tentativas somente para falha transitória.
+- Até três tentativas para falha HTTP transitória ou total declarado variável.
 - HTTP 401/403 encerra imediatamente.
 - HTTP 429 respeita espera limitada e depois falha.
 - Pedido explícito do titular interrompe a V4 até revisão.
@@ -544,6 +548,8 @@ Os casos CT-200 em diante ficam catalogados em [`TESTES.md`](TESTES.md) antes de
 - Concorrência efetiva nunca passa de duas lojas.
 - Uma falha não cancela sucessos das demais.
 - Falha no meio das páginas preserva snapshot anterior.
+- Total variável seleciona a tentativa completa com mais produtos únicos.
+- Publicação degradada atualiza encontrados sem inativar ausentes.
 - Publicação, inativação e medições são atômicas por loja.
 - Histórico completo por 30 dias e expurgo do anterior.
 - Códigos de falha não vazam URL de banco nem payload.
@@ -615,7 +621,7 @@ A V4 só pode ser marcada implementada quando:
 2. Loja não selecionada não recebe nenhuma consulta de produto.
 3. Cada partição de uma loja é percorrida até `isLastPage`, sem teto fixo no código.
 4. Duplicatas são removidas por ID e contabilizadas.
-5. Falha parcial não publica catálogo incompleto nem apaga o sucesso anterior.
+5. Falha estrutural não publica catálogo incompleto; total variável só publica uma tentativa que chegou ao fim e não inativa ausentes.
 6. Dez lojas selecionadas geram dez tarefas sem limite funcional e com no máximo duas simultâneas.
 7. A busca pública lê somente o banco e somente lojas selecionadas.
 8. “celular Motorola Edge 60 Pro” retorna Edge 60 Pro e não Moto G.
@@ -644,7 +650,7 @@ A V4 só pode ser marcada implementada quando:
 | Interface | Resultados por loja, menor preço atual, sem imagens |
 | Histórico | Todos os produtos das lojas selecionadas, retenção de 30 dias |
 | Alertas | Nenhum e-mail ou alerta de preço na primeira entrega |
-| Falha | Atomicidade e último sucesso por loja; rodada geral pode ser parcial |
+| Falha | Atomicidade e último sucesso por loja; total variável aceita melhor tentativa completa sem inativar ausentes; rodada geral pode ser parcial |
 
 ### 15.2 Aberto antes de ampliar o rollout
 
@@ -664,3 +670,5 @@ Esses gates não reabrem o comportamento de produto. Eles definem como cumprir o
 Em 2026-08-16, a fonte pública respondeu sem autenticação e com identificação honesta. O levantamento encontrou 111 vendedores diretos, confirmou Casas Bahia e Ponto e validou busca paginada de produtos com campos monetários e caminhos individuais. Casas Bahia e Ponto declararam 3.000 produtos e 84 páginas de 36 itens numa busca vazia. Também foi observada repetição de produto entre páginas, justificando RN61.
 
 No levantamento inicial não houve coleta completa nem escrita. Em 2026-08-17, o contrato real revelou três diferenças que as fixtures antigas escondiam: raiz `sellers`, tags como objetos e caminhos relativos com variante `?v=`. Depois da correção, a migração `008` foi aplicada e a rodada 3 da Casas Bahia terminou em `sucesso`: 94 páginas, 3.363 itens lidos, 3.310 únicos, 53 sobreposições e Edge 60 Pro presente com preço de R$ 3.688,89 e 9% de cashback naquele momento. Ponto continua desmarcada até o próximo gate.
+
+Ainda em 2026-08-17, uma rodada posterior mostrou que `pagination.total` pode variar durante todas as três tentativas da mesma partição. A V4.5.1 passou a concluir cada candidata até `isLastPage`, preferir qualquer tentativa estável e, se todas variarem, publicar a candidata completa com mais produtos únicos como `degradada`. Essa publicação atualiza encontrados e medições sem inativar ausentes; a migração `009` guarda qualidade, tentativas e intervalo dos totais.

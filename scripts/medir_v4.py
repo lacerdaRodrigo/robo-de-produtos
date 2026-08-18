@@ -42,6 +42,8 @@ class RepositorioSomenteMedicao:
         loja: LojaDiretaInter,
         produtos: tuple[ProdutoDiretoInter, ...],
         resumo: ResumoColetaProdutosInter,
+        *,
+        catalogo_completo: bool = True,
     ) -> None:
         self.resumo = resumo
 

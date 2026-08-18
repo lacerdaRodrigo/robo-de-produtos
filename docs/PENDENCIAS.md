@@ -10,7 +10,7 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 
 **V3 do Shopping Inter:** implementação publicada pela PR #22. A migração `006` está aplicada no Neon e a primeira execução real terminou com sucesso, cadastrando 381 lojas. A conferência visual final na Vercel continua pendente.
 
-**V4 de produtos diretos:** V4.1–V4.5 estão implementadas. A migração incremental `008` foi aplicada no Neon e o primeiro aceite real, somente com Casas Bahia, terminou em sucesso: 94 páginas, 3.363 itens lidos, 3.310 produtos únicos e Edge 60 Pro retornando na busca local. O próximo rollout é Ponto; projeções para 3, 10 e 111 lojas ainda precisam ser fechadas.
+**V4 de produtos diretos:** V4.1–V4.5 estão implementadas. A migração incremental `008` foi aplicada no Neon e o primeiro aceite real, somente com Casas Bahia, terminou em sucesso: 94 páginas, 3.363 itens lidos, 3.310 produtos únicos e Edge 60 Pro retornando na busca local. A correção V4.5.1 para total variável está pronta no código, com a migração `009` ainda pendente no Neon. O próximo rollout é Ponto; projeções para 3, 10 e 111 lojas ainda precisam ser fechadas.
 
 ---
 
@@ -52,7 +52,9 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 - [x] **V4.3:** seleção de lojas, coleta por loja, snapshot atual e histórico
 - [x] **V4.4:** `/inter/produtos`, seleção administrativa e histórico público
 - [x] **V4.5:** workflow matricial, `max-parallel: 2`, cooldown de 1,5 s e consolidação da rodada
+- [x] **V4.5.1:** total variável conserva até três candidatas completas, publica a maior como degradada e preserva produtos ausentes (`migracoes/009`)
 - [x] Validar a primeira loja: Casas Bahia, 3.310 produtos ativos e Edge 60 Pro confirmado
+- [ ] Aplicar `migracoes/009_coleta_degradada_produtos_inter.sql` no Neon antes de publicar a V4.5.1
 - [ ] Validar Ponto antes de ampliar a seleção
 
 ---

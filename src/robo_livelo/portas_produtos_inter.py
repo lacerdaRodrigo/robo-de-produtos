@@ -75,6 +75,8 @@ class RepositorioProdutosInter(Protocol):
         loja: LojaDiretaInter,
         produtos: tuple[ProdutoDiretoInter, ...],
         resumo: ResumoColetaProdutosInter,
+        *,
+        catalogo_completo: bool = True,
     ) -> None: ...
 
     def falhar_loja(self, execucao_id: int, codigo: str) -> None: ...

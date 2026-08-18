@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schema `007`/`008`, coletor, site e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 205 testes verdes no robô e 33 no site, com 94,13% de cobertura do núcleo puro.
+**Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schemas `007`/`008` aplicados, migração `009` pronta, coletor, site e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 210 testes verdes no robô e 38 no site, com 94,16% de cobertura do núcleo puro.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
