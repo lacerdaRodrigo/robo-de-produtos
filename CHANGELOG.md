@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.28.3 (2026-08-18)
+
+### Bug Fixes
+
+- **livelo**: Reidrata catalogo apos limpeza
+  ([`3c67f58`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3c67f587bae91acfe30a9b43ada547be99092c7d))
+
+
 ## v1.28.2 (2026-08-18)
 
 ### Bug Fixes
