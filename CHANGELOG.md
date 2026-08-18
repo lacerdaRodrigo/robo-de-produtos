@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.4 (2026-08-18)
+
+### Bug Fixes
+
+- **inter**: Exibe loja selecionada sem esperar snapshot
+  ([`dc633de`](https://github.com/lacerdaRodrigo/robo-livelo/commit/dc633def22922494d9f390cc86d80af047082c25))
+
+
 ## v1.29.3 (2026-08-18)
 
 ### Bug Fixes
