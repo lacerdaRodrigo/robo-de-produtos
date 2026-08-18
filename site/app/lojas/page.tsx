@@ -14,7 +14,7 @@ import { BuscaProgressiva } from "../componentes/busca-progressiva";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Dica } from "../componentes/dica";
 import { Rodape } from "../rodape";
-import { acaoAdicionarLoja } from "./acoes";
+import { acaoAdicionarLoja, acaoAtualizarAgora } from "./acoes";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +92,9 @@ export default async function PaginaDeLojas({
         )}
 
         <h2>Adicionar loja</h2>
+        <form action={acaoAtualizarAgora}>
+          <button type="submit" className="botao secundario">Atualizar lojas e pontuação agora</button>
+        </form>
         <form action={acaoAdicionarLoja} className="bloco">
           <div className="grade-2col">
             <div className="campo">
