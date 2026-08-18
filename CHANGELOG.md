@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.28.4 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Atualiza inter ao selecionar loja
+  ([`5cef360`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5cef36004b5fed31e84f912b08fa3f36fee831f2))
+
+
 ## v1.28.3 (2026-08-18)
 
 ### Bug Fixes
