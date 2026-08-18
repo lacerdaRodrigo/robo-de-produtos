@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.2 (2026-08-18)
+
+### Bug Fixes
+
+- **livelo**: Nao reidrata lojas nao escolhidas
+  ([`3af4f9c`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3af4f9cd96a28cbf1fca4043630f6456b2a09ac3))
+
+
 ## v1.29.1 (2026-08-18)
 
 ### Bug Fixes
