@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.29.6 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Adiciona botão para atualizar produtos selecionados
+  ([`1e66e14`](https://github.com/lacerdaRodrigo/robo-livelo/commit/1e66e148f0028fb6d4cc6a1947fc7a78b19b17d0))
+
+
 ## v1.29.5 (2026-08-18)
 
 ### Bug Fixes
