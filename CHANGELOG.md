@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.30.2 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Preserva paginação e permite descartar lojas
+  ([#33](https://github.com/lacerdaRodrigo/robo-livelo/pull/33),
+  [`e921769`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e92176928f02de4088921e2d98e07af38d033b19))
+
+
 ## v1.30.1 (2026-08-19)
 
 ### Bug Fixes
