@@ -181,6 +181,7 @@ a:hover {
 .produto-precos { display: flex; align-items: baseline; gap: var(--e2); margin: var(--e3) 0; }
 .produto-antigo { color: var(--suave); text-decoration: line-through; }
 .produto-atual { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.preco-liquido-destaque { color: var(--marca-forte); font-weight: 800; font-variant-numeric: tabular-nums; }
 .etiquetas-produto { display: flex; flex-wrap: wrap; gap: var(--e1); }
 .grupo-produtos h2 span { color: var(--suave); font-size: 0.8rem; font-weight: 500; text-transform: none; letter-spacing: normal; }
 .confirmacao { display: inline-block; }

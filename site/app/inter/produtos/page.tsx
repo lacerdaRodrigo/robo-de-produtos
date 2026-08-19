@@ -36,7 +36,7 @@ function CartaoProduto({ produto }: { produto: ProdutoDireto }) {
       {(produto.cashback_texto || produto.cashback_percentual_texto) && (
         <p className="detalhe">Cashback: {[produto.cashback_texto, percentual(produto.cashback_percentual_texto)].filter(Boolean).join(" · ")}</p>
       )}
-      {produto.preco_liquido_texto && <p className="detalhe"><strong>Após cashback:</strong> {produto.preco_liquido_texto}</p>}
+      {produto.preco_liquido_texto && <p className="detalhe"><strong>Após cashback:</strong> <strong className="preco-liquido-destaque">{produto.preco_liquido_texto}</strong></p>}
       {produto.parcelamento && <p className="detalhe">{produto.parcelamento}</p>}
       {produto.estoque !== null && <p className="detalhe">Estoque: {produto.estoque}</p>}
       {produto.etiquetas?.length > 0 && <p className="etiquetas-produto">{produto.etiquetas.map((etiqueta) => <span className="etiqueta" key={etiqueta}>{etiqueta}</span>)}</p>}
