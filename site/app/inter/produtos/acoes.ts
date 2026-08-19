@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { selecionarLojaDireta } from "@/lib/banco-produtos-inter";
+import { resumoLojasDiretas, selecionarLojaDireta } from "@/lib/banco-produtos-inter";
+import { dispararProdutosInter } from "@/lib/github";
 import { exigirSessao } from "@/lib/sessao";
 
 function destinoDepoisDaAcao(dados: FormData, ok: "adicionada" | "removida", nome: string) {
@@ -41,4 +42,17 @@ export async function acaoRemoverLojaDireta(dados: FormData) {
   revalidatePath("/inter/produtos");
   revalidatePath("/inter/produtos/lojas");
   redirect(destinoDepoisDaAcao(dados, "removida", nome));
+}
+
+export async function acaoAtualizarProdutosInter() {
+  await exigirSessao();
+  const resumo = await resumoLojasDiretas();
+  if (resumo.selecionadas < 1) {
+    redirect("/inter/produtos/lojas?erro=sem-lojas");
+  }
+  const resultado = await dispararProdutosInter();
+  if (!resultado.ok) {
+    redirect(`/inter/produtos/lojas?erro=${resultado.motivo === "sem-token" ? "sem-token" : "disparo"}`);
+  }
+  redirect("/inter/produtos/lojas?ok=disparado");
 }

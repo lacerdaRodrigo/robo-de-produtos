@@ -36,6 +36,10 @@ export async function dispararRoboInter(): Promise<ResultadoDoDisparo> {
   return dispararWorkflow("inter.yml", {});
 }
 
+export async function dispararProdutosInter(): Promise<ResultadoDoDisparo> {
+  return dispararWorkflow("produtos-inter.yml", {});
+}
+
 async function dispararWorkflow(
   workflow: string,
   inputs: Record<string, string>,
