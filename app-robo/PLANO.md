@@ -101,6 +101,7 @@ flowchart TD
 - **Flutter é cliente:** apresenta dados, coleta intenção e chama contratos HTTP.
 - **Servidor decide:** autenticação, autorização, cooldown, idempotência e validação ocorrem novamente na API.
 - **Robô coleta uma vez:** o resultado gravado no Neon atende site atual, Flutter e notificações.
+- **Catálogo completo no servidor, recorte no cliente:** o robô grava tudo que a fonte expuser para cada loja selecionada; a API pesquisa no banco e entrega somente uma página por resposta.
 - **Migração reversível:** nenhuma fase exige apagar o `site/`.
 - **Compatibilidade primeiro:** novas tabelas e endpoints serão aditivos enquanto o site legado estiver em produção.
 
@@ -123,7 +124,51 @@ Contratos iniciais esperados, ainda sem assinatura definitiva:
 - central de notificações e relatórios;
 - auditoria administrativa.
 
-### 4.3 Disparo dos robôs
+### 4.3 Coleta completa, busca no banco e paginação da API
+
+Existe uma diferença obrigatória entre **coletar**, **guardar** e **mostrar**:
+
+| Camada | Responsabilidade aprovada |
+|---|---|
+| Robô | Percorrer todas as páginas que a fonte disponibilizar para cada loja selecionada, sem teto fixo de produtos, e deduplicar por loja + ID externo |
+| Banco | Manter o último catálogo válido e gravar uma nova medição de cada produto ativo em toda coleta bem-sucedida, com a retenção de 30 dias definida no PRD V4 |
+| API | Pesquisar e filtrar no Postgres, usando o último catálogo válido, e devolver somente uma página de resultados por resposta |
+| Flutter | Exibir a página recebida, permitir continuar o garimpo e pedir outras páginas; nunca baixar o catálogo inteiro para pesquisar no aparelho |
+
+Exemplo aprovado: se uma televisão custa R$ 5.000 em uma medição e R$ 4.000 na seguinte, o catálogo atual mostra R$ 4.000 e o histórico do mesmo produto — identificado por loja + ID externo — preserva as duas medições enquanto estiverem dentro dos 30 dias. Se uma busca por `tv` encontrar 200 ofertas, as 200 ficam alcançáveis pelo usuário, mas chegam ao Flutter em páginas, e não em uma única resposta.
+
+Isso não promete o catálogo universal da varejista. O sistema guarda **tudo que a fonte realmente expôs ao robô** nas consultas permitidas e concluídas. Uma limitação ou janela da própria fonte deve ser mostrada com estado honesto, conforme o PRD V4.
+
+#### 4.3.1 Contrato inicial da busca de produtos
+
+Exemplo conceitual, cuja assinatura final será fechada na Fase 1:
+
+`GET /api/v1/inter/produtos?q=tv&page=1&por_pagina=20`
+
+| Campo/regra | Limite inicial aprovado |
+|---|---|
+| `q` | Obrigatório para a busca do MVP; de 2 a 100 caracteres, permitindo termos como `tv` |
+| `page` | Inteiro a partir de 1; padrão 1 |
+| `por_pagina` | Padrão 20; máximo 50; não existe `all` nem outro modo sem paginação |
+| Filtros | Executados no servidor; loja, marca, categoria e faixa de preço entram apenas com valores e formatos validados |
+| Ordenação | Lista fixa aceita pela API; padrão estável por menor preço atual, depois nome e ID |
+| Resultado | `itens`, `pagina`, `por_pagina`, `total_itens`, `total_paginas`, `tem_proxima`, horário e qualidade do catálogo |
+| Histórico de um produto | Retenção de 30 dias; padrão 30 medições por página e máximo 100 |
+
+Com 200 resultados e o padrão de 20, existem 10 páginas. O usuário pode percorrer todas, refinar por marca — Samsung, LG e outras que existirem no catálogo —, preço, categoria ou loja, sem perder resultados entre páginas. A API nunca corta silenciosamente o total encontrado.
+
+A busca considera nome, marca e categoria persistidos. Sinônimos necessários para a experiência, como `tv`, `televisão` e `televisor`, serão um dicionário pequeno, versionado e coberto por testes; nenhum sinônimo será criado por adivinhação durante uma requisição.
+
+Regras complementares:
+
+- a caixa de busca nunca chama o Inter nem dispara coleta;
+- uma coleta nova publica o catálogo por loja de forma atômica e preserva o último sucesso se falhar;
+- produto ausente de uma coleta completa deixa de aparecer como oferta atual, mas seu histórico expira normalmente;
+- todas as páginas usam a mesma busca, filtros e ordenação; não pode haver item perdido ou duplicado na navegação;
+- o Flutter deve cancelar ou ignorar resposta de uma busca antiga quando a pessoa digitar outra;
+- o formato exato de cursor/versão do catálogo e os índices do Postgres serão escolhidos na Fase 1 com teste de volume, sem mudar os limites funcionais acima.
+
+### 4.4 Disparo dos robôs
 
 Os workflows atuais continuam sendo os executores oficiais:
 
@@ -142,7 +187,7 @@ A API poderá solicitar `workflow_dispatch`, mas deverá:
 7. devolver estado consultável em vez de manter a tela bloqueada;
 8. reler lojas selecionadas do banco, como o fluxo V4 já faz.
 
-### 4.4 Fila e concorrência
+### 4.5 Fila e concorrência
 
 O aplicativo mostrará `aguardando`, `em execução`, `sucesso`, `parcial`, `degradada` ou `falha`, conforme o domínio permitir. Uma solicitação repetida não deve criar outra execução equivalente.
 
@@ -311,7 +356,7 @@ As lições de `docs/EMAIL.md` continuam válidas: e-mail deve ser verificado no
 - consulta cashback Inter;
 - seleção e descarte de lojas do Inter;
 - seleção de lojas para coleta de produtos;
-- pesquisa local de produtos;
+- pesquisa de produtos no catálogo persistido, por API paginada, sem baixar o catálogo inteiro no aparelho;
 - preço, desconto, cashback e valor após cashback;
 - histórico de 30 dias existente;
 - favoritos e preferências pessoais;
@@ -477,6 +522,10 @@ O Flutter seguirá uma pirâmide com **muitos testes unitários e de widgets/com
 - Preço “após cashback” deve ter destaque equivalente ao preço atual.
 - Confirmação deve nascer de ação explícita e não reabrir em loop.
 - Botão em processamento não deve criar disparo duplicado.
+- Uma coleta com 3.310 produtos pode persistir todos eles, enquanto a resposta padrão da busca contém no máximo 20 itens.
+- Uma busca com 200 resultados deve permitir percorrer dez páginas de 20 sem lacunas nem duplicações.
+- Buscar `tv` deve encontrar os modelos compatíveis presentes no catálogo e permitir refinar por marca, categoria, loja e preço.
+- Quando o preço muda de R$ 5.000 para R$ 4.000, o atual e as duas medições do histórico devem permanecer coerentes.
 
 ### 12.4 Gates do CI
 
@@ -544,6 +593,7 @@ Android pode ser testado por instalação direta antes da Play Store. iOS exige 
 - mapear todas as consultas e Server Actions do Next.js;
 - classificar leitura pública, leitura autenticada e mutação administrativa;
 - documentar contratos JSON e erros;
+- fechar busca no servidor, paginação padrão 20/máximo 50, ordenação estável e contrato do histórico;
 - decidir estratégia de compatibilidade;
 - confirmar API no backend atual ou registrar alternativa;
 - definir identificadores do aplicativo e ambientes.
@@ -577,7 +627,7 @@ Android pode ser testado por instalação direta antes da Play Store. iOS exige 
 - Livelo;
 - cashback Inter;
 - produtos e histórico;
-- frescor, estados e paginação;
+- busca no banco, filtros, frescor, estados e paginação sem catálogo inteiro no cliente;
 - testes unitários, widgets, goldens e integração.
 
 **Saída:** você consegue consultar o mesmo dado no Flutter Web/Android sem administrar ainda.
@@ -642,6 +692,8 @@ Nenhuma fase autoriza apagar `site/`. A aposentadoria definitiva será uma decis
 13. Testes novos e suítes antigas passam no CI.
 14. Cobertura crítica do Flutter atinge pelo menos 90%.
 15. Custos permanecem dentro dos limites aprovados ou o sistema avisa antes da expansão.
+16. Todas as ofertas expostas por uma coleta válida são persistidas, sem teto artificial de 3.000 ou 3.310 produtos.
+17. O Flutter recebe no máximo 50 produtos por resposta e consegue alcançar todos os resultados de uma busca por páginas, sem corte silencioso.
 
 ---
 
@@ -663,10 +715,46 @@ Estes itens não serão inventados durante a implementação:
 
 Cada decisão deverá registrar evidência, impacto, testes e atualização deste plano/PRDs relacionados.
 
+### 17.1 Melhorias recomendadas para discutir no momento certo
+
+Os itens abaixo ficam registrados como **opções recomendadas, não como autorização para implementar agora**. Antes de iniciar cada um, o assistente deve explicar em linguagem simples: o que é, por que ajuda, em qual fase entra, possível custo, risco de não fazer e alternativa mais simples. O responsável decide então se aprova, adia ou descarta.
+
+Uma opção pode virar pré-condição de segurança apenas quando a funcionalidade relacionada for realmente ativada. Exemplo: o relatório por Resend é opcional; se for escolhido para enviar a convidados, verificar um domínio deixa de ser opcional para essa entrega.
+
+| Opção para conversa futura | Por que pode valer a pena | Quando discutir |
+|---|---|---|
+| Separar seleção operacional de loja e acompanhamento pessoal | Impede que o favorito de um convidado aumente automaticamente o trabalho dos robôs | Fases 1 e 5 |
+| Definir consumidor da outbox com retry e fila de falhas | Evita perder ou repetir push/e-mail e não depende de uma função web ficar viva por muito tempo | Antes da Fase 6 |
+| Política de compatibilidade entre versão do app e da API | Um celular pode ficar semanas sem atualizar; a API não deve quebrar o aplicativo antigo de surpresa | Fases 1 e 3 |
+| Ambientes separados para desenvolvimento, piloto e produção | Teste de login, push, e-mail ou banco não atinge dados reais por engano | Fase 2 |
+| Revisar as regras de alerta dos PRDs V3/V4 | Hoje esses documentos não enviam e-mail nem decidem se um preço é bom; qualquer nova regra precisa de limiar, repetição e teste | Antes da Fase 6 |
+| Orçamentos de tempo/tamanho da API, índices, lista virtual e cache | Mantém a busca rápida quando o número de lojas e produtos crescer | Fases 1 e 4 |
+| Cache somente de leitura, com horário visível | Ajuda em internet ruim sem permitir administração offline ou mostrar dado velho como atual | Depois da Fase 4 |
+| Diagnóstico de falhas do app sem dados sensíveis | Facilita descobrir travamentos e relacioná-los à versão do app/API | Fases 2 e 7 |
+| Metas de recuperação de backup (RPO/RTO) | Define quanto dado e tempo de indisponibilidade seriam aceitáveis após uma falha | Fase 7 |
+| Testes nativos de permissão e recebimento de push | Testes Flutter não controlam sozinhos todos os diálogos e comportamentos do Android/iOS | Fase 6 |
+| Persistência segura específica do Flutter Web | Navegador não oferece o mesmo cofre nativo de Android/iOS; exige sessão curta, CSP e estratégia suportada | Fase 3 |
+| Validar App Check também na API | Enviar o token pelo app só ajuda se o servidor conferir sua validade | Fase 3 |
+| Domínio verificado para o Resend | O domínio de teste atende apenas o dono da conta; convidados exigem remetente próprio validado | Fase 6 |
+| Aviso de não afiliação com Livelo e Inter | Reduz confusão de marca nas telas de ajuda e nas listagens das lojas de aplicativos | Fase 8 |
+| Requisitos reais de Google Play, TestFlight e aparelho físico | Contas novas e push nativo podem exigir testes, participantes, configuração APNs e dispositivos reais | Antes da publicação |
+| Atualização recomendada/obrigatória e feature flags | Permite liberar ou interromper uma função com segurança sem quebrar todos os clientes | Fases 3 e 8 |
+
+### 17.2 Decisões que permanecem abertas na paginação
+
+Os limites funcionais de 20 por padrão e 50 no máximo estão aprovados. Na Fase 1 ainda será explicado e decidido:
+
+- paginação por cursor ou por número de página com versão do catálogo;
+- índices de busca adequados ao volume real no Neon;
+- orçamento de tamanho e tempo de resposta medido, sem escolher número arbitrário agora;
+- comportamento visual entre botão “próxima página” e carregamento progressivo;
+- filtros que entram no primeiro MVP além de marca, categoria, loja e preço.
+
 ---
 
 ## 18. Referências internas
 
+- [`../AGENTS.md`](../AGENTS.md) — instruções de entrada reconhecidas pelo Codex para trabalhar neste repositório.
 - [`../CLAUDE.md`](../CLAUDE.md) — regras de arquitetura, segurança e trabalho dos agentes.
 - [`../README.md`](../README.md) — visão geral e operação atual.
 - [`../docs/PRD.md`](../docs/PRD.md) — fonte principal de requisitos Livelo.
@@ -738,4 +826,3 @@ Estas referências devem ser reconsultadas nas fases correspondentes; preços, l
 ## 20. Regra para iniciar
 
 Quando o responsável disser que chegou o momento de começar, a primeira entrega será a **Fase 1 — Inventário e contratos**. Não começar por telas. Depois do contrato aprovado, iniciar a fundação testável do Flutter em `app-robo/`, mantendo `site/`, banco e robôs atuais operacionais.
-
