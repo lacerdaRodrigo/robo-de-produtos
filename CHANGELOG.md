@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.30.0 (2026-08-19)
+
+### Features
+
+- **inter**: Destaca preço após cashback
+  ([#31](https://github.com/lacerdaRodrigo/robo-livelo/pull/31),
+  [`13d60dc`](https://github.com/lacerdaRodrigo/robo-livelo/commit/13d60dc651c6e2ea1932a0dd810627a442bf6fa4))
+
+
 ## v1.29.6 (2026-08-19)
 
 ### Bug Fixes
