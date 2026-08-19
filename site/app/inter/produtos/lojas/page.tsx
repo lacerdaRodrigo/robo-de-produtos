@@ -11,7 +11,11 @@ import { BuscaProgressiva } from "../../../componentes/busca-progressiva";
 import { Cabecalho } from "../../../componentes/cabecalho";
 import { ConfirmacaoEmTela } from "../../../componentes/confirmacao-em-tela";
 import { Rodape } from "../../../rodape";
-import { acaoRemoverLojaDireta, acaoSelecionarLojaDireta } from "../acoes";
+import {
+  acaoAtualizarProdutosInter,
+  acaoRemoverLojaDireta,
+  acaoSelecionarLojaDireta,
+} from "../acoes";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +90,31 @@ export default async function PaginaLojasProdutos({
               : "A loja escolhida não foi encontrada."}
           </p>
         )}
+        {ok === "disparado" && (
+          <p className="faixa">
+            Atualização dos produtos solicitada. A coleta será executada para todas as lojas selecionadas.
+          </p>
+        )}
+        {erro === "sem-lojas" && (
+          <p className="faixa ruim">Selecione pelo menos uma loja antes de atualizar os produtos.</p>
+        )}
+        {erro === "sem-token" && (
+          <p className="faixa ruim">O token de disparo do GitHub não está configurado.</p>
+        )}
+        {erro === "disparo" && (
+          <p className="faixa ruim">O GitHub recusou o pedido de atualização dos produtos.</p>
+        )}
+
+        <div className="acoes-do-cartao">
+          <form action={acaoAtualizarProdutosInter}>
+            <button className="botao" type="submit" disabled={resumo.selecionadas === 0}>
+              Atualizar produtos agora
+            </button>
+          </form>
+          <p className="detalhe">
+            Executa uma rodada única para todas as {resumo.selecionadas} lojas selecionadas.
+          </p>
+        </div>
 
         <BuscaProgressiva
           acao="/inter/produtos/lojas"
