@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.30.1 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Deixa preço após cashback no mesmo destaque
+  ([#32](https://github.com/lacerdaRodrigo/robo-livelo/pull/32),
+  [`3fd0257`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3fd0257f55f35ac787d5d6dbe37becfecaa92904))
+
+
 ## v1.30.0 (2026-08-19)
 
 ### Features
