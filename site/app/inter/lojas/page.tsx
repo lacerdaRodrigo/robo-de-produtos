@@ -118,7 +118,7 @@ export default async function PaginaLojasInter({
           </p>
         ) : (
           <>
-            <div className="lista-grade">
+            <div className="lista-grade" id="lista-lojas-inter">
               {lojas.map((loja) => (
                 <article className="cartao" key={loja.id_externo}>
                   <div className="linha">
@@ -140,6 +140,8 @@ export default async function PaginaLojasInter({
                     <form action={loja.favorita ? acaoRemoverInter : acaoAcompanharInter}>
                       <input type="hidden" name="id" value={loja.id} />
                       <input type="hidden" name="nome" value={loja.nome} />
+                      <input type="hidden" name="q" value={q} />
+                      <input type="hidden" name="pagina" value={String(pagina)} />
                       <button
                         type="submit"
                         className={loja.favorita ? "secundario" : undefined}
