@@ -12,6 +12,15 @@ import {
 import { dispararRoboInter } from "@/lib/github";
 import { exigirSessao } from "@/lib/sessao";
 
+function retornoLojasInter(dados: FormData, parametros: Record<string, string>) {
+  const query = new URLSearchParams(parametros);
+  const busca = String(dados.get("q") ?? "");
+  const pagina = String(dados.get("pagina") ?? "");
+  if (busca) query.set("q", busca);
+  if (pagina && pagina !== "1") query.set("pagina", pagina);
+  return `/inter/lojas?${query.toString()}#lista-lojas-inter`;
+}
+
 export async function acaoAcompanharInter(dados: FormData) {
   await exigirSessao();
   const id = String(dados.get("id") ?? "");
@@ -36,9 +45,14 @@ export async function acaoAcompanharInter(dados: FormData) {
   }
   revalidatePath("/inter");
   revalidatePath("/inter/lojas");
-  const parametros = new URLSearchParams({ ok: "adicionada", nome, atualizacao });
-  if (falta > 0) parametros.set("segundos", String(falta));
-  redirect(`/inter/lojas?${parametros.toString()}`);
+  redirect(
+    retornoLojasInter(dados, {
+      ok: "adicionada",
+      nome,
+      atualizacao,
+      ...(falta > 0 ? { segundos: String(falta) } : {}),
+    }),
+  );
 }
 
 export async function acaoRemoverInter(dados: FormData) {
@@ -51,7 +65,7 @@ export async function acaoRemoverInter(dados: FormData) {
   await deixarDeAcompanharLojaInter(id);
   revalidatePath("/inter");
   revalidatePath("/inter/lojas");
-  redirect(`/inter/lojas?ok=removida&nome=${encodeURIComponent(nome)}`);
+  redirect(retornoLojasInter(dados, { ok: "removida", nome }));
 }
 
 export async function acaoAtualizarInter() {
