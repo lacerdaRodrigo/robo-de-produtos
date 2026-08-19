@@ -23,6 +23,7 @@ export type TentativaInter = {
 };
 
 export type CashbackInter = {
+  id: string;
   id_externo: string;
   slug: string;
   nome: string;
@@ -75,7 +76,7 @@ export async function ultimaExecucaoInterValida(): Promise<TentativaInter | null
 export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[]> {
   const sql = conectar();
   return (await sql`
-    SELECT l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
+    SELECT l.id, l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
            COALESCE(c.cashback_principal_texto, l.cashback_principal_texto) AS cashback_principal_texto,
            COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) AS cashback_principal_valor,
            COALESCE(c.cashback_secundario_texto, l.cashback_secundario_texto) AS cashback_secundario_texto,
