@@ -17,21 +17,60 @@ import {
   ordenarCashbacksPorNome,
 } from "@/lib/formato-inter";
 import { BuscaProgressiva } from "../componentes/busca-progressiva";
+import { acaoRemoverInter } from "./acoes";
 import { Cabecalho } from "../componentes/cabecalho";
 import { Rodape } from "../rodape";
 
 export const dynamic = "force-dynamic";
 
+function FormularioRemoverInter({
+  loja,
+  q,
+  ordenar,
+}: {
+  loja: CashbackInter;
+  q: string;
+  ordenar: string;
+}) {
+  return (
+    <form action={acaoRemoverInter} className="form-lixeira-inter">
+      <input type="hidden" name="id" value={loja.id} />
+      <input type="hidden" name="nome" value={loja.nome} />
+      <input type="hidden" name="q" value={q} />
+      <input type="hidden" name="ordenar" value={ordenar} />
+      <button
+        type="submit"
+        className="botao discreto lixeira-cartao"
+        title={`Descartar ${loja.nome}`}
+        aria-label={`Descartar ${loja.nome}`}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v5" />
+          <path d="M14 11v5" />
+        </svg>
+      </button>
+    </form>
+  );
+}
+
 function CartaoInter({
   loja,
   coletadoEm,
+  q,
+  ordenar,
 }: {
   loja: CashbackInter;
   coletadoEm: string;
+  q: string;
+  ordenar: string;
 }) {
   if (!loja.encontrada) {
     return (
       <article className="cartao cartao-inter">
+        <FormularioRemoverInter loja={loja} q={q} ordenar={ordenar} />
         <span className="nome">{loja.nome}</span>
         <p className="detalhe">
           Não encontrada nesta consulta. Ela continua nas suas favoritas.
@@ -42,6 +81,7 @@ function CartaoInter({
 
   return (
     <article className="cartao cartao-inter">
+      <FormularioRemoverInter loja={loja} q={q} ordenar={ordenar} />
       <div className="cartao-inter-topo">
         <span className="logo-loja" aria-hidden="true">{loja.nome.slice(0, 1).toUpperCase()}</span>
         <div className="cartao-titulo">
@@ -228,9 +268,15 @@ export default async function PaginaInter({
             <Link href="/inter/lojas">Escolher lojas</Link>
           </p>
         ) : (
-          <div className="lista-grade grade-cashback">
+          <div className="lista-grade grade-cashback" id="lista-cashback">
             {lojas.map((loja) => (
-              <CartaoInter key={loja.id_externo} loja={loja} coletadoEm={concluidaEm} />
+              <CartaoInter
+                key={loja.id_externo}
+                loja={loja}
+                coletadoEm={concluidaEm}
+                q={q}
+                ordenar={ordenar}
+              />
             ))}
           </div>
         )}
