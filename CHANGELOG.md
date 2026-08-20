@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.31.0 (2026-08-20)
+
+### Documentation
+
+- Adiciona instruções para o Codex
+  ([`62a561a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/62a561a3ce20cf2211d15ac033bea7ffa1c837a5))
+
+- **app-robo**: Adiciona plano do piloto Flutter
+  ([`7b18075`](https://github.com/lacerdaRodrigo/robo-livelo/commit/7b1807597d2e2f1ed5dc77a3e44405bfc035ab05))
+
+- **app-robo**: Detalha catálogo e paginação da API
+  ([`4ec42ee`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4ec42ee910d9a7e4d031cb33fc635a808b7072cb))
+
+### Features
+
+- **app-robo**: Inicio do Flutter e API v1 de leitura
+  ([`732de42`](https://github.com/lacerdaRodrigo/robo-livelo/commit/732de423257fb6ff41a98c512f17437f7048ca48))
+
+
 ## v1.30.2 (2026-08-19)
 
 ### Bug Fixes
