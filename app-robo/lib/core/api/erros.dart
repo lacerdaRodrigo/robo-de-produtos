@@ -1,0 +1,30 @@
+/// Erro de domínio da API v1, já normalizado no cliente.
+///
+/// O corpo de erro da API é `{ "erro": { "codigo", "mensagem" } }`
+/// (FASE1-Contrato-API §4.7). Nunca vaza URL de banco nem segredo — o servidor
+/// é quem garante isso; aqui a gente só transporta o código e a mensagem.
+class ErroDeApi implements Exception {
+  ErroDeApi(this.status, this.codigo, this.mensagem);
+
+  /// Status HTTP do erro.
+  final int status;
+
+  /// Código de domínio devolvido pela API (`validacao`, `nao-achei`, ...).
+  final String codigo;
+
+  /// Mensagem legível para o usuário.
+  final String mensagem;
+
+  @override
+  String toString() => 'ErroDeApi($status: $codigo)';
+}
+
+/// Falhou sozinho na camada de rede/cliente, sem corpo de API.
+class ErroDeRede implements Exception {
+  ErroDeRede(this.motivo);
+
+  final String motivo;
+
+  @override
+  String toString() => 'ErroDeRede($motivo)';
+}
