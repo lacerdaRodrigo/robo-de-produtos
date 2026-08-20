@@ -238,3 +238,52 @@ Entregue neste inventário:
 - [x] Contrato JSON de paginação, ordenação, card de produto, histórico e erros
 - [x] Lacunas detectadas: busca de produtos sem paginação e sem filtros (**corrigir no servidor**)
 - [ ] Contra-assinatura do responsável das perguntas da Seção 6 — **pendente**
+
+---
+
+## 9. Avanço real — Fases 2 a 4.1
+
+> Estado registrado depois do commit `732de42` (base do Flutter + API v1 na `main`).
+> Este contrato guiou o que se fez; abaixo fica o que está implementado e o que falta.
+
+### 9.1 Fase 2 — bootstrap (entregada)
+
+- [x] Projeto Flutter criado em `app-robo/` (org provisional)
+- [x] Tokens e tema aprovados; formatação pt-BR sem `double`
+- [x] CI `.github/workflows/app-robo.yml` (analyze, formta, test, build web)
+
+### 9.2 Fase 3 — API v1 (entregada)
+
+- [x] Endpoints `status`, `livelo/painel`, `inter/cashback`, `inter/produtos`, `inter/produtos/lojas`, `inter/produtos/historico`
+- [x] **Busca de produtos paginada no servidor** (corrige `LIMIT 500`) com filtros
+- [x] Cliente Flutter: `ClienteApi`, `Pagina<T>`, modelos, `ApiV1.buscarProdutos`
+- [x] Gates verdes: tsc, vitest, build do site
+
+### 9.3 Fase 4.1 — shell web, estados, integração (entregada)
+
+- [x] Construção da API real injetável para test
+- [x] Widgets de estado (carregar, vazio, falha)
+- [x] Barra lateral com 5 destinos, `IndexedStack` preserva estado
+- [x] Página Início consulta o `/status` real
+- [x] 34 testes Flutter verdes + build web
+
+### 9.4 Pendiente (falta)
+
+| Pendiente | Fase |
+|---|---|
+| Painel Livelo | 4.2 |
+| Painel Inter (cashback) | 4.3 |
+| Produtos + histórico | 4.4 |
+| Firebase (conectar, setup seu) | 3 |
+| Mutaciones admin | 5 |
+| Push e reportes | 6 |
+| Identifiers do app | gate |
+| Barra inferior móvil | plataformas |
+
+### 9.5 Gates respondidos (Sección 6)
+
+- Backend: `site/app/api/v1/`
+- Paginação: página + `atualizado_em`/`qualidade` (sem cursor)
+- Filtros: marca/categoria/loja/precio
+- Login: Firebase e-mail/senha (a conectar)
+- Nome público: "Radar de Benefícios"
