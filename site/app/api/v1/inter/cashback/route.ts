@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import { paginacaoEnvelope, paginaValida, porPaginaValida } from "@/lib/api";
 import { cashbacksInter, ultimaExecucaoInterValida } from "@/lib/banco-inter";
 import {
@@ -12,10 +13,13 @@ import { paginar } from "@/lib/paginacao";
 /**
  * GET /api/v1/inter/cashback?q=&ordenar=&pagina=&por_pagina=
  *
- * Cashback dos Sites parceiros (V3), público. `ordenar`:
+ * Cashback dos Sites parceiros (V3), autenticado para o Flutter. `ordenar`:
  * `cashback` (padrão, RN37) | `nome`.
  */
 export async function GET(requisicao: Request) {
+  const acesso = await autenticarRequisicao(requisicao, { operacao: "inter.cashback.ler" });
+  if (!acesso.ok) return acesso.resposta;
+
   const url = new URL(requisicao.url);
   const q = url.searchParams.get("q") ?? "";
   const ordenarBruto = url.searchParams.get("ordenar") ?? "cashback";

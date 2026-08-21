@@ -1,4 +1,4 @@
-package br.com.radarbeneficios.app_robo
+package br.com.radarbeneficios.app
 
 import io.flutter.embedding.android.FlutterActivity
 

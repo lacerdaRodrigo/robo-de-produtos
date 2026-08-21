@@ -124,6 +124,28 @@ class StatusApi {
   final bool saudavel;
 }
 
+class PerfilUsuario {
+  const PerfilUsuario({
+    required this.id,
+    required this.email,
+    required this.papel,
+  });
+
+  factory PerfilUsuario.parse(Map<String, dynamic> objeto) {
+    return PerfilUsuario(
+      id: _texto(objeto['id']),
+      email: _texto(objeto['email']),
+      papel: _texto(objeto['papel']),
+    );
+  }
+
+  final String id;
+  final String email;
+  final String papel;
+
+  bool get administrador => papel == 'admin';
+}
+
 String _texto(Object? valor) => valor?.toString() ?? '';
 
 bool _booleano(Object? valor) {

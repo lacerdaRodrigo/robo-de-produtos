@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -11,10 +12,6 @@ export function MolduraNavegacao({
   children: React.ReactNode;
 }) {
   const [aberto, setAberto] = useState(false);
-
-  useEffect(() => {
-    setAberto(false);
-  }, [atual]);
 
   useEffect(() => {
     document.body.style.overflow = aberto ? "hidden" : "";
@@ -36,7 +33,7 @@ export function MolduraNavegacao({
           <IconeMenu />
         </button>
         <Link href="/" className="cabecalho-marca" aria-label="Radar de Benefícios — início">
-          <img src="/logo.png" alt="" width={30} height={30} />
+          <Image src="/logo.png" alt="" width={30} height={30} />
           <span>Radar de Benefícios</span>
         </Link>
         <a

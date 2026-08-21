@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import {
   corpoErro,
   MAXIMO_HISTORICO_POR_PAGINA,
@@ -14,10 +15,15 @@ import { historicoProdutoDireto } from "@/lib/banco-produtos-inter";
 /**
  * GET /api/v1/inter/produtos/historico?loja=&produto=&pagina=&por_pagina=
  *
- * Histórico de 30 dias de um produto numa loja (V4). Público.
+ * Histórico de 30 dias de um produto numa loja (V4), autenticado.
  * `por_pagina` padrão 30, máximo 100 (FASE1-Contrato-API §4.6).
  */
 export async function GET(requisicao: Request) {
+  const acesso = await autenticarRequisicao(requisicao, {
+    operacao: "inter.produtos.historico.ler",
+  });
+  if (!acesso.ok) return acesso.resposta;
+
   const url = new URL(requisicao.url);
   const loja = url.searchParams.get("loja");
   const produto = url.searchParams.get("produto");

@@ -21,7 +21,7 @@ void main() {
       ),
     );
 
-    await at.pumpWidget(RadarApp(api: api));
+    await at.pumpWidget(RadarApp.semAutenticacaoParaTeste(api: api));
 
     expect(find.byIcon(Destino.inicio.icone), findsWidgets);
     expect(find.byIcon(Destino.alertas.icone), findsWidgets);

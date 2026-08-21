@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { esperaAteProximoDisparo } from "@/lib/banco";
 import { esperaAteProximoDisparoInter } from "@/lib/banco-inter";
@@ -27,8 +28,8 @@ export async function Cabecalho({atual}:{atual:string}){
  const podeDisparar=logado&&temTokenDeDisparo(),podeDispararInter=logado&&temTokenDeDisparoInter();
  const falta=logado?await esperaAteProximoDisparo().catch(()=>0):0,faltaInter=logado?await esperaAteProximoDisparoInter().catch(()=>0):0;
  const liveloAtivo=atual==="/"||atual.startsWith("/lojas")||atual.startsWith("/avisos"),interAtivo=atual.startsWith("/inter");
- return <MolduraNavegacao atual={atual}><aside className="barra-lateral">
-  <Link href="/" className="bl-marca"><span className="bl-marca-icone"><img src="/logo.png" alt="" width={22} height={22}/></span><span className="bl-marca-nome">Radar de Benefícios</span></Link>
+ return <MolduraNavegacao key={atual} atual={atual}><aside className="barra-lateral">
+  <Link href="/" className="bl-marca"><span className="bl-marca-icone"><Image src="/logo.png" alt="" width={22} height={22}/></span><span className="bl-marca-nome">Radar de Benefícios</span></Link>
   <nav className="bl-nav bl-nav-simples" aria-label="Benefícios">
    <details className="bl-grupo" open={liveloAtivo}><summary><span className="bl-grupo-icone"><IconePainel/></span><span><strong>Livelo</strong><small>Pontos e alertas</small></span><span className="bl-grupo-seta">⌄</span></summary><div className="bl-grupo-itens">
     {livelo.map(item=><ItemMenu key={item.href} item={item} atual={atual}/>)}

@@ -39,6 +39,7 @@ ApiV1 apiQueResponde(String corpoHttp) {
     paginaPadrao: 20,
     cliente: ClienteApi(
       baseUrl: baseUrl,
+      provedorToken: () async => 'token-teste',
       cliente: http_testing.MockClient(
         (_) async => http.Response(corpoHttp, 200),
       ),
@@ -78,6 +79,7 @@ void main() {
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
         cliente: http_testing.MockClient((requisicao) async {
           consultas.add(requisicao.url);
           return http.Response(
@@ -116,5 +118,16 @@ void main() {
 
     expect(status.api, 'v1');
     expect(status.saudavel, isTrue);
+  });
+
+  test('perfil converte autorização e papel', () async {
+    final api = apiQueResponde(
+      '{"id":"42","email":"piloto@example.com","papel":"admin"}',
+    );
+
+    final perfil = await api.perfil();
+
+    expect(perfil.email, 'piloto@example.com');
+    expect(perfil.administrador, isTrue);
   });
 }

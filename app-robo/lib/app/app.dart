@@ -2,18 +2,35 @@ import 'package:flutter/material.dart';
 
 import '../core/api/api_v1.dart';
 import '../core/api/construcao.dart';
+import '../core/autenticacao/autenticador.dart';
+import 'autenticacao/portao.dart';
+import 'componentes/estados.dart';
 import 'navegacao/moldura.dart';
 import 'tema/tema.dart';
 
 /// Raiz do aplicativo Radar de Benefícios.
 ///
-/// Fase 4.1: shell de navegação + integração real com a API. `api` é
-/// injetável para os testes usarem cliente falso; sem ele, o app constrói a
-/// API real (PLANO §15, Fase 4).
+/// Produção sempre usa [RadarApp.comAutenticacao]. O construtor sem gate tem
+/// nome explícito e existe apenas para widgets antigos continuarem testáveis.
 class RadarApp extends StatelessWidget {
-  RadarApp({super.key, ApiV1? api}) : api = api ?? construirApi();
+  const RadarApp.semAutenticacaoParaTeste({super.key, required this.api})
+    : autenticador = null,
+      erroConfiguracao = null;
+
+  const RadarApp.comAutenticacao({
+    super.key,
+    required this.api,
+    required this.autenticador,
+  }) : erroConfiguracao = null;
+
+  RadarApp.configuracaoPendente(String mensagem, {super.key})
+    : api = construirApi(),
+      autenticador = null,
+      erroConfiguracao = mensagem;
 
   final ApiV1 api;
+  final Autenticador? autenticador;
+  final String? erroConfiguracao;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +40,11 @@ class RadarApp extends StatelessWidget {
       theme: TemaRadar.claro(),
       darkTheme: TemaRadar.escuro(),
       themeMode: ThemeMode.light,
-      home: MolduraRadar(api: api),
+      home: erroConfiguracao != null
+          ? Scaffold(body: EstadoFalha(mensagem: erroConfiguracao!))
+          : autenticador != null
+          ? PortaoAutenticacao(autenticador: autenticador!, api: api)
+          : MolduraRadar(api: api),
     );
   }
 }

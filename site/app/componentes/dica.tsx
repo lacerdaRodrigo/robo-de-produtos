@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-let contador = 0;
-
 /**
  * Ponto de interrogacao que explica um termo (RNF14: sem JavaScript).
  *
@@ -22,7 +20,9 @@ export function Dica({
   children: React.ReactNode;
   secao?: string;
 }) {
-  const id = `dica-${(contador += 1)}`;
+  // Todas as dicas atuais informam uma secao unica por pagina. O ID
+  // deterministico evita estado global durante SSR e continua estavel sem JS.
+  const id = `dica-${secao ?? titulo.toLocaleLowerCase("pt-BR").replace(/\W+/g, "-")}`;
   return (
     <span className="dica">
       <button type="button" aria-label={`O que é ${titulo}`} aria-describedby={id}>

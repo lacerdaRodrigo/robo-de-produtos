@@ -1,0 +1,23 @@
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "radarbeneficios",
+                    "appId": "1:100167816991:android:570f7af7ffd75b08f9822a",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "radarbeneficios",
+                    "configurations": {
+                        "android": "1:100167816991:android:570f7af7ffd75b08f9822a",
+                        "ios": "1:100167816991:ios:ba7dc324f51f21d1f9822a",
+                        "web": "1:100167816991:web:956512e3b10bee1df9822a"
+                    }
+                }
+            }
+        }
+    }
+}

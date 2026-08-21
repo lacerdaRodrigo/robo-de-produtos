@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import {
   paginacaoEnvelope,
   paginaValida,
@@ -12,10 +13,14 @@ import { paginar } from "@/lib/paginacao";
 /**
  * GET /api/v1/livelo/painel?q=&ordenar=&pagina=&por_pagina=
  *
- * Painel da Livelo, público. Mesmos dados da página `/`, expostos como JSON
+ * Painel da Livelo para o Flutter autenticado. A página `/` continua pública
+ * e intacta durante a transição.
  * paginado para o Flutter. `ordenar`: `pontos` (padrão) | `alerta` | `nome`.
  */
 export async function GET(requisicao: Request) {
+  const acesso = await autenticarRequisicao(requisicao, { operacao: "livelo.painel.ler" });
+  if (!acesso.ok) return acesso.resposta;
+
   const url = new URL(requisicao.url);
   const q = url.searchParams.get("q") ?? "";
   const ordenarBruto = url.searchParams.get("ordenar") ?? "pontos";

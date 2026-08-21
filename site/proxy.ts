@@ -15,7 +15,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * no PRD-V2 §9.2: nonce muda a cada requisicao, entao a pagina passa a ser
  * renderizada a cada visita em vez de servida do cache.
  */
-export function middleware(requisicao: NextRequest) {
+export function proxy(requisicao: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   const politica = [

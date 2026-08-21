@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { telaDeAlertasEscondida } from "@/lib/flags";
@@ -50,7 +51,7 @@ export async function Rodape({
         </p>
       )}
       <p className="marca-rodape">
-        <img src="/logo.png" alt="" width={16} height={16} />
+        <Image src="/logo.png" alt="" width={16} height={16} />
         Radar de Benefícios v{versao ?? VERSAO_ATUAL}
       </p>
     </footer>

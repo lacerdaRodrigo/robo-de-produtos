@@ -2,6 +2,11 @@
 
 Página pública com a pontuação atual das lojas favoritas, mais a edição protegida por senha. Lê o mesmo banco Neon que o robô alimenta a cada execução.
 
+> **Em descontinuação:** desde 20 de agosto de 2026, esta interface não recebe
+> novas funcionalidades. Ela continua operando apenas como fallback e como
+> hospedeiro transitório da API v1 consumida pelo Flutter. Remoção da interface
+> ou mudança da API exige uma etapa de corte separada.
+
 O **porquê** de cada decisão está no [`PRD-V2.md`](../docs/PRD-V2.md) — aqui fica só como rodar.
 
 ## O que ele mostra
@@ -24,6 +29,32 @@ DATABASE_URL=... SENHA_SITE=... SEGREDO_SESSAO=... npm run dev
 
 As três variáveis são obrigatórias. Nenhuma delas tem prefixo `NEXT_PUBLIC_`: a credencial do banco vive só no servidor (PRD-V2 §9.0), e o navegador nunca fala com o Postgres.
 
+## API v1 para o Flutter
+
+Enquanto durar a transição, o site legado continua com sua senha única e cookie. Isso não autentica o
+Flutter. A API em `/api/v1` usa Firebase Authentication por usuário:
+
+- `/api/v1/status` é público;
+- as demais rotas exigem `Authorization: Bearer <ID token>`;
+- o token é validado com revogação pelo Firebase Admin;
+- o e-mail verificado precisa existir e estar ativo em `usuario_app`;
+- papel, rate limit persistente e auditoria são decididos no servidor;
+- App Check é uma proteção complementar com rollout separado.
+
+Além de `DATABASE_URL`, o servidor da API usa:
+
+```text
+FIREBASE_PROJECT_ID=radarbeneficios
+FIREBASE_SERVICE_ACCOUNT_JSON=<JSON secreto em uma linha>
+SEGREDO_LIMITE_API=<valor longo e aleatorio>
+EXIGIR_APP_CHECK=false
+```
+
+O JSON da conta de serviço nunca entra no repositório. Em produção, essas
+variáveis ficam no cofre da Vercel. Antes do primeiro acesso, aplique a migração
+`migracoes/010_autenticacao_app.sql` e insira apenas o e-mail convidado; o UID
+Firebase é vinculado no primeiro acesso válido.
+
 ```bash
 npm run testar   # vitest
 npm run checar   # tsc --noEmit
@@ -34,7 +65,8 @@ npm run build
 
 1. **New Project** apontando para este repositório
 2. **Root Directory**: `site` — defina ainda na tela de import, antes do primeiro Deploy
-3. Environment Variables: `DATABASE_URL`, `SENHA_SITE`, `SEGREDO_SESSAO`, em Production e Preview
+3. Environment Variables do legado: `DATABASE_URL`, `SENHA_SITE`, `SEGREDO_SESSAO`, em Production e Preview
+4. Para a API Flutter: `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `SEGREDO_LIMITE_API` e `EXIGIR_APP_CHECK`
 
 `SENHA_SITE` é credencial de vida longa, sem segundo fator e sem revogação individual — o trade-off está aceito no PRD-V2 §9.0, e é por isso que ela precisa ser longa e aleatória. `SEGREDO_SESSAO` é independente: assina o cookie de sessão, e trocá-lo derruba as sessões abertas sem trocar a senha.
 
@@ -56,7 +88,7 @@ Manter robô e site no mesmo repositório é decisão registrada: a fonte da ver
 
 ## Content-Security-Policy e o nonce
 
-A política tem nonce por requisição (`middleware.ts`), e não cabeçalho estático. Motivo registrado porque custou um deploy quebrado:
+A política tem nonce por requisição (`proxy.ts`), e não cabeçalho estático. Motivo registrado porque custou um deploy quebrado:
 
 `script-src 'self'` parece certo e não é. O Next embute o payload de dados da página em `<script>` **inline** — 43 deles. Com a política estrita sem nonce, o navegador recusa todos, o React encontra um stream vazio, dispara `Error: Connection closed` e **apaga o HTML que o servidor mandou correto**. O sintoma é cruel: com JavaScript desligado a página funciona; com JavaScript ligado, fica em branco.
 

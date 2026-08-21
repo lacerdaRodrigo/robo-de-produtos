@@ -5,8 +5,8 @@ import 'pagina.dart';
 /// API v1 exposta para o Flutter (FASE1-Contrato-API §4).
 ///
 /// Cada método monta a URL, chama o cliente e converte para o modelo. A
-/// autenticação real (Firebase) entra via `ClienteApi`/token quando o setup
-/// estiver pronto (Fase 3); hoje estas leituras são públicas.
+/// O status é público. As demais leituras levam o ID token e, quando ativo,
+/// o token do App Check pelo `ClienteApi` (PLANO, Fase 3B).
 class ApiV1 {
   ApiV1({required this.cliente, required this.paginaPadrao});
 
@@ -14,8 +14,13 @@ class ApiV1 {
   final int paginaPadrao;
 
   Future<StatusApi> status() async {
-    final corpo = await cliente.obter('/api/v1/status');
+    final corpo = await cliente.obter('/api/v1/status', autenticado: false);
     return StatusApi.parse(corpo);
+  }
+
+  Future<PerfilUsuario> perfil() async {
+    final corpo = await cliente.obter('/api/v1/perfil');
+    return PerfilUsuario.parse(corpo);
   }
 
   /// Busca de produtos paginada (V4). `q` obrigatório, 2–100 caracteres.

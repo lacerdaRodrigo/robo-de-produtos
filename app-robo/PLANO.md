@@ -1,12 +1,20 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** planejamento aprovado; implementação não iniciada  
-**Data-base:** 19 de agosto de 2026  
+**Status:** Fase 3B implementada localmente; rollout autenticado em fechamento
+
+**Data-base:** 20 de agosto de 2026
+
 **Repositório:** `lacerdaRodrigo/robo-livelo`  
 **Referência observada na elaboração:** `main` na versão `1.30.2` (`46146c7`)  
 **Pasta reservada para a futura implementação:** `app-robo/`
 
 > Este documento registra o plano do piloto. A criação deste arquivo não autoriza criar telas, inicializar o Flutter, alterar banco, API, workflows, notificações ou substituir o site atual. Cada fase de implementação depende de pedido explícito do responsável pelo projeto.
+
+> **Direção de produto confirmada em 20 de agosto de 2026:** o Flutter será a
+> única interface do produto ao final da transição. A interface Next.js não
+> receberá novas funcionalidades; `site/` fica temporariamente apenas como
+> fallback e como hospedeiro da API v1 até um corte de backend explicitamente
+> autorizado.
 
 ---
 
@@ -15,7 +23,7 @@
 1. O novo cliente será desenvolvido em **Flutter**.
 2. O mesmo código Flutter atenderá **Web, Android e iOS**, com adaptação responsiva por plataforma e tamanho de tela.
 3. O futuro painel Flutter será o único painel de administração do produto.
-4. O site atual em `site/` **não será removido nem interrompido durante a construção**.
+4. O site atual em `site/` **não será removido nem interrompido durante a construção**, mas sua interface não receberá novas funcionalidades.
 5. O novo projeto ficará isolado em `app-robo/`.
 6. Os robôs Python, o Postgres no Neon e os workflows atuais serão reutilizados. Não haverá cópia dos robôs dentro do Flutter.
 7. Durante a transição, site atual e Flutter poderão consultar os mesmos dados e solicitar os mesmos robôs por uma API autenticada.
@@ -57,7 +65,7 @@ Este plano foi construído a partir do código e da documentação existentes, e
 |---|---|---|
 | Robôs | Python 3.11, domínio puro e adaptadores de I/O | Reutilizar sem copiar para o Flutter |
 | Banco | Postgres no Neon | Continuar como fonte compartilhada de dados |
-| Site | Next.js 15, React 19, TypeScript, publicado pela Vercel | Manter funcionando durante toda a transição |
+| Site | Next.js 16, React 19, TypeScript, publicado pela Vercel | Manter apenas como fallback e hospedeiro transitório da API durante a transição |
 | Livelo | Workflow `.github/workflows/robo.yml` | Manter isolado; horários atuais e disparo manual |
 | Inter — Sites parceiros | Workflow `.github/workflows/inter.yml` | Manter isolado da Livelo e de produtos |
 | Inter — Compre direto | Workflow `.github/workflows/produtos-inter.yml` | Manter matriz dinâmica e `max-parallel: 2` |
@@ -640,7 +648,8 @@ Android pode ser testado por instalação direta antes da Play Store. iOS exige 
 - disparar robôs e acompanhar a fila;
 - zona de perigo com proteção reforçada.
 
-**Saída:** Flutter administra o backend; Next.js continua disponível como fallback.
+**Saída:** Flutter administra o backend; a interface Next.js permanece somente
+como fallback transitório, sem evolução funcional.
 
 ### Fase 6 — Push e relatórios
 
@@ -668,7 +677,7 @@ Android pode ser testado por instalação direta antes da Play Store. iOS exige 
 - smoke Web, Android e iOS;
 - confirmar estabilidade de notificações e relatórios;
 - publicar Flutter Web como painel principal;
-- manter o site atual como fallback pelo período aprovado;
+- manter o site atual apenas pelo período técnico aprovado para o corte;
 - retirar apenas a interface administrativa legada quando houver decisão explícita.
 
 Nenhuma fase autoriza apagar `site/`. A aposentadoria definitiva será uma decisão separada.
@@ -701,15 +710,19 @@ Nenhuma fase autoriza apagar `site/`. A aposentadoria definitiva será uma decis
 
 Estes itens não serão inventados durante a implementação:
 
-- nome público definitivo do aplicativo;
-- identificadores Android e iOS;
-- método exato de login dentro do Firebase Authentication;
+- nome público definido para o piloto: **Radar de Benefícios**;
+- identificadores Android e iOS definidos: `br.com.radarbeneficios.app`;
+- login definido: Firebase Authentication por e-mail/senha, convite fechado e
+  sem cadastro público;
 - domínio/remetente do novo relatório por e-mail;
 - horário do relatório diário;
-- backend definitivo da API após o inventário;
-- bibliotecas Flutter de estado, rotas, HTTP e serialização;
+- backend do piloto definido na API v1 do Next.js/Vercel; reavaliar somente se
+  o gate operacional mostrar limitação real;
+- fundação Flutter definida com SDKs oficiais do Firebase, `http` e conversão
+  manual de JSON; bibliotecas extras continuam exigindo justificativa;
 - política exata de retenção de auditoria e notificações;
-- período em que o Next.js ficará como fallback após o corte;
+- data e roteiro para desligar a interface Next.js e, se necessário, mover a API
+  v1 para outro hospedeiro;
 - quando pagar e publicar na Google Play e na App Store;
 - regra matemática para comparar pontos Livelo com cashback em dinheiro.
 

@@ -1,6 +1,8 @@
 # Fase 1 — Inventário e contratos do `app-robo`
 
-**Status:** entrega da Fase 1 do [`PLANO.md`](PLANO.md). Nenhum código do Flutter, nenhuma API criada ainda.
+**Status:** registro da Fase 1 do [`PLANO.md`](PLANO.md). Atualização da Fase 3B:
+API e autenticação já possuem implementação local; este documento preserva o
+inventário que orientou o código.
 **Data-base:** 19 de agosto de 2026. Repositório `main` na versão `1.30.2`.
 **Fonte do inventário:** leitura do `site/` (rotas, Server Actions, `lib/`), sem alterar nada.
 
@@ -104,7 +106,8 @@ Modelos existentes que virarão os corpos de resposta (tipos já definidos em `s
 - A API exige **token emitido por provedor** (direção do Plano §5.3: Firebase Authentication),
   **validado no servidor** antes de qualquer leitura pessoal ou mutação. Existir no provedor
   não basta — o e-mail precisa estar autorizado e o perfil ativo no banco.
-- Método exato de login ainda é **gate em aberto** (Plano §17).
+- Método fechado na Fase 3B: **e-mail e senha do Firebase Authentication**, sem
+  cadastro público; recuperação e confirmação de e-mail ficam a cargo do Firebase.
 
 ### 4.3 Paginação única (padrão do produto)
 
@@ -204,12 +207,12 @@ A API **não** recebe arquivo, branch, URL ou slug arbitrário do cliente. Ela:
 
 Item do plano | Decisão atual | O que falta responder
 ---|---|---
-§4.2 Backend da API | `site/app/api/v1/` | Confirmar que Vercel aguenta; senão registrar alternativa **antes** de codar API
-§5.3 Login | Firebase Authentication, fechado | Método exato (sem senha vs provedor), identificadores Android/iOS
-§17 Identificadores | em aberto | `applicationId` Android e bundle iOS do app
+§4.2 Backend da API | `site/app/api/v1/` escolhido como hospedeiro transitório; a interface Next.js será descontinuada | Validar o deploy e decidir o hospedeiro da API antes do corte do site
+§5.3 Login | Firebase Authentication por e-mail/senha, sem cadastro público; provedor, conta e convite inicial criados | Definir a senha, confirmar o e-mail e executar o smoke real
+§17 Identificadores | `br.com.radarbeneficios.app` em Android e iOS | Fechado na Fase 3B
 §17.2 Paginação | cursor **vs** página+número com versão do catálogo | escolher antes da busca de produtos paginada
 §17.2 Filtros MVP | marca, categoria, loja, preço | confirmar se esses 4 já entram no primeiro MVP
-§17 Nome público | em aberto | nome definitivo do app (hoje "Radar de Benefícios")
+§17 Nome público | **Radar de Benefícios** | fechado na Fase 3B
 §17 Horário relatório diário | em aberto | decidir na Fase 6
 
 Recomendação da Fase 1: **página + número + `atualizado_em`/`qualidade`** (sem cursor) no
@@ -237,7 +240,8 @@ Entregue neste inventário:
 - [x] Modelos de dados reutilizáveis listados
 - [x] Contrato JSON de paginação, ordenação, card de produto, histórico e erros
 - [x] Lacunas detectadas: busca de produtos sem paginação e sem filtros (**corrigir no servidor**)
-- [ ] Contra-assinatura do responsável das perguntas da Seção 6 — **pendente**
+- [x] Decisões de backend, login, identificadores, paginação e filtros confirmadas
+  nas Fases 3A/3B; os gates operacionais permanecem em `docs/PENDENCIAS.md`.
 
 ---
 

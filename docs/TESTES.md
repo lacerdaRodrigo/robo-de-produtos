@@ -365,6 +365,23 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-243 | Funciona sem JavaScript | Busca por `?q=`, seleção, remoção e histórico possuem HTML e formulários reais | Renderização de servidor e navegação manual |
 | CT-244 | Integrações anteriores não regridem | V4 ausente, vazia ou falhando não muda Livelo nem V3 | Rodar todas as suítes e builds existentes |
 
+### Fase 3B — autenticação da API e Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-248 | Bearer obrigatório | Endpoint privado recusa cabeçalho ausente ou ambíguo antes de ler dados | Dependências falsas e resposta 401 |
+| CT-249 | Token inválido ou revogado | Falhas distintas do provedor viram a mesma resposta neutra | Firebase Admin falso lança exceção |
+| CT-250 | E-mail verificado | Token válido sem e-mail confirmado não atravessa o gate | Claim `email_verified=false`, resposta 403 |
+| CT-251 | Convite ativo | Existir no Firebase não basta; ausente ou inativo é recusado | Repositório de usuários falso |
+| CT-252 | Papel no servidor | Usuário comum não executa operação marcada como admin | Papel exigido `admin`, resposta 403 |
+| CT-253 | App Check em rollout | Quando exigido, token ausente/inválido é recusado antes da identidade | Alternar a dependência `appCheckObrigatorio` |
+| CT-254 | Limite por origem | Excesso antes da autenticação devolve 429 e `Retry-After` | Contador persistente falso bloqueia primeira janela |
+| CT-255 | Limite por usuário/operação | Segundo limite protege conta autenticada e ações sensíveis | Primeira janela aceita e segunda recusa |
+| CT-256 | Falha interna neutra | Erro de banco/provedor não vaza URL ou segredo e conserva request ID | Exceção sentinela e corpo 500 |
+| CT-257 | Tokens no cliente | Flutter envia Bearer/App Check em chamada privada e nunca chama rede privada sem sessão | `MockClient` inspeciona cabeçalhos |
+| CT-258 | Login e recuperação | Tela envia credenciais pela porta injetada e recuperação não enumera e-mail | Testes de widget com autenticador falso |
+| CT-259 | Gate de convite | Perfil autorizado abre o app; 403 mostra acesso negado e permite sair | API e autenticação falsas em widget test |
+
 ---
 
 ## Fora dos testes automáticos
@@ -438,15 +455,22 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_principal_inter.py` | 1 | 3 |
 | `teste_produtos_inter.py` | 9 | 19 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **159** | **210** |
+| **Total (robô)** | **159** | **211** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
 | `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
 | `site/testes/paginacao.teste.ts` | 0 | 5 |
-| **Total (site)** | **23** | **38** |
+| `site/testes/api.teste.ts` | 0 | 9 |
+| `site/testes/limpeza.teste.ts` | 0 | 3 |
+| `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
+| **Total (site)** | **CTs catalogados + apoio** | **62** |
+| `app-robo/test/` | CT-257–CT-259 + fundação | 41 |
+| **Total (Flutter)** | **3 CTs da Fase 3B + apoio** | **41** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
 Manuais: CT-050 e CT-051.
 
-Confirme o número real com `pytest --collect-only -q` antes de citá-lo em qualquer documento — foi assim que o total errado de "47 casos" sobreviveu ao planejamento original.
+Confirme o número real com o coletor de cada suíte antes de citá-lo em qualquer
+documento (`pytest --collect-only -q`, `npm run testar` e `flutter test`) — foi
+assim que o total errado de "47 casos" sobreviveu ao planejamento original.

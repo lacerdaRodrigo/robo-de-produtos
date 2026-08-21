@@ -28,3 +28,13 @@ class ErroDeRede implements Exception {
   @override
   String toString() => 'ErroDeRede($motivo)';
 }
+
+/// A chamada privada foi tentada sem uma sessão Firebase utilizável.
+class ErroDeAutenticacao implements Exception {
+  ErroDeAutenticacao(this.mensagem);
+
+  final String mensagem;
+
+  @override
+  String toString() => 'ErroDeAutenticacao';
+}

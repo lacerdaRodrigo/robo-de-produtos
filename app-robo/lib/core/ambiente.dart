@@ -12,4 +12,11 @@ abstract final class Ambiente {
 
   static const paginaPadrao = 20;
   static const paginaMaxima = 50;
+
+  /// App Check Web usa uma chave pública própria do reCAPTCHA. Os demais
+  /// identificadores públicos são gerados pelo FlutterFire.
+  static const firebaseRecaptchaSiteKey = String.fromEnvironment(
+    'FIREBASE_RECAPTCHA_SITE_KEY',
+  );
+  static const appCheckAtivo = bool.fromEnvironment('ATIVAR_APP_CHECK');
 }

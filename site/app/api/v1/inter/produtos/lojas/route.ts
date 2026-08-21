@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 
+import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import { paginacaoEnvelope, paginaValida, porPaginaValida } from "@/lib/api";
 import { buscarLojasDiretas, totalLojasDiretas } from "@/lib/banco-produtos-inter";
 
 /**
  * GET /api/v1/inter/produtos/lojas?q=&pagina=&por_pagina=
  *
- * Catálogo de vendedores diretos (V4). Público para leitura; a seleção é
+ * Catálogo de vendedores diretos (V4), autenticado para leitura; a seleção é
  * mutação administrativa e entra quando a autenticação (Firebase) estiver
  * ligada na Fase 3/5.
  */
 export async function GET(requisicao: Request) {
+  const acesso = await autenticarRequisicao(requisicao, {
+    operacao: "inter.produtos.lojas.ler",
+  });
+  if (!acesso.ok) return acesso.resposta;
+
   const url = new URL(requisicao.url);
   const q = url.searchParams.get("q") ?? "";
   const pagina = paginaValida(url.searchParams.get("pagina"));

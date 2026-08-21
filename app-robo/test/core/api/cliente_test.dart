@@ -11,6 +11,7 @@ void main() {
   ClienteApi cliente(http.Response resposta) => ClienteApi(
     baseUrl: baseUrl,
     cliente: http_testing.MockClient((_) async => resposta),
+    provedorToken: () async => 'token-teste',
   );
 
   test('monta caminho e consulta, e decodifica JSON', () async {
@@ -23,7 +24,7 @@ void main() {
       }),
     );
 
-    final corpo = await api.obter('/api/v1/status');
+    final corpo = await api.obter('/api/v1/status', autenticado: false);
 
     expect(corpo, {'saudavel': true});
     expect(chamadas.single.path, '/api/v1/status');
@@ -37,6 +38,8 @@ void main() {
         chamadas.add(requisicao.url);
         return http.Response('{"itens":[]}', 200);
       }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
     );
 
     await api.obter(
@@ -49,6 +52,41 @@ void main() {
       'pagina': '2',
       'por_pagina': '20',
     });
+  });
+
+  test('envia ID token e App Check somente na chamada privada', () async {
+    late http.Request chamada;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((requisicao) async {
+        chamada = requisicao;
+        return http.Response('{}', 200);
+      }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
+    );
+
+    await api.obter('/api/v1/perfil');
+
+    expect(chamada.headers['authorization'], 'Bearer id-token');
+    expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
+  });
+
+  test('não chama endpoint privado sem sessão', () async {
+    var chamouRede = false;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((_) async {
+        chamouRede = true;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    expect(
+      () => api.obter('/api/v1/perfil'),
+      throwsA(isA<ErroDeAutenticacao>()),
+    );
+    expect(chamouRede, isFalse);
   });
 
   test('erro com corpo padrão vira ErroDeApi', () async {

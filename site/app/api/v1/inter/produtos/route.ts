@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import {
   corpoErro,
   paginacaoEnvelope,
@@ -28,11 +29,14 @@ function precoValido(bruto: string): string | null {
 /**
  * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&marca=&categoria=&loja=&preco_min=&preco_max=
  *
- * Busca de produtos (V4), pública e **paginada no servidor** — nada de baixar
+ * Busca de produtos (V4), autenticada e **paginada no servidor** — nada de baixar
  * catálogo no cliente. `q` é obrigatório (2–100 carac.). Ordenação estável
  * por menor preço atual, depois nome, depois ID (RN71).
  */
 export async function GET(requisicao: Request) {
+  const acesso = await autenticarRequisicao(requisicao, { operacao: "inter.produtos.buscar" });
+  if (!acesso.ok) return acesso.resposta;
+
   const url = new URL(requisicao.url);
   const q = (url.searchParams.get("q") ?? "").trim();
   const pagina = paginaValida(url.searchParams.get("pagina"));
