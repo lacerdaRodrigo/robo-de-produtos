@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.32.2 (2026-08-21)
+
+### Bug Fixes
+
+- Empacota Firebase Admin na API
+  ([`e796b98`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e796b98a90958e8396d42263eceaea166233fd7b))
+
+
 ## v1.32.1 (2026-08-21)
 
 ### Bug Fixes
