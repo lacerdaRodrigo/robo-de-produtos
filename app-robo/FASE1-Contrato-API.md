@@ -1,8 +1,8 @@
 # Fase 1 — Inventário e contratos do `app-robo`
 
 **Status:** registro da Fase 1 do [`PLANO.md`](PLANO.md). Atualização da Fase 3B:
-API e autenticação já possuem implementação local; este documento preserva o
-inventário que orientou o código.
+API e autenticação estão publicadas e validadas em produção; este documento
+preserva o inventário que orientou o código.
 **Data-base:** 19 de agosto de 2026. Repositório `main` na versão `1.30.2`.
 **Fonte do inventário:** leitura do `site/` (rotas, Server Actions, `lib/`), sem alterar nada.
 
@@ -261,6 +261,8 @@ Entregue neste inventário:
 - [x] Endpoints `status`, `livelo/painel`, `inter/cashback`, `inter/produtos`, `inter/produtos/lojas`, `inter/produtos/historico`
 - [x] **Busca de produtos paginada no servidor** (corrige `LIMIT 500`) com filtros
 - [x] Cliente Flutter: `ClienteApi`, `Pagina<T>`, modelos, `ApiV1.buscarProdutos`
+- [x] Firebase por e-mail/senha, convite fechado, papéis, rate limit e auditoria
+- [x] Identificadores Android/iOS `br.com.radarbeneficios.app`
 - [x] Gates verdes: tsc, vitest, build do site
 
 ### 9.3 Fase 4.1 — shell web, estados, integração (entregada)
@@ -278,10 +280,8 @@ Entregue neste inventário:
 | Painel Livelo | 4.2 |
 | Painel Inter (cashback) | 4.3 |
 | Produtos + histórico | 4.4 |
-| Firebase (conectar, setup seu) | 3 |
 | Mutaciones admin | 5 |
 | Push e reportes | 6 |
-| Identifiers do app | gate |
 | Barra inferior móvil | plataformas |
 
 ### 9.5 Gates respondidos (Sección 6)
@@ -289,5 +289,5 @@ Entregue neste inventário:
 - Backend: `site/app/api/v1/`
 - Paginação: página + `atualizado_em`/`qualidade` (sem cursor)
 - Filtros: marca/categoria/loja/precio
-- Login: Firebase e-mail/senha (a conectar)
+- Login: Firebase e-mail/senha conectado e validado em produção
 - Nome público: "Radar de Benefícios"

@@ -43,16 +43,20 @@ apenas durante a transição.
 - [x] Publicar a API protegida e executar o smoke login → perfil → leitura — APK
       de produção exibiu `Serviço conectado / API v1`; vínculo e auditoria de
       sucesso confirmados no Neon em 2026-08-20
-- [ ] Registrar/observar App Check em Web, Android e iOS; só depois exigir no servidor
-- [ ] Definir a retenção de `auditoria_app`; a migração atual não apaga auditoria
+- [x] Habilitar a API Firebase App Check, registrar o token de depuração do Samsung
+      SM-M135M e validar o Android com `ATIVAR_APP_CHECK=true` — concluído em
+      2026-08-20, sem gravar o token no repositório
+- [ ] Registrar/observar App Check em Web e iOS; só depois exigir no servidor
+- [x] Definir retenção de 30 dias para `auditoria_app`; cada nova gravação remove
+      os eventos vencidos na mesma consulta, sem cron ou credencial adicional
 - [ ] Acompanhar atualização de `firebase_app_check`: a versão atual ainda emite aviso
       de migração futura para Built-in Kotlin, sem quebrar o build atual
 - [x] Tratar a auditoria npm: Next 16.3.1, React 19.2.8 e dependências corrigidas;
       `npm audit --omit=dev` confirmou zero vulnerabilidades em 2026-08-20
 
-O App Check permanece deliberadamente desligado nos dois lados. Ativá-lo exige
-observar primeiro os provedores nas três plataformas; isso e a retenção da
-auditoria são endurecimentos posteriores e não foram tratados como concluídos.
+O app Android de teste já envia um token App Check aceito pelo Firebase. A
+obrigatoriedade global permanece desligada na API (`EXIGIR_APP_CHECK=false`)
+para não bloquear Web/iOS antes de esses dois alvos serem observados.
 
 ---
 

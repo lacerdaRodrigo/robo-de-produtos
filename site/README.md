@@ -59,7 +59,13 @@ O primeiro smoke autenticado em produção foi concluído em 2026-08-20 usando o
 Flutter instalado no Samsung SM-M135M contra
 `https://robo-livelo.vercel.app`. O app abriu a área protegida e o Neon registrou
 o vínculo do convite, o último acesso e a auditoria de sucesso. App Check segue
-desligado até o rollout separado nas três plataformas.
+sem obrigatoriedade global até o rollout separado nas três plataformas. O
+Android de depuração foi registrado e validado em 2026-08-20; Web e iOS ainda
+precisam do mesmo smoke antes de alterar `EXIGIR_APP_CHECK`.
+
+Os eventos técnicos de `auditoria_app` têm retenção de 30 dias. Cada nova
+gravação remove os eventos vencidos na mesma consulta; se a API ficar totalmente
+ociosa, o expurgo ocorre no primeiro acesso seguinte.
 
 ```bash
 npm run testar   # vitest

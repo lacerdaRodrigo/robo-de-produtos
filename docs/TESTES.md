@@ -381,6 +381,7 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-257 | Tokens no cliente | Flutter envia Bearer/App Check em chamada privada e nunca chama rede privada sem sessão | `MockClient` inspeciona cabeçalhos |
 | CT-258 | Login e recuperação | Tela envia credenciais pela porta injetada e recuperação não enumera e-mail | Testes de widget com autenticador falso |
 | CT-259 | Gate de convite | Perfil autorizado abre o app; 403 mostra acesso negado e permite sair | API e autenticação falsas em widget test |
+| CT-260 | Retenção da auditoria | Cada evento novo também remove registros técnicos anteriores a 30 dias | Banco falso inspeciona a consulta única de inserção e expurgo |
 
 ---
 
@@ -464,7 +465,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/limpeza.teste.ts` | 0 | 3 |
 | `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
 | `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
-| **Total (site)** | **CTs catalogados + apoio** | **63** |
+| `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
+| **Total (site)** | **CTs catalogados + apoio** | **64** |
 | `app-robo/test/` | CT-257–CT-259 + fundação | 41 |
 | **Total (Flutter)** | **3 CTs da Fase 3B + apoio** | **41** |
 

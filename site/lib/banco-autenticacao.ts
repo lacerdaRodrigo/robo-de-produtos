@@ -26,6 +26,12 @@ export type EventoAuditoria = {
   codigo: string;
 };
 
+/**
+ * Prazo aprovado para os registros técnicos da API. A limpeza acontece na
+ * mesma consulta que grava o evento seguinte, sem cron nem credencial extra.
+ */
+export const RETENCAO_AUDITORIA_DIAS = 30;
+
 function conectar() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL nao configurada no ambiente do site.");
@@ -106,12 +112,20 @@ export async function consumirLimite(
 export async function registrarAuditoria(evento: EventoAuditoria): Promise<void> {
   const sql = conectar();
   await sql`
-    INSERT INTO auditoria_app (
-      usuario_app_id, identidade_hash, origem_hash, requisicao_id,
-      acao, resultado, codigo
-    ) VALUES (
-      ${evento.usuarioId}, ${evento.identidadeHash}, ${evento.origemHash},
-      ${evento.requisicaoId}, ${evento.acao}, ${evento.resultado}, ${evento.codigo}
+    WITH evento_inserido AS (
+      INSERT INTO auditoria_app (
+        usuario_app_id, identidade_hash, origem_hash, requisicao_id,
+        acao, resultado, codigo
+      ) VALUES (
+        ${evento.usuarioId}, ${evento.identidadeHash}, ${evento.origemHash},
+        ${evento.requisicaoId}, ${evento.acao}, ${evento.resultado}, ${evento.codigo}
+      )
+      RETURNING momento
     )
+    DELETE FROM auditoria_app
+     WHERE momento < (
+       SELECT momento - make_interval(days => ${RETENCAO_AUDITORIA_DIAS})
+         FROM evento_inserido
+     )
   `;
 }

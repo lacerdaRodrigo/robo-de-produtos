@@ -70,6 +70,10 @@ aparece no console deve ser cadastrado no Firebase para teste, nunca commitado.
 Builds release usam Play Integrity no Android, App Attest com fallback no iOS e
 reCAPTCHA v3 no Web.
 
+O token de depuração do Samsung SM-M135M foi registrado e aceito em 2026-08-20;
+o APK com `ATIVAR_APP_CHECK=true` abriu a área autenticada. A API continua com
+`EXIGIR_APP_CHECK=false` até o mesmo smoke passar em Web e iOS.
+
 ## Qualidade (gates)
 
 ```bash

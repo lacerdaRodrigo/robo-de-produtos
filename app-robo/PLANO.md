@@ -228,11 +228,14 @@ O plano preserva a regra da V4: tarefas de produtos são por loja, páginas são
 
 Esta separação evita repetir milhares de produtos para cada pessoa e impede que favoritos e preferências vazem entre usuários.
 
-### 5.3 Autenticação planejada
+### 5.3 Autenticação aprovada
 
-Para o piloto, a direção aprovada é autenticação fechada por convite. A proposta técnica é Firebase Authentication, usando um método sem senha própria do projeto ou um provedor suportado. A escolha exata do método de entrada será fechada antes da implementação.
+O piloto usa Firebase Authentication por e-mail/senha, sem cadastro público. O
+responsável cria a conta no Firebase e mantém o convite ativo no Postgres.
 
-O token emitido pelo provedor deverá ser validado pela API. Existir no provedor não basta: o e-mail também precisa estar autorizado e o perfil precisa estar ativo no banco do produto.
+O token emitido pelo Firebase é validado pela API com checagem de revogação.
+Existir no provedor não basta: o e-mail também precisa estar verificado,
+autorizado e com perfil ativo no banco do produto.
 
 ---
 
@@ -256,6 +259,7 @@ O token emitido pelo provedor deverá ser validado pela API. Existir no provedor
 - Validação de esquema, tamanho, paginação e caracteres de todas as entradas.
 - Logs estruturados com identificadores técnicos, nunca payload completo, credenciais ou dados desnecessários.
 - Auditoria de login, convite, alteração de papel, disparo, exclusão, troca de preferências e envio de relatório.
+- Auditoria técnica da API retida por 30 dias; a gravação seguinte remove eventos vencidos usando o índice por data, sem cron ou nova credencial.
 - Dependências fixadas por lockfile e revisão automática de vulnerabilidades.
 - Revisão orientada pelo OWASP MASVS para armazenamento, autenticação, rede, plataforma, código e privacidade.
 
@@ -720,7 +724,8 @@ Estes itens não serão inventados durante a implementação:
   o gate operacional mostrar limitação real;
 - fundação Flutter definida com SDKs oficiais do Firebase, `http` e conversão
   manual de JSON; bibliotecas extras continuam exigindo justificativa;
-- política exata de retenção de auditoria e notificações;
+- retenção da auditoria técnica definida em 30 dias; retenção das notificações
+  continua pendente;
 - data e roteiro para desligar a interface Next.js e, se necessário, mover a API
   v1 para outro hospedeiro;
 - quando pagar e publicar na Google Play e na App Store;
