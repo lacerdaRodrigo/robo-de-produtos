@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robo-livelo"
-version = "1.31.0"
+version = "1.32.0"
 description = "Radar de beneficios da Livelo e do Shopping Inter"
 requires-python = ">=3.11"
 dependencies = [

@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.32.0 (2026-08-21)
+
+### Features
+
+- Conclui autenticacao por convite no Flutter
+  ([`28b3166`](https://github.com/lacerdaRodrigo/robo-livelo/commit/28b3166fdca514100f4910dcf32be4c696f35ea4))
+
+
 ## v1.31.0 (2026-08-20)
 
 ### Documentation
