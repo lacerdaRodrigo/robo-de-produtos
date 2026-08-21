@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.32.1 (2026-08-21)
+
+### Bug Fixes
+
+- Adia carregamento do Firebase App Check
+  ([`79c69e0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/79c69e0b44f2b0de75e91ab5e754a3f0c2aa5ec7))
+
+
 ## v1.32.0 (2026-08-21)
 
 ### Features
