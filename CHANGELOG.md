@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.34.0 (2026-08-21)
+
+### Documentation
+
+- Registra versao 1.33.0
+  ([`2776bb0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2776bb0536d464a3294d39ca82e98179e4d2bbad))
+
+### Features
+
+- Adapta navegacao para Android
+  ([`cb3c8b4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/cb3c8b49c0181f6cd68a84becfb71875f7197b5f))
+
+
 ## v1.33.0 (2026-08-21)
 
 ### Documentation
