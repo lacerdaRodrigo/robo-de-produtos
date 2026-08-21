@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.33.0 (2026-08-21)
+
+### Documentation
+
+- Fecha rollout autenticado da fase 3B
+  ([`97341ba`](https://github.com/lacerdaRodrigo/robo-livelo/commit/97341bab849d976867da8f6c9dad0d49c4d132e1))
+
+### Features
+
+- Aplica retencao da auditoria da API
+  ([`d96ec33`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d96ec33f98aa4f89aa4ac407cce570c378786b20))
+
+
 ## v1.32.2 (2026-08-21)
 
 ### Bug Fixes
