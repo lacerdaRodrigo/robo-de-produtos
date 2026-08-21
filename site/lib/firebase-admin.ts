@@ -1,5 +1,4 @@
 import { applicationDefault, cert, getApps, initializeApp, type App } from "firebase-admin/app";
-import { getAppCheck } from "firebase-admin/app-check";
 import { getAuth } from "firebase-admin/auth";
 
 export type IdentidadeFirebase = {
@@ -69,5 +68,10 @@ export async function verificarIdToken(token: string): Promise<IdentidadeFirebas
 
 /** App Check complementa a autenticacao; nunca concede identidade de usuario. */
 export async function verificarTokenAppCheck(token: string): Promise<void> {
+  // O pacote App Check depende de um modulo ESM. Carrega-lo de forma ansiosa
+  // derruba a funcao inteira na Vercel/Next antes mesmo de o rollout estar
+  // habilitado. O import tardio tambem evita esse custo quando a protecao esta
+  // explicitamente desligada.
+  const { getAppCheck } = await import("firebase-admin/app-check");
   await getAppCheck(aplicativoAdmin()).verifyToken(token);
 }

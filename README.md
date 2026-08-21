@@ -14,7 +14,7 @@ Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Po
 > convite administrativo foi criado e o e-mail para definição de senha foi
 > enviado. Segredos/deploy da API e o smoke autenticado em produção continuam
 > como gates explícitos em
-> [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Gates locais: 62 testes do site e
+> [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md). Gates locais: 63 testes do site e
 > 41 testes Flutter, além de TypeScript, análise e builds verdes; a auditoria npm
 > está zerada. A interface final será somente Flutter: o Next.js fica sem novas
 > funcionalidades e serve como fallback/API durante a transição.

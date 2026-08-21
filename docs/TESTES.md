@@ -463,7 +463,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/api.teste.ts` | 0 | 9 |
 | `site/testes/limpeza.teste.ts` | 0 | 3 |
 | `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
-| **Total (site)** | **CTs catalogados + apoio** | **62** |
+| `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
+| **Total (site)** | **CTs catalogados + apoio** | **63** |
 | `app-robo/test/` | CT-257–CT-259 + fundação | 41 |
 | **Total (Flutter)** | **3 CTs da Fase 3B + apoio** | **41** |
 
