@@ -4,7 +4,7 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md), no [`PRD-V3.md`](PRD-V3.md) ou no [`PRD-V4.md`](PRD-V4.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-20. Versão técnica atual: **1.21.0**.
+> Atualizado em 2026-08-20. Versão técnica atual: **1.32.2**.
 
 **Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: a barra lateral, a cor de ação (indigo), o Painel (hero com Top 3, botão "Ir para a Livelo") e a tabela de Lojas (coluna Limiar, ícone de remover) já entraram. Em 2026-08-13, pela manhã, você mandou `novo.html` direto na `main` (fora de PR) — mesmo mockup que já estava em mãos, confirmado byte a byte igual ao HTML colado no chat — e cobrou que o Painel estava "totalmente diferente". Comparação lado a lado (prints do Painel e de Lojas logado contra a leitura do mockup, já que o CDN do Tailwind não carrega neste ambiente) mostrou que a barra lateral, o hero, os cartões e os toggles já batiam; a diferença de verdade era estrutural: o mockup ordena numa grade única, o site ainda agrupava por categoria. Resolvido na quarta fatia (ver abaixo) — os controles de ordenar entraram e o agrupamento por categoria saiu, com busca cobrindo o que o índice de categoria fazia antes. O modal de cadastro do mockup segue de fora por não ganhar nada sobre o formulário inline que já funciona sem JavaScript; só a Central de Alertas fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
@@ -16,11 +16,12 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 
 ## Flutter — Fase 3B (autenticação por convite)
 
-**Código local validado; rollout de produção parcialmente executado.** O projeto
-Firebase `radarbeneficios` foi criado e conectado em 2026-08-20. Web, Android e
-iOS estão registrados com `br.com.radarbeneficios.app` nos alvos móveis. A
-direção final é manter somente a interface Flutter; o Next.js não recebe novas
-funcionalidades e hospeda a API apenas durante a transição.
+**Fase 3B concluída e validada em produção em 2026-08-20.** O projeto Firebase
+`radarbeneficios` está conectado a Web, Android e iOS. O primeiro convite foi
+vinculado no acesso real, a API protegida respondeu pelo app instalado no Samsung
+SM-M135M e a auditoria registrou o sucesso. A direção final é manter somente a
+interface Flutter; o Next.js não recebe novas funcionalidades e hospeda a API
+apenas durante a transição.
 
 - [x] Definir Firebase Authentication por e-mail/senha, sem cadastro público
 - [x] Conectar Web, Android e iOS pelo FlutterFire, sem segredo administrativo no bundle
@@ -35,11 +36,13 @@ funcionalidades e hospeda a API apenas durante a transição.
 - [x] Confirmar que o provedor **E-mail/senha** está ativo — criação da conta aceita pelo Firebase
 - [x] Aplicar `migracoes/010_autenticacao_app.sql` no Neon — aplicada em 2026-08-20
 - [x] Criar o primeiro usuário Firebase e inserir o convite `admin` ativo em `usuario_app`
-- [ ] Responsável definir a senha pelo e-mail enviado, confirmar o endereço no
-      primeiro acesso e concluir o vínculo do UID
-- [ ] Configurar na Vercel `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`,
+- [x] Responsável definiu a senha, confirmou o endereço e concluiu o vínculo do UID
+      no primeiro acesso real — validado em 2026-08-20
+- [x] Configurar na Vercel `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`,
       `SEGREDO_LIMITE_API` e `EXIGIR_APP_CHECK=false`
-- [ ] Publicar a API protegida e executar o smoke login → perfil → leitura
+- [x] Publicar a API protegida e executar o smoke login → perfil → leitura — APK
+      de produção exibiu `Serviço conectado / API v1`; vínculo e auditoria de
+      sucesso confirmados no Neon em 2026-08-20
 - [ ] Registrar/observar App Check em Web, Android e iOS; só depois exigir no servidor
 - [ ] Definir a retenção de `auditoria_app`; a migração atual não apaga auditoria
 - [ ] Acompanhar atualização de `firebase_app_check`: a versão atual ainda emite aviso
@@ -47,10 +50,9 @@ funcionalidades e hospeda a API apenas durante a transição.
 - [x] Tratar a auditoria npm: Next 16.3.1, React 19.2.8 e dependências corrigidas;
       `npm audit --omit=dev` confirmou zero vulnerabilidades em 2026-08-20
 
-O deploy da API não foi executado nesta rodada: a cópia local não possui vínculo
-`site/.vercel`, CLI/token da Vercel nem credencial Firebase Admin/ADC. Além disso,
-o responsável autorizou commit, mas proibiu `push`; portanto não existe código
-novo publicado para receber essas variáveis ou executar o smoke de produção.
+O App Check permanece deliberadamente desligado nos dois lados. Ativá-lo exige
+observar primeiro os provedores nas três plataformas; isso e a retenção da
+auditoria são endurecimentos posteriores e não foram tratados como concluídos.
 
 ---
 

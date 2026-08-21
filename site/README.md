@@ -55,6 +55,12 @@ variáveis ficam no cofre da Vercel. Antes do primeiro acesso, aplique a migraç
 `migracoes/010_autenticacao_app.sql` e insira apenas o e-mail convidado; o UID
 Firebase é vinculado no primeiro acesso válido.
 
+O primeiro smoke autenticado em produção foi concluído em 2026-08-20 usando o
+Flutter instalado no Samsung SM-M135M contra
+`https://robo-livelo.vercel.app`. O app abriu a área protegida e o Neon registrou
+o vínculo do convite, o último acesso e a auditoria de sucesso. App Check segue
+desligado até o rollout separado nas três plataformas.
+
 ```bash
 npm run testar   # vitest
 npm run checar   # tsc --noEmit

@@ -1,6 +1,6 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** Fase 3B implementada localmente; rollout autenticado em fechamento
+**Status:** Fase 3B concluída; rollout autenticado validado em produção
 
 **Data-base:** 20 de agosto de 2026
 

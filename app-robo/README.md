@@ -3,11 +3,12 @@
 Cliente multiplataforma (Flutter) do Radar de Benefícios. Atende Web, Android e iOS
 com o mesmo código, isolado do site legado em `site/`.
 
-> **Estado atual — Fase 3B (autenticação):** projeto Firebase `radarbeneficios`
+> **Estado atual — Fase 3B concluída:** projeto Firebase `radarbeneficios`
 > conectado para Web, Android e iOS; login fechado por e-mail/senha, recuperação,
-> token na API e gate de convite implementados. A migração 010 e o primeiro
-> convite administrativo já estão no Neon. As telas de domínio continuam no
-> piloto somente leitura e o Flutter será a única interface ao fim da transição.
+> token na API e gate de convite validados em produção. A migração 010 está no
+> Neon, o primeiro convite foi vinculado e o smoke real passou no Samsung
+> SM-M135M em 2026-08-20. As telas de domínio continuam no piloto somente leitura
+> e o Flutter será a única interface ao fim da transição.
 > O plano completo está em
 > [`PLANO.md`](PLANO.md); o contrato de API que orienta as Fases 3+ está em
 > [`FASE1-Contrato-API.md`](FASE1-Contrato-API.md).
@@ -51,6 +52,13 @@ flutter build web
 `API_URL` pode ser definido com `--dart-define=API_URL=https://...`. Chamadas
 privadas enviam o ID token no Bearer automaticamente. O endpoint `/api/v1/status`
 permanece público.
+
+O piloto publicado usa:
+
+```bash
+flutter run -d <id-android> \
+  --dart-define=API_URL=https://robo-livelo.vercel.app
+```
 
 App Check deve ser ativado em rollout: primeiro registre e observe os provedores
 no Console Firebase; depois compile com `--dart-define=ATIVAR_APP_CHECK=true`.
