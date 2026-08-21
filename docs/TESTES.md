@@ -382,6 +382,8 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-258 | Login e recuperação | Tela envia credenciais pela porta injetada e recuperação não enumera e-mail | Testes de widget com autenticador falso |
 | CT-259 | Gate de convite | Perfil autorizado abre o app; 403 mostra acesso negado e permite sair | API e autenticação falsas em widget test |
 | CT-260 | Retenção da auditoria | Cada evento novo também remove registros técnicos anteriores a 30 dias | Banco falso inspeciona a consulta única de inserção e expurgo |
+| CT-261 | Navegação inferior no celular | Os cinco destinos aparecem com ícone/rótulo e trocam o painel | Widget em viewport de telefone toca em Livelo |
+| CT-262 | Navegação realmente adaptativa | Paisagem de celular mantém barra inferior; tela larga conserva lateral | Widgets com menor dimensão abaixo/acima de 600 px |
 
 ---
 
@@ -467,8 +469,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
 | **Total (site)** | **CTs catalogados + apoio** | **64** |
-| `app-robo/test/` | CT-257–CT-259 + fundação | 41 |
-| **Total (Flutter)** | **3 CTs da Fase 3B + apoio** | **41** |
+| `app-robo/test/` | CT-257–CT-259, CT-261–CT-262 + fundação | 43 |
+| **Total (Flutter)** | **5 CTs catalogados + apoio** | **43** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

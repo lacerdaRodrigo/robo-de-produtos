@@ -4,7 +4,7 @@ Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja 
 
 Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 211 testes no robô, 64 no site e 41 no Flutter, com 94,16% de cobertura do núcleo puro.
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 211 testes no robô, 64 no site e 43 no Flutter, com 94,16% de cobertura do núcleo puro.
 
 > **Aceite em andamento:** a V4 possui coletor, persistência, site e workflow matricial. Casas Bahia é a única loja de produtos selecionada; Ponto e o dimensionamento para mais lojas continuam como próximos gates. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
 
@@ -13,9 +13,11 @@ Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Po
 > está publicada na Vercel e o primeiro convite administrativo foi vinculado em
 > um login real no Samsung SM-M135M. O app exibiu `Serviço conectado / API v1`,
 > e o Neon confirmou o acesso e a auditoria de sucesso. Gates locais: 64 testes do site e
-> 41 testes Flutter, além de TypeScript, análise e builds verdes; a auditoria npm
+> 43 testes Flutter, além de TypeScript, análise e builds verdes; a auditoria npm
 > está zerada. A interface final será somente Flutter: o Next.js fica sem novas
 > funcionalidades e serve como fallback/API durante a transição.
+> A Fase 4 começou pelo Android: celulares agora usam navegação inferior em
+> retrato e paisagem; o Painel Livelo real é a próxima fatia.
 
 ## Como funciona
 

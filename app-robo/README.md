@@ -9,6 +9,8 @@ com o mesmo código, isolado do site legado em `site/`.
 > Neon, o primeiro convite foi vinculado e o smoke real passou no Samsung
 > SM-M135M em 2026-08-20. As telas de domínio continuam no piloto somente leitura
 > e o Flutter será a única interface ao fim da transição.
+> A Fase 4 começou pelo Android: a navegação inferior adaptativa já foi validada
+> no Samsung em retrato; Livelo real é a próxima tela.
 > O plano completo está em
 > [`PLANO.md`](PLANO.md); o contrato de API que orienta as Fases 3+ está em
 > [`FASE1-Contrato-API.md`](FASE1-Contrato-API.md).

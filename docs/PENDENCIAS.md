@@ -60,6 +60,24 @@ para não bloquear Web/iOS antes de esses dois alvos serem observados.
 
 ---
 
+## Flutter — Fase 4 Android primeiro
+
+**Fase 4.2A concluída em 2026-08-20.** O Samsung SM-M135M usa barra inferior
+com Início, Livelo, Inter, Alertas e Mais; a seleção troca o `IndexedStack` sem
+descartar o estado das áreas. Celular em retrato e paisagem mantém essa barra,
+enquanto telas maiores preservam a lateral. O Flutter Web fica por último por
+decisão do responsável.
+
+- [x] Implementar navegação inferior para celular sem comprimir a barra lateral
+- [x] Preservar os mesmos cinco destinos, rótulos semânticos e estado das abas
+- [x] Testar celular em retrato/paisagem e tela larga
+- [x] Instalar no Samsung e validar seleção de Início → Livelo
+- [ ] **Fase 4.2B:** substituir o lugar-ocupante de Livelo pelo painel real
+- [ ] **Fase 4.3:** cashback Inter somente leitura
+- [ ] **Fase 4.4:** produtos, busca paginada e histórico
+
+---
+
 ## Só você pode fazer (exige conta ou credencial)
 
 - [x] Cadastrar `DATABASE_URL` como secret no GitHub — feito em 2026-08-11. Ensaio geral local no mesmo dia, com a página real e o catálogo vindo do banco: 132 lojas em 10 categorias (idênticas às do TOML), 254 parceiros extraídos, 18 promoções em 7 categorias, e-mail de 12 KB — folgado ante o corte de 102 KB do Gmail (C05)

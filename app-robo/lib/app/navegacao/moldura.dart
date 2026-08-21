@@ -6,11 +6,9 @@ import '../paginas/lugar.dart';
 import '../tema/tokens.dart';
 import 'destinos.dart';
 
-/// Moldura de navegação do Radar (PLANO §10.4). Nesta fase web se monta como
-/// barra lateral azul-marino fixa; o corpo usa `IndexedStack` para preservar
-/// o estado de cada área ao trocar de aba.
-///
-/// A barra inferior do móvel entra na fase de plataformas; este é o foco web.
+/// Moldura adaptativa do Radar (PLANO §10.4). Celulares usam barra inferior;
+/// telas maiores usam a lateral azul-marinho. O corpo conserva o mesmo
+/// `IndexedStack` nos dois modos para preservar cada área ao trocar de aba.
 class MolduraRadar extends StatefulWidget {
   const MolduraRadar({super.key, required this.api});
 
@@ -21,6 +19,8 @@ class MolduraRadar extends StatefulWidget {
 }
 
 class _EstadoMolduraRadar extends State<MolduraRadar> {
+  static const _menorDimensaoDeCelular = 600.0;
+
   Destino _selecionado = Destino.inicio;
 
   late final List<Widget> _paineis = <Widget>[
@@ -37,15 +37,56 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   @override
   Widget build(BuildContext context) {
+    final celular =
+        MediaQuery.sizeOf(context).shortestSide < _menorDimensaoDeCelular;
+    final conteudo = IndexedStack(
+      index: _selecionado.index,
+      children: _paineis,
+    );
+
+    if (celular) {
+      return Scaffold(
+        body: conteudo,
+        bottomNavigationBar: NavegacaoInferior(
+          selecionado: _selecionado,
+          aoSelecionar: _selecionar,
+        ),
+      );
+    }
+
     return Scaffold(
       body: Row(
         children: [
           BarraLateral(selecionado: _selecionado, aoSelecionar: _selecionar),
-          Expanded(
-            child: IndexedStack(index: _selecionado.index, children: _paineis),
-          ),
+          Expanded(child: conteudo),
         ],
       ),
+    );
+  }
+}
+
+class NavegacaoInferior extends StatelessWidget {
+  const NavegacaoInferior({
+    super.key,
+    required this.selecionado,
+    required this.aoSelecionar,
+  });
+
+  final Destino selecionado;
+  final ValueChanged<Destino> aoSelecionar;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: selecionado.index,
+      onDestinationSelected: (indice) => aoSelecionar(Destino.values[indice]),
+      destinations: [
+        for (final destino in Destino.values)
+          NavigationDestination(
+            icon: Icon(destino.icone),
+            label: destino.titulo,
+          ),
+      ],
     );
   }
 }

@@ -265,24 +265,24 @@ Entregue neste inventário:
 - [x] Identificadores Android/iOS `br.com.radarbeneficios.app`
 - [x] Gates verdes: tsc, vitest, build do site
 
-### 9.3 Fase 4.1 — shell web, estados, integração (entregada)
+### 9.3 Fase 4.1/4.2A — shell adaptativo, estados e integração (entregada)
 
 - [x] Construção da API real injetável para test
 - [x] Widgets de estado (carregar, vazio, falha)
 - [x] Barra lateral com 5 destinos, `IndexedStack` preserva estado
+- [x] Barra inferior com os mesmos 5 destinos em celular, inclusive em paisagem
 - [x] Página Início consulta o `/status` real
-- [x] 34 testes Flutter verdes + build web
+- [x] 43 testes Flutter verdes + build web/APK Android
 
-### 9.4 Pendiente (falta)
+### 9.4 Pendente (falta)
 
-| Pendiente | Fase |
+| Pendente | Fase |
 |---|---|
 | Painel Livelo | 4.2 |
 | Painel Inter (cashback) | 4.3 |
 | Produtos + histórico | 4.4 |
-| Mutaciones admin | 5 |
-| Push e reportes | 6 |
-| Barra inferior móvil | plataformas |
+| Mutações administrativas | 5 |
+| Push e relatórios | 6 |
 
 ### 9.5 Gates respondidos (Sección 6)
 
