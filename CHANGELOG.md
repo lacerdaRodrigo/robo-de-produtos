@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.35.0 (2026-08-22)
+
+### Documentation
+
+- Registra versao 1.34.0
+  ([`d3a3cc4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d3a3cc4df00e72ec06e71064ed75f04ab9e8eed2))
+
+### Features
+
+- Conclui painéis Flutter de benefícios
+  ([`40b33c5`](https://github.com/lacerdaRodrigo/robo-livelo/commit/40b33c5188cab31da2167e9ad4de6a4134c90fd9))
+
+- Publica administracao no app Flutter
+  ([`39dcad4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/39dcad40e1299fbde37a99d3aec23ad8505805f8))
+
+
 ## v1.34.0 (2026-08-21)
 
 ### Documentation
