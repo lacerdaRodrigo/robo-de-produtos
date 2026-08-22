@@ -1,6 +1,6 @@
 /// Modelo de paginação da API v1.
 ///
-/// Contrato idêntico ao `site/lib/api.ts` (FASE1-Contrato-API §4.3): o
+/// Contrato idêntico ao `site/lib/api.ts`: o
 /// servidor entrega `pagina`, `por_pagina`, `total_itens`, `total_paginas`,
 /// `tem_proxima` e, opcionalmente, `atualizado_em`, qualidade e o estado da
 /// última tentativa. O cliente

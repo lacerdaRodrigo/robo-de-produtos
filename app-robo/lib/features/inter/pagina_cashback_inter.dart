@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api_v1.dart';
+import '../administracao/botao_disparo.dart';
 import 'cartao_cashback_inter.dart';
 import 'controlador_cashback_inter.dart';
 import 'formato_cashback_inter.dart';
@@ -10,10 +11,16 @@ import '../produtos/pagina_produtos.dart';
 
 /// Consulta somente leitura dos Sites parceiros do Inter (Fase 4.3).
 class PaginaCashbackInter extends StatefulWidget {
-  const PaginaCashbackInter({super.key, required this.api, this.controlador});
+  const PaginaCashbackInter({
+    super.key,
+    required this.api,
+    this.controlador,
+    this.administrador = false,
+  });
 
   final ApiV1 api;
   final ControladorCashbackInter? controlador;
+  final bool administrador;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
@@ -72,7 +79,10 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => PaginaProdutos(api: widget.api),
+                        builder: (_) => PaginaProdutos(
+                          api: widget.api,
+                          administrador: widget.administrador,
+                        ),
                       ),
                     );
                   },
@@ -81,6 +91,15 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: BotaoDisparo(
+              api: widget.api,
+              dominio: 'inter',
+              administrador: widget.administrador,
+            ),
+          ),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: TextField(

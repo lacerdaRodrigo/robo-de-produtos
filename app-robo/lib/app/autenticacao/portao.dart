@@ -71,7 +71,12 @@ class _EstadoValidacaoDoConvite extends State<_ValidacaoDoConvite> {
             body: Carregando(mensagem: 'Validando acesso ao piloto…'),
           );
         }
-        if (estado.hasData) return MolduraRadar(api: widget.api);
+        if (estado.hasData) {
+          return MolduraRadar(
+            api: widget.api,
+            administrador: estado.data!.administrador,
+          );
+        }
 
         final erro = estado.error;
         final acessoNegado = erro is ErroDeApi && erro.status == 403;

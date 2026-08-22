@@ -3,16 +3,23 @@ import 'package:flutter/material.dart';
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api_v1.dart';
+import '../administracao/botao_disparo.dart';
 import 'cartao_livelo.dart';
 import 'controlador_painel_livelo.dart';
 import 'formato_livelo.dart';
 
 /// Painel somente-leitura da Livelo (Fase 4.2B).
 class PaginaPainelLivelo extends StatefulWidget {
-  const PaginaPainelLivelo({super.key, required this.api, this.controlador});
+  const PaginaPainelLivelo({
+    super.key,
+    required this.api,
+    this.controlador,
+    this.administrador = false,
+  });
 
   final ApiV1 api;
   final ControladorPainelLivelo? controlador;
+  final bool administrador;
 
   @override
   State<PaginaPainelLivelo> createState() => _EstadoPaginaPainelLivelo();
@@ -50,6 +57,8 @@ class _EstadoPaginaPainelLivelo extends State<PaginaPainelLivelo> {
       builder: (context, _) => _PainelLiveloConteudo(
         controlador: _controlador,
         campoBusca: _campoBusca,
+        api: widget.api,
+        administrador: widget.administrador,
       ),
     );
   }
@@ -59,10 +68,14 @@ class _PainelLiveloConteudo extends StatelessWidget {
   const _PainelLiveloConteudo({
     required this.controlador,
     required this.campoBusca,
+    required this.api,
+    required this.administrador,
   });
 
   final ControladorPainelLivelo controlador;
   final TextEditingController campoBusca;
+  final ApiV1 api;
+  final bool administrador;
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +88,21 @@ class _PainelLiveloConteudo extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            child: Text(
-              'Livelo',
-              style: Theme.of(context).textTheme.headlineSmall,
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Livelo',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                BotaoDisparo(
+                  api: api,
+                  dominio: 'livelo',
+                  administrador: administrador,
+                ),
+              ],
             ),
           ),
           Padding(

@@ -1,5 +1,5 @@
 /**
- * Contrato de paginação da API v1 (FASE1-Contrato-API §4.3).
+ * Contrato de paginação da API v1.
  *
  * Tudo aqui é puro — recebe strings/numbers de querystring e devolve valores
  * seguros. É o que os route handlers usam e o que o teste unitário cobre,
@@ -56,7 +56,7 @@ export function paginacaoEnvelope(
   };
 }
 
-/** Corpo de erro padrão da API (FASE1-Contrato-API §4.7). */
+/** Corpo de erro padrão da API v1. */
 export type ErroApi = {
   erro: { codigo: string; mensagem: string };
 };

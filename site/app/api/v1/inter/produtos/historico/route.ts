@@ -16,7 +16,7 @@ import { historicoProdutoDireto } from "@/lib/banco-produtos-inter";
  * GET /api/v1/inter/produtos/historico?loja=&produto=&pagina=&por_pagina=
  *
  * Histórico de 30 dias de um produto numa loja (V4), autenticado.
- * `por_pagina` padrão 30, máximo 100 (FASE1-Contrato-API §4.6).
+ * `por_pagina` padrão 30, máximo 100.
  */
 export async function GET(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, {

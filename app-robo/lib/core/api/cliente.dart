@@ -34,19 +34,7 @@ class ClienteApi {
     final uri = Uri.parse(
       '$baseUrl$caminho',
     ).replace(queryParameters: consulta);
-    final cabecalhos = <String, String>{'accept': 'application/json'};
-    if (autenticado) {
-      final token = await provedorToken?.call();
-      if (token == null || token.isEmpty) {
-        throw ErroDeAutenticacao('Entre novamente para continuar.');
-      }
-      cabecalhos['authorization'] = 'Bearer $token';
-
-      final appCheck = await provedorAppCheck?.call();
-      if (appCheck != null && appCheck.isNotEmpty) {
-        cabecalhos['x-firebase-appcheck'] = appCheck;
-      }
-    }
+    final cabecalhos = await _cabecalhos(autenticado: autenticado);
 
     final resposta = await _http
         .get(uri, headers: cabecalhos)
@@ -65,6 +53,103 @@ class ClienteApi {
       throw ErroDeApi(resposta.statusCode, codigo, mensagem);
     }
     return corpo;
+  }
+
+  /// Envia uma mutação JSON autenticada para a API v1.
+  ///
+  /// O app não conhece banco, workflow ou URL externa: ele apenas remete o
+  /// estado final desejado. A API revalida papel, App Check e limites antes de
+  /// qualquer alteração administrativa.
+  Future<Map<String, dynamic>> alterar(
+    String caminho, {
+    required Map<String, Object?> corpo,
+  }) async {
+    final uri = Uri.parse('$baseUrl$caminho');
+    final cabecalhos = await _cabecalhos();
+    cabecalhos['content-type'] = 'application/json';
+    final resposta = await _http
+        .patch(uri, headers: cabecalhos, body: jsonEncode(corpo))
+        .timeout(const Duration(seconds: 20));
+    final decodificado = _decodificar(resposta);
+    if (resposta.statusCode >= 400) {
+      final erro = decodificado['erro'];
+      final codigo = erro is Map
+          ? (erro['codigo']?.toString() ?? 'inesperado')
+          : 'inesperado';
+      final mensagem = erro is Map
+          ? (erro['mensagem']?.toString() ?? 'erro na API')
+          : 'erro na API';
+      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
+    }
+    return decodificado;
+  }
+
+  /// Cria uma solicitação JSON autenticada na API v1.
+  ///
+  /// [cabecalhosExtras] é usado pela chave de idempotência de operações que
+  /// podem ser reenviadas pelo sistema operacional após perder a conexão.
+  Future<Map<String, dynamic>> criar(
+    String caminho, {
+    required Map<String, Object?> corpo,
+    Map<String, String>? cabecalhosExtras,
+  }) async {
+    final uri = Uri.parse('$baseUrl$caminho');
+    final cabecalhos = await _cabecalhos();
+    cabecalhos['content-type'] = 'application/json';
+    cabecalhos.addAll(cabecalhosExtras ?? const <String, String>{});
+    final resposta = await _http
+        .post(uri, headers: cabecalhos, body: jsonEncode(corpo))
+        .timeout(const Duration(seconds: 20));
+    final decodificado = _decodificar(resposta);
+    if (resposta.statusCode >= 400) {
+      final erro = decodificado['erro'];
+      final codigo = erro is Map
+          ? (erro['codigo']?.toString() ?? 'inesperado')
+          : 'inesperado';
+      final mensagem = erro is Map
+          ? (erro['mensagem']?.toString() ?? 'erro na API')
+          : 'erro na API';
+      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
+    }
+    return decodificado;
+  }
+
+  /// Remove um recurso administrativo identificado pela própria API.
+  Future<Map<String, dynamic>> remover(String caminho) async {
+    final uri = Uri.parse('$baseUrl$caminho');
+    final cabecalhos = await _cabecalhos();
+    final resposta = await _http
+        .delete(uri, headers: cabecalhos)
+        .timeout(const Duration(seconds: 20));
+    final decodificado = _decodificar(resposta);
+    if (resposta.statusCode >= 400) {
+      final erro = decodificado['erro'];
+      final codigo = erro is Map
+          ? (erro['codigo']?.toString() ?? 'inesperado')
+          : 'inesperado';
+      final mensagem = erro is Map
+          ? (erro['mensagem']?.toString() ?? 'erro na API')
+          : 'erro na API';
+      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
+    }
+    return decodificado;
+  }
+
+  Future<Map<String, String>> _cabecalhos({bool autenticado = true}) async {
+    final cabecalhos = <String, String>{'accept': 'application/json'};
+    if (!autenticado) return cabecalhos;
+
+    final token = await provedorToken?.call();
+    if (token == null || token.isEmpty) {
+      throw ErroDeAutenticacao('Entre novamente para continuar.');
+    }
+    cabecalhos['authorization'] = 'Bearer $token';
+
+    final appCheck = await provedorAppCheck?.call();
+    if (appCheck != null && appCheck.isNotEmpty) {
+      cabecalhos['x-firebase-appcheck'] = appCheck;
+    }
+    return cabecalhos;
   }
 
   Map<String, dynamic> _decodificar(http.Response resposta) {

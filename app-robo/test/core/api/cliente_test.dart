@@ -72,6 +72,72 @@ void main() {
     expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
   });
 
+  test('PATCH administrativo leva tokens e corpo JSON', () async {
+    late http.Request chamada;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((requisicao) async {
+        chamada = requisicao;
+        return http.Response('{"id":"loja-1","favorita":true}', 200);
+      }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
+    );
+
+    await api.alterar(
+      '/api/v1/inter/lojas',
+      corpo: const {'id': 'loja-1', 'favorita': true},
+    );
+
+    expect(chamada.method, 'PATCH');
+    expect(chamada.headers['authorization'], 'Bearer id-token');
+    expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
+    expect(chamada.headers['content-type'], 'application/json');
+    expect(chamada.body, '{"id":"loja-1","favorita":true}');
+  });
+
+  test('POST administrativo preserva a chave idempotente', () async {
+    late http.Request chamada;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((requisicao) async {
+        chamada = requisicao;
+        return http.Response('{"estado":"aceito"}', 202);
+      }),
+      provedorToken: () async => 'id-token',
+    );
+
+    await api.criar(
+      '/api/v1/administracao/disparos',
+      corpo: const {'dominio': 'livelo'},
+      cabecalhosExtras: const {'idempotency-key': 'chave-valida-123456'},
+    );
+
+    expect(chamada.method, 'POST');
+    expect(chamada.headers['idempotency-key'], 'chave-valida-123456');
+    expect(chamada.body, '{"dominio":"livelo"}');
+  });
+
+  test('DELETE administrativo leva os tokens sem corpo', () async {
+    late http.Request chamada;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((requisicao) async {
+        chamada = requisicao;
+        return http.Response('{"removida":true}', 200);
+      }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
+    );
+
+    await api.remover('/api/v1/livelo/lojas/42');
+
+    expect(chamada.method, 'DELETE');
+    expect(chamada.headers['authorization'], 'Bearer id-token');
+    expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
+    expect(chamada.body, isEmpty);
+  });
+
   test('não chama endpoint privado sem sessão', () async {
     var chamouRede = false;
     final api = ClienteApi(

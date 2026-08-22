@@ -4,6 +4,7 @@ import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api_v1.dart';
 import '../../core/api/modelos.dart';
+import '../administracao/botao_disparo.dart';
 import 'cartao_produto.dart';
 import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
@@ -11,10 +12,16 @@ import 'pagina_historico_produto.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
 class PaginaProdutos extends StatefulWidget {
-  const PaginaProdutos({super.key, required this.api, this.controlador});
+  const PaginaProdutos({
+    super.key,
+    required this.api,
+    this.controlador,
+    this.administrador = false,
+  });
 
   final ApiV1 api;
   final ControladorBuscaProdutos? controlador;
+  final bool administrador;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -70,6 +77,14 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: BotaoDisparo(
+            api: widget.api,
+            dominio: 'produtos_inter',
+            administrador: widget.administrador,
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
           child: TextField(

@@ -197,6 +197,53 @@ export async function removerLoja(id: number): Promise<void> {
   await sql`DELETE FROM loja WHERE id = ${id}`;
 }
 
+/** Cadastro atômico usado pela API v1: loja, regra e apelidos entram juntos. */
+export async function adicionarLojaAdministrativa(entrada: {
+  nome: string;
+  categoria: string;
+  apelidos: string[];
+  multiplicador: string | null;
+  piso: string | null;
+}): Promise<number> {
+  const sql = conectar();
+  const linhas = (await sql`
+    WITH nova AS (
+      INSERT INTO loja (nome, categoria, multiplicador, piso_pontos)
+      VALUES (${entrada.nome}, ${entrada.categoria}, ${entrada.multiplicador}, ${entrada.piso})
+      RETURNING id
+    ), novos_apelidos AS (
+      INSERT INTO apelido (loja_id, texto)
+      SELECT nova.id, valor
+        FROM nova, unnest(${entrada.apelidos}::text[]) AS valor
+    )
+    SELECT id FROM nova
+  `) as Array<{ id: number }>;
+  if (!linhas[0]) throw new Error("loja nao criada");
+  return linhas[0].id;
+}
+
+export async function salvarLimiarDaLojaSeExistir(
+  id: number,
+  multiplicador: string | null,
+  piso: string | null,
+): Promise<boolean> {
+  const sql = conectar();
+  const linhas = (await sql`
+    UPDATE loja SET multiplicador = ${multiplicador}, piso_pontos = ${piso}
+     WHERE id = ${id}
+     RETURNING id
+  `) as Array<{ id: number }>;
+  return linhas.length > 0;
+}
+
+export async function removerLojaSeExistir(id: number): Promise<boolean> {
+  const sql = conectar();
+  const linhas = (await sql`DELETE FROM loja WHERE id = ${id} RETURNING id`) as Array<{
+    id: number;
+  }>;
+  return linhas.length > 0;
+}
+
 export async function categorias(): Promise<string[]> {
   const sql = conectar();
   const linhas = (await sql`

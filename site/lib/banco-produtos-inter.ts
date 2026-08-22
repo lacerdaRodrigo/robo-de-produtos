@@ -81,7 +81,7 @@ const COLUNAS_PRODUTO = `
   m.momento AS atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome`;
 
 /**
- * Busca paginada de produtos (FASE1-Contrato-API §4.3): entrega `total` e uma
+ * Busca paginada de produtos: entrega `total` e uma
  * página de `itens` por consulta. É a correção da lacuna do site atual, que
  * devolvia tudo numa chamada (LIMIT 500) e não paginava.
  *
@@ -274,13 +274,20 @@ export async function totalLojasDiretas(termo = ""): Promise<number> {
   return Number(linhas[0]?.total ?? 0);
 }
 
-export async function selecionarLojaDireta(id: string, selecionar: boolean): Promise<void> {
+/**
+ * Altera uma seleção de forma idempotente e informa se a loja era elegível.
+ * Loja inativa não pode voltar a ser selecionada, mas uma seleção antiga pode
+ * ser removida para o estado ficar recuperável.
+ */
+export async function selecionarLojaDireta(id: string, selecionar: boolean): Promise<boolean> {
   const sql = conectar();
-  await sql`
+  const linhas = (await sql`
     UPDATE loja_direta_inter
        SET selecionada = ${selecionar}, atualizada_em = now()
      WHERE id = ${id} AND (${selecionar} = FALSE OR ativa = TRUE)
-  `;
+     RETURNING id
+  `) as Array<{ id: string }>;
+  return linhas.length > 0;
 }
 
 export async function resumoLojasDiretas(): Promise<{ selecionadas: number; total: number }> {
@@ -346,7 +353,7 @@ export type StatusCatalogoProdutos = {
 };
 
 /** Resumo da última execução de produtos, para o envelope da busca pública
- *  (FASE1-Contrato-API §4.3: `atualizado_em` e `qualidade`). null quando a
+ *  (`atualizado_em` e `qualidade`). null quando a
  *  V4 ainda não coletou nada. */
 export async function statusCatalogoProdutos(): Promise<StatusCatalogoProdutos> {
   const sql = conectar();

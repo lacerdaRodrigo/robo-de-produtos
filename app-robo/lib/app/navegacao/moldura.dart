@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_v1.dart';
+import '../../features/administracao/pagina_administracao.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
 import '../paginas/inicio.dart';
@@ -12,9 +13,10 @@ import 'destinos.dart';
 /// telas maiores usam a lateral azul-marinho. O corpo conserva o mesmo
 /// `IndexedStack` nos dois modos para preservar cada área ao trocar de aba.
 class MolduraRadar extends StatefulWidget {
-  const MolduraRadar({super.key, required this.api});
+  const MolduraRadar({super.key, required this.api, this.administrador = true});
 
   final ApiV1 api;
+  final bool administrador;
 
   @override
   State<MolduraRadar> createState() => _EstadoMolduraRadar();
@@ -27,10 +29,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   late final List<Widget> _paineis = <Widget>[
     PaginaInicio(api: widget.api),
-    PaginaPainelLivelo(api: widget.api),
-    PaginaCashbackInter(api: widget.api),
+    PaginaPainelLivelo(api: widget.api, administrador: widget.administrador),
+    PaginaCashbackInter(api: widget.api, administrador: widget.administrador),
     const PaginaEmBreve(titulo: 'Alertas'),
-    const PaginaEmBreve(titulo: 'Mais'),
+    PaginaAdministracao(api: widget.api, administrador: widget.administrador),
   ];
 
   void _selecionar(Destino destino) {

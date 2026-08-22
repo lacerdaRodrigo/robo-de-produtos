@@ -1,7 +1,7 @@
 /// Erro de domínio da API v1, já normalizado no cliente.
 ///
 /// O corpo de erro da API é `{ "erro": { "codigo", "mensagem" } }`
-/// (FASE1-Contrato-API §4.7). Nunca vaza URL de banco nem segredo — o servidor
+/// (contrato da API v1). Nunca vaza URL de banco nem segredo — o servidor
 /// é quem garante isso; aqui a gente só transporta o código e a mensagem.
 class ErroDeApi implements Exception {
   ErroDeApi(this.status, this.codigo, this.mensagem);

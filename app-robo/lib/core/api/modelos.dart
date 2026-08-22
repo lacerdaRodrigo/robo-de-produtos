@@ -178,6 +178,165 @@ class LojaDireto {
   final String nome;
   final bool selecionada;
   final bool ativa;
+
+  LojaDireto copiarCom({bool? selecionada}) => LojaDireto(
+    id: id,
+    idExterno: idExterno,
+    slug: slug,
+    nome: nome,
+    selecionada: selecionada ?? this.selecionada,
+    ativa: ativa,
+  );
+}
+
+/// Loja disponível no catálogo dos Sites parceiros do Inter.
+///
+/// A oferta continua textual porque cashback é dado financeiro; a seleção de
+/// favorita é um estado administrativo, não um cálculo no aplicativo.
+class LojaCatalogoInter {
+  const LojaCatalogoInter({
+    required this.id,
+    required this.idExterno,
+    required this.slug,
+    required this.nome,
+    required this.cashbackPrincipalTexto,
+    required this.cashbackPrincipalValor,
+    required this.ativa,
+    required this.favorita,
+  });
+
+  factory LojaCatalogoInter.parse(Map<String, dynamic> objeto) =>
+      LojaCatalogoInter(
+        id: _texto(objeto['id']),
+        idExterno: _texto(objeto['id_externo']),
+        slug: _texto(objeto['slug']),
+        nome: _texto(objeto['nome']),
+        cashbackPrincipalTexto: _texto(objeto['cashback_principal_texto']),
+        cashbackPrincipalValor: _textoOpcional(
+          objeto['cashback_principal_valor'],
+        ),
+        ativa: _booleano(objeto['ativa']),
+        favorita: _booleano(objeto['favorita']),
+      );
+
+  final String id;
+  final String idExterno;
+  final String slug;
+  final String nome;
+  final String cashbackPrincipalTexto;
+  final String? cashbackPrincipalValor;
+  final bool ativa;
+  final bool favorita;
+
+  LojaCatalogoInter copiarCom({bool? favorita}) => LojaCatalogoInter(
+    id: id,
+    idExterno: idExterno,
+    slug: slug,
+    nome: nome,
+    cashbackPrincipalTexto: cashbackPrincipalTexto,
+    cashbackPrincipalValor: cashbackPrincipalValor,
+    ativa: ativa,
+    favorita: favorita ?? this.favorita,
+  );
+}
+
+/// Loja Livelo disponível para administração.
+///
+/// Limiares continuam como texto decimal. `null` significa herdar a
+/// preferência global, não ausência acidental nem zero.
+class LojaLiveloAdministrativa {
+  const LojaLiveloAdministrativa({
+    required this.id,
+    required this.nome,
+    required this.categoria,
+    required this.multiplicador,
+    required this.piso,
+    required this.apelidos,
+  });
+
+  factory LojaLiveloAdministrativa.parse(Map<String, dynamic> objeto) =>
+      LojaLiveloAdministrativa(
+        id: _texto(objeto['id']),
+        nome: _texto(objeto['nome']),
+        categoria: _texto(objeto['categoria']),
+        multiplicador: _textoOpcional(objeto['multiplicador']),
+        piso: _textoOpcional(objeto['piso_pontos']),
+        apelidos:
+            (objeto['apelidos'] as List<dynamic>?)
+                ?.map(_texto)
+                .where((valor) => valor.isNotEmpty)
+                .toList(growable: false) ??
+            const <String>[],
+      );
+
+  final String id;
+  final String nome;
+  final String categoria;
+  final String? multiplicador;
+  final String? piso;
+  final List<String> apelidos;
+
+  LojaLiveloAdministrativa comRegra({
+    required String? multiplicador,
+    required String? piso,
+  }) => LojaLiveloAdministrativa(
+    id: id,
+    nome: nome,
+    categoria: categoria,
+    multiplicador: multiplicador,
+    piso: piso,
+    apelidos: apelidos,
+  );
+}
+
+class PreferenciasLiveloAdministrativas {
+  const PreferenciasLiveloAdministrativas({
+    required this.multiplicador,
+    required this.piso,
+    required this.assinanteClube,
+  });
+
+  factory PreferenciasLiveloAdministrativas.parse(
+    Map<String, dynamic> objeto,
+  ) => PreferenciasLiveloAdministrativas(
+    multiplicador: _texto(objeto['multiplicador_padrao']),
+    piso: _texto(objeto['piso_pontos_padrao']),
+    assinanteClube: _booleano(objeto['assinante_clube']),
+  );
+
+  final String multiplicador;
+  final String piso;
+  final bool assinanteClube;
+}
+
+class ResumoLimpezaAdministrativa {
+  const ResumoLimpezaAdministrativa({
+    required this.dominio,
+    required this.fraseConfirmacao,
+    required this.contagens,
+  });
+
+  factory ResumoLimpezaAdministrativa.parse(Map<String, dynamic> objeto) {
+    final contagensBrutas = objeto['contagens'];
+    final contagens = <String, int>{};
+    if (contagensBrutas is Map) {
+      for (final entrada in contagensBrutas.entries) {
+        final valor = entrada.value;
+        if (valor is num) {
+          contagens[entrada.key.toString()] = valor.toInt();
+        }
+      }
+    }
+    return ResumoLimpezaAdministrativa(
+      dominio: _texto(objeto['dominio']),
+      fraseConfirmacao: _texto(objeto['frase_confirmacao']),
+      contagens: Map<String, int>.unmodifiable(contagens),
+    );
+  }
+
+  final String dominio;
+  final String fraseConfirmacao;
+  final Map<String, int> contagens;
 }
 
 /// Oferta persistida dos Sites parceiros do Inter (PRD-V3 RN32–RN40).
@@ -264,6 +423,49 @@ class PerfilUsuario {
   final String papel;
 
   bool get administrador => papel == 'admin';
+}
+
+/// Estado da última solicitação manual de coleta, não da coleta em si.
+class EstadoDisparoAdministrativo {
+  const EstadoDisparoAdministrativo({
+    required this.dominio,
+    required this.cooldownSegundos,
+    required this.ultimaSolicitacaoEm,
+    required this.ultimoEstado,
+  });
+
+  factory EstadoDisparoAdministrativo.parse(Map<String, dynamic> objeto) =>
+      EstadoDisparoAdministrativo(
+        dominio: _texto(objeto['dominio']),
+        cooldownSegundos: (objeto['cooldown_segundos'] as num?)?.toInt() ?? 0,
+        ultimaSolicitacaoEm: _textoOpcional(objeto['ultima_solicitacao_em']),
+        ultimoEstado: _textoOpcional(objeto['ultimo_estado']),
+      );
+
+  final String dominio;
+  final int cooldownSegundos;
+  final String? ultimaSolicitacaoEm;
+  final String? ultimoEstado;
+}
+
+/// Resposta de uma solicitação aceita ou ainda em reserva no servidor.
+class ResultadoDisparoAdministrativo {
+  const ResultadoDisparoAdministrativo({
+    required this.dominio,
+    required this.estado,
+    required this.cooldownSegundos,
+  });
+
+  factory ResultadoDisparoAdministrativo.parse(Map<String, dynamic> objeto) =>
+      ResultadoDisparoAdministrativo(
+        dominio: _texto(objeto['dominio']),
+        estado: _texto(objeto['estado']),
+        cooldownSegundos: (objeto['cooldown_segundos'] as num?)?.toInt() ?? 0,
+      );
+
+  final String dominio;
+  final String estado;
+  final int cooldownSegundos;
 }
 
 /// Uma loja do painel Livelo, como retornada pela API v1.

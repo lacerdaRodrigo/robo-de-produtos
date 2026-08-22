@@ -79,4 +79,16 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Mais abre a administração do Flutter', (at) async {
+    usarTamanho(at, const Size(390, 844));
+    await at.pumpWidget(RadarApp.semAutenticacaoParaTeste(api: _api()));
+    await at.pumpAndSettle();
+
+    await at.tap(find.byIcon(Icons.more_horiz));
+    await at.pumpAndSettle();
+
+    expect(find.text('Administração'), findsOneWidget);
+    expect(find.byKey(const Key('busca-lojas-livelo')), findsOneWidget);
+  });
 }

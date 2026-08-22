@@ -303,4 +303,197 @@ void main() {
       expect(resposta.medicoes.single.precoLiquidoValor, '939.00');
     },
   );
+
+  test(
+    'catálogos administrativos usam páginas e PATCH com o estado desejado',
+    () async {
+      final requisicoes = <http.Request>[];
+      final api = ApiV1(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            requisicoes.add(requisicao);
+            if (requisicao.url.path == '/api/v1/inter/lojas') {
+              return http.Response(
+                jsonEncode({
+                  'itens': [
+                    {
+                      'id': 'parceira-1',
+                      'id_externo': '1',
+                      'slug': 'loja',
+                      'nome': 'Loja parceira',
+                      'cashback_principal_texto': '5%',
+                      'cashback_principal_valor': '5.00',
+                      'ativa': true,
+                      'favorita': false,
+                    },
+                  ],
+                  'pagina': 2,
+                  'por_pagina': 20,
+                  'total_itens': 21,
+                  'total_paginas': 2,
+                  'tem_proxima': false,
+                }),
+                200,
+              );
+            }
+            if (requisicao.method == 'PATCH') {
+              return http.Response('{"id":"direta-1","selecionada":true}', 200);
+            }
+            return http.Response(
+              '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
+              200,
+            );
+          }),
+        ),
+      );
+
+      final parceiras = await api.lojasInter(q: 'loja', pagina: 2);
+      await api.alterarFavoritaInter(id: 'parceira-1', favorita: true);
+      await api.lojasDiretas();
+      await api.alterarSelecaoLojaDireta(id: 'direta-1', selecionada: true);
+
+      expect(parceiras.itens.single.cashbackPrincipalValor, '5.00');
+      expect(parceiras.itens.single.favorita, isFalse);
+      expect(requisicoes[0].url.queryParameters['q'], 'loja');
+      expect(requisicoes[0].url.queryParameters['pagina'], '2');
+      expect(requisicoes[1].method, 'PATCH');
+      expect(requisicoes[1].body, '{"id":"parceira-1","favorita":true}');
+      expect(requisicoes[3].method, 'PATCH');
+      expect(requisicoes[3].body, '{"id":"direta-1","selecionada":true}');
+    },
+  );
+
+  test('consulta e solicita disparo por contrato fechado', () async {
+    final requisicoes = <http.Request>[];
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          requisicoes.add(requisicao);
+          if (requisicao.method == 'POST') {
+            return http.Response(
+              '{"dominio":"livelo","estado":"aceito","cooldown_segundos":300}',
+              202,
+            );
+          }
+          return http.Response(
+            '{"dominio":"livelo","cooldown_segundos":0,"ultima_solicitacao_em":null,"ultimo_estado":null}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    final estado = await api.estadoDisparo('livelo');
+    final resposta = await api.solicitarDisparo(
+      dominio: 'livelo',
+      chaveIdempotencia: 'chave-valida-123456',
+    );
+
+    expect(estado.cooldownSegundos, 0);
+    expect(resposta.estado, 'aceito');
+    expect(requisicoes[0].url.queryParameters['dominio'], 'livelo');
+    expect(requisicoes[1].headers['idempotency-key'], 'chave-valida-123456');
+  });
+
+  test('administração Livelo preserva texto e usa rotas por recurso', () async {
+    final requisicoes = <http.Request>[];
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          requisicoes.add(requisicao);
+          if (requisicao.url.path == '/api/v1/livelo/preferencias') {
+            return http.Response(
+              '{"multiplicador_padrao":"2.90","piso_pontos_padrao":"4.00","assinante_clube":true}',
+              200,
+            );
+          }
+          if (requisicao.method == 'POST') {
+            return http.Response(
+              '{"id":"42","nome":"Loja Nova","categoria":"Viagem","apelidos":["Loja N"],"multiplicador":"3.00","piso_pontos":"5.00"}',
+              201,
+            );
+          }
+          if (requisicao.method == 'PATCH' || requisicao.method == 'DELETE') {
+            return http.Response('{}', 200);
+          }
+          return http.Response(
+            '{"itens":[{"id":"7","nome":"Loja","categoria":"Casa","multiplicador":"2.90","piso_pontos":null,"apelidos":["Loja BR"]}],"pagina":1,"por_pagina":20,"total_itens":1,"total_paginas":1,"tem_proxima":false}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    final pagina = await api.lojasLivelo(q: 'casa');
+    final preferencias = await api.preferenciasLivelo();
+    final criada = await api.cadastrarLojaLivelo(
+      nome: 'Loja Nova',
+      categoria: 'Viagem',
+      apelidos: const ['Loja N'],
+      multiplicador: '3.00',
+      piso: '5.00',
+    );
+    await api.alterarRegraLojaLivelo(
+      id: '7',
+      multiplicador: null,
+      piso: '6.00',
+    );
+    await api.salvarPreferenciasLivelo(
+      multiplicador: '2.90',
+      piso: '4.00',
+      assinanteClube: false,
+    );
+    await api.removerLojaLivelo('7');
+
+    expect(pagina.itens.single.multiplicador, '2.90');
+    expect(pagina.itens.single.piso, isNull);
+    expect(preferencias.multiplicador, '2.90');
+    expect(criada.piso, '5.00');
+    expect(requisicoes.first.url.queryParameters['q'], 'casa');
+    expect(requisicoes[2].body, contains('"multiplicador":"3.00"'));
+    expect(requisicoes[3].url.path, '/api/v1/livelo/lojas/7');
+    expect(requisicoes[3].body, '{"multiplicador":null,"piso":"6.00"}');
+    expect(requisicoes[4].body, contains('"assinante_clube":false'));
+    expect(requisicoes[5].method, 'DELETE');
+  });
+
+  test('zona de perigo consulta resumo e envia somente a frase', () async {
+    final requisicoes = <http.Request>[];
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          requisicoes.add(requisicao);
+          if (requisicao.method == 'POST') {
+            return http.Response('{"dominio":"livelo","concluida":true}', 200);
+          }
+          return http.Response(
+            '{"dominio":"livelo","frase_confirmacao":"APAGAR LIVELO",'
+            '"contagens":{"lojas":2,"pontuacoes":10}}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    final resumo = await api.resumoLimpeza('livelo');
+    await api.executarLimpeza(dominio: 'livelo', frase: 'APAGAR LIVELO');
+
+    expect(resumo.fraseConfirmacao, 'APAGAR LIVELO');
+    expect(resumo.contagens, {'lojas': 2, 'pontuacoes': 10});
+    expect(requisicoes[0].url.path, '/api/v1/administracao/limpeza/livelo');
+    expect(requisicoes[1].method, 'POST');
+    expect(requisicoes[1].body, '{"frase":"APAGAR LIVELO"}');
+  });
 }

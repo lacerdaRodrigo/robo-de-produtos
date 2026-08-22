@@ -130,18 +130,30 @@ export async function totalLojasInter(termo = ""): Promise<number> {
   return linhas[0]?.total ?? 0;
 }
 
-export async function acompanharLojaInter(id: string): Promise<void> {
+/** Marca uma loja ativa como favorita sem disparar coleta. */
+export async function acompanharLojaInter(id: string): Promise<boolean> {
   const sql = conectar();
+  const lojas = (await sql`
+    SELECT id FROM loja_inter WHERE id = ${id} AND ativa = TRUE
+  `) as Array<{ id: string }>;
+  if (lojas.length === 0) return false;
   await sql`
     INSERT INTO favorita_inter (loja_inter_id)
     SELECT id FROM loja_inter WHERE id = ${id} AND ativa = TRUE
     ON CONFLICT (loja_inter_id) DO NOTHING
   `;
+  return true;
 }
 
-export async function deixarDeAcompanharLojaInter(id: string): Promise<void> {
+/** Remove uma favorita sem falhar se ela já estiver removida. */
+export async function deixarDeAcompanharLojaInter(id: string): Promise<boolean> {
   const sql = conectar();
+  const lojas = (await sql`
+    SELECT id FROM loja_inter WHERE id = ${id}
+  `) as Array<{ id: string }>;
+  if (lojas.length === 0) return false;
   await sql`DELETE FROM favorita_inter WHERE loja_inter_id = ${id}`;
+  return true;
 }
 
 const INTERVALO_MINIMO_INTER_MINUTOS = 5;

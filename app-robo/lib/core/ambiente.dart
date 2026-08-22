@@ -1,13 +1,14 @@
 /// Configuração de ambiente do app.
 ///
-/// A URL da API pode ser injetada no build com `--dart-define=API_URL=...`.
-/// Padrão para o dev Web contra o site local (Vercel em produção usa a mesma
-/// origem). Nenhum segredo mora aqui (PLANO §6).
+/// A URL da API pode ser substituída no build com
+/// `--dart-define=API_URL=...`. O padrão público permite instalar o APK em um
+/// aparelho externo sem fazê-lo apontar para o `localhost` do próprio celular.
+/// Nenhum segredo mora aqui (PLANO §6).
 abstract final class Ambiente {
-  /// Ex.: `http://localhost:3000` (dev) ou a mesma origem do deploy.
+  /// Desenvolvimento local pode sobrescrever com `http://localhost:3000`.
   static const baseUrlApi = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:3000',
+    defaultValue: 'https://robo-livelo.vercel.app',
   );
 
   static const paginaPadrao = 20;

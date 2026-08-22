@@ -1,24 +1,19 @@
 import { NextResponse } from "next/server";
 
+import { validarFavoritaInter } from "@/lib/administracao-api";
 import { autenticarRequisicao } from "@/lib/autenticacao-api";
-import { validarSelecaoDeLojaDireta } from "@/lib/administracao-api";
 import { corpoErro, paginacaoEnvelope, paginaValida, porPaginaValida, STATUS } from "@/lib/api";
 import {
-  buscarLojasDiretas,
-  selecionarLojaDireta,
-  totalLojasDiretas,
-} from "@/lib/banco-produtos-inter";
+  acompanharLojaInter,
+  buscarLojasInter,
+  deixarDeAcompanharLojaInter,
+  totalLojasInter,
+} from "@/lib/banco-inter";
 
-/**
- * GET /api/v1/inter/produtos/lojas?q=&pagina=&por_pagina=
- *
- * Catálogo de vendedores diretos (V4), autenticado para leitura; a seleção é
- * mutação administrativa e entra quando a autenticação (Firebase) estiver
- * ligada na Fase 3/5.
- */
+/** Catálogo administrativo dos Sites parceiros do Inter. */
 export async function GET(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, {
-    operacao: "inter.produtos.lojas.ler",
+    operacao: "inter.lojas.ler",
     papel: "admin",
   });
   if (!acesso.ok) return acesso.resposta;
@@ -27,28 +22,22 @@ export async function GET(requisicao: Request) {
   const q = url.searchParams.get("q") ?? "";
   const pagina = paginaValida(url.searchParams.get("pagina"));
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
-
   const [itens, total] = await Promise.all([
-    buscarLojasDiretas(q, pagina, porPagina),
-    totalLojasDiretas(q),
+    buscarLojasInter(q, pagina, porPagina),
+    totalLojasInter(q),
   ]);
-
-  return NextResponse.json({
-    itens,
-    ...paginacaoEnvelope(total, pagina, porPagina),
-  });
+  return NextResponse.json({ itens, ...paginacaoEnvelope(total, pagina, porPagina) });
 }
 
 /**
- * PATCH /api/v1/inter/produtos/lojas
+ * PATCH /api/v1/inter/lojas
  *
- * Corpo: `{ "id": "…", "selecionada": true|false }`.
- * Esta ação só altera a seleção; não inicia coleta nem aceita workflow, URL
- * ou qualquer valor de fonte externa vindo do aplicativo.
+ * Corpo: `{ "id": "…", "favorita": true|false }`. A seleção é idempotente
+ * e não inicia coleta: o disparo controlado pertence à etapa 5.2.
  */
 export async function PATCH(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, {
-    operacao: "inter.produtos.lojas.selecao",
+    operacao: "inter.lojas.favorita",
     papel: "admin",
     sensivel: true,
   });
@@ -63,7 +52,7 @@ export async function PATCH(requisicao: Request) {
       headers: { "x-request-id": acesso.requisicaoId },
     });
   }
-  const entrada = validarSelecaoDeLojaDireta(corpo);
+  const entrada = validarFavoritaInter(corpo);
   if (!entrada.ok) {
     return NextResponse.json(corpoErro("validacao", entrada.mensagem), {
       status: STATUS.INVALIDA,
@@ -72,7 +61,9 @@ export async function PATCH(requisicao: Request) {
   }
 
   try {
-    const alterada = await selecionarLojaDireta(entrada.valor.id, entrada.valor.selecionada);
+    const alterada = entrada.valor.favorita
+      ? await acompanharLojaInter(entrada.valor.id)
+      : await deixarDeAcompanharLojaInter(entrada.valor.id);
     if (!alterada) {
       return NextResponse.json(corpoErro("nao-achei", "loja nao encontrada ou indisponivel"), {
         status: STATUS.NAO_ACHEI,
@@ -83,7 +74,7 @@ export async function PATCH(requisicao: Request) {
       headers: { "x-request-id": acesso.requisicaoId },
     });
   } catch {
-    return NextResponse.json(corpoErro("inesperado", "nao foi possivel alterar a selecao"), {
+    return NextResponse.json(corpoErro("inesperado", "nao foi possivel alterar a favorita"), {
       status: STATUS.INESPERADO,
       headers: { "x-request-id": acesso.requisicaoId },
     });
