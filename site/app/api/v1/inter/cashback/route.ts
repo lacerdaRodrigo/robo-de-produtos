@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import { paginacaoEnvelope, paginaValida, porPaginaValida } from "@/lib/api";
-import { cashbacksInter, ultimaExecucaoInterValida } from "@/lib/banco-inter";
+import {
+  cashbacksInter,
+  ultimaExecucaoInterValida,
+  ultimaTentativaInter,
+} from "@/lib/banco-inter";
 import {
   filtrarCashbacksInter,
   ordenarCashbacksInter,
@@ -28,10 +32,21 @@ export async function GET(requisicao: Request) {
 
   const ordenar = ordenarBruto === "nome" ? ("nome" as const) : ("cashback" as const);
 
-  const execucao = await ultimaExecucaoInterValida();
+  const [execucao, tentativa] = await Promise.all([
+    ultimaExecucaoInterValida(),
+    ultimaTentativaInter(),
+  ]);
+  // RN33: a última tentativa e o último retrato válido são informações
+  // independentes. O cliente mantém o retrato anterior, mas pode avisar uma
+  // falha recente sem inventar cashback zero.
+  const atualizacao = {
+    atualizado_em: execucao?.concluida_em ?? null,
+    ultima_tentativa_em: tentativa?.iniciada_em ?? null,
+    ultima_tentativa_estado: tentativa?.estado ?? null,
+  };
   if (!execucao) {
     return NextResponse.json(
-      { itens: [], atualizado_em: null, ...paginacaoEnvelope(0, pagina, porPagina) },
+      { itens: [], ...atualizacao, ...paginacaoEnvelope(0, pagina, porPagina) },
       { status: 200 },
     );
   }
@@ -43,7 +58,7 @@ export async function GET(requisicao: Request) {
 
   return NextResponse.json({
     itens: paginado.itens,
-    atualizado_em: execucao.concluida_em,
+    ...atualizacao,
     ...paginacaoEnvelope(paginado.totalItens, pagina, porPagina),
   });
 }

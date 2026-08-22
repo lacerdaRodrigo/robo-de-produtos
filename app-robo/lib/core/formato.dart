@@ -27,6 +27,21 @@ String? moeda(String? valor) {
   return 'R\$ $comPonto,$decimal';
 }
 
+/// Formata um decimal textual para leitura pt-BR, sem convertê-lo em número.
+///
+/// `2.90` vira `2,9` e `6.000` vira `6`. A função serve tanto para pontos
+/// quanto para limiares da Livelo; ausência continua sendo ausência.
+String? decimal(String? valor) {
+  if (valor == null || valor.trim().isEmpty) {
+    return null;
+  }
+  final partes = valor.trim().split('.');
+  final inteiro = partes.first;
+  final fracao = partes.length > 1 ? partes.sublist(1).join('.') : '';
+  final fracaoLimpa = fracao.replaceFirst(RegExp(r'0+$'), '');
+  return fracaoLimpa.isEmpty ? inteiro : '$inteiro,$fracaoLimpa';
+}
+
 /// Agrupa os dígitos do inteiro em grupos de três, separados por ponto
 /// (milhar) e mantendo a ordem original.
 String _agrupar(String inteiro) {

@@ -2,7 +2,8 @@
 ///
 /// Contrato idêntico ao `site/lib/api.ts` (FASE1-Contrato-API §4.3): o
 /// servidor entrega `pagina`, `por_pagina`, `total_itens`, `total_paginas`,
-/// `tem_proxima` e, opcionalmente, `atualizado_em` e `qualidade`. O cliente
+/// `tem_proxima` e, opcionalmente, `atualizado_em`, qualidade e o estado da
+/// última tentativa. O cliente
 /// nunca corta total em silêncio: páginas são pedidas até `tem_proxima = false`.
 class Pagina<T> {
   const Pagina({
@@ -14,6 +15,8 @@ class Pagina<T> {
     required this.temProxima,
     this.atualizadoEm,
     this.qualidade,
+    this.ultimaTentativaEm,
+    this.ultimaTentativaEstado,
   });
 
   factory Pagina.parse(
@@ -34,6 +37,8 @@ class Pagina<T> {
       temProxima: (objeto['tem_proxima'] as bool?) ?? false,
       atualizadoEm: objeto['atualizado_em'] as String?,
       qualidade: objeto['qualidade'] as String?,
+      ultimaTentativaEm: objeto['ultima_tentativa_em'] as String?,
+      ultimaTentativaEstado: objeto['ultima_tentativa_estado'] as String?,
     );
   }
 
@@ -49,6 +54,11 @@ class Pagina<T> {
 
   /// `completa` | `degradada` | null (RN86).
   final String? qualidade;
+
+  /// Momento e estado da tentativa mais recente, quando o domínio expõe.
+  /// Isso não substitui [atualizadoEm], que pertence ao último retrato válido.
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
 
   bool get vazia => itens.isEmpty;
 }

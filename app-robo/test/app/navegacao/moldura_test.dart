@@ -13,6 +13,7 @@ ApiV1 _api() => ApiV1(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
+    provedorToken: () async => 'token-teste',
     cliente: http_testing.MockClient(
       (_) async => http.Response('{"api":"v1","saudavel":true}', 200),
     ),
@@ -73,6 +74,9 @@ void main() {
     await at.tap(find.byIcon(Icons.star_outline));
     await at.pumpAndSettle();
 
-    expect(find.text('Ainda não implementado nesta fase.'), findsWidgets);
+    expect(
+      find.text('Ainda não há uma coleta da Livelo para mostrar.'),
+      findsOneWidget,
+    );
   });
 }

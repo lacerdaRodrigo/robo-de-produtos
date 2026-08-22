@@ -23,6 +23,45 @@ class ApiV1 {
     return PerfilUsuario.parse(corpo);
   }
 
+  /// Painel paginado da Livelo (Fase 4.2B).
+  ///
+  /// `alerta` é um filtro no servidor, embora apareça como opção de
+  /// ordenação na interface para preservar o contrato HTTP já publicado.
+  Future<Pagina<PontuacaoLivelo>> painelLivelo({
+    String q = '',
+    String ordenar = 'pontos',
+    int pagina = 1,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/v1/livelo/painel',
+      consulta: <String, String>{
+        'q': q,
+        'ordenar': ordenar,
+        'pagina': '$pagina',
+        'por_pagina': '$paginaPadrao',
+      },
+    );
+    return Pagina.parse(corpo, PontuacaoLivelo.parse);
+  }
+
+  /// Cashback dos Sites parceiros do Inter (PRD-V3), sempre lido da API.
+  Future<Pagina<CashbackInter>> painelCashbackInter({
+    String q = '',
+    String ordenar = 'cashback',
+    int pagina = 1,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/v1/inter/cashback',
+      consulta: <String, String>{
+        'q': q,
+        'ordenar': ordenar,
+        'pagina': '$pagina',
+        'por_pagina': '$paginaPadrao',
+      },
+    );
+    return Pagina.parse(corpo, CashbackInter.parse);
+  }
+
   /// Busca de produtos paginada (V4). `q` obrigatório, 2–100 caracteres.
   Future<Pagina<ProdutoDireto>> buscarProdutos(
     String termo, {
@@ -48,5 +87,24 @@ class ApiV1 {
       },
     );
     return Pagina.parse(corpo, ProdutoDireto.parse);
+  }
+
+  /// Histórico paginado de um produto dentro de uma loja direta específica.
+  Future<HistoricoProdutoDireto> historicoProduto({
+    required String loja,
+    required String produto,
+    int pagina = 1,
+    int porPagina = 30,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/v1/inter/produtos/historico',
+      consulta: <String, String>{
+        'loja': loja,
+        'produto': produto,
+        'pagina': '$pagina',
+        'por_pagina': '$porPagina',
+      },
+    );
+    return HistoricoProdutoDireto.parse(corpo);
   }
 }

@@ -81,6 +81,76 @@ class ProdutoDireto {
   final String atualizadaEm;
 }
 
+/// Uma medição de preço do histórico de 30 dias de um produto direto.
+///
+/// Valores NUMERIC permanecem texto até a apresentação (PRD-V4 RNF29).
+class MedicaoProdutoDireto {
+  const MedicaoProdutoDireto({
+    required this.momento,
+    required this.precoAtualValor,
+    required this.cashbackValor,
+    required this.precoLiquidoValor,
+  });
+
+  factory MedicaoProdutoDireto.parse(Map<String, dynamic> objeto) {
+    return MedicaoProdutoDireto(
+      momento: _texto(objeto['momento']),
+      precoAtualValor: _texto(objeto['preco_atual_valor']),
+      cashbackValor: _textoOpcional(objeto['cashback_valor']),
+      precoLiquidoValor: _textoOpcional(objeto['preco_liquido_valor']),
+    );
+  }
+
+  final String momento;
+  final String precoAtualValor;
+  final String? cashbackValor;
+  final String? precoLiquidoValor;
+}
+
+/// Resposta do histórico de um produto em uma loja (PRD-V4 RF46/RN78).
+class HistoricoProdutoDireto {
+  const HistoricoProdutoDireto({
+    required this.produto,
+    required this.minimo,
+    required this.maximo,
+    required this.medicoes,
+    required this.pagina,
+    required this.porPagina,
+    required this.totalItens,
+    required this.temProxima,
+  });
+
+  factory HistoricoProdutoDireto.parse(Map<String, dynamic> objeto) {
+    final medicoes =
+        (objeto['medicoes'] as List<dynamic>?)
+            ?.map(
+              (item) =>
+                  MedicaoProdutoDireto.parse(item as Map<String, dynamic>),
+            )
+            .toList(growable: false) ??
+        const <MedicaoProdutoDireto>[];
+    return HistoricoProdutoDireto(
+      produto: ProdutoDireto.parse(objeto['produto'] as Map<String, dynamic>),
+      minimo: _textoOpcional(objeto['minimo']),
+      maximo: _textoOpcional(objeto['maximo']),
+      medicoes: medicoes,
+      pagina: (objeto['pagina'] as num?)?.toInt() ?? 1,
+      porPagina: (objeto['por_pagina'] as num?)?.toInt() ?? 30,
+      totalItens: (objeto['total_itens'] as num?)?.toInt() ?? medicoes.length,
+      temProxima: objeto['tem_proxima'] as bool? ?? false,
+    );
+  }
+
+  final ProdutoDireto produto;
+  final String? minimo;
+  final String? maximo;
+  final List<MedicaoProdutoDireto> medicoes;
+  final int pagina;
+  final int porPagina;
+  final int totalItens;
+  final bool temProxima;
+}
+
 class LojaDireto {
   const LojaDireto({
     required this.id,
@@ -108,6 +178,56 @@ class LojaDireto {
   final String nome;
   final bool selecionada;
   final bool ativa;
+}
+
+/// Oferta persistida dos Sites parceiros do Inter (PRD-V3 RN32–RN40).
+///
+/// Percentuais permanecem em texto: o aplicativo exibe o texto da fonte e
+/// nunca usa `double` para reconstruir uma oferta financeira.
+class CashbackInter {
+  const CashbackInter({
+    required this.id,
+    required this.slug,
+    required this.nome,
+    required this.cashbackPrincipalTexto,
+    required this.cashbackPrincipalValor,
+    required this.cashbackSecundarioTexto,
+    required this.cashbackSecundarioValor,
+    required this.etiqueta,
+    required this.descricaoPrincipal,
+    required this.descricaoSecundaria,
+    required this.encontrada,
+  });
+
+  factory CashbackInter.parse(Map<String, dynamic> objeto) => CashbackInter(
+    id: _texto(objeto['id']),
+    slug: _texto(objeto['slug']),
+    nome: _texto(objeto['nome']),
+    cashbackPrincipalTexto: _textoOpcional(objeto['cashback_principal_texto']),
+    cashbackPrincipalValor: _textoOpcional(objeto['cashback_principal_valor']),
+    cashbackSecundarioTexto: _textoOpcional(
+      objeto['cashback_secundario_texto'],
+    ),
+    cashbackSecundarioValor: _textoOpcional(
+      objeto['cashback_secundario_valor'],
+    ),
+    etiqueta: _textoOpcional(objeto['etiqueta']),
+    descricaoPrincipal: _textoOpcional(objeto['descricao_principal']),
+    descricaoSecundaria: _textoOpcional(objeto['descricao_secundaria']),
+    encontrada: _booleano(objeto['encontrada']),
+  );
+
+  final String id;
+  final String slug;
+  final String nome;
+  final String? cashbackPrincipalTexto;
+  final String? cashbackPrincipalValor;
+  final String? cashbackSecundarioTexto;
+  final String? cashbackSecundarioValor;
+  final String? etiqueta;
+  final String? descricaoPrincipal;
+  final String? descricaoSecundaria;
+  final bool encontrada;
 }
 
 class StatusApi {
@@ -146,7 +266,68 @@ class PerfilUsuario {
   bool get administrador => papel == 'admin';
 }
 
+/// Uma loja do painel Livelo, como retornada pela API v1.
+///
+/// Campos decimais permanecem texto do início ao fim. O Postgres entrega
+/// `NUMERIC` como string e convertê-lo para `double` no cliente reabriria a
+/// perda de precisão que o domínio Python evita com `Decimal`.
+class PontuacaoLivelo {
+  const PontuacaoLivelo({
+    required this.nome,
+    required this.categoria,
+    required this.pontosAtuais,
+    required this.pontosBase,
+    required this.pontosClube,
+    required this.valorDeDisparo,
+    required this.moeda,
+    required this.prefixoAte,
+    required this.emPromocao,
+    required this.alertou,
+    required this.campanha,
+    required this.descricaoCampanha,
+    required this.fimPromocao,
+  });
+
+  factory PontuacaoLivelo.parse(Map<String, dynamic> objeto) {
+    return PontuacaoLivelo(
+      nome: _texto(objeto['nome']),
+      categoria: _textoOpcional(objeto['categoria']),
+      pontosAtuais: _textoOpcional(objeto['pontos_atuais']),
+      pontosBase: _textoOpcional(objeto['pontos_base']),
+      pontosClube: _textoOpcional(objeto['pontos_clube']),
+      valorDeDisparo: _textoOpcional(objeto['valor_de_disparo']),
+      moeda: _texto(objeto['moeda']),
+      prefixoAte: _booleano(objeto['prefixo_ate']),
+      emPromocao: _booleano(objeto['em_promocao']),
+      alertou: _booleano(objeto['alertou']),
+      campanha: _textoOpcional(objeto['campanha']),
+      descricaoCampanha: _textoOpcional(objeto['descricao_campanha']),
+      fimPromocao: _textoOpcional(objeto['fim_promocao']),
+    );
+  }
+
+  /// Nome canônico é a identidade única entre páginas da Livelo.
+  final String nome;
+  final String? categoria;
+  final String? pontosAtuais;
+  final String? pontosBase;
+  final String? pontosClube;
+  final String? valorDeDisparo;
+  final String moeda;
+  final bool prefixoAte;
+  final bool emPromocao;
+  final bool alertou;
+  final String? campanha;
+  final String? descricaoCampanha;
+  final String? fimPromocao;
+}
+
 String _texto(Object? valor) => valor?.toString() ?? '';
+
+String? _textoOpcional(Object? valor) {
+  final texto = valor?.toString().trim();
+  return texto == null || texto.isEmpty ? null : texto;
+}
 
 bool _booleano(Object? valor) {
   if (valor is bool) {

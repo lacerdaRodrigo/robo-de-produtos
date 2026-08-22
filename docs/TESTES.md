@@ -385,6 +385,52 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-261 | Navegação inferior no celular | Os cinco destinos aparecem com ícone/rótulo e trocam o painel | Widget em viewport de telefone toca em Livelo |
 | CT-262 | Navegação realmente adaptativa | Paisagem de celular mantém barra inferior; tela larga conserva lateral | Widgets com menor dimensão abaixo/acima de 600 px |
 
+### Fase 4.2B — painel Livelo no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-263 | Modelo Livelo completo | JSON da API vira `PontuacaoLivelo`, preservando opcionais e decimais como `String` | Fixture em Dart com todos os campos |
+| CT-264 | Decimal textual de pontos | `2.90` vira `2,9` e `6.000` vira `6`, sem `double` | Testar formatador puro |
+| CT-265 | Rótulos do Clube | `CLUB` e `PROMOTION_CLUB` recebem explicações distintas | Testar a função pura de rótulo |
+| CT-266 | Validade e atraso | Data no fuso de Brasília e coleta acima de 12 h usam relógio explícito | Fixar `agora` no teste |
+| CT-267 | Consulta do painel | Cliente envia `q`, `ordenar`, `pagina` e `por_pagina=20` | `MockClient` inspeciona URL e resposta |
+| CT-268 | Primeira página | Controlador expõe itens, total, carimbo e próxima página | Fonte injetada responde envelope válido |
+| CT-269 | Paginação e deduplicação | Próximas páginas chegam só pelo botão e nome canônico repetido não duplica cartão | Duas respostas com uma loja repetida |
+| CT-270 | Concorrência, reset e resposta antiga | Não há duas chamadas de paginação; busca/ordenação limpam a sequência e descartam resposta antiga | `Completer` controla a ordem das respostas |
+| CT-271 | Debounce da busca | Digitação só consulta após 350 ms sem nova entrada | Relógio de teste/fonte injetada |
+| CT-272 | Erro de página adicional | Itens anteriores ficam visíveis e retry tenta apenas a próxima página | Primeira resposta válida, segunda falha e terceira passa |
+| CT-273 | Estados do painel | Loading, falha/retry, sem coleta, catálogo vazio, busca vazia, atraso e loja ausente não se confundem | Testes de widget com controlador injetado |
+| CT-274 | Cartão e condições | Pontos, base, limiar, Clube, promoção, alerta e condições expansíveis são renderizados com texto seguro | Widget com modelo completo |
+| CT-275 | Filtros e fim da lista | Os três controles aparecem; página final informa que não há mais resultados | Tocar controles e carregar a última resposta |
+| CT-276 | Layout e navegação Livelo | Retrato, tela larga e toque em Livelo preservam a moldura e exibem o painel real | Widgets em viewports distintos |
+
+### Fase 4.3 — cashback Inter no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-277 | Modelo e carimbo Inter | Oferta textual, decimais como `String`, opcionais e horário de Brasília são preservados; atraso ocorre somente após 24 h | Fixture Dart e relógio explícito |
+| CT-278 | Consulta do cashback | Cliente envia `q`, `ordenar`, `pagina` e `por_pagina=20` ao endpoint autenticado | `MockClient` inspeciona URL e envelope |
+| CT-279 | Página e deduplicação Inter | Primeira página, próxima página e repetição de ID estável produzem uma lista única | Fonte injetada com duas páginas |
+| CT-280 | Reset e resposta antiga | Busca/ordenação reiniciam a sequência, aguardam 350 ms e descartam a resposta anterior | `Completer` e fonte injetada |
+| CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
+| CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
+| CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
+| CT-284 | Navegação e responsividade Inter | Tocar Inter abre o painel real e a moldura preserva abas, retrato/paisagem e tela larga | Widget da moldura em viewports distintos |
+
+### Fase 4.4 — produtos no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-285 | Modelo e histórico de produto | Campos comerciais, medições e valores `NUMERIC` permanecem textuais; carimbo usa Brasília e atraso de 12 h | Fixtures Dart e relógio explícito |
+| CT-286 | Contrato de histórico | Cliente envia loja, produto e paginação própria de 30 itens ao endpoint autenticado | `MockClient` inspeciona URL e resposta |
+| CT-287 | Busca paginada local | Termo curto não consulta; busca aguarda 350 ms, pagina e deduplica por loja + ID | Controlador com fonte injetada |
+| CT-288 | Filtros e respostas antigas | Filtros reiniciam a sequência e a resposta de consulta descartada não reaparece | `Completer` controla a ordem |
+| CT-289 | Falha adicional de produtos | Itens existentes permanecem e retry carrega a mesma página | Segunda resposta falha, terceira passa |
+| CT-290 | Estados e cards de produto | Termo mínimo, vazio, falha/retry, qualidade degradada, preço, cashback, líquido e grupos de loja são distintos | Widgets com controlador injetado |
+| CT-291 | Filtros e tela larga | Filtros chegam ao controlador e a grade adapta os cartões sem perder semântica | Bottom sheet e viewport largo |
+| CT-292 | Inter abre Produtos | O atalho interno na aba Inter abre a busca sem descartar o painel de cashback | Teste de widget da navegação interna |
+| CT-293 | Histórico de 30 dias | Mínimo, máximo, medições paginadas, falha e retry aparecem sem converter valores em `double` | Mock autenticado da API e widget |
+
 ---
 
 ## Fora dos testes automáticos
@@ -468,9 +514,9 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
 | `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
-| **Total (site)** | **CTs catalogados + apoio** | **64** |
-| `app-robo/test/` | CT-257–CT-259, CT-261–CT-262 + fundação | 43 |
-| **Total (Flutter)** | **5 CTs catalogados + apoio** | **43** |
+| **Total (site)** | **CTs catalogados + apoio** | **65** |
+| `app-robo/test/` | CT-257–CT-259, CT-261–CT-293 + fundação | 87 |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **87** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

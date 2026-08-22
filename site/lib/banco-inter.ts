@@ -89,7 +89,10 @@ export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[
       JOIN favorita_inter f ON f.loja_inter_id = l.id
       LEFT JOIN cashback_inter c
         ON c.loja_inter_id = l.id AND c.execucao_inter_id = ${execucaoId}
-     WHERE l.ativa = TRUE
+     -- RN42: uma favorita que desapareceu da fonte permanece no retrato
+     -- válido, marcada por c.encontrada = false. Filtrar l.ativa aqui a
+     -- esconderia do cliente e a faria parecer removida.
+     WHERE f.loja_inter_id IS NOT NULL
   `) as CashbackInter[];
 }
 

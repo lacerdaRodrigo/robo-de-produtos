@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_v1.dart';
+import '../../features/livelo/pagina_painel_livelo.dart';
+import '../../features/inter/pagina_cashback_inter.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lugar.dart';
 import '../tema/tokens.dart';
@@ -25,8 +27,8 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   late final List<Widget> _paineis = <Widget>[
     PaginaInicio(api: widget.api),
-    const PaginaEmBreve(titulo: 'Livelo'),
-    const PaginaEmBreve(titulo: 'Inter'),
+    PaginaPainelLivelo(api: widget.api),
+    PaginaCashbackInter(api: widget.api),
     const PaginaEmBreve(titulo: 'Alertas'),
     const PaginaEmBreve(titulo: 'Mais'),
   ];

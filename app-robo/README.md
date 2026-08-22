@@ -3,14 +3,22 @@
 Cliente multiplataforma (Flutter) do Radar de Benefícios. Atende Web, Android e iOS
 com o mesmo código, isolado do site legado em `site/`.
 
-> **Estado atual — Fase 3B concluída:** projeto Firebase `radarbeneficios`
+> **Estado atual — Fase 4.3 em validação local:** projeto Firebase `radarbeneficios`
 > conectado para Web, Android e iOS; login fechado por e-mail/senha, recuperação,
 > token na API e gate de convite validados em produção. A migração 010 está no
 > Neon, o primeiro convite foi vinculado e o smoke real passou no Samsung
 > SM-M135M em 2026-08-20. As telas de domínio continuam no piloto somente leitura
 > e o Flutter será a única interface ao fim da transição.
 > A Fase 4 começou pelo Android: a navegação inferior adaptativa já foi validada
-> no Samsung em retrato; Livelo real é a próxima tela.
+> no Samsung em retrato, e o painel Livelo real está implementado, testado e
+> com builds locais Web/APK gerados e smoke físico concluído no Samsung. O
+> painel somente leitura de cashback Inter passou pelos gates locais e aguarda
+> apenas o smoke físico no Samsung; o Flutter
+> continua lendo exclusivamente a API v1.
+> A Fase 4.4 passou pelos gates locais: a busca paginada de produtos, filtros,
+> agrupamento por loja e histórico continuam somente leitura e não acessam o
+> banco diretamente. Ainda falta o smoke físico no Samsung; o build do site
+> legado tem uma pendência técnica independente no Next.js.
 > O plano completo está em
 > [`PLANO.md`](PLANO.md); o contrato de API que orienta as Fases 3+ está em
 > [`FASE1-Contrato-API.md`](FASE1-Contrato-API.md).

@@ -130,4 +130,177 @@ void main() {
     expect(perfil.email, 'piloto@example.com');
     expect(perfil.administrador, isTrue);
   });
+
+  test('painelLivelo preserva decimais e envia a paginação', () async {
+    Uri? consulta;
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          consulta = requisicao.url;
+          return http.Response(
+            jsonEncode({
+              'itens': [
+                {
+                  'nome': 'Casas Bahia',
+                  'categoria': 'Marketplace',
+                  'pontos_atuais': '2.90',
+                  'pontos_base': '1.00',
+                  'pontos_clube': null,
+                  'valor_de_disparo': '4.00',
+                  'moeda': 'R\$',
+                  'prefixo_ate': true,
+                  'em_promocao': true,
+                  'alertou': true,
+                  'campanha': 'PROMOTION_CLUB',
+                  'descricao_campanha': 'Condições',
+                  'fim_promocao': '2026-08-22T23:59:00Z',
+                },
+              ],
+              'pagina': 2,
+              'por_pagina': 20,
+              'total_itens': 21,
+              'total_paginas': 2,
+              'tem_proxima': false,
+              'atualizado_em': '2026-08-22T12:00:00Z',
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    final resposta = await api.painelLivelo(
+      q: 'casa',
+      ordenar: 'alerta',
+      pagina: 2,
+    );
+
+    expect(consulta!.path, '/api/v1/livelo/painel');
+    expect(consulta!.queryParameters, {
+      'q': 'casa',
+      'ordenar': 'alerta',
+      'pagina': '2',
+      'por_pagina': '20',
+    });
+    expect(resposta.itens.single.pontosAtuais, '2.90');
+    expect(resposta.itens.single.pontosClube, isNull);
+    expect(resposta.itens.single.alertou, isTrue);
+  });
+
+  test('painelCashbackInter preserva a oferta textual e a paginação', () async {
+    Uri? consulta;
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          consulta = requisicao.url;
+          return http.Response(
+            jsonEncode({
+              'itens': [
+                {
+                  'id': 'inter-1',
+                  'slug': 'loja',
+                  'nome': 'Loja & Cia',
+                  'cashback_principal_texto': 'Até 12% de cashback',
+                  'cashback_principal_valor': '12.00',
+                  'cashback_secundario_texto': null,
+                  'cashback_secundario_valor': null,
+                  'etiqueta': 'Oferta especial',
+                  'descricao_principal': 'Em itens selecionados',
+                  'descricao_secundaria': null,
+                  'encontrada': true,
+                },
+              ],
+              'pagina': 1,
+              'por_pagina': 20,
+              'total_itens': 1,
+              'total_paginas': 1,
+              'tem_proxima': false,
+              'atualizado_em': '2026-08-22T12:00:00Z',
+              'ultima_tentativa_em': '2026-08-22T14:00:00Z',
+              'ultima_tentativa_estado': 'falha',
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    final resposta = await api.painelCashbackInter(
+      q: 'loja',
+      ordenar: 'nome',
+      pagina: 2,
+    );
+
+    expect(consulta!.path, '/api/v1/inter/cashback');
+    expect(consulta!.queryParameters, {
+      'q': 'loja',
+      'ordenar': 'nome',
+      'pagina': '2',
+      'por_pagina': '20',
+    });
+    expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
+    expect(resposta.itens.single.cashbackPrincipalValor, '12.00');
+    expect(resposta.itens.single.encontrada, isTrue);
+    expect(resposta.ultimaTentativaEstado, 'falha');
+  });
+
+  test(
+    'historicoProduto preserva NUMERIC textual e paginação própria',
+    () async {
+      Uri? consulta;
+      final api = ApiV1(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            consulta = requisicao.url;
+            return http.Response(
+              jsonEncode({
+                'produto': _itens.single,
+                'minimo': '900.00',
+                'maximo': '1200.00',
+                'medicoes': [
+                  {
+                    'momento': '2026-08-22T12:00:00Z',
+                    'preco_atual_valor': '999.00',
+                    'cashback_valor': '60.00',
+                    'preco_liquido_valor': '939.00',
+                  },
+                ],
+                'pagina': 2,
+                'por_pagina': 30,
+                'total_itens': 60,
+                'total_paginas': 2,
+                'tem_proxima': false,
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+
+      final resposta = await api.historicoProduto(
+        loja: 'casas-bahia',
+        produto: '1',
+        pagina: 2,
+      );
+
+      expect(consulta!.path, '/api/v1/inter/produtos/historico');
+      expect(consulta!.queryParameters, {
+        'loja': 'casas-bahia',
+        'produto': '1',
+        'pagina': '2',
+        'por_pagina': '30',
+      });
+      expect(resposta.minimo, '900.00');
+      expect(resposta.medicoes.single.precoLiquidoValor, '939.00');
+    },
+  );
 }
