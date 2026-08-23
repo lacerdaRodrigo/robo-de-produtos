@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.36.0 (2026-08-23)
+
+### Bug Fixes
+
+- Usa dominio movel publico no app
+  ([`d032a79`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d032a79d5219834a17121629abe59cb9a8a1572b))
+
+### Documentation
+
+- Atualiza planos e adota prototipo primeiro
+  ([`045df46`](https://github.com/lacerdaRodrigo/robo-livelo/commit/045df465e1c059b9f1a55f29cdf5cd09a6451c17))
+
+### Features
+
+- Adiciona prototipos web e mobile do Radar
+  ([`f58c1db`](https://github.com/lacerdaRodrigo/robo-livelo/commit/f58c1db752d10f12f4f8d974928ea4beeb2ee650))
+
+
 ## v1.35.0 (2026-08-22)
 
 ### Documentation
