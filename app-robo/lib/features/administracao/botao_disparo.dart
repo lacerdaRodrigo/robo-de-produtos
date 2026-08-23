@@ -15,11 +15,13 @@ class BotaoDisparo extends StatefulWidget {
     required this.api,
     required this.dominio,
     required this.administrador,
+    this.rotulo = 'Atualizar agora',
   });
 
   final ApiV1 api;
   final String dominio;
   final bool administrador;
+  final String rotulo;
 
   @override
   State<BotaoDisparo> createState() => _EstadoBotaoDisparo();
@@ -121,7 +123,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     return Tooltip(
       message: espera > 0
           ? 'Aguarde ${_tempo(espera)} para pedir nova coleta.'
-          : 'Solicitar uma nova coleta',
+          : 'Solicitar: ${widget.rotulo}',
       child: FilledButton.tonalIcon(
         onPressed: espera > 0 || _solicitando ? null : _solicitar,
         icon: _solicitando
@@ -136,7 +138,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
               ? 'Solicitando…'
               : espera > 0
               ? 'Aguarde ${_tempo(espera)}'
-              : 'Atualizar agora',
+              : widget.rotulo,
         ),
       ),
     );

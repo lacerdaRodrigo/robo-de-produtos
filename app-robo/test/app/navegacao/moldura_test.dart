@@ -25,22 +25,44 @@ const _resumo =
     '"dados_mais_recentes_em":null,"qualidade":null,"lojas_selecionadas":0,'
     '"lojas_sem_coleta":0,"produtos_ativos":0}}';
 
-ApiV1 _api() => ApiV1(
+const _resumoComEstadosIndependentes =
+    '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"atencao",'
+    '"livelo":{"estado":"atualizado","ultimo_sucesso_em":"2026-08-23T10:30:00Z",'
+    '"lojas_acompanhadas":3,"alertas_ultima_coleta":2},'
+    '"cashback_inter":{"estado":"falha_recente","ultima_tentativa_em":"2026-08-23T11:40:00Z",'
+    '"ultima_tentativa_estado":"falha","ultimo_sucesso_em":"2026-08-23T08:00:00Z",'
+    '"lojas_acompanhadas":4,"lojas_encontradas_ultima_coleta":4},'
+    '"produtos":{"estado":"parcial","ultima_tentativa_em":"2026-08-23T11:30:00Z",'
+    '"ultima_tentativa_estado":"parcial","dados_mais_antigos_em":"2026-08-23T09:00:00Z",'
+    '"dados_mais_recentes_em":"2026-08-23T11:00:00Z","qualidade":"completa",'
+    '"lojas_selecionadas":2,"lojas_sem_coleta":1,"produtos_ativos":15}}';
+
+ApiV1 _api({String resumo = _resumo, List<http.Request>? requisicoes}) => ApiV1(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
     provedorToken: () async => 'token-teste',
     cliente: http_testing.MockClient((requisicao) async {
+      requisicoes?.add(requisicao);
       if (requisicao.url.path == '/api/v1/status') {
         return http.Response('{"api":"v1","saudavel":true}', 200);
       }
       if (requisicao.url.path == '/api/v1/resumo') {
-        return http.Response(_resumo, 200);
+        return http.Response(resumo, 200);
       }
       if (requisicao.url.path == '/api/v1/livelo/preferencias') {
         return http.Response(
           '{"multiplicador_padrao":"2.00",'
           '"piso_pontos_padrao":"4.00","assinante_clube":false}',
+          200,
+        );
+      }
+      if (requisicao.url.path == '/api/v1/administracao/disparos') {
+        final dominio = requisicao.url.queryParameters['dominio'] ?? '';
+        return http.Response(
+          '{"dominio":"$dominio",'
+          '"cooldown_segundos":0,"ultima_solicitacao_em":null,'
+          '"ultimo_estado":null}',
           200,
         );
       }
@@ -54,6 +76,8 @@ Future<void> _abrir(
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool administrador = false,
+  String resumo = _resumo,
+  List<http.Request>? requisicoes,
 }) async {
   at.view.devicePixelRatio = 1;
   at.view.physicalSize = tamanho;
@@ -62,7 +86,10 @@ Future<void> _abrir(
   await at.pumpWidget(
     MaterialApp(
       theme: TemaRadar.claro(),
-      home: MolduraRadar(api: _api(), administrador: administrador),
+      home: MolduraRadar(
+        api: _api(resumo: resumo, requisicoes: requisicoes),
+        administrador: administrador,
+      ),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
           context,
@@ -179,6 +206,20 @@ void main() {
     );
   });
 
+  testWidgets('hub de Lojas mostra estados reais sem misturar os domínios', (
+    at,
+  ) async {
+    await _abrir(at, resumo: _resumoComEstadosIndependentes);
+    await _irPara(at, Destino.lojas);
+
+    expect(find.text('3 lojas acompanhadas'), findsOneWidget);
+    expect(find.text('2 alertas na última coleta'), findsOneWidget);
+    expect(find.text('4 acompanhadas no Cashback'), findsOneWidget);
+    expect(find.text('Cashback: falha recente'), findsOneWidget);
+    expect(find.text('2 lojas selecionadas em Produtos'), findsOneWidget);
+    expect(find.text('Produtos: parcial'), findsOneWidget);
+  });
+
   testWidgets('Voltar do domínio interno retorna primeiro ao hub de Lojas', (
     at,
   ) async {
@@ -193,6 +234,77 @@ void main() {
 
     expect(find.byKey(const Key('hub-lojas')), findsOneWidget);
     expect(find.byKey(const Key('voltar-para-lojas')), findsNothing);
+  });
+
+  testWidgets(
+    'Shopping Inter separa Cashback e Produtos com retornos próprios',
+    (at) async {
+      await _abrir(
+        at,
+        tamanho: const Size(390, 1500),
+        resumo: _resumoComEstadosIndependentes,
+      );
+      await _irPara(at, Destino.lojas);
+      await at.tap(find.byKey(const Key('abrir-lojas-inter')));
+      await at.pumpAndSettle();
+
+      expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
+      expect(find.text('Cashback — Sites parceiros'), findsOneWidget);
+      expect(find.text('Produtos — Compre direto'), findsOneWidget);
+      expect(find.text('falha recente'), findsOneWidget);
+      expect(find.text('parcial'), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('abrir-cashback-inter')));
+      await at.pumpAndSettle();
+      expect(
+        find.byKey(const Key('voltar-para-shopping-inter')),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextField, 'Buscar por loja'), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('voltar-para-shopping-inter')));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('abrir-produtos-inter')));
+      await at.pumpAndSettle();
+      expect(
+        find.byKey(const Key('voltar-para-shopping-inter')),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextField, 'Buscar produtos'), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('voltar-para-shopping-inter')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('hub-lojas')), findsOneWidget);
+    },
+  );
+
+  testWidgets('admin recebe atualizações identificadas por modalidade', (
+    at,
+  ) async {
+    final requisicoes = <http.Request>[];
+    await _abrir(
+      at,
+      tamanho: const Size(390, 1500),
+      administrador: true,
+      requisicoes: requisicoes,
+    );
+    await _irPara(at, Destino.lojas);
+    await at.tap(find.byKey(const Key('abrir-lojas-inter')));
+    await at.pumpAndSettle();
+
+    expect(find.text('Atualizar Cashback'), findsOneWidget);
+    expect(find.text('Atualizar Produtos'), findsOneWidget);
+    final dominiosConsultados = requisicoes
+        .where(
+          (requisicao) =>
+              requisicao.url.path == '/api/v1/administracao/disparos',
+        )
+        .map((requisicao) => requisicao.url.queryParameters['dominio'])
+        .toSet();
+    expect(dominiosConsultados, {'inter', 'produtos_inter'});
   });
 
   testWidgets('Produtos é destino direto e preserva a busca entre áreas', (

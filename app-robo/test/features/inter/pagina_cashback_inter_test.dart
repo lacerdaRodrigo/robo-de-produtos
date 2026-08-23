@@ -245,7 +245,9 @@ void main() {
     expect(find.text('C&A'), findsOneWidget);
   });
 
-  testWidgets('atalho de Produtos abre a busca interna do Inter', (at) async {
+  testWidgets('página de Cashback mantém o foco nos Sites parceiros', (
+    at,
+  ) async {
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async =>
           _pagina([], atualizadaEm: null),
@@ -254,10 +256,8 @@ void main() {
 
     await at.pumpWidget(_tela(controlador));
     await at.pumpAndSettle();
-    await at.tap(find.byTooltip('Produtos no Inter'));
-    await at.pumpAndSettle();
 
-    expect(find.text('Produtos no Inter'), findsOneWidget);
-    expect(find.text('Buscar produtos'), findsOneWidget);
+    expect(find.text('Cashback — Sites parceiros'), findsOneWidget);
+    expect(find.byTooltip('Produtos no Inter'), findsNothing);
   });
 }

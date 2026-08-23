@@ -1,8 +1,7 @@
 # Plano de redesign por telas — Radar de Benefícios
 
-**Status:** Modelo 0, Módulo 1 — Login e Módulo 2 — Moldura implementados e
-aprovados no Android conectado; Módulo 3 aprovado e implementado localmente,
-com publicação da nova API e smoke físico ainda não autorizados
+**Status:** Modelo 0 e Módulos 1 a 4 implementados e aceitos; Módulo 5 — hub
+do Shopping Inter implementado localmente após aprovação dos protótipos
 
 **Data-base:** 23 de agosto de 2026
 
@@ -495,8 +494,9 @@ ordenação. Até lá, os quatro atalhos fixos são a alternativa simples.
 #### Registro do Módulo 3 — implementação local
 
 **Estado:** contrato, API, Flutter e gates locais concluídos em 23 de agosto de
-2026. A rota ainda não foi publicada e o APK não foi instalado, porque essas
-ações externas não foram autorizadas nesta rodada.
+2026. A rota foi observada publicada com proteção de autenticação (`401` sem
+credencial) e o resumo foi aberto no Samsung em build debug sem App Check. O
+App Check de depuração continua com observação própria pendente.
 
 - `GET /api/v1/resumo` autentica com a operação `resumo.ler` e faz uma leitura
   isolada por domínio;
@@ -540,6 +540,29 @@ os cartões exibem apenas descrição e acesso, não números fictícios.
 **Aceite:** caminhos, títulos e retorno ficam claros no Samsung e no Web;
 teclado/leitor de tela entendem cada cartão como ação única.
 
+#### Registro do Módulo 4 — implementação local
+
+**Estado:** protótipos Web/Mobile aprovados e implementação local concluída em
+23 de agosto de 2026. O aceite visual no Samsung fica com o responsável.
+
+- o hub consulta somente `GET /api/v1/resumo`, sem iniciar coleta nem acessar
+  Livelo, Inter ou Postgres diretamente;
+- Livelo mostra lojas acompanhadas, alertas somente quando há coleta válida e
+  o instante do último sucesso;
+- Shopping Inter mostra Cashback e Produtos em chips separados; uma falha ou
+  estado parcial de uma modalidade não é apresentado como estado da outra;
+- indisponibilidade da leitura mantém os dois acessos disponíveis e oferece
+  nova tentativa do resumo, sem inventar números;
+- cada cartão inteiro continua sendo uma única ação para sua jornada existente,
+  e o retorno para o hub preserva a navegação interna.
+
+Validações executadas:
+
+- `dart format --output=none --set-exit-if-changed lib test`;
+- `flutter analyze` sem apontamentos;
+- `flutter test`: **148 testes aprovados**, incluindo CT-328;
+- builds Web e APK debug aprovados; o APK não foi instalado nesta etapa.
+
 ### Módulo 5 — hub do Shopping Inter
 
 **Tipo:** reorganização das duas integrações Inter já implementadas.
@@ -559,6 +582,31 @@ workflows próprios. O hub compartilha navegação, não regra de negócio.
 
 **Aceite:** uma pessoa que não conhece os PRDs identifica a diferença entre
 Sites parceiros e Compre direto antes de abrir a jornada.
+
+#### Registro do Módulo 5 — implementação local
+
+**Estado:** protótipos Web/Mobile aprovados e implementação local concluída em
+23 de agosto de 2026. O aceite visual no Samsung fica com o responsável.
+
+- `Lojas → Shopping Inter` abre um segundo hub, com cartões distintos para
+  **Cashback — Sites parceiros** e **Produtos — Compre direto**;
+- cada cartão consulta somente o resumo autenticado já existente e mantém
+  estado e carimbo próprios, sem transformar falha, parcial ou ausência em zero;
+- os pedidos administrativos aparecem apenas para administrador e chamam,
+  respectivamente, os domínios `inter` e `produtos_inter`; não há ação genérica
+  que possa disparar o workflow errado;
+- Cashback e Produtos permanecem em suas páginas, controladores e contratos
+  atuais. Seus retornos explícitos levam primeiro ao Shopping Inter e depois a
+  Lojas;
+- a Administração existente em **Mais** continua sendo o acesso protegido de
+  gerenciamento enquanto a reorganização dela fica reservada para o Módulo 9.
+
+Validações executadas:
+
+- `dart format --output=none --set-exit-if-changed lib test`;
+- `flutter analyze` sem apontamentos;
+- `flutter test`: **150 testes aprovados**, incluindo CT-329;
+- builds Web e APK debug aprovados; não houve smoke manual nesta etapa.
 
 ### Módulo 6 — Produtos e histórico de 30 dias
 
@@ -1026,16 +1074,10 @@ e-mail real.
 
 ## 8. Próximo passo
 
-O **Modelo 0**, o **Módulo 1 — Login** e o **Módulo 2 — Moldura** receberam
-aceite visual e físico no Android conectado. Web e iOS permanecem como
-validações futuras de plataforma.
+Os **Módulos 0 a 4** receberam aceite e o **Módulo 5 — hub do Shopping Inter**
+está implementado localmente após a aprovação dos protótipos. O próximo passo é
+o protótipo do Módulo 6; Web e iOS permanecem como validações futuras de
+plataforma.
 
-O Módulo 3 está concluído no workspace. Para consumir a nova rota contra o
-ambiente publicado no Samsung, ainda será necessária autorização separada para
-publicar a API e instalar um APK apontando para ela. Até isso ocorrer, o código
-local e os testes comprovam o contrato, mas o endpoint publicado atual não deve
-ser tratado como atualizado.
-
-O próximo módulo visual permanece bloqueado até o responsável decidir o aceite
-do Módulo 3 e liberar o Módulo 4. Nenhum commit ou `push` foi criado nesta
-rodada.
+Nenhum commit, `push`, disparo, migração ou mutação real foi realizado nesta
+etapa.

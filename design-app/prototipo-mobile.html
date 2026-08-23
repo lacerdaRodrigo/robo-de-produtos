@@ -2313,7 +2313,7 @@
           <section id="tela-lojas" class="tela" data-title="Lojas">
             <header class="cabecalho-tela">
               <div>
-                <p class="selo">Fontes conectadas</p>
+                <p class="selo">Protótipo · dados ilustrativos</p>
                 <h1>Lojas</h1>
                 <p>Escolha a fonte primeiro. Cada uma mantém suas próprias regras e ações.</p>
               </div>
@@ -2329,9 +2329,9 @@
                   <p>Acompanhe pontos por real, promoções, Clube e sua regra de alerta.</p>
                 </div>
                 <div class="fonte-resumo">
-                  <span class="selo ganho"><span data-livelo-follow-count>3</span> acompanhadas</span>
-                  <span class="selo ganho">2 alertas</span>
-                  <span class="selo">Atualizada há 18 min</span>
+                  <span class="selo ganho">3 lojas acompanhadas</span>
+                  <span class="selo ganho">2 alertas na última coleta</span>
+                  <span class="selo">Último sucesso há 18 min</span>
                 </div>
                 <button class="btn btn-primario" type="button" data-screen="livelo">
                   Abrir Livelo
@@ -2348,8 +2348,9 @@
                   <p>Entre em Cashback dos Sites parceiros ou Produtos do Compre direto.</p>
                 </div>
                 <div class="fonte-resumo">
-                  <span class="selo ganho"><span data-follow-count>3</span> acompanhadas</span>
-                  <span class="selo">2 modalidades</span>
+                  <span class="selo ganho">3 acompanhadas no Cashback</span>
+                  <span class="selo">1 loja selecionada em Produtos</span>
+                  <span class="selo">Estados separados por modalidade</span>
                 </div>
                 <button class="btn btn-primario" type="button" data-screen="inter">
                   Abrir Inter
@@ -2366,7 +2367,7 @@
             </button>
             <header class="cabecalho-tela">
               <div>
-                <p class="selo ganho">Fonte conectada</p>
+                <p class="selo">Protótipo · dados ilustrativos</p>
                 <h1>Shopping Inter</h1>
                 <p>Cashback e Produtos são jornadas diferentes. Escolha o que você quer fazer agora.</p>
               </div>
@@ -2374,13 +2375,9 @@
 
             <div class="inter-hero">
               <div>
-                <h2>Resumo do Inter</h2>
-                <p><span data-follow-count>3</span> lojas acompanhadas · última coleta válida há 22 min</p>
+                <h2>Resumo por modalidade</h2>
+                <p>Cashback: 3 acompanhadas · último sucesso há 22 min. Produtos: 1 loja selecionada · catálogo completo.</p>
               </div>
-              <button class="btn btn-secundario" type="button" data-action="update-request">
-                <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
-                Atualizar dados
-              </button>
             </div>
 
             <div class="acoes-grade">
@@ -2392,6 +2389,10 @@
                   <h3>Cashback</h3>
                   <p>Sites parceiros, percentuais e condições completas da oferta.</p>
                 </div>
+                <span class="selo">Último sucesso há 22 min</span>
+                <button class="btn btn-secundario" type="button" data-action="update-request-cashback">
+                  Solicitar atualização do Cashback
+                </button>
                 <button class="btn btn-primario" type="button" data-screen="cashback">Ver cashback</button>
               </article>
 
@@ -2403,6 +2404,10 @@
                   <h3>Produtos</h3>
                   <p>Compre direto, busca no banco, preços e histórico de 30 dias.</p>
                 </div>
+                <span class="selo">1 loja selecionada · catálogo completo</span>
+                <button class="btn btn-secundario" type="button" data-action="update-request-products">
+                  Solicitar atualização de Produtos
+                </button>
                 <button class="btn btn-primario" type="button" data-screen="produtos">Buscar produtos</button>
               </article>
             </div>
@@ -3150,6 +3155,8 @@
           if (action === 'save-shortcuts') showToast('Visual salvo no protótipo. A persistência será definida na implementação.');
           if (action === 'recover') showToast('Se o e-mail estiver cadastrado, as instruções serão enviadas.');
           if (action === 'update-request') showToast('Pedido aceito. A coleta ainda precisa terminar.');
+          if (action === 'update-request-cashback') showToast('Pedido de atualização do Cashback aceito. A coleta ainda precisa terminar.');
+          if (action === 'update-request-products') showToast('Pedido de atualização de Produtos aceito. A coleta ainda precisa terminar.');
           if (action === 'admin-info') showToast('No app final, esta opção abre a administração protegida.');
           if (action === 'logout') {
             closeMobileMenu(false);

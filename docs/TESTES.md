@@ -514,6 +514,18 @@ formatação, análise, 147 testes e builds Web/APK debug passaram. A cobertura
 global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 (100%). Não houve publicação, instalação ou smoke contra produção.
 
+### Redesign — Módulo 4, hub de Lojas
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-328 | Resumos isolados no hub | Livelo, Cashback e Produtos exibem contagens e estados próprios; falha recente e parcial não viram zero nem contaminam outra fonte | Fixture de `/api/v1/resumo` com estados distintos e teste de widget da moldura |
+
+### Redesign — Módulo 5, hub do Shopping Inter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-329 | Modalidades, atualizações e retornos isolados | O hub distingue Cashback — Sites parceiros de Produtos — Compre direto, preserva seus estados, consulta cada domínio administrativo e retorna de cada jornada ao Shopping Inter antes de Lojas | Fixture de `/api/v1/resumo` e teste de widget da moldura navegando por ambas as modalidades |
+
 ---
 
 ## Fora dos testes automáticos

@@ -18,12 +18,14 @@ class PaginaProdutos extends StatefulWidget {
     this.controlador,
     this.administrador = false,
     this.incorporada = false,
+    this.mostrarTituloInterno = true,
   });
 
   final ApiV1 api;
   final ControladorBuscaProdutos? controlador;
   final bool administrador;
   final bool incorporada;
+  final bool mostrarTituloInterno;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -83,7 +85,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.incorporada)
+        if (widget.incorporada && widget.mostrarTituloInterno)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: Text(
@@ -92,11 +94,17 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             ),
           ),
         Padding(
-          padding: EdgeInsets.fromLTRB(24, widget.incorporada ? 12 : 16, 24, 0),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            widget.incorporada && widget.mostrarTituloInterno ? 12 : 16,
+            24,
+            0,
+          ),
           child: BotaoDisparo(
             api: widget.api,
             dominio: 'produtos_inter',
             administrador: widget.administrador,
+            rotulo: 'Atualizar Produtos',
           ),
         ),
         Padding(

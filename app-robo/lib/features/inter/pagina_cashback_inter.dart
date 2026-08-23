@@ -7,7 +7,6 @@ import '../administracao/botao_disparo.dart';
 import 'cartao_cashback_inter.dart';
 import 'controlador_cashback_inter.dart';
 import 'formato_cashback_inter.dart';
-import '../produtos/pagina_produtos.dart';
 
 /// Consulta somente leitura dos Sites parceiros do Inter (Fase 4.3).
 class PaginaCashbackInter extends StatefulWidget {
@@ -16,11 +15,13 @@ class PaginaCashbackInter extends StatefulWidget {
     required this.api,
     this.controlador,
     this.administrador = false,
+    this.incorporada = false,
   });
 
   final ApiV1 api;
   final ControladorCashbackInter? controlador;
   final bool administrador;
+  final bool incorporada;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
@@ -60,103 +61,84 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
       _controlador.atualizadoEm,
       DateTime.now(),
     );
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final conteudo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!widget.incorporada)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Shopping Inter',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
+            child: Text(
+              'Cashback — Sites parceiros',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+          ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(24, widget.incorporada ? 16 : 0, 24, 0),
+          child: BotaoDisparo(
+            api: widget.api,
+            dominio: 'inter',
+            administrador: widget.administrador,
+            rotulo: 'Atualizar Cashback',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: TextField(
+            controller: _campoBusca,
+            onChanged: _controlador.mudarBusca,
+            decoration: const InputDecoration(
+              labelText: 'Buscar por loja',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              for (final ordenacao in OrdenacaoCashbackInter.values)
+                ChoiceChip(
+                  label: Text(ordenacao.rotulo),
+                  selected: _controlador.ordenacao == ordenacao,
+                  onSelected: (_) => _controlador.mudarOrdenacao(ordenacao),
                 ),
-                IconButton(
-                  tooltip: 'Produtos no Inter',
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PaginaProdutos(
-                          api: widget.api,
-                          administrador: widget.administrador,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.inventory_2_outlined),
-                ),
-              ],
-            ),
+            ],
           ),
+        ),
+        if (_controlador.atualizadoEm != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: BotaoDisparo(
-              api: widget.api,
-              dominio: 'inter',
-              administrador: widget.administrador,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+            child: Text(
+              'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)}'
+              '${atrasada ? ' · dados atrasados' : ''}',
+              style: TextStyle(color: atrasada ? Tokens.atencao : null),
             ),
           ),
-          const SizedBox(height: 8),
+        if (_controlador.atualizadoEm != null && !_controlador.carregando)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextField(
-              controller: _campoBusca,
-              onChanged: _controlador.mudarBusca,
-              decoration: const InputDecoration(
-                labelText: 'Buscar por loja',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+            child: Text('${_controlador.totalItens} lojas acompanhadas'),
           ),
+        if (_controlador.ultimaTentativaFalhou &&
+            _controlador.atualizadoEm != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-            child: Wrap(
-              spacing: 8,
-              children: [
-                for (final ordenacao in OrdenacaoCashbackInter.values)
-                  ChoiceChip(
-                    label: Text(ordenacao.rotulo),
-                    selected: _controlador.ordenacao == ordenacao,
-                    onSelected: (_) => _controlador.mudarOrdenacao(ordenacao),
-                  ),
-              ],
-            ),
-          ),
-          if (_controlador.atualizadoEm != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+            child: Semantics(
+              liveRegion: true,
               child: Text(
-                'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)}'
-                '${atrasada ? ' · dados atrasados' : ''}',
-                style: TextStyle(color: atrasada ? Tokens.atencao : null),
+                'A última sincronização do Inter falhou. '
+                'Exibindo a última coleta válida.',
+                style: const TextStyle(color: Tokens.perigo),
               ),
             ),
-          if (_controlador.atualizadoEm != null && !_controlador.carregando)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
-              child: Text('${_controlador.totalItens} lojas acompanhadas'),
-            ),
-          if (_controlador.ultimaTentativaFalhou &&
-              _controlador.atualizadoEm != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
-              child: Semantics(
-                liveRegion: true,
-                child: Text(
-                  'A última sincronização do Inter falhou. '
-                  'Exibindo a última coleta válida.',
-                  style: const TextStyle(color: Tokens.perigo),
-                ),
-              ),
-            ),
-          Expanded(child: _corpo()),
-        ],
-      ),
+          ),
+        Expanded(child: _corpo()),
+      ],
     );
+    return widget.incorporada ? conteudo : SafeArea(child: conteudo);
   }
 
   Widget _corpo() {

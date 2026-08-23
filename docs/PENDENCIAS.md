@@ -133,14 +133,22 @@ dependências de API, gates visuais e o roteiro automático no Samsung conectado
       resumo e quatro atalhos reais no Flutter
 - [x] Passar TypeScript, ESLint, 83 testes e build do site; formatação, análise,
       147 testes, 91,29% de cobertura e builds Web/APK no Flutter
-- [ ] Publicar a nova rota da API — exige autorização explícita; não executado
-- [ ] Instalar o APK apontando para a API publicada e fazer o aceite manual do
-      Módulo 3 — o responsável dispensou teste físico pelo Codex nesta rodada
+- [x] Confirmar que a rota publicada `/api/v1/resumo` continua protegida sem
+      credencial e abrir o Início autenticado no Samsung; o resumo carregou em
+      build debug com App Check desativado, sem mutação de dados
+- [x] Aprovar os protótipos do **Módulo 4 — hub de Lojas**
+- [x] Implementar o hub com resumo real por domínio, estados separados de
+      Livelo/Cashback/Produtos e retorno preservado; 148 testes, análise e
+      builds Web/APK passaram
+- [x] Fazer o aceite visual do Módulo 4 no Samsung com o APK novo
+- [x] Aprovar os protótipos do **Módulo 5 — hub do Shopping Inter**
+- [x] Implementar o hub com Cashback e Produtos separados, retornos explícitos
+      e pedidos administrativos por domínio; 150 testes, análise e builds
+      Web/APK passaram
 
-**Execução atual:** o Módulo 3 foi aprovado e concluído localmente em 23 de
-agosto de 2026. A nova rota ainda não existe no ambiente publicado e o APK não
-foi instalado nesta rodada; portanto, consumo real no Samsung depende dessas
-duas ações externas. Nenhum `push`, publicação, migração ou disparo foi feito.
+**Execução atual:** Módulos 0 a 4 estão aceitos. O Módulo 5 está pronto
+localmente e aguarda somente o aceite visual do responsável; nenhum `push`,
+publicação, migração, disparo ou mutação foi feito nessa implementação.
 
 ---
 

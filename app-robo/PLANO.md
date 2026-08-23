@@ -1,6 +1,6 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android. No redesign incremental, identidade, abertura, Módulo 1 — Login e Módulo 2 — Moldura foram implementados e aprovados no Samsung conectado; o Módulo 3 aguarda contrato próprio e os aceites de Web/iOS permanecem pendentes.
+**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android. No redesign incremental, identidade, abertura e Módulos 1 a 4 foram implementados e aceitos; o Módulo 5 — hub do Shopping Inter está pronto localmente para aceite visual. Os aceites de Web/iOS permanecem pendentes.
 
 **Data-base:** 23 de agosto de 2026
 
@@ -18,9 +18,9 @@
 
 > O redesign completo está dividido por telas em
 > [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md). Esse plano não
-> libera a etapa seguinte: abertura/identidade, login e moldura já foram
-> aprovados e implementados, mas o Início só muda após contrato e novo gate
-> visual do Módulo 3.
+> libera a etapa seguinte: abertura/identidade, login, moldura e Início já
+> foram aprovados e implementados. O hub do Shopping Inter está pronto
+> localmente para aceite visual antes do Módulo 6.
 
 ---
 

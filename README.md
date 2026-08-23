@@ -15,9 +15,12 @@ Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Po
 > aprovado no Samsung conectado. A nova moldura com gaveta Mobile, lateral Web
 > e destinos Início/Lojas/Produtos/Alertas/Mais também foi implementada e
 > aprovada manualmente no aparelho. O Módulo 3 — Início e seu resumo autenticado
-> foram implementados localmente; publicação da rota e instalação não foram
-> executadas. A suíte Flutter possui 147 testes e 91,29% de cobertura global;
-> Web e iOS ainda precisam de aceite visual. Veja o
+> já consome a rota publicada; o Módulo 4 — hub de Lojas agora mostra os
+> resumos reais de Livelo, Cashback e Produtos sem misturar seus estados. O
+> Módulo 5 organiza o Shopping Inter em Cashback — Sites parceiros e Produtos
+> — Compre direto, com retornos e atualizações separados por domínio. A suíte
+> Flutter possui 150 testes; Web e iOS ainda precisam de aceite visual.
+> Veja o
 > [`plano de redesign`](app-robo/PLANO-REDESIGN-POR-TELAS.md).
 
 ## Como funciona
