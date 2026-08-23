@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.38.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa módulos 1 a 3 do redesign
+  ([`b39d357`](https://github.com/lacerdaRodrigo/robo-livelo/commit/b39d357a5ad24e48cb4304b2c7048ee4871a89b5))
+
+
 ## v1.37.0 (2026-08-23)
 
 ### Features
