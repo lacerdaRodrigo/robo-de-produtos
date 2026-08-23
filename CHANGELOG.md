@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.39.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa hubs de lojas e inter
+  ([`20b6d56`](https://github.com/lacerdaRodrigo/robo-livelo/commit/20b6d56724fd1ec88b7440c573840382f05ff137))
+
+
 ## v1.38.0 (2026-08-23)
 
 ### Features
