@@ -1,0 +1,2954 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Protótipo navegável da nova experiência do Radar de Benefícios."
+    />
+    <title>Protótipo Web — Radar de Benefícios</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --marca-950: #081a2d;
+        --marca-900: #102a43;
+        --marca-800: #163b5c;
+        --acao-700: #12568f;
+        --acao-600: #1769aa;
+        --acao-100: #dceeff;
+        --ciano-500: #25b8d8;
+        --ciano-100: #def8fd;
+        --ganho-700: #126b32;
+        --ganho-600: #16803c;
+        --ganho-100: #dcfce7;
+        --atencao-700: #8b5a12;
+        --atencao-100: #fff2d7;
+        --perigo-600: #c53030;
+        --perigo-100: #fee2e2;
+        --texto: #102a43;
+        --texto-suave: #536779;
+        --borda: #d9e3ec;
+        --fundo: #f4f7fb;
+        --superficie: #ffffff;
+        --sombra: 0 14px 34px rgba(16, 42, 67, 0.1);
+        --raio: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 90% 0%, rgba(37, 184, 216, 0.1), transparent 28rem),
+          var(--fundo);
+        color: var(--texto);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid rgba(23, 105, 170, 0.34);
+        outline-offset: 3px;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .icone {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .prototipo-aviso {
+        position: fixed;
+        z-index: 90;
+        top: 12px;
+        left: 50%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 36px;
+        max-width: calc(100vw - 24px);
+        padding: 6px 8px 6px 14px;
+        transform: translateX(-50%);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 999px;
+        background: rgba(8, 26, 45, 0.9);
+        box-shadow: 0 8px 24px rgba(8, 26, 45, 0.2);
+        color: #fff;
+        font-size: 12px;
+        backdrop-filter: blur(12px);
+      }
+
+      .prototipo-aviso button {
+        min-height: 28px;
+        padding: 3px 10px;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: var(--marca-900);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .splash {
+        position: fixed;
+        z-index: 100;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at center, rgba(37, 184, 216, 0.18), transparent 24rem),
+          var(--marca-950);
+        color: #fff;
+        transition:
+          opacity 260ms ease,
+          visibility 260ms ease;
+      }
+
+      .splash[hidden] {
+        display: grid;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .splash.instant-hidden {
+        display: none;
+      }
+
+      .splash-conteudo {
+        width: min(360px, 100%);
+        text-align: center;
+      }
+
+      .splash-marca {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 154px;
+        height: 154px;
+        margin: 0 auto 24px;
+      }
+
+      .splash-marca::before,
+      .splash-marca::after {
+        position: absolute;
+        content: "";
+        border: 2px solid rgba(37, 184, 216, 0.42);
+        border-radius: 50%;
+        animation: pulso 1.7s ease-out infinite;
+      }
+
+      .splash-marca::before {
+        inset: 10px;
+      }
+
+      .splash-marca::after {
+        inset: -8px;
+        animation-delay: 360ms;
+      }
+
+      .splash-logo {
+        position: relative;
+        z-index: 1;
+        width: 112px;
+        height: 112px;
+        object-fit: contain;
+        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22));
+        animation: respirar 1.7s ease-in-out infinite;
+      }
+
+      .splash h1 {
+        margin: 0;
+        font-size: clamp(28px, 7vw, 38px);
+        letter-spacing: -0.04em;
+      }
+
+      .splash p {
+        margin: 8px 0 0;
+        color: #c6d7e7;
+      }
+
+      .splash-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 28px;
+        color: #fff;
+        font-size: 14px;
+      }
+
+      .splash-status::before {
+        width: 8px;
+        height: 8px;
+        content: "";
+        border-radius: 50%;
+        background: var(--ciano-500);
+        box-shadow: 0 0 0 6px rgba(37, 184, 216, 0.15);
+        animation: piscar 1.2s ease-in-out infinite;
+      }
+
+      @keyframes pulso {
+        0% {
+          transform: scale(0.76);
+          opacity: 0;
+        }
+        35% {
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.1);
+          opacity: 0;
+        }
+      }
+
+      @keyframes respirar {
+        50% {
+          transform: scale(1.04) rotate(2deg);
+        }
+      }
+
+      @keyframes piscar {
+        50% {
+          opacity: 0.42;
+        }
+      }
+
+      .login {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+      }
+
+      .login[hidden],
+      .aplicativo[hidden] {
+        display: none;
+      }
+
+      .login-visual {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100vh;
+        overflow: hidden;
+        padding: 72px clamp(32px, 6vw, 88px) 48px;
+        background:
+          linear-gradient(145deg, rgba(23, 105, 170, 0.24), transparent 54%),
+          var(--marca-950);
+        color: #fff;
+      }
+
+      .login-visual::before {
+        position: absolute;
+        top: -22vw;
+        right: -22vw;
+        width: 62vw;
+        height: 62vw;
+        content: "";
+        border: 1px solid rgba(37, 184, 216, 0.18);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 7vw rgba(37, 184, 216, 0.05),
+          0 0 0 14vw rgba(37, 184, 216, 0.035);
+      }
+
+      .assinatura {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+      }
+
+      .assinatura-logo {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+        border-radius: 15px;
+        background: #fff;
+      }
+
+      .assinatura-logo img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+      }
+
+      .login-chamada {
+        position: relative;
+        z-index: 1;
+        max-width: 620px;
+        margin: auto 0;
+      }
+
+      .login-chamada .sobrelinha {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #d9f8ff;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .login-chamada h1 {
+        max-width: 700px;
+        margin: 22px 0 18px;
+        font-size: clamp(42px, 5.5vw, 76px);
+        line-height: 0.98;
+        letter-spacing: -0.055em;
+      }
+
+      .login-chamada p {
+        max-width: 520px;
+        margin: 0;
+        color: #c6d7e7;
+        font-size: clamp(17px, 2vw, 21px);
+      }
+
+      .login-beneficios {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 34px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .login-beneficios li {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #eaf6ff;
+        font-size: 14px;
+      }
+
+      .login-beneficios li::before {
+        width: 8px;
+        height: 8px;
+        content: "";
+        border-radius: 50%;
+        background: var(--ciano-500);
+      }
+
+      .login-rodape {
+        position: relative;
+        z-index: 1;
+        color: #93aabd;
+        font-size: 12px;
+      }
+
+      .login-formulario-area {
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 68px clamp(24px, 5vw, 72px) 32px;
+        background: var(--superficie);
+      }
+
+      .login-formulario {
+        width: min(430px, 100%);
+      }
+
+      .login-formulario .mobile-brand {
+        display: none;
+      }
+
+      .login-formulario h2 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -0.035em;
+      }
+
+      .login-formulario > p {
+        margin: 0 0 28px;
+        color: var(--texto-suave);
+      }
+
+      .campo {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 18px;
+      }
+
+      .campo label {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .input-wrap {
+        position: relative;
+      }
+
+      .campo input,
+      .busca input {
+        width: 100%;
+        min-height: 52px;
+        border: 1px solid var(--borda);
+        border-radius: 14px;
+        background: #fff;
+        color: var(--texto);
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .campo input {
+        padding: 0 48px 0 16px;
+      }
+
+      .campo input:hover,
+      .busca input:hover {
+        border-color: #9db3c7;
+      }
+
+      .campo input:focus,
+      .busca input:focus {
+        border-color: var(--acao-600);
+        box-shadow: 0 0 0 4px rgba(23, 105, 170, 0.1);
+        outline: 0;
+      }
+
+      .mostrar-senha {
+        position: absolute;
+        top: 50%;
+        right: 7px;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--acao-700);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 48px;
+        padding: 0 18px;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        font-weight: 800;
+        text-decoration: none;
+        transition:
+          transform 150ms ease,
+          box-shadow 150ms ease,
+          background 150ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primario {
+        background: var(--acao-600);
+        box-shadow: 0 8px 18px rgba(23, 105, 170, 0.23);
+        color: #fff;
+      }
+
+      .btn-primario:hover {
+        background: var(--acao-700);
+      }
+
+      .btn-secundario {
+        border-color: #b8ccdd;
+        background: #fff;
+        color: var(--acao-700);
+      }
+
+      .btn-suave {
+        background: var(--acao-100);
+        color: var(--acao-700);
+      }
+
+      .btn-ganho {
+        background: var(--ganho-600);
+        color: #fff;
+      }
+
+      .btn-largo {
+        width: 100%;
+      }
+
+      .btn-link {
+        min-height: 44px;
+        padding: 0 8px;
+        border: 0;
+        background: transparent;
+        color: var(--acao-700);
+        font-weight: 800;
+      }
+
+      .login-acoes {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .login-seguranca {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--fundo);
+        color: var(--texto-suave);
+        font-size: 13px;
+      }
+
+      .aplicativo {
+        min-height: 100vh;
+      }
+
+      .barra-inferior {
+        display: none;
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .lateral {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 58px 14px 20px;
+        background: var(--marca-950);
+        color: #fff;
+      }
+
+      .lateral .assinatura {
+        padding: 0 10px 26px;
+      }
+
+      .lateral-navegacao {
+        display: grid;
+        gap: 5px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 48px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        color: #c6d7e7;
+        font-weight: 750;
+        text-align: left;
+      }
+
+      .nav-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+
+      .nav-item.ativo {
+        background: #fff;
+        color: var(--marca-900);
+      }
+
+      .lateral-rodape {
+        margin-top: auto;
+        padding: 14px 10px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .perfil-mini {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .avatar {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+        background: rgba(37, 184, 216, 0.19);
+        color: #d9f8ff;
+        font-weight: 900;
+      }
+
+      .perfil-mini strong,
+      .perfil-mini small {
+        display: block;
+      }
+
+      .perfil-mini small {
+        color: #93aabd;
+      }
+
+      .conteudo {
+        min-width: 0;
+        min-height: 100vh;
+        padding-bottom: 40px;
+      }
+
+      .tela {
+        display: none;
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 74px clamp(20px, 4vw, 54px) 48px;
+      }
+
+      .tela.ativa {
+        display: block;
+        animation: entrar-tela 220ms ease both;
+      }
+
+      @keyframes entrar-tela {
+        from {
+          transform: translateY(6px);
+          opacity: 0;
+        }
+      }
+
+      .cabecalho-tela {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .cabecalho-tela h1,
+      .cabecalho-tela h2 {
+        margin: 0;
+        letter-spacing: -0.045em;
+      }
+
+      .cabecalho-tela h1 {
+        font-size: clamp(30px, 4vw, 46px);
+      }
+
+      .cabecalho-tela p {
+        max-width: 680px;
+        margin: 6px 0 0;
+        color: var(--texto-suave);
+      }
+
+      .botao-icone {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+        border: 1px solid var(--borda);
+        border-radius: 15px;
+        background: #fff;
+        color: var(--marca-900);
+      }
+
+      .voltar {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        margin-bottom: 18px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--acao-700);
+        font-weight: 850;
+      }
+
+      .hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr;
+        gap: 24px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        padding: clamp(24px, 4vw, 40px);
+        border-radius: 26px;
+        background:
+          linear-gradient(135deg, rgba(37, 184, 216, 0.18), transparent 58%),
+          var(--marca-950);
+        box-shadow: var(--sombra);
+        color: #fff;
+      }
+
+      .hero::after {
+        position: absolute;
+        right: -100px;
+        bottom: -150px;
+        width: 380px;
+        height: 380px;
+        content: "";
+        border: 1px solid rgba(37, 184, 216, 0.2);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 50px rgba(37, 184, 216, 0.05),
+          0 0 0 100px rgba(37, 184, 216, 0.03);
+      }
+
+      .hero > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero .sobrelinha {
+        margin: 0 0 10px;
+        color: #8fe9fa;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero h2 {
+        max-width: 620px;
+        margin: 0;
+        font-size: clamp(27px, 3.5vw, 42px);
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        max-width: 620px;
+        margin: 12px 0 0;
+        color: #c6d7e7;
+      }
+
+      .hero-sinal {
+        display: grid;
+        place-items: center;
+        min-height: 150px;
+      }
+
+      .hero-sinal img {
+        width: 148px;
+        height: 148px;
+        object-fit: contain;
+        filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.24));
+      }
+
+      .grade-metricas {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 30px;
+      }
+
+      .metrica,
+      .cartao,
+      .fonte-card,
+      .acao-card,
+      .loja-card {
+        border: 1px solid var(--borda);
+        background: var(--superficie);
+        box-shadow: 0 7px 20px rgba(16, 42, 67, 0.055);
+      }
+
+      .metrica {
+        padding: 18px;
+        border-radius: 18px;
+      }
+
+      .metrica-topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .metrica-icone,
+      .acao-icone,
+      .fonte-icone {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+      }
+
+      .azul {
+        background: var(--acao-100);
+        color: var(--acao-700);
+      }
+
+      .verde {
+        background: var(--ganho-100);
+        color: var(--ganho-700);
+      }
+
+      .ciano {
+        background: var(--ciano-100);
+        color: #087e98;
+      }
+
+      .ambar {
+        background: var(--atencao-100);
+        color: var(--atencao-700);
+      }
+
+      .metrica strong {
+        display: block;
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+
+      .metrica span {
+        color: var(--texto-suave);
+        font-size: 13px;
+      }
+
+      .secao {
+        margin-top: 32px;
+      }
+
+      .secao-topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .secao h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: -0.025em;
+      }
+
+      .atalhos {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .atalho {
+        min-height: 120px;
+        padding: 16px;
+        border: 1px solid var(--borda);
+        border-radius: 18px;
+        background: #fff;
+        color: var(--texto);
+        text-align: left;
+      }
+
+      .atalho:hover {
+        border-color: #9db3c7;
+        box-shadow: var(--sombra);
+      }
+
+      .atalho .icone {
+        width: 26px;
+        height: 26px;
+        margin-bottom: 18px;
+        color: var(--acao-600);
+      }
+
+      .atalho strong,
+      .atalho small {
+        display: block;
+      }
+
+      .atalho small {
+        margin-top: 3px;
+        color: var(--texto-suave);
+      }
+
+      .lista-atencao {
+        display: grid;
+        gap: 10px;
+      }
+
+      .linha-atencao {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 14px;
+        padding: 15px 16px;
+        border: 1px solid var(--borda);
+        border-radius: 16px;
+        background: #fff;
+      }
+
+      .linha-atencao strong,
+      .linha-atencao small {
+        display: block;
+      }
+
+      .linha-atencao small {
+        color: var(--texto-suave);
+      }
+
+      .ponto-status {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--ganho-600);
+        box-shadow: 0 0 0 5px var(--ganho-100);
+      }
+
+      .selo {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        padding: 5px 9px;
+        border-radius: 999px;
+        background: var(--fundo);
+        color: var(--texto-suave);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .selo.ganho {
+        background: var(--ganho-100);
+        color: var(--ganho-700);
+      }
+
+      .selo.atencao {
+        background: var(--atencao-100);
+        color: var(--atencao-700);
+      }
+
+      .selo.perigo {
+        background: var(--perigo-100);
+        color: var(--perigo-600);
+      }
+
+      .fontes-grade,
+      .acoes-grade {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .fonte-card,
+      .acao-card {
+        position: relative;
+        display: grid;
+        gap: 14px;
+        padding: 22px;
+        border-radius: var(--raio);
+      }
+
+      .fonte-card {
+        min-height: 240px;
+      }
+
+      .fonte-card h2,
+      .acao-card h3 {
+        margin: 0;
+        letter-spacing: -0.025em;
+      }
+
+      .fonte-card p,
+      .acao-card p {
+        margin: 0;
+        color: var(--texto-suave);
+      }
+
+      .fonte-card .btn,
+      .acao-card .btn {
+        align-self: end;
+        justify-self: start;
+      }
+
+      .fonte-resumo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: auto;
+      }
+
+      .inter-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+        padding: 24px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, var(--ciano-100), #fff);
+        border: 1px solid #b8e9f2;
+      }
+
+      .inter-hero h2,
+      .inter-hero p {
+        margin: 0;
+      }
+
+      .inter-hero p {
+        margin-top: 4px;
+        color: var(--texto-suave);
+      }
+
+      .busca {
+        position: relative;
+        margin: 18px 0 12px;
+      }
+
+      .busca .icone {
+        position: absolute;
+        z-index: 1;
+        top: 15px;
+        left: 15px;
+        color: var(--texto-suave);
+      }
+
+      .busca input {
+        padding: 0 18px 0 48px;
+      }
+
+      .segmentos {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 14px;
+        background: #e8eef4;
+      }
+
+      .segmentos button {
+        min-height: 40px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--texto-suave);
+        font-weight: 800;
+      }
+
+      .segmentos button.ativo {
+        background: #fff;
+        box-shadow: 0 3px 10px rgba(16, 42, 67, 0.09);
+        color: var(--texto);
+      }
+
+      .resultado-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 14px 0;
+        color: var(--texto-suave);
+        font-size: 14px;
+      }
+
+      .sucesso-inline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 14px 0;
+        padding: 14px 16px;
+        border: 1px solid #9cdeb0;
+        border-radius: 15px;
+        background: var(--ganho-100);
+        color: var(--ganho-700);
+        font-weight: 750;
+      }
+
+      .sucesso-inline[hidden] {
+        display: none;
+      }
+
+      .lojas-grade {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .loja-card {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+        padding: 17px;
+        border-radius: 18px;
+      }
+
+      .loja-monograma {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 15px;
+        background: var(--fundo);
+        color: var(--marca-900);
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      .loja-conteudo {
+        min-width: 0;
+      }
+
+      .loja-topo {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .loja-topo h3 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .loja-categoria {
+        display: block;
+        margin-top: 3px;
+        color: var(--texto-suave);
+        font-size: 12px;
+      }
+
+      .cashback {
+        color: var(--ganho-700);
+        font-size: 17px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .cashback.livelo {
+        color: var(--acao-700);
+      }
+
+      .loja-card p {
+        min-height: 42px;
+        margin: 7px 0 14px;
+        color: var(--texto-suave);
+        font-size: 13px;
+      }
+
+      .loja-rodape {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .loja-acoes {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .loja-selos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .loja-acoes .btn:disabled {
+        cursor: default;
+        opacity: 1;
+      }
+
+      .btn-lixeira {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid #f3b7b7;
+        border-radius: 12px;
+        background: var(--perigo-100);
+        color: var(--perigo-600);
+      }
+
+      .btn-lixeira:hover {
+        border-color: var(--perigo-600);
+        background: #ffd2d2;
+      }
+
+      .loja-detalhes {
+        display: grid;
+        gap: 5px;
+        margin: 12px 0 15px;
+        padding: 11px 12px;
+        border-radius: 12px;
+        background: var(--fundo);
+        color: var(--texto-suave);
+        font-size: 12px;
+      }
+
+      .loja-detalhe {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .loja-detalhe strong {
+        color: var(--texto);
+        text-align: right;
+      }
+
+      .loja-card .btn {
+        min-height: 40px;
+        padding: 0 13px;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+
+      .paginacao {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .produto-resultado {
+        margin-top: 18px;
+      }
+
+      .produto-card-demo {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        padding: 20px;
+        border: 1px solid var(--borda);
+        border-radius: 18px;
+        background: var(--superficie);
+        box-shadow: 0 7px 20px rgba(16, 42, 67, 0.055);
+      }
+
+      .produto-card-demo h2,
+      .produto-card-demo p {
+        margin: 0;
+      }
+
+      .produto-card-demo p {
+        margin-top: 5px;
+        color: var(--texto-suave);
+      }
+
+      .produto-card-demo .produto-preco {
+        display: block;
+        margin: 12px 0 4px;
+        color: var(--marca-900);
+        font-size: 24px;
+        font-weight: 950;
+      }
+
+      .produto-card-acoes {
+        display: flex;
+        align-items: flex-end;
+      }
+
+      .historico-resumos {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+      }
+
+      .historico-resumo {
+        padding: 12px;
+        border: 1px solid var(--borda);
+        border-radius: 12px;
+        background: var(--fundo);
+      }
+
+      .historico-resumo span,
+      .historico-resumo strong {
+        display: block;
+      }
+
+      .historico-resumo span {
+        color: var(--texto-suave);
+        font-size: 12px;
+      }
+
+      .historico-resumo strong {
+        margin-top: 4px;
+        font-size: 18px;
+      }
+
+      .historico-tabela-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--borda);
+        border-radius: 14px;
+      }
+
+      .historico-tabela {
+        width: 100%;
+        min-width: 560px;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .historico-tabela th,
+      .historico-tabela td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--borda);
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .historico-tabela th {
+        background: var(--fundo);
+        color: var(--texto-suave);
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .historico-tabela tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .vazio {
+        grid-column: 1 / -1;
+        padding: 42px 20px;
+        border: 1px dashed #b8ccdd;
+        border-radius: 18px;
+        color: var(--texto-suave);
+        text-align: center;
+      }
+
+      .placeholder-alertas {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 18px;
+        padding: 24px;
+        border: 1px solid #f2d195;
+        border-radius: 20px;
+        background: var(--atencao-100);
+      }
+
+      .placeholder-alertas h2,
+      .placeholder-alertas p {
+        margin: 0;
+      }
+
+      .placeholder-alertas p {
+        margin-top: 6px;
+        color: #6f501f;
+      }
+
+      .mais-lista {
+        display: grid;
+        gap: 10px;
+      }
+
+      .mais-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 14px;
+        min-height: 72px;
+        padding: 12px 16px;
+        border: 1px solid var(--borda);
+        border-radius: 16px;
+        background: #fff;
+        color: var(--texto);
+        text-align: left;
+      }
+
+      .mais-item strong,
+      .mais-item small {
+        display: block;
+      }
+
+      .mais-item small {
+        margin-top: 2px;
+        color: var(--texto-suave);
+      }
+
+      .toast {
+        position: fixed;
+        z-index: 120;
+        right: 22px;
+        bottom: 22px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        max-width: min(420px, calc(100vw - 32px));
+        padding: 14px 17px;
+        transform: translateY(18px);
+        border: 1px solid #9cdeb0;
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: var(--sombra);
+        color: var(--ganho-700);
+        font-weight: 800;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          transform 200ms ease,
+          opacity 200ms ease;
+      }
+
+      .toast.visivel {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      dialog {
+        width: min(520px, calc(100vw - 28px));
+        padding: 0;
+        border: 0;
+        border-radius: 22px;
+        box-shadow: 0 28px 80px rgba(8, 26, 45, 0.3);
+        color: var(--texto);
+      }
+
+      dialog::backdrop {
+        background: rgba(8, 26, 45, 0.54);
+        backdrop-filter: blur(4px);
+      }
+
+      .dialogo-conteudo {
+        padding: 24px;
+      }
+
+      .dialogo-conteudo h2 {
+        margin: 0;
+      }
+
+      .dialogo-conteudo > p {
+        margin: 6px 0 20px;
+        color: var(--texto-suave);
+      }
+
+      .opcao-atalho {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 52px;
+        padding: 8px 10px;
+        border-bottom: 1px solid #edf1f5;
+      }
+
+      .opcao-atalho input {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--acao-600);
+      }
+
+      .dialogo-acoes {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .dialogo-perigo-icone {
+        display: grid;
+        place-items: center;
+        width: 50px;
+        height: 50px;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        background: var(--perigo-100);
+        color: var(--perigo-600);
+      }
+
+      .btn-perigo {
+        border-color: var(--perigo-600);
+        background: var(--perigo-600);
+        color: #fff;
+      }
+
+      @media (max-width: 920px) {
+        .login {
+          grid-template-columns: 1fr;
+        }
+
+        .login-visual {
+          display: none;
+        }
+
+        .login-formulario .mobile-brand {
+          display: flex;
+          margin-bottom: 28px;
+          color: var(--marca-900);
+        }
+
+        .app-grid {
+          display: block;
+        }
+
+        .lateral {
+          display: none;
+        }
+
+        .conteudo {
+          padding-bottom: 92px;
+        }
+
+        .tela {
+          padding-top: 68px;
+        }
+
+        .barra-inferior {
+          position: fixed;
+          z-index: 80;
+          right: 10px;
+          bottom: 10px;
+          left: 10px;
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          min-height: 68px;
+          padding: 6px;
+          border: 1px solid rgba(217, 227, 236, 0.88);
+          border-radius: 22px;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 10px 28px rgba(8, 26, 45, 0.14);
+          backdrop-filter: blur(16px);
+        }
+
+        .barra-inferior .nav-item {
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: 3px;
+          min-width: 0;
+          min-height: 56px;
+          padding: 4px 2px;
+          border-radius: 16px;
+          color: var(--texto-suave);
+          font-size: 11px;
+          text-align: center;
+        }
+
+        .barra-inferior .nav-item.ativo {
+          background: var(--acao-100);
+          color: var(--acao-700);
+        }
+
+        .barra-inferior .icone {
+          width: 21px;
+          height: 21px;
+        }
+
+        .grade-metricas {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .metrica:first-child {
+          grid-column: 1 / -1;
+        }
+
+        .atalhos {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
+        .prototipo-aviso span {
+          max-width: 138px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .login-formulario-area {
+          align-items: start;
+          padding: 72px 20px 34px;
+        }
+
+        .login-formulario h2 {
+          font-size: 28px;
+        }
+
+        .tela {
+          padding-right: 16px;
+          padding-left: 16px;
+        }
+
+        .cabecalho-tela {
+          align-items: center;
+        }
+
+        .cabecalho-tela h1 {
+          font-size: 32px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          padding: 24px;
+        }
+
+        .hero-sinal {
+          display: none;
+        }
+
+        .grade-metricas,
+        .fontes-grade,
+        .acoes-grade,
+        .lojas-grade {
+          grid-template-columns: 1fr;
+        }
+
+        .metrica:first-child {
+          grid-column: auto;
+        }
+
+        .linha-atencao {
+          grid-template-columns: auto 1fr;
+        }
+
+        .linha-atencao .selo {
+          grid-column: 2;
+        }
+
+        .inter-hero {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .loja-card {
+          grid-template-columns: 42px 1fr;
+          padding: 15px;
+        }
+
+        .loja-monograma {
+          width: 42px;
+          height: 42px;
+        }
+
+        .loja-topo {
+          display: block;
+        }
+
+        .cashback {
+          display: block;
+          margin-top: 3px;
+        }
+
+        .resultado-meta {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .produto-card-demo {
+          grid-template-columns: 1fr;
+        }
+
+        .produto-card-acoes {
+          align-items: stretch;
+        }
+
+        .produto-card-acoes .btn {
+          width: 100%;
+        }
+
+        .segmentos {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          width: 100%;
+        }
+
+        .toast {
+          right: 16px;
+          bottom: 94px;
+          left: 16px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="sr-only" aria-hidden="true">
+      <symbol id="i-home" viewBox="0 0 24 24">
+        <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />
+      </symbol>
+      <symbol id="i-store" viewBox="0 0 24 24">
+        <path d="M4 9v11h16V9M3 9l2-6h14l2 6M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M9 20v-6h6v6" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="i-back" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="i-cash" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M7 9h.01M17 15h.01M12 9v6M10 11h3a1 1 0 0 1 0 2h-3" />
+      </symbol>
+      <symbol id="i-product" viewBox="0 0 24 24">
+        <path d="m4 7 8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10" />
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z" />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 15 6l-.3-2.6h-4L10.4 6A8 8 0 0 0 9 7.1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A8 8 0 0 0 10.4 18l.3 2.6h4L15 18a8 8 0 0 0 1.5-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M20 7v5h-5M4 17v-5h5M6.1 8A7 7 0 0 1 18 6l2 6M17.9 16A7 7 0 0 1 6 18l-2-6" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
+      </symbol>
+    </svg>
+
+    <div class="prototipo-aviso">
+      <span>Protótipo Web · dados ilustrativos</span>
+      <button type="button" data-action="replay">Rever abertura</button>
+    </div>
+
+    <section id="splash" class="splash" aria-label="Inicializando Radar">
+      <div class="splash-conteudo">
+        <div class="splash-marca">
+          <img
+            class="splash-logo"
+            src="assets/logo-radar-conceito.png"
+            alt=""
+            width="112"
+            height="112"
+          />
+        </div>
+        <h1>Radar</h1>
+        <p>Pontos, cashback e preços no seu alcance.</p>
+        <div class="splash-status" role="status">Preparando seu radar…</div>
+      </div>
+    </section>
+
+    <section id="login" class="login" hidden>
+      <div class="login-visual">
+        <div class="assinatura">
+          <span class="assinatura-logo">
+            <img src="assets/logo-radar-conceito.png" alt="" width="42" height="42" />
+          </span>
+          <span>Radar de Benefícios</span>
+        </div>
+        <div class="login-chamada">
+          <span class="sobrelinha">SEU RADAR DE OPORTUNIDADES</span>
+          <h1>Seu próximo benefício não passa despercebido.</h1>
+          <p>Pontos, cashback e preços reunidos em um só lugar, prontos para ajudar na sua próxima decisão.</p>
+          <ul class="login-beneficios">
+            <li>Livelo</li>
+            <li>Shopping Inter</li>
+            <li>Histórico de preços</li>
+          </ul>
+        </div>
+        <div class="login-rodape">Projeto independente, sem afiliação com Livelo ou Banco Inter.</div>
+      </div>
+
+      <div class="login-formulario-area">
+        <form id="login-form" class="login-formulario">
+          <div class="assinatura mobile-brand">
+            <span class="assinatura-logo">
+              <img src="assets/logo-radar-conceito.png" alt="" width="42" height="42" />
+            </span>
+            <span>Radar de Benefícios</span>
+          </div>
+          <h2>Que bom ter você aqui</h2>
+          <p>Entre com seu acesso para ver as oportunidades acompanhadas.</p>
+
+          <div class="campo">
+            <label for="email">E-mail</label>
+            <div class="input-wrap">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="username"
+                placeholder="voce@exemplo.com"
+                value="radar@exemplo.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="senha">Senha</label>
+            <div class="input-wrap">
+              <input
+                id="senha"
+                name="senha"
+                type="password"
+                autocomplete="current-password"
+                value="radar123"
+                required
+              />
+              <button
+                class="mostrar-senha"
+                type="button"
+                data-action="toggle-password"
+                aria-label="Mostrar senha"
+              >
+                <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="login-acoes">
+            <button class="btn btn-primario btn-largo" type="submit">
+              <svg class="icone" aria-hidden="true"><use href="#i-lock"></use></svg>
+              <span>Entrar no protótipo</span>
+            </button>
+            <button class="btn-link" type="button" data-action="recover">
+              Esqueci minha senha
+            </button>
+          </div>
+
+          <div class="login-seguranca">
+            <svg class="icone" aria-hidden="true"><use href="#i-lock"></use></svg>
+            <span>Seu acesso continua protegido pelo Firebase e validado pela API.</span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div id="aplicativo" class="aplicativo" hidden>
+      <div class="app-grid">
+        <aside class="lateral" aria-label="Navegação principal">
+          <div class="assinatura">
+            <span class="assinatura-logo">
+              <img src="assets/logo-radar-conceito.png" alt="" width="42" height="42" />
+            </span>
+            <span>Radar</span>
+          </div>
+
+          <nav class="lateral-navegacao">
+            <button class="nav-item ativo" type="button" data-screen="inicio">
+              <svg class="icone" aria-hidden="true"><use href="#i-home"></use></svg>
+              <span>Início</span>
+            </button>
+            <button class="nav-item" type="button" data-screen="lojas">
+              <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
+              <span>Lojas</span>
+            </button>
+            <button class="nav-item" type="button" data-screen="produtos">
+              <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+              <span>Produtos</span>
+            </button>
+            <button class="nav-item" type="button" data-screen="alertas">
+              <svg class="icone" aria-hidden="true"><use href="#i-bell"></use></svg>
+              <span>Alertas</span>
+            </button>
+            <button class="nav-item" type="button" data-screen="mais">
+              <svg class="icone" aria-hidden="true"><use href="#i-more"></use></svg>
+              <span>Mais</span>
+            </button>
+          </nav>
+
+          <div class="lateral-rodape">
+            <div class="perfil-mini">
+              <span class="avatar">RL</span>
+              <span>
+                <strong>Rodrigo</strong>
+                <small>Administrador</small>
+              </span>
+            </div>
+          </div>
+        </aside>
+
+        <main class="conteudo">
+          <section id="tela-inicio" class="tela ativa" data-title="Início">
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo ganho">Tudo sincronizado</p>
+                <h1>Bom dia, Rodrigo</h1>
+                <p>Veja primeiro o que pode fazer diferença na sua próxima compra.</p>
+              </div>
+              <button class="botao-icone" type="button" data-screen="alertas" aria-label="Abrir alertas">
+                <svg class="icone" aria-hidden="true"><use href="#i-bell"></use></svg>
+              </button>
+            </header>
+
+            <article class="hero">
+              <div>
+                <p class="sobrelinha">OPORTUNIDADE EM DESTAQUE</p>
+                <h2>Seu radar encontrou três movimentos importantes hoje.</h2>
+                <p>Há promoção Livelo, cashback acompanhado e uma queda de preço nos dados ilustrativos deste protótipo.</p>
+              </div>
+              <div class="hero-sinal">
+                <img src="assets/logo-radar-conceito.png" alt="" width="148" height="148" />
+              </div>
+            </article>
+
+            <div class="grade-metricas" aria-label="Resumo do dia">
+              <article class="metrica">
+                <div class="metrica-topo">
+                  <span class="metrica-icone azul">
+                    <svg class="icone" aria-hidden="true"><use href="#i-star"></use></svg>
+                  </span>
+                  <span class="selo ganho">2 em alerta</span>
+                </div>
+                <strong>6 pts/R$</strong>
+                <span>Maior pontuação Livelo acompanhada</span>
+              </article>
+              <article class="metrica">
+                <div class="metrica-topo">
+                  <span class="metrica-icone verde">
+                    <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
+                  </span>
+                </div>
+                <strong>12%</strong>
+                <span>Maior cashback acompanhado</span>
+              </article>
+              <article class="metrica">
+                <div class="metrica-topo">
+                  <span class="metrica-icone ciano">
+                    <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
+                  </span>
+                </div>
+                <strong data-follow-count>3</strong>
+                <span>Lojas Inter acompanhadas</span>
+              </article>
+            </div>
+
+            <section class="secao">
+              <div class="secao-topo">
+                <h2>Seus atalhos</h2>
+                <button class="btn-link" type="button" data-action="customize">Personalizar</button>
+              </div>
+              <div id="atalhos" class="atalhos">
+                <button class="atalho" type="button" data-screen="cashback">
+                  <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
+                  <strong>Cashback Inter</strong>
+                  <small>Buscar e acompanhar</small>
+                </button>
+                <button class="atalho" type="button" data-screen="livelo">
+                  <svg class="icone" aria-hidden="true"><use href="#i-star"></use></svg>
+                  <strong>Ofertas Livelo</strong>
+                  <small>Ver pontos atuais</small>
+                </button>
+                <button class="atalho" type="button" data-screen="produtos">
+                  <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+                  <strong>Buscar produto</strong>
+                  <small>Catálogo local</small>
+                </button>
+                <button class="atalho" type="button" data-screen="inter">
+                  <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
+                  <strong>Atualizações</strong>
+                  <small>Status por domínio</small>
+                </button>
+              </div>
+            </section>
+
+            <section class="secao">
+              <div class="secao-topo">
+                <h2>O que merece atenção</h2>
+                <span class="selo">Dados ilustrativos</span>
+              </div>
+              <div class="lista-atencao">
+                <article class="linha-atencao">
+                  <span class="ponto-status" aria-hidden="true"></span>
+                  <div>
+                    <strong>Casas Bahia chegou a 6 pontos por real</strong>
+                    <small>Livelo · acima da sua regra de alerta</small>
+                  </div>
+                  <span class="selo ganho">Agora</span>
+                </article>
+                <article class="linha-atencao">
+                  <span class="ponto-status" aria-hidden="true"></span>
+                  <div>
+                    <strong>Magalu está com cashback de até 12%</strong>
+                    <small>Sites parceiros · confirme as condições antes da compra</small>
+                  </div>
+                  <span class="selo ganho">12%</span>
+                </article>
+                <article class="linha-atencao">
+                  <span class="ponto-status" aria-hidden="true"></span>
+                  <div>
+                    <strong>Uma coleta de produtos está em andamento</strong>
+                    <small>Pedido aceito · conclusão ainda não confirmada</small>
+                  </div>
+                  <span class="selo atencao">Executando</span>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <section id="tela-lojas" class="tela" data-title="Lojas">
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo">Fontes conectadas</p>
+                <h1>Lojas</h1>
+                <p>Escolha a fonte primeiro. Cada uma mantém suas próprias regras e ações.</p>
+              </div>
+            </header>
+
+            <div class="fontes-grade">
+              <article class="fonte-card">
+                <span class="fonte-icone azul">
+                  <svg class="icone" aria-hidden="true"><use href="#i-star"></use></svg>
+                </span>
+                <div>
+                  <h2>Livelo</h2>
+                  <p>Acompanhe pontos por real, promoções, Clube e sua regra de alerta.</p>
+                </div>
+                <div class="fonte-resumo">
+                  <span class="selo ganho"><span data-livelo-follow-count>3</span> acompanhadas</span>
+                  <span class="selo ganho">2 alertas</span>
+                  <span class="selo">Atualizada há 18 min</span>
+                </div>
+                <button class="btn btn-primario" type="button" data-screen="livelo">
+                  Abrir Livelo
+                  <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+                </button>
+              </article>
+
+              <article class="fonte-card">
+                <span class="fonte-icone ciano">
+                  <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
+                </span>
+                <div>
+                  <h2>Shopping Inter</h2>
+                  <p>Entre em Cashback dos Sites parceiros ou Produtos do Compre direto.</p>
+                </div>
+                <div class="fonte-resumo">
+                  <span class="selo ganho"><span data-follow-count>3</span> acompanhadas</span>
+                  <span class="selo">2 modalidades</span>
+                </div>
+                <button class="btn btn-primario" type="button" data-screen="inter">
+                  Abrir Inter
+                  <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+                </button>
+              </article>
+            </div>
+          </section>
+
+          <section id="tela-inter" class="tela" data-title="Shopping Inter">
+            <button class="voltar" type="button" data-screen="lojas">
+              <svg class="icone" aria-hidden="true"><use href="#i-back"></use></svg>
+              Voltar para Lojas
+            </button>
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo ganho">Fonte conectada</p>
+                <h1>Shopping Inter</h1>
+                <p>Cashback e Produtos são jornadas diferentes. Escolha o que você quer fazer agora.</p>
+              </div>
+            </header>
+
+            <div class="inter-hero">
+              <div>
+                <h2>Resumo do Inter</h2>
+                <p><span data-follow-count>3</span> lojas acompanhadas · última coleta válida há 22 min</p>
+              </div>
+              <button class="btn btn-secundario" type="button" data-action="update-request">
+                <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
+                Atualizar dados
+              </button>
+            </div>
+
+            <div class="acoes-grade">
+              <article class="acao-card">
+                <span class="acao-icone verde">
+                  <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
+                </span>
+                <div>
+                  <h3>Cashback</h3>
+                  <p>Sites parceiros, percentuais e condições completas da oferta.</p>
+                </div>
+                <button class="btn btn-primario" type="button" data-screen="cashback">Ver cashback</button>
+              </article>
+
+              <article class="acao-card">
+                <span class="acao-icone ciano">
+                  <svg class="icone" aria-hidden="true"><use href="#i-product"></use></svg>
+                </span>
+                <div>
+                  <h3>Produtos</h3>
+                  <p>Compre direto, busca no banco, preços e histórico de 30 dias.</p>
+                </div>
+                <button class="btn btn-primario" type="button" data-screen="produtos">Buscar produtos</button>
+              </article>
+            </div>
+          </section>
+
+          <section id="tela-cashback" class="tela" data-title="Cashback">
+            <button class="voltar" type="button" data-screen="inter">
+              <svg class="icone" aria-hidden="true"><use href="#i-back"></use></svg>
+              Voltar para Shopping Inter
+            </button>
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo ganho">Sites parceiros</p>
+                <h1>Cashback</h1>
+                <p>Pesquise no catálogo salvo e acompanhe uma loja sem sair desta tela.</p>
+              </div>
+              <button class="botao-icone" type="button" data-action="update-request" aria-label="Solicitar atualização do cashback">
+                <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
+              </button>
+            </header>
+
+            <div class="segmentos" aria-label="Filtro de acompanhamento">
+              <button class="ativo" type="button" data-domain="inter" data-filter="all">Todas as lojas</button>
+              <button type="button" data-domain="inter" data-filter="following">
+                Acompanhadas (<span data-follow-count>3</span>)
+              </button>
+            </div>
+
+            <label class="busca">
+              <span class="sr-only">Buscar loja</span>
+              <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input id="inter-store-search" type="search" placeholder="Digite o nome da loja…" autocomplete="off" />
+            </label>
+
+            <div id="inter-success-inline" class="sucesso-inline" role="status" aria-live="polite" hidden>
+              <svg class="icone" aria-hidden="true"><use href="#i-check"></use></svg>
+              <span id="inter-success-inline-text">Loja adicionada ao acompanhamento.</span>
+            </div>
+
+            <div class="resultado-meta">
+              <span id="inter-store-count">20 lojas encontradas</span>
+              <span id="inter-store-page">Mostrando 10 de 20</span>
+            </div>
+
+            <div id="inter-store-grid" class="lojas-grade" aria-live="polite"></div>
+            <div class="paginacao">
+              <button id="inter-load-more" class="btn btn-secundario" type="button">Mostrar mais 10</button>
+            </div>
+          </section>
+
+          <section id="tela-livelo" class="tela" data-title="Livelo">
+            <button class="voltar" type="button" data-screen="lojas">
+              <svg class="icone" aria-hidden="true"><use href="#i-back"></use></svg>
+              Voltar para Lojas
+            </button>
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo ganho">2 alertas ativos</p>
+                <h1>Livelo</h1>
+                <p>Pesquise todas as lojas encontradas na coleta e escolha quais acompanhar. Pontos, base, Clube e alertas continuam separados do Inter.</p>
+              </div>
+              <button class="botao-icone" type="button" data-action="update-request" aria-label="Solicitar atualização da Livelo">
+                <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
+              </button>
+            </header>
+            <div class="segmentos" aria-label="Filtro das lojas Livelo">
+              <button class="ativo" type="button" data-domain="livelo" data-filter="all">Todas as lojas</button>
+              <button type="button" data-domain="livelo" data-filter="following">
+                Acompanhadas (<span data-livelo-follow-count>3</span>)
+              </button>
+            </div>
+
+            <label class="busca">
+              <span class="sr-only">Buscar loja ou categoria da Livelo</span>
+              <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input id="livelo-store-search" type="search" placeholder="Digite a loja ou categoria…" autocomplete="off" />
+            </label>
+
+            <div id="livelo-success-inline" class="sucesso-inline" role="status" aria-live="polite" hidden>
+              <svg class="icone" aria-hidden="true"><use href="#i-check"></use></svg>
+              <span id="livelo-success-inline-text">Loja adicionada ao acompanhamento.</span>
+            </div>
+
+            <div class="resultado-meta">
+              <span id="livelo-store-count">20 lojas encontradas</span>
+              <span id="livelo-store-page">Mostrando 10 de 20</span>
+            </div>
+
+            <div id="livelo-store-grid" class="lojas-grade" aria-live="polite"></div>
+            <div class="paginacao">
+              <button id="livelo-load-more" class="btn btn-secundario" type="button">Mostrar mais 10</button>
+            </div>
+          </section>
+
+          <section id="tela-produtos" class="tela" data-title="Produtos">
+            <button class="voltar" type="button" data-screen="inter">
+              <svg class="icone" aria-hidden="true"><use href="#i-back"></use></svg>
+              Voltar para Shopping Inter
+            </button>
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo">Compre direto no Inter</p>
+                <h1>Produtos</h1>
+                <p>A busca usa somente o último catálogo válido no Postgres. Digitar aqui nunca chama o Inter.</p>
+              </div>
+            </header>
+            <label class="busca">
+              <span class="sr-only">Buscar produto</span>
+              <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input id="product-search" type="search" placeholder="Ex.: smartphone Motorola Edge 60 Pro" />
+            </label>
+            <div id="product-demo" class="vazio">
+              Digite pelo menos dois caracteres para procurar no catálogo local.
+            </div>
+            <section id="product-results" class="produto-resultado" hidden>
+              <div class="resultado-meta">
+                <span>1 produto ilustrativo encontrado</span>
+                <span>Última coleta: hoje, 20h</span>
+              </div>
+              <article class="produto-card-demo">
+                <div>
+                  <p class="selo ganho">Disponível na última coleta</p>
+                  <h2>Motorola Edge 60 Pro 5G 256 GB</h2>
+                  <p>Casas Bahia · Compre direto no Inter</p>
+                  <strong class="produto-preco">R$ 2.899,00</strong>
+                  <span class="selo">Após cashback: R$ 2.754,05</span>
+                </div>
+                <div class="produto-card-acoes">
+                  <button class="btn btn-secundario" type="button" data-action="open-product-history">
+                    Ver histórico
+                  </button>
+                </div>
+              </article>
+            </section>
+          </section>
+
+          <section id="tela-alertas" class="tela" data-title="Alertas">
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo atencao">Fase futura</p>
+                <h1>Alertas</h1>
+                <p>Este destino fica estável na navegação, mas não finge uma central que o backend ainda não entrega.</p>
+              </div>
+            </header>
+            <div class="placeholder-alertas">
+              <span class="metrica-icone ambar">
+                <svg class="icone" aria-hidden="true"><use href="#i-bell"></use></svg>
+              </span>
+              <div>
+                <h2>Central planejada para a Fase 6</h2>
+                <p>Push, relatórios e histórico de notificações só entram depois de requisitos, outbox, idempotência e testes próprios.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="tela-mais" class="tela" data-title="Mais">
+            <header class="cabecalho-tela">
+              <div>
+                <p class="selo">Conta e sistema</p>
+                <h1>Mais</h1>
+                <p>Configurações menos frequentes ficam aqui, sem disputar espaço com as lojas.</p>
+              </div>
+            </header>
+            <div class="mais-lista">
+              <button class="mais-item" type="button" data-action="admin-info">
+                <span class="metrica-icone azul"><svg class="icone" aria-hidden="true"><use href="#i-settings"></use></svg></span>
+                <span><strong>Administração</strong><small>Lojas, preferências, disparos e zona de perigo</small></span>
+                <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+              </button>
+              <button class="mais-item" type="button" data-action="customize">
+                <span class="metrica-icone ciano"><svg class="icone" aria-hidden="true"><use href="#i-home"></use></svg></span>
+                <span><strong>Atalhos do Início</strong><small>Escolha até quatro acessos rápidos</small></span>
+                <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+              </button>
+              <button class="mais-item" type="button" data-action="replay">
+                <span class="metrica-icone verde"><svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg></span>
+                <span><strong>Rever abertura</strong><small>Reproduzir a animação de inicialização</small></span>
+                <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+              </button>
+              <button class="mais-item" type="button" data-action="logout">
+                <span class="metrica-icone ambar"><svg class="icone" aria-hidden="true"><use href="#i-lock"></use></svg></span>
+                <span><strong>Sair</strong><small>Voltar para a proposta de login</small></span>
+                <svg class="icone" aria-hidden="true"><use href="#i-arrow"></use></svg>
+              </button>
+            </div>
+          </section>
+        </main>
+
+        <nav class="barra-inferior" aria-label="Navegação principal">
+          <button class="nav-item ativo" type="button" data-screen="inicio">
+            <svg class="icone" aria-hidden="true"><use href="#i-home"></use></svg>
+            <span>Início</span>
+          </button>
+          <button class="nav-item" type="button" data-screen="lojas">
+            <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
+            <span>Lojas</span>
+          </button>
+          <button class="nav-item" type="button" data-screen="produtos">
+            <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
+            <span>Produtos</span>
+          </button>
+          <button class="nav-item" type="button" data-screen="alertas">
+            <svg class="icone" aria-hidden="true"><use href="#i-bell"></use></svg>
+            <span>Alertas</span>
+          </button>
+          <button class="nav-item" type="button" data-screen="mais">
+            <svg class="icone" aria-hidden="true"><use href="#i-more"></use></svg>
+            <span>Mais</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">
+      <svg class="icone" aria-hidden="true"><use href="#i-check"></use></svg>
+      <span id="toast-text">Ação concluída.</span>
+    </div>
+
+    <dialog id="shortcut-dialog">
+      <form method="dialog" class="dialogo-conteudo">
+        <h2>Personalizar atalhos</h2>
+        <p>Escolha os quatro acessos mais úteis. A navegação principal continua fixa.</p>
+        <label class="opcao-atalho"><input type="checkbox" checked /> Cashback Inter</label>
+        <label class="opcao-atalho"><input type="checkbox" checked /> Ofertas Livelo</label>
+        <label class="opcao-atalho"><input type="checkbox" checked /> Buscar produto</label>
+        <label class="opcao-atalho"><input type="checkbox" checked /> Atualizações</label>
+        <div class="dialogo-acoes">
+          <button class="btn btn-secundario" value="cancel">Cancelar</button>
+          <button class="btn btn-primario" value="default" data-action="save-shortcuts">Salvar visual</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-question">
+      <div class="dialogo-conteudo">
+        <span class="dialogo-perigo-icone">
+          <svg class="icone" aria-hidden="true"><use href="#i-trash"></use></svg>
+        </span>
+        <h2 id="delete-title">Remover acompanhamento?</h2>
+        <p id="delete-question">Você quer mesmo excluir esta loja do acompanhamento?</p>
+        <div class="dialogo-acoes">
+          <button class="btn btn-secundario" type="button" data-action="cancel-delete">Cancelar</button>
+          <button id="confirm-delete" class="btn btn-perigo" type="button">Sim, excluir</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="history-dialog" aria-labelledby="history-title" aria-describedby="history-subtitle">
+      <div class="dialogo-conteudo">
+        <p class="selo">3 coletas por dia</p>
+        <h2 id="history-title">Histórico</h2>
+        <p id="history-subtitle">Medições preservadas dos últimos 30 dias.</p>
+        <div class="historico-resumos">
+          <div class="historico-resumo">
+            <span id="history-min-label">Menor em 30 dias</span>
+            <strong id="history-min-value">—</strong>
+          </div>
+          <div class="historico-resumo">
+            <span id="history-max-label">Maior em 30 dias</span>
+            <strong id="history-max-value">—</strong>
+          </div>
+        </div>
+        <div class="historico-tabela-wrap">
+          <table class="historico-tabela">
+            <thead>
+              <tr>
+                <th>Quando</th>
+                <th id="history-value-heading">Valor</th>
+                <th id="history-secondary-heading">Complemento</th>
+                <th id="history-result-heading">Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="history-rows"></tbody>
+          </table>
+        </div>
+        <div class="dialogo-acoes">
+          <button class="btn btn-primario" type="button" data-action="close-history">Fechar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      (function () {
+        'use strict';
+
+        var stores = [
+          { name: 'Magalu', cashback: 'Até 12%', note: 'Percentual varia conforme produto e condição.', following: true },
+          { name: 'Casas Bahia', cashback: 'Até 8%', note: 'Confira as condições antes de concluir a compra.', following: true },
+          { name: 'Riachuelo', cashback: 'Até 7%', note: 'Oferta para Cliente Inter Shopping.', following: true },
+          { name: 'C&A', cashback: 'Até 6%', note: 'O Inter não informou condições adicionais.', following: false },
+          { name: 'Netshoes', cashback: 'Até 10%', note: 'Percentual ilustrativo para o protótipo.', following: false },
+          { name: 'Nike', cashback: 'Até 5%', note: 'Condição pode variar por categoria.', following: false },
+          { name: 'Natura', cashback: 'Até 9%', note: 'Consulte a oferta atual antes da compra.', following: false },
+          { name: 'Samsung', cashback: 'Até 4%', note: 'Percentual ilustrativo para o protótipo.', following: false },
+          { name: 'Centauro', cashback: 'Até 7%', note: 'Oferta sujeita às regras do parceiro.', following: false },
+          { name: 'Renner', cashback: 'Até 5%', note: 'Confira a condição publicada pelo Inter.', following: false },
+          { name: 'Ponto', cashback: 'Até 8%', note: 'Oferta para Sites parceiros.', following: false },
+          { name: 'Fast Shop', cashback: 'Até 6%', note: 'Percentual pode depender do produto.', following: false },
+          { name: 'Sephora', cashback: 'Até 9%', note: 'Condições ilustrativas neste protótipo.', following: false },
+          { name: 'Booking.com', cashback: 'Até 4%', note: 'A elegibilidade pode variar por reserva.', following: false },
+          { name: 'Decolar', cashback: 'Até 5%', note: 'Confirme datas e condições aplicáveis.', following: false },
+          { name: 'Mercado Livre', cashback: 'Ofertas disponíveis', note: 'Sem percentual numérico nesta consulta.', following: false },
+          { name: 'Adidas', cashback: 'Até 6%', note: 'Percentual ilustrativo para o protótipo.', following: false },
+          { name: 'Cobasi', cashback: 'Até 5%', note: 'Confira as condições no Shopping Inter.', following: false },
+          { name: 'Petz', cashback: 'Até 4%', note: 'Oferta sujeita a categorias elegíveis.', following: false },
+          { name: 'Drogasil', cashback: 'Até 3%', note: 'Percentual ilustrativo para o protótipo.', following: false }
+        ];
+
+        var liveloStores = [
+          { name: 'Magalu', category: 'Marketplace', points: '6 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '7 pts/R$', note: 'Promoção ilustrativa válida até 25/08. Confira as condições da campanha.', alert: true, following: true },
+          { name: 'Casas Bahia', category: 'Marketplace', points: '5 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '6 pts/R$', note: 'Pontuação promocional em categorias selecionadas.', alert: true, following: true },
+          { name: 'Renner', category: 'Moda', points: '4 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Promoção ilustrativa válida enquanto durar a campanha.', alert: false, following: true },
+          { name: 'Riachuelo', category: 'Moda', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '4 pts/R$', note: 'Clube Livelo possui pontuação própria nesta simulação.', alert: false, following: false },
+          { name: 'Netshoes', category: 'Esporte', points: '5 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Confira produtos elegíveis antes de concluir a compra.', alert: false, following: false },
+          { name: 'Decolar', category: 'Viagem', points: '6 pts/R$', normal: '6 pts/R$', threshold: '12 pts/R$', club: null, note: 'Pontuação alta permanente; não representa promoção.', alert: false, following: false },
+          { name: 'C&A', category: 'Moda', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '4 pts/R$', note: 'Condições ilustrativas para validar o cartão.', alert: false, following: false },
+          { name: 'Natura', category: 'Beleza', points: '4 pts/R$', normal: '4 pts/R$', threshold: '8 pts/R$', club: null, note: 'Pontuação atual igual ao normal informado pela fonte.', alert: false, following: false },
+          { name: 'Samsung', category: 'Eletro', points: '2 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '3 pts/R$', note: 'Campanha ilustrativa para produtos selecionados.', alert: false, following: false },
+          { name: 'Centauro', category: 'Esporte', points: '4 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Consulte a validade apresentada pela Livelo.', alert: false, following: false },
+          { name: 'Petlove', category: 'Pets', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: null, note: 'Petlove e Petlove Saúde permanecem lojas diferentes.', alert: false, following: false },
+          { name: 'Cobasi', category: 'Pets', points: '2 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '3 pts/R$', note: 'Pontuação ilustrativa para o protótipo.', alert: false, following: false },
+          { name: 'Adidas', category: 'Esporte', points: '5 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Oferta sujeita às condições publicadas pela Livelo.', alert: false, following: false },
+          { name: 'Nike', category: 'Esporte', points: '4 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: '5 pts/R$', note: 'Clube Livelo possui pontuação própria nesta simulação.', alert: false, following: false },
+          { name: 'Fast Shop', category: 'Eletro', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: null, note: 'Consulte as categorias elegíveis da campanha.', alert: false, following: false },
+          { name: 'Ponto', category: 'Marketplace', points: '4 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '5 pts/R$', note: 'Condições ilustrativas para navegação e busca.', alert: false, following: false },
+          { name: 'iFood', category: 'Alimentação', points: '2 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: null, note: 'Pontuação apresentada como texto, sem cálculo financeiro.', alert: false, following: false },
+          { name: 'Localiza', category: 'Viagem', points: '4 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Localiza e suas variações não são mescladas por nome.', alert: false, following: false },
+          { name: 'Booking.com', category: 'Viagem', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: null, note: 'Confira datas, reservas e demais condições da campanha.', alert: false, following: false },
+          { name: 'Sephora', category: 'Beleza', points: '5 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: '6 pts/R$', note: 'Promoção ilustrativa para demonstrar todos os dados do cartão.', alert: false, following: false }
+        ];
+
+        var pageSize = 10;
+        var visible = pageSize;
+        var filter = 'all';
+        var liveloVisible = pageSize;
+        var liveloFilter = 'all';
+        var toastTimer;
+        var successTimer;
+        var pendingRemoval = null;
+
+        var splash = document.getElementById('splash');
+        var login = document.getElementById('login');
+        var app = document.getElementById('aplicativo');
+        var search = document.getElementById('inter-store-search');
+        var storeGrid = document.getElementById('inter-store-grid');
+        var loadMore = document.getElementById('inter-load-more');
+        var storeCount = document.getElementById('inter-store-count');
+        var storePage = document.getElementById('inter-store-page');
+        var successInline = document.getElementById('inter-success-inline');
+        var successText = document.getElementById('inter-success-inline-text');
+        var liveloSearch = document.getElementById('livelo-store-search');
+        var liveloStoreGrid = document.getElementById('livelo-store-grid');
+        var liveloLoadMore = document.getElementById('livelo-load-more');
+        var liveloStoreCount = document.getElementById('livelo-store-count');
+        var liveloStorePage = document.getElementById('livelo-store-page');
+        var liveloSuccessInline = document.getElementById('livelo-success-inline');
+        var liveloSuccessText = document.getElementById('livelo-success-inline-text');
+        var toast = document.getElementById('toast');
+        var toastText = document.getElementById('toast-text');
+        var shortcutDialog = document.getElementById('shortcut-dialog');
+        var deleteDialog = document.getElementById('delete-dialog');
+        var deleteQuestion = document.getElementById('delete-question');
+        var confirmDelete = document.getElementById('confirm-delete');
+        var productDemo = document.getElementById('product-demo');
+        var productResults = document.getElementById('product-results');
+        var historyDialog = document.getElementById('history-dialog');
+        var historyTitle = document.getElementById('history-title');
+        var historySubtitle = document.getElementById('history-subtitle');
+        var historyMinLabel = document.getElementById('history-min-label');
+        var historyMinValue = document.getElementById('history-min-value');
+        var historyMaxLabel = document.getElementById('history-max-label');
+        var historyMaxValue = document.getElementById('history-max-value');
+        var historyValueHeading = document.getElementById('history-value-heading');
+        var historySecondaryHeading = document.getElementById('history-secondary-heading');
+        var historyResultHeading = document.getElementById('history-result-heading');
+        var historyRows = document.getElementById('history-rows');
+
+        function hideSplash(next) {
+          window.setTimeout(function () {
+            splash.hidden = true;
+            if (next === 'app') {
+              login.hidden = true;
+              app.hidden = false;
+            } else {
+              login.hidden = false;
+              app.hidden = true;
+            }
+          }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 80 : 1550);
+        }
+
+        function replaySplash() {
+          splash.hidden = false;
+          window.setTimeout(function () {
+            splash.hidden = true;
+          }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 120 : 1600);
+        }
+
+        function navigate(screen) {
+          app.hidden = false;
+          login.hidden = true;
+          document.querySelectorAll('.tela').forEach(function (item) {
+            item.classList.toggle('ativa', item.id === 'tela-' + screen);
+          });
+          document.querySelectorAll('.nav-item[data-screen]').forEach(function (item) {
+            item.classList.toggle('ativo', item.getAttribute('data-screen') === screen);
+          });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          var active = document.getElementById('tela-' + screen);
+          if (active) {
+            document.title = active.getAttribute('data-title') + ' — Radar';
+          }
+        }
+
+        function normalize(text) {
+          return text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        }
+
+        function initials(name) {
+          return name
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(function (part) { return part.charAt(0); })
+            .join('')
+            .toUpperCase();
+        }
+
+        function updateFollowCount() {
+          var count = stores.filter(function (store) { return store.following; }).length;
+          var liveloCount = liveloStores.filter(function (store) { return store.following; }).length;
+          document.querySelectorAll('[data-follow-count]').forEach(function (item) {
+            item.textContent = String(count);
+          });
+          document.querySelectorAll('[data-livelo-follow-count]').forEach(function (item) {
+            item.textContent = String(liveloCount);
+          });
+        }
+
+        function domainView(domain) {
+          if (domain === 'livelo') {
+            return {
+              items: liveloStores,
+              search: liveloSearch,
+              grid: liveloStoreGrid,
+              loadMore: liveloLoadMore,
+              count: liveloStoreCount,
+              page: liveloStorePage,
+              filter: liveloFilter,
+              visible: liveloVisible
+            };
+          }
+          return {
+            items: stores,
+            search: search,
+            grid: storeGrid,
+            loadMore: loadMore,
+            count: storeCount,
+            page: storePage,
+            filter: filter,
+            visible: visible
+          };
+        }
+
+        function filteredStores(domain) {
+          var view = domainView(domain);
+          var term = normalize(view.search.value.trim());
+          return view.items.filter(function (store) {
+            var searchable = store.name + ' ' + (store.category || '');
+            var matchesText = normalize(searchable).indexOf(term) !== -1;
+            var matchesFilter = view.filter === 'all' || store.following;
+            return matchesText && matchesFilter;
+          });
+        }
+
+        function addDetail(container, label, value) {
+          if (!value) return;
+          var row = document.createElement('span');
+          row.className = 'loja-detalhe';
+          var text = document.createElement('span');
+          text.textContent = label;
+          var strong = document.createElement('strong');
+          strong.textContent = value;
+          row.append(text, strong);
+          container.appendChild(row);
+        }
+
+        function addHistoryRow(values) {
+          var row = document.createElement('tr');
+          values.forEach(function (value) {
+            var cell = document.createElement('td');
+            cell.textContent = value;
+            row.appendChild(cell);
+          });
+          historyRows.appendChild(row);
+        }
+
+        function openHistory(domain, store) {
+          historyRows.replaceChildren();
+          historyMinLabel.textContent = 'Menor em 30 dias';
+          historyMaxLabel.textContent = 'Maior em 30 dias';
+
+          if (domain === 'livelo') {
+            historyTitle.textContent = 'Histórico de pontuação — ' + store.name;
+            historySubtitle.textContent = store.category + ' · medições ilustrativas das coletas de 09h, 14h e 20h.';
+            historyMinValue.textContent = store.normal;
+            historyMaxValue.textContent = store.points;
+            historyValueHeading.textContent = 'Pontuação';
+            historySecondaryHeading.textContent = 'Clube';
+            historyResultHeading.textContent = 'Situação';
+            addHistoryRow(['Hoje, 09h', store.normal, store.club || '—', 'Normal']);
+            addHistoryRow(['Hoje, 14h', store.points, store.club || '—', store.alert ? 'Alerta ativo' : 'Sem alerta']);
+            addHistoryRow(['Hoje, 20h', store.points, store.club || '—', store.alert ? 'Alerta ativo' : 'Sem alerta']);
+          } else {
+            historyTitle.textContent = 'Histórico do produto';
+            historySubtitle.textContent = 'Motorola Edge 60 Pro 5G 256 GB · Casas Bahia';
+            historyMinValue.textContent = 'R$ 2.699,00';
+            historyMaxValue.textContent = 'R$ 3.199,00';
+            historyValueHeading.textContent = 'Preço';
+            historySecondaryHeading.textContent = 'Cashback';
+            historyResultHeading.textContent = 'Após cashback';
+            addHistoryRow(['Hoje, 09h', 'R$ 3.199,00', 'R$ 159,95', 'R$ 3.039,05']);
+            addHistoryRow(['Hoje, 14h', 'R$ 2.999,00', 'R$ 149,95', 'R$ 2.849,05']);
+            addHistoryRow(['Hoje, 20h', 'R$ 2.899,00', 'R$ 144,95', 'R$ 2.754,05']);
+          }
+
+          if (typeof historyDialog.showModal === 'function') historyDialog.showModal();
+        }
+
+        function requestRemoval(domain, store) {
+          pendingRemoval = { domain: domain, store: store };
+          deleteQuestion.textContent = 'Você quer mesmo excluir a loja ' + store.name + ' do acompanhamento?';
+          if (typeof deleteDialog.showModal === 'function') deleteDialog.showModal();
+        }
+
+        function renderStores(domain) {
+          var view = domainView(domain);
+          var results = filteredStores(domain);
+          var shown = results.slice(0, view.visible);
+          view.grid.replaceChildren();
+
+          if (shown.length === 0) {
+            var empty = document.createElement('div');
+            empty.className = 'vazio';
+            empty.textContent = view.search.value.trim()
+              ? 'Nenhuma loja encontrada para “' + view.search.value.trim() + '”.'
+              : 'Você ainda não acompanha nenhuma loja neste filtro.';
+            view.grid.appendChild(empty);
+          }
+
+          shown.forEach(function (store) {
+            var card = document.createElement('article');
+            card.className = 'loja-card ' + domain;
+
+            var monogram = document.createElement('span');
+            monogram.className = 'loja-monograma';
+            monogram.textContent = initials(store.name);
+            monogram.setAttribute('aria-hidden', 'true');
+
+            var content = document.createElement('div');
+            content.className = 'loja-conteudo';
+
+            var top = document.createElement('div');
+            top.className = 'loja-topo';
+            var titleGroup = document.createElement('div');
+            var title = document.createElement('h3');
+            title.textContent = store.name;
+            titleGroup.appendChild(title);
+            if (store.category) {
+              var category = document.createElement('small');
+              category.className = 'loja-categoria';
+              category.textContent = store.category;
+              titleGroup.appendChild(category);
+            }
+            var value = document.createElement('span');
+            value.className = domain === 'livelo' ? 'cashback livelo' : 'cashback';
+            value.textContent = domain === 'livelo' ? store.points : store.cashback;
+            top.append(titleGroup, value);
+
+            var note = document.createElement('p');
+            note.textContent = store.note;
+
+            var details = null;
+            if (domain === 'livelo') {
+              details = document.createElement('div');
+              details.className = 'loja-detalhes';
+              addDetail(details, 'Pontuação normal', store.normal);
+              addDetail(details, 'Alerta a partir de', store.threshold);
+              addDetail(details, 'Clube Livelo', store.club);
+            }
+
+            var footer = document.createElement('div');
+            footer.className = 'loja-rodape';
+            var labels = document.createElement('div');
+            labels.className = 'loja-selos';
+            var label = document.createElement('span');
+            label.className = store.following ? 'selo ganho' : 'selo';
+            label.textContent = store.following ? 'Acompanhada' : 'Disponível';
+            labels.appendChild(label);
+            if (domain === 'livelo' && store.alert) {
+              var alertLabel = document.createElement('span');
+              alertLabel.className = 'selo perigo';
+              alertLabel.textContent = 'Alerta ativo';
+              labels.appendChild(alertLabel);
+            }
+
+            var actions = document.createElement('div');
+            actions.className = 'loja-acoes';
+            if (domain === 'livelo') {
+              var historyButton = document.createElement('button');
+              historyButton.type = 'button';
+              historyButton.className = 'btn btn-secundario';
+              historyButton.textContent = 'Histórico';
+              historyButton.addEventListener('click', function () {
+                openHistory('livelo', store);
+              });
+              actions.appendChild(historyButton);
+            }
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = store.following ? 'btn btn-secundario' : 'btn btn-primario';
+            button.textContent = store.following ? 'Acompanhando' : 'Acompanhar';
+            button.setAttribute('aria-pressed', String(store.following));
+            button.disabled = store.following;
+            button.addEventListener('click', function () {
+              store.following = true;
+              updateFollowCount();
+              showSuccess(domain, store.name + ' foi adicionada e o app já refletiu a mudança.');
+              renderStores(domain);
+            });
+            actions.appendChild(button);
+
+            if (store.following) {
+              var deleteButton = document.createElement('button');
+              deleteButton.type = 'button';
+              deleteButton.className = 'btn-lixeira';
+              deleteButton.title = 'Excluir ' + store.name + ' do acompanhamento';
+              deleteButton.setAttribute('aria-label', 'Excluir ' + store.name + ' do acompanhamento');
+              var deleteIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              deleteIcon.setAttribute('class', 'icone');
+              deleteIcon.setAttribute('aria-hidden', 'true');
+              var deleteUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+              deleteUse.setAttribute('href', '#i-trash');
+              deleteIcon.appendChild(deleteUse);
+              deleteButton.appendChild(deleteIcon);
+              deleteButton.addEventListener('click', function () {
+                requestRemoval(domain, store);
+              });
+              actions.appendChild(deleteButton);
+            }
+
+            footer.append(labels, actions);
+            content.append(top, note);
+            if (details) content.appendChild(details);
+            content.appendChild(footer);
+            card.append(monogram, content);
+            view.grid.appendChild(card);
+          });
+
+          view.count.textContent = results.length + (results.length === 1 ? ' loja encontrada' : ' lojas encontradas');
+          view.page.textContent = 'Mostrando ' + shown.length + ' de ' + results.length;
+          view.loadMore.hidden = shown.length >= results.length;
+        }
+
+        function showToast(message) {
+          window.clearTimeout(toastTimer);
+          toastText.textContent = message;
+          toast.classList.add('visivel');
+          toastTimer = window.setTimeout(function () {
+            toast.classList.remove('visivel');
+          }, 3800);
+        }
+
+        function showSuccess(domain, message) {
+          window.clearTimeout(successTimer);
+          var inline = domain === 'livelo' ? liveloSuccessInline : successInline;
+          var text = domain === 'livelo' ? liveloSuccessText : successText;
+          text.textContent = message;
+          inline.hidden = false;
+          showToast(message);
+          successTimer = window.setTimeout(function () {
+            inline.hidden = true;
+          }, 5200);
+        }
+
+        confirmDelete.addEventListener('click', function () {
+          if (!pendingRemoval) return;
+          var domain = pendingRemoval.domain;
+          var store = pendingRemoval.store;
+          store.following = false;
+          deleteDialog.close();
+          pendingRemoval = null;
+          updateFollowCount();
+          renderStores(domain);
+          showSuccess(domain, 'A loja ' + store.name + ' foi excluída do acompanhamento e a tela já foi atualizada.');
+        });
+
+        deleteDialog.addEventListener('close', function () {
+          pendingRemoval = null;
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function (event) {
+          event.preventDefault();
+          app.hidden = false;
+          login.hidden = true;
+          navigate('inicio');
+          showToast('Acesso validado. Bem-vindo ao Radar.');
+        });
+
+        document.addEventListener('click', function (event) {
+          var screenButton = event.target.closest('[data-screen]');
+          if (screenButton) {
+            navigate(screenButton.getAttribute('data-screen'));
+            return;
+          }
+
+          var actionButton = event.target.closest('[data-action]');
+          if (!actionButton) return;
+          var action = actionButton.getAttribute('data-action');
+
+          if (action === 'cancel-delete') {
+            deleteDialog.close();
+            pendingRemoval = null;
+            return;
+          }
+          if (action === 'open-product-history') {
+            openHistory('inter', null);
+            return;
+          }
+          if (action === 'close-history') {
+            historyDialog.close();
+            return;
+          }
+          if (action === 'replay') replaySplash();
+          if (action === 'customize' && typeof shortcutDialog.showModal === 'function') shortcutDialog.showModal();
+          if (action === 'save-shortcuts') showToast('Visual salvo no protótipo. A persistência será definida na implementação.');
+          if (action === 'recover') showToast('Se o e-mail estiver cadastrado, as instruções serão enviadas.');
+          if (action === 'update-request') showToast('Pedido aceito. A coleta ainda precisa terminar.');
+          if (action === 'admin-info') showToast('No app final, esta opção abre a administração protegida.');
+          if (action === 'logout') {
+            app.hidden = true;
+            login.hidden = false;
+            document.title = 'Entrar — Radar';
+          }
+          if (action === 'toggle-password') {
+            var password = document.getElementById('senha');
+            var showing = password.type === 'text';
+            password.type = showing ? 'password' : 'text';
+            actionButton.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
+          }
+        });
+
+        document.querySelectorAll('[data-filter]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            var domain = button.getAttribute('data-domain');
+            if (domain === 'livelo') {
+              liveloFilter = button.getAttribute('data-filter');
+              liveloVisible = pageSize;
+            } else {
+              filter = button.getAttribute('data-filter');
+              visible = pageSize;
+            }
+            document.querySelectorAll('[data-filter][data-domain="' + domain + '"]').forEach(function (item) {
+              item.classList.toggle('ativo', item === button);
+            });
+            renderStores(domain);
+          });
+        });
+
+        search.addEventListener('input', function () {
+          visible = pageSize;
+          renderStores('inter');
+        });
+
+        loadMore.addEventListener('click', function () {
+          visible += pageSize;
+          renderStores('inter');
+        });
+
+        liveloSearch.addEventListener('input', function () {
+          liveloVisible = pageSize;
+          renderStores('livelo');
+        });
+
+        liveloLoadMore.addEventListener('click', function () {
+          liveloVisible += pageSize;
+          renderStores('livelo');
+        });
+
+        document.getElementById('product-search').addEventListener('input', function (event) {
+          var value = event.target.value.trim();
+          if (value.length < 2) {
+            productDemo.hidden = false;
+            productResults.hidden = true;
+            return;
+          }
+          productDemo.hidden = true;
+          productResults.hidden = false;
+        });
+
+        updateFollowCount();
+        renderStores('inter');
+        renderStores('livelo');
+        var requestedScreen = new URLSearchParams(window.location.search).get('tela');
+        if (requestedScreen && document.getElementById('tela-' + requestedScreen)) {
+          splash.classList.add('instant-hidden');
+          login.hidden = true;
+          app.hidden = false;
+          navigate(requestedScreen);
+        } else {
+          hideSplash('login');
+        }
+      })();
+    </script>
+  </body>
+</html>
