@@ -120,7 +120,6 @@ fatia. Falta o smoke físico no Samsung para encerrar a jornada de produtos.
 
 ## Alterações locais a preservar
 
-Já existiam mudanças locais de documentação em `app-robo/PLANO.md` e
-`app-robo/FASE1-Contrato-API.md`; elas pertencem ao responsável e não devem ser
-descartadas. As mudanças da Fase 4.2B também ainda estão locais e não foram
-publicadas.
+Já existiam mudanças locais de documentação em `app-robo/PLANO.md`; elas
+pertencem ao responsável e não devem ser descartadas. As mudanças da Fase 4.2B
+também ainda estão locais e não foram publicadas.

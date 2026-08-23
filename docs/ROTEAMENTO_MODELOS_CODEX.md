@@ -4,9 +4,9 @@ Status: regra operacional deste projeto.
 
 ## Regra obrigatória
 
-Antes de alterar código, documento, teste, configuração ou workflow, o assistente classifica a tarefa e informa o modelo e o esforço recomendados. O usuário escolhe manualmente no seletor e confirma. Só então a alteração começa.
+Antes de alterar código, documento, teste, configuração ou workflow, o assistente classifica a tarefa, escolhe automaticamente o modelo e o esforço adequados e informa essa escolha. A alteração começa sem confirmação manual adicional.
 
-Leitura, busca e diagnóstico sem modificar arquivos podem acontecer antes da classificação. Se a tarefa mudar de escopo, a recomendação deve ser refeita.
+Leitura, busca e diagnóstico sem modificar arquivos podem acontecer antes da classificação. Se a tarefa mudar de escopo, a recomendação deve ser refeita. A execução automática não autoriza publicação, migração de produção, exclusão, envio real ou outra ação externa relevante.
 
 ## Modelos
 

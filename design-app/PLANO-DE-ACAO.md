@@ -11,6 +11,24 @@ não alteram o aplicativo Flutter, a API, o banco, os robôs ou os workflows.
 
 **Logo conceitual:** [`assets/logo-radar-conceito.png`](assets/logo-radar-conceito.png)
 
+## 0. Regra permanente de evolução visual
+
+Toda nova funcionalidade visível, tela, jornada ou mudança relevante de
+navegação deve seguir esta ordem:
+
+1. confirmar o requisito e separar dado real de hipótese;
+2. atualizar `prototipo-web.html` e `prototipo-mobile.html`;
+3. validar o fluxo visual com o responsável;
+4. atualizar PRD e contratos afetados;
+5. implementar no Flutter/API com testes;
+6. manter os protótipos sincronizados com qualquer ajuste aprovado durante a
+   implementação.
+
+Os protótipos são a primeira etapa obrigatória, mas continuam sendo simulações:
+não provam que API, banco, coleta ou regra já estejam implementados. Correções
+internas sem efeito visual não exigem tela nova; mudanças percebidas pelo usuário
+exigem atualização dos dois protótipos.
+
 ## 1. Resultado da análise
 
 O produto já possui uma base técnica forte, mas sua interface cresceu por

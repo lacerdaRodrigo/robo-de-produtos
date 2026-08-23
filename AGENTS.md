@@ -19,16 +19,16 @@ Este é o arquivo de entrada do Codex. Ele não substitui a documentação do pr
 
 Nunca trate plano como código pronto nem memória de conversa como prova do estado do repositório. Confira arquivos, commits e testes. Se não houver evidência, diga que é hipótese ou sugestão.
 
-## 2. Regra zero antes de editar
+## 2. Regra zero para execução automática
 
 Antes de alterar código, documentação, workflow, teste ou configuração:
 
 1. entenda a tarefa por leitura e diagnóstico sem mudanças;
-2. informe o modelo e o nível de esforço recomendados;
-3. explique o motivo em uma frase simples;
-4. aguarde confirmação manual do responsável.
+2. escolha automaticamente o modelo e o nível de esforço adequados;
+3. informe a escolha e o motivo em uma frase simples;
+4. execute a menor mudança coerente e as validações relevantes, sem aguardar confirmação manual.
 
-Se o escopo mudar materialmente, faça uma nova classificação. Uma autorização para analisar não autoriza editar; uma autorização para editar um arquivo não autoriza publicar, migrar banco, apagar o legado ou realizar outra ação externa.
+Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de implementação autoriza as edições, os testes e a documentação diretamente relacionados, mas não autoriza publicar, migrar banco de produção, apagar o legado, enviar notificações reais ou realizar outra ação externa relevante.
 
 ## 3. Como conversar com o responsável
 
@@ -67,6 +67,10 @@ Se o escopo mudar materialmente, faça uma nova classificação. Uma autorizaç�
 
 - Não inicialize Flutter, crie telas, banco, API ou workflow apenas porque existe um plano.
 - Quando houver autorização para começar, siga a Fase 1 do plano: inventário e contratos antes de telas.
+- Toda nova funcionalidade visível, tela, jornada ou mudança relevante de navegação deve ser desenhada primeiro nos dois protótipos de `design-app/`: [`prototipo-web.html`](design-app/prototipo-web.html) e [`prototipo-mobile.html`](design-app/prototipo-mobile.html).
+- A implementação real só começa depois que o responsável validar a experiência no protótipo. Se a mudança afetar apenas uma plataforma, registre o motivo e mantenha a outra coerente.
+- O protótipo não substitui requisitos nem autoriza inventar contrato, dado ou backend. Depois da aprovação visual, atualize PRD/contratos quando necessário e só então implemente com testes.
+- Correção interna sem mudança visual não exige criar uma tela nova. Se uma correção alterar comportamento percebido, atualize também os protótipos para evitar divergência.
 - Um único projeto Flutter deve atender Web, Android e iOS com layout adaptativo.
 - Preserve os tokens e as regras de design aprovados no plano.
 - Escreva muitos testes unitários e de widgets/componentes; mantenha os testes de integração nas jornadas críticas.
@@ -92,4 +96,5 @@ Uma tarefa só está concluída quando:
 2. as regras existentes foram preservadas ou a mudança foi documentada;
 3. os testes relevantes passaram, ou a impossibilidade foi informada;
 4. segurança, compatibilidade do site legado e dados históricos foram considerados;
-5. o responsável recebeu um resumo simples dos arquivos, validações e decisões ainda abertas.
+5. para mudança visível, os protótipos Web e Mobile foram aprovados e continuam coerentes com a implementação;
+6. o responsável recebeu um resumo simples dos arquivos, validações e decisões ainda abertas.

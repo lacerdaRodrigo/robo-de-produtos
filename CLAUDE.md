@@ -2,16 +2,35 @@
 
 Leia o [`PRD.md`](docs/PRD.md) antes de propor qualquer mudança. Ele é a fonte da verdade: requisitos (RF), requisitos não-funcionais (RNF), restrições (C) e regras de negócio (RN) são todos numerados e referenciados entre si e sempre atualizar as docs , se mudar alguma regra , teste e etc.
 
-## Regra zero — escolher a IA antes de alterar
+## Regra zero — execução automática
 
 Antes de qualquer alteração em código, documentação, workflow, teste, configuração ou até espaço/ponto-e-vírgula, o assistente deve:
 
 1. Entender a tarefa, usando leitura ou inspeção sem alteração quando necessário.
-2. Informar o modelo e o nível de esforço recomendados.
-3. Explicar o motivo em uma frase.
-4. Aguardar a confirmação manual do usuário antes de editar qualquer arquivo.
+2. Escolher automaticamente o modelo e o nível de esforço adequados.
+3. Informar a escolha e o motivo em uma frase.
+4. Fazer a menor alteração coerente e executar as validações relevantes, sem aguardar confirmação manual.
 
-Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde que não mudem arquivos. Se o escopo mudar, classifique novamente. A referência prática fica em [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md).
+Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde que não mudem arquivos. Se o escopo mudar, classifique novamente. Um pedido de implementação cobre as edições, os testes e a documentação diretamente relacionados, mas não publicação, migração de produção, exclusão, envio real ou outra ação externa relevante. A referência prática fica em [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md).
+
+## Regra de produto — protótipo antes da implementação
+
+Toda nova funcionalidade visível, tela, jornada ou mudança relevante de
+navegação deve passar primeiro pelos dois protótipos de `design-app/`:
+[`prototipo-web.html`](design-app/prototipo-web.html) e
+[`prototipo-mobile.html`](design-app/prototipo-mobile.html).
+
+Ordem obrigatória:
+
+1. confirmar o requisito e os limites conhecidos, sem inventar backend;
+2. atualizar Web e Mobile com dados claramente ilustrativos;
+3. apresentar o fluxo ao responsável e obter a aprovação visual;
+4. atualizar PRD e contratos afetados, quando houver mudança de regra ou dado;
+5. somente então implementar no Flutter/API, com testes e documentação;
+6. manter os protótipos sincronizados se a implementação aprovada mudar.
+
+Correção puramente interna, sem efeito percebido na interface, não exige tela
+nova. Correção que altere comportamento visível deve atualizar o protótipo.
 
 ## O que é este projeto
 

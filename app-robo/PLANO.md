@@ -1,8 +1,8 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** Fase 3B concluída; Fase 4 Android iniciada com navegação adaptativa
+**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android
 
-**Data-base:** 20 de agosto de 2026
+**Data-base:** 22 de agosto de 2026
 
 **Repositório:** `lacerdaRodrigo/robo-livelo`  
 **Referência observada na elaboração:** `main` na versão `1.30.2` (`46146c7`)  
@@ -31,6 +31,7 @@
 9. O produto terá notificações push automáticas e relatórios por e-mail.
 10. Segurança, testes unitários e testes de componentes serão requisitos de primeira classe.
 11. A identidade visual seguirá a direção **financeiro confiável**: azul-marinho, verde para ganho e visual sóbrio.
+12. Toda nova funcionalidade visível, tela ou jornada será criada primeiro nos protótipos Web e Mobile de `design-app/`; o código real só começa depois da aprovação visual do responsável e da atualização dos contratos afetados.
 
 ---
 
@@ -149,7 +150,7 @@ Isso não promete o catálogo universal da varejista. O sistema guarda **tudo qu
 
 #### 4.3.1 Contrato inicial da busca de produtos
 
-Exemplo conceitual, cuja assinatura final será fechada na Fase 1:
+Contrato fechado no inventário da Fase 1:
 
 `GET /api/v1/inter/produtos?q=tv&page=1&por_pagina=20`
 
@@ -174,7 +175,7 @@ Regras complementares:
 - produto ausente de uma coleta completa deixa de aparecer como oferta atual, mas seu histórico expira normalmente;
 - todas as páginas usam a mesma busca, filtros e ordenação; não pode haver item perdido ou duplicado na navegação;
 - o Flutter deve cancelar ou ignorar resposta de uma busca antiga quando a pessoa digitar outra;
-- o formato exato de cursor/versão do catálogo e os índices do Postgres serão escolhidos na Fase 1 com teste de volume, sem mudar os limites funcionais acima.
+- a paginação inicial usa número de página com `atualizado_em`/`qualidade`; índices e orçamento de resposta serão medidos contra o volume real, sem mudar os limites funcionais acima.
 
 ### 4.4 Disparo dos robôs
 
@@ -595,65 +596,271 @@ Android pode ser testado por instalação direta antes da Play Store. iOS exige 
 
 ## 15. Fases de execução
 
-### Fase 0 — Planejamento
+### Fases concluídas
 
-**Entrega:** este documento.  
-**Não inclui:** código, tela, banco, API ou workflow.
+| Fase | Entrega comprovada |
+|---|---|
+| 0 — Planejamento | Plano do piloto aprovado |
+| 1 — Inventário e contratos | Inventário concluído; contratos vivos estão nas rotas API e em `site/lib/api.ts` |
+| 2 — Bootstrap | Projeto Flutter, tema, ambientes, análise, testes e CI |
+| 3 — API e autenticação | API v1, Firebase por convite, papéis, rate limit, auditoria e App Check observado no Android |
 
-### Fase 1 — Inventário e contratos
-
-- mapear todas as consultas e Server Actions do Next.js;
-- classificar leitura pública, leitura autenticada e mutação administrativa;
-- documentar contratos JSON e erros;
-- fechar busca no servidor, paginação padrão 20/máximo 50, ordenação estável e contrato do histórico;
-- decidir estratégia de compatibilidade;
-- confirmar API no backend atual ou registrar alternativa;
-- definir identificadores do aplicativo e ambientes.
-
-**Saída:** contrato aprovado, sem alterar o comportamento dos robôs.
-
-### Fase 2 — Bootstrap do `app-robo`
-
-- inicializar Flutter para Web, Android e iOS;
-- criar tema e tokens do design aprovado;
-- definir arquitetura interna e dependências após validação;
-- preparar ambientes local/teste/produção;
-- configurar análise, testes e CI do Flutter.
-
-**Saída:** aplicativo vazio compilando nos alvos, com testes de fundação; nenhuma tela funcional migrada.
-
-### Fase 3 — API compatível e autenticação
-
-- endpoints versionados;
-- autenticação por convite;
-- perfis e papéis;
-- validação de token no servidor;
-- rate limit, auditoria e App Check;
-- adaptadores para o site legado continuarem funcionando.
-
-**Saída:** Flutter autenticado lendo dados falsos/controle; site atual intacto.
+As fases encerradas não permanecem na fila de implementação. O contrato vivo
+fica próximo da implementação da API, evitando documento histórico duplicado.
 
 ### Fase 4 — Piloto somente leitura
 
-- Painel;
-- Livelo;
-- cashback Inter;
-- produtos e histórico;
-- busca no banco, filtros, frescor, estados e paginação sem catálogo inteiro no cliente;
-- testes unitários, widgets, goldens e integração.
+- [x] 4.1 — shell, estados reutilizáveis e leitura do status real da API;
+- [x] 4.2A — navegação adaptativa, com barra inferior no Android e lateral em telas largas;
+- [x] 4.2B — painel Livelo real no Android;
+- [x] 4.3 — cashback Inter somente leitura, com gates locais e smoke físico no Samsung;
+- [x] 4.4 — produtos, busca paginada e histórico, com gates locais e smoke físico no Samsung;
+- [x] conclusão da Fase 4 Android — painéis somente leitura validados no aparelho.
 
-**Saída:** você consegue consultar o mesmo dado no Flutter Web/Android sem administrar ainda.
+#### Encerramento da Fase 4 Android
+
+Os três painéis somente leitura — Livelo, cashback Inter e Produtos/histórico —
+foram entregues como clientes autenticados da API v1. Valores de pontos, dinheiro
+e cashback permanecem texto; busca, filtros, paginação, atraso, ausência, falha
+e resposta antiga têm estados distintos. Os CT-263 a CT-293, a formatação, a
+análise, 87 testes Flutter, cobertura crítica >= 90% e builds Web/APK passaram.
+
+O smoke físico no Samsung SM-M135M confirmou login Firebase, App Check, acesso
+à API, navegação adaptativa e as jornadas de leitura. O build do aparelho deve
+receber `API_URL` e `ATIVAR_APP_CHECK=true`; sem a URL, `localhost` aponta para
+o próprio celular. Mutações administrativas, links externos e evolução visual do
+Next.js permanecem fora da Fase 4.
 
 ### Fase 5 — Administração compartilhada
 
-- acompanhar e descartar lojas;
-- escolher lojas de produtos;
-- favoritos, metas e preferências;
-- disparar robôs e acompanhar a fila;
-- zona de perigo com proteção reforçada.
+**Status:** implementação e aceite local das etapas 5.0 a 5.3 concluídos em 22
+de agosto de 2026. O primeiro teste destrutivo ocorreu no banco descartável
+`radar_aceite_f5_codex_20260822`, nunca em produção; depois do aceite, esse
+banco e sua massa artificial foram removidos. No mesmo dia, após autorização
+específica, as migrações `011` e `012` foram aplicadas em produção e a API foi
+publicada na Vercel. Não houve limpeza de produção, disparo real de workflow ou
+mudança visual no site legado.
 
-**Saída:** Flutter administra o backend; a interface Next.js permanece somente
-como fallback transitório, sem evolução funcional.
+**Objetivo:** permitir que o administrador faça pelo Flutter as operações que
+hoje existem no backend: lojas e regras da Livelo, favoritas dos Sites parceiros,
+seleção de lojas de produtos, preferências e disparos controlados. A zona de
+perigo entra por último, sob as regras de `PRD-V5.md`.
+
+O Flutter continuará cliente da API v1: não falará com Neon, GitHub Actions,
+Livelo ou Inter diretamente. Toda mutação exige autenticação Firebase, usuário
+ativo, papel administrativo, validação no servidor, auditoria e proteção contra
+repetição.
+
+#### Entrega concluída localmente — administração segura (5.1)
+
+- API v1 administrativa sem alteração de tela no Next.js:
+  - `GET`/`POST /api/v1/livelo/lojas` para catálogo e cadastro de lojas;
+  - `PATCH`/`DELETE /api/v1/livelo/lojas/{id}` para regra própria e remoção;
+  - `GET`/`PATCH /api/v1/livelo/preferencias` para padrões globais e Clube;
+  - `GET`/`PATCH /api/v1/inter/lojas` para catálogo e favoritas dos Sites
+    parceiros;
+  - `GET`/`PATCH /api/v1/inter/produtos/lojas` para catálogo e seleção de
+    lojas do Compre direto.
+- As mutações exigem administrador, App Check quando habilitado, limite de ação
+  sensível e auditoria no servidor. Recebem somente estado ou dados de domínio,
+  nunca URL, token ou workflow, e não iniciam coleta.
+- Nome e apelidos Livelo são conferidos contra o catálogo canônico; cadastro,
+  regra e apelidos entram atomicamente. Pontos, limiares e cashback continuam
+  texto decimal, sem `number`/`double`.
+- O Flutter oferece três abas em **Mais → Administração**: Livelo, Sites
+  parceiros e Compre direto. Há busca com 350 ms, paginação manual,
+  deduplicação, bloqueio de duplo toque, confirmação nominal de remoção e erro
+  que preserva a lista. Livelo inclui preferências globais, cadastro com
+  apelidos e exceções por loja.
+- Depois do aceite descartável, a zona de perigo foi exposta somente para
+  administrador em uma quarta aba. Livelo e Inter possuem páginas separadas,
+  prévia das contagens, frase exata, botão bloqueado até a confirmação e nova
+  validação/autorização no servidor. Abrir a tela nunca executa limpeza.
+
+#### Entrega concluída localmente — disparos controlados (5.2)
+
+- `POST /api/v1/administracao/disparos` aceita somente `livelo`, `inter` ou
+  `produtos_inter`, exige administrador, App Check quando habilitado e uma
+  `Idempotency-Key` opaca. O servidor escolhe o workflow; o app não recebe
+  token, URL de GitHub ou qualquer outro detalhe de infraestrutura.
+- `GET` na mesma rota expõe o cooldown e o estado da última solicitação, sem
+  chamar workflow. Produtos é recusado antes do disparo se não houver loja
+  selecionada.
+- A migração `011_disparos_api_idempotentes.sql` cria a reserva persistente:
+  uma unicidade parcial permite somente uma solicitação ativa por domínio e
+  chave repetida recebe o resultado da mesma intenção. A falha de rede conserva
+  a reserva por cinco minutos, preferindo atrasar a próxima tentativa a criar
+  duas coletas.
+- No Flutter, administradores veem **Atualizar agora** nos painéis Livelo,
+  Sites parceiros e Produtos. O botão mostra cooldown, bloqueia duplo toque e
+  só informa que o pedido foi aceito — a coleta real só termina quando o robô
+  gravar novos dados.
+- Os casos de contrato administrativo foram registrados como CT-294 a CT-298,
+  cobrindo seleção, favoritas, idempotência/cooldown, decimais textuais,
+  preferências, regras Livelo e limpeza descartável.
+
+#### Rollout de produção da Fase 5
+
+- As migrações `011_disparos_api_idempotentes.sql` e
+  `012_oferta_direta_inter_atual.sql` foram aplicadas no banco de produção
+  `neondb` em 22 de agosto de 2026. A reserva começou vazia, os quatro índices
+  esperados da `011` foram confirmados e a tabela coberta pela `012` manteve as
+  20 colunas esperadas.
+- A API foi publicada no projeto Vercel existente, deployment
+  `dpl_AeNZvYSAr6VHkQA892K5ZqSjmB3C`, e promovida para
+  `https://robo-livelo.vercel.app`. O build Next.js confirmou todas as novas
+  rotas administrativas.
+- O smoke HTTP confirmou `/api/v1/status` saudável. As seis famílias de rotas
+  administrativas testadas sem credencial responderam `401`, comprovando que
+  estão publicadas e continuam protegidas.
+- O padrão do Flutter passou a ser a URL pública; desenvolvimento local ainda
+  pode sobrescrever `API_URL`. Um APK release portátil foi gerado com a mesma
+  URL e `ATIVAR_APP_CHECK=false`, pois outro aparelho usando provider debug
+  exigiria cadastrar um token próprio. A API continua com autenticação Firebase
+  obrigatória e `EXIGIR_APP_CHECK=false` durante este piloto.
+- A primeira tentativa em outro Android exibiu a mensagem genérica de falha de
+  acesso sem produzir chamada a `/api/v1/perfil` na Vercel nem nova auditoria
+  no Neon. Como o APK anterior e uma compilação local antiga compartilhavam o
+  mesmo nome e o mesmo `versionCode=1`, o artefato portátil foi corrigido para
+  `versionName=1.0.1` e `versionCode=2`, forçando o Android a reconhecer a
+  atualização.
+- O APK corrigido
+  `build/app/outputs/flutter-apk/radar-beneficios-fase5-v1.0.1-build2.apk` tem
+  52,7 MB, URL pública confirmada no binário, assinatura APK v2 válida e
+  SHA-256
+  `24b5e5be869a133f4a001e53aa50f07688a768243019a9620ef7ef6196e1cdb4`.
+- A instalação por atualização e a abertura autenticada passaram no Samsung
+  SM-M135M conectado; o sistema confirmou a versão `1.0.1 (2)` e o Flutter não
+  registrou exceção na inicialização.
+
+**Pendente operacional:** instalar o APK corrigido em outro Android e executar o smoke
+autenticado das leituras e da Administração. Não executar a zona de perigo em
+produção durante o smoke. App Check volta a ser obrigatório no artefato de
+distribuição depois do rollout por Play Integrity.
+
+#### Validação local consolidada da Fase 5 segura
+
+- Dart formatado e `flutter analyze` sem apontamentos.
+- `flutter test --coverage`: 106 testes aprovados; cobertura de 96,8% na API,
+  95,6% nos modelos, 100% no controlador administrativo e 92,7% na zona de
+  perigo.
+- `flutter build web` e `flutter build apk --debug` aprovados; nenhum artefato
+  foi publicado ou instalado.
+- `tsc --noEmit` aprovado; 78 testes Vitest regulares aprovados e o aceite
+  destrutivo manual passou separadamente. Nenhuma tela do site legado foi
+  alterada.
+- Ruff aprovado; 211 testes Pytest aprovados com 94,16% de cobertura.
+- `git diff --check` aprovado. Testes regulares usaram fakes e não acessaram
+  GitHub, Livelo ou Inter reais; somente o aceite 5.3 acessou o Neon para criar
+  e remover o banco isolado e consultar metadados de schema, sem ler linhas de
+  produção.
+
+#### Aceite destrutivo concluído — 5.3
+
+- Um banco isolado foi criado dentro do projeto Neon usando nome protegido por
+  prefixo `radar_aceite_f5_`; produção foi usada apenas para criar e remover
+  esse banco, sem leitura ou alteração de linhas do produto.
+- A reconstrução do zero revelou que `oferta_direta_inter_atual` existia em
+  produção e no contrato de limpeza, mas não nas migrações. A migração
+  idempotente `012_oferta_direta_inter_atual.sql` agora elimina essa divergência.
+- As 12 migrações foram aplicadas do zero e 23 tabelas públicas foram criadas.
+- Uma linha representativa foi inserida em cada tabela afetada de Livelo,
+  Inter Sites parceiros, Inter Compre direto, autenticação, limites, auditoria
+  e idempotência.
+- O teste forçou falha depois do início da limpeza Livelo e bloqueio por chave
+  externa no reset Inter; ambos preservaram o estado anterior, confirmando
+  rollback.
+- As limpezas bem-sucedidas afetaram somente o domínio escolhido, restauraram
+  as três preferências Livelo, preservaram login/auditoria/limites e puderam ser
+  repetidas em banco vazio. Novos disparos Livelo, Inter e Produtos voltaram a
+  ser aceitos no banco.
+- O teste manual contém uma trava que recusa qualquer `DATABASE_URL` cujo banco
+  não comece com `radar_aceite_f5_`. Depois do passe, o banco descartável foi
+  removido definitivamente.
+
+#### 5.0 — contrato administrativo e fronteira de segurança
+
+1. Inventariar as funções de servidor existentes e classificar leitura,
+   mutação, autorização, auditoria e idempotência.
+2. Definir endpoints API v1 autenticados, com corpos mínimos, erros estáveis e
+   números monetários/de pontos preservados como texto.
+3. Exigir token Firebase, usuário ativo e papel administrativo no servidor para
+   cada leitura administrativa e mutação.
+4. Definir idempotência para disparos e ações reenviáveis pelo celular; o
+   servidor continua sendo a autoridade para cooldown e autorização.
+5. Criar testes de contrato com fakes, sem banco, GitHub ou fontes reais.
+
+**Saída:** contrato revisado antes de existir botão administrativo no app.
+
+#### 5.1 — administração segura, sem disparar robôs
+
+1. Livelo: listar, cadastrar/remover favoritas e editar padrões/exceções já
+   existentes.
+2. Inter Sites parceiros: buscar, acompanhar e remover favoritas.
+3. Inter Compre direto: buscar, selecionar e remover lojas de coleta.
+4. Preservar busca, página, filtros e posição útil após cada ação.
+5. Mostrar carregamento, sucesso, falha, retry, conflito e acesso negado como
+   estados distintos.
+
+**Saída:** catálogo e preferências existentes são administráveis no Flutter,
+sem executar coleta.
+
+#### 5.2 — disparos controlados e acompanhamento
+
+1. Expor cooldown e última tentativa por domínio.
+2. Solicitar Livelo, Inter Sites parceiros ou Produtos somente pela API.
+3. Bloquear duplo toque no cliente; o servidor garante idempotência e cooldown.
+4. Informar com honestidade: aceito, ainda em espera, sem seleção necessária,
+   acesso negado ou falha.
+
+**Saída:** o app solicita uma coleta sem duplicá-la nem afirmar sucesso antes
+da resposta do servidor.
+
+#### 5.3 — zona de perigo
+
+1. Primeiro validar o fluxo da V5 em banco descartável, com dados de Livelo,
+   Inter e autenticação representativos.
+2. Só então expor no Flutter os resumos por domínio e páginas separadas de
+   confirmação.
+3. Exigir `APAGAR LIVELO` ou `RESETAR INTER`, validados no servidor; domínio
+   nunca será aceito livremente da interface.
+4. Confirmar transação única, rollback, repetição em banco vazio e preservação
+   de login, tema, flags e domínio não escolhido.
+5. Não executar limpeza de produção sem autorização explícita, mesmo que a
+   interface esteja pronta.
+
+**Saída:** função verificável em ambiente descartável, sem autorizar apagar
+dados reais.
+
+#### Limites e decisões abertas
+
+- A interface legada em Next.js não recebe evolução visual nem funcional.
+  Caso a API v1 administrativa exija código no hospedeiro atual, será somente
+  camada de API e precisa de autorização específica antes de começar.
+- Metas não entram nesta fase: não há modelo, regra de cálculo nem contrato de
+  backend aprovado para elas.
+- Push, e-mail, relatórios e horário silencioso pertencem à Fase 6.
+- O ambiente descartável e o responsável pelo primeiro aceite destrutivo devem
+  ser definidos antes da etapa 5.3.
+
+#### Testes e aceite da Fase 5
+
+| Bloco | Casos mínimos |
+|---|---|
+| Contrato | token/papel, payload inválido, autorização negada, conflito, idempotência e cooldown |
+| Controladores | inicial, sucesso, falha, retry, duplo toque, resposta antiga e preservação de filtros |
+| Widgets | leitura, mutação, sem permissão, carregamento, erro, sucesso, retrato/paisagem e tela larga |
+| Zona de perigo | frases correta/errada/vazia/trocada, domínio vazio, rollback e isolamento Livelo/Inter/autenticação |
+| Banco descartável | uma linha por tabela afetada, transação e repetição conforme `PRD-V5.md` §8.2 |
+
+Gates: formatação Dart, `flutter analyze`, testes Flutter com cobertura mínima
+de 90% nas regras/controladores/serviços críticos, builds Web e APK; Pytest e
+Ruff continuam verdes. O site só entra nos gates quando houver alteração na API;
+sua interface não será alterada.
+
+**Saída da fase:** Flutter administra o backend com as proteções necessárias;
+a interface Next.js permanece apenas como fallback transitório, sem evolução
+funcional.
 
 ### Fase 6 — Push e relatórios
 
@@ -714,22 +921,17 @@ Nenhuma fase autoriza apagar `site/`. A aposentadoria definitiva será uma decis
 
 Estes itens não serão inventados durante a implementação:
 
-- nome público definido para o piloto: **Radar de Benefícios**;
-- identificadores Android e iOS definidos: `br.com.radarbeneficios.app`;
-- login definido: Firebase Authentication por e-mail/senha, convite fechado e
-  sem cadastro público;
 - domínio/remetente do novo relatório por e-mail;
 - horário do relatório diário;
-- backend do piloto definido na API v1 do Next.js/Vercel; reavaliar somente se
-  o gate operacional mostrar limitação real;
-- fundação Flutter definida com SDKs oficiais do Firebase, `http` e conversão
-  manual de JSON; bibliotecas extras continuam exigindo justificativa;
-- retenção da auditoria técnica definida em 30 dias; retenção das notificações
-  continua pendente;
+- retenção das notificações;
 - data e roteiro para desligar a interface Next.js e, se necessário, mover a API
   v1 para outro hospedeiro;
 - quando pagar e publicar na Google Play e na App Store;
 - regra matemática para comparar pontos Livelo com cashback em dinheiro.
+
+Já estão fechados: nome **Radar de Benefícios**, identificadores
+`br.com.radarbeneficios.app`, Firebase por convite, API v1 transitória no
+Next.js/Vercel, fundação Flutter, paginação numerada e auditoria técnica por 30 dias.
 
 Cada decisão deverá registrar evidência, impacto, testes e atualização deste plano/PRDs relacionados.
 
@@ -758,15 +960,17 @@ Uma opção pode virar pré-condição de segurança apenas quando a funcionalid
 | Requisitos reais de Google Play, TestFlight e aparelho físico | Contas novas e push nativo podem exigir testes, participantes, configuração APNs e dispositivos reais | Antes da publicação |
 | Atualização recomendada/obrigatória e feature flags | Permite liberar ou interromper uma função com segurança sem quebrar todos os clientes | Fases 3 e 8 |
 
-### 17.2 Decisões que permanecem abertas na paginação
+### 17.2 Medições que permanecem abertas na paginação
 
-Os limites funcionais de 20 por padrão e 50 no máximo estão aprovados. Na Fase 1 ainda será explicado e decidido:
+O contrato está fechado: número de página, 20 itens por padrão, 50 no máximo e
+`atualizado_em`/`qualidade` quando o domínio fornecer. Permanecem como trabalho
+técnico de cada conjunto de dados:
 
-- paginação por cursor ou por número de página com versão do catálogo;
 - índices de busca adequados ao volume real no Neon;
 - orçamento de tamanho e tempo de resposta medido, sem escolher número arbitrário agora;
-- comportamento visual entre botão “próxima página” e carregamento progressivo;
-- filtros que entram no primeiro MVP além de marca, categoria, loja e preço.
+- teste de estabilidade entre páginas durante a publicação de uma coleta nova;
+- comportamento visual adequado a cada jornada; Livelo 4.2B usará carregamento progressivo;
+- validação dos filtros aprovados de marca, categoria, loja e preço na jornada de produtos.
 
 ---
 
@@ -841,6 +1045,12 @@ Estas referências devem ser reconsultadas nas fases correspondentes; preços, l
 
 ---
 
-## 20. Regra para iniciar
+## 20. Regra para continuar
 
-Quando o responsável disser que chegou o momento de começar, a primeira entrega será a **Fase 1 — Inventário e contratos**. Não começar por telas. Depois do contrato aprovado, iniciar a fundação testável do Flutter em `app-robo/`, mantendo `site/`, banco e robôs atuais operacionais.
+A Fase 5 está implementada e seu backend foi publicado. O próximo gate é o
+smoke físico do APK portátil em outro Android: login, Livelo, Inter, Produtos,
+Administração e solicitação controlada de atualização. A zona de perigo não será
+executada em produção nesse roteiro. Depois do aceite físico, a Fase 6 recebe um
+plano próprio antes de push, outbox ou relatórios. O Flutter continua cliente da
+API; o site não recebe evolução visual e permanece apenas como fallback e
+hospedeiro transitório até o corte ser autorizado separadamente.
