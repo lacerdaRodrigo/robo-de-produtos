@@ -3,24 +3,14 @@
 Cliente multiplataforma (Flutter) do Radar de Benefícios. Atende Web, Android e iOS
 com o mesmo código, isolado do site legado em `site/`.
 
-> **Estado atual — Fase 4.3 em validação local:** projeto Firebase `radarbeneficios`
-> conectado para Web, Android e iOS; login fechado por e-mail/senha, recuperação,
-> token na API e gate de convite validados em produção. A migração 010 está no
-> Neon, o primeiro convite foi vinculado e o smoke real passou no Samsung
-> SM-M135M em 2026-08-20. As telas de domínio continuam no piloto somente leitura
-> e o Flutter será a única interface ao fim da transição.
-> A Fase 4 começou pelo Android: a navegação inferior adaptativa já foi validada
-> no Samsung em retrato, e o painel Livelo real está implementado, testado e
-> com builds locais Web/APK gerados e smoke físico concluído no Samsung. O
-> painel somente leitura de cashback Inter passou pelos gates locais e aguarda
-> apenas o smoke físico no Samsung; o Flutter
-> continua lendo exclusivamente a API v1.
-> A Fase 4.4 passou pelos gates locais: a busca paginada de produtos, filtros,
-> agrupamento por loja e histórico continuam somente leitura e não acessam o
-> banco diretamente. Ainda falta o smoke físico no Samsung; o build do site
-> legado tem uma pendência técnica independente no Next.js.
-> O plano completo e as decisões de contrato estão em [`PLANO.md`](PLANO.md);
-> a implementação viva da paginação e dos erros está em `site/lib/api.ts`.
+> **Estado atual:** as Fases 0 a 5 do piloto estão implementadas; autenticação,
+> painéis de leitura e administração continuam usando somente a API v1. No
+> redesign incremental, a Etapa 0 foi aprovada e a Etapa 1 — identidade e
+> abertura — passou localmente por 121 testes, análise e formatação. A versão
+> final foi instalada e aprovada no Samsung conectado; Web e iOS ainda precisam
+> de aceite visual. O login real ainda não foi redesenhado.
+> O plano técnico está em [`PLANO.md`](PLANO.md) e a ordem visual por telas em
+> [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md).
 
 ## Plataformas e identificadores
 
@@ -98,5 +88,7 @@ sem enfraquecer os gates de Python (`testes.yml`/Ruff/Pytest) e do site.
 ## Referência de design
 
 - Paleta e direção visual aprovadas: `PLANO.md §10.2`
+- Ordem e aceite das novas telas: `PLANO-REDESIGN-POR-TELAS.md`
+- Fontes vetoriais da marca: `../design-app/assets/logo-radar.svg`
 - Regras de segurança/dinheiro (sem `double`, sem segredo no cliente): `PLANO.md §6`
 - Contrato da API (paginação e erros): `../site/lib/api.ts`

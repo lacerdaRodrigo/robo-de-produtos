@@ -1,15 +1,17 @@
 # Plano de ação — nova experiência do Radar de Benefícios
 
-**Status:** proposta visual e funcional para validação. Este plano e os protótipos
-não alteram o aplicativo Flutter, a API, o banco, os robôs ou os workflows.
+**Status:** direção inicial aprovada; fundação da marca e abertura implementadas
+localmente no Flutter. As demais telas continuam propostas e não estão
+autorizadas automaticamente.
 
-**Data-base da auditoria:** 22 de agosto de 2026
+**Data-base da auditoria:** 23 de agosto de 2026
 
 **Protótipo Web:** [`prototipo-web.html`](prototipo-web.html)
 
 **Protótipo Mobile:** [`prototipo-mobile.html`](prototipo-mobile.html)
 
-**Logo conceitual:** [`assets/logo-radar-conceito.png`](assets/logo-radar-conceito.png)
+**Logo vetorial aprovado:** [`assets/logo-radar.svg`](assets/logo-radar.svg) e
+[`assets/logo-radar-sobre-escuro.svg`](assets/logo-radar-sobre-escuro.svg)
 
 ## 0. Regra permanente de evolução visual
 
@@ -35,7 +37,7 @@ O produto já possui uma base técnica forte, mas sua interface cresceu por
 entregas sucessivas. As funções existem; o problema principal é encontrá-las e
 entender como Livelo, Sites parceiros do Inter e Compre direto se relacionam.
 
-### Evidências no estado atual
+### Evidências encontradas antes da Fase D1
 
 - O nome público aprovado já é **Radar de Benefícios**. Android, iOS e o título
   do Flutter usam esse nome; não vale fazer uma renomeação técnica do
@@ -102,10 +104,10 @@ O conceito troca o antigo “R$ vira ponto” e o ícone padrão do Flutter por 
 símbolo próprio: um radar encontra uma oportunidade. Ele evita cifrão, moeda,
 carrinho e marcas da Livelo ou do Inter.
 
-O PNG atual é uma **exploração para aprovação**, não um pacote final de ícones.
-Depois da escolha visual, a implementação deverá produzir uma fonte vetorial
-limpa e os recortes exigidos por Android, iOS e Web, inclusive versão
-`maskable`. Não substituir os ícones reais antes dessa aprovação.
+O PNG inicial foi uma exploração para aprovação e permanece guardado como
+histórico. A direção aprovada foi redesenhada em SVG, ganhou variante clara e
+os recortes exigidos por Android, iOS e Web, inclusive versão `maskable`, na
+Fase D1.
 
 ## 3. Arquitetura de navegação
 
@@ -170,24 +172,26 @@ mas preserva os domínios e contratos separados.
 
 ### 4.1 Abertura
 
-A abertura terá duas camadas, sem atraso artificial:
+A abertura terá duas camadas coordenadas:
 
-1. **Launch screen nativa:** fundo azul-marinho e símbolo estático, exibidos
-   enquanto o motor Flutter inicia.
-2. **Bootstrap Flutter:** animação curta do feixe do radar enquanto Firebase,
+1. **Launch screen nativa:** fundo azul-marinho e símbolo animado desde o toque,
+   exibidos enquanto o motor Flutter inicia.
+2. **Bootstrap Flutter:** animação contínua do feixe do radar enquanto Firebase,
    sessão, convite, App Check e configuração da API são validados.
 
 Regras:
 
-- duração visual ideal entre 700 ms e 1,8 s quando a inicialização for rápida;
-- nunca segurar o usuário só para terminar a animação;
+- ciclo visual mínimo de 1,5 segundo quando a inicialização for rápida;
+- se a validação demorar mais que o ciclo mínimo, não adicionar outra espera;
 - depois de alguns segundos, trocar o texto por uma explicação honesta;
-- falha oferece **Tentar novamente** e nunca gira para sempre;
+- enquanto a validação estiver pendente, a animação reinicia a cada ciclo;
+- falha interrompe a espera e oferece **Tentar novamente**;
 - respeitar a preferência de movimento reduzido;
 - usar animação vetorial/CSS/Flutter, não um GIF pesado.
 
-O protótipo simula essa abertura. A implementação nativa é trabalho posterior e
-precisa de testes em Android, iOS e Web.
+O protótipo simula essa abertura. A Fase D1 já implementou as camadas nativas e
+Flutter em Android, iOS e Web. O Android conectado recebeu aceite visual e
+smoke físico; Web e iOS permanecem pendentes.
 
 ### 4.2 Login
 
@@ -317,21 +321,23 @@ claras e neutras para não cansar os olhos.
 - foco visível, contraste WCAG AA e suporte a aumento de texto;
 - nenhum texto externo é interpretado como HTML.
 
-## 6. Plano de implementação posterior
+## 6. Plano de implementação incremental
 
 ### Fase D0 — decisão visual
 
-- aprovar nome curto “Radar”;
-- aprovar ou revisar símbolo e paleta de apoio;
-- aprovar navegação fixa e atalhos editáveis;
-- aprovar os fluxos do protótipo.
+- [x] aprovar nome curto “Radar”;
+- [x] aprovar símbolo, paleta de apoio, abertura e estrutura do login;
+- [ ] decidir a navegação mobile na etapa própria;
+- [ ] decidir se e quando entram atalhos editáveis.
 
 ### Fase D1 — fundação da marca e abertura
 
-- produzir logo vetorial final e ícones de todas as plataformas;
-- corrigir Web Manifest, metadados e favicon;
-- criar launch screens nativas e bootstrap animado;
-- adicionar testes de inicialização, falha e movimento reduzido.
+- [x] produzir logo vetorial e ícones de todas as plataformas;
+- [x] corrigir Web Manifest, metadados e favicon;
+- [x] criar launch screens nativas e bootstrap animado;
+- [x] adicionar testes de inicialização, falha e movimento reduzido;
+- [x] obter o aceite visual e executar o smoke físico no Android conectado;
+- [ ] obter o aceite visual em Web e iOS quando voltarem ao escopo.
 
 ### Fase D2 — login e moldura
 

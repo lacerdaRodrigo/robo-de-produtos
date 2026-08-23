@@ -8,15 +8,19 @@ import '../componentes/estados.dart';
 import '../navegacao/moldura.dart';
 import 'pagina_entrar.dart';
 
+typedef ConstrutorValidacaoAcesso = Widget Function(BuildContext context);
+
 class PortaoAutenticacao extends StatelessWidget {
   const PortaoAutenticacao({
     super.key,
     required this.autenticador,
     required this.api,
+    this.construirValidacao,
   });
 
   final Autenticador autenticador;
   final ApiV1 api;
+  final ConstrutorValidacaoAcesso? construirValidacao;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,7 @@ class PortaoAutenticacao extends StatelessWidget {
           key: ValueKey(conta.id),
           api: api,
           autenticador: autenticador,
+          construirValidacao: construirValidacao,
         );
       },
     );
@@ -41,10 +46,12 @@ class _ValidacaoDoConvite extends StatefulWidget {
     super.key,
     required this.api,
     required this.autenticador,
+    this.construirValidacao,
   });
 
   final ApiV1 api;
   final Autenticador autenticador;
+  final ConstrutorValidacaoAcesso? construirValidacao;
 
   @override
   State<_ValidacaoDoConvite> createState() => _EstadoValidacaoDoConvite();
@@ -67,6 +74,10 @@ class _EstadoValidacaoDoConvite extends State<_ValidacaoDoConvite> {
       future: _perfil,
       builder: (context, estado) {
         if (estado.connectionState != ConnectionState.done) {
+          final construirValidacao = widget.construirValidacao;
+          if (construirValidacao != null) {
+            return construirValidacao(context);
+          }
           return const Scaffold(
             body: Carregando(mensagem: 'Validando acesso ao piloto…'),
           );

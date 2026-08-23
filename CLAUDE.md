@@ -67,6 +67,13 @@ Radar pessoal de benefícios com três integrações. A Livelo filtra lojas favo
 
 Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige varredura de consistência: PRD, `docs/TESTES.md` e `README.md`. Uma decisão que contradiz outra seção é bug de documentação, não detalhe.
 
+## Cadência de testes
+
+- Trabalhe em lote: primeiro implemente e escreva ou ajuste os testes, sem rodar a suíte depois de cada pequena edição.
+- Execute os testes relevantes no fechamento da tarefa ou antes do build previsto. Quando o fechamento já incluir build, a execução anterior ao build também é a validação final; não rode a mesma suíte duas vezes sem necessidade.
+- Se essa validação encontrar falhas, corrija e rode somente os testes necessários durante o ajuste; ao estabilizar, confirme a suíte relevante uma vez.
+- Não pule os gates finais nem declare aprovação sem evidência. Esta regra reduz a frequência das execuções, não a cobertura exigida.
+
 ## Antes de escrever código
 
 A V1.0 está em produção (§11.1 do PRD). A V2.0 está em produção e **validada contra a página real** (2026-08-11): o extrator lê o payload `__NEXT_DATA__` (RF14), `Parceiro` tem `pontos_base`/`inicio_promocao`/`fim_promocao`/`campanha`, e o e-mail mostra validade (RN22) e distingue `CLUB` de `PROMOTION_CLUB` (RN23). A V2.1 está no ar desde 2026-08-11: o `DATABASE_URL` foi cadastrado, `montar_catalogo()` lê o Postgres com o TOML como reserva, e em produção o catálogo já vem do banco (132 lojas, 10 categorias, batendo com o arquivo).

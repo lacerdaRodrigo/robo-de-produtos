@@ -1,8 +1,8 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android
+**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android. No redesign incremental, a Etapa 0 foi aprovada e a Etapa 1 foi implementada e aprovada no Samsung conectado; os aceites visuais de Web e iOS permanecem pendentes.
 
-**Data-base:** 22 de agosto de 2026
+**Data-base:** 23 de agosto de 2026
 
 **Repositório:** `lacerdaRodrigo/robo-livelo`  
 **Referência observada na elaboração:** `main` na versão `1.30.2` (`46146c7`)  
@@ -15,6 +15,11 @@
 > receberá novas funcionalidades; `site/` fica temporariamente apenas como
 > fallback e como hospedeiro da API v1 até um corte de backend explicitamente
 > autorizado.
+
+> O redesign completo está dividido por telas em
+> [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md). Esse plano não
+> libera a etapa seguinte: abertura e identidade foram a primeira fatia, e o
+> login só muda depois do início explicitamente autorizado da Etapa 2.
 
 ---
 

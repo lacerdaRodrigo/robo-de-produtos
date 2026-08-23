@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 /// são os valores iniciais aprovados.
 abstract final class Tokens {
   // Marca e superfícies institucionais.
+  static const Color marcaProfunda = Color(0xFF081A2D); // abertura e ícones
   static const Color marca = Color(0xFF102A43);
   static const Color marcaClara = Color(0xFF1769AA); // ação, links, foco
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,21 +18,99 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Pontos, cashback e preços reunidos em um só radar.">
+  <meta name="theme-color" content="#081A2D">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="app_robo">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Radar">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>app_robo</title>
+  <title>Radar de Benefícios</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: #081a2d;
+    }
+
+    #radar-native-launch {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 24px;
+      padding: 32px;
+      box-sizing: border-box;
+      color: #f5fbff;
+      background: #081a2d;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+    }
+
+    .radar-native-logo {
+      width: clamp(112px, 22vw, 152px);
+      height: auto;
+      animation: radar-respiro 1.8s ease-in-out infinite;
+    }
+
+    .radar-native-titulo {
+      margin: 0;
+      font-size: clamp(24px, 5vw, 34px);
+      font-weight: 750;
+      letter-spacing: -0.03em;
+    }
+
+    .radar-native-status {
+      margin: -12px 0 0;
+      color: #c6e1f4;
+      font-size: 15px;
+    }
+
+    @keyframes radar-respiro {
+      0%, 100% { opacity: 0.82; transform: scale(0.96); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .radar-native-logo { animation: none; }
+    }
+  </style>
 </head>
 <body>
+  <div id="radar-native-launch" role="status" aria-live="polite">
+    <svg class="radar-native-logo" viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <linearGradient id="radar-feixe-web" x1="256" y1="256" x2="440" y2="104" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#4ba3e3"/>
+          <stop offset="1" stop-color="#55d5ed"/>
+        </linearGradient>
+        <linearGradient id="radar-ganho-web" x1="390" y1="54" x2="466" y2="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#4ade80"/>
+          <stop offset="1" stop-color="#22a34a"/>
+        </linearGradient>
+      </defs>
+      <path d="M367 113a180 180 0 1 0 61 181" fill="none" stroke="#c6e1f4" stroke-linecap="round" stroke-width="44"/>
+      <path d="M256 256 348 91c6-11 20-14 30-7l77 48c12 8 12 26-1 33Z" fill="url(#radar-feixe-web)"/>
+      <path d="M428 50c6 27 19 40 46 46-27 6-40 19-46 46-6-27-19-40-46-46 27-6 40-19 46-46Z" fill="url(#radar-ganho-web)"/>
+    </svg>
+    <p class="radar-native-titulo">Radar de Benefícios</p>
+    <p class="radar-native-status">Preparando seu radar…</p>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('radar-native-launch')?.remove();
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

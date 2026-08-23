@@ -1,5 +1,6 @@
-# Launch Screen Assets
+# Assets da abertura
 
-You can customize the launch screen with your own desired assets by replacing the image files in this directory.
-
-You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+Os três PNGs transparentes usam a variante clara do símbolo sobre o fundo
+azul-marinho definido em `LaunchScreen.storyboard`. A
+[fonte vetorial aprovada](../../../../../design-app/assets/logo-radar-sobre-escuro.svg)
+deve permanecer sincronizada com os recortes 1x, 2x e 3x quando a marca mudar.

@@ -81,6 +81,9 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 
 - Faça a menor mudança coerente com o pedido e preserve alterações do usuário.
 - Toda correção de bug recebe teste de regressão quando tecnicamente possível.
+- Trabalhe em lote: implemente a mudança e escreva ou ajuste os testes sem executar a suíte após cada pequena edição.
+- Rode os testes relevantes no fechamento da tarefa ou antes do build previsto. Se o fechamento já incluir build, a execução que antecede o build vale como validação final; não duplique a suíte sem motivo.
+- Se a validação final falhar, corrija e repita somente os testes necessários até estabilizar; depois confirme a suíte relevante uma vez.
 - Não enfraqueça os gates atuais de Pytest, Ruff, Vitest, TypeScript e build do site.
 - Código Flutter deve passar por análise, formatação, testes unitários/widgets e builds previstos para a fase.
 - Testes não acessam fontes reais, Neon de produção, FCM real ou e-mail real.

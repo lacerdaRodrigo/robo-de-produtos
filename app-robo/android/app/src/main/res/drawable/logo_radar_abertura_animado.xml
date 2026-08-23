@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/logo_radar_abertura_vetor">
+    <target
+        android:name="feixe_radar"
+        android:animation="@animator/radar_varredura" />
+    <target
+        android:name="oportunidade_radar"
+        android:animation="@animator/radar_oportunidade" />
+    <target
+        android:name="marca_radar"
+        android:animation="@animator/radar_respiro" />
+</animated-vector>

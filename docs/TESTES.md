@@ -431,6 +431,33 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-292 | Inter abre Produtos | O atalho interno na aba Inter abre a busca sem descartar o painel de cashback | Teste de widget da navegação interna |
 | CT-293 | Histórico de 30 dias | Mínimo, máximo, medições paginadas, falha e retry aparecem sem converter valores em `double` | Mock autenticado da API e widget |
 
+### Fase 5 — administração compartilhada no Flutter/API
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-294 | Catálogos administrativos | Seleção, favoritas, paginação e deduplicação usam apenas os contratos autenticados da API | Cliente falso, controlador e widgets administrativos |
+| CT-295 | Disparo idempotente e cooldown | Duplo toque não cria dois pedidos; o app exibe aceite/cooldown sem afirmar que a coleta terminou | API falsa, chave opaca e widget do botão de disparo |
+| CT-296 | Decimais administrativos textuais | Pontos, limites, multiplicadores e cashback atravessam Flutter/API como texto, sem `double` | Fixtures e inspeção de corpo JSON |
+| CT-297 | Preferências e regras Livelo | Padrões globais, Clube e exceção por loja usam rotas fechadas e preservam o estado carregado | API falsa e jornada de widget da administração |
+| CT-298 | Limpeza protegida e descartável | Prévia, frase exata, autorização e rollback impedem limpeza acidental; o aceite destrutivo usa somente banco isolado | Widgets, Vitest e roteiro 5.3 do plano Flutter |
+
+### Redesign — Etapa 1, identidade e abertura
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-299 | Logo vetorial aprovado | As variantes clara/escura conservam geometria, semântica e o golden aprovado | `logo_radar_test.dart` com `CustomPainter`, semântica e golden |
+| CT-300 | Bootstrap antes do gate | A raiz de produção desenha a abertura enquanto Firebase/App Check ainda inicializam | `Completer` injetado em `RadarApp.inicializando` |
+| CT-301 | Ciclo visual mínimo | Resultado pronto aguarda somente o ciclo aprovado de 1,5 segundo; inicialização mais lenta não recebe espera adicional | Inicializadores falso imediato e lento com relógio controlado |
+| CT-302 | Inicialização demorada honesta | Após o limiar, o status explica a demora e mantém a marca visível | Relógio do teste avança até `tempoParaAviso` |
+| CT-303 | Falha segura e nova tentativa | Erro oferece retry, não vaza a exceção interna e uma tentativa válida segue o fluxo | Inicializadores pendente, excepcional e válido injetados |
+| CT-304 | Movimento reduzido | A preferência do sistema desativa o ticker e os pulsos da marca | `MediaQueryData(disableAnimations: true)` e inspeção de `TickerMode` |
+
+O APK instalado no Android conectado também validou manifests, ícones e o loop
+dos recursos de abertura nativos e Flutter. O build Web passou antes dos ajustes
+visuais finais do Android e não foi repetido nesta rodada. O
+`LaunchScreen.storyboard` do iOS foi conferido estruturalmente, mas seu build
+depende de Xcode/macOS e permanece parte do smoke físico da etapa.
+
 ---
 
 ## Fora dos testes automáticos
@@ -515,8 +542,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
 | **Total (site)** | **CTs catalogados + apoio** | **65** |
-| `app-robo/test/` | CT-257–CT-259, CT-261–CT-293 + fundação | 87 |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **87** |
+| `app-robo/test/` | CT-257–CT-259, CT-261–CT-304 + fundação | 121 |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **121** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

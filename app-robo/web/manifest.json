@@ -1,12 +1,11 @@
 {
-    "name": "app_robo",
-    "short_name": "app_robo",
+    "name": "Radar de Benefícios",
+    "short_name": "Radar",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#081A2D",
+    "theme_color": "#081A2D",
+    "description": "Pontos, cashback e preços reunidos em um só radar.",
     "prefer_related_applications": false,
     "icons": [
         {
