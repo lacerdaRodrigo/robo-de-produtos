@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.37.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa abertura animada da nova identidade
+  ([`bdbb2ee`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bdbb2ee8deafa663bd2ad473cdce0f52d1fecfee))
+
+
 ## v1.36.0 (2026-08-23)
 
 ### Bug Fixes
