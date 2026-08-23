@@ -403,6 +403,143 @@ class StatusApi {
   final bool saudavel;
 }
 
+enum EstadoResumo {
+  atualizado,
+  atencao,
+  atrasado,
+  atualizando,
+  falhaRecente,
+  parcial,
+  degradado,
+  semDados,
+  indisponivel;
+
+  factory EstadoResumo.parse(Object? valor) => switch (valor?.toString()) {
+    'atualizado' => atualizado,
+    'atencao' => atencao,
+    'atrasado' => atrasado,
+    'atualizando' => atualizando,
+    'falha_recente' => falhaRecente,
+    'parcial' => parcial,
+    'degradado' => degradado,
+    'sem_dados' => semDados,
+    _ => indisponivel,
+  };
+}
+
+class ResumoLivelo {
+  const ResumoLivelo({
+    required this.estado,
+    required this.ultimoSucessoEm,
+    required this.lojasAcompanhadas,
+    required this.alertasUltimaColeta,
+  });
+
+  factory ResumoLivelo.parse(Map<String, dynamic> objeto) => ResumoLivelo(
+    estado: EstadoResumo.parse(objeto['estado']),
+    ultimoSucessoEm: _textoOpcional(objeto['ultimo_sucesso_em']),
+    lojasAcompanhadas: _inteiroNaoNegativo(objeto['lojas_acompanhadas']),
+    alertasUltimaColeta: _inteiroNaoNegativo(objeto['alertas_ultima_coleta']),
+  );
+
+  final EstadoResumo estado;
+  final String? ultimoSucessoEm;
+  final int lojasAcompanhadas;
+  final int alertasUltimaColeta;
+}
+
+class ResumoCashbackInter {
+  const ResumoCashbackInter({
+    required this.estado,
+    required this.ultimaTentativaEm,
+    required this.ultimaTentativaEstado,
+    required this.ultimoSucessoEm,
+    required this.lojasAcompanhadas,
+    required this.lojasEncontradasUltimaColeta,
+  });
+
+  factory ResumoCashbackInter.parse(Map<String, dynamic> objeto) =>
+      ResumoCashbackInter(
+        estado: EstadoResumo.parse(objeto['estado']),
+        ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+        ultimaTentativaEstado: _textoOpcional(
+          objeto['ultima_tentativa_estado'],
+        ),
+        ultimoSucessoEm: _textoOpcional(objeto['ultimo_sucesso_em']),
+        lojasAcompanhadas: _inteiroNaoNegativo(objeto['lojas_acompanhadas']),
+        lojasEncontradasUltimaColeta: _inteiroNaoNegativo(
+          objeto['lojas_encontradas_ultima_coleta'],
+        ),
+      );
+
+  final EstadoResumo estado;
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
+  final String? ultimoSucessoEm;
+  final int lojasAcompanhadas;
+  final int lojasEncontradasUltimaColeta;
+}
+
+class ResumoProdutos {
+  const ResumoProdutos({
+    required this.estado,
+    required this.ultimaTentativaEm,
+    required this.ultimaTentativaEstado,
+    required this.dadosMaisAntigosEm,
+    required this.dadosMaisRecentesEm,
+    required this.qualidade,
+    required this.lojasSelecionadas,
+    required this.lojasSemColeta,
+    required this.produtosAtivos,
+  });
+
+  factory ResumoProdutos.parse(Map<String, dynamic> objeto) => ResumoProdutos(
+    estado: EstadoResumo.parse(objeto['estado']),
+    ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+    ultimaTentativaEstado: _textoOpcional(objeto['ultima_tentativa_estado']),
+    dadosMaisAntigosEm: _textoOpcional(objeto['dados_mais_antigos_em']),
+    dadosMaisRecentesEm: _textoOpcional(objeto['dados_mais_recentes_em']),
+    qualidade: _textoOpcional(objeto['qualidade']),
+    lojasSelecionadas: _inteiroNaoNegativo(objeto['lojas_selecionadas']),
+    lojasSemColeta: _inteiroNaoNegativo(objeto['lojas_sem_coleta']),
+    produtosAtivos: _inteiroNaoNegativo(objeto['produtos_ativos']),
+  );
+
+  final EstadoResumo estado;
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
+  final String? dadosMaisAntigosEm;
+  final String? dadosMaisRecentesEm;
+  final String? qualidade;
+  final int lojasSelecionadas;
+  final int lojasSemColeta;
+  final int produtosAtivos;
+}
+
+class ResumoInicio {
+  const ResumoInicio({
+    required this.geradoEm,
+    required this.estadoGeral,
+    required this.livelo,
+    required this.cashbackInter,
+    required this.produtos,
+  });
+
+  factory ResumoInicio.parse(Map<String, dynamic> objeto) => ResumoInicio(
+    geradoEm: _texto(objeto['gerado_em']),
+    estadoGeral: EstadoResumo.parse(objeto['estado_geral']),
+    livelo: ResumoLivelo.parse(_mapa(objeto['livelo'])),
+    cashbackInter: ResumoCashbackInter.parse(_mapa(objeto['cashback_inter'])),
+    produtos: ResumoProdutos.parse(_mapa(objeto['produtos'])),
+  );
+
+  final String geradoEm;
+  final EstadoResumo estadoGeral;
+  final ResumoLivelo livelo;
+  final ResumoCashbackInter cashbackInter;
+  final ResumoProdutos produtos;
+}
+
 class PerfilUsuario {
   const PerfilUsuario({
     required this.id,
@@ -538,3 +675,13 @@ bool _booleano(Object? valor) {
   final texto = valor?.toString().trim().toLowerCase() ?? '';
   return texto == 'true' || texto == '1' || texto == 'on';
 }
+
+int _inteiroNaoNegativo(Object? valor) {
+  final convertido = valor is num
+      ? valor.toInt()
+      : int.tryParse(valor?.toString() ?? '') ?? 0;
+  return convertido < 0 ? 0 : convertido;
+}
+
+Map<String, dynamic> _mapa(Object? valor) =>
+    valor is Map<String, dynamic> ? valor : <String, dynamic>{};

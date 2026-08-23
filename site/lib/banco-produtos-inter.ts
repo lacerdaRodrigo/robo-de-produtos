@@ -68,6 +68,79 @@ export type PaginaProdutosDiretos = {
   total: number;
 };
 
+export type EstadoTentativaProdutos = "iniciada" | "sucesso" | "parcial" | "falha";
+
+export type ResumoProdutosPersistido = {
+  ultima_tentativa_em: string | null;
+  ultima_tentativa_estado: EstadoTentativaProdutos | null;
+  dados_mais_antigos_em: string | null;
+  dados_mais_recentes_em: string | null;
+  qualidade: "completa" | "degradada" | null;
+  lojas_selecionadas: number;
+  lojas_sem_coleta: number;
+  produtos_ativos: number;
+};
+
+/**
+ * Resumo do Compre direto sem esconder lojas atrasadas atrás de uma única
+ * data. A tentativa coordenadora e o último sucesso de cada loja selecionada
+ * continuam independentes; produtos vêm apenas do catálogo ativo local.
+ */
+export async function resumoProdutosPersistido(): Promise<ResumoProdutosPersistido> {
+  const sql = conectar();
+  const linhas = (await sql`
+    WITH selecionadas AS (
+      SELECT id
+        FROM loja_direta_inter
+       WHERE selecionada = TRUE AND ativa = TRUE
+    ), ultimos_sucessos AS (
+      SELECT loja.id, execucao.concluida_em, execucao.qualidade
+        FROM selecionadas loja
+        LEFT JOIN LATERAL (
+          SELECT concluida_em, qualidade
+            FROM execucao_loja_produtos_inter
+           WHERE loja_direta_inter_id = loja.id AND estado = 'sucesso'
+           ORDER BY concluida_em DESC, id DESC
+           LIMIT 1
+        ) execucao ON TRUE
+    ), tentativa AS (
+      SELECT iniciada_em, estado
+        FROM execucao_produtos_inter
+       ORDER BY iniciada_em DESC, id DESC
+       LIMIT 1
+    )
+    SELECT (SELECT iniciada_em FROM tentativa) AS ultima_tentativa_em,
+           (SELECT estado FROM tentativa) AS ultima_tentativa_estado,
+           min(ultimos_sucessos.concluida_em) AS dados_mais_antigos_em,
+           max(ultimos_sucessos.concluida_em) AS dados_mais_recentes_em,
+           CASE
+             WHEN count(ultimos_sucessos.concluida_em) = 0 THEN NULL
+             WHEN bool_or(ultimos_sucessos.qualidade = 'degradada') THEN 'degradada'
+             ELSE 'completa'
+           END AS qualidade,
+           count(ultimos_sucessos.id)::int AS lojas_selecionadas,
+           count(*) FILTER (WHERE ultimos_sucessos.concluida_em IS NULL)::int
+             AS lojas_sem_coleta,
+           (
+             SELECT count(*)::int
+               FROM produto_direto_inter produto
+               JOIN loja_direta_inter loja ON loja.id = produto.loja_direta_inter_id
+              WHERE produto.ativo = TRUE AND loja.selecionada = TRUE AND loja.ativa = TRUE
+           ) AS produtos_ativos
+      FROM ultimos_sucessos
+  `) as ResumoProdutosPersistido[];
+  return linhas[0] ?? {
+    ultima_tentativa_em: null,
+    ultima_tentativa_estado: null,
+    dados_mais_antigos_em: null,
+    dados_mais_recentes_em: null,
+    qualidade: null,
+    lojas_selecionadas: 0,
+    lojas_sem_coleta: 0,
+    produtos_ativos: 0,
+  };
+}
+
 /** Colunas de produto + a medição mais recente, igual a `buscarProdutosDiretos`
  *  mas com `?` para parâmetros posicionais e um apelido de tabela reutilizável. */
 const COLUNAS_PRODUTO = `

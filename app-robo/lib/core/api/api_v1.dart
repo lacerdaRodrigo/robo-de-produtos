@@ -18,6 +18,12 @@ class ApiV1 {
     return StatusApi.parse(corpo);
   }
 
+  /// Resumo agregado do Início, lido somente do Postgres pela API.
+  Future<ResumoInicio> resumo() async {
+    final corpo = await cliente.obter('/api/v1/resumo');
+    return ResumoInicio.parse(corpo);
+  }
+
   Future<PerfilUsuario> perfil() async {
     final corpo = await cliente.obter('/api/v1/perfil');
     return PerfilUsuario.parse(corpo);

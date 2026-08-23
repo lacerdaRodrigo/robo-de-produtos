@@ -1,8 +1,8 @@
 # Plano de ação — nova experiência do Radar de Benefícios
 
-**Status:** direção inicial aprovada; fundação da marca e abertura implementadas
-localmente no Flutter. As demais telas continuam propostas e não estão
-autorizadas automaticamente.
+**Status:** direção inicial, abertura, Login, Moldura e Início aprovados; os
+Módulos 0 a 3 estão implementados localmente no Flutter. As telas seguintes
+continuam propostas e não estão autorizadas automaticamente.
 
 **Data-base da auditoria:** 23 de agosto de 2026
 
@@ -327,7 +327,7 @@ claras e neutras para não cansar os olhos.
 
 - [x] aprovar nome curto “Radar”;
 - [x] aprovar símbolo, paleta de apoio, abertura e estrutura do login;
-- [ ] decidir a navegação mobile na etapa própria;
+- [x] decidir a navegação mobile na etapa própria: gaveta;
 - [ ] decidir se e quando entram atalhos editáveis.
 
 ### Fase D1 — fundação da marca e abertura
@@ -341,10 +341,13 @@ claras e neutras para não cansar os olhos.
 
 ### Fase D2 — login e moldura
 
-- redesenhar o login sem mudar o contrato Firebase;
-- aplicar novos tokens e componentes;
-- trocar a navegação para Início/Lojas/Produtos/Alertas/Mais;
-- preservar `IndexedStack`, responsividade e semântica.
+- [x] redesenhar o login sem mudar o contrato Firebase;
+- [x] aplicar os tokens e componentes necessários ao login;
+- [x] obter o aceite visual do login no Android conectado;
+- [x] decidir e aprovar a moldura/navegação mobile com gaveta;
+- [x] trocar a navegação para Início/Lojas/Produtos/Alertas/Mais;
+- [x] preservar `IndexedStack`, responsividade e semântica;
+- [x] obter o aceite visual final da implementação no Samsung.
 
 ### Fase D3 — Início e hub de Lojas
 

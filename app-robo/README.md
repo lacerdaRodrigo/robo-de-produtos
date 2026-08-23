@@ -5,10 +5,11 @@ com o mesmo código, isolado do site legado em `site/`.
 
 > **Estado atual:** as Fases 0 a 5 do piloto estão implementadas; autenticação,
 > painéis de leitura e administração continuam usando somente a API v1. No
-> redesign incremental, a Etapa 0 foi aprovada e a Etapa 1 — identidade e
-> abertura — passou localmente por 121 testes, análise e formatação. A versão
-> final foi instalada e aprovada no Samsung conectado; Web e iOS ainda precisam
-> de aceite visual. O login real ainda não foi redesenhado.
+> redesign incremental, identidade, abertura, login responsivo e a nova moldura
+> já receberam aceite no Samsung conectado. O Módulo 3 — Início foi aprovado e
+> implementado localmente com o novo resumo autenticado: 147 testes Flutter,
+> 91,29% de cobertura e builds Web/APK passaram. Publicação da rota e instalação
+> do APK não foram executadas; Web e iOS ainda precisam de aceite visual.
 > O plano técnico está em [`PLANO.md`](PLANO.md) e a ordem visual por telas em
 > [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md).
 
@@ -49,8 +50,9 @@ flutter build web
 ```
 
 `API_URL` pode ser definido com `--dart-define=API_URL=https://...`. Chamadas
-privadas enviam o ID token no Bearer automaticamente. O endpoint `/api/v1/status`
-permanece público.
+privadas enviam o ID token no Bearer automaticamente. O endpoint
+`/api/v1/status` permanece público; `/api/v1/resumo` é autenticado e lê somente
+o Postgres do servidor, sem chamar Livelo ou Inter ao atualizar o Início.
 
 O piloto publicado usa:
 

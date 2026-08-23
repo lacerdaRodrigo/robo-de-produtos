@@ -4,16 +4,20 @@ Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja 
 
 Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte documentada: 211 testes no robô, 65 no site e 121 no Flutter, com 94,16% de cobertura do núcleo puro.
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte documentada: 211 testes no robô, 83 no site e 147 no Flutter, com 94,16% de cobertura do núcleo puro.
 
 > **Aceite em andamento:** a V4 possui coletor, persistência, site e workflow matricial. Casas Bahia é a única loja de produtos selecionada; Ponto e o dimensionamento para mais lojas continuam como próximos gates. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
 
 > **Flutter:** as Fases 0 a 5 do piloto estão implementadas e a API da Fase 5
 > está publicada. O redesign agora segue por telas: a direção visual inicial foi
 > aprovada e a nova identidade/abertura foi implementada localmente em Web,
-> Android e na estrutura iOS, com 121 testes aprovados. A abertura animada foi
-> validada no Samsung conectado; Web e iOS ainda precisam de aceite visual. O
-> login real permanece intacto e a Etapa 2 não foi iniciada. Veja o
+> Android e na estrutura iOS. O login responsivo também foi implementado e
+> aprovado no Samsung conectado. A nova moldura com gaveta Mobile, lateral Web
+> e destinos Início/Lojas/Produtos/Alertas/Mais também foi implementada e
+> aprovada manualmente no aparelho. O Módulo 3 — Início e seu resumo autenticado
+> foram implementados localmente; publicação da rota e instalação não foram
+> executadas. A suíte Flutter possui 147 testes e 91,29% de cobertura global;
+> Web e iOS ainda precisam de aceite visual. Veja o
 > [`plano de redesign`](app-robo/PLANO-REDESIGN-POR-TELAS.md).
 
 ## Como funciona

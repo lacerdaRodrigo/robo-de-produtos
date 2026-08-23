@@ -57,6 +57,39 @@ export type Preferencias = {
   assinante_clube: boolean;
 };
 
+export type ResumoLiveloPersistido = {
+  ultimo_sucesso_em: string | null;
+  lojas_acompanhadas: number;
+  alertas_ultima_coleta: number;
+};
+
+/** Recorte agregado da Livelo para o Início do aplicativo.
+ *
+ * `execucao` só recebe retratos concluídos e atômicos. A contagem de lojas
+ * vem do catálogo acompanhado atual; ausência de execução continua distinta
+ * de uma coleta válida com zero alertas.
+ */
+export async function resumoLiveloPersistido(): Promise<ResumoLiveloPersistido> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT ultima.momento AS ultimo_sucesso_em,
+           (SELECT count(*)::int FROM loja) AS lojas_acompanhadas,
+           COALESCE(ultima.alertas, 0)::int AS alertas_ultima_coleta
+      FROM (SELECT 1) base
+      LEFT JOIN LATERAL (
+        SELECT momento, alertas
+          FROM execucao
+         ORDER BY momento DESC, id DESC
+         LIMIT 1
+      ) ultima ON TRUE
+  `) as ResumoLiveloPersistido[];
+  return linhas[0] ?? {
+    ultimo_sucesso_em: null,
+    lojas_acompanhadas: 0,
+    alertas_ultima_coleta: 0,
+  };
+}
+
 /** RN26: o carimbo da pagina. Sem execucao registrada, a pagina diz isso em
  *  vez de fingir que esta atualizada. */
 export async function ultimaExecucao(): Promise<Execucao | null> {

@@ -6,10 +6,15 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/app.dart';
-import 'package:app_robo/app/navegacao/destinos.dart';
 import 'package:app_robo/core/api/api_v1.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/autenticacao/autenticador.dart';
+
+const _resumoVazio =
+    '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"sem_dados",'
+    '"livelo":{"estado":"sem_dados"},'
+    '"cashback_inter":{"estado":"sem_dados"},'
+    '"produtos":{"estado":"sem_dados"}}';
 
 class AutenticadorFalso implements Autenticador {
   AutenticadorFalso([this.contaAtual]);
@@ -77,10 +82,7 @@ void main() {
       RadarApp.comAutenticacao(api: api, autenticador: autenticador),
     );
 
-    expect(
-      find.text('Entre com o acesso recebido para o piloto.'),
-      findsOneWidget,
-    );
+    expect(find.text('Que bom ter você aqui'), findsOneWidget);
     await at.enterText(find.byType(EditableText).at(0), 'piloto@example.com');
     await at.enterText(find.byType(EditableText).at(1), 'senha-segura');
     await at.tap(find.text('Entrar'));
@@ -126,6 +128,9 @@ void main() {
             200,
           );
         }
+        if (requisicao.url.path == '/api/v1/resumo') {
+          return http.Response(_resumoVazio, 200);
+        }
         return http.Response('{"api":"v1","saudavel":true}', 200);
       }),
       autenticador,
@@ -136,7 +141,7 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.byIcon(Destino.inicio.icone), findsWidgets);
+    expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
   });
 
   testWidgets('sessão sem convite mostra acesso negado e permite sair', (

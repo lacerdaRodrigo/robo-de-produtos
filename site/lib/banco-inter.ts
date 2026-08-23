@@ -48,6 +48,48 @@ export type LojaCatalogoInter = {
   favorita: boolean;
 };
 
+export type ResumoCashbackInterPersistido = {
+  ultima_tentativa_em: string | null;
+  ultima_tentativa_estado: TentativaInter["estado"] | null;
+  ultimo_sucesso_em: string | null;
+  lojas_acompanhadas: number;
+  lojas_encontradas_ultima_coleta: number;
+};
+
+/** Última tentativa, último retrato válido e seleção atual em uma leitura. */
+export async function resumoCashbackInterPersistido(): Promise<ResumoCashbackInterPersistido> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT tentativa.iniciada_em AS ultima_tentativa_em,
+           tentativa.estado AS ultima_tentativa_estado,
+           sucesso.concluida_em AS ultimo_sucesso_em,
+           (SELECT count(*)::int FROM favorita_inter) AS lojas_acompanhadas,
+           COALESCE(sucesso.favoritas_encontradas, 0)::int
+             AS lojas_encontradas_ultima_coleta
+      FROM (SELECT 1) base
+      LEFT JOIN LATERAL (
+        SELECT iniciada_em, estado
+          FROM execucao_inter
+         ORDER BY iniciada_em DESC, id DESC
+         LIMIT 1
+      ) tentativa ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT concluida_em, favoritas_encontradas
+          FROM execucao_inter
+         WHERE estado = 'sucesso'
+         ORDER BY concluida_em DESC, id DESC
+         LIMIT 1
+      ) sucesso ON TRUE
+  `) as ResumoCashbackInterPersistido[];
+  return linhas[0] ?? {
+    ultima_tentativa_em: null,
+    ultima_tentativa_estado: null,
+    ultimo_sucesso_em: null,
+    lojas_acompanhadas: 0,
+    lojas_encontradas_ultima_coleta: 0,
+  };
+}
+
 export async function ultimaTentativaInter(): Promise<TentativaInter | null> {
   const sql = conectar();
   const linhas = (await sql`

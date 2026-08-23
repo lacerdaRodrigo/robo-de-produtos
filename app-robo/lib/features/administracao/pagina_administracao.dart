@@ -16,10 +16,12 @@ class PaginaAdministracao extends StatefulWidget {
     super.key,
     required this.api,
     this.administrador = true,
+    this.incorporada = false,
   });
 
   final ApiV1 api;
   final bool administrador;
+  final bool incorporada;
 
   @override
   State<PaginaAdministracao> createState() => _EstadoPaginaAdministracao();
@@ -101,18 +103,16 @@ class _EstadoPaginaAdministracao extends State<PaginaAdministracao> {
   @override
   Widget build(BuildContext context) {
     if (!widget.administrador) {
-      return const Scaffold(
-        body: EstadoVazio(
-          mensagem: 'Seu acesso não permite administrar catálogos.',
-        ),
+      const corpo = EstadoVazio(
+        mensagem: 'Seu acesso não permite administrar catálogos.',
       );
+      return widget.incorporada ? corpo : const Scaffold(body: corpo);
     }
     return DefaultTabController(
       length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Administração'),
-          bottom: const TabBar(
+      child: Builder(
+        builder: (context) {
+          const abas = TabBar(
             isScrollable: true,
             tabs: [
               Tab(text: 'Livelo'),
@@ -120,24 +120,46 @@ class _EstadoPaginaAdministracao extends State<PaginaAdministracao> {
               Tab(text: 'Compre direto'),
               Tab(text: 'Zona de perigo'),
             ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _AdministracaoLivelo(api: widget.api),
-            _CatalogoParceiros(
-              controlador: _catalogoParceiros,
-              alterando: _alterando,
-              aoAlterar: _alterarFavorita,
-            ),
-            _CatalogoDiretas(
-              controlador: _catalogoDiretas,
-              alterando: _alterando,
-              aoAlterar: _alterarSelecao,
-            ),
-            ZonaPerigoAdministrativa(api: widget.api),
-          ],
-        ),
+          );
+          final conteudo = TabBarView(
+            children: [
+              _AdministracaoLivelo(api: widget.api),
+              _CatalogoParceiros(
+                controlador: _catalogoParceiros,
+                alterando: _alterando,
+                aoAlterar: _alterarFavorita,
+              ),
+              _CatalogoDiretas(
+                controlador: _catalogoDiretas,
+                alterando: _alterando,
+                aoAlterar: _alterarSelecao,
+              ),
+              ZonaPerigoAdministrativa(api: widget.api),
+            ],
+          );
+
+          if (!widget.incorporada) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Administração'), bottom: abas),
+              body: conteudo,
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                child: Text(
+                  'Administração',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+              const Material(color: Colors.transparent, child: abas),
+              Expanded(child: conteudo),
+            ],
+          );
+        },
       ),
     );
   }

@@ -100,18 +100,47 @@ decisão do responsável.
 
 O redesign segue o
 [`app-robo/PLANO-REDESIGN-POR-TELAS.md`](../app-robo/PLANO-REDESIGN-POR-TELAS.md)
-e não libera todas as telas de uma vez.
+e não libera todas as telas de uma vez. Em 23 de agosto de 2026, o plano passou
+a mapear todos os módulos até o fechamento multiplataforma, incluindo
+dependências de API, gates visuais e o roteiro automático no Samsung conectado.
 
 - [x] **Etapa 0:** aprovar nome, símbolo, textos, abertura e estrutura do login
 - [x] Sincronizar os protótipos Web/Mobile e produzir as duas variantes SVG
 - [x] **Etapa 1 local:** aplicar ícones, launch screens e bootstrap Flutter com
       ciclo mínimo de 1,5 segundo, loop durante a validação, demora honesta,
       erro seguro, retry e movimento reduzido
-- [x] Passar 121 testes Flutter, análise e formatação
+- [x] Passar 137 testes Flutter, análise e formatação
 - [x] Instalar e aprovar visualmente a abertura no Samsung SM-M135M conectado
+- [x] Planejar os Módulos 1 a 12, separando reskin existente, contrato novo,
+      melhoria opcional e funcionalidade futura
+- [x] Registrar a autorização para criar/rodar localmente e testar no Samsung,
+      sem `push`, publicação, migração, disparo ou mutação real automática
 - [ ] Fazer o aceite visual da abertura no navegador quando voltar ao escopo
 - [ ] Validar launch screen e ícone em iOS quando houver macOS/Xcode ou aparelho
-- [ ] Iniciar a **Etapa 2 — login** somente com autorização explícita
+- [x] Aprovar e implementar o **Módulo 1 — Login** sem mudar Firebase, convite
+      ou autorização da API; 131 testes, análise, builds Web/APK e abertura no
+      Samsung passaram
+- [x] Escolher a gaveta como navegação mobile do **Módulo 2 — Moldura** e manter
+      lateral fixa no Web amplo
+- [x] Implementar cinco destinos, hub transitório de Lojas, retorno interno e
+      preservação de estado; análise, 137 testes, cobertura global de 90,16%,
+      builds Web/APK e instalação preservando dados locais passaram
+- [x] Fazer o aceite visual final do Módulo 2 no Samsung já aberto
+- [x] Aprovar os protótipos e o contrato agregado do **Módulo 3 — Início**
+- [x] Implementar localmente `GET /api/v1/resumo` com leituras isoladas de
+      Livelo, Cashback Inter e Produtos, sem chamada direta às fontes
+- [x] Implementar métricas, prioridade por estado, retry preservando o último
+      resumo e quatro atalhos reais no Flutter
+- [x] Passar TypeScript, ESLint, 83 testes e build do site; formatação, análise,
+      147 testes, 91,29% de cobertura e builds Web/APK no Flutter
+- [ ] Publicar a nova rota da API — exige autorização explícita; não executado
+- [ ] Instalar o APK apontando para a API publicada e fazer o aceite manual do
+      Módulo 3 — o responsável dispensou teste físico pelo Codex nesta rodada
+
+**Execução atual:** o Módulo 3 foi aprovado e concluído localmente em 23 de
+agosto de 2026. A nova rota ainda não existe no ambiente publicado e o APK não
+foi instalado nesta rodada; portanto, consumo real no Samsung depende dessas
+duas ações externas. Nenhum `push`, publicação, migração ou disparo foi feito.
 
 ---
 

@@ -458,6 +458,62 @@ visuais finais do Android e não foi repetido nesta rodada. O
 `LaunchScreen.storyboard` do iOS foi conferido estruturalmente, mas seu build
 depende de Xcode/macOS e permanece parte do smoke físico da etapa.
 
+### Redesign — Módulo 1, login
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-305 | Login responsivo | Celular prioriza o formulário; Web amplo separa apresentação e acesso no breakpoint aprovado | Widgets em 390 × 844 e 1440 × 900 + goldens |
+| CT-306 | Credenciais sem transformação indevida | O e-mail perde somente espaços nas bordas; a senha chega intacta ao `Autenticador` | Autenticador falso inspeciona os argumentos recebidos |
+| CT-307 | Senha acessível | Mostrar/ocultar troca rótulo e obscurecimento sem apagar o conteúdo | Tooltip, `EditableText` e conteúdo controlado |
+| CT-308 | Envio pendente seguro | Loading preserva os dois campos e impede novo envio enquanto a tentativa está pendente | `Completer` injetado e inspeção do formulário |
+| CT-309 | Falha e recuperação neutra | Erro não apaga os campos; recuperação nunca confirma se a conta existe, mesmo diante de falha conhecida do provedor | `FalhaDeAutenticacao` injetada e regiões de mensagem inspecionadas |
+| CT-310 | Tela estreita e texto ampliado | Em 320 × 640 com texto a 150%, campos e ações continuam alcançáveis sem overflow | Viewport e `TextScaler` controlados |
+
+O fechamento do módulo passou por formatação, análise, 131 testes, build Web e
+APK debug. `pagina_entrar.dart` atingiu 233/241 linhas (96,68%); a cobertura
+global observada foi 89,76%. O APK foi aberto no Samsung SM-M135M sem submeter
+credenciais reais, e o responsável aprovou o resultado visual e dispensou o
+restante do roteiro manual.
+
+### Redesign — Módulo 2, moldura e navegação
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-311 | Destinos fixos do redesign | A ordem principal é Início, Lojas, Produtos, Alertas e Mais, sem esconder jornadas existentes | Enum fechado e inspeção dos cinco itens |
+| CT-312 | Gaveta e lateral adaptativas | Mobile/retrato/paisagem usa cabeçalho + gaveta; Web a partir de 920 px usa lateral com a mesma ordem | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
+| CT-313 | Hub transitório de Lojas | Livelo e Shopping Inter continuam alcançáveis sem consultar resumo nem exibir métricas fictícias | API falsa e ações do hub isolado |
+| CT-314 | Voltar na hierarquia interna | Voltar de Livelo/Inter retorna primeiro para Lojas em vez de sair do app | Navegador aninhado e `handlePopRoute` |
+| CT-315 | Estado preservado entre áreas | Trocar de Produtos para outra área e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
+| CT-316 | Alertas e Administração preservados | Atalho do cabeçalho abre o estado honesto de Alertas; Mais mantém Administração para admin | Ações da moldura e API falsa fechada |
+| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, abrir/fechar e os cinco destinos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
+| CT-318 | Moldura visual aprovada | Gaveta Mobile e lateral Web permanecem iguais às referências aprovadas | Goldens dos dois breakpoints |
+
+O fechamento passou por formatação, análise, 137 testes, build Web e APK debug.
+A cobertura global ficou em 2529/2805 linhas (90,16%); `moldura.dart` atingiu
+116/118 (98,31%) e `lojas.dart`, 70/71 (98,59%). O APK foi instalado com
+substituição, preservando os dados locais, e o responsável concluiu o teste
+manual no Samsung SM-M135M com resultado aprovado.
+
+### Redesign — Módulo 3, Início e resumo real
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-319 | Agregação isolada | Livelo, Cashback Inter e Produtos conservam relógios, recortes e contagens próprios | Dependências assíncronas injetadas no agregador TypeScript |
+| CT-320 | Estados e frescor | Atualizado, atraso, atualização, falha recente, parcial, degradado e sem dados não se confundem | Relógio UTC explícito e fixtures de cada domínio |
+| CT-321 | Falha parcial segura | Falha de uma consulta marca somente o domínio como indisponível, sem vazar exceção nem fabricar zero | Uma dependência rejeita e as outras respondem |
+| CT-322 | Contrato Flutter | `/api/v1/resumo` envia autenticação e converte estados, horários e contagens sem aceitar valores hostis | `MockClient` e modelos Dart manuais |
+| CT-323 | Métricas e recortes | Alertas Livelo, lojas de cashback e produtos ativos exibem o recorte real; indisponível usa `—` | Widget com respostas válidas, zero e indisponibilidade |
+| CT-324 | Retry sem apagar resumo | Falha na atualização mantém o último payload visível e oferece nova tentativa | Primeira resposta válida e segunda com erro |
+| CT-325 | Atalhos reais | Lojas, Livelo, Produtos e Cashback Inter abrem as jornadas existentes | Callbacks isolados e moldura completa |
+| CT-326 | Responsividade e acessibilidade | Web amplo, 320 × 640 e texto a 150% permanecem alcançáveis sem overflow | Viewports e `TextScaler` controlados |
+| CT-327 | Início visual aprovado | Topo do Início em Mobile e Web amplo permanece igual às referências aprovadas | Dois goldens próprios, além dos goldens da moldura |
+
+O fechamento local passou por TypeScript, ESLint, 83 testes Vitest e build do
+site; a rota `/api/v1/resumo` apareceu no inventário do Next.js. No Flutter,
+formatação, análise, 147 testes e builds Web/APK debug passaram. A cobertura
+global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
+(100%). Não houve publicação, instalação ou smoke contra produção.
+
 ---
 
 ## Fora dos testes automáticos
@@ -541,9 +597,10 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
 | `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
-| **Total (site)** | **CTs catalogados + apoio** | **65** |
-| `app-robo/test/` | CT-257–CT-259, CT-261–CT-304 + fundação | 121 |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **121** |
+| `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
+| **Total (site)** | **CTs catalogados + apoio** | **83** |
+| `app-robo/test/` | CT-257–CT-259, CT-261–CT-327 + fundação | 147 |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **147** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

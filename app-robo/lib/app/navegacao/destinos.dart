@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Destinos da navegação principal (PLANO §10.4). Nesta fase o app é só o
-/// shell com esses destinos; as telas de cada área entram em 4.2+.
+/// Destinos fixos da navegação principal do redesign.
+///
+/// Integrações continuam separadas internamente: [lojas] apenas organiza o
+/// acesso a Livelo e Shopping Inter, e [produtos] abre a busca local da API.
 enum Destino {
-  inicio(Icons.dashboard_outlined, 'Início'),
-  livelo(Icons.star_outline, 'Livelo'),
-  inter(Icons.shopping_cart_outlined, 'Inter'),
+  inicio(Icons.home_outlined, 'Início'),
+  lojas(Icons.storefront_outlined, 'Lojas'),
+  produtos(Icons.search, 'Produtos'),
   alertas(Icons.notifications_outlined, 'Alertas'),
   mais(Icons.more_horiz, 'Mais');
 

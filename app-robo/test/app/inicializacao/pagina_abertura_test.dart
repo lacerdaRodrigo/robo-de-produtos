@@ -14,6 +14,12 @@ import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/autenticacao/autenticador.dart';
 import 'package:app_robo/core/autenticacao/configuracao_firebase.dart';
 
+const _resumoVazio =
+    '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"sem_dados",'
+    '"livelo":{"estado":"sem_dados"},'
+    '"cashback_inter":{"estado":"sem_dados"},'
+    '"produtos":{"estado":"sem_dados"}}';
+
 class _AutenticadorFalso implements Autenticador {
   _AutenticadorFalso([this.contaAtual]);
 
@@ -46,7 +52,12 @@ ApiV1 _api(Autenticador autenticador) => ApiV1(
     provedorToken: autenticador.token,
     provedorAppCheck: autenticador.tokenAppCheck,
     cliente: http_testing.MockClient(
-      (_) async => http.Response('{"api":"v1","saudavel":true}', 200),
+      (requisicao) async => http.Response(
+        requisicao.url.path == '/api/v1/resumo'
+            ? _resumoVazio
+            : '{"api":"v1","saudavel":true}',
+        200,
+      ),
     ),
   ),
 );
@@ -126,10 +137,7 @@ void main() {
     expect(find.text('Preparando seu radar…'), findsOneWidget);
     await at.pump(const Duration(milliseconds: 1));
 
-    expect(
-      find.text('Entre com o acesso recebido para o piloto.'),
-      findsOneWidget,
-    );
+    expect(find.text('Que bom ter você aqui'), findsOneWidget);
     expect(find.text('Preparando seu radar…'), findsNothing);
   });
 
@@ -149,10 +157,7 @@ void main() {
     await at.pump();
     await at.pump();
 
-    expect(
-      find.text('Entre com o acesso recebido para o piloto.'),
-      findsOneWidget,
-    );
+    expect(find.text('Que bom ter você aqui'), findsOneWidget);
   });
 
   testWidgets('mantém a abertura animada durante a validação do convite', (
@@ -170,6 +175,9 @@ void main() {
         provedorAppCheck: autenticador.tokenAppCheck,
         cliente: http_testing.MockClient((requisicao) {
           if (requisicao.url.path == '/api/v1/perfil') return perfil.future;
+          if (requisicao.url.path == '/api/v1/resumo') {
+            return Future.value(http.Response(_resumoVazio, 200));
+          }
           return Future.value(
             http.Response('{"api":"v1","saudavel":true}', 200),
           );
@@ -254,10 +262,7 @@ void main() {
     segunda.complete(InicializacaoFirebase.pronta(autenticador));
     await at.pump();
     await at.pump();
-    expect(
-      find.text('Entre com o acesso recebido para o piloto.'),
-      findsOneWidget,
-    );
+    expect(find.text('Que bom ter você aqui'), findsOneWidget);
   });
 
   testWidgets('exceção não expõe detalhes técnicos na abertura', (at) async {

@@ -1932,9 +1932,9 @@
           <section id="tela-inicio" class="tela ativa" data-title="Início">
             <header class="cabecalho-tela">
               <div>
-                <p class="selo ganho">Tudo sincronizado</p>
-                <h1>Bom dia, Rodrigo</h1>
-                <p>Veja primeiro o que pode fazer diferença na sua próxima compra.</p>
+                <p class="selo">Resumo da API</p>
+                <h1>Seu radar hoje</h1>
+                <p>Dados do último retrato válido de cada domínio, sem consultar Livelo ou Inter durante a navegação.</p>
               </div>
               <button class="botao-icone" type="button" data-screen="alertas" aria-label="Abrir alertas">
                 <svg class="icone" aria-hidden="true"><use href="#i-bell"></use></svg>
@@ -1943,9 +1943,9 @@
 
             <article class="hero">
               <div>
-                <p class="sobrelinha">OPORTUNIDADE EM DESTAQUE</p>
-                <h2>Seu radar encontrou três movimentos importantes hoje.</h2>
-                <p>Há promoção Livelo, cashback acompanhado e uma queda de preço nos dados ilustrativos deste protótipo.</p>
+                <p class="sobrelinha">ESTADO DOS DADOS</p>
+                <h2>Livelo, cashback e produtos seguem relógios separados.</h2>
+                <p>O resumo destaca atraso, falha recente, coleta em andamento ou qualidade degradada sem apagar o último dado válido.</p>
               </div>
               <div class="hero-sinal">
                 <img src="assets/logo-radar.svg" alt="" width="148" height="148" />
@@ -1958,41 +1958,43 @@
                   <span class="metrica-icone azul">
                     <svg class="icone" aria-hidden="true"><use href="#i-star"></use></svg>
                   </span>
-                  <span class="selo ganho">2 em alerta</span>
+                  <span class="selo">Recorte: última coleta</span>
                 </div>
-                <strong>6 pts/R$</strong>
-                <span>Maior pontuação Livelo acompanhada</span>
+                <strong>—</strong>
+                <span>Alertas Livelo · preenchido pela API</span>
               </article>
               <article class="metrica">
                 <div class="metrica-topo">
                   <span class="metrica-icone verde">
                     <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
                   </span>
+                  <span class="selo">Recorte: acompanhadas</span>
                 </div>
-                <strong>12%</strong>
-                <span>Maior cashback acompanhado</span>
+                <strong>—</strong>
+                <span>Lojas com cashback acompanhadas · preenchido pela API</span>
               </article>
               <article class="metrica">
                 <div class="metrica-topo">
                   <span class="metrica-icone ciano">
                     <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
                   </span>
+                  <span class="selo">Recorte: catálogo ativo</span>
                 </div>
-                <strong data-follow-count>3</strong>
-                <span>Lojas Inter acompanhadas</span>
+                <strong>—</strong>
+                <span>Produtos ativos das lojas selecionadas · preenchido pela API</span>
               </article>
             </div>
 
             <section class="secao">
               <div class="secao-topo">
-                <h2>Seus atalhos</h2>
-                <button class="btn-link" type="button" data-action="customize">Personalizar</button>
+                <h2>Atalhos</h2>
+                <span class="selo">Fixos nesta fase</span>
               </div>
               <div id="atalhos" class="atalhos">
-                <button class="atalho" type="button" data-screen="cashback">
-                  <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
-                  <strong>Cashback Inter</strong>
-                  <small>Buscar e acompanhar</small>
+                <button class="atalho" type="button" data-screen="lojas">
+                  <svg class="icone" aria-hidden="true"><use href="#i-store"></use></svg>
+                  <strong>Lojas</strong>
+                  <small>Escolher uma fonte</small>
                 </button>
                 <button class="atalho" type="button" data-screen="livelo">
                   <svg class="icone" aria-hidden="true"><use href="#i-star"></use></svg>
@@ -2004,43 +2006,43 @@
                   <strong>Buscar produto</strong>
                   <small>Catálogo local</small>
                 </button>
-                <button class="atalho" type="button" data-screen="inter">
-                  <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
-                  <strong>Atualizações</strong>
-                  <small>Status por domínio</small>
+                <button class="atalho" type="button" data-screen="cashback">
+                  <svg class="icone" aria-hidden="true"><use href="#i-cash"></use></svg>
+                  <strong>Cashback Inter</strong>
+                  <small>Buscar acompanhadas</small>
                 </button>
               </div>
             </section>
 
             <section class="secao">
               <div class="secao-topo">
-                <h2>O que merece atenção</h2>
-                <span class="selo">Dados ilustrativos</span>
+                <h2>Estado por domínio</h2>
+                <span class="selo">Contrato real</span>
               </div>
               <div class="lista-atencao">
                 <article class="linha-atencao">
                   <span class="ponto-status" aria-hidden="true"></span>
                   <div>
-                    <strong>Casas Bahia chegou a 6 pontos por real</strong>
-                    <small>Livelo · acima da sua regra de alerta</small>
+                    <strong>Livelo</strong>
+                    <small>Último sucesso, lojas acompanhadas e alertas da coleta</small>
                   </div>
-                  <span class="selo ganho">Agora</span>
+                  <span class="selo">API</span>
                 </article>
                 <article class="linha-atencao">
                   <span class="ponto-status" aria-hidden="true"></span>
                   <div>
-                    <strong>Magalu está com cashback de até 12%</strong>
-                    <small>Sites parceiros · confirme as condições antes da compra</small>
+                    <strong>Cashback Inter</strong>
+                    <small>Última tentativa separada do último retrato válido</small>
                   </div>
-                  <span class="selo ganho">12%</span>
+                  <span class="selo">API</span>
                 </article>
                 <article class="linha-atencao">
                   <span class="ponto-status" aria-hidden="true"></span>
                   <div>
-                    <strong>Uma coleta de produtos está em andamento</strong>
-                    <small>Pedido aceito · conclusão ainda não confirmada</small>
+                    <strong>Produtos</strong>
+                    <small>Rodada, qualidade e intervalo real de atualização por loja</small>
                   </div>
-                  <span class="selo atencao">Executando</span>
+                  <span class="selo">API</span>
                 </article>
               </div>
             </section>

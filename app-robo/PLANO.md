@@ -1,6 +1,6 @@
 # Plano do `app-robo` — Flutter Web, Android e iOS
 
-**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android. No redesign incremental, a Etapa 0 foi aprovada e a Etapa 1 foi implementada e aprovada no Samsung conectado; os aceites visuais de Web e iOS permanecem pendentes.
+**Status:** Fases 0 a 5 implementadas; banco e API da Fase 5 publicados em produção, com smoke físico do APK portátil pendente em outro Android. No redesign incremental, identidade, abertura, Módulo 1 — Login e Módulo 2 — Moldura foram implementados e aprovados no Samsung conectado; o Módulo 3 aguarda contrato próprio e os aceites de Web/iOS permanecem pendentes.
 
 **Data-base:** 23 de agosto de 2026
 
@@ -18,8 +18,9 @@
 
 > O redesign completo está dividido por telas em
 > [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md). Esse plano não
-> libera a etapa seguinte: abertura e identidade foram a primeira fatia, e o
-> login só muda depois do início explicitamente autorizado da Etapa 2.
+> libera a etapa seguinte: abertura/identidade, login e moldura já foram
+> aprovados e implementados, mas o Início só muda após contrato e novo gate
+> visual do Módulo 3.
 
 ---
 
@@ -137,6 +138,30 @@ Contratos iniciais esperados, ainda sem assinatura definitiva:
 - registro/remoção de token de push;
 - central de notificações e relatórios;
 - auditoria administrativa.
+
+#### 4.2.1 Resumo autenticado do Início
+
+O contrato `GET /api/v1/resumo` foi aprovado e implementado localmente no
+Módulo 3 do redesign. A rota lê somente o Postgres e agrega três blocos
+independentes: `livelo`, `cashback_inter` e `produtos`.
+
+- Livelo devolve último sucesso, lojas acompanhadas e alertas da última coleta;
+- Cashback Inter separa última tentativa do último sucesso e informa favoritas
+  acompanhadas/encontradas;
+- Produtos separa a tentativa coordenadora do último sucesso por loja, expõe
+  a data selecionada mais antiga e mais recente, qualidade, lojas sem coleta e
+  produtos ativos;
+- cada bloco possui estado próprio; falha de leitura vira `indisponivel` sem
+  fabricar zero nem derrubar os outros blocos;
+- atrasos usam os intervalos já adotados nos painéis: 12 horas para Livelo e
+  Produtos, 24 horas para Cashback Inter;
+- atualizar a tela repete apenas essa leitura da API. Não inicia robô e não
+  consulta Livelo ou Inter.
+
+O contrato completo e seus estados estão registrados em
+`PLANO-REDESIGN-POR-TELAS.md`, junto do gate visual aprovado. A implementação
+vive em `site/lib/resumo-inicio.ts` e na rota aditiva
+`site/app/api/v1/resumo/route.ts`; o site legado não foi alterado.
 
 ### 4.3 Coleta completa, busca no banco e paginação da API
 

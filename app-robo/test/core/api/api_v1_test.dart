@@ -6,6 +6,7 @@ import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/core/api/api_v1.dart';
 import 'package:app_robo/core/api/cliente.dart';
+import 'package:app_robo/core/api/modelos.dart';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -119,6 +120,81 @@ void main() {
     expect(status.api, 'v1');
     expect(status.saudavel, isTrue);
   });
+
+  test('resumo converte estados, horários e contagens por domínio', () async {
+    Uri? consulta;
+    final api = ApiV1(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          consulta = requisicao.url;
+          return http.Response(
+            jsonEncode({
+              'gerado_em': '2026-08-23T12:00:00.000Z',
+              'estado_geral': 'atencao',
+              'livelo': {
+                'estado': 'atualizado',
+                'ultimo_sucesso_em': '2026-08-23T08:00:00.000Z',
+                'lojas_acompanhadas': 126,
+                'alertas_ultima_coleta': 2,
+              },
+              'cashback_inter': {
+                'estado': 'falha_recente',
+                'ultima_tentativa_em': '2026-08-23T11:00:00.000Z',
+                'ultima_tentativa_estado': 'falha',
+                'ultimo_sucesso_em': '2026-08-23T07:00:00.000Z',
+                'lojas_acompanhadas': 4,
+                'lojas_encontradas_ultima_coleta': 3,
+              },
+              'produtos': {
+                'estado': 'degradado',
+                'ultima_tentativa_em': '2026-08-23T06:00:00.000Z',
+                'ultima_tentativa_estado': 'sucesso',
+                'dados_mais_antigos_em': '2026-08-23T06:05:00.000Z',
+                'dados_mais_recentes_em': '2026-08-23T06:30:00.000Z',
+                'qualidade': 'degradada',
+                'lojas_selecionadas': 3,
+                'lojas_sem_coleta': 0,
+                'produtos_ativos': 3310,
+              },
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    final resposta = await api.resumo();
+
+    expect(consulta!.path, '/api/v1/resumo');
+    expect(resposta.estadoGeral, EstadoResumo.atencao);
+    expect(resposta.livelo.alertasUltimaColeta, 2);
+    expect(resposta.cashbackInter.estado, EstadoResumo.falhaRecente);
+    expect(resposta.cashbackInter.ultimoSucessoEm, isNotNull);
+    expect(resposta.produtos.estado, EstadoResumo.degradado);
+    expect(resposta.produtos.produtosAtivos, 3310);
+  });
+
+  test(
+    'resumo trata estado desconhecido e contagem hostil com segurança',
+    () async {
+      final api = apiQueResponde(
+        '{"gerado_em":"x","estado_geral":"novo",'
+        '"livelo":{"estado":"novo","lojas_acompanhadas":-2},'
+        '"cashback_inter":{"estado":"novo","lojas_acompanhadas":"ruim"},'
+        '"produtos":{"estado":"novo","produtos_ativos":-1}}',
+      );
+
+      final resposta = await api.resumo();
+
+      expect(resposta.estadoGeral, EstadoResumo.indisponivel);
+      expect(resposta.livelo.lojasAcompanhadas, 0);
+      expect(resposta.cashbackInter.lojasAcompanhadas, 0);
+      expect(resposta.produtos.produtosAtivos, 0);
+    },
+  );
 
   test('perfil converte autorização e papel', () async {
     final api = apiQueResponde(

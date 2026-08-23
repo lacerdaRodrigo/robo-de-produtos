@@ -17,11 +17,13 @@ class PaginaProdutos extends StatefulWidget {
     required this.api,
     this.controlador,
     this.administrador = false,
+    this.incorporada = false,
   });
 
   final ApiV1 api;
   final ControladorBuscaProdutos? controlador;
   final bool administrador;
+  final bool incorporada;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -61,13 +63,17 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Produtos no Inter')),
-    body: AnimatedBuilder(
+  Widget build(BuildContext context) {
+    final corpo = AnimatedBuilder(
       animation: _controlador,
       builder: (context, _) => _conteudo(context),
-    ),
-  );
+    );
+    if (widget.incorporada) return corpo;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Produtos no Inter')),
+      body: corpo,
+    );
+  }
 
   Widget _conteudo(BuildContext context) {
     final atrasado = coletaProdutosAtrasada(
@@ -77,8 +83,16 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.incorporada)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Text(
+              'Produtos',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+          ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          padding: EdgeInsets.fromLTRB(24, widget.incorporada ? 12 : 16, 24, 0),
           child: BotaoDisparo(
             api: widget.api,
             dominio: 'produtos_inter',
