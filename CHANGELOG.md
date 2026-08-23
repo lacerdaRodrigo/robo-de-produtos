@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.40.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Redesenha busca e histórico de produtos
+  ([`ba40f2c`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ba40f2cc6228ddf5aa7f3ec56ebb808f3852955a))
+
+
 ## v1.39.0 (2026-08-23)
 
 ### Features
