@@ -19,7 +19,9 @@ Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Po
 > resumos reais de Livelo, Cashback e Produtos sem misturar seus estados. O
 > Módulo 5 organiza o Shopping Inter em Cashback — Sites parceiros e Produtos
 > — Compre direto, com retornos e atualizações separados por domínio. A suíte
-> Flutter possui 150 testes; Web e iOS ainda precisam de aceite visual.
+> Flutter possui 153 testes. O Módulo 6 redesenha a busca e o histórico de
+> Produtos, preservando a paginação, os valores comerciais e o link HTTPS
+> validado do Shopping Inter. Web e iOS ainda precisam de aceite visual.
 > Veja o
 > [`plano de redesign`](app-robo/PLANO-REDESIGN-POR-TELAS.md).
 

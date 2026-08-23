@@ -81,6 +81,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   String _termo = '';
   FiltrosProdutos _filtros = const FiltrosProdutos();
   int _pagina = 0;
+  int _porPagina = 20;
   int _totalItens = 0;
   bool _temProxima = false;
   bool _carregando = false;
@@ -94,6 +95,8 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   String get termo => _termo;
   FiltrosProdutos get filtros => _filtros;
   int get totalItens => _totalItens;
+  int get pagina => _pagina;
+  int get porPagina => _porPagina;
   bool get temProxima => _temProxima;
   bool get carregando => _carregando;
   bool get carregandoMais => _carregandoMais;
@@ -143,6 +146,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     _itens.clear();
     _ids.clear();
     _pagina = 0;
+    _porPagina = 20;
     _totalItens = 0;
     _temProxima = false;
     _atualizadoEm = null;
@@ -192,6 +196,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
       if (_ids.add(chave)) _itens.add(item);
     }
     _pagina = resposta.pagina;
+    _porPagina = resposta.porPagina;
     _totalItens = resposta.totalItens;
     _temProxima = resposta.temProxima;
     _atualizadoEm = resposta.atualizadoEm;

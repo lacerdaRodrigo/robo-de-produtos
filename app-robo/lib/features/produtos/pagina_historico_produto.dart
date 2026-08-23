@@ -24,6 +24,7 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
   final _medicoes = <MedicaoProdutoDireto>[];
   HistoricoProdutoDireto? _resumo;
   Object? _erro;
+  Object? _erroMais;
   var _carregando = true;
   var _carregandoMais = false;
   var _pagina = 0;
@@ -40,6 +41,7 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
     setState(() {
       if (mais) {
         _carregandoMais = true;
+        _erroMais = null;
       } else {
         _carregando = true;
         _erro = null;
@@ -63,9 +65,18 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
         }
         _pagina = resposta.pagina;
         _temProxima = resposta.temProxima;
+        _erroMais = null;
       });
     } catch (erro) {
-      if (mounted) setState(() => _erro = erro);
+      if (mounted) {
+        setState(() {
+          if (mais) {
+            _erroMais = erro;
+          } else {
+            _erro = erro;
+          }
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -108,6 +119,14 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
           runSpacing: 12,
           children: [
             _ResumoValor(
+              rotulo: 'Preço atual',
+              valor: resumo.produto.precoAtualTexto,
+            ),
+            _ResumoValor(
+              rotulo: 'Cashback atual',
+              valor: resumo.produto.cashbackTexto,
+            ),
+            _ResumoValor(
               rotulo: 'Menor em 30 dias',
               valor: valorMonetario(resumo.minimo),
             ),
@@ -120,20 +139,74 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
         const SizedBox(height: 24),
         Text('Medições', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        for (final medicao in _medicoes)
-          Card(
-            child: ListTile(
-              title: Text(valorMonetario(medicao.precoAtualValor) ?? '—'),
-              subtitle: Text(dataHoraProduto(medicao.momento)),
-              trailing: medicao.cashbackValor == null
-                  ? null
-                  : Text('Cashback\n${valorMonetario(medicao.cashbackValor)}'),
-            ),
-          ),
+        LayoutBuilder(
+          builder: (context, limites) => limites.maxWidth >= 700
+              ? SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Quando')),
+                      DataColumn(label: Text('Preço')),
+                      DataColumn(label: Text('Cashback')),
+                      DataColumn(label: Text('Após cashback')),
+                    ],
+                    rows: [
+                      for (final medicao in _medicoes)
+                        DataRow(
+                          cells: [
+                            DataCell(Text(dataHoraProduto(medicao.momento))),
+                            DataCell(
+                              Text(
+                                valorMonetario(medicao.precoAtualValor) ?? '—',
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                valorMonetario(medicao.cashbackValor) ?? '—',
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                valorMonetario(medicao.precoLiquidoValor) ??
+                                    '—',
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (final medicao in _medicoes)
+                      Card(
+                        child: ListTile(
+                          title: Text(
+                            valorMonetario(medicao.precoAtualValor) ?? '—',
+                          ),
+                          subtitle: Text(dataHoraProduto(medicao.momento)),
+                          trailing: medicao.cashbackValor == null
+                              ? null
+                              : Text(
+                                  'Cashback\n'
+                                  '${valorMonetario(medicao.cashbackValor)}',
+                                ),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
         if (_carregandoMais)
           const Padding(
             padding: EdgeInsets.all(12),
             child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_erroMais != null)
+          Center(
+            child: FilledButton.tonal(
+              onPressed: () => _carregar(mais: true),
+              child: const Text('Tentar carregar mais medições'),
+            ),
           )
         else if (_temProxima)
           Center(

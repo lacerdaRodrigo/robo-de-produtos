@@ -526,6 +526,13 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 |---|---|---|---|
 | CT-329 | Modalidades, atualizações e retornos isolados | O hub distingue Cashback — Sites parceiros de Produtos — Compre direto, preserva seus estados, consulta cada domínio administrativo e retorna de cada jornada ao Shopping Inter antes de Lojas | Fixture de `/api/v1/resumo` e teste de widget da moldura navegando por ambas as modalidades |
 
+### Redesign — Módulo 6, Produtos e histórico
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
+| CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
+
 ---
 
 ## Fora dos testes automáticos

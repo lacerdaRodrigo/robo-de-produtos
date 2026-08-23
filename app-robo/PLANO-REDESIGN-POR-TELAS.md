@@ -1,7 +1,7 @@
 # Plano de redesign por telas — Radar de Benefícios
 
-**Status:** Modelo 0 e Módulos 1 a 4 implementados e aceitos; Módulo 5 — hub
-do Shopping Inter implementado localmente após aprovação dos protótipos
+**Status:** Modelo 0 e Módulos 1 a 5 implementados e aceitos; Módulo 6 —
+Produtos e histórico de 30 dias implementado localmente após aprovação visual
 
 **Data-base:** 23 de agosto de 2026
 
@@ -658,6 +658,28 @@ Validações executadas:
 
 **Saída:** busca e histórico recebem a nova identidade sem alterar as regras V4.
 
+#### Registro do Módulo 6 — protótipos para aceite
+
+**Estado:** protótipos Web/Mobile aprovados e implementação local concluída em
+23 de agosto de 2026. O aceite visual no Samsung fica com o responsável.
+
+- busca local deixa explícito o mínimo de dois caracteres, o catálogo válido e
+  a ausência de chamada ao Inter durante a digitação;
+- filtros ilustram loja, marca e preço, sem fingir que o catálogo foi baixado;
+- resultado mostra 20 itens por página, total alcançável, qualidade e horário
+  do catálogo, além de cartão com preço, após cashback, desconto, estoque e
+  parcelamento da mesma medição;
+- o histórico passa a apresentar valor atual, menor e maior em 30 dias, com
+  tabela acessível e paginada; o link externo é descrito como HTTPS validado do
+  Shopping Inter.
+
+Validações executadas:
+
+- `dart format --output=none --set-exit-if-changed lib test`;
+- `flutter analyze` sem apontamentos;
+- `flutter test`: **153 testes aprovados**, incluindo CT-330 e CT-331;
+- builds Web e APK debug aprovados; não houve smoke manual nesta etapa.
+
 ### Módulo 7 — Cashback Inter e acompanhamento
 
 **Tipo:** redesign de leitura existente + aproximação das mutações já existentes
@@ -1074,9 +1096,9 @@ e-mail real.
 
 ## 8. Próximo passo
 
-Os **Módulos 0 a 4** receberam aceite e o **Módulo 5 — hub do Shopping Inter**
-está implementado localmente após a aprovação dos protótipos. O próximo passo é
-o protótipo do Módulo 6; Web e iOS permanecem como validações futuras de
+Os **Módulos 0 a 5** receberam aceite e o **Módulo 6 — Produtos e histórico de
+30 dias** está pronto localmente para aceite visual. O próximo passo é o
+protótipo do Módulo 7; Web e iOS permanecem como validações futuras de
 plataforma.
 
 Nenhum commit, `push`, disparo, migração ou mutação real foi realizado nesta

@@ -145,10 +145,14 @@ dependências de API, gates visuais e o roteiro automático no Samsung conectado
 - [x] Implementar o hub com Cashback e Produtos separados, retornos explícitos
       e pedidos administrativos por domínio; 150 testes, análise e builds
       Web/APK passaram
+- [x] Fazer o aceite visual do Módulo 5 no fluxo aprovado
+- [x] Aprovar os protótipos do **Módulo 6 — Produtos e histórico de 30 dias**
+- [x] Implementar busca, cartão e histórico redesenhados; 153 testes, análise
+      e builds Web/APK passaram
 
-**Execução atual:** Módulos 0 a 4 estão aceitos. O Módulo 5 está pronto
+**Execução atual:** Módulos 0 a 5 estão aceitos. O Módulo 6 está pronto
 localmente e aguarda somente o aceite visual do responsável; nenhum `push`,
-publicação, migração, disparo ou mutação foi feito nessa implementação.
+publicação, migração, disparo ou mutação foi feito nesta etapa.
 
 ---
 

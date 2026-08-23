@@ -1262,6 +1262,40 @@
         margin-top: 18px;
       }
 
+      .produto-filtros,
+      .produto-metadata,
+      .produto-status,
+      .produto-valores,
+      .produto-infos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .produto-filtros {
+        margin-top: 12px;
+      }
+
+      .produto-filtro {
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--borda);
+        border-radius: 999px;
+        background: var(--superficie);
+        color: var(--texto);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .produto-status {
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        color: var(--texto-suave);
+        font-size: 13px;
+      }
+
       .produto-card-demo {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
@@ -1284,11 +1318,30 @@
       }
 
       .produto-card-demo .produto-preco {
-        display: block;
-        margin: 12px 0 4px;
+        margin: 4px 0 0;
         color: var(--marca-900);
         font-size: 24px;
         font-weight: 950;
+      }
+
+      .produto-preco-anterior {
+        color: var(--texto-suave);
+        text-decoration: line-through;
+      }
+
+      .produto-valor {
+        display: grid;
+        gap: 3px;
+      }
+
+      .produto-valor span,
+      .produto-infos span {
+        color: var(--texto-suave);
+        font-size: 12px;
+      }
+
+      .produto-apos-cashback {
+        color: var(--ganho);
       }
 
       .produto-card-acoes {
@@ -1298,7 +1351,7 @@
 
       .historico-resumos {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
         gap: 10px;
         margin: 18px 0;
       }
@@ -2509,9 +2562,9 @@
             </button>
             <header class="cabecalho-tela">
               <div>
-                <p class="selo">Compre direto no Inter</p>
+                <p class="selo">Protótipo · dados ilustrativos</p>
                 <h1>Produtos</h1>
-                <p>A busca usa somente o último catálogo válido no Postgres. Digitar aqui nunca chama o Inter.</p>
+                <p>Compre direto no Inter. A busca usa somente o último catálogo válido no Postgres e nunca chama o Inter enquanto você digita.</p>
               </div>
             </header>
             <label class="busca">
@@ -2519,28 +2572,55 @@
               <svg class="icone" aria-hidden="true"><use href="#i-search"></use></svg>
               <input id="product-search" type="search" placeholder="Ex.: smartphone Motorola Edge 60 Pro" />
             </label>
+            <div class="produto-filtros" aria-label="Filtros de produto">
+              <button class="produto-filtro" type="button" data-action="filter-products">Filtros</button>
+              <button class="produto-filtro" type="button" data-action="filter-products">Loja: Casas Bahia</button>
+              <button class="produto-filtro" type="button" data-action="filter-products">Marca: Motorola</button>
+              <button class="produto-filtro" type="button" data-action="filter-products">Preço até R$ 3.000</button>
+            </div>
             <div id="product-demo" class="vazio">
               Digite pelo menos dois caracteres para procurar no catálogo local.
             </div>
             <section id="product-results" class="produto-resultado" hidden>
-              <div class="resultado-meta">
-                <span>1 produto ilustrativo encontrado</span>
-                <span>Última coleta: hoje, 20h</span>
+              <div class="produto-status">
+                <span>200 produtos · página 1 de 10 · 20 por página</span>
+                <span class="selo ganho">Catálogo completo · hoje, 20h</span>
               </div>
               <article class="produto-card-demo">
                 <div>
                   <p class="selo ganho">Disponível na última coleta</p>
                   <h2>Motorola Edge 60 Pro 5G 256 GB</h2>
-                  <p>Casas Bahia · Compre direto no Inter</p>
-                  <strong class="produto-preco">R$ 2.899,00</strong>
-                  <span class="selo">Após cashback: R$ 2.754,05</span>
+                  <p>Casas Bahia · Motorola · Celular</p>
+                  <div class="produto-valores">
+                    <div class="produto-valor">
+                      <span>De R$ 3.199,00</span>
+                      <strong class="produto-preco">R$ 2.899,00</strong>
+                    </div>
+                    <div class="produto-valor produto-apos-cashback">
+                      <span>Após cashback</span>
+                      <strong class="produto-preco">R$ 2.754,05</strong>
+                    </div>
+                  </div>
+                  <div class="produto-infos">
+                    <span class="selo ganho">R$ 144,95 de cashback</span>
+                    <span class="selo">9% de desconto</span>
+                    <span class="selo">10x sem juros</span>
+                    <span class="selo">4 em estoque</span>
+                  </div>
                 </div>
                 <div class="produto-card-acoes">
                   <button class="btn btn-secundario" type="button" data-action="open-product-history">
                     Ver histórico
                   </button>
+                  <button class="btn btn-primario" type="button" data-action="open-product-link">
+                    Abrir no Shopping Inter
+                  </button>
                 </div>
               </article>
+              <div class="paginacao">
+                <span>Página 1 de 10</span>
+                <button class="btn btn-secundario" type="button" data-action="next-products">Mostrar próximos 20</button>
+              </div>
             </section>
           </section>
 
@@ -2639,6 +2719,10 @@
         <h2 id="history-title">Histórico</h2>
         <p id="history-subtitle">Medições preservadas dos últimos 30 dias.</p>
         <div class="historico-resumos">
+          <div class="historico-resumo">
+            <span id="history-current-label">Preço atual</span>
+            <strong id="history-current-value">—</strong>
+          </div>
           <div class="historico-resumo">
             <span id="history-min-label">Menor em 30 dias</span>
             <strong id="history-min-value">—</strong>
@@ -2754,6 +2838,8 @@
         var historyDialog = document.getElementById('history-dialog');
         var historyTitle = document.getElementById('history-title');
         var historySubtitle = document.getElementById('history-subtitle');
+        var historyCurrentLabel = document.getElementById('history-current-label');
+        var historyCurrentValue = document.getElementById('history-current-value');
         var historyMinLabel = document.getElementById('history-min-label');
         var historyMinValue = document.getElementById('history-min-value');
         var historyMaxLabel = document.getElementById('history-max-label');
@@ -2907,12 +2993,14 @@
 
         function openHistory(domain, store) {
           historyRows.replaceChildren();
+          historyCurrentLabel.textContent = 'Atual';
           historyMinLabel.textContent = 'Menor em 30 dias';
           historyMaxLabel.textContent = 'Maior em 30 dias';
 
           if (domain === 'livelo') {
             historyTitle.textContent = 'Histórico de pontuação — ' + store.name;
             historySubtitle.textContent = store.category + ' · medições ilustrativas das coletas de 09h, 14h e 20h.';
+            historyCurrentValue.textContent = store.points;
             historyMinValue.textContent = store.normal;
             historyMaxValue.textContent = store.points;
             historyValueHeading.textContent = 'Pontuação';
@@ -2924,6 +3012,8 @@
           } else {
             historyTitle.textContent = 'Histórico do produto';
             historySubtitle.textContent = 'Motorola Edge 60 Pro 5G 256 GB · Casas Bahia';
+            historyCurrentLabel.textContent = 'Preço atual';
+            historyCurrentValue.textContent = 'R$ 2.899,00';
             historyMinValue.textContent = 'R$ 2.699,00';
             historyMaxValue.textContent = 'R$ 3.199,00';
             historyValueHeading.textContent = 'Preço';
@@ -3146,6 +3236,9 @@
             openHistory('inter', null);
             return;
           }
+          if (action === 'filter-products') showToast('Filtros ilustrativos. No app, loja, marca, categoria e preço serão validados pela API.');
+          if (action === 'next-products') showToast('Próxima página ilustrativa. Todos os resultados continuam alcançáveis por paginação.');
+          if (action === 'open-product-link') showToast('No app, este link só abre um endereço HTTPS validado do Shopping Inter.');
           if (action === 'close-history') {
             historyDialog.close();
             return;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
@@ -8,6 +9,7 @@ import '../administracao/botao_disparo.dart';
 import 'cartao_produto.dart';
 import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
+import 'link_shopping_inter.dart';
 import 'pagina_historico_produto.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
@@ -165,7 +167,25 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             _controlador.erro == null)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-            child: Text('${_controlador.totalItens} produtos encontrados'),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  label: Text(
+                    '${_controlador.totalItens} produtos · página '
+                    '${_controlador.pagina} · ${_controlador.porPagina} por página',
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    _controlador.qualidade == 'degradada'
+                        ? 'Catálogo degradado'
+                        : 'Catálogo completo',
+                  ),
+                ),
+              ],
+            ),
           ),
         Expanded(child: _corpo()),
       ],
@@ -240,17 +260,32 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     );
   }
 
-  Widget _cartao(ProdutoDireto produto) => CartaoProduto(
-    produto: produto,
-    aoAbrirHistorico: () {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              PaginaHistoricoProduto(api: widget.api, produto: produto),
+  Widget _cartao(ProdutoDireto produto) {
+    final link = linkSeguroShoppingInter(produto.caminho);
+    return CartaoProduto(
+      produto: produto,
+      aoAbrirHistorico: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                PaginaHistoricoProduto(api: widget.api, produto: produto),
+          ),
+        );
+      },
+      aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
+    );
+  }
+
+  Future<void> _abrirNoShopping(Uri link) async {
+    final abriu = await launchUrl(link, mode: LaunchMode.externalApplication);
+    if (!abriu && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível abrir o Shopping Inter.'),
         ),
       );
-    },
-  );
+    }
+  }
 
   Widget _paginacao() {
     if (_controlador.carregandoMais) {

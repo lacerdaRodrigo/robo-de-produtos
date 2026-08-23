@@ -8,10 +8,12 @@ class CartaoProduto extends StatelessWidget {
     super.key,
     required this.produto,
     required this.aoAbrirHistorico,
+    this.aoAbrirNoShopping,
   });
 
   final ProdutoDireto produto;
   final VoidCallback aoAbrirHistorico;
+  final VoidCallback? aoAbrirNoShopping;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,10 @@ class CartaoProduto extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(produto.nome, style: tema.textTheme.titleMedium),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(produto.lojaNome),
+              ),
               if (produto.marca != null || produto.categoria != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -48,13 +54,11 @@ class CartaoProduto extends StatelessWidget {
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  produto.precoAtualTexto,
-                  style: tema.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              _ValorComercial(
+                rotulo: 'Preço atual',
+                valor: produto.precoAtualTexto,
+                estilo: tema.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               if (produto.descontoTexto != null ||
@@ -84,14 +88,12 @@ class CartaoProduto extends StatelessWidget {
                   ),
                 ),
               if (produto.precoLiquidoTexto != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Após cashback: ${produto.precoLiquidoTexto}',
-                    style: tema.textTheme.titleSmall?.copyWith(
-                      color: Tokens.ganho,
-                      fontWeight: FontWeight.bold,
-                    ),
+                _ValorComercial(
+                  rotulo: 'Após cashback',
+                  valor: produto.precoLiquidoTexto!,
+                  estilo: tema.textTheme.headlineSmall?.copyWith(
+                    color: Tokens.ganho,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               if (produto.parcelamento != null)
@@ -116,13 +118,22 @@ class CartaoProduto extends StatelessWidget {
                     ],
                   ),
                 ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: aoAbrirHistorico,
-                  icon: const Icon(Icons.timeline_outlined),
-                  label: const Text('Ver histórico'),
-                ),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: aoAbrirHistorico,
+                    icon: const Icon(Icons.timeline_outlined),
+                    label: const Text('Ver histórico'),
+                  ),
+                  if (aoAbrirNoShopping != null)
+                    FilledButton.tonalIcon(
+                      onPressed: aoAbrirNoShopping,
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Abrir no Shopping Inter'),
+                    ),
+                ],
               ),
             ],
           ),
@@ -130,4 +141,28 @@ class CartaoProduto extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ValorComercial extends StatelessWidget {
+  const _ValorComercial({
+    required this.rotulo,
+    required this.valor,
+    required this.estilo,
+  });
+
+  final String rotulo;
+  final String valor;
+  final TextStyle? estilo;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(rotulo, style: Theme.of(context).textTheme.labelMedium),
+        Text(valor, style: estilo),
+      ],
+    ),
+  );
 }

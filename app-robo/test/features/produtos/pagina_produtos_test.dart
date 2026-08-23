@@ -61,8 +61,12 @@ ApiV1 _api() => ApiV1(
   ),
 );
 
-ApiV1 _apiHistorico({bool primeiraFalha = false}) {
+ApiV1 _apiHistorico({
+  bool primeiraFalha = false,
+  bool falhaPaginaDois = false,
+}) {
   var chamadas = 0;
+  var falhaPaginaDoisPendente = falhaPaginaDois;
   return ApiV1(
     paginaPadrao: 20,
     cliente: ClienteApi(
@@ -74,6 +78,10 @@ ApiV1 _apiHistorico({bool primeiraFalha = false}) {
           return http.Response('{"erro":{"codigo":"falha"}}', 500);
         }
         final pagina = requisicao.url.queryParameters['pagina'] ?? '1';
+        if (pagina == '2' && falhaPaginaDoisPendente) {
+          falhaPaginaDoisPendente = false;
+          return http.Response('{"erro":{"codigo":"falha"}}', 500);
+        }
         return http.Response(
           jsonEncode({
             'produto': {
@@ -159,14 +167,17 @@ void main() {
     await at.enterText(find.byType(TextField).first, 'edge');
     await at.pumpAndSettle();
 
-    expect(find.text('Casas Bahia'), findsOneWidget);
-    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
-    expect(find.text('Após cashback: R\$ 3.356,89'), findsOneWidget);
+    expect(find.text('Casas Bahia'), findsAtLeastNWidgets(1));
+    expect(find.text('Motorola Edge 60 Pro'), findsAtLeastNWidgets(1));
+    expect(find.text('Após cashback'), findsAtLeastNWidgets(1));
+    expect(find.text('R\$ 3.356,89'), findsAtLeastNWidgets(1));
+    expect(find.text('Abrir no Shopping Inter'), findsOneWidget);
     await at.drag(find.byType(ListView), const Offset(0, -500));
     await at.pumpAndSettle();
-    expect(find.text('Ponto'), findsOneWidget);
-    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
-    expect(find.text('Após cashback: R\$ 3.356,89'), findsOneWidget);
+    expect(find.text('Ponto'), findsAtLeastNWidgets(1));
+    expect(find.text('Motorola Edge 60 Pro'), findsAtLeastNWidgets(1));
+    expect(find.text('Após cashback'), findsAtLeastNWidgets(1));
+    expect(find.text('R\$ 3.356,89'), findsAtLeastNWidgets(1));
     expect(find.textContaining('última coleta foi degradada'), findsOneWidget);
   });
 
@@ -284,5 +295,27 @@ void main() {
     await at.tap(find.text('Tentar novamente'));
     await at.pumpAndSettle();
     expect(find.text('Menor em 30 dias'), findsOneWidget);
+  });
+
+  testWidgets('falha em página adicional mantém o histórico já mostrado', (
+    at,
+  ) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaHistoricoProduto(
+          api: _apiHistorico(falhaPaginaDois: true),
+          produto: _produto(),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('R\$ 3.688,89'), findsAtLeastNWidgets(1));
+    await at.tap(find.text('Carregar mais medições'));
+    await at.pumpAndSettle();
+
+    expect(find.text('R\$ 3.688,89'), findsAtLeastNWidgets(1));
+    expect(find.text('Tentar carregar mais medições'), findsOneWidget);
   });
 }
