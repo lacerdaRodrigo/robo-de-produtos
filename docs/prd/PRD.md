@@ -1,7 +1,7 @@
 # PRD — Robô de Pontuação Turbinada (Livelo)
 
 **Versão:** v1.1
-**Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schemas `007`/`008` aplicados, migração `009` pronta, coletor, site e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 210 testes verdes no robô e 38 no site, com 94,16% de cobertura do núcleo puro.
+**Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schemas `007`/`008` aplicados, migração `009` pronta, coletor e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 210 testes verdes no robô, com 94,16% de cobertura do núcleo puro. A interface web Next.js (`site/`) foi desativada em 2026-08-24 e substituída pelo Flutter em `app/`; a API v1 (antigo `site/app/api/v1/`) foi arquivada em `backend/api/`.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -32,7 +32,7 @@ Promoção de pontuação turbinada na Livelo é efêmera, não tem aviso prévi
 - Banco de dados e qualquer serviço hospedado além do GitHub.
 - Histórico entre execuções, comparação de execuções e gráfico de tendência.
   *(O robô é stateless: cada execução mostra tudo que está ativo naquele momento, mesmo que repita o e-mail do dia anterior. A arquitetura deixa um contrato de repositório no-op como ponto de extensão — ver Seção 4.)*
-  **Continua fora do escopo como entrada de decisão.** A V2.3 passou a gravar o retrato de cada execução para o site ter o que exibir, mas nenhuma regra lê esse histórico de volta — ver RNF04.
+  **Continua fora do escopo como entrada de decisão.** A V2.3 passou a gravar o retrato de cada execução para o app (Flutter) e a API terem o que exibir, mas nenhuma regra lê esse histórico de volta — ver RNF04.
 - Data de validade da promoção. **A justificativa original desta exclusão era falsa** e está registrada em 11.2: acreditava-se que exigiria ~40 requisições extras, mas a página já traz `dateStart` e `dateEnd` no mesmo payload. Segue fora da V1.0 apenas porque a V1.0 já estava fechada quando isso foi descoberto.
 - Login na conta Livelo, compra automática ou clique automático. **O robô nunca autentica** — lê apenas página pública.
 - Multiusuário, cadastro ou preferências por usuário.
@@ -66,7 +66,7 @@ Sem banco de dados e sem front-end, a medição usa apenas o que o GitHub já of
 | ID | Métrica | Alvo | Fonte |
 |---|---|---|---|
 | **MS1** | Confiabilidade | ≥ 95% das execuções agendadas terminam sem falha, em janela de 30 dias | Aba Actions do repositório |
-| **MS2** | Fidelidade | Zero divergência entre o e-mail e o site, no smoke test manual | Conferência manual |
+| **MS2** | Fidelidade | Zero divergência entre o e-mail e o que o app/API exibem, no smoke test manual | Conferência manual |
 | **MS3** | Falha visível | Falha injetada de propósito gera notificação do GitHub | Teste único, feito na V1 |
 | **MS4** | Utilidade | Eu paro de abrir a página da Livelo manualmente | Autoavaliação mensal (qualitativo) |
 | **MS5** | Sinal de vida | Nenhum dia sem e-mail. A ausência de e-mail passa a significar uma coisa só: o robô parou | Caixa de entrada |
@@ -104,7 +104,7 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | **RNF01** | Custo zero de operação | Somente free tier do GitHub Actions, em repositório público |
 | **RNF02** | Cortesia de rede | Três execuções agendadas por dia, mais disparos manuais com **intervalo mínimo de 5 minutos** entre eles (V2.3.2); timeout explícito; User-Agent honesto |
 | **RNF03** | Execução rápida | Menos de 60 segundos por execução |
-| **RNF04** | Decisão sem memória | Nenhuma decisão do robô consulta execução anterior; duas execuções seguidas sobre a mesma página produzem o mesmo e-mail. **Revisado na V2.3:** o robô passou a *escrever* o retrato de cada rodada para alimentar o site (RF15). Ele grava e nunca lê de volta — o histórico é subproduto, não entrada de regra |
+| **RNF04** | Decisão sem memória | Nenhuma decisão do robô consulta execução anterior; duas execuções seguidas sobre a mesma página produzem o mesmo e-mail. **Revisado na V2.3:** o robô passou a *escrever* o retrato de cada rodada para alimentar o app/API (RF15). Ele grava e nunca lê de volta — o histórico é subproduto, não entrada de regra |
 | **RNF05** | Segredo fora do código **e fora do log** | Nenhum valor sensível impresso — o log do Actions é público |
 | **RNF06** | Falha sempre visível | Qualquer erro encerra o processo com código de saída diferente de zero |
 | **RNF07** | Portabilidade | O mesmo código roda localmente e no Actions; só variáveis de ambiente mudam |
@@ -202,11 +202,11 @@ Contratos definidos apenas onde a troca é realmente provável. Eram três na V1
 | `Notificador` | Entregar a mensagem montada | Isola o canal de saída da lógica que decide o conteúdo | SMTP via Gmail |
 | `CatalogoFavoritas` | Fornecer lojas favoritas, apelidos e categorias | Atende RNF09: a mudança mais frequente do projeto deixa de exigir edição de código | Arquivo TOML ou Postgres, com o arquivo de reserva |
 | `PreferenciasGlobais` | Fornecer multiplicador padrão, piso padrão e se o leitor assina o Clube | RN28 precisa de uma régua editável sem `git push`. Separada do catálogo porque responde outra pergunta — "com que régua", não "quais lojas" — e vem de outra tabela | Padrões do PRD-V2 §6.1 ou Postgres, com os padrões de reserva |
-| `RepositorioDeExecucao` | Guardar o retrato de cada rodada | RF15: o site precisa da pontuação atual, que só existe durante a execução | Postgres, ou nenhum lugar quando não há banco |
+| `RepositorioDeExecucao` | Guardar o retrato de cada rodada | RF15: o app/API precisa da pontuação atual, que só existe durante a execução | Postgres, ou nenhum lugar quando não há banco |
 
 **O ponto de extensão previsto virou necessidade.** Este PRD registrava `RepositorioExecucao` como "documentado, não implementado", porque histórico estava fora do escopo da V1 (Seção 1.4) e criar interface no-op para funcionalidade inexistente seria construir o futuro. A V2.3 é a necessidade que ele esperava, e a previsão se confirmou: o caso de uso ganhou uma dependência a mais e **nenhuma regra de negócio mudou**.
 
-O robô escreve e nunca lê de volta. Nenhuma decisão de alerta consulta o passado, então a Seção 1.4 continua valendo onde ela importa — o que existe agora é subproduto para o site, não estado que muda o comportamento.
+O robô escreve e nunca lê de volta. Nenhuma decisão de alerta consulta o passado, então a Seção 1.4 continua valendo onde ela importa — o que existe agora é subproduto para o app/API, não estado que muda o comportamento.
 
 ### 4.3 Desenho
 
@@ -245,41 +245,38 @@ flowchart TD
 
 Estrutura plana, com um arquivo dedicado aos contratos. O projeto deve ficar abaixo de 500 linhas de código — hierarquia de pastas custaria mais do que entrega.
 
-> **Exceção aberta na V2.3:** o site vive em `site/`, e isso não fere a regra acima. A regra vale para o **robô**, que continua plano dentro de `src/robo_livelo/`. `site/` é outro runtime, outra linguagem e outro deploy — misturá-lo na raiz é que seria confusão. Mora no mesmo repositório porque a fonte da verdade (este PRD) precisa ser uma só.
+> **Nota de organização (atualizada em 2026-08-24):** a regra acima vale para o
+> **robô**, que continua plano e sem I/O dentro de `backend/robo/src/robo_livelo/`.
+> O antigo `site/` (Next.js, outro runtime/linguagem/deploy) foi desativado e a
+> API v1 arquivada em `backend/api/`. Esta observação preserva a exceção que já
+> não se aplica: não existe mais front-end web a manter no mesmo repositório.
 
 ```
-robo-livelo/
+robo/
 ├── .github/
-│   ├── workflows/
-│   │   ├── robo.yml
-│   │   └── testes.yml
-│   └── dependabot.yml
-├── config/
-│   └── lojas_favoritas.toml    # RNF09 — dado de negócio fora do código ✔
-├── migracoes/                  # esquema do Postgres, em SQL versionado
-├── site/                       # Next.js na Vercel (V2.3) — fora do robô
-├── src/robo_livelo/
-│   ├── __init__.py
-│   ├── modelos.py              # núcleo puro: Parceiro, LojaFavorita, Preferencias, Mensagem
-│   ├── portas.py               # os 4 contratos e as exceções do domínio
-│   ├── extrator.py             # núcleo puro: HTML → Parceiro
-│   ├── categorias.py           # núcleo puro: filtrar, agrupar, ordenar
-│   ├── alertas.py              # núcleo puro: RN27, RN28, RN29
-│   ├── retrato.py              # núcleo puro: o que a execução viu (RF15)
-│   ├── montador_email.py       # núcleo puro: Parceiro → mensagem
-│   ├── adaptadores.py          # requests, smtplib, TOML, Postgres
-│   └── principal.py            # composition root + caso de uso
-├── testes/
+│   └── workflows/                # robo.yml, inter.yml, produtos-inter.yml, testes.yml, versao.yml, app.yml
+├── backend/
+│   ├── robo/                     # robô Python
+│   │   ├── src/robo_livelo/      # núcleo puro + portas + adaptadores + composition roots
+│   │   ├── testes/               # pytest (prefixo teste_)
+│   │   ├── config/lojas_favoritas.toml   # RNF09 — dado de negócio fora do código ✔
+│   │   ├── scripts/              # carregar_catalogo.py, medir_v4.py
+│   │   └── pyproject.toml
+│   └── api/                      # API v1 arquivada (sem prefixo v1)
+│       ├── routes/               # rotas por domínio (livelo, inter, administracao, status...)
+│       └── lib/                  # banco, autenticação, formato, limpeza, disparos
+├── app/                          # Flutter (Web, Android e iOS) — única interface
+├── migracoes/                    # esquema do Postgres, em SQL versionado
 ├── docs/
-│   ├── PRD.md                  # fonte da verdade (este documento) ✔
-│   ├── TESTES.md               # catálogo de casos ✔
-│   └── ARQUITETURA.md          # histórico, substituído por este PRD ✔
-├── pyproject.toml
-├── .env.example                ✔
-├── .gitignore                  ✔
-├── CLAUDE.md                   # contexto para agentes de IA ✔
-├── LICENSE                     ✔
-└── README.md                   ✔
+│   ├── prd/                      # PRD.md (fonte da verdade), PRD-V2..V5
+│   ├── guias/                    # ARQUITETURA (histórico), EMAIL, ROTEAMENTO_MODELOS
+│   ├── TESTES.md                 # catálogo de casos
+│   └── PENDENCIAS.md             # lista viva do que falta
+├── .env.example                  ✔
+├── .gitignore                    ✔
+├── CLAUDE.md                     # contexto para agentes de IA ✔
+├── LICENSE                       ✔
+└── README.md                     ✔
 ```
 
 Itens marcados com ✔ já existem. O restante é criado na V1.0.
@@ -331,7 +328,7 @@ erDiagram
 
 ### 5.3 Configuração das lojas favoritas
 
-Arquivo `config/lojas_favoritas.toml`, fonte da verdade das favoritas e dos apelidos exigidos por RN04.
+Arquivo `backend/robo/config/lojas_favoritas.toml`, fonte da verdade das favoritas e dos apelidos exigidos por RN04.
 
 ```toml
 [[loja]]
@@ -606,7 +603,7 @@ A versão do projeto é calculada pelos commits, não escolhida à mão. O padr�
 | `feat!:` ou `BREAKING CHANGE` | major — 1.0.0 para 2.0.0 |
 | `docs:`, `test:`, `chore:` | nenhum |
 
-A ferramenta é o `python-semantic-release`, que mantém `pyproject.toml`, `__init__.py` e `CHANGELOG.md` em sincronia e cria a tag e o Release no GitHub. A versão aparece no rodapé de todo e-mail, para que um defeito relatado possa ser amarrado ao código que o gerou.
+A ferramenta é o `python-semantic-release`, que mantém `backend/robo/pyproject.toml`, `backend/robo/src/robo_livelo/__init__.py` e `CHANGELOG.md` em sincronia e cria a tag e o Release no GitHub. A versão aparece no rodapé de todo e-mail, para que um defeito relatado possa ser amarrado ao código que o gerou.
 
 > **Tensão declarada:** criar tag e release exige `contents: write`, e §9.4 diz que o projeto não escreve no repositório. A regra continua valendo onde importa — o workflow do robô mantém `contents: read`. Quem ganha escrita é o workflow `versao.yml`, que só roda em push na `main`, só cria tag, changelog e release, e nunca é acionado pelo robô. São superfícies diferentes, e a do scraper continua sem poder escrever.
 

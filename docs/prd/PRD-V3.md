@@ -301,7 +301,7 @@ O princípio da V1 continua: **núcleo puro, mundo por contrato**. A separação
 | `portas_inter.py` | Contratos novos | Fonte, catálogo de favoritas e repositório do Inter |
 | `adaptadores_inter.py` | Adaptadores novos | HTTP fixo e Postgres das tabelas do Inter |
 | `principal_inter.py` | Orquestração nova | Composition root e código de saída exclusivo |
-| `site/lib/banco-inter.ts` | Servidor do site | Consultas e mutações das tabelas do Inter |
+| `backend/api/lib/banco-inter.ts` (antes `site/lib/banco-inter.ts`) | Servidor da API | Consultas e mutações das tabelas do Inter |
 | `/inter` | Página pública | Favoritas, ranking, descrições e carimbo |
 | `/inter/lojas` | Página protegida | Busca no catálogo e seleção/remoção |
 | `.github/workflows/inter.yml` | Automação nova | Cron e disparo manual do Inter |
@@ -708,8 +708,8 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 | Tema | Decisão fechada |
 |---|---|
 | Módulos | `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
-| Entrada | `python -m robo_livelo.principal_inter` |
-| Site | `site/lib/banco-inter.ts`, rotas `/inter` e `/inter/lojas` e ações próprias do Inter |
+| Entrada | `python -m robo_livelo.principal_inter` (a partir de `backend/robo/`) |
+| API | `backend/api/lib/banco-inter.ts` (arquivada); antes em `site/lib/banco-inter.ts`, com rotas `/inter` e `/inter/lojas` |
 | Dependências | Nenhuma dependência Python ou npm nova; usar `requests`, `psycopg`, React e Neon já instalados |
 | Compartilhamento | Sessão, tema, componentes realmente genéricos e dispatch parametrizado podem ser reutilizados; modelos e regras da Livelo não |
 | Workflow | `inter.yml` tem `permissions: contents: read`, timeout de 10 minutos e recebe apenas `DATABASE_URL` |

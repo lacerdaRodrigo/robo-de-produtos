@@ -1009,17 +1009,17 @@ técnico de cada conjunto de dados:
 - [`../AGENTS.md`](../AGENTS.md) — instruções de entrada reconhecidas pelo Codex para trabalhar neste repositório.
 - [`../CLAUDE.md`](../CLAUDE.md) — regras de arquitetura, segurança e trabalho dos agentes.
 - [`../README.md`](../README.md) — visão geral e operação atual.
-- [`../docs/PRD.md`](../docs/PRD.md) — fonte principal de requisitos Livelo.
-- [`../docs/PRD-V2.md`](../docs/PRD-V2.md) — site, Neon, autenticação e regras de alerta.
-- [`../docs/PRD-V3.md`](../docs/PRD-V3.md) — cashback dos Sites parceiros do Inter.
-- [`../docs/PRD-V4.md`](../docs/PRD-V4.md) — produtos, paginação, histórico e isolamento por loja.
-- [`../docs/PRD-V5.md`](../docs/PRD-V5.md) — limpeza administrativa e zona de perigo.
+- [`../docs/prd/PRD.md`](../docs/prd/PRD.md) — fonte principal de requisitos Livelo.
+- [`../docs/prd/PRD-V2.md`](../docs/prd/PRD-V2.md) — site, Neon, autenticação e regras de alerta.
+- [`../docs/prd/PRD-V3.md`](../docs/prd/PRD-V3.md) — cashback dos Sites parceiros do Inter.
+- [`../docs/prd/PRD-V4.md`](../docs/prd/PRD-V4.md) — produtos, paginação, histórico e isolamento por loja.
+- [`../docs/prd/PRD-V5.md`](../docs/prd/PRD-V5.md) — limpeza administrativa e zona de perigo.
 - [`../docs/PENDENCIAS.md`](../docs/PENDENCIAS.md) — estado real, gates e pendências.
 - [`../docs/TESTES.md`](../docs/TESTES.md) — catálogo de testes existente.
-- [`../docs/EMAIL.md`](../docs/EMAIL.md) — design e limitações reais do e-mail.
-- [`../docs/ARQUITETURA.md`](../docs/ARQUITETURA.md) — histórico das decisões de arquitetura.
-- [`../site/README.md`](../site/README.md) — rotas, sessão, Vercel e comportamento do site.
-- [`../site/app/design-system.css`](../site/app/design-system.css) — referência visual atual, sem obrigar cópia literal.
+- [`../docs/guias/EMAIL.md`](../docs/guias/EMAIL.md) — design e limitações reais do e-mail.
+- [`../docs/guias/ARQUITETURA.md`](../docs/guias/ARQUITETURA.md) — histórico das decisões de arquitetura.
+- [`../backend/api/README.md`](../backend/api/README.md) — rotas, sessão e contrato da API.
+- [`../design-app/prototipo-web.html`](../design-app/prototipo-web.html) — referência visual, sem obrigar cópia literal.
 - [`../.github/workflows/robo.yml`](../.github/workflows/robo.yml) — Livelo.
 - [`../.github/workflows/inter.yml`](../.github/workflows/inter.yml) — cashback Inter.
 - [`../.github/workflows/produtos-inter.yml`](../.github/workflows/produtos-inter.yml) — produtos Inter.

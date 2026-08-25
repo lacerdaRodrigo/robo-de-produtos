@@ -46,13 +46,16 @@ todas leem apenas fontes públicas.
 
 | Documento | Para quê |
 |---|---|
-| **[`docs/PRD.md`](docs/PRD.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
+| **[`docs/prd/PRD.md`](docs/prd/PRD.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
 | [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
-| [`docs/PRD-V2.md`](docs/PRD-V2.md) | V2: data de validade, site próprio e e-mail condicional |
-| [`docs/PRD-V3.md`](docs/PRD-V3.md) | V3: Shopping Inter, cashback e condições |
-| [`docs/PRD-V4.md`](docs/PRD-V4.md) | V4: catálogo completo, busca local e histórico de 30 dias |
-| [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
+| [`docs/prd/PRD-V2.md`](docs/prd/PRD-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
+| [`docs/prd/PRD-V3.md`](docs/prd/PRD-V3.md) | V3: Shopping Inter, cashback e condições |
+| [`docs/prd/PRD-V4.md`](docs/prd/PRD-V4.md) | V4: catálogo completo, busca local e histórico de 30 dias |
+| [`docs/prd/PRD-V5.md`](docs/prd/PRD-V5.md) | V5: limpeza administrativa |
+| [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
+| [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Design e lições do e-mail |
+| [`docs/guias/ARQUITETURA.md`](docs/guias/ARQUITETURA.md) | Histórico, substituído pelo PRD |
 | [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA |
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |

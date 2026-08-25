@@ -1,7 +1,7 @@
 # PRD V5 — Limpeza administrativa por domínio
 
 **Versão:** V5.0 — planejamento  
-**Status:** implementado no site; aceite destrutivo em banco descartável pendente
+**Status:** implementado na API e no app Flutter; aceite destrutivo em banco descartável pendente
 
 > A V5 adiciona uma operação administrativa destrutiva ao Radar de Benefícios. Ela não coleta uma nova fonte e não muda as regras dos robôs: permite apagar separadamente os dados da Livelo ou resetar todos os dados do Shopping Inter, sempre dentro da área autenticada.
 
