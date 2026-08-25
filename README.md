@@ -13,7 +13,7 @@ cada fonte sem misturar suas regras.
 > produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17:
 > 3.310 produtos ativos e busca local confirmada no Neon. O Flutter (app/) está em
 > redesign por telas; a interface Web legada (Next.js) foi desativada em 2026-08-24
-> e a API v1 foi arquivada em `backend/api/`.
+> e a API (sem prefixo de versão) foi arquivada em `backend/api/`.
 
 ## Estrutura do repositório
 
@@ -22,7 +22,7 @@ robo/
 ├── app/            # Flutter (Web, Android e iOS) — única interface
 ├── backend/
 │   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
-│   └── api/        # API v1 autenticada (arquivada, não roda)
+│   └── api/        # API autenticada (arquivada, não roda)
 ├── docs/           # PRDs e documentação
 ├── migracoes/      # schema do Postgres (Neon) — 001 a 012
 ├── design-app/     # protótipos visuais Web/Mobile
@@ -72,8 +72,9 @@ flutter run -d <id-android>    # android
 flutter build web
 ```
 
-O app consome a API v1 (`/api/v1/*`), que hoje está arquivada — para desenvolvimento
-local aponte `--dart-define=API_URL=...` para uma API em execução. Veja
+O app consome a API (`/api/*` por domínio, ex.: `/api/livelo`, `/api/inter`), que
+hoje está arquivada — para desenvolvimento local aponte
+`--dart-define=API_URL=...` para uma API em execução. Veja
 [`app/README.md`](app/README.md).
 
 ## Como rodar os robôs (backend)

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../administracao/botao_disparo.dart';
 import 'cartao_livelo.dart';
 import 'controlador_painel_livelo.dart';
@@ -17,7 +17,7 @@ class PaginaPainelLivelo extends StatefulWidget {
     this.administrador = false,
   });
 
-  final ApiV1 api;
+  final Api api;
   final ControladorPainelLivelo? controlador;
   final bool administrador;
 
@@ -74,7 +74,7 @@ class _PainelLiveloConteudo extends StatelessWidget {
 
   final ControladorPainelLivelo controlador;
   final TextEditingController campoBusca;
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
 
   @override

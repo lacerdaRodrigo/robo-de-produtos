@@ -6,7 +6,7 @@ import 'package:http/testing.dart' as http_testing;
 import 'package:app_robo/app/navegacao/destinos.dart';
 import 'package:app_robo/app/navegacao/moldura.dart';
 import 'package:app_robo/app/tema/tema.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 
 const _paginaVazia =
@@ -37,27 +37,27 @@ const _resumoComEstadosIndependentes =
     '"dados_mais_recentes_em":"2026-08-23T11:00:00Z","qualidade":"completa",'
     '"lojas_selecionadas":2,"lojas_sem_coleta":1,"produtos_ativos":15}}';
 
-ApiV1 _api({String resumo = _resumo, List<http.Request>? requisicoes}) => ApiV1(
+Api _api({String resumo = _resumo, List<http.Request>? requisicoes}) => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
     provedorToken: () async => 'token-teste',
     cliente: http_testing.MockClient((requisicao) async {
       requisicoes?.add(requisicao);
-      if (requisicao.url.path == '/api/v1/status') {
+      if (requisicao.url.path == '/api/status') {
         return http.Response('{"api":"v1","saudavel":true}', 200);
       }
-      if (requisicao.url.path == '/api/v1/resumo') {
+      if (requisicao.url.path == '/api/resumo') {
         return http.Response(resumo, 200);
       }
-      if (requisicao.url.path == '/api/v1/livelo/preferencias') {
+      if (requisicao.url.path == '/api/livelo/preferencias') {
         return http.Response(
           '{"multiplicador_padrao":"2.00",'
           '"piso_pontos_padrao":"4.00","assinante_clube":false}',
           200,
         );
       }
-      if (requisicao.url.path == '/api/v1/administracao/disparos') {
+      if (requisicao.url.path == '/api/administracao/disparos') {
         final dominio = requisicao.url.queryParameters['dominio'] ?? '';
         return http.Response(
           '{"dominio":"$dominio",'
@@ -300,7 +300,7 @@ void main() {
     final dominiosConsultados = requisicoes
         .where(
           (requisicao) =>
-              requisicao.url.path == '/api/v1/administracao/disparos',
+              requisicao.url.path == '/api/administracao/disparos',
         )
         .map((requisicao) => requisicao.url.queryParameters['dominio'])
         .toSet();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import '../../core/autenticacao/autenticador.dart';
@@ -19,7 +19,7 @@ class PortaoAutenticacao extends StatelessWidget {
   });
 
   final Autenticador autenticador;
-  final ApiV1 api;
+  final Api api;
   final ConstrutorValidacaoAcesso? construirValidacao;
 
   @override
@@ -49,7 +49,7 @@ class _ValidacaoDoConvite extends StatefulWidget {
     this.construirValidacao,
   });
 
-  final ApiV1 api;
+  final Api api;
   final Autenticador autenticador;
   final ConstrutorValidacaoAcesso? construirValidacao;
 

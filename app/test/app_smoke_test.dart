@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/app.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 
 const _resumoVazio =
@@ -17,13 +17,13 @@ const _resumoVazio =
 
 void main() {
   testWidgets('RadarApp sobe e mostra a navegacao', (WidgetTester at) async {
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
         cliente: http_testing.MockClient(
           (requisicao) async => http.Response(
-            requisicao.url.path == '/api/v1/resumo'
+            requisicao.url.path == '/api/resumo'
                 ? _resumoVazio
                 : '{"api":"v1","saudavel":true}',
             200,

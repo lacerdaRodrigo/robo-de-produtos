@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import 'cartao_produto.dart';
@@ -23,7 +23,7 @@ class PaginaProdutos extends StatefulWidget {
     this.mostrarTituloInterno = true,
   });
 
-  final ApiV1 api;
+  final Api api;
   final ControladorBuscaProdutos? controlador;
   final bool administrador;
   final bool incorporada;

@@ -51,7 +51,7 @@ A API v1 arquivada em `backend/api/` é o backend que o Flutter consome. Para
 republicá-la em um host Next/Vercel depois:
 
 1. **Restaurar o projeto Next** a partir de
-`backend/api/` (`routes/v1/**` + `lib/**` + `package.json`) e recriar a parte de
+`backend/api/` (`routes/**` + `lib/**` + `package.json`) e recriar a parte de
 SSR/UI se ainda for usada (as telas legadas foram removidas).
 2. **Aplicar as migrações** necessárias aos dados do Neon:
    `migracoes/` (010 a 012 para auth/limite/auditoria, disparos idempotentes e catálogo de produtos).
@@ -70,27 +70,28 @@ SSR/UI se ainda for usada (as telas legadas foram removidas).
 
 ## 4. API v1 — inventário (arquivado)
 
-Tudo em `backend/api/`. Endpoint público único: `GET /api/v1/status`.
-Demais exigem Firebase + papel; as mutações administrativas exigem `admin`.
+Tudo em `backend/api/`. Os caminhos são por domínio, sem versão. Endpoint público
+único: `GET /api/status`. Demais exigem Firebase + papel; as mutações
+administrativas exigem `admin`.
 
-### 4.1 Rotas (`backend/api/routes/v1/**`)
+### 4.1 Rotas (`backend/api/routes/**`)
 
 | Rota | Métodos | Função | Auth |
 |---|---|---|---|
-| `api/v1/status` | GET | Health-check público | — |
-| `api/v1/resumo` | GET | Início agregado (Livelo+Inter+produtos) | Firebase |
-| `api/v1/perfil` | GET | Perfil mínimo (gate de entrada) | Firebase |
-| `api/v1/livelo/painel` | GET | Painel Livelo paginado | Firebase |
-| `api/v1/livelo/preferencias` | GET/PATCH | Preferências Livelo | admin |
-| `api/v1/livelo/lojas` | GET/POST | Catálogo/cadastro lojas | admin |
-| `api/v1/livelo/lojas/[id]` | PATCH/DELETE | Regra/remoção loja | admin |
-| `api/v1/inter/lojas` | GET/PATCH | Sites parceiros / favorita | admin |
-| `api/v1/inter/cashback` | GET | Cashback paginado | Firebase |
-| `api/v1/inter/produtos` | GET | Busca produtos paginada | Firebase |
-| `api/v1/inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
-| `api/v1/inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
-| `api/v1/administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
-| `api/v1/administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
+| `api/status` | GET | Health-check público | — |
+| `api/resumo` | GET | Início agregado (Livelo+Inter+produtos) | Firebase |
+| `api/perfil` | GET | Perfil mínimo (gate de entrada) | Firebase |
+| `api/livelo/painel` | GET | Painel Livelo paginado | Firebase |
+| `api/livelo/preferencias` | GET/PATCH | Preferências Livelo | admin |
+| `api/livelo/lojas` | GET/POST | Catálogo/cadastro lojas | admin |
+| `api/livelo/lojas/[id]` | PATCH/DELETE | Regra/remoção loja | admin |
+| `api/inter/lojas` | GET/PATCH | Sites parceiros / favorita | admin |
+| `api/inter/cashback` | GET | Cashback paginado | Firebase |
+| `api/inter/produtos` | GET | Busca produtos paginada | Firebase |
+| `api/inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
+| `api/inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
+| `api/administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
+| `api/administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
 
 ### 4.2 Libs
 

@@ -1,10 +1,11 @@
 # `app/` — Flutter (Web, Android e iOS)
 
 Cliente multiplataforma do **Radar de Benefícios**. Atende Web, Android e iOS com
-o mesmo código, consumindo somente a API v1 arquivada em `../backend/api/`.
+o mesmo código, consumindo somente a API arquivada em `../backend/api/`.
 
 > **Estado atual:** as Fases 0 a 5 do piloto estão implementadas e a API da Fase 5
-> já foi publicada. Autenticação, painéis de leitura e administração usam a API v1.
+> já foi publicada. Autenticação, painéis de leitura e administração usam a API
+> (sem prefixo de versão, por domínio).
 > O redesign por telas está em andamento: identidade, abertura, login responsivo e
 > a nova moldura receberam aceite no Samsung conectado; os Módulos 3 a 6 (Início,
 > hub de Lojas, Shopping Inter e Produtos/histórico) estão implementados. Web e iOS
@@ -49,7 +50,7 @@ flutter build web
 
 `API_URL` pode ser definido com `--dart-define=API_URL=https://...`. Chamadas
 privadas enviam o ID token no Bearer automaticamente. O endpoint
-`/api/v1/status` permanece público; `/api/v1/resumo` é autenticado e lê somente
+`/api/status` permanece público; `/api/resumo` é autenticado e lê somente
 o Postgres do servidor, sem chamar Livelo ou Inter ao atualizar o Início.
 
 O piloto publicado usa a URL pública da API. Configuração local pode apontar

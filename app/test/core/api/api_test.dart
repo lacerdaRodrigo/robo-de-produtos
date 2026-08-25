@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
 
@@ -35,8 +35,8 @@ const _itens = <Map<String, Object?>>[
   },
 ];
 
-ApiV1 apiQueResponde(String corpoHttp) {
-  return ApiV1(
+Api apiQueResponde(String corpoHttp) {
+  return Api(
     paginaPadrao: 20,
     cliente: ClienteApi(
       baseUrl: baseUrl,
@@ -76,7 +76,7 @@ void main() {
 
   test('buscarProdutos envia filtros na consulta', () async {
     final consultas = <Uri>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -123,7 +123,7 @@ void main() {
 
   test('resumo converte estados, horários e contagens por domínio', () async {
     Uri? consulta;
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -168,7 +168,7 @@ void main() {
 
     final resposta = await api.resumo();
 
-    expect(consulta!.path, '/api/v1/resumo');
+    expect(consulta!.path, '/api/resumo');
     expect(resposta.estadoGeral, EstadoResumo.atencao);
     expect(resposta.livelo.alertasUltimaColeta, 2);
     expect(resposta.cashbackInter.estado, EstadoResumo.falhaRecente);
@@ -209,7 +209,7 @@ void main() {
 
   test('painelLivelo preserva decimais e envia a paginação', () async {
     Uri? consulta;
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -254,7 +254,7 @@ void main() {
       pagina: 2,
     );
 
-    expect(consulta!.path, '/api/v1/livelo/painel');
+    expect(consulta!.path, '/api/livelo/painel');
     expect(consulta!.queryParameters, {
       'q': 'casa',
       'ordenar': 'alerta',
@@ -268,7 +268,7 @@ void main() {
 
   test('painelCashbackInter preserva a oferta textual e a paginação', () async {
     Uri? consulta;
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -313,7 +313,7 @@ void main() {
       pagina: 2,
     );
 
-    expect(consulta!.path, '/api/v1/inter/cashback');
+    expect(consulta!.path, '/api/inter/cashback');
     expect(consulta!.queryParameters, {
       'q': 'loja',
       'ordenar': 'nome',
@@ -330,7 +330,7 @@ void main() {
     'historicoProduto preserva NUMERIC textual e paginação própria',
     () async {
       Uri? consulta;
-      final api = ApiV1(
+      final api = Api(
         paginaPadrao: 20,
         cliente: ClienteApi(
           baseUrl: baseUrl,
@@ -368,7 +368,7 @@ void main() {
         pagina: 2,
       );
 
-      expect(consulta!.path, '/api/v1/inter/produtos/historico');
+      expect(consulta!.path, '/api/inter/produtos/historico');
       expect(consulta!.queryParameters, {
         'loja': 'casas-bahia',
         'produto': '1',
@@ -384,14 +384,14 @@ void main() {
     'catálogos administrativos usam páginas e PATCH com o estado desejado',
     () async {
       final requisicoes = <http.Request>[];
-      final api = ApiV1(
+      final api = Api(
         paginaPadrao: 20,
         cliente: ClienteApi(
           baseUrl: baseUrl,
           provedorToken: () async => 'token-teste',
           cliente: http_testing.MockClient((requisicao) async {
             requisicoes.add(requisicao);
-            if (requisicao.url.path == '/api/v1/inter/lojas') {
+            if (requisicao.url.path == '/api/inter/lojas') {
               return http.Response(
                 jsonEncode({
                   'itens': [
@@ -444,7 +444,7 @@ void main() {
 
   test('consulta e solicita disparo por contrato fechado', () async {
     final requisicoes = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -479,14 +479,14 @@ void main() {
 
   test('administração Livelo preserva texto e usa rotas por recurso', () async {
     final requisicoes = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
         provedorToken: () async => 'token-teste',
         cliente: http_testing.MockClient((requisicao) async {
           requisicoes.add(requisicao);
-          if (requisicao.url.path == '/api/v1/livelo/preferencias') {
+          if (requisicao.url.path == '/api/livelo/preferencias') {
             return http.Response(
               '{"multiplicador_padrao":"2.90","piso_pontos_padrao":"4.00","assinante_clube":true}',
               200,
@@ -536,7 +536,7 @@ void main() {
     expect(criada.piso, '5.00');
     expect(requisicoes.first.url.queryParameters['q'], 'casa');
     expect(requisicoes[2].body, contains('"multiplicador":"3.00"'));
-    expect(requisicoes[3].url.path, '/api/v1/livelo/lojas/7');
+    expect(requisicoes[3].url.path, '/api/livelo/lojas/7');
     expect(requisicoes[3].body, '{"multiplicador":null,"piso":"6.00"}');
     expect(requisicoes[4].body, contains('"assinante_clube":false'));
     expect(requisicoes[5].method, 'DELETE');
@@ -544,7 +544,7 @@ void main() {
 
   test('zona de perigo consulta resumo e envia somente a frase', () async {
     final requisicoes = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: baseUrl,
@@ -568,7 +568,7 @@ void main() {
 
     expect(resumo.fraseConfirmacao, 'APAGAR LIVELO');
     expect(resumo.contagens, {'lojas': 2, 'pontuacoes': 10});
-    expect(requisicoes[0].url.path, '/api/v1/administracao/limpeza/livelo');
+    expect(requisicoes[0].url.path, '/api/administracao/limpeza/livelo');
     expect(requisicoes[1].method, 'POST');
     expect(requisicoes[1].body, '{"frase":"APAGAR LIVELO"}');
   });

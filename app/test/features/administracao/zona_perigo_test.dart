@@ -5,14 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/features/administracao/zona_perigo.dart';
 
 void main() {
   testWidgets('exige frase exata antes da limpeza Livelo', (at) async {
     final chamadas = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
@@ -70,13 +70,13 @@ void main() {
 
     expect(find.text('Os dados da Livelo foram apagados.'), findsOneWidget);
     final post = chamadas.where((chamada) => chamada.method == 'POST').single;
-    expect(post.url.path, '/api/v1/administracao/limpeza/livelo');
+    expect(post.url.path, '/api/administracao/limpeza/livelo');
     expect(post.body, '{"frase":"APAGAR LIVELO"}');
   });
 
   testWidgets('falha do resumo permite tentar novamente sem POST', (at) async {
     var tentativas = 0;
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',

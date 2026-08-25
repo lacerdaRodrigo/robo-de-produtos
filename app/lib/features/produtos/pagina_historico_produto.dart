@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import 'formato_produtos.dart';
 
@@ -12,7 +12,7 @@ class PaginaHistoricoProduto extends StatefulWidget {
     required this.produto,
   });
 
-  final ApiV1 api;
+  final Api api;
   final ProdutoDireto produto;
 
   @override

@@ -7,25 +7,25 @@ import 'pagina.dart';
 /// Cada método monta a URL, chama o cliente e converte para o modelo. A
 /// O status é público. As demais leituras levam o ID token e, quando ativo,
 /// o token do App Check pelo `ClienteApi` (PLANO, Fase 3B).
-class ApiV1 {
-  ApiV1({required this.cliente, required this.paginaPadrao});
+class Api {
+  Api({required this.cliente, required this.paginaPadrao});
 
   final ClienteApi cliente;
   final int paginaPadrao;
 
   Future<StatusApi> status() async {
-    final corpo = await cliente.obter('/api/v1/status', autenticado: false);
+    final corpo = await cliente.obter('/api/status', autenticado: false);
     return StatusApi.parse(corpo);
   }
 
   /// Resumo agregado do Início, lido somente do Postgres pela API.
   Future<ResumoInicio> resumo() async {
-    final corpo = await cliente.obter('/api/v1/resumo');
+    final corpo = await cliente.obter('/api/resumo');
     return ResumoInicio.parse(corpo);
   }
 
   Future<PerfilUsuario> perfil() async {
-    final corpo = await cliente.obter('/api/v1/perfil');
+    final corpo = await cliente.obter('/api/perfil');
     return PerfilUsuario.parse(corpo);
   }
 
@@ -39,7 +39,7 @@ class ApiV1 {
     int pagina = 1,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/livelo/painel',
+      '/api/livelo/painel',
       consulta: <String, String>{
         'q': q,
         'ordenar': ordenar,
@@ -57,7 +57,7 @@ class ApiV1 {
     int pagina = 1,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/inter/cashback',
+      '/api/inter/cashback',
       consulta: <String, String>{
         'q': q,
         'ordenar': ordenar,
@@ -80,7 +80,7 @@ class ApiV1 {
     String? precoMax,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/inter/produtos',
+      '/api/inter/produtos',
       consulta: <String, String>{
         'q': termo,
         'pagina': '$pagina',
@@ -103,7 +103,7 @@ class ApiV1 {
     int porPagina = 30,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/inter/produtos/historico',
+      '/api/inter/produtos/historico',
       consulta: <String, String>{
         'loja': loja,
         'produto': produto,
@@ -120,7 +120,7 @@ class ApiV1 {
     int pagina = 1,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/inter/lojas',
+      '/api/inter/lojas',
       consulta: <String, String>{
         'q': q,
         'pagina': '$pagina',
@@ -136,7 +136,7 @@ class ApiV1 {
     required bool favorita,
   }) async {
     await cliente.alterar(
-      '/api/v1/inter/lojas',
+      '/api/inter/lojas',
       corpo: <String, Object?>{'id': id, 'favorita': favorita},
     );
   }
@@ -147,7 +147,7 @@ class ApiV1 {
     int pagina = 1,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/inter/produtos/lojas',
+      '/api/inter/produtos/lojas',
       consulta: <String, String>{
         'q': q,
         'pagina': '$pagina',
@@ -163,7 +163,7 @@ class ApiV1 {
     required bool selecionada,
   }) async {
     await cliente.alterar(
-      '/api/v1/inter/produtos/lojas',
+      '/api/inter/produtos/lojas',
       corpo: <String, Object?>{'id': id, 'selecionada': selecionada},
     );
   }
@@ -173,7 +173,7 @@ class ApiV1 {
     int pagina = 1,
   }) async {
     final corpo = await cliente.obter(
-      '/api/v1/livelo/lojas',
+      '/api/livelo/lojas',
       consulta: <String, String>{
         'q': q,
         'pagina': '$pagina',
@@ -184,7 +184,7 @@ class ApiV1 {
   }
 
   Future<PreferenciasLiveloAdministrativas> preferenciasLivelo() async {
-    final corpo = await cliente.obter('/api/v1/livelo/preferencias');
+    final corpo = await cliente.obter('/api/livelo/preferencias');
     return PreferenciasLiveloAdministrativas.parse(corpo);
   }
 
@@ -196,7 +196,7 @@ class ApiV1 {
     String? piso,
   }) async {
     final corpo = await cliente.criar(
-      '/api/v1/livelo/lojas',
+      '/api/livelo/lojas',
       corpo: <String, Object?>{
         'nome': nome,
         'categoria': categoria,
@@ -214,13 +214,13 @@ class ApiV1 {
     String? piso,
   }) async {
     await cliente.alterar(
-      '/api/v1/livelo/lojas/$id',
+      '/api/livelo/lojas/$id',
       corpo: <String, Object?>{'multiplicador': multiplicador, 'piso': piso},
     );
   }
 
   Future<void> removerLojaLivelo(String id) async {
-    await cliente.remover('/api/v1/livelo/lojas/$id');
+    await cliente.remover('/api/livelo/lojas/$id');
   }
 
   Future<PreferenciasLiveloAdministrativas> salvarPreferenciasLivelo({
@@ -229,7 +229,7 @@ class ApiV1 {
     required bool assinanteClube,
   }) async {
     final corpo = await cliente.alterar(
-      '/api/v1/livelo/preferencias',
+      '/api/livelo/preferencias',
       corpo: <String, Object?>{
         'multiplicador': multiplicador,
         'piso': piso,
@@ -240,7 +240,7 @@ class ApiV1 {
   }
 
   Future<ResumoLimpezaAdministrativa> resumoLimpeza(String dominio) async {
-    final corpo = await cliente.obter('/api/v1/administracao/limpeza/$dominio');
+    final corpo = await cliente.obter('/api/administracao/limpeza/$dominio');
     return ResumoLimpezaAdministrativa.parse(corpo);
   }
 
@@ -249,7 +249,7 @@ class ApiV1 {
     required String frase,
   }) async {
     await cliente.criar(
-      '/api/v1/administracao/limpeza/$dominio',
+      '/api/administracao/limpeza/$dominio',
       corpo: <String, Object?>{'frase': frase},
     );
   }
@@ -257,7 +257,7 @@ class ApiV1 {
   /// Consulta cooldown e última solicitação manual de um domínio fechado.
   Future<EstadoDisparoAdministrativo> estadoDisparo(String dominio) async {
     final corpo = await cliente.obter(
-      '/api/v1/administracao/disparos',
+      '/api/administracao/disparos',
       consulta: <String, String>{'dominio': dominio},
     );
     return EstadoDisparoAdministrativo.parse(corpo);
@@ -269,7 +269,7 @@ class ApiV1 {
     required String chaveIdempotencia,
   }) async {
     final corpo = await cliente.criar(
-      '/api/v1/administracao/disparos',
+      '/api/administracao/disparos',
       corpo: <String, Object?>{'dominio': dominio},
       cabecalhosExtras: <String, String>{'idempotency-key': chaveIdempotencia},
     );

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/autenticacao/autenticador.dart';
 import '../../core/autenticacao/configuracao_firebase.dart';
 import '../autenticacao/portao.dart';
@@ -10,7 +10,7 @@ import '../identidade/logo_radar.dart';
 import '../tema/tokens.dart';
 
 typedef InicializadorAcesso = Future<InicializacaoFirebase> Function();
-typedef FabricaApiAutenticada = ApiV1 Function(Autenticador autenticador);
+typedef FabricaApiAutenticada = Api Function(Autenticador autenticador);
 
 /// Abertura Flutter exibida enquanto Firebase, App Check e sessão são
 /// preparados. Cumpre o ciclo visual mínimo aprovado; quando a inicialização
@@ -39,7 +39,7 @@ class _EstadoPaginaAbertura extends State<PaginaAbertura> {
   bool _demorada = false;
   String? _erro;
   Autenticador? _autenticador;
-  ApiV1? _api;
+  Api? _api;
 
   @override
   void initState() {

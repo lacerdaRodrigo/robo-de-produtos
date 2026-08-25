@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/tema/tema.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
@@ -53,7 +53,7 @@ Pagina<ProdutoDireto> _pagina(
   qualidade: 'degradada',
 );
 
-ApiV1 _api() => ApiV1(
+Api _api() => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
@@ -61,13 +61,13 @@ ApiV1 _api() => ApiV1(
   ),
 );
 
-ApiV1 _apiHistorico({
+Api _apiHistorico({
   bool primeiraFalha = false,
   bool falhaPaginaDois = false,
 }) {
   var chamadas = 0;
   var falhaPaginaDoisPendente = falhaPaginaDois;
-  return ApiV1(
+  return Api(
     paginaPadrao: 20,
     cliente: ClienteApi(
       baseUrl: 'http://localhost:3000',

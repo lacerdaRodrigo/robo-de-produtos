@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/app.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/autenticacao/autenticador.dart';
 
@@ -57,8 +57,8 @@ class AutenticadorFalso implements Autenticador {
   Future<void> fechar() => controlador.close();
 }
 
-ApiV1 apiCom(http_testing.MockClient cliente, Autenticador autenticador) {
-  return ApiV1(
+Api apiCom(http_testing.MockClient cliente, Autenticador autenticador) {
+  return Api(
     paginaPadrao: 20,
     cliente: ClienteApi(
       baseUrl: 'http://localhost:3000',
@@ -121,14 +121,14 @@ void main() {
     addTearDown(autenticador.fechar);
     final api = apiCom(
       http_testing.MockClient((requisicao) async {
-        if (requisicao.url.path == '/api/v1/perfil') {
+        if (requisicao.url.path == '/api/perfil') {
           expect(requisicao.headers['authorization'], 'Bearer token-teste');
           return http.Response(
             '{"id":"42","email":"piloto@example.com","papel":"usuario"}',
             200,
           );
         }
-        if (requisicao.url.path == '/api/v1/resumo') {
+        if (requisicao.url.path == '/api/resumo') {
           return http.Response(_resumoVazio, 200);
         }
         return http.Response('{"api":"v1","saudavel":true}', 200);

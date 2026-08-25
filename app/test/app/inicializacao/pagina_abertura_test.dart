@@ -9,7 +9,7 @@ import 'package:app_robo/app/app.dart';
 import 'package:app_robo/app/identidade/logo_radar.dart';
 import 'package:app_robo/app/inicializacao/pagina_abertura.dart';
 import 'package:app_robo/app/tema/tema.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/autenticacao/autenticador.dart';
 import 'package:app_robo/core/autenticacao/configuracao_firebase.dart';
@@ -45,7 +45,7 @@ class _AutenticadorFalso implements Autenticador {
   Future<String?> tokenAppCheck() async => 'app-check-teste';
 }
 
-ApiV1 _api(Autenticador autenticador) => ApiV1(
+Api _api(Autenticador autenticador) => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
@@ -53,7 +53,7 @@ ApiV1 _api(Autenticador autenticador) => ApiV1(
     provedorAppCheck: autenticador.tokenAppCheck,
     cliente: http_testing.MockClient(
       (requisicao) async => http.Response(
-        requisicao.url.path == '/api/v1/resumo'
+        requisicao.url.path == '/api/resumo'
             ? _resumoVazio
             : '{"api":"v1","saudavel":true}',
         200,
@@ -167,15 +167,15 @@ void main() {
       const ContaAutenticada(id: 'uid-1', email: 'piloto@example.com'),
     );
     final perfil = Completer<http.Response>();
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
         provedorToken: autenticador.token,
         provedorAppCheck: autenticador.tokenAppCheck,
         cliente: http_testing.MockClient((requisicao) {
-          if (requisicao.url.path == '/api/v1/perfil') return perfil.future;
-          if (requisicao.url.path == '/api/v1/resumo') {
+          if (requisicao.url.path == '/api/perfil') return perfil.future;
+          if (requisicao.url.path == '/api/resumo') {
             return Future.value(http.Response(_resumoVazio, 200));
           }
           return Future.value(

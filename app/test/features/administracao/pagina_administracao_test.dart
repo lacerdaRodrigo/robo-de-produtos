@@ -5,14 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/features/administracao/pagina_administracao.dart';
 
 void main() {
   testWidgets('lista parceiras e confirma a favorita pela API', (at) async {
     final chamadas = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
@@ -22,13 +22,13 @@ void main() {
           if (requisicao.method == 'PATCH') {
             return http.Response('{"id":"1","favorita":true}', 200);
           }
-          if (requisicao.url.path == '/api/v1/livelo/preferencias') {
+          if (requisicao.url.path == '/api/livelo/preferencias') {
             return http.Response(
               '{"multiplicador_padrao":"2","piso_pontos_padrao":"4","assinante_clube":false}',
               200,
             );
           }
-          if (requisicao.url.path != '/api/v1/inter/lojas') {
+          if (requisicao.url.path != '/api/inter/lojas') {
             return http.Response(
               '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
               200,
@@ -71,7 +71,7 @@ void main() {
     await at.pumpAndSettle();
 
     final patch = chamadas.where((chamada) => chamada.method == 'PATCH').single;
-    expect(patch.url.path, '/api/v1/inter/lojas');
+    expect(patch.url.path, '/api/inter/lojas');
     expect(patch.body, '{"id":"1","favorita":true}');
   });
 
@@ -79,14 +79,14 @@ void main() {
     at,
   ) async {
     final chamadas = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
         provedorToken: () async => 'token-teste',
         cliente: http_testing.MockClient((requisicao) async {
           chamadas.add(requisicao);
-          if (requisicao.url.path == '/api/v1/livelo/preferencias') {
+          if (requisicao.url.path == '/api/livelo/preferencias') {
             if (requisicao.method == 'PATCH') {
               return http.Response(
                 '{"multiplicador_padrao":"2.90","piso_pontos_padrao":"5.00","assinante_clube":true}',
@@ -98,7 +98,7 @@ void main() {
               200,
             );
           }
-          if (requisicao.url.path == '/api/v1/livelo/lojas') {
+          if (requisicao.url.path == '/api/livelo/lojas') {
             if (requisicao.method == 'POST') {
               return http.Response(
                 '{"id":"8","nome":"Nova","categoria":"Viagem","apelidos":[],"multiplicador":null,"piso_pontos":null}',
@@ -110,7 +110,7 @@ void main() {
               200,
             );
           }
-          if (requisicao.url.path == '/api/v1/livelo/lojas/7') {
+          if (requisicao.url.path == '/api/livelo/lojas/7') {
             return http.Response(
               requisicao.method == 'DELETE' ? '{"removida":true}' : '{}',
               200,
@@ -158,21 +158,21 @@ void main() {
     final preferencias = chamadas.singleWhere(
       (chamada) =>
           chamada.method == 'PATCH' &&
-          chamada.url.path == '/api/v1/livelo/preferencias',
+          chamada.url.path == '/api/livelo/preferencias',
     );
     expect(preferencias.body, contains('"multiplicador":"2,90"'));
     expect(preferencias.body, contains('"assinante_clube":true'));
     final regra = chamadas.singleWhere(
       (chamada) =>
           chamada.method == 'PATCH' &&
-          chamada.url.path == '/api/v1/livelo/lojas/7',
+          chamada.url.path == '/api/livelo/lojas/7',
     );
     expect(regra.body, '{"multiplicador":"3.00","piso":"6.00"}');
     expect(
       chamadas.any(
         (chamada) =>
             chamada.method == 'DELETE' &&
-            chamada.url.path == '/api/v1/livelo/lojas/7',
+            chamada.url.path == '/api/livelo/lojas/7',
       ),
       isTrue,
     );
@@ -183,7 +183,7 @@ void main() {
     at,
   ) async {
     var chamadas = 0;
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',

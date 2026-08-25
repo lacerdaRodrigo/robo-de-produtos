@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/idempotencia.dart';
 import '../../core/api/modelos.dart';
@@ -18,7 +18,7 @@ class BotaoDisparo extends StatefulWidget {
     this.rotulo = 'Atualizar agora',
   });
 
-  final ApiV1 api;
+  final Api api;
   final String dominio;
   final bool administrador;
   final String rotulo;

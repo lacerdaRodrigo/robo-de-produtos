@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/idempotencia.dart';
 import 'package:app_robo/features/administracao/botao_disparo.dart';
@@ -19,7 +19,7 @@ void main() {
 
   testWidgets('admin solicita coleta uma vez e guarda o cooldown', (at) async {
     final requisicoes = <http.Request>[];
-    final api = ApiV1(
+    final api = Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',

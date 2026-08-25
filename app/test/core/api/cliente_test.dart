@@ -24,10 +24,10 @@ void main() {
       }),
     );
 
-    final corpo = await api.obter('/api/v1/status', autenticado: false);
+    final corpo = await api.obter('/api/status', autenticado: false);
 
     expect(corpo, {'saudavel': true});
-    expect(chamadas.single.path, '/api/v1/status');
+    expect(chamadas.single.path, '/api/status');
   });
 
   test('passa consulta como query parameters', () async {
@@ -43,7 +43,7 @@ void main() {
     );
 
     await api.obter(
-      '/api/v1/inter/produtos',
+      '/api/inter/produtos',
       consulta: {'q': 'tv', 'pagina': '2', 'por_pagina': '20'},
     );
 
@@ -66,7 +66,7 @@ void main() {
       provedorAppCheck: () async => 'app-check-token',
     );
 
-    await api.obter('/api/v1/perfil');
+    await api.obter('/api/perfil');
 
     expect(chamada.headers['authorization'], 'Bearer id-token');
     expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
@@ -85,7 +85,7 @@ void main() {
     );
 
     await api.alterar(
-      '/api/v1/inter/lojas',
+      '/api/inter/lojas',
       corpo: const {'id': 'loja-1', 'favorita': true},
     );
 
@@ -108,7 +108,7 @@ void main() {
     );
 
     await api.criar(
-      '/api/v1/administracao/disparos',
+      '/api/administracao/disparos',
       corpo: const {'dominio': 'livelo'},
       cabecalhosExtras: const {'idempotency-key': 'chave-valida-123456'},
     );
@@ -130,7 +130,7 @@ void main() {
       provedorAppCheck: () async => 'app-check-token',
     );
 
-    await api.remover('/api/v1/livelo/lojas/42');
+    await api.remover('/api/livelo/lojas/42');
 
     expect(chamada.method, 'DELETE');
     expect(chamada.headers['authorization'], 'Bearer id-token');
@@ -149,7 +149,7 @@ void main() {
     );
 
     expect(
-      () => api.obter('/api/v1/perfil'),
+      () => api.obter('/api/perfil'),
       throwsA(isA<ErroDeAutenticacao>()),
     );
     expect(chamouRede, isFalse);

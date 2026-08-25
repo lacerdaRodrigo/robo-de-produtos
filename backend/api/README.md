@@ -1,11 +1,12 @@
-# `backend/api/` — API v1 (arquivada)
+# `backend/api/` — API (arquivada)
 
-A **API v1 autenticada** que o Flutter consome. Originalmente vivia dentro da
+A **API autenticada** que o Flutter consome. Originalmente vivia dentro da
 interface Next.js (`site/`), que foi desativada em 2026-08-24. Foi arquivada aqui
 para permitir re-hospedagem posterior, sem perder o contrato.
 
-> **Estado:** arquivada e **não roda** no momento. Endpoint público único é
-> `GET /api/v1/status`. As demais rotas exigem Firebase; as mutações
+> **Estado:** arquivada e **não roda** no momento. Os caminhos são por domínio,
+> sem prefixo de versão (ex.: `/api/livelo`, `/api/inter`). Endpoint público único
+> é `GET /api/status`. As demais rotas exigem Firebase; as mutações
 > administrativas exigem papel `admin`. Para republicar, siga o roteiro de
 > reativação em [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
 
@@ -14,13 +15,16 @@ para permitir re-hospedagem posterior, sem perder o contrato.
 ```text
 backend/api/
 ├── routes/     # rotas HTTP (Next.js App Router), uma pasta por endpoint
-│   └── v1/     # administracao, inter, livelo, perfil, resumo, status
+│   ├── livelo/   # painel, preferencias, lojas
+│   ├── inter/    # cashback, lojas, produtos
+│   ├── administracao/  # disparos, limpeza/[dominio]
+│   └── perfil, resumo, status
 ├── lib/        # lógica da API (banco, autenticação, formato, limpeza, disparos)
 ├── examples/   # .env.example (modelo de variáveis)
 └── package.json
 ```
 
-## Rotas (`routes/v1/**`)
+## Rotas (`routes/**`)
 
 | Rota | Métodos | Função | Auth |
 |---|---|---|---|

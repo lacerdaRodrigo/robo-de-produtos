@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import 'controlador_catalogo_administracao.dart';
@@ -19,7 +19,7 @@ class PaginaAdministracao extends StatefulWidget {
     this.incorporada = false,
   });
 
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
   final bool incorporada;
 
@@ -168,7 +168,7 @@ class _EstadoPaginaAdministracao extends State<PaginaAdministracao> {
 class _AdministracaoLivelo extends StatefulWidget {
   const _AdministracaoLivelo({required this.api});
 
-  final ApiV1 api;
+  final Api api;
 
   @override
   State<_AdministracaoLivelo> createState() => _EstadoAdministracaoLivelo();

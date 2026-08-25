@@ -8,7 +8,7 @@ import 'package:http/testing.dart' as http_testing;
 import 'package:app_robo/app/componentes/estados.dart';
 import 'package:app_robo/app/paginas/inicio.dart';
 import 'package:app_robo/app/tema/tema.dart';
-import 'package:app_robo/core/api/api_v1.dart';
+import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 
 Map<String, Object?> resumo({
@@ -48,8 +48,8 @@ Map<String, Object?> resumo({
   },
 };
 
-ApiV1 apiQueResponde(Future<http.Response> Function(http.Request) responder) =>
-    ApiV1(
+Api apiQueResponde(Future<http.Response> Function(http.Request) responder) =>
+    Api(
       paginaPadrao: 20,
       cliente: ClienteApi(
         baseUrl: 'http://localhost:3000',
@@ -60,7 +60,7 @@ ApiV1 apiQueResponde(Future<http.Response> Function(http.Request) responder) =>
 
 Future<void> abrir(
   WidgetTester at,
-  ApiV1 api, {
+  Api api, {
   VoidCallback? aoAbrirLojas,
   VoidCallback? aoAbrirLivelo,
   VoidCallback? aoAbrirProdutos,
@@ -110,7 +110,7 @@ void main() {
     at,
   ) async {
     final api = apiQueResponde((requisicao) async {
-      expect(requisicao.url.path, '/api/v1/resumo');
+      expect(requisicao.url.path, '/api/resumo');
       expect(requisicao.headers['authorization'], 'Bearer token-teste');
       return http.Response(jsonEncode(resumo()), 200);
     });

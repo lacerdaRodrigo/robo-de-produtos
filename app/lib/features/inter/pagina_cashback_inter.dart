@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../administracao/botao_disparo.dart';
 import 'cartao_cashback_inter.dart';
 import 'controlador_cashback_inter.dart';
@@ -18,7 +18,7 @@ class PaginaCashbackInter extends StatefulWidget {
     this.incorporada = false,
   });
 
-  final ApiV1 api;
+  final Api api;
   final ControladorCashbackInter? controlador;
   final bool administrador;
   final bool incorporada;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../../features/administracao/botao_disparo.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
@@ -20,7 +20,7 @@ class PaginaLojas extends StatefulWidget {
     required this.ativa,
   });
 
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
   final bool ativa;
 
@@ -83,7 +83,7 @@ class PaginaHubShoppingInter extends StatefulWidget {
     required this.administrador,
   });
 
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
 
   @override
@@ -151,7 +151,7 @@ class _HubShoppingInter extends StatefulWidget {
     required this.aoAbrir,
   });
 
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
   final ValueChanged<_ModalidadeInter> aoAbrir;
 
@@ -399,7 +399,7 @@ class _PaginaInternaShoppingInter extends StatelessWidget {
 class _HubLojas extends StatefulWidget {
   const _HubLojas({required this.api, required this.aoAbrir});
 
-  final ApiV1 api;
+  final Api api;
   final ValueChanged<FonteLojas> aoAbrir;
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../componentes/estados.dart';
 import '../identidade/logo_radar.dart';
@@ -19,7 +19,7 @@ class PaginaInicio extends StatefulWidget {
     this.agora,
   });
 
-  final ApiV1 api;
+  final Api api;
   final VoidCallback? aoAbrirLojas;
   final VoidCallback? aoAbrirLivelo;
   final VoidCallback? aoAbrirProdutos;

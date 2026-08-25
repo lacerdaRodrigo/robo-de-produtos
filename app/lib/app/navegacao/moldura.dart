@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../identidade/logo_radar.dart';
@@ -18,7 +18,7 @@ import 'destinos.dart';
 class MolduraRadar extends StatefulWidget {
   const MolduraRadar({super.key, required this.api, this.administrador = true});
 
-  final ApiV1 api;
+  final Api api;
   final bool administrador;
 
   @override

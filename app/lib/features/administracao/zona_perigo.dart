@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/tema/tokens.dart';
-import '../../core/api/api_v1.dart';
+import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 
@@ -32,7 +32,7 @@ const _rotulos = <String, String>{
 class ZonaPerigoAdministrativa extends StatelessWidget {
   const ZonaPerigoAdministrativa({super.key, required this.api});
 
-  final ApiV1 api;
+  final Api api;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +132,7 @@ class PaginaConfirmacaoLimpeza extends StatefulWidget {
     required this.dominio,
   }) : assert(dominio == 'livelo' || dominio == 'inter');
 
-  final ApiV1 api;
+  final Api api;
   final String dominio;
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/api/api_v1.dart';
+import '../core/api/api.dart';
 import '../core/api/construcao.dart';
 import '../core/autenticacao/autenticador.dart';
 import '../core/autenticacao/configuracao_firebase.dart';
@@ -55,13 +55,13 @@ class RadarApp extends StatelessWidget {
       inicializador = null,
       fabricaApi = null;
 
-  final ApiV1? api;
+  final Api? api;
   final Autenticador? autenticador;
   final String? erroConfiguracao;
   final InicializadorAcesso? inicializador;
   final FabricaApiAutenticada? fabricaApi;
 
-  static ApiV1 _fabricarApi(Autenticador autenticador) => construirApi(
+  static Api _fabricarApi(Autenticador autenticador) => construirApi(
     provedorToken: autenticador.token,
     provedorAppCheck: autenticador.tokenAppCheck,
   );
