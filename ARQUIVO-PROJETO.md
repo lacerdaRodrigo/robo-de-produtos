@@ -1,24 +1,25 @@
 # Arquivo do projeto — Radar de Benefícios
 
 > **Intent a este documento:** registrar o estado e a memória do projeto depois da
-> desativação da interface Next.js (`site/`), consolidando o conhecimento do legado
-> dentro de `app-robo/`. É um guia de reativação e reconstrução, não um contrato novo.
+> desativação da interface Next.js (`site/`), consolidando o conhecimento do legado.
+> É um guia de reativação e reconstrução, não um contrato novo.
 
 **Data-base:** 24 de agosto de 2026
-**Repositório:** `lacerdaRodrigo/robo-livelo`
-**Branch da operação:** `feat/arquivar-site-e-api`
+**Repositório:** `lacerdaRodrigo/robo`
+**Pasta raiz:** `robo/` (era `robo-livelo/`)
 
 ---
 
 ## 1. O que mudou nesta operação
 
-- A interface legada **Next.js** (`site/`) foi desativada e removida da raiz — incluindo
+- A interface legada **Next.js** (`site/`) foi desativada e removida — incluindo
   o deploy na Vercel (`https://robo-livelo.vercel.app`).
-- A **API v1** (que vivia dentro do `site/`) foi arquivada em [`apis/`](apis/).
-- O **backend Python** (robôs Livelo, Inter Sites parceiros e Compre direto), os
-  **workflows** de GitHub Actions, `config/`, `scripts/` e `pyproject.toml` ficaram
-  **vivos na raiz** e continuam rodando — a coleta segue gravando no Postgres (Neon).
-- Documentação, protótipos, migrações e memórias foram consolidados dentro de `app-robo/`.
+- A **API v1** (que vivia dentro do `site/`) foi arquivada em [`backend/api/`](backend/api/).
+- O **backend Python** (robôs Livelo, Inter Sites parceiros e Compre direto) foi
+  consolidado em [`backend/robo/`](backend/robo/) — com `src/`, `testes/`, `config/`,
+  `scripts/` e `pyproject.toml`.
+- Documentação, protótipos e migrações foram consolidados na **raiz** de `robo/`.
+- A pasta raiz foi renomeada de `robo-livelo` para `robo`.
 
 > **Decisão de produto registrada:** o Flutter é a única interface prevista ao fim
 > da transição (PLANO.md). Esta operação removeu a interface Next.js. O backend de
@@ -30,32 +31,32 @@
 
 | Conteúdo | Local | Estado |
 |---|---|---|
-| Aplicativo Flutter (Web, Android, iOS) | `app-robo/` | Ativo — única interface |
-| API v1 arquivada (rotas + libs + package.json) | `app-robo/apis/` | Arquivada, não roda |
-| Liste de variáveis de ambiente da API | `app-robo/apis/examples/.env.example` | Referência |
-| Robôs Python (Livelo, Inter, produtos) | `src/robo_livelo/` (raiz) | Ativo |
-| Testes do robô | `testes/` (raiz) | Ativo |
-| Migrações SQL (001–012) | `app-robo/migracoes/` | Arquivadas |
-| Doc do produto (PRDs, arquitetura, email, etc.) | `app-robo/docs/` | Arquivada |
-| Protótipos Web/Mobile | `app-robo/design-app/` | Arquivado |
-| Workflows GitHub Actions | `.github/workflows/` (raiz) | Ativo |
-| Catálogo Livelo (132 lojas) | `config/lojas_favoritas.toml` (raiz) | Ativo |
-| Scripts utilitários | `scripts/` (raiz) | Ativo |
+| Aplicativo Flutter (Web, Android, iOS) | `app/` | Ativo — única interface |
+| API v1 arquivada (rotas + libs + package.json) | `backend/api/` | Arquivado, não roda |
+| Variáveis de ambiente da API (modelo) | `backend/api/examples/.env.example` | Referência |
+| Robôs Python (Livelo, Inter, produtos) | `backend/robo/src/robo_livelo/` | Ativo |
+| Testes do robô | `backend/robo/testes/` | Ativo |
+| Config do robô, scripts e pyproject | `backend/robo/{config,scripts,pyproject.toml}` | Ativo |
+| Migrações SQL (001–012) | `migracoes/` | Arquivada |
+| Doc do produto (PRDs, arquitetura, email, etc.) | `docs/` | Arquivada |
+| Protótipos Web/Mobile | `design-app/` | Arquivado |
+| Workflows GitHub Actions | `.github/workflows/` | Ativo |
+| Memórias de projeto (CLAUDE, AGENTS, PLANO) | raiz `*` | Ativo |
 
 ---
 
 ## 3. Como reativar a API (fluxo de retorno à hospedagem)
 
-A API v1 arquivada em `app-robo/apis/` é o backend que o Flutter consome. Para
+A API v1 arquivada em `backend/api/` é o backend que o Flutter consome. Para
 republicá-la em um host Next/Vercel depois:
 
 1. **Restaurar o projeto Next** a partir de
-`app-robo/apis/` (`api/v1/**` + `lib/**` + `package.json`) e recriar a parte de
+`backend/api/` (`routes/v1/**` + `lib/**` + `package.json`) e recriar a parte de
 SSR/UI se ainda for usada (as telas legadas foram removidas).
 2. **Aplicar as migrações** necessárias aos dados do Neon:
-   `app-robo/migracoes/` (010 a 012 para auth/limite/auditoria, disparos idempotentes e catálogo de produtos).
+   `migracoes/` (010 a 012 para auth/limite/auditoria, disparos idempotentes e catálogo de produtos).
 3. **Cadastrar as variáveis de ambiente** (modelo em
-   `apis/examples/.env.example`); segredos ficam somente no servidor/cofre.
+   `backend/api/examples/.env.example`); segredos ficam somente no servidor/cofre.
 4. **Configurar o Firebase** (Admin SDK, permissões, App Check opcional) e o
    convite de usuário no Postgres.
 5. **Definir a URL pública** que o Flutter consumirá (padrão atual:
@@ -69,10 +70,10 @@ SSR/UI se ainda for usada (as telas legadas foram removidas).
 
 ## 4. API v1 — inventário (arquivado)
 
-Tudo em `app-robo/apis/`. Endpoint público único: `GET /api/v1/status`.
+Tudo em `backend/api/`. Endpoint público único: `GET /api/v1/status`.
 Demais exigem Firebase + papel; as mutações administrativas exigem `admin`.
 
-### 4.1 Rotas
+### 4.1 Rotas (`backend/api/routes/v1/**`)
 
 | Rota | Métodos | Função | Auth |
 |---|---|---|---|
@@ -101,7 +102,7 @@ Demais exigem Firebase + papel; as mutações administrativas exigem `admin`.
 - Auxiliares: `github.ts`, `flags.ts`
 
 Dependências da API: `@neondatabase/serverless`, `firebase-admin`, `next`, `react`,
-`react-dom` (modelo completo em `apis/package.json`). Override: `uuid` 11.1.1.
+`react-dom` (modelo completo em `backend/api/package.json`). Override: `uuid` 11.1.1.
 
 ---
 
@@ -113,7 +114,7 @@ O produto tem **3 integrações isoladas**, com tabelas, processos e workflows p
 2. **Inter — Sites parceiros** — catálogo de cashback (V3).
 3. **Inter — Compre direto** — coleta de produtos para lojas escolhidas, busca local e histórico de 30 dias (V4).
 
-Regras que não podem regredir (origem: `app-robo/CLAUDE.md`):
+Regras que não podem regredir (origem: `CLAUDE.md`):
 
 - O núcleo Python **não faz I/O**; o mundo entra por portas/adaptadores.
 - Livelo, Sites e Compre direto continuam **isolados** (domínio, processo, tabela, workflow).
@@ -128,7 +129,7 @@ Regras que não podem regredir (origem: `app-robo/CLAUDE.md`):
 
 ## 6. Segredos (nunca no repositório)
 
-Segredos dão origem a `apis/examples/.env.example` (modelo sem valor real):
+Segredos dão origem a `backend/api/examples/.env.example` (modelo sem valor real):
 
 - `DATABASE_URL` — Neon Postgres
 - `SENHA_APP_GMAIL`, `EMAIL_REMETENTE`, `EMAIL_DESTINO` — e-mail diário
@@ -138,7 +139,7 @@ Segredos dão origem a `apis/examples/.env.example` (modelo sem valor real):
 - `SEGREDO_LIMITE_API` — HMAC de pseudonimização de IP/UID
 - `EXIGIR_APP_CHECK` — `false` por padrão
 
-> `app-robo/.env` real está no disco mas **ignorado no git**. Nunca commitar.
+> `app/.env` real está no disco mas **ignorado no git**. Nunca commitar.
 
 ---
 
@@ -153,12 +154,15 @@ Segredos dão origem a `apis/examples/.env.example` (modelo sem valor real):
 
 ## 8. O que não foi executado
 
-Para manter os robôs ativos e evitar risco na operação de arquivo, **não** foi feito:
+Para manter o conhecimento sem risco na operação de arquivo:
 
-- Nenhuma alteração em `src/`, `testes/`, `scripts/`, `config/`, `pyproject.toml`.
-- Nenhuma migração de produção aplicada (o banco ficou como estava).
-- Nenhum deploy, smoke ou alteração em `.github/workflows/`.
-- Não foi desligado nada no GitHub Actions — os robôs seguem rodando.
+- O backend Python ficou organizado em `backend/robo/` (src, testes, config, scripts, pyproject).
+- Nenhuma migração de produção foi aplicada nesta reorganização (o banco ficou como estava).
+- Nenhum deploy, smoke ou alteração em `.github/workflows/` foi feito por esta mudança.
+- A desativação da API v1 e a parada dos robôs, se desejada, é ação **separada e
+  explícita** que não está contemplada neste arquivo.
 
-A desativação da API v1 e a parada dos robôs, se desejada, é ação **separada e
-explícita** que não está contemplada neste arquivo.
+> **Caminhos de CI:** os workflows de coleta rodam `python -m robo_livelo.*` a partir
+> da raiz. Com o pacote movido para `backend/robo/src/`, recolocar o CI em pé exige
+> rodar a partir de `backend/robo/` (ex.: `cd backend/robo && pip install -e .`).
+> O mesmo vale para o caminho `config/lojas_favoritas.toml` em `principal.py`.
