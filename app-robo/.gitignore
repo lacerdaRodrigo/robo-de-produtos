@@ -1,3 +1,8 @@
+# Segredos — nunca commitar (PRD §9.1)
+.env
+.env.*
+!.env.example
+
 # Miscellaneous
 *.class
 *.log
