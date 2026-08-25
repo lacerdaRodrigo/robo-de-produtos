@@ -1,4 +1,4 @@
-# PRD V3 — Cashback do Shopping Inter
+# PRD — Inter Cashback (Sites parceiros)
 
 **Versão:** V3.0–V3.3
 **Status:** implementado e validado no workspace em 2026-08-14. A migração `006` foi aplicada no Neon e a primeira sincronização real cadastrou 381 lojas; a publicação do código no GitHub/Vercel depende do envio destas mudanças ao repositório remoto.
@@ -6,7 +6,7 @@
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
 
-Este documento é o **delta sobre o [`PRD.md`](PRD.md) e o [`PRD-V2.md`](PRD-V2.md)**. Tudo que não for redefinido aqui continua valendo. A V3 não revoga regras da Livelo: quando a regra for exclusiva do Inter, isso estará escrito explicitamente.
+Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md) e o [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md)**. Tudo que não for redefinido aqui continua valendo. A V3 não revoga regras da Livelo: quando a regra for exclusiva do Inter, isso estará escrito explicitamente.
 
 ---
 

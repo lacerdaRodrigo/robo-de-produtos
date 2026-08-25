@@ -674,7 +674,7 @@ mudança visual no site legado.
 **Objetivo:** permitir que o administrador faça pelo Flutter as operações que
 hoje existem no backend: lojas e regras da Livelo, favoritas dos Sites parceiros,
 seleção de lojas de produtos, preferências e disparos controlados. A zona de
-perigo entra por último, sob as regras de `PRD-V5.md`.
+perigo entra por último, sob as regras de `PRD-ADMINISTRACAO.md`.
 
 O Flutter continuará cliente da API v1: não falará com Neon, GitHub Actions,
 Livelo ou Inter diretamente. Toda mutação exige autenticação Firebase, usuário
@@ -881,7 +881,7 @@ dados reais.
 | Controladores | inicial, sucesso, falha, retry, duplo toque, resposta antiga e preservação de filtros |
 | Widgets | leitura, mutação, sem permissão, carregamento, erro, sucesso, retrato/paisagem e tela larga |
 | Zona de perigo | frases correta/errada/vazia/trocada, domínio vazio, rollback e isolamento Livelo/Inter/autenticação |
-| Banco descartável | uma linha por tabela afetada, transação e repetição conforme `PRD-V5.md` §8.2 |
+| Banco descartável | uma linha por tabela afetada, transação e repetição conforme `PRD-ADMINISTRACAO.md` §8.2 |
 
 Gates: formatação Dart, `flutter analyze`, testes Flutter com cobertura mínima
 de 90% nas regras/controladores/serviços críticos, builds Web e APK; Pytest e
@@ -1009,11 +1009,11 @@ técnico de cada conjunto de dados:
 - [`../AGENTS.md`](../AGENTS.md) — instruções de entrada reconhecidas pelo Codex para trabalhar neste repositório.
 - [`../CLAUDE.md`](../CLAUDE.md) — regras de arquitetura, segurança e trabalho dos agentes.
 - [`../README.md`](../README.md) — visão geral e operação atual.
-- [`../docs/prd/PRD.md`](../docs/prd/PRD.md) — fonte principal de requisitos Livelo.
-- [`../docs/prd/PRD-V2.md`](../docs/prd/PRD-V2.md) — site, Neon, autenticação e regras de alerta.
-- [`../docs/prd/PRD-V3.md`](../docs/prd/PRD-V3.md) — cashback dos Sites parceiros do Inter.
-- [`../docs/prd/PRD-V4.md`](../docs/prd/PRD-V4.md) — produtos, paginação, histórico e isolamento por loja.
-- [`../docs/prd/PRD-V5.md`](../docs/prd/PRD-V5.md) — limpeza administrativa e zona de perigo.
+- [`../docs/prd/PRD-LIVELO.md`](../docs/prd/PRD-LIVELO.md) — fonte principal de requisitos Livelo.
+- [`../docs/prd/PRD-LIVELO-V2.md`](../docs/prd/PRD-LIVELO-V2.md) — site, Neon, autenticação e regras de alerta.
+- [`../docs/prd/PRD-INTER-CASHBACK.md`](../docs/prd/PRD-INTER-CASHBACK.md) — cashback dos Sites parceiros do Inter.
+- [`../docs/prd/PRD-INTER-PRODUTOS.md`](../docs/prd/PRD-INTER-PRODUTOS.md) — produtos, paginação, histórico e isolamento por loja.
+- [`../docs/prd/PRD-ADMINISTRACAO.md`](../docs/prd/PRD-ADMINISTRACAO.md) — limpeza administrativa e zona de perigo.
 - [`../docs/PENDENCIAS.md`](../docs/PENDENCIAS.md) — estado real, gates e pendências.
 - [`../docs/TESTES.md`](../docs/TESTES.md) — catálogo de testes existente.
 - [`../docs/guias/EMAIL.md`](../docs/guias/EMAIL.md) — design e limitações reais do e-mail.

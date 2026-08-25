@@ -58,7 +58,7 @@ python -m pytest --cov --cov-fail-under=90
 
 ## Referências
 
-- Requisitos e regras numeradas: [`../../docs/PRD.md`](../../docs/PRD.md) e deltas
+- Requisitos e regras numeradas: [`../../docs/prd/PRD-LIVELO.md`](../../docs/prd/PRD-LIVELO.md) e deltas
   `PRD-V2/V3/V4/V5.md`.
 - Reativação dos workflows de coleta: [`../../.github/README.md`](../../.github/README.md)
   e [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).

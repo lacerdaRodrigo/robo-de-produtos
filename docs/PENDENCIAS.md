@@ -2,7 +2,7 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
-O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md), no [`PRD-V3.md`](PRD-V3.md) ou no [`PRD-V4.md`](PRD-V4.md) — aqui fica só o que fazer e em que ordem.
+O **porquê** de cada item está no [`PRD-LIVELO.md`](PRD-LIVELO.md), no [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md), no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md) ou no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md) — aqui fica só o que fazer e em que ordem.
 
 > Atualizado em 2026-08-23. Versão técnica atual: **1.34.0**.
 
@@ -184,7 +184,7 @@ publicação, migração, disparo ou mutação foi feito nesta etapa.
 
 ## V4 — catálogo de produtos do Compre direto no Inter
 
-- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-V4.md`
+- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-INTER-PRODUTOS.md`
 - [x] Registrar CT-200 em diante como catálogo de testes planejados
 - [x] **V4.1 de código:** medidor `backend/robo/scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
 - [ ] **V4.1 — gate físico:** paginação, duração e duplicatas medidas na Casas Bahia; falta registrar bytes totais e projeções

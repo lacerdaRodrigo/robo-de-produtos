@@ -2,7 +2,7 @@
 
 Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o app e a API usam Flutter/TypeScript.
 
-A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD.md`](PRD.md)**. Este documento é só o catálogo de casos.
+A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD-LIVELO.md`](PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
 
 Convenção: arquivos e funções de teste usam o prefixo `teste_` (em vez do padrão `test_` do pytest), configurado no `pyproject.toml`.
 
@@ -218,7 +218,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 ## Shopping Inter — V3
 
-> Casos da V3 definidos no [`PRD-V3.md`](PRD-V3.md). A suíte padrão usa a
+> Casos da V3 definidos no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md). A suíte padrão usa a
 > fixture sanitizada `backend/robo/testes/fixtures/lojas_inter.json` e nunca toca a rede.
 
 ### `backend/robo/testes/teste_extrator_inter.py` — JSON público → `LojaInter`
@@ -285,7 +285,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 ## Produtos do Shopping Inter — V4
 
-> Casos definidos no [`PRD-V4.md`](PRD-V4.md). A primeira implementação usa
+> Casos definidos no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md). A primeira implementação usa
 > `backend/robo/testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
 > e `backend/api/` (antes `site/testes/formato-produtos-inter.teste.ts`) para a busca local e a migração
 > `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia

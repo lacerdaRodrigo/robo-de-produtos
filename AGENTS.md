@@ -7,12 +7,12 @@ Este é o arquivo de entrada do Codex. Ele não substitui a documentação do pr
 ## 1. Leitura obrigatória
 
 1. Leia o [`CLAUDE.md`](CLAUDE.md) inteiro. As regras dele também valem para o Codex.
-2. Leia o [`docs/PRD.md`](docs/PRD.md), fonte principal de requisitos e regras numeradas.
+2. Leia o [`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md), fonte principal de requisitos e regras numeradas.
 3. Leia somente os deltas relacionados à tarefa:
-   - [`docs/PRD-V2.md`](docs/PRD-V2.md): site, banco, autenticação e alertas Livelo;
-   - [`docs/PRD-V3.md`](docs/PRD-V3.md): cashback dos Sites parceiros do Inter;
-   - [`docs/PRD-V4.md`](docs/PRD-V4.md): produtos do Compre direto, coleta, busca e histórico;
-   - [`docs/PRD-V5.md`](docs/PRD-V5.md): limpeza administrativa e zona de perigo;
+   - [`docs/PRD-LIVELO-V2.md`](docs/PRD-LIVELO-V2.md): site, banco, autenticação e alertas Livelo;
+   - [`docs/PRD-INTER-CASHBACK.md`](docs/PRD-INTER-CASHBACK.md): cashback dos Sites parceiros do Inter;
+   - [`docs/PRD-INTER-PRODUTOS.md`](docs/PRD-INTER-PRODUTOS.md): produtos do Compre direto, coleta, busca e histórico;
+   - [`docs/PRD-ADMINISTRACAO.md`](docs/PRD-ADMINISTRACAO.md): limpeza administrativa e zona de perigo;
    - [`app/PLANO.md`](app/PLANO.md): piloto Flutter Web, Android e iOS.
 4. Consulte [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md) e o código/branch atuais para separar o que está implementado, publicado, pendente ou apenas planejado.
 5. Ao mexer em regra ou teste, consulte também [`docs/TESTES.md`](docs/TESTES.md), [`README.md`](README.md) e a documentação específica afetada.

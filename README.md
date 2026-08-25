@@ -46,13 +46,13 @@ todas leem apenas fontes públicas.
 
 | Documento | Para quê |
 |---|---|
-| **[`docs/prd/PRD.md`](docs/prd/PRD.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
+| **[`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
 | [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
-| [`docs/prd/PRD-V2.md`](docs/prd/PRD-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
-| [`docs/prd/PRD-V3.md`](docs/prd/PRD-V3.md) | V3: Shopping Inter, cashback e condições |
-| [`docs/prd/PRD-V4.md`](docs/prd/PRD-V4.md) | V4: catálogo completo, busca local e histórico de 30 dias |
-| [`docs/prd/PRD-V5.md`](docs/prd/PRD-V5.md) | V5: limpeza administrativa |
+| [`docs/prd/PRD-LIVELO-V2.md`](docs/prd/PRD-LIVELO-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
+| [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
+| [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
+| [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
 | [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
 | [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Design e lições do e-mail |
 | [`docs/guias/ARQUITETURA.md`](docs/guias/ARQUITETURA.md) | Histórico, substituído pelo PRD |

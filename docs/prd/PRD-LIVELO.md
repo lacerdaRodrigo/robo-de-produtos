@@ -1,4 +1,4 @@
-# PRD — Robô de Pontuação Turbinada (Livelo)
+# PRD — Livelo (Robô de Pontuação Turbinada)
 
 **Versão:** v1.1
 **Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schemas `007`/`008` aplicados, migração `009` pronta, coletor e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 210 testes verdes no robô, com 94,16% de cobertura do núcleo puro. A interface web Next.js (`site/`) foi desativada em 2026-08-24 e substituída pelo Flutter em `app/`; a API v1 (antigo `site/app/api/v1/`) foi arquivada em `backend/api/`.
@@ -268,7 +268,7 @@ robo/
 ├── app/                          # Flutter (Web, Android e iOS) — única interface
 ├── migracoes/                    # esquema do Postgres, em SQL versionado
 ├── docs/
-│   ├── prd/                      # PRD.md (fonte da verdade), PRD-V2..V5
+│   ├── prd/                      # PRD-LIVELO.md (fonte da verdade), PRD-V2..V5
 │   ├── guias/                    # ARQUITETURA (histórico), EMAIL, ROTEAMENTO_MODELOS
 │   ├── TESTES.md                 # catálogo de casos
 │   └── PENDENCIAS.md             # lista viva do que falta
@@ -693,7 +693,7 @@ O repositório é público por decisão do objetivo O4, o que expõe publicament
 |---|---|---|
 | **V1.0** ✔ | Fatia vertical completa: todo o escopo da Seção 2, rodando no GitHub Actions com o quality gate verde | MS2 verificado contra a página real (254 parceiros, 22 promoções). MS3 pendente até a primeira execução no Actions |
 | **V1.1** | Roteiro do smoke manual e regra de filtro no Gmail para os e-mails sem promoção (11.4) | MS1 e MS5 medidos ao longo de 30 dias |
-| **V2** | Planejada em documento próprio: [`PRD-V2.md`](PRD-V2.md). Data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional | Ver Seção 4 do PRD V2 |
+| **V2** | Planejada em documento próprio: [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md). Data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional | Ver Seção 4 do PRD V2 |
 
 A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando, da requisição HTTP até o e-mail entregue. Não há versão anterior a ela porque qualquer recorte menor não produz valor — meio caminho não manda e-mail nenhum.
 
@@ -712,7 +712,7 @@ A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando,
 
 Registrado para não voltar como ideia nova: banco de dados, multiusuário com cadastro, outros programas de pontos, compra ou clique automático, e qualquer técnica de evasão de bloqueio.
 
-> **Front-end saiu desta lista.** A V2 o traz de volta como site próprio (Next.js na Vercel, com edição sob autenticação), com a justificativa registrada na Seção 1 do [`PRD-V2.md`](PRD-V2.md). O motivo do veto original — infraestrutura sob responsabilidade própria, contra O2 — deixou de valer porque a V2 assumiu esse custo deliberadamente, como registrado no §7.3 do PRD-V2.
+> **Front-end saiu desta lista.** A V2 o traz de volta como site próprio (Next.js na Vercel, com edição sob autenticação), com a justificativa registrada na Seção 1 do [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md). O motivo do veto original — infraestrutura sob responsabilidade própria, contra O2 — deixou de valer porque a V2 assumiu esse custo deliberadamente, como registrado no §7.3 do PRD-V2.
 >
 > **Banco de dados também saiu desta lista, e também voltou.** A tabela acima registrava "sem banco de dados" como decisão permanente; o PRD-V2 §3.3 revoga isso explicitamente — a configuração passa a viver em Postgres porque o site precisa escrevê-la.
 

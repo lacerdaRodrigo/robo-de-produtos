@@ -1,6 +1,6 @@
 # Arquitetura do Projeto — documento histórico
 
-> ⚠️ **Este documento foi substituído pelo [`PRD.md`](PRD.md), que é a fonte da verdade do projeto.**
+> ⚠️ **Este documento foi substituído pelo [`PRD-LIVELO.md`](PRD-LIVELO.md), que é a fonte da verdade do projeto.**
 >
 > Ele fica preservado por registrar o raciocínio original. O **dicionário de lojas e categorias** do Passo 1 já foi convertido em `config/lojas_favoritas.toml`, onde os nomes foram conferidos contra a página real e ganharam apelidos quando a Livelo exibe grafia diferente (ex.: C&A aparece como "CEA").
 >

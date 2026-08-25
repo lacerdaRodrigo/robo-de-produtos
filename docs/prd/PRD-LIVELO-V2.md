@@ -1,11 +1,11 @@
-# PRD V2 — Robô de Pontuação Turbinada (Livelo)
+# PRD — Livelo V2 (delta: validade, e-mail, banco)
 
 **Versão:** v2.x (documento vivo)
 **Status:** V2.0 a V2.3 implementadas e em produção. V2.4 (e-mail condicional/RF16) segue planejada e pendente.
 
 > A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
 
-Este documento é o **delta sobre o [`PRD.md`](PRD.md)**, que segue valendo como fonte da verdade de tudo que não for redefinido aqui. Onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
+Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**, que segue valendo como fonte da verdade de tudo que não for redefinido aqui. Onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
 
 ---
 

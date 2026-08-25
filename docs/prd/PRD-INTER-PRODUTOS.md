@@ -1,4 +1,4 @@
-# PRD V4 — Catálogo de produtos do Shopping Inter
+# PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.1 em aceite progressivo
 **Status:** schema, coletor, site e workflow matricial implementados. Em 2026-08-17, a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos; a busca local confirmou o Motorola Edge 60 Pro. A migração `009`, que registra e publica com segurança a melhor tentativa diante de total variável, está pronta e ainda precisa ser aplicada. Ponto, bytes totais e projeções para mais lojas continuam como gates antes de ampliar o rollout.
@@ -6,7 +6,7 @@
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
 
-Este documento é o **delta sobre o [`PRD.md`](PRD.md), o [`PRD-V2.md`](PRD-V2.md) e o [`PRD-V3.md`](PRD-V3.md)**. Tudo que não for redefinido aqui continua valendo. “V4” é a versão de produto deste documento; o antigo nome “V4.6” do mockup de navegação é apenas um rótulo visual histórico e não tem relação com esta entrega.
+Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md), o [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md) e o [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md)**. Tudo que não for redefinido aqui continua valendo. “V4” é a versão de produto deste documento; o antigo nome “V4.6” do mockup de navegação é apenas um rótulo visual histórico e não tem relação com esta entrega.
 
 ---
 
