@@ -37,7 +37,7 @@ _log = logging.getLogger(__name__)
 URL_PARCEIROS = "https://www.livelo.com.br/juntar-pontos/todos-os-parceiros"
 
 # RNF02: identificacao honesta, sem disfarce. Nao existe evasao neste projeto.
-USER_AGENT = "robo-livelo/1.0 (projeto pessoal; github.com/rodrigo/robo-livelo)"
+USER_AGENT = "robo-de-produtos/1.0 (projeto pessoal; github.com/lacerdaRodrigo/robo-de-produtos)"
 
 TAMANHO_MAXIMO = 5 * 1024 * 1024  # PRD 9.2: a pagina real pesa ~1,4 MB
 

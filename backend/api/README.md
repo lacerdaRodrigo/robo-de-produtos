@@ -1,34 +1,30 @@
-# `backend/api/` — API (arquivada)
+# `backend/api/` — API autenticada (Flutter)
 
-A **API autenticada** que o Flutter consome. Originalmente vivia dentro da
-interface Next.js (`site/`), que foi desativada em 2026-08-24. Foi arquivada aqui
-para permitir re-hospedagem posterior, sem perder o contrato.
+A **API autenticada** que o Flutter consome. Foi movida da interface Next.js
+legada (`site/`, desativada em 2026-08-24) para este diretório, preservando o
+contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
 
-> **Estado:** arquivada e **não roda** no momento. Os caminhos são por domínio,
-> sem prefixo de versão (ex.: `/api/livelo`, `/api/inter`). Endpoint público único
-> é `GET /api/status`. As demais rotas exigem Firebase; as mutações
-> administrativas exigem papel `admin`. Para republicar, siga o roteiro de
-> reativação em [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
+> **Estado:** a partir de 2026-08-23 o shell publicável foi reconstruído aqui:
+> rotas do App Router em `app/api/**`, `next.config.ts` com headers de
+> segurança, middleware de allowlist de origem (CORS) e `GET /status` mínimo.
+> Para republicar, siga [`ARQUIVO-PROJETO`](../../ARQUIVO-PROJETO.md).
 
 ## Estrutura
 
 ```text
 backend/api/
-├── routes/     # rotas HTTP (Next.js App Router), uma pasta por endpoint
-│   ├── livelo/   # painel, preferencias, lojas
-│   ├── inter/    # cashback, lojas, produtos
-│   ├── administracao/  # disparos, limpeza/[dominio]
-│   └── perfil, resumo, status
-├── lib/        # lógica da API (banco, autenticação, formato, limpeza, disparos)
-├── examples/   # .env.example (modelo de variáveis)
+├── app/            # rotas HTTP (Next.js App Router), uma pasta por endpoint
+│   └── api/        #  /status, /resumo, /perfil, /livelo, /inter, /administracao
+├── lib/            # lógica da API (banco, autenticação, formato, limpeza, disparos)
+├── examples/       # .env.example (modelo de variáveis)
 └── package.json
 ```
 
-## Rotas (`routes/**`)
+## Rotas (`app/api/**`)
 
 | Rota | Métodos | Função | Auth |
 |---|---|---|---|
-| `status` | GET | Health-check público | — |
+| `status` | GET | Health-check público (`{saudavel:true}`) | — |
 | `resumo` | GET | Início agregado (Livelo+Inter+produtos) | Firebase |
 | `perfil` | GET | Perfil mínimo (gate de entrada) | Firebase |
 | `livelo/painel` | GET | Painel Livelo paginado | Firebase |
@@ -43,23 +39,26 @@ backend/api/
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
 
+A raiz `/` devolve 404 vazio. Constraints e execução completa em
+[`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
+
 ## Dependências
 
-- `@neondatabase/serverless` (Postgres Neon)
+- `@neondatabase/serverless` (PostgresNeon)
 - `firebase-admin` (validação de ID token e App Check)
 - `next` 16, `react`, `react-dom`
 - Override: `uuid` 11.1.1
 
 Variáveis de ambiente (modelo em `examples/.env.example`): `DATABASE_URL`,
 `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `SEGREDO_LIMITE_API`,
-`EXIGIR_APP_CHECK`, e as de e-mail/github do fluxo do robô.
+`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS`, e as de e-mail/github do fluxo do robô.
 
 ## Como rodar / testar
 
 ```bash
 npm install
 npm run checar   # tsc --noEmit
-npm run testar   # vitest run
+npm run testar   # vitest run (testes em lib/*.teste.ts)
 npm run build    # next build
 ```
 

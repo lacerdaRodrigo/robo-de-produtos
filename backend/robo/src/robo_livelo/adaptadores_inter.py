@@ -22,7 +22,9 @@ URL_INTER = (
     "https://marketplace-api.web.bancointer.com.br/site/affiliate/inter/v1/"
     "departments/ALL-STORES/stores?lang=pt-BR"
 )
-USER_AGENT_INTER = "radar-beneficios/3 (projeto pessoal; github.com/lacerdaRodrigo/robo-livelo)"
+USER_AGENT_INTER = (
+    "radar-beneficios/3 (projeto pessoal; github.com/lacerdaRodrigo/robo-de-produtos)"
+)
 TAMANHO_MAXIMO_INTER = 5 * 1024 * 1024
 STATUS_TRANSITORIOS = {408, 429}
 

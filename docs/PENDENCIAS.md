@@ -2,6 +2,37 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
+---
+
+## Reativação — API, robôs e CI (após arquivar o site)
+
+> Em 2026-08-23 reconstruí o shell publicável da API em `backend/api/` e corrigi
+> os workflows para apontarem para `backend/robo`. Registro do que já entrou e
+> do que ainda exige ação operacional (merge, Vercel, segredos, migrações).
+
+- [x] Movido `backend/api/routes/**` → `backend/api/app/api/**` (App Router)
+- [x] Esqueleto do API: `tsconfig.json`, `next-env.d.ts`, `next.config.ts`
+      (headers de segurança + `poweredByHeader:false`), `app/layout.tsx`,
+      `app/page.tsx`, `vitest.config.ts`, teste `lib/api.teste.ts`
+- [x] `GET /status` mínimo `{saudavel:true}` (sem nome de produto)
+- [x] Middleware `backend/api/middleware.ts`: HTTPS + allowlist de origem (CORS)
+      via `ALLOWED_ORIGINS`
+- [x] Workflows `robo.yml`, `inter.yml`, `produtos-inter.yml`: `working-directory:
+      backend/robo` + `cache-dependency-path`
+- [x] `testes.yml`: removido job `site:` (pasta desativada), job `qualidade`
+      corrigido para working dir `backend/robo`
+- [x] Gates API verde: `tsc --noEmit`, vitest (7), `next build`
+- [x] Gates robô verde: ruff, format, `pytest` 94,16%
+- [ ] Cadastrar `ALLOWED_ORIGINS` na Vercel (origin exata do Flutter Web)
+- [ ] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
+- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada)
+- [ ] Conferir segredos `DATABASE_URL`, e-mail e `GITHUB_TOKEN_DISPARO` no GitHub
+- [ ] App Check: inscrever Web (reCAPTCHA) e iOS e recriar token debug do Samsung;
+      só então `EXIGIR_APP_CHECK=true`
+- [ ] Smoke no Samsung: `/status` → login → perfil → resumo → painel/cashback/produtos
+
+---
+
 O **porquê** de cada item está no [`PRD-LIVELO.md`](PRD-LIVELO.md), no [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md), no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md) ou no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md) — aqui fica só o que fazer e em que ordem.
 
 > Atualizado em 2026-08-23. Versão técnica atual: **1.34.0**.

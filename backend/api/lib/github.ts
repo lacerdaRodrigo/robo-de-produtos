@@ -15,7 +15,7 @@
  * forma; o site le o resultado direto do banco.
  */
 
-const REPOSITORIO = "lacerdaRodrigo/robo-livelo";
+const REPOSITORIO = "lacerdaRodrigo/robo-de-produtos";
 const RAMO = "main";
 
 export function temTokenDeDisparo(): boolean {

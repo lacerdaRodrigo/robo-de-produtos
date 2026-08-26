@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-// API v1 — status e versão. Leitura pública; sem banco.
+// Health-check público. Mínimo para revelar o mínimo: nenhum nome de produto
+// nem dado. O domínio aberto no navegador não devolve nada além disto e do 404
+// da raiz /.
 export async function GET() {
-  return NextResponse.json(
-    { api: "v1", produto: "Radar de Benefícios", saudavel: true },
-    { status: 200 },
-  );
+  return NextResponse.json({ saudavel: true }, { status: 200 });
 }

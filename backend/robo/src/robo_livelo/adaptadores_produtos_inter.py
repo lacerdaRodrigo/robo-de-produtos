@@ -31,7 +31,7 @@ URL_PRODUTOS_DIRETOS = (
     "products/search"
 )
 USER_AGENT_PRODUTOS_INTER = (
-    "radar-beneficios/4 (projeto pessoal; github.com/lacerdaRodrigo/robo-livelo)"
+    "radar-beneficios/4 (projeto pessoal; github.com/lacerdaRodrigo/robo-de-produtos)"
 )
 TAMANHO_MAXIMO_PRODUTOS_INTER = 5 * 1024 * 1024
 STATUS_TRANSITORIOS = {408, 429}
