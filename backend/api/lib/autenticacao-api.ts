@@ -194,7 +194,14 @@ export async function autenticarRequisicao(
     let identidade: IdentidadeFirebase;
     try {
       identidade = await deps.verificarIdToken(token);
-    } catch {
+    } catch (erro) {
+      if (process.env.DEBUG_AUTH === "true") {
+        console.error(
+          `[auth] token-invalido-ou-revogado detalhe: ${
+            erro instanceof Error ? erro.message.slice(0, 200) : String(erro)
+          }`,
+        );
+      }
       await auditar(deps, auditoriaBase(), "negado", "token-invalido-ou-revogado");
       return {
         ok: false,
