@@ -12,6 +12,7 @@ from robo_livelo.adaptadores import (
     CatalogoArquivo,
     CatalogoComReserva,
     NotificadorEmail,
+    NotificadorNulo,
     PreferenciasComReserva,
     PreferenciasPadrao,
     RepositorioNulo,
@@ -26,10 +27,10 @@ from robo_livelo.portas import (
     SiteMudou,
 )
 from robo_livelo.principal import (
+    credenciais_de_email,
     montar_catalogo,
     montar_preferencias,
     montar_repositorio,
-    validar_segredos,
     verificar_promocoes,
 )
 from testes.conftest import (
@@ -185,12 +186,21 @@ def teste_ct046_falha_de_login_no_gmail():
     assert "senha-secreta" not in str(erro.value)
 
 
-def teste_ct069_segredo_faltando_falha_antes_da_rede():
-    """PRD 7.3: nao gasta requisicao para descobrir que falta segredo."""
-    with pytest.raises(SystemExit, match="SENHA_APP_GMAIL"):
-        validar_segredos({"EMAIL_REMETENTE": "a@b.com", "EMAIL_DESTINO": "a@b.com"})
+def teste_ct069_e_mail_e_opcional_sem_credenciais_roda_mesmo_assim(favoritas):
+    """Credencial de e-mail ausente deixa de ser impeditivo (O3).
 
-    validar_segredos(
+    O robo executa coleta, alerta e retrato sem enviar e-mail; so o canal de
+    aviso deixa de existir. Nada de SystemExit nem rolha no meio.
+    """
+    total, notificador, _ = executa(
+        pagina(("Natura", "4", True)),
+        favoritas,
+        notificador=NotificadorNulo(),
+    )
+    assert total == 1
+
+    assert not credenciais_de_email({})
+    assert credenciais_de_email(
         {"EMAIL_REMETENTE": "a@b.com", "SENHA_APP_GMAIL": "x", "EMAIL_DESTINO": "a@b.com"}
     )
 

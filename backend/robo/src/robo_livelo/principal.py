@@ -20,6 +20,7 @@ from robo_livelo.adaptadores import (
     CatalogoComReserva,
     CatalogoPostgres,
     NotificadorEmail,
+    NotificadorNulo,
     PaginaLiveloHttp,
     PreferenciasComReserva,
     PreferenciasPadrao,
@@ -47,14 +48,16 @@ CAMINHO_CONFIG_PADRAO = Path("config/lojas_favoritas.toml")
 # dependencia nova (RNF13).
 FUSO_BRASILIA = timezone(timedelta(hours=-3))
 
-_SEGREDOS = ("EMAIL_REMETENTE", "SENHA_APP_GMAIL", "EMAIL_DESTINO")
+_SEGREDOS_EMAIL = ("EMAIL_REMETENTE", "SENHA_APP_GMAIL", "EMAIL_DESTINO")
 
 
-def validar_segredos(ambiente: dict[str, str]) -> None:
-    """PRD 7.3: falha antes da rede se faltar segredo."""
-    faltando = [nome for nome in _SEGREDOS if not ambiente.get(nome)]
-    if faltando:
-        raise SystemExit(f"Variaveis obrigatorias ausentes: {', '.join(faltando)}")
+def credenciais_de_email(ambiente: dict[str, str]) -> bool:
+    """Se as tres credenciais de e-mail existem, o notificador real e usado.
+
+    Ausencia de credencial nao e erro: o robo roda igual (coleta, alerta,
+    retrato no banco), sem enviar e-mail. So deixa de existir o canal.
+    """
+    return all(ambiente.get(nome) for nome in _SEGREDOS_EMAIL)
 
 
 def montar_catalogo(ambiente: dict[str, str], caminho: Path) -> CatalogoFavoritas:
@@ -200,13 +203,17 @@ def principal(argv: list[str] | None = None) -> int:
     load_dotenv()
 
     ambiente = dict(os.environ)
-    validar_segredos(ambiente)
 
     limiar = int(ambiente.get("LIMIAR_PARCEIROS", LIMIAR_PADRAO))
     caminho = Path(ambiente.get("CAMINHO_CONFIG", CAMINHO_CONFIG_PADRAO))
     # Ausente (agendado) ou "true" (workflow_dispatch sem marcar a caixa)
     # mandam e-mail; so "false" explicito, vindo do botao do site, cala.
     enviar_email = ambiente.get("ENVIAR_EMAIL", "true").strip().lower() != "false"
+    # Sem credenciais de e-mail, o canal nao existe: roda sem enviar, e o
+    # que ia ser "mandar e-mail" vira "nao mandar" sem ser erro (O3).
+    if not credenciais_de_email(ambiente):
+        _log.info("Credenciais de e-mail ausentes: coleta segue sem enviar e-mail.")
+        enviar_email = False
 
     try:
         verificar_promocoes(
@@ -214,10 +221,14 @@ def principal(argv: list[str] | None = None) -> int:
             catalogo=montar_catalogo(ambiente, caminho),
             preferencias=montar_preferencias(ambiente),
             repositorio=montar_repositorio(ambiente),
-            notificador=NotificadorEmail(
-                remetente=ambiente["EMAIL_REMETENTE"],
-                senha=ambiente["SENHA_APP_GMAIL"],
-                destino=ambiente["EMAIL_DESTINO"],
+            notificador=(
+                NotificadorEmail(
+                    remetente=ambiente["EMAIL_REMETENTE"],
+                    senha=ambiente["SENHA_APP_GMAIL"],
+                    destino=ambiente["EMAIL_DESTINO"],
+                )
+                if credenciais_de_email(ambiente)
+                else NotificadorNulo()
             ),
             limiar=limiar,
             enviar_email=enviar_email,

@@ -211,6 +211,19 @@ class NotificadorEmail:
             raise FalhaAoNotificar(f"Falha ao enviar o e-mail: {type(erro).__name__}") from None
 
 
+class NotificadorNulo:
+    """Notificador que nao envia nada (e-mail opcional).
+
+    E usado quando as credenciais de e-mail nao estao no ambiente: o robo
+    executa a coleta normalmente, monta o retrato e grava, so nao envia
+    e-mail. Ausencia de credencial deixa de ser impedimento (RF10 e
+    condicional a existir configuracao de envio).
+    """
+
+    def enviar(self, mensagem: Mensagem) -> None:
+        return None
+
+
 class CatalogoPostgres:
     """Le as lojas favoritas do Postgres (PRD V2, secao 7.1.1).
 
