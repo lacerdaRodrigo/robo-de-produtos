@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
+import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../identidade/logo_radar.dart';
@@ -261,14 +262,47 @@ class GavetaRadar extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
-              child: Text(
-                administrador ? 'Acesso administrador' : 'Acesso padrão',
-                style: const TextStyle(color: Color(0xFF93AABD), fontSize: 12),
-              ),
+              child: _RodapeVersao(administrador: administrador),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RodapeVersao extends StatelessWidget {
+  const _RodapeVersao({required this.administrador});
+
+  final bool administrador;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          administrador ? 'Acesso administrador' : 'Acesso padrão',
+          style: const TextStyle(color: Color(0xFF93AABD), fontSize: 12),
+        ),
+        FutureBuilder<String>(
+          future: VersaoApp.versao(),
+          builder: (context, estado) {
+            final texto = estado.hasData && estado.data != '—'
+                ? 'v${estado.data}'
+                : '';
+            if (texto.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                texto,
+                style: const TextStyle(color: Color(0xFF93AABD), fontSize: 11),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -332,13 +366,7 @@ class BarraLateral extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
-                child: Text(
-                  administrador ? 'Acesso administrador' : 'Acesso padrão',
-                  style: const TextStyle(
-                    color: Color(0xFF93AABD),
-                    fontSize: 12,
-                  ),
-                ),
+                child: _RodapeVersao(administrador: administrador),
               ),
             ],
           ),
