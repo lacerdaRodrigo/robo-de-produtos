@@ -8,7 +8,7 @@ abstract final class Ambiente {
   /// Desenvolvimento local pode sobrescrever com `http://localhost:3000`.
   static const baseUrlApi = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://app-robo.vercel.app',
+    defaultValue: 'https://robo-de-produtos.vercel.app',
   );
 
   static const paginaPadrao = 20;
