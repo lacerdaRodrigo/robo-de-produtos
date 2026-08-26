@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.43.0 (2026-08-26)
+
+### Features
+
+- **app**: Versao do app no rodape da navegacao
+  ([`1f58f78`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1f58f789f94555fdedd7efc5014621b59bcf642d))
+
+
 ## v1.42.0 (2026-08-26)
 
 ### Chores
