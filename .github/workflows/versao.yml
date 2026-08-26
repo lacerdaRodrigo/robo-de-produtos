@@ -34,8 +34,10 @@ jobs:
           cache: pip
 
       - name: Instalar semantic-release
-        # Pinado: 10.5+ quebrou com `Actor.name_email_regex` (10.6.1 confirma).
-        run: pip install python-semantic-release==10.4.1
+        # Pina semantic-release e GitPython: a versão 10.5+ quebra com
+        # `Actor.name_email_regex` (removido no GitPython 3.1.60+). O par
+        # 10.4.1 + 3.1.50 roda o release sem esse erro.
+        run: pip install "python-semantic-release==10.4.1" "gitpython==3.1.50"
 
       - name: Configurar autoria dos commits de release
         run: |
