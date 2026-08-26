@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.42.0 (2026-08-26)
+
+### Chores
+
+- **ci**: Remove workflow temporário de regenerar goldens
+  ([`9b32756`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9b3275665ba97c5780aea55bd851688389a04edd))
+
+### Features
+
+- **api**: Loga detalhe do erro de token quando DEBUG_AUTH=true
+  ([`1a8a0e1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1a8a0e18dc304032ef7c8bebc6d0a13dd916ceca))
+
+
 ## v1.41.0 (2026-08-26)
 
 ### Bug Fixes
