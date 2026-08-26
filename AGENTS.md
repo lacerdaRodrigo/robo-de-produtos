@@ -7,13 +7,13 @@ Este é o arquivo de entrada do Codex. Ele não substitui a documentação do pr
 ## 1. Leitura obrigatória
 
 1. Leia o [`CLAUDE.md`](CLAUDE.md) inteiro. As regras dele também valem para o Codex.
-2. Leia o [`docs/PRD.md`](docs/PRD.md), fonte principal de requisitos e regras numeradas.
+2. Leia o [`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md), fonte principal de requisitos e regras numeradas.
 3. Leia somente os deltas relacionados à tarefa:
-   - [`docs/PRD-V2.md`](docs/PRD-V2.md): site, banco, autenticação e alertas Livelo;
-   - [`docs/PRD-V3.md`](docs/PRD-V3.md): cashback dos Sites parceiros do Inter;
-   - [`docs/PRD-V4.md`](docs/PRD-V4.md): produtos do Compre direto, coleta, busca e histórico;
-   - [`docs/PRD-V5.md`](docs/PRD-V5.md): limpeza administrativa e zona de perigo;
-   - [`app-robo/PLANO.md`](app-robo/PLANO.md): piloto Flutter Web, Android e iOS.
+   - [`docs/PRD-LIVELO-V2.md`](docs/PRD-LIVELO-V2.md): site, banco, autenticação e alertas Livelo;
+   - [`docs/PRD-INTER-CASHBACK.md`](docs/PRD-INTER-CASHBACK.md): cashback dos Sites parceiros do Inter;
+   - [`docs/PRD-INTER-PRODUTOS.md`](docs/PRD-INTER-PRODUTOS.md): produtos do Compre direto, coleta, busca e histórico;
+   - [`docs/PRD-ADMINISTRACAO.md`](docs/PRD-ADMINISTRACAO.md): limpeza administrativa e zona de perigo;
+   - [`app/PLANO.md`](app/PLANO.md): piloto Flutter Web, Android e iOS.
 4. Consulte [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md) e o código/branch atuais para separar o que está implementado, publicado, pendente ou apenas planejado.
 5. Ao mexer em regra ou teste, consulte também [`docs/TESTES.md`](docs/TESTES.md), [`README.md`](README.md) e a documentação específica afetada.
 
@@ -58,12 +58,12 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 - Para cada loja direta selecionada, o robô percorre todas as páginas que a fonte disponibilizar; não existe teto artificial de 3.000 ou 3.310 produtos.
 - O banco mantém o último catálogo válido e medições históricas de todos os produtos ativos, conforme retenção do PRD V4.
 - A pesquisa consulta somente o Postgres. Digitar no app nunca chama o Inter nem inicia uma coleta.
-- O Flutter nunca recebe o catálogo completo: a API filtra no servidor e entrega páginas, inicialmente 20 itens e no máximo 50 por resposta, conforme [`app-robo/PLANO.md`](app-robo/PLANO.md).
+- O Flutter nunca recebe o catálogo completo: a API filtra no servidor e entrega páginas, inicialmente 20 itens e no máximo 50 por resposta, conforme [`app/PLANO.md`](app/PLANO.md).
 - Todos os resultados encontrados continuam alcançáveis por paginação. Não cortar total silenciosamente, duplicar ou perder itens entre páginas.
 - A identidade histórica é loja + ID externo do produto. Não mesclar variantes ou produtos entre lojas por semelhança textual.
 - O sistema promete tudo que a fonte expôs numa coleta válida, não o catálogo universal de uma varejista.
 
-## 6. Trabalho no `app-robo/`
+## 6. Trabalho no `app/`
 
 - Não inicialize Flutter, crie telas, banco, API ou workflow apenas porque existe um plano.
 - Quando houver autorização para começar, siga a Fase 1 do plano: inventário e contratos antes de telas.
@@ -74,7 +74,7 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 - Um único projeto Flutter deve atender Web, Android e iOS com layout adaptativo.
 - Preserve os tokens e as regras de design aprovados no plano.
 - Escreva muitos testes unitários e de widgets/componentes; mantenha os testes de integração nas jornadas críticas.
-- A estrutura por `features` em `app-robo/` é uma exceção deliberada à convenção plana dos módulos Python. Não reorganize o Python por causa dela.
+- A estrutura por `features` em `app/` é uma exceção deliberada à convenção plana dos módulos Python. Não reorganize o Python por causa dela.
 - Itens da seção de melhorias opcionais do plano não estão autorizados automaticamente.
 
 ## 7. Alterações, testes e documentação

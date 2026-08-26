@@ -2,7 +2,38 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
-O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md), no [`PRD-V3.md`](PRD-V3.md) ou no [`PRD-V4.md`](PRD-V4.md) — aqui fica só o que fazer e em que ordem.
+---
+
+## Reativação — API, robôs e CI (após arquivar o site)
+
+> Em 2026-08-23 reconstruí o shell publicável da API em `backend/api/` e corrigi
+> os workflows para apontarem para `backend/robo`. Registro do que já entrou e
+> do que ainda exige ação operacional (merge, Vercel, segredos, migrações).
+
+- [x] Movido `backend/api/routes/**` → `backend/api/app/api/**` (App Router)
+- [x] Esqueleto do API: `tsconfig.json`, `next-env.d.ts`, `next.config.ts`
+      (headers de segurança + `poweredByHeader:false`), `app/layout.tsx`,
+      `app/page.tsx`, `vitest.config.ts`, teste `lib/api.teste.ts`
+- [x] `GET /status` mínimo `{saudavel:true}` (sem nome de produto)
+- [x] Middleware `backend/api/middleware.ts`: HTTPS + allowlist de origem (CORS)
+      via `ALLOWED_ORIGINS`
+- [x] Workflows `robo.yml`, `inter.yml`, `produtos-inter.yml`: `working-directory:
+      backend/robo` + `cache-dependency-path`
+- [x] `testes.yml`: removido job `site:` (pasta desativada), job `qualidade`
+      corrigido para working dir `backend/robo`
+- [x] Gates API verde: `tsc --noEmit`, vitest (7), `next build`
+- [x] Gates robô verde: ruff, format, `pytest` 94,16%
+- [ ] Cadastrar `ALLOWED_ORIGINS` na Vercel (origin exata do Flutter Web)
+- [ ] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
+- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada)
+- [ ] Conferir segredos `DATABASE_URL`, e-mail e `GITHUB_TOKEN_DISPARO` no GitHub
+- [ ] App Check: inscrever Web (reCAPTCHA) e iOS e recriar token debug do Samsung;
+      só então `EXIGIR_APP_CHECK=true`
+- [ ] Smoke no Samsung: `/status` → login → perfil → resumo → painel/cashback/produtos
+
+---
+
+O **porquê** de cada item está no [`PRD-LIVELO.md`](PRD-LIVELO.md), no [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md), no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md) ou no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md) — aqui fica só o que fazer e em que ordem.
 
 > Atualizado em 2026-08-23. Versão técnica atual: **1.34.0**.
 
@@ -20,13 +51,13 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 `radarbeneficios` está conectado a Web, Android e iOS. O primeiro convite foi
 vinculado no acesso real, a API protegida respondeu pelo app instalado no Samsung
 SM-M135M e a auditoria registrou o sucesso. A direção final é manter somente a
-interface Flutter; o Next.js não recebe novas funcionalidades e hospeda a API
-apenas durante a transição.
+interface Flutter; a interface web Next.js (`site/`) foi desativada em 2026-08-24
+e a API v1 foi arquivada em `backend/api/`.
 
 - [x] Definir Firebase Authentication por e-mail/senha, sem cadastro público
 - [x] Conectar Web, Android e iOS pelo FlutterFire, sem segredo administrativo no bundle
 - [x] Criar login, recuperação, confirmação de e-mail e encerramento de sessão
-- [x] Enviar ID token nas chamadas privadas e manter `/api/v1/status` público
+- [x] Enviar ID token nas chamadas privadas e manter `/api/status` público
 - [x] Validar token e revogação no servidor antes de consultar dados
 - [x] Exigir convite ativo, papel e e-mail verificado no Postgres
 - [x] Implementar rate limit persistente por origem, usuário e operação
@@ -79,7 +110,7 @@ decisão do responsável.
 - [x] Testar celular em retrato/paisagem e tela larga
 - [x] Instalar no Samsung e validar seleção de Início → Livelo
 - [x] **Fase 4.2B concluída em 2026-08-22:** substituir o lugar-ocupante de Livelo pelo painel real
-  - [x] consumir `/api/v1/livelo/painel` mantendo decimais como texto
+  - [x] consumir `/api/livelo/painel` mantendo decimais como texto
   - [x] pesquisar loja/categoria e ordenar por pontos, alerta ou nome
   - [x] carregar todas as páginas sob demanda, sem duplicar itens e ignorando respostas antigas
   - [x] mostrar pontos atuais, base, disparo, Clube, promoção e alerta
@@ -99,7 +130,7 @@ decisão do responsável.
 ## Flutter — redesign por telas
 
 O redesign segue o
-[`app-robo/PLANO-REDESIGN-POR-TELAS.md`](../app-robo/PLANO-REDESIGN-POR-TELAS.md)
+[`app/PLANO-REDESIGN-POR-TELAS.md`](../app/PLANO-REDESIGN-POR-TELAS.md)
 e não libera todas as telas de uma vez. Em 23 de agosto de 2026, o plano passou
 a mapear todos os módulos até o fechamento multiplataforma, incluindo
 dependências de API, gates visuais e o roteiro automático no Samsung conectado.
@@ -127,13 +158,13 @@ dependências de API, gates visuais e o roteiro automático no Samsung conectado
       builds Web/APK e instalação preservando dados locais passaram
 - [x] Fazer o aceite visual final do Módulo 2 no Samsung já aberto
 - [x] Aprovar os protótipos e o contrato agregado do **Módulo 3 — Início**
-- [x] Implementar localmente `GET /api/v1/resumo` com leituras isoladas de
+- [x] Implementar localmente `GET /api/resumo` com leituras isoladas de
       Livelo, Cashback Inter e Produtos, sem chamada direta às fontes
 - [x] Implementar métricas, prioridade por estado, retry preservando o último
       resumo e quatro atalhos reais no Flutter
 - [x] Passar TypeScript, ESLint, 83 testes e build do site; formatação, análise,
       147 testes, 91,29% de cobertura e builds Web/APK no Flutter
-- [x] Confirmar que a rota publicada `/api/v1/resumo` continua protegida sem
+- [x] Confirmar que a rota publicada `/api/resumo` continua protegida sem
       credencial e abrir o Início autenticado no Samsung; o resumo carregou em
       build debug com App Check desativado, sem mutação de dados
 - [x] Aprovar os protótipos do **Módulo 4 — hub de Lojas**
@@ -184,9 +215,9 @@ publicação, migração, disparo ou mutação foi feito nesta etapa.
 
 ## V4 — catálogo de produtos do Compre direto no Inter
 
-- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-V4.md`
+- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-INTER-PRODUTOS.md`
 - [x] Registrar CT-200 em diante como catálogo de testes planejados
-- [x] **V4.1 de código:** medidor `scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
+- [x] **V4.1 de código:** medidor `backend/robo/scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
 - [ ] **V4.1 — gate físico:** paginação, duração e duplicatas medidas na Casas Bahia; falta registrar bytes totais e projeções
 - [ ] Projetar volume para 3, 10 e 111 lojas, com três rodadas diárias e retenção de 30 dias
 - [x] Fechar em código schema, índices, área de preparação em memória, publicação atômica e expurgo de 30 dias
@@ -229,7 +260,7 @@ O que sobrou disso:
 - [x] Tirar o "hipótese não confirmada" do comentário em `extrator.py` e do CT-091 em `docs/TESTES.md` — `"ATE"` está confirmado
 - [x] **`PROMOTION_CLUB` ganhou rótulo próprio.** Decisão de 2026-08-11: `CLUB` continua "exclusivo assinantes Clube"; `PROMOTION_CLUB` passa a exibir "assinantes Clube ganham mais", porque nesses a base subiu para todo mundo (Sephora 1→6 com Clube em 10) e a promoção *serve* ao não assinante. `activeCampaign` virou a fonte primária de RN23, com a comparação numérica de reserva para valor desconhecido. RN23 reescrita no PRD-V2 §6.2. CT-103 a CT-105
 - [x] Ruído no log reduzido: item sem `parity` nenhuma (produto da própria Livelo) cai em `DEBUG` mais um resumo em `INFO`; `parity` presente e ilegível continua `WARNING`, porque aí é sintoma. CT-106 e CT-107
-- [x] `testes/fixtures/payload_parceiros.json` enriquecida com quatro itens copiados da página real de 2026-08-11: Sephora e Coffee Mais (`PROMOTION_CLUB`), Aliexpress (`CLUB` com `separatorSlug: "ATE"`) e Liga Vitória (`parity: null`)
+- [x] `backend/robo/testes/fixtures/payload_parceiros.json` enriquecida com quatro itens copiados da página real de 2026-08-11: Sephora e Coffee Mais (`PROMOTION_CLUB`), Aliexpress (`CLUB` com `separatorSlug: "ATE"`) e Liga Vitória (`parity: null`)
 
 ---
 
@@ -238,7 +269,7 @@ O que sobrou disso:
 - [x] Criar conta e projeto no Neon
 - [x] Esquema com `loja`, `apelido` e `preferencia` (`migracoes/001_esquema.sql`)
 - [x] Adaptador `CatalogoPostgres` implementando a porta existente
-- [x] Script de carga do TOML para o banco (`scripts/carregar_catalogo.py`)
+- [x] Script de carga do TOML para o banco (`backend/robo/scripts/carregar_catalogo.py`)
 - [x] Verificar leitura: 132 lojas, 10 categorias, apelidos preservados
 - [x] `principal.py` escolher o adaptador conforme `DATABASE_URL` existir, com o arquivo como reserva — `montar_catalogo()` mais o adaptador `CatalogoComReserva`. CT-108, CT-109, CT-114 a CT-116
 - [x] Passar `DATABASE_URL` ao workflow `robo.yml`
@@ -386,7 +417,7 @@ Nota de convivência com o resto do trabalho que aconteceu na mesma noite (redes
 - [x] Dependabot: `checkout@v7` e `setup-python@v7` em `testes.yml` e `robo.yml` (PRs #1 e #2, 2026-08-11)
 - [x] Versão **1.2.0** publicada em 2026-08-11, carregando a V2.0
 - [x] **V2.0 validada contra a página real** em 2026-08-11 — 254 parceiros extraídos tanto na execução agendada das 23h27 quanto na conferência local; `separatorSlug: "ATE"` e o conjunto de valores de `activeCampaign` confirmados
-- [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
+- [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `backend/robo/testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
 - [x] **V2.1** — `montar_catalogo()` escolhe Postgres ou arquivo conforme `DATABASE_URL`; `CatalogoComReserva` protege a execução contra o Neon fora do ar; `multiplicador`/`piso_pontos` lidos das duas fontes; `DATABASE_URL` passado ao `robo.yml`
 - [x] Roteiro do smoke manual CT-050 escrito, com os números de 2026-08-11 como linha de base
 - [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138

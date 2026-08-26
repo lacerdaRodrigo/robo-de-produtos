@@ -20,6 +20,9 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/robo
 
     steps:
       - uses: actions/checkout@v7
@@ -28,6 +31,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/robo/pyproject.toml
 
       - name: Instalar dependencias
         run: pip install -e .

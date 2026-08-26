@@ -3,7 +3,7 @@
 **Atualizado em 22 de agosto de 2026**
 
 Este arquivo é um ponto de retomada rápido. A fonte completa de requisitos
-continua sendo `docs/PRD.md`; o plano Flutter continua em
+continua sendo `docs/prd/PRD-LIVELO.md`; o plano Flutter continua em
 `app-robo/PLANO.md`.
 
 ## Última entrega concluída

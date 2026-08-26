@@ -1,5 +1,7 @@
 # Segredos — nunca commitar (PRD §9.1)
 .env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
@@ -9,21 +11,18 @@ venv/
 *.egg-info/
 build/
 dist/
-
-# Testes e cobertura
 .pytest_cache/
 .coverage
 htmlcov/
 .ruff_cache/
 
+# Node / API
+node_modules/
+.next/
+npm-debug.log*
+*.tsbuildinfo
+
 # Editor / SO
 .vscode/
 .idea/
 .DS_Store
-
-# Site (Next.js)
-site/node_modules/
-site/.next/
-site/next-env.d.ts
-site/.vercel/
-site/tsconfig.tsbuildinfo

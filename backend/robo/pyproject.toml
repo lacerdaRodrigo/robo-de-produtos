@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robo-livelo"
+version = "1.40.0"
+description = "Radar de beneficios da Livelo e do Shopping Inter"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "python-dotenv>=1.0",
+    "psycopg[binary]>=3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "python-semantic-release>=9.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["testes"]
+python_files = ["teste_*.py"]
+python_functions = ["teste_*"]
+python_classes = ["Teste*"]
+addopts = "-q"
+
+[tool.coverage.run]
+# PRD 8.4: a meta de 90% vale apenas para o nucleo puro. Adaptadores e
+# orquestradores fazem I/O e sao exercitados por testes de componente, sem
+# entrarem nesta metrica.
+include = [
+    "*/robo_livelo/modelos.py",
+    "*/robo_livelo/extrator.py",
+    "*/robo_livelo/categorias.py",
+    "*/robo_livelo/montador_email.py",
+    "*/robo_livelo/alertas.py",
+    "*/robo_livelo/retrato.py",
+    "*/robo_livelo/modelos_inter.py",
+    "*/robo_livelo/extrator_inter.py",
+    "*/robo_livelo/ranking_inter.py",
+    "*/robo_livelo/retrato_inter.py",
+    "*/robo_livelo/modelos_produtos_inter.py",
+    "*/robo_livelo/extrator_produtos_inter.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.semantic_release]
+# Versao vem dos commits: fix -> patch, feat -> minor, feat! -> major.
+version_toml = ["pyproject.toml:project.version"]
+version_variables = [
+    "src/robo_livelo/__init__.py:__version__",
+]
+commit_message = "chore(release): {version}"
+changelog_file = "CHANGELOG.md"
+build_command = ""
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.main]
+match = "main"
