@@ -34,7 +34,8 @@ jobs:
           cache: pip
 
       - name: Instalar semantic-release
-        run: pip install python-semantic-release
+        # Pinado: 10.5+ quebrou com `Actor.name_email_regex` (10.6.1 confirma).
+        run: pip install python-semantic-release==10.4.1
 
       - name: Configurar autoria dos commits de release
         run: |

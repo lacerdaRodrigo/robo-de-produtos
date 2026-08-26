@@ -148,10 +148,7 @@ void main() {
       }),
     );
 
-    expect(
-      () => api.obter('/api/perfil'),
-      throwsA(isA<ErroDeAutenticacao>()),
-    );
+    expect(() => api.obter('/api/perfil'), throwsA(isA<ErroDeAutenticacao>()));
     expect(chamouRede, isFalse);
   });
 

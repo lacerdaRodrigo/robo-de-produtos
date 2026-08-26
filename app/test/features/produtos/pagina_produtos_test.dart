@@ -61,10 +61,7 @@ Api _api() => Api(
   ),
 );
 
-Api _apiHistorico({
-  bool primeiraFalha = false,
-  bool falhaPaginaDois = false,
-}) {
+Api _apiHistorico({bool primeiraFalha = false, bool falhaPaginaDois = false}) {
   var chamadas = 0;
   var falhaPaginaDoisPendente = falhaPaginaDois;
   return Api(

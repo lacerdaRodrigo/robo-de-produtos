@@ -19,9 +19,9 @@ from dotenv import load_dotenv
 
 from robo_livelo.adaptadores import CatalogoArquivo
 
-RAIZ = Path(__file__).resolve().parents[1]
+RAIZ = Path(__file__).resolve().parents[3]
 ESQUEMA = RAIZ / "migracoes" / "001_esquema.sql"
-CATALOGO = RAIZ / "config" / "lojas_favoritas.toml"
+CATALOGO = Path(__file__).resolve().parents[1] / "config" / "lojas_favoritas.toml"
 
 
 def principal() -> int:

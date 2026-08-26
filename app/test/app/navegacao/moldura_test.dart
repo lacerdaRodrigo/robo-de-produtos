@@ -299,8 +299,7 @@ void main() {
     expect(find.text('Atualizar Produtos'), findsOneWidget);
     final dominiosConsultados = requisicoes
         .where(
-          (requisicao) =>
-              requisicao.url.path == '/api/administracao/disparos',
+          (requisicao) => requisicao.url.path == '/api/administracao/disparos',
         )
         .map((requisicao) => requisicao.url.queryParameters['dominio'])
         .toSet();
