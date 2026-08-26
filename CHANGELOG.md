@@ -2,6 +2,63 @@
 
 <!-- version list -->
 
+## v1.41.0 (2026-08-26)
+
+### Bug Fixes
+
+- **api**: Resolve firebase-admin ERR_REQUIRE_ESM no serverless
+  ([`014702c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/014702ca93fb6e60f6fdab3207e60544f5afa285))
+
+- **ci**: Pina GitPython 3.1.50 no versao.yml
+  ([`e37fc4c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e37fc4c7caefe75df504c01b507d935e52d27aa7))
+
+- **ci**: Pina semantic-release em 10.4.1 e corrige caminho do catálogo
+  ([`5cc2542`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5cc254285fc5fd6246e5f00fcbfe69b8a7244814))
+
+### Chores
+
+- **ci**: Workflow temporário de regenerar goldens no runner
+  ([`f171bc1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f171bc1db637cd704950b996b5175f1a761309fe))
+
+### Documentation
+
+- Adiciona README em cada pasta e atualiza raiz
+  ([`5933f5c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5933f5c57939774e38119bc91c962aa1f62367ca))
+
+- Reorganiza docs em subpastas e remove referências ao site legado
+  ([`430ed84`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/430ed84c32caf312907260bf4d1ee2158d5490fd))
+
+- **prd**: Renomeia PRDs por domínio/ação
+  ([`74036ca`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/74036cab4d255f31dd4712bc89355c17ab9b1ab0))
+
+### Features
+
+- Desativa site Next.js e arquiva API em app-robo/apis
+  ([`01aba7d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/01aba7d7ac34465e905d2ac748996f8a63409075))
+
+- **robo**: E-mail opcional — sem credencial roda igual
+  ([`bf8e49a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/bf8e49a52c394cd0de5c4c1c41b466cd808ca218))
+
+### Refactoring
+
+- Consolida backend Python em app-robo/backend
+  ([`1a778e2`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1a778e2c57fc47d61d525b40e4fa34b4cf5f318e))
+
+- Renomeia raiz robo-livelo para robo e reorganiza pastas
+  ([`59ea599`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/59ea5996d8d07a7f45fc17eaa26524f19253e883))
+
+- **api**: Remove prefixo v1 e renomeia para caminhos por domínio
+  ([`93c7e49`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/93c7e497b1f94afd1698ca79d41b0ad2c1b5ea82))
+
+### Testing
+
+- **app**: Regenera golden da lateral Web e remove restos de diff
+  ([`0b4e709`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/0b4e709fb90bae02b31094ef205579932779e654))
+
+- **app**: Usa goldens gerados no runner do CI (referência do gate)
+  ([`a833ee3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a833ee34cfbd1231c8190e0d17beaa88dacc78a3))
+
+
 ## v1.40.0 (2026-08-23)
 
 ### Features
