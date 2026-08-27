@@ -8,20 +8,21 @@ divida: sem ele, nada impede um `import requests` dentro das regras.
 from __future__ import annotations
 
 import ast
+import tomllib
 from pathlib import Path
 
 import pytest
 
 PACOTE = Path(__file__).resolve().parents[1] / "src" / "robo_livelo"
+RAIZ_REPOSITORIO = Path(__file__).resolve().parents[3]
 
-# O nucleo nao faz entrada e saida: nada de rede, disco, ambiente ou SMTP.
+# O nucleo nao faz entrada e saida: nada de rede, disco ou ambiente.
 # beautifulsoup4 e permitido de proposito — transforma texto em estrutura,
 # nao abre conexao nem arquivo (PRD 4.1).
 MODULOS_LIVELO = [
     "modelos.py",
     "extrator.py",
     "categorias.py",
-    "montador_email.py",
     "alertas.py",
     "retrato.py",
 ]
@@ -34,7 +35,7 @@ MODULOS_INTER = [
     "extrator_produtos_inter.py",
 ]
 MODULOS_DO_NUCLEO = [*MODULOS_LIVELO, *MODULOS_INTER]
-IMPORTS_PROIBIDOS = {"requests", "smtplib", "tomllib", "os", "pathlib", "dotenv", "socket"}
+IMPORTS_PROIBIDOS = {"requests", "tomllib", "os", "pathlib", "dotenv", "socket"}
 
 
 def imports_de(caminho: Path) -> set[str]:
@@ -64,3 +65,16 @@ def teste_nucleo_nao_importa_adaptadores():
     """A dependencia aponta para dentro: adaptador conhece nucleo, nunca o contrario."""
     for modulo in MODULOS_DO_NUCLEO:
         assert "adaptadores" not in "".join(imports_de(PACOTE / modulo))
+
+
+def teste_versionamento_aponta_para_os_arquivos_apos_reorganizacao():
+    configuracao = tomllib.loads(
+        (RAIZ_REPOSITORIO / "backend/robo/pyproject.toml").read_text(encoding="utf-8")
+    )["tool"]["semantic_release"]
+    workflow = (RAIZ_REPOSITORIO / ".github/workflows/versao.yml").read_text(encoding="utf-8")
+
+    assert configuracao["version_toml"] == ["backend/robo/pyproject.toml:project.version"]
+    assert configuracao["version_variables"] == [
+        "backend/robo/src/robo_livelo/__init__.py:__version__"
+    ]
+    assert "semantic-release -c backend/robo/pyproject.toml version" in workflow

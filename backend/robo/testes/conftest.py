@@ -1,7 +1,7 @@
 """Fixtures e fakes compartilhados.
 
 Os fakes implementam as portas do PRD 4.2. Testar contra o contrato do
-projeto, e nao contra o detalhe interno de requests/smtplib, e o que faz o
+projeto, e nao contra o detalhe interno de requests, e o que faz o
 teste sobreviver a troca prevista em C04.
 """
 
@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from robo_livelo.extrator import TITULO_SECAO_PARCEIROS
-from robo_livelo.modelos import LojaFavorita, Mensagem, Parceiro
+from robo_livelo.modelos import LojaFavorita, Parceiro
 from robo_livelo.modelos_inter import LojaInter
 
 PASTA_FIXTURES = Path(__file__).parent / "fixtures"
@@ -226,20 +226,3 @@ class CatalogoFake:
         if self.erro:
             raise self.erro
         return self._lojas
-
-
-class NotificadorFake:
-    """Porta Notificador."""
-
-    def __init__(self, erro: Exception | None = None) -> None:
-        self.enviadas: list[Mensagem] = []
-        self.erro = erro
-
-    def enviar(self, mensagem: Mensagem) -> None:
-        if self.erro:
-            raise self.erro
-        self.enviadas.append(mensagem)
-
-    @property
-    def foi_chamado(self) -> bool:
-        return bool(self.enviadas)

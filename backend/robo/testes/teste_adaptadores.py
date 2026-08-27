@@ -470,7 +470,7 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):
-    """RN08 vale para o site tambem: link arbitrario nao entra na pagina."""
+    """RN08 vale para a API tambem: link arbitrario nao entra no banco."""
     hostil = faz_parceiro("Natura", "8", base="2", link="https://site-malicioso.example/x")
     snapshot = RetratoDaExecucao(
         momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
@@ -523,7 +523,7 @@ def teste_ct146_falha_ao_gravar_nao_vaza_a_senha(monkeypatch):
 
 
 def teste_repositorio_nulo_nao_quebra_sem_banco(caplog):
-    """Quem clonou o projeto sem Neon continua recebendo e-mail."""
+    """Quem clonou o projeto sem Neon consegue executar um diagnostico local."""
     snapshot = RetratoDaExecucao(
         momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
         parceiros_lidos=1,

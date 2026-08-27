@@ -1,6 +1,6 @@
 # Instruções para o Codex
 
-**Escopo:** todo o repositório `robo-livelo`.
+**Escopo:** todo o repositório `robo-de-produtos`.
 
 Este é o arquivo de entrada do Codex. Ele não substitui a documentação do produto. Antes de propor ou executar trabalho, siga a ordem abaixo.
 
@@ -9,11 +9,11 @@ Este é o arquivo de entrada do Codex. Ele não substitui a documentação do pr
 1. Leia o [`CLAUDE.md`](CLAUDE.md) inteiro. As regras dele também valem para o Codex.
 2. Leia o [`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md), fonte principal de requisitos e regras numeradas.
 3. Leia somente os deltas relacionados à tarefa:
-   - [`docs/PRD-LIVELO-V2.md`](docs/PRD-LIVELO-V2.md): site, banco, autenticação e alertas Livelo;
-   - [`docs/PRD-INTER-CASHBACK.md`](docs/PRD-INTER-CASHBACK.md): cashback dos Sites parceiros do Inter;
-   - [`docs/PRD-INTER-PRODUTOS.md`](docs/PRD-INTER-PRODUTOS.md): produtos do Compre direto, coleta, busca e histórico;
-   - [`docs/PRD-ADMINISTRACAO.md`](docs/PRD-ADMINISTRACAO.md): limpeza administrativa e zona de perigo;
-   - [`app/PLANO.md`](app/PLANO.md): piloto Flutter Web, Android e iOS.
+   - [`docs/prd/PRD-LIVELO-V2.md`](docs/prd/PRD-LIVELO-V2.md): histórico da V2, banco e evolução da régua Livelo;
+   - [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md): cashback dos Sites parceiros do Inter;
+   - [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md): produtos do Compre direto, coleta, busca e histórico;
+   - [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md): limpeza administrativa e zona de perigo;
+   - [`docs/arquivados/PLANO.md`](docs/arquivados/PLANO.md): plano histórico do piloto Flutter Web, Android e iOS.
 4. Consulte [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md) e o código/branch atuais para separar o que está implementado, publicado, pendente ou apenas planejado.
 5. Ao mexer em regra ou teste, consulte também [`docs/TESTES.md`](docs/TESTES.md), [`README.md`](README.md) e a documentação específica afetada.
 
@@ -43,9 +43,9 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 
 - O núcleo Python não faz I/O; integrações entram por portas e adaptadores.
 - Livelo, Inter Sites parceiros e Inter Compre direto continuam como domínios, processos, tabelas e workflows isolados.
-- O site atual em `site/` permanece vivo até uma decisão explícita de corte.
+- A interface Next.js antiga em `site/` foi removida por decisão explícita. Não a recrie; preserve a API ativa em `backend/api/`.
 - O Flutter é cliente da API: não acessa Neon, GitHub Actions, Livelo ou Inter diretamente.
-- Os robôs gravam uma vez no Postgres e atendem o site legado, o Flutter e as notificações.
+- Os robôs gravam uma vez no Postgres e atendem o Flutter e a API sem duplicar coletas.
 - Dinheiro, cashback e pontuação usam `Decimal`/`NUMERIC` e contratos seguros; nunca `float`/`double` para cálculo financeiro.
 - Texto e links de fonte externa são hostis: validar, escapar e nunca executar como HTML.
 - Nenhum segredo pode entrar em log, repositório, bundle Web, APK ou IPA.
@@ -58,7 +58,7 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 - Para cada loja direta selecionada, o robô percorre todas as páginas que a fonte disponibilizar; não existe teto artificial de 3.000 ou 3.310 produtos.
 - O banco mantém o último catálogo válido e medições históricas de todos os produtos ativos, conforme retenção do PRD V4.
 - A pesquisa consulta somente o Postgres. Digitar no app nunca chama o Inter nem inicia uma coleta.
-- O Flutter nunca recebe o catálogo completo: a API filtra no servidor e entrega páginas, inicialmente 20 itens e no máximo 50 por resposta, conforme [`app/PLANO.md`](app/PLANO.md).
+- O Flutter nunca recebe o catálogo completo: a API filtra no servidor e entrega páginas, inicialmente 20 itens e no máximo 50 por resposta, conforme o [`plano histórico do app`](docs/arquivados/PLANO.md).
 - Todos os resultados encontrados continuam alcançáveis por paginação. Não cortar total silenciosamente, duplicar ou perder itens entre páginas.
 - A identidade histórica é loja + ID externo do produto. Não mesclar variantes ou produtos entre lojas por semelhança textual.
 - O sistema promete tudo que a fonte expôs numa coleta válida, não o catálogo universal de uma varejista.

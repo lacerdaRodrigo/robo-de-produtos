@@ -1,13 +1,14 @@
 # Arquitetura do Projeto — documento histórico
 
-> ⚠️ **Este documento foi substituído pelo [`PRD-LIVELO.md`](PRD-LIVELO.md), que é a fonte da verdade do projeto.**
+> ⚠️ **Este documento foi substituído pelo [`PRD-LIVELO.md`](../prd/PRD-LIVELO.md), que é a fonte da verdade do projeto.**
 >
 > Ele fica preservado por registrar o raciocínio original. O **dicionário de lojas e categorias** do Passo 1 já foi convertido em `config/lojas_favoritas.toml`, onde os nomes foram conferidos contra a página real e ganharam apelidos quando a Livelo exibe grafia diferente (ex.: C&A aparece como "CEA").
 >
 > **Decisões abaixo que o PRD substituiu:**
 > - Correspondência **parcial** de nomes → agora é match exato com apelidos cadastrados (PRD RN04).
 > - Alerta de quebra dentro do extrator → passou para o caso de uso (PRD §6.4).
-> - `SEMPRE_ENVIAR` como interruptor → eliminado; o robô envia em toda execução (PRD RF10).
+> - Todo o canal SMTP/Gmail → retirado em 2026-08-27; o restante deste arquivo
+>   descreve apenas o desenho antigo e não configura o ambiente atual.
 > - Extrator fazendo requisição HTTP → separado em porta `FonteDePagina` (PRD §4.2).
 > - Estrutura de pastas do final deste documento → substituída pela da Seção 4.4 do PRD.
 
@@ -56,18 +57,10 @@ Testado contra a página real (`https://www.livelo.com.br/juntar-pontos/todos-os
 
 ---
 
-## Passo 3 — Montador de E-mail
+## Passo 3 — canal retirado
 
-**Formato:** HTML (com fallback em texto simples para clientes de e-mail antigos).
-
-**Regras de exibição:**
-- Agrupado por categoria, cada uma com uma cor de identificação visual
-- Dentro de cada categoria, lojas ordenadas por pontuação (maior primeiro)
-- Quando a loja tiver um valor extra exclusivo pra assinante do Clube Livelo, ambos os valores aparecem
-- ❌ Sem data de validade da promoção (decisão ligada à do Passo 2 — não vale o risco de mais requisições)
-- Botão de call-to-action ("Ver oferta") linkando direto pra página do parceiro na Livelo — importante manter o link da Livelo (não o site da loja direto), porque é assim que a pontuação é validada
-
-O layout visual (cores, hierarquia, espaçamento) foi validado com um protótipo antes da implementação.
+O terceiro passo do desenho original foi removido em 2026-08-27. O histórico
+completo continua disponível no Git.
 
 ---
 
@@ -80,15 +73,6 @@ O layout visual (cores, hierarquia, espaçamento) foi validado com um protótipo
 ```yaml
 cron: "0 12,17,23 * * *"   # 12h/17h/23h UTC = 09h/14h/20h BR
 ```
-
-**Segurança:** credenciais nunca ficam no código, mesmo com o repositório público:
-
-| Variável | Onde vive localmente | Onde vive em produção |
-|---|---|---|
-| `EMAIL_REMETENTE` | `.env` (gitignored) | GitHub Secret |
-| `SENHA_APP_GMAIL` | `.env` (gitignored) | GitHub Secret |
-| `EMAIL_DESTINO` | `.env` (gitignored) | GitHub Secret |
-| `SEMPRE_ENVIAR` | `.env` (opcional) | variável direta no workflow |
 
 **Workflows separados:**
 - `robo.yml` — roda o robô nos 3 horários + botão manual (`workflow_dispatch`)
@@ -108,7 +92,6 @@ cron: "0 12,17,23 * * *"   # 12h/17h/23h UTC = 09h/14h/20h BR
 | `requests` | baixa a página da Livelo |
 | `beautifulsoup4` + `lxml` | interpreta o HTML e extrai os dados |
 | `python-dotenv` | lê variáveis de ambiente localmente |
-| `smtplib` (nativo) | envia o e-mail via Gmail |
 | `pytest` | testes automatizados |
 | `ruff` | lint + formatação de código |
 | GitHub Actions | agendamento + CI de testes |
@@ -131,7 +114,6 @@ livelo-bot/
 │       ├── __init__.py
 │       ├── categorias.py
 │       ├── extrator.py          # busca e interpreta os dados da Livelo
-│       ├── montador_email.py    # monta o HTML do e-mail
 │       └── principal.py         # orquestra tudo e envia
 ├── testes/
 │   ├── fixtures/
@@ -139,7 +121,6 @@ livelo-bot/
 │   ├── conftest.py
 │   ├── teste_categorias.py
 │   ├── teste_extrator.py
-│   ├── teste_montador_email.py
 │   └── teste_principal.py
 ├── docs/
 │   ├── ARQUITETURA.md

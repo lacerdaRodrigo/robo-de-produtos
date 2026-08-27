@@ -115,7 +115,6 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
       FROM loja l
       LEFT JOIN pontuacao p
         ON p.loja_id = l.id AND p.execucao_id = ${execucaoId}
-     WHERE l.favorita = TRUE
      ORDER BY l.categoria NULLS LAST, p.alertou DESC, p.pontos_atuais DESC NULLS LAST, p.nome
   `) as PontuacaoDeLoja[];
 }

@@ -6,28 +6,25 @@ Ver PRD secao 4.2. Trocar qualquer classe daqui nao toca o nucleo.
 from __future__ import annotations
 
 import logging
-import smtplib
 import time
 import tomllib
 from decimal import Decimal, InvalidOperation
-from email.message import EmailMessage
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 
 from robo_livelo.modelos import (
+    DOMINIO_LIVELO,
     LojaFavorita,
-    Mensagem,
     PontuacaoDeLoja,
     Preferencias,
     RetratoDaExecucao,
 )
-from robo_livelo.montador_email import link_confiavel
 from robo_livelo.portas import (
     CatalogoFavoritas,
     ConfiguracaoInvalida,
     FalhaAoGuardar,
-    FalhaAoNotificar,
     FalhaAoObterPagina,
     PreferenciasGlobais,
 )
@@ -166,64 +163,6 @@ class CatalogoArquivo:
         return lojas
 
 
-class NotificadorEmail:
-    """Envia por SMTP com SSL (RF09, RN17).
-
-    Nenhuma credencial aparece em log nem em excecao: o log do Actions e
-    publico (RNF05, PRD 9.1).
-    """
-
-    def __init__(
-        self,
-        remetente: str,
-        senha: str,
-        destino: str,
-        servidor: str = "smtp.gmail.com",
-        porta: int = 465,
-        conexao=None,
-    ) -> None:
-        self._remetente = remetente
-        self._senha = senha
-        self._destino = destino
-        self._servidor = servidor
-        self._porta = porta
-        self._conexao = conexao or smtplib.SMTP_SSL
-
-    def enviar(self, mensagem: Mensagem) -> None:
-        email = EmailMessage()
-        email["Subject"] = mensagem.assunto
-        email["From"] = self._remetente
-        email["To"] = self._destino  # RN17: um so destinatario, sem CC nem BCC
-        email.set_content(mensagem.corpo_texto)
-        email.add_alternative(mensagem.corpo_html, subtype="html")
-
-        try:
-            with self._conexao(self._servidor, self._porta) as smtp:
-                smtp.login(self._remetente, self._senha)
-                smtp.send_message(email)
-        except smtplib.SMTPAuthenticationError as erro:
-            # Mensagem propria: a original pode ecoar credencial.
-            raise FalhaAoNotificar(
-                "Autenticacao recusada pelo servidor de e-mail. "
-                "Verifique a Senha de Aplicativo do Gmail."
-            ) from erro.__class__(erro.smtp_code, b"")
-        except Exception as erro:
-            raise FalhaAoNotificar(f"Falha ao enviar o e-mail: {type(erro).__name__}") from None
-
-
-class NotificadorNulo:
-    """Notificador que nao envia nada (e-mail opcional).
-
-    E usado quando as credenciais de e-mail nao estao no ambiente: o robo
-    executa a coleta normalmente, monta o retrato e grava, so nao envia
-    e-mail. Ausencia de credencial deixa de ser impedimento (RF10 e
-    condicional a existir configuracao de envio).
-    """
-
-    def enviar(self, mensagem: Mensagem) -> None:
-        return None
-
-
 class CatalogoPostgres:
     """Le as lojas favoritas do Postgres (PRD V2, secao 7.1.1).
 
@@ -298,8 +237,8 @@ class CatalogoPostgres:
 class RepositorioNulo:
     """Nao guarda nada, e diz isso uma vez no log.
 
-    E o que roda em quem clonou o projeto sem Neon: o robo continua
-    mandando e-mail, so nao alimenta site nenhum.
+    Permite executar um diagnostico local sem Neon. Nao atualiza a API nem
+    representa o modo de producao.
     """
 
     def registrar(self, retrato: RetratoDaExecucao) -> None:
@@ -378,9 +317,21 @@ def _linha_de_pontuacao(pontuacao: PontuacaoDeLoja, execucao_id: int) -> dict:
         "campanha": parceiro.campanha if parceiro else None,
         "descricao_campanha": parceiro.descricao_campanha if parceiro else None,
         "fim_promocao": parceiro.fim_promocao if parceiro else None,
-        # RN08 vale para o site tambem: link que nao e da Livelo nao entra.
-        "link": (parceiro.link if parceiro and link_confiavel(parceiro.link) else None),
+        # RN08 vale para a API tambem: link que nao e da Livelo nao entra.
+        "link": (parceiro.link if parceiro and _link_confiavel(parceiro.link) else None),
     }
+
+
+def _link_confiavel(link: str) -> bool:
+    """RN08: persiste somente links HTTP(S) sob o dominio da Livelo."""
+    try:
+        endereco = urlparse(link)
+    except ValueError:
+        return False
+    if endereco.scheme not in ("http", "https"):
+        return False
+    host = (endereco.hostname or "").lower()
+    return host == DOMINIO_LIVELO or host.endswith("." + DOMINIO_LIVELO)
 
 
 class PreferenciasPadrao:

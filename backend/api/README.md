@@ -2,12 +2,11 @@
 
 A **API autenticada** que o Flutter consome. Foi movida da interface Next.js
 legada (`site/`, desativada em 2026-08-24) para este diretório, preservando o
-contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
+contrato. Está publicada na Vercel com Root Directory = `backend/api`.
 
-> **Estado:** a partir de 2026-08-23 o shell publicável foi reconstruído aqui:
-> rotas do App Router em `app/api/**`, `next.config.ts` com headers de
-> segurança, middleware de allowlist de origem (CORS) e `GET /status` mínimo.
-> Para republicar, siga [`ARQUIVO-PROJETO`](../../ARQUIVO-PROJETO.md).
+> **Estado em 2026-08-27:** a API responde em
+> [`/api/status`](https://robo-de-produtos.vercel.app/api/status). As rotas do
+> App Router ficam em `app/api/**`; o CI valida tipos, lint, 83 testes e build.
 
 ## Estrutura
 
@@ -16,6 +15,7 @@ backend/api/
 ├── app/            # rotas HTTP (Next.js App Router), uma pasta por endpoint
 │   └── api/        #  /status, /resumo, /perfil, /livelo, /inter, /administracao
 ├── lib/            # lógica da API (banco, autenticação, formato, limpeza, disparos)
+├── testes/         # contratos recuperados da antiga interface Next.js
 ├── examples/       # .env.example (modelo de variáveis)
 └── package.json
 ```
@@ -39,8 +39,7 @@ backend/api/
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
 
-A raiz `/` devolve 404 vazio. Constraints e execução completa em
-[`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
+A raiz `/` devolve 404 vazio. O Flutter acessa somente as rotas `/api/**`.
 
 ## Dependências
 
@@ -51,14 +50,17 @@ A raiz `/` devolve 404 vazio. Constraints e execução completa em
 
 Variáveis de ambiente (modelo em `examples/.env.example`): `DATABASE_URL`,
 `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `SEGREDO_LIMITE_API`,
-`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS`, e as de e-mail/github do fluxo do robô.
+`GITHUB_TOKEN_DISPARO`, `EXIGIR_APP_CHECK` e `ALLOWED_ORIGINS`.
+Responsabilidades, tipos e rotação estão em
+[`../../docs/CONFIGURACAO.md`](../../docs/CONFIGURACAO.md).
 
 ## Como rodar / testar
 
 ```bash
-npm install
+npm ci
 npm run checar   # tsc --noEmit
-npm run testar   # vitest run (testes em lib/*.teste.ts)
+npm run lint     # ESLint
+npm run testar   # Vitest (lib/*.teste.ts e testes/*.teste.ts)
 npm run build    # next build
 ```
 

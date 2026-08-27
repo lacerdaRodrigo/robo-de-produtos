@@ -26,7 +26,7 @@ PROPORCAO_SUSPEITA = Decimal("0.9")
 
 
 def pontuacao_efetiva(parceiro: Parceiro, *, assinante_clube: bool) -> Decimal:
-    """Quanto o leitor deste e-mail ganha de fato.
+    """Quanto o usuario ganha de fato.
 
     Assinante enxerga o tier do Clube quando ele existe; quem nao assina
     enxerga a pontuacao aberta (PRD-V2 6.2).
@@ -107,8 +107,8 @@ def suspeita_de_base_degenerada(parceiros: list[Parceiro], total_de_alertas: int
     O alerta inteiro depende de `parityBau` ser honesto. Se um dia a Livelo
     passar a preencher a base com o proprio valor promocional, todo parceiro
     vira 1x e **nenhum alerta dispara, sem nada quebrar** — o robo segue
-    verde, o e-mail segue chegando vazio e a conclusao errada ("nao teve
-    promocao") e indistinguivel da certa.
+    verde e a conclusao errada ("nao teve promocao") fica indistinguivel
+    da certa nos clientes da API.
 
     A checagem e feita dentro da execucao, sem guardar estado (PRD 1.4): o
     sintoma de C07 e visivel numa rodada so, porque afeta a pagina inteira
