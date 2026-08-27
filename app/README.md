@@ -1,7 +1,7 @@
 # `app/` — Flutter (Web, Android e iOS)
 
 Cliente multiplataforma do **Radar de Benefícios**. Atende Web, Android e iOS com
-o mesmo código, consumindo somente a API ativa em `../backend/api/`.
+o mesmo código, consumindo somente a API arquivada em `../backend/api/`.
 
 > **Estado atual:** as Fases 0 a 5 do piloto estão implementadas e a API da Fase 5
 > já foi publicada. Autenticação, painéis de leitura e administração usam a API
@@ -9,9 +9,8 @@ o mesmo código, consumindo somente a API ativa em `../backend/api/`.
 > O redesign por telas está em andamento: identidade, abertura, login responsivo e
 > a nova moldura receberam aceite no Samsung conectado; os Módulos 3 a 6 (Início,
 > hub de Lojas, Shopping Inter e Produtos/histórico) estão implementados. Web e iOS
-> ainda precisam de aceite visual. O plano técnico histórico está em
-> [`PLANO.md`](../docs/arquivados/PLANO.md) e a ordem visual por telas em
-> [`PLANO-REDESIGN-POR-TELAS.md`](../docs/arquivados/PLANO-REDESIGN-POR-TELAS.md).
+> ainda precisam de aceite visual. O plano técnico está em [`PLANO.md`](PLANO.md) e a
+> ordem visual por telas em [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md).
 
 ## Plataformas e identificadores
 
@@ -53,10 +52,6 @@ flutter build web
 privadas enviam o ID token no Bearer automaticamente. O endpoint
 `/api/status` permanece público; `/api/resumo` é autenticado e lê somente
 o Postgres do servidor, sem chamar Livelo ou Inter ao atualizar o Início.
-
-O app não carrega `.env`. O mapa de `API_URL`, `ATIVAR_APP_CHECK` e
-`FIREBASE_RECAPTCHA_SITE_KEY` está em
-[`../docs/CONFIGURACAO.md`](../docs/CONFIGURACAO.md).
 
 O piloto publicado usa a URL pública da API. Configuração local pode apontar
 para uma API em desenvolvimento via `--dart-define`.

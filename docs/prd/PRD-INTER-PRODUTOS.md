@@ -528,7 +528,7 @@ Busca pública não é registrada como perfil nem enviada à fonte. O robô cole
 
 ## 11. Testes
 
-Os casos CT-200 em diante ficam catalogados em [`TESTES.md`](../TESTES.md) antes de qualquer código.
+Os casos CT-200 em diante ficam catalogados em [`TESTES.md`](TESTES.md) antes de qualquer código.
 
 ### 11.1 Extrator e paginação
 

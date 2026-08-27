@@ -113,7 +113,7 @@ O4 (portfólio) também ganha valor: o projeto passa a demonstrar duas integraç
 | Um único workflow de coleta | Mantido para Livelo e acrescentado um workflow exclusivo do Inter |
 | Um único catálogo de favoritas | Mantido para Livelo e acrescentado um catálogo independente do Inter |
 | RN04: correspondência exata por nome/apelido | Continua na Livelo. No Inter, a seleção usa o identificador estável retornado pelo catálogo (RN34) |
-| RF16: requisito Livelo aposentado | Não se aplica ao Inter |
+| RF16: e-mail condicional | Não se aplica ao Inter nesta versão |
 | RN25: nenhum recurso externo na página | Continua valendo também para a área do Inter |
 
 Nenhuma regra, coluna ou rota da Livelo é removida por este documento.
@@ -278,9 +278,9 @@ São estados diferentes:
 | Resposta com menos de 100 válidas | “Última atualização falhou; mostrando dados de…” | Falha e preserva o retrato anterior |
 | Nunca houve execução válida | “O Inter ainda não foi sincronizado” | Não exibe percentuais vazios como zero |
 
-### 6.6 Por que não há alerta automático nesta entrega
+### 6.6 Por que não há e-mail nesta entrega
 
-Na Livelo existe uma régua definida: pontuação atual contra base, multiplicador e piso. No Inter, a fonte medida traz a oferta atual, mas não uma base histórica nem validade. Disparar um alerta por “cashback alto” exigiria escolher um número arbitrário ou comparar histórico — duas regras que o usuário ainda não pediu.
+Na Livelo existe uma régua definida: pontuação atual contra base, multiplicador e piso. No Inter, a fonte medida traz a oferta atual, mas não uma base histórica nem validade. Mandar e-mail por “cashback alto” exigiria escolher um número arbitrário ou comparar histórico — duas regras que o usuário ainda não pediu.
 
 A V3 entrega consulta e ranking. Um alerta futuro só entra com uma regra própria documentada e calibrada.
 
@@ -334,7 +334,7 @@ Uma execução faz uma chamada externa, valida toda a resposta em memória e só
 | Sessão e limite de login do site | Tabelas `loja`, `apelido`, `execucao`, `pontuacao` |
 | Cliente do GitHub para dispatch, parametrizado por workflow | Workflow `robo.yml` |
 | Formatação segura e componentes visuais genéricos | Régua de multiplicador/piso e regras do Clube Livelo |
-| Padrão de repositório e transação | Régua e alertas específicos da Livelo |
+| Padrão de repositório e transação | Notificador por e-mail |
 
 Reutilizar não significa mover tudo antes da hora. Uma extração para módulo genérico só ocorre se os dois lados realmente precisarem do mesmo contrato e os testes provarem que a Livelo não mudou.
 
@@ -349,7 +349,7 @@ Reutilizar não significa mover tudo antes da hora. Uma extração para módulo 
 7. Em uma transação, atualizar catálogo, gravar cashback das favoritas e concluir a tentativa como `sucesso`.
 8. Confirmar a transação e registrar somente totais no log.
 
-Qualquer falha antes do passo 8 preserva a última execução válida e tenta marcar a tentativa como `falha` em uma operação curta e separada. Se o próprio banco estiver indisponível, o workflow continua sendo a fonte da falha; o cliente não inventa um registro que não conseguiu persistir. Assim como no fluxo Livelo atual, alimentar o Postgres é o produto da execução.
+Qualquer falha antes do passo 8 preserva a última execução válida e tenta marcar a tentativa como `falha` em uma operação curta e separada. Se o próprio banco estiver indisponível, o workflow continua sendo a fonte da falha; o site não inventa um registro que não conseguiu persistir. Diferentemente da Livelo, não existe e-mail prioritário para enviar antes do banco; no Inter, alimentar o site é o produto da execução.
 
 ### 7.5 Workflow e disparo manual
 
@@ -512,7 +512,7 @@ Nome, etiqueta e descrições são dados hostis para fins de renderização:
 
 ### 10.3 Autenticação e segredos
 
-Leitura de favoritas segue o contrato definido para a API. Alteração e disparo manual usam a sessão existente. `DATABASE_URL` e token do GitHub continuam somente no servidor.
+Leitura de favoritas é pública, como na Livelo. Alteração e disparo manual usam a sessão existente. `DATABASE_URL` e token do GitHub continuam somente no servidor. O robô do Inter não recebe credenciais de e-mail porque não envia e-mail.
 
 O token de dispatch deve ter apenas o acesso necessário ao workflow do repositório. Nenhum segredo aparece no navegador ou log.
 

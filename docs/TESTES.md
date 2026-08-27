@@ -1,8 +1,8 @@
 # Plano de Testes
 
-Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`: `testes.yml` valida o robô e a API; `app-robo.yml` valida o Flutter.
+Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o app e a API usam Flutter/TypeScript.
 
-A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD-LIVELO.md`](prd/PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
+A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD-LIVELO.md`](PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
 
 Convenção: arquivos e funções de teste usam o prefixo `teste_` (em vez do padrão `test_` do pytest), configurado no `pyproject.toml`.
 
@@ -84,36 +84,77 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-132 | Preferência ilegível ou ausente cai no padrão | Escolha oposta à do catálogo: existe valor sensato para seguir, então a rodada continua — mas não em silêncio | Chave com texto no lugar de número, checar padrão e `WARNING` |
 | CT-133 | Preferências caem para o padrão quando o banco falha | Mesmo motivo de CT-108 | Principal que levanta `ConfiguracaoInvalida`, checar padrão e `WARNING` |
 | CT-144 | Grava execução e pontuações na mesma transação | Retrato pela metade no banco viraria página mentindo, que é pior que página velha | Fake de `psycopg`, checar a linha de execução e as de pontuação |
-| CT-145 | Link fora do domínio não é gravado ⚠️ | RN08 vale para a API: link arbitrário não entra no banco | Parceiro com link hostil, checar `link is None` |
+| CT-145 | Link fora do domínio não é gravado ⚠️ | RN08 vale para o site também: link arbitrário não entra na página | Parceiro com link hostil, checar `link is None` |
 | CT-146 | Falha ao gravar não vaza a senha ⚠️ | PRD §9.1 — a exceção do `psycopg` carrega a URL inteira | Fake que falha, checar ausência da senha e `__cause__` cortado |
 | CT-159 | Banco vazio não é falha ⚠️ | Levantar aqui faria a reserva cair no TOML e ressuscitar as lojas que o dono acabou de apagar pelo site. A reserva cobre indisponibilidade, não vontade | Consulta que devolve zero linhas, checar `[]` e `WARNING` |
 | CT-160 | Banco vazio não aciona a reserva | Contraprova de CT-108: só falha de verdade chega na reserva | Principal vazio com reserva cheia, checar que a reserva não foi chamada |
 
-## `backend/robo/testes/teste_principal.py` — orquestração com fakes
+## `backend/robo/testes/teste_montador_email.py` — função `montar_email()`
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-030 | Uma categoria, uma loja | Caso mais simples: e-mail sai com 1 categoria e 1 loja | Dict pequeno, checar presença do nome no HTML |
+| CT-031 | Várias categorias e lojas | Todas as categorias e lojas devem aparecer, sem sumir nenhuma | Dict com 3 categorias, 2 lojas cada, contar ocorrências |
+| CT-032 | Ordenação por pontos | Loja com mais pontos aparece antes da com menos, na mesma categoria | 2 lojas fora de ordem, checar posição no HTML |
+| CT-033 | Loja sem tier Clube | Não pode gerar erro nem bloco vazio estranho | Loja sem `pontos_clube` (ou `None`), checar HTML limpo |
+| CT-034 | Loja com tier Clube | Valor extra deve aparecer visível no HTML | Loja com `pontos_clube` preenchido, checar presença do texto |
+| CT-035 | Assunto reflete o total | Com 5 promoções, o assunto deve conter "5" | Montar com 5 lojas, checar número no assunto |
+| CT-036 | Categorias em ordem alfabética | "Beleza" deve aparecer antes de "Moda" | Categorias fora de ordem, checar posição no HTML |
+| CT-037 | Dicionário vazio | Sem promoções, gera e-mail válido com o assunto próprio de "sem promoções" (RN/PRD RF10) | Passar `{}`, checar que o assunto é o de ausência de promoção |
+| CT-038 | Texto simples bate com HTML | Fallback em texto puro precisa ter as mesmas lojas que o HTML | Comparar presença de nomes nas duas versões |
+| CT-064 | Escape de texto hostil ⚠️ | RN07 — nome contendo `<`, `&` ou aspas não pode injetar markup no e-mail | Loja chamada `<b>Loja</b> & "X"`, checar que sai escapado |
+| CT-065 | Link fora do domínio da Livelo | PRD §9.2 — link que não aponta para a Livelo não entra no e-mail | Parceiro com link externo, checar que o botão não é gerado com ele |
+| CT-066 | Categoria vazia não aparece | RN14 — categoria sem loja em promoção some do e-mail | Agrupamento com categoria vazia, checar ausência do título |
+| CT-067 | Pontuação fracionada | PRD §5.4 — `Decimal` evita `2.9000000000000004` no corpo | Parceiro com 2,9 pontos, checar o texto exato renderizado |
+| CT-068 | Prefixo "Até" preservado na exibição | RN12 — o sentido de "Até X pontos" não pode se perder | Parceiro com `prefixo_ate=True`, checar que o texto exibe "Até" |
+| CT-096 | Termina hoje recebe destaque (RN22) | `fim_promocao` no mesmo dia do `agora` mostra "Termina hoje!" com destaque próprio | Parceiro com `fim` igual ao dia do `agora` do teste, checar HTML e texto |
+| CT-097 | Validade futura mostra data (RF18) | `fim_promocao` numa data futura mostra "Válido até DD/MM", sem o destaque de RN22 | Parceiro com `fim` alguns dias à frente |
+| CT-098 | Sem `fim_promocao`, sem texto de validade | Não pode gerar texto nem quebrar | Parceiro com `fim=None` |
+| CT-099 | Marca exclusivo Clube (RN23) | Base parada (`pontos_atuais == pontos_base`) com `pontos_clube` maior — o exemplo real do PRD-V2 (O Boticário) | Parceiro com `base` igual a `pontos_atuais` e `clube` maior |
+| CT-100 | Base também turbinada não marca exclusivo | Contraprova de CT-099 — é bônus geral, não só do Clube | Parceiro com `base` menor que `pontos_atuais` e `clube` maior ainda |
+| CT-101 | Sem `pontos_clube`, sem marcação | Regressão de CT-033 | Parceiro sem `clube` |
+| CT-103 | `PROMOTION_CLUB` ganha rótulo próprio | RN23 — a base subiu também, então não é exclusivo: o não assinante aproveita, só não pelo número maior | Sephora real (base 1 → 6, Clube 10), checar "assinantes Clube ganham mais" e ausência de "exclusivo" |
+| CT-104 | `CLUB` marca exclusivo sem depender de `pontos_base` | RN23 — a string confirmada decide sozinha | Parceiro com `campanha="CLUB"` e `pontos_base=None`, checar "exclusivo assinantes Clube" |
+| CT-105 | Campanha desconhecida cai na comparação numérica | Valor novo que a Livelo invente não pode derrubar a marcação | Dois parceiros com campanha inventada, um com base parada e outro não |
+| CT-161 | Catálogo vazio tem assunto próprio ⚠️ | "Não teve promoção" e "você não tem loja nenhuma" não podem ler igual — a segunda com a frase da primeira faria o robô parecer trabalhando quando não há o que procurar | `montar({}, catalogo_vazio=True)`, checar assunto e corpo |
+| CT-162 | Sem promoção continua com a frase de sempre | Contraprova de CT-161 | `montar({})` sem a marca |
+| CT-169 | Descrição com mais de uma frase ganha "…mais" (redesign 2026-08-13) | `<details>/<summary>` sem JavaScript — primeira frase sempre visível, resto atrás do clique | Descrição com duas frases, checar `<details` e as duas frases presentes |
+| CT-170 | Descrição de frase única não ganha "…mais" | Sem segunda frase não há o que esconder — clicar não revelaria nada novo | Descrição com uma frase só, checar ausência de `<details` |
+| CT-171 | Sem `descricao_campanha`, sem bloco de descrição | Card sem descrição não ganha rodapé nenhum, nem vazio | Parceiro com `descricao_campanha=None` |
+| CT-172 | Descrição longa corta sem quebrar palavra (C05) | O "resto" atrás do "…mais" tem teto, para o pior caso (132 lojas) caber no limite do Gmail | Descrição com "resto" bem acima do limite, checar corte em fronteira de palavra |
+| CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto hospedado em URL, assinando as duas pontas do e-mail. Não pode usar `data:` URI, que o Gmail descarta | `montar(...)`, contar duas ocorrências de `https://robo-livelo.vercel.app/logo.png` e checar ausência de `data:image` |
+
+## `backend/robo/testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-040 | Filtra loja fora do catálogo | Loja em promoção mas fora das favoritas deve ser ignorada (RN05) | Lista com 1 cadastrada + 1 não cadastrada, checar filtro |
 | CT-041 | Filtra loja sem promoção | Loja cadastrada mas com `em_promocao=False` não entra | Simular essa loja, checar ausência no resultado |
-| CT-042 | Conta alertas em categorias diferentes | O total não pode perder lojas ao agrupar | Duas favoritas alertadas de categorias diferentes, checar total 2 |
+| CT-042 | Agrupamento por categoria | Duas lojas da mesma categoria caem na mesma lista | 2 lojas de "Beleza", checar `len(resultado["Beleza"]) == 2` |
 | CT-024 | Alerta de quebra ⚠️ | RN13 — total abaixo do limiar encerra a execução com falha. Veio de `teste_extrator.py`: o limiar é regra de negócio, não parsing (PRD §6.4) | Fake devolvendo menos parceiros que o limiar, checar exceção e código de saída ≠ 0 |
-| CT-043 | Sem promoções conclui com zero | Ausência de alerta é resultado válido, não falha | Fake sem promoções, checar retorno zero |
-| CT-070 | Favoritas ausentes vão pro log | RN19 — favorita cadastrada que não apareceu na página fica visível no diagnóstico | Fake sem uma das favoritas, checar log |
-| CT-071 | Parceiro malformado não derruba | Descarta só aquele parceiro e segue | Um item inválido entre válidos, checar total |
-| CT-102 | `agora` chega ao extrator | A mesma referência de tempo decide RN21 durante toda a coleta | Promoção terminando hoje, checar que ainda conta |
+| CT-043 | Sem promoções, envia mesmo assim | RF10 — toda execução envia. Substitui os antigos CT-043/CT-044, que testavam o `SEMPRE_ENVIAR` eliminado | Fake sem promoções, checar que o notificador **foi** chamado com o assunto de ausência |
+| CT-045 | Credenciais corretas no envio | O adaptador deve usar exatamente as variáveis configuradas | Fake de notificador, checar os argumentos recebidos |
+| CT-046 | Falha de login no Gmail | Senha errada não pode travar sem explicação | Simular erro de autenticação, checar exceção legível |
+| CT-069 | Segredo faltando falha antes da rede ⚠️ | PRD §7.3 — validação na largada, sem gastar requisição | Remover um segredo, checar erro e que a fonte de página **não** foi chamada |
+| CT-070 | Favoritas ausentes vão pro log | RN19 — favorita cadastrada que não apareceu na página é registrada no log, nunca no e-mail | Fake sem uma das favoritas, checar log e ausência no e-mail |
+| CT-071 | Parceiro malformado não derruba | PRD §6.4 — descarta só aquele parceiro e segue | Fake com 1 parceiro de valor inválido entre válidos, checar que o e-mail sai |
+| CT-072 | Destinatário único | RN17/RN18 — envio sem CC e sem BCC | Checar que o notificador recebeu exatamente um destinatário |
+| CT-073 | Nenhum segredo no log ⚠️ | RNF05 — log do Actions é público | Capturar a saída de log da execução completa, checar ausência de senha e de e-mail |
+| CT-102 | `agora` chega ao extrator e ao e-mail, fim a fim | O mesmo `agora` passado a `verificar_promocoes` decide RN21 no extrator e RN22 no montador — uma promoção que termina hoje aparece destacada no e-mail final | Fluxo completo com fakes, checar "Termina hoje!" no resultado |
 | CT-114 | Sem `DATABASE_URL`, catálogo vem do arquivo | Quem clona o projeto e roda na própria máquina não tem Neon | `montar_catalogo({})`, checar `CatalogoArquivo` |
 | CT-115 | Com `DATABASE_URL`, o banco manda e o arquivo fica de reserva | PRD V2 §7.1.1 | `montar_catalogo` com a variável, checar `CatalogoComReserva` |
 | CT-116 | `DATABASE_URL` em branco conta como ausente | Secret não configurado no Actions chega como string vazia, não ausente — sem isto o robô tentaria conectar em `""` | `montar_catalogo` com espaços, checar `CatalogoArquivo` |
 | CT-134 | Sem `DATABASE_URL`, preferências são os padrões | Simétrico a CT-114 | `montar_preferencias({})` |
 | CT-135 | Com `DATABASE_URL`, preferências vêm do banco com reserva | Simétrico a CT-115 | `montar_preferencias` com a variável |
-| CT-136 | Alerta usa pontuação, não etiqueta ⚠️ | RN27 fim a fim: a Livelo etiqueta um sem aumento e esquece outro que triplicou | Checar no retrato qual loja recebeu `alertou=true` |
+| CT-136 | O alerta manda no e-mail, não a etiqueta ⚠️ | RN27 fim a fim: a Livelo etiqueta um sem aumento e esquece outro que triplicou | Payload com os dois casos, checar quem sai no e-mail |
 | CT-137 | Preferências do banco mudam o resultado | RN28 fim a fim: a mesma página com três réguas | Fake da porta com piso e multiplicador diferentes |
 | CT-138 | Suspeita de RN29 vai para o log ⚠️ | Silêncio com página parada é suspeita, não dia fraco | Payload com todos os parceiros parados, checar `WARNING` |
-| CT-147 | Sem `DATABASE_URL` usa repositório nulo | Permite diagnóstico local sem prometer atualização do app | `montar_repositorio({})`, checar `RepositorioNulo` |
+| CT-147 | Sem `DATABASE_URL` não há onde guardar | Quem clonou sem Neon continua recebendo e-mail | `montar_repositorio({})`, checar `RepositorioNulo` |
 | CT-148 | Com `DATABASE_URL` o retrato vai para o banco | RF15 | `montar_repositorio` com a variável |
-| CT-149 | Retrato registra todas as favoritas | RF15/RN24: a API recebe alertadas e não alertadas | Fluxo completo com fake de repositório |
-| CT-150 | Falha ao guardar derruba a execução ⚠️ | Sem outro canal de saída, workflow verde com app velho seria falha silenciosa | Repositório que levanta `FalhaAoGuardar`, checar propagação |
-| CT-163 | Catálogo vazio avisa no log | Banco vazio é estado distinto de “nenhuma promoção” | `CatalogoFake([])`, checar retorno zero e `WARNING` |
+| CT-149 | Retrato registrado depois do e-mail | RF15 fim a fim: o site recebe **todas** as favoritas, não só as alertadas (RN24) | Fluxo completo com fake de repositório |
+| CT-150 | Falha ao guardar não derruba a execução ⚠️ | A consequência é site velho, que o carimbo de RN26 denuncia sozinho. Perder o e-mail do dia seria pior | Repositório que levanta `FalhaAoGuardar`, checar e-mail enviado e `WARNING` |
+| CT-163 | Catálogo vazio avisa no e-mail e no log ⚠️ | Fim a fim: banco sem loja nenhuma não vira "dia sem promoção" | `CatalogoFake([])`, checar assunto próprio e `WARNING` |
+| CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
 
 ## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 
@@ -153,7 +194,7 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `retrato.py`; falhar diante de I/O |
+| CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py`, falhar se aparecer `requests`, `smtplib`, `tomllib`, `os`, `pathlib` ou `dotenv` |
 
 ## Formatação do app/API (antes `site/testes/formato.teste.ts`, TypeScript)
 
@@ -161,8 +202,8 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-151 | Pontuação sem resíduo de `float` ⚠️ | O `NUMERIC` do Postgres chega como string e assim fica; não converter o contrato financeiro para `Number` | `pontos("2.90")` → `"2,9"`; `pontos(null)` → `"—"` |
-| CT-152 | Rótulo do Clube (RN23) | `CLUB` é exclusividade; `PROMOTION_CLUB` é vantagem maior | As duas campanhas mais uma desconhecida |
+| CT-151 | Pontuação sem resíduo de `float` ⚠️ | O `NUMERIC` do Postgres chega como string e assim fica. `Number("2.90")` traria de volta o `2.9000000000000004` que o e-mail evita (PRD §5.4) | `pontos("2.90")` → `"2,9"`; `pontos(null)` → `"—"` |
+| CT-152 | Rótulo do Clube (RN23) | Mesma distinção do e-mail: `CLUB` é exclusividade, `PROMOTION_CLUB` é vantagem maior | As duas campanhas mais uma desconhecida |
 | CT-153 | Termina hoje no fuso certo (RN22) | A Vercel roda em UTC. Sem fixar Brasília, promoção que acaba 23h59 apareceria como "amanhã" | Data de hoje e data futura |
 | CT-154 | Idade do carimbo (RN26) | O carimbo só cumpre o papel se der para perceber que envelheceu — é o que sustenta MS6 | 30 min, 3 h, 20 h e 3 dias |
 | CT-155 | Pontuação inteira não ganha vírgula | `6`, não `6,00` | `pontos("6.000")` |
@@ -173,13 +214,11 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-165 | Barra de progresso do cartão (RN30, redesenho V2.3.3) | `atual`/`base` ausentes (loja não encontrada) devolvem `null`, sem dividir por zero; a largura nunca passa de 100% mesmo com o limiar bem acima do teto calculado | `barraDeProgresso(null, ...)` → `null`; `barraDeProgresso("6", "1", "4")` com valores dentro de 0–100; teto vindo de zero não gera `NaN`/`Infinity` |
 | CT-174 | Ordenação do Painel (redesenho V4.6) | A grade única do Painel troca o agrupamento por categoria por ordenação explícita, sem `Number()` virar texto exibido | Ordenar por maior pontuação, em alerta e nome A-Z, preservando casos sem pontuação |
 
-Rodam com `npm run testar` dentro de `backend/api/`. Os contratos úteis foram
-recuperados da antiga pasta `site/testes/` em 2026-08-27, sem restaurar o
-frontend Next.js removido.
+Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API agora vive arquivada em `backend/api/`; esses casos de contrato permanecem como registro.
 
 ## Shopping Inter — V3
 
-> Casos da V3 definidos no [`PRD-INTER-CASHBACK.md`](prd/PRD-INTER-CASHBACK.md). A suíte padrão usa a
+> Casos da V3 definidos no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md). A suíte padrão usa a
 > fixture sanitizada `backend/robo/testes/fixtures/lojas_inter.json` e nunca toca a rede.
 
 ### `backend/robo/testes/teste_extrator_inter.py` — JSON público → `LojaInter`
@@ -246,7 +285,7 @@ frontend Next.js removido.
 
 ## Produtos do Shopping Inter — V4
 
-> Casos definidos no [`PRD-INTER-PRODUTOS.md`](prd/PRD-INTER-PRODUTOS.md). A primeira implementação usa
+> Casos definidos no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md). A primeira implementação usa
 > `backend/robo/testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
 > e `backend/api/` (antes `site/testes/formato-produtos-inter.teste.ts`) para a busca local e a migração
 > `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia
@@ -505,9 +544,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 
 ### Roteiro do CT-050
 
-**Quando rodar:** depois de mexer no `extrator.py`, diante de mudança suspeita na
-fonte e periodicamente. A suíte automática usa fixture: ela prova o contrato do
-código, nunca que a Livelo continua entregando o mesmo payload.
+**Quando rodar:** depois de mexer no `extrator.py` ou no `montador_email.py`, quando o e-mail parecer estranho, e uma vez por mês sem motivo nenhum. A suíte automática usa fixture: ela prova que o código faz o que foi combinado, nunca que a Livelo continua entregando o que combinou.
 
 **Passo 1 — a página ainda tem o payload:**
 
@@ -539,14 +576,13 @@ O que conferir:
 | Em promoção | 31 | Zero por vários dias seguidos é suspeito (C07) |
 | Valores de `campanha` | `BAU`, `PROMOTION`, `CLUB`, `PROMOTION_CLUB` | Valor novo na lista significa regra nova da Livelo e RN23 desatualizada |
 
-**Passo 2b — o app, no navegador/dispositivo de verdade:** além do que vem abaixo, o passeio sem teclado: partindo da tela inicial, chegar a **todas** as telas e voltar usando só cliques. Se alguma exigir digitar URL, é defeito.
+**Passo 2b — o site, no navegador de verdade:** além do que vem abaixo, o passeio sem teclado: partindo da página inicial, chegar a **todas** as telas e voltar usando só cliques. Se alguma exigir digitar URL, é defeito.
 
-Abrir o Flutter Web e o Android com a API publicada e confirmar que as lojas,
-validade, regra do Clube e pontuação aparecem sem resíduo de ponto flutuante.
-`curl` prova o contrato da API, mas não substitui o cliente real.
+ abrir a página publicada **com JavaScript ligado** e confirmar que as lojas aparecem. Parece redundante depois do passo 3 do e-mail, mas não é: em 2026-08-11 a página serviu HTML perfeito e ficou em branco no navegador, porque a CSP recusou os scripts inline do Next e o React apagou o que o servidor tinha mandado. `curl` não pega essa classe de defeito — só o navegador.
 
-**Passo 3 — registrar:** anotar data, ambiente e resultado em
-`docs/PENDENCIAS.md`. Sem registro, a comparação seguinte não tem evidência.
+**Passo 3 — o e-mail (a parte que só o olho pega):** abrir o último e-mail recebido e conferir que a validade aparece (`Válido até dd/mm` ou `Termina hoje!`), que o rótulo do Clube bate com o caso (`exclusivo assinantes Clube` só quando a base não se moveu), que os pontos não têm cauda de `float` (`2,9`, nunca `2,9000000000000004`) e que o Gmail não cortou o fim da mensagem com "[Mensagem truncada]" (C05).
+
+**Passo 4 — registrar:** anotar a data e os números em `docs/PENDENCIAS.md`. Sem registro, a comparação do mês seguinte não tem contra o quê comparar.
 
 ---
 
@@ -561,32 +597,29 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_adaptadores.py` | 22 | 27 |
 | `teste_alertas.py` | 13 | 17 |
 | `teste_retrato.py` | 5 | 5 |
-| `teste_principal.py` | 21 | 22 |
+| `teste_montador_email.py` | 31 | 33 |
+| `teste_principal.py` | 27 | 29 |
 | `teste_extrator_inter.py` | 9 | 10 |
 | `teste_adaptadores_inter.py` | 2 | 4 |
 | `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
 | `teste_produtos_inter.py` | 9 | 19 |
-| `teste_fronteira.py` | 2 | 14 |
-| **Total (robô)** | **122** | **172** |
-| `backend/api/testes/formato.teste.ts` | 11 | 23 |
-| `backend/api/testes/formato-inter.teste.ts` | 10 | 7 |
-| `backend/api/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
-| `backend/api/testes/paginacao.teste.ts` | 0 | 5 |
-| `backend/api/lib/api.teste.ts` | 0 | 9 |
-| `backend/api/lib/banco.teste.ts` | regressão do catálogo Livelo | 1 |
-| `backend/api/lib/github.teste.ts` | disparo Livelo sem inputs obsoletos | 1 |
-| `backend/api/testes/administracao-api.teste.ts` | CT-294–CT-297 | 13 |
-| `backend/api/testes/limpeza.teste.ts` | 0 | 3 |
-| `backend/api/testes/limpeza-descartavel.teste.ts` | CT-298 | 1 ignorado sem banco descartável |
-| `backend/api/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
-| `backend/api/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
-| `backend/api/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
-| `backend/api/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
-| **Total (API)** | **CTs catalogados + apoio** | **84** |
-| `app/test/` | CT-257–CT-259, CT-261–CT-331 + fundação | 153 |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **153** |
+| `teste_fronteira.py` | 2 | 13 |
+| **Total (robô)** | **159** | **211** |
+| `site/testes/formato.teste.ts` | 11 | 23 |
+| `site/testes/formato-inter.teste.ts` | 10 | 8 |
+| `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
+| `site/testes/paginacao.teste.ts` | 0 | 5 |
+| `site/testes/api.teste.ts` | 0 | 9 |
+| `site/testes/limpeza.teste.ts` | 0 | 3 |
+| `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
+| `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
+| `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
+| `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
+| **Total (site)** | **CTs catalogados + apoio** | **83** |
+| `app/test/` | CT-257–CT-259, CT-261–CT-327 + fundação | 147 |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **147** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
@@ -595,8 +628,3 @@ Manuais: CT-050 e CT-051.
 Confirme o número real com o coletor de cada suíte antes de citá-lo em qualquer
 documento (`pytest --collect-only -q` no robô e `flutter test` no app) — foi
 assim que o total errado de "47 casos" sobreviveu ao planejamento original.
-
-Validação local de 2026-08-27: os 212 testes Python passaram; na API, 82 testes
-passaram e o único aceite destrutivo ficou corretamente ignorado. No Flutter,
-150 de 153 passaram e três goldens tiveram diferenças mínimas de rasterização;
-o workflow remoto anterior estava verde.
