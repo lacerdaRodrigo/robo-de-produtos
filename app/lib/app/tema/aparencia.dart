@@ -13,9 +13,7 @@ abstract interface class PreferenciasAparencia {
 class PreferenciasAparenciaNativas implements PreferenciasAparencia {
   const PreferenciasAparenciaNativas();
 
-  static const _canal = MethodChannel(
-    'br.com.radarbeneficios.app/aparencia',
-  );
+  static const _canal = MethodChannel('br.com.radarbeneficios.app/aparencia');
 
   bool get _disponivel =>
       !kIsWeb &&
@@ -41,9 +39,7 @@ class PreferenciasAparenciaNativas implements PreferenciasAparencia {
       ThemeMode.dark => 'escuro',
       ThemeMode.system => null,
     };
-    await _canal.invokeMethod<void>('salvar', <String, Object?>{
-      'modo': valor,
-    });
+    await _canal.invokeMethod<void>('salvar', <String, Object?>{'modo': valor});
   }
 }
 
@@ -125,7 +121,6 @@ class AparenciaRadar extends InheritedNotifier<ControladorAparencia> {
     required super.child,
   }) : super(notifier: controlador);
 
-  static ControladorAparencia? talvezDe(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<AparenciaRadar>()
-      ?.notifier;
+  static ControladorAparencia? talvezDe(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AparenciaRadar>()?.notifier;
 }

@@ -42,6 +42,7 @@ Api _api() => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
+    provedorToken: () async => 'token-teste',
     cliente: http_testing.MockClient(
       (requisicao) async => http.Response(
         requisicao.url.path == '/api/resumo'

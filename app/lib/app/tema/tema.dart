@@ -4,6 +4,36 @@ import 'tokens.dart';
 
 /// Temas do Radar com a mesma identidade e sem misturar ação com ganho.
 abstract final class TemaRadar {
+  /// Tema congelado de jornadas que não fazem parte do ciclo mobile.
+  static ThemeData legadoClaro() {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      fontFamily: 'Roboto',
+    );
+    return base.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Tokens.marca,
+        brightness: Brightness.light,
+        primary: Tokens.marca,
+      ),
+      scaffoldBackgroundColor: Tokens.fundo,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Tokens.marca,
+        foregroundColor: Colors.white,
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Tokens.texto,
+        displayColor: Tokens.texto,
+      ),
+    );
+  }
+
+  /// Tema amplo anterior com as cores semânticas usadas pelos widgets novos.
+  static ThemeData legadoClaroComCores() => legadoClaro().copyWith(
+    extensions: const <ThemeExtension<dynamic>>[CoresRadar.legadas()],
+  );
+
   static ThemeData claro() {
     final base = ThemeData(
       useMaterial3: true,

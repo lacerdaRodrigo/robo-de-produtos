@@ -24,11 +24,10 @@ class RadarApp extends StatefulWidget {
     super.key,
     required this.api,
     this.controladorAparencia,
-  })
-    : autenticador = null,
-      erroConfiguracao = null,
-      inicializador = null,
-      fabricaApi = null;
+  }) : autenticador = null,
+       erroConfiguracao = null,
+       inicializador = null,
+       fabricaApi = null;
 
   const RadarApp.comAutenticacao({
     super.key,
@@ -64,12 +63,11 @@ class RadarApp extends StatefulWidget {
     String mensagem, {
     super.key,
     this.controladorAparencia,
-  })
-    : api = construirApi(),
-      autenticador = null,
-      erroConfiguracao = mensagem,
-      inicializador = null,
-      fabricaApi = null;
+  }) : api = construirApi(),
+       autenticador = null,
+       erroConfiguracao = mensagem,
+       inicializador = null,
+       fabricaApi = null;
 
   final Api? api;
   final Autenticador? autenticador;
@@ -123,23 +121,26 @@ class _EstadoRadarApp extends State<RadarApp> {
               final preservarClaro =
                   kIsWeb || limites.maxWidth >= _larguraLayoutAmplo;
               if (!preservarClaro) return child!;
-              return Theme(data: TemaRadar.claro(), child: child!);
+              return Theme(
+                data: TemaRadar.legadoClaroComCores(),
+                child: child!,
+              );
             },
           ),
         ),
         home: widget.inicializador != null
-          ? PaginaAbertura(
-              inicializar: widget.inicializador!,
-              fabricarApi: widget.fabricaApi!,
-            )
-          : widget.erroConfiguracao != null
-          ? Scaffold(body: EstadoFalha(mensagem: widget.erroConfiguracao!))
-          : widget.autenticador != null
-          ? PortaoAutenticacao(
-              autenticador: widget.autenticador!,
-              api: widget.api!,
-            )
-          : MolduraRadar(api: widget.api!),
+            ? PaginaAbertura(
+                inicializar: widget.inicializador!,
+                fabricarApi: widget.fabricaApi!,
+              )
+            : widget.erroConfiguracao != null
+            ? Scaffold(body: EstadoFalha(mensagem: widget.erroConfiguracao!))
+            : widget.autenticador != null
+            ? PortaoAutenticacao(
+                autenticador: widget.autenticador!,
+                api: widget.api!,
+              )
+            : MolduraRadar(api: widget.api!),
       ),
     );
   }

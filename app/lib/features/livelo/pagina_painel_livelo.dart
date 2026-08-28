@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
+import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../administracao/botao_disparo.dart';
@@ -15,11 +16,13 @@ class PaginaPainelLivelo extends StatefulWidget {
     required this.api,
     this.controlador,
     this.administrador = false,
+    this.experienciaCompacta = false,
   });
 
   final Api api;
   final ControladorPainelLivelo? controlador;
   final bool administrador;
+  final bool experienciaCompacta;
 
   @override
   State<PaginaPainelLivelo> createState() => _EstadoPaginaPainelLivelo();
@@ -59,6 +62,7 @@ class _EstadoPaginaPainelLivelo extends State<PaginaPainelLivelo> {
         campoBusca: _campoBusca,
         api: widget.api,
         administrador: widget.administrador,
+        experienciaCompacta: widget.experienciaCompacta,
       ),
     );
   }
@@ -70,12 +74,14 @@ class _PainelLiveloConteudo extends StatelessWidget {
     required this.campoBusca,
     required this.api,
     required this.administrador,
+    required this.experienciaCompacta,
   });
 
   final ControladorPainelLivelo controlador;
   final TextEditingController campoBusca;
   final Api api;
   final bool administrador;
+  final bool experienciaCompacta;
 
   @override
   Widget build(BuildContext context) {
@@ -87,81 +93,133 @@ class _PainelLiveloConteudo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  'Livelo',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                BotaoDisparo(
-                  api: api,
-                  dominio: 'livelo',
-                  administrador: administrador,
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: TextField(
-              controller: campoBusca,
-              onChanged: controlador.mudarBusca,
-              textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
-                labelText: 'Buscar por loja ou categoria',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final ordenacao in OrdenacaoLivelo.values)
-                  ChoiceChip(
-                    label: Text(ordenacao.rotulo),
-                    selected: controlador.ordenacao == ordenacao,
-                    onSelected: (_) => controlador.mudarOrdenacao(ordenacao),
-                  ),
-              ],
-            ),
-          ),
-          if (controlador.atualizadoEm != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-              child: Row(
+          Flexible(
+            flex: 2,
+            fit: FlexFit.loose,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    atrasada ? Icons.schedule : Icons.check_circle_outline,
-                    size: 18,
-                    color: atrasada ? cores.atencao : cores.ganho,
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      experienciaCompacta ? 20 : 24,
+                      experienciaCompacta ? 24 : 24,
+                      experienciaCompacta ? 20 : 24,
+                      12,
+                    ),
+                    child: experienciaCompacta
+                        ? CabecalhoSecaoRadar(
+                            sobrelinha: 'Programa de pontos',
+                            titulo: 'Livelo',
+                            descricao:
+                                'Lojas, pontos e campanhas no último retrato salvo. Navegar aqui não consulta a Livelo ao vivo.',
+                          )
+                        : Text(
+                            'Livelo',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Última coleta: ${dataHoraLivelo(controlador.atualizadoEm)}'
-                      '${atrasada ? ' · dados atrasados' : ''}',
-                      style: TextStyle(color: atrasada ? cores.atencao : null),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      experienciaCompacta ? 20 : 24,
+                      0,
+                      experienciaCompacta ? 20 : 24,
+                      12,
+                    ),
+                    child: BotaoDisparo(
+                      api: api,
+                      dominio: 'livelo',
+                      administrador: administrador,
                     ),
                   ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: experienciaCompacta ? 20 : 24,
+                    ),
+                    child: experienciaCompacta
+                        ? CampoBuscaRadar(
+                            controlador: campoBusca,
+                            dica: 'Buscar loja ou categoria',
+                            aoMudar: controlador.mudarBusca,
+                          )
+                        : TextField(
+                            controller: campoBusca,
+                            onChanged: controlador.mudarBusca,
+                            textInputAction: TextInputAction.search,
+                            decoration: const InputDecoration(
+                              labelText: 'Buscar por loja ou categoria',
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      experienciaCompacta ? 20 : 24,
+                      12,
+                      experienciaCompacta ? 20 : 24,
+                      8,
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final ordenacao in OrdenacaoLivelo.values)
+                          ChoiceChip(
+                            label: Text(ordenacao.rotulo),
+                            selected: controlador.ordenacao == ordenacao,
+                            onSelected: (_) =>
+                                controlador.mudarOrdenacao(ordenacao),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (controlador.atualizadoEm != null)
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: experienciaCompacta ? 20 : 24,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            atrasada
+                                ? Icons.schedule
+                                : Icons.check_circle_outline,
+                            size: 18,
+                            color: atrasada ? cores.atencao : cores.ganho,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Última coleta: ${dataHoraLivelo(controlador.atualizadoEm)}'
+                              '${atrasada ? ' · dados atrasados' : ''}',
+                              style: TextStyle(
+                                color: atrasada ? cores.atencao : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (controlador.atualizadoEm != null &&
+                      !controlador.carregandoInicial)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        experienciaCompacta ? 20 : 24,
+                        4,
+                        experienciaCompacta ? 20 : 24,
+                        8,
+                      ),
+                      child: Text(
+                        '${controlador.totalItens} lojas encontradas',
+                      ),
+                    ),
                 ],
               ),
             ),
-          if (controlador.atualizadoEm != null &&
-              !controlador.carregandoInicial)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
-              child: Text('${controlador.totalItens} lojas encontradas'),
-            ),
-          Expanded(child: _corpo(context)),
+          ),
+          Expanded(flex: 3, child: _corpo(context)),
         ],
       ),
     );

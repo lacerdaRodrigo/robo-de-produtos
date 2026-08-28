@@ -86,12 +86,10 @@ class CartaoLivelo extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 6,
                     children: [
-                      if (loja.prefixoAte)
-                        _Selo(texto: 'Até', cor: cores.acao),
+                      if (loja.prefixoAte) _Selo(texto: 'Até', cor: cores.acao),
                       if (loja.emPromocao)
                         _Selo(texto: 'Promoção', cor: cores.ganho),
-                      if (clube != null)
-                        _Selo(texto: clube, cor: cores.acao),
+                      if (clube != null) _Selo(texto: clube, cor: cores.acao),
                       if (loja.fimPromocao != null)
                         _Selo(
                           texto: validadeLivelo(loja.fimPromocao),
@@ -143,10 +141,7 @@ class _SeloAlerta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Selo(
-      texto: 'Alerta ativo',
-      cor: CoresRadar.de(context).perigo,
-    );
+    return _Selo(texto: 'Alerta ativo', cor: CoresRadar.de(context).perigo);
   }
 }
 

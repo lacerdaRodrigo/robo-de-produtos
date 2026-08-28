@@ -76,6 +76,7 @@ Future<void> _abrir(
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool administrador = false,
+  bool escuro = false,
   String resumo = _resumo,
   List<http.Request>? requisicoes,
 }) async {
@@ -85,10 +86,15 @@ Future<void> _abrir(
   addTearDown(at.view.resetPhysicalSize);
   await at.pumpWidget(
     MaterialApp(
-      theme: TemaRadar.claro(),
+      theme: escuro
+          ? TemaRadar.escuro()
+          : tamanho.width >= 920
+          ? TemaRadar.legadoClaroComCores()
+          : TemaRadar.claro(),
       home: MolduraRadar(
         api: _api(resumo: resumo, requisicoes: requisicoes),
         administrador: administrador,
+        agora: () => DateTime(2026, 8, 26),
       ),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
@@ -106,14 +112,21 @@ Future<void> _abrirGaveta(WidgetTester at) async {
   await at.pumpAndSettle();
 }
 
-Future<void> _irPara(WidgetTester at, Destino destino) async {
+Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
   await _abrirGaveta(at);
-  await at.tap(find.byKey(Key('destino-${destino.name}')));
+  final item = find.byKey(Key('destino-${destino.name}'));
+  await at.ensureVisible(item);
+  await at.tap(item);
+  await at.pumpAndSettle();
+}
+
+Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
+  await at.tap(find.byKey(Key('destino-lateral-${destino.name}')));
   await at.pumpAndSettle();
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho e gaveta com cinco destinos fixos', (
+  testWidgets('celular usa cabeçalho e gaveta com quatro áreas aprovadas', (
     at,
   ) async {
     await _abrir(at);
@@ -122,11 +135,15 @@ void main() {
     expect(find.byType(BarraLateral), findsNothing);
     await _abrirGaveta(at);
 
-    for (final destino in Destino.values) {
+    for (final destino in DestinoCompacto.values) {
       expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
-      expect(find.text(destino.titulo), findsOneWidget);
+      expect(find.text(destino.titulo), findsWidgets);
     }
-    expect(find.text('Acesso padrão'), findsOneWidget);
+    expect(find.byKey(const Key('destino-alertas')), findsNothing);
+    expect(find.byKey(const Key('destino-mais')), findsNothing);
+    expect(find.byKey(const Key('abrir-alertas-gaveta')), findsOneWidget);
+    expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
+    expect(find.text('Acesso padrão'), findsWidgets);
   });
 
   testWidgets('celular em paisagem continua com a gaveta', (at) async {
@@ -156,7 +173,7 @@ void main() {
   ) async {
     await _abrir(at);
 
-    expect(find.text('Seu radar hoje'), findsOneWidget);
+    expect(find.text('Bom dia.'), findsOneWidget);
     expect(find.text('Livelo: sem dados'), findsOneWidget);
   });
 
@@ -188,9 +205,9 @@ void main() {
     expect(find.text('Shopping Inter'), findsWidgets);
   });
 
-  testWidgets('Lojas mantém Livelo e Shopping Inter alcançáveis', (at) async {
-    await _abrir(at);
-    await _irPara(at, Destino.lojas);
+  testWidgets('Lojas permanece íntegra na experiência ampla', (at) async {
+    await _abrir(at, tamanho: const Size(1440, 900));
+    await _irParaAmplo(at, Destino.lojas);
 
     expect(find.byKey(const Key('hub-lojas')), findsOneWidget);
     expect(find.text('Livelo'), findsOneWidget);
@@ -209,8 +226,12 @@ void main() {
   testWidgets('hub de Lojas mostra estados reais sem misturar os domínios', (
     at,
   ) async {
-    await _abrir(at, resumo: _resumoComEstadosIndependentes);
-    await _irPara(at, Destino.lojas);
+    await _abrir(
+      at,
+      tamanho: const Size(1440, 900),
+      resumo: _resumoComEstadosIndependentes,
+    );
+    await _irParaAmplo(at, Destino.lojas);
 
     expect(find.text('3 lojas acompanhadas'), findsOneWidget);
     expect(find.text('2 alertas na última coleta'), findsOneWidget);
@@ -223,8 +244,8 @@ void main() {
   testWidgets('Voltar do domínio interno retorna primeiro ao hub de Lojas', (
     at,
   ) async {
-    await _abrir(at);
-    await _irPara(at, Destino.lojas);
+    await _abrir(at, tamanho: const Size(1440, 900));
+    await _irParaAmplo(at, Destino.lojas);
     await at.tap(find.byKey(const Key('abrir-lojas-inter')));
     await at.pumpAndSettle();
 
@@ -244,9 +265,7 @@ void main() {
         tamanho: const Size(390, 1500),
         resumo: _resumoComEstadosIndependentes,
       );
-      await _irPara(at, Destino.lojas);
-      await at.tap(find.byKey(const Key('abrir-lojas-inter')));
-      await at.pumpAndSettle();
+      await _irParaCompacto(at, DestinoCompacto.inter);
 
       expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
       expect(find.text('Cashback — Sites parceiros'), findsOneWidget);
@@ -275,9 +294,6 @@ void main() {
       await at.tap(find.byKey(const Key('voltar-para-shopping-inter')));
       await at.pumpAndSettle();
       expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
-      await at.binding.handlePopRoute();
-      await at.pumpAndSettle();
-      expect(find.byKey(const Key('hub-lojas')), findsOneWidget);
     },
   );
 
@@ -291,9 +307,7 @@ void main() {
       administrador: true,
       requisicoes: requisicoes,
     );
-    await _irPara(at, Destino.lojas);
-    await at.tap(find.byKey(const Key('abrir-lojas-inter')));
-    await at.pumpAndSettle();
+    await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(find.text('Atualizar Cashback'), findsOneWidget);
     expect(find.text('Atualizar Produtos'), findsOneWidget);
@@ -310,15 +324,14 @@ void main() {
     at,
   ) async {
     await _abrir(at);
-    await _irPara(at, Destino.produtos);
+    await _irParaCompacto(at, DestinoCompacto.produtos);
 
     final busca = find.widgetWithText(TextField, 'Buscar produtos');
     expect(busca, findsOneWidget);
     await at.enterText(busca, 'x');
 
-    await _irPara(at, Destino.alertas);
-    expect(find.text('Ainda não implementado nesta fase.'), findsOneWidget);
-    await _irPara(at, Destino.produtos);
+    await _irParaCompacto(at, DestinoCompacto.livelo);
+    await _irParaCompacto(at, DestinoCompacto.produtos);
 
     expect(at.widget<TextField>(busca).controller?.text, 'x');
   });
@@ -331,15 +344,24 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Alertas'), findsOneWidget);
-    expect(find.text('Ainda não implementado nesta fase.'), findsOneWidget);
+    expect(
+      find.text(
+        'Estados importantes do retrato atual, sem simular uma caixa de entrada.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('caixa de entrada'), findsWidgets);
   });
 
-  testWidgets('Mais conserva a administração existente para admin', (at) async {
+  testWidgets('conta oferece administração fora das quatro áreas', (at) async {
     await _abrir(at, administrador: true);
-    await _irPara(at, Destino.mais);
+    await _abrirGaveta(at);
+    await at.tap(find.byKey(const Key('abrir-sistema-gaveta')));
+    await at.pumpAndSettle();
 
     expect(find.text('Administração'), findsOneWidget);
-    expect(find.byKey(const Key('busca-lojas-livelo')), findsOneWidget);
+    expect(find.text('Conta e sistema'), findsOneWidget);
+    expect(find.text('Acesso administrador'), findsOneWidget);
   });
 
   testWidgets('gaveta aceita texto ampliado sem perder destinos', (at) async {
@@ -347,9 +369,21 @@ void main() {
     await _abrirGaveta(at);
 
     expect(at.takeException(), isNull);
-    for (final destino in Destino.values) {
+    for (final destino in DestinoCompacto.values) {
       expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
     }
+  });
+
+  testWidgets('quatro áreas continuam alcançáveis com texto ampliado', (
+    at,
+  ) async {
+    await _abrir(at, tamanho: const Size(320, 640), escalaTexto: 1.5);
+
+    for (final destino in DestinoCompacto.values.skip(1)) {
+      await _irParaCompacto(at, destino);
+      expect(at.takeException(), isNull, reason: destino.titulo);
+    }
+    expect(find.widgetWithText(TextField, 'Buscar produtos'), findsOneWidget);
   });
 
   testWidgets('gaveta mobile confere com o golden aprovado', (at) async {
@@ -359,6 +393,24 @@ void main() {
     await expectLater(
       find.byType(MolduraRadar),
       matchesGoldenFile('../../goldens/moldura_mobile_gaveta.png'),
+    );
+  });
+
+  testWidgets('Início mobile novo confere com o golden claro', (at) async {
+    await _abrir(at, resumo: _resumoComEstadosIndependentes);
+
+    await expectLater(
+      find.byType(MolduraRadar),
+      matchesGoldenFile('../../goldens/moldura_mobile_inicio.png'),
+    );
+  });
+
+  testWidgets('Início mobile novo confere com o golden escuro', (at) async {
+    await _abrir(at, resumo: _resumoComEstadosIndependentes, escuro: true);
+
+    await expectLater(
+      find.byType(MolduraRadar),
+      matchesGoldenFile('../../goldens/moldura_mobile_inicio_escuro.png'),
     );
   });
 

@@ -86,6 +86,8 @@ class _EstadoValidacaoDoConvite extends State<_ValidacaoDoConvite> {
           return MolduraRadar(
             api: widget.api,
             administrador: estado.data!.administrador,
+            identificacaoConta: estado.data!.email,
+            aoSair: widget.autenticador.sair,
           );
         }
 

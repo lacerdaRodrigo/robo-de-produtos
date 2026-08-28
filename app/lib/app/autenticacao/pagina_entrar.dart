@@ -90,39 +90,38 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: TemaRadar.claro(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: LayoutBuilder(
-          builder: (context, limites) {
-            final amplo = limites.maxWidth >= _larguraLayoutAmplo;
-            final formulario = _AreaFormulario(
-              compacto: !amplo,
-              formulario: _formulario,
-              email: _email,
-              senha: _senha,
-              ocupado: _ocupado,
-              ocultarSenha: _ocultarSenha,
-              erro: _erro,
-              aviso: _aviso,
-              aoAlternarSenha: () =>
-                  setState(() => _ocultarSenha = !_ocultarSenha),
-              aoEntrar: _entrar,
-              aoRecuperar: _redefinirSenha,
-            );
+    final pagina = Scaffold(
+      backgroundColor: Colors.white,
+      body: LayoutBuilder(
+        builder: (context, limites) {
+          final amplo = limites.maxWidth >= _larguraLayoutAmplo;
+          final formulario = _AreaFormulario(
+            compacto: !amplo,
+            formulario: _formulario,
+            email: _email,
+            senha: _senha,
+            ocupado: _ocupado,
+            ocultarSenha: _ocultarSenha,
+            erro: _erro,
+            aviso: _aviso,
+            aoAlternarSenha: () =>
+                setState(() => _ocultarSenha = !_ocultarSenha),
+            aoEntrar: _entrar,
+            aoRecuperar: _redefinirSenha,
+          );
 
-            if (!amplo) return formulario;
-            return Row(
-              children: [
-                const Expanded(flex: 108, child: _PainelDaMarca()),
-                Expanded(flex: 92, child: formulario),
-              ],
-            );
-          },
-        ),
+          if (!amplo) return formulario;
+          return Row(
+            children: [
+              const Expanded(flex: 108, child: _PainelDaMarca()),
+              Expanded(flex: 92, child: formulario),
+            ],
+          );
+        },
       ),
     );
+    if (Theme.of(context).brightness == Brightness.light) return pagina;
+    return Theme(data: TemaRadar.legadoClaro(), child: pagina);
   }
 }
 

@@ -46,6 +46,7 @@ abstract final class Tokens {
 class CoresRadar extends ThemeExtension<CoresRadar> {
   const CoresRadar({
     required this.acao,
+    required this.integracaoInter,
     required this.ganho,
     required this.atencao,
     required this.perigo,
@@ -56,6 +57,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   const CoresRadar.claras()
     : acao = Tokens.marcaClara,
+      integracaoInter = const Color(0xFF0B7F99),
       ganho = Tokens.ganho,
       atencao = Tokens.atencao,
       perigo = Tokens.perigo,
@@ -65,6 +67,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   const CoresRadar.escuras()
     : acao = Tokens.acaoEscura,
+      integracaoInter = Tokens.acaoEscura,
       ganho = Tokens.ganhoEscuro,
       atencao = Tokens.atencaoEscura,
       perigo = Tokens.perigoEscuro,
@@ -72,7 +75,19 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       superficieAlternativa = Tokens.superficieAlternativaEscura,
       borda = Tokens.bordaEscura;
 
+  /// Paleta anterior preservada no Web e em layouts amplos durante a migração.
+  const CoresRadar.legadas()
+    : acao = Tokens.marcaClara,
+      integracaoInter = const Color(0xFF087E8B),
+      ganho = Tokens.ganho,
+      atencao = Tokens.atencao,
+      perigo = Tokens.perigo,
+      textoSuave = const Color(0xFF60758A),
+      superficieAlternativa = const Color(0xFFF0F4F7),
+      borda = const Color(0xFFDCE6EE);
+
   final Color acao;
+  final Color integracaoInter;
   final Color ganho;
   final Color atencao;
   final Color perigo;
@@ -89,6 +104,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   @override
   CoresRadar copyWith({
     Color? acao,
+    Color? integracaoInter,
     Color? ganho,
     Color? atencao,
     Color? perigo,
@@ -97,12 +113,12 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     Color? borda,
   }) => CoresRadar(
     acao: acao ?? this.acao,
+    integracaoInter: integracaoInter ?? this.integracaoInter,
     ganho: ganho ?? this.ganho,
     atencao: atencao ?? this.atencao,
     perigo: perigo ?? this.perigo,
     textoSuave: textoSuave ?? this.textoSuave,
-    superficieAlternativa:
-        superficieAlternativa ?? this.superficieAlternativa,
+    superficieAlternativa: superficieAlternativa ?? this.superficieAlternativa,
     borda: borda ?? this.borda,
   );
 
@@ -111,6 +127,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     if (other == null) return this;
     return CoresRadar(
       acao: Color.lerp(acao, other.acao, t)!,
+      integracaoInter: Color.lerp(integracaoInter, other.integracaoInter, t)!,
       ganho: Color.lerp(ganho, other.ganho, t)!,
       atencao: Color.lerp(atencao, other.atencao, t)!,
       perigo: Color.lerp(perigo, other.perigo, t)!,

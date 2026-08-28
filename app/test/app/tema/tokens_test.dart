@@ -18,10 +18,7 @@ void main() {
       Tokens.superficieEscura.toARGB32(),
       const Color(0xFF0D2032).toARGB32(),
     );
-    expect(
-      Tokens.textoEscuro.toARGB32(),
-      const Color(0xFFEDF7FF).toARGB32(),
-    );
+    expect(Tokens.textoEscuro.toARGB32(), const Color(0xFFEDF7FF).toARGB32());
   });
 
   test('tema gera um ColorScheme material', () {

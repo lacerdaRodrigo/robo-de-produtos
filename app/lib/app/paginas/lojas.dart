@@ -6,6 +6,7 @@ import '../../features/administracao/botao_disparo.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/produtos/pagina_produtos.dart';
+import '../componentes/fundacao_visual.dart';
 import '../tema/tokens.dart';
 
 enum FonteLojas { livelo, cashbackInter }
@@ -81,10 +82,14 @@ class PaginaHubShoppingInter extends StatefulWidget {
     super.key,
     required this.api,
     required this.administrador,
+    this.experienciaCompacta = false,
+    this.ativa = true,
   });
 
   final Api api;
   final bool administrador;
+  final bool experienciaCompacta;
+  final bool ativa;
 
   @override
   State<PaginaHubShoppingInter> createState() => _EstadoHubShoppingInter();
@@ -126,6 +131,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
   @override
   Widget build(BuildContext context) {
     return NavigatorPopHandler<void>(
+      enabled: widget.ativa,
       onPopWithResult: (_) => _navegador.currentState?.pop(),
       child: Navigator(
         key: _navegador,
@@ -135,6 +141,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
             api: widget.api,
             administrador: widget.administrador,
             aoAbrir: _abrir,
+            experienciaCompacta: widget.experienciaCompacta,
           ),
         ),
       ),
@@ -149,11 +156,13 @@ class _HubShoppingInter extends StatefulWidget {
     required this.api,
     required this.administrador,
     required this.aoAbrir,
+    required this.experienciaCompacta,
   });
 
   final Api api;
   final bool administrador;
   final ValueChanged<_ModalidadeInter> aoAbrir;
+  final bool experienciaCompacta;
 
   @override
   State<_HubShoppingInter> createState() => _EstadoHubShoppingInterConteudo();
@@ -180,17 +189,26 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
           key: const Key('hub-shopping-inter'),
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
           children: [
-            Text(
-              'Shopping Inter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Escolha entre cashback dos Sites parceiros e produtos do Compre direto.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
-            ),
+            if (widget.experienciaCompacta)
+              const CabecalhoSecaoRadar(
+                sobrelinha: 'Shopping e cashback',
+                titulo: 'Banco Inter',
+                descricao:
+                    'Sites parceiros e Compre direto ficam juntos nesta área, mas continuam com dados e coletas separados.',
+              )
+            else ...[
+              Text(
+                'Shopping Inter',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Escolha entre cashback dos Sites parceiros e produtos do Compre direto.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
+              ),
+            ],
             if (estado.connectionState != ConnectionState.done) ...[
               const SizedBox(height: 20),
               const LinearProgressIndicator(),
@@ -203,7 +221,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             _AcessoModalidadeInter(
               chaveAcao: const Key('abrir-cashback-inter'),
               icone: Icons.percent_outlined,
-              cor: cores.acao,
+              cor: cores.integracaoInter,
               titulo: 'Cashback — Sites parceiros',
               descricao:
                   'Acompanhe as lojas parceiras e as condições de cashback do Inter.',
@@ -487,7 +505,7 @@ class _ConteudoHubLojas extends StatelessWidget {
           _AcessoFonte(
             key: const Key('abrir-lojas-inter'),
             icone: Icons.shopping_bag_outlined,
-            cor: cores.acao,
+            cor: cores.integracaoInter,
             titulo: 'Shopping Inter',
             descricao:
                 'Entre em Cashback dos Sites parceiros ou Produtos do Compre direto.',
