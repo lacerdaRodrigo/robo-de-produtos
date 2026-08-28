@@ -81,6 +81,7 @@ class _PainelLiveloConteudo extends StatelessWidget {
   Widget build(BuildContext context) {
     final agora = DateTime.now();
     final atrasada = coletaAtrasada(controlador.atualizadoEm, agora);
+    final cores = CoresRadar.de(context);
 
     return SafeArea(
       child: Column(
@@ -141,14 +142,14 @@ class _PainelLiveloConteudo extends StatelessWidget {
                   Icon(
                     atrasada ? Icons.schedule : Icons.check_circle_outline,
                     size: 18,
-                    color: atrasada ? Tokens.atencao : Tokens.ganho,
+                    color: atrasada ? cores.atencao : cores.ganho,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Última coleta: ${dataHoraLivelo(controlador.atualizadoEm)}'
                       '${atrasada ? ' · dados atrasados' : ''}',
-                      style: TextStyle(color: atrasada ? Tokens.atencao : null),
+                      style: TextStyle(color: atrasada ? cores.atencao : null),
                     ),
                   ),
                 ],

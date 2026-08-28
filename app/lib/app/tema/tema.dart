@@ -2,39 +2,67 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-/// Tema claro por padrão, com a paleta aprovada no PLANO §10.2.
-///
-/// Tema escuro completo é evolução posterior (PLANO §9.2); aqui existe só a
-/// base clara. O token de ganho nunca define a cor de ação — a decisão de
-/// "verde = ganho" fica no design, não no tema.
+/// Temas do Radar com a mesma identidade e sem misturar ação com ganho.
 abstract final class TemaRadar {
-  static ThemeData claro([Brightness brilho = Brightness.light]) {
+  static ThemeData claro() {
     final base = ThemeData(
       useMaterial3: true,
-      brightness: brilho,
+      brightness: Brightness.light,
       fontFamily: 'Roboto',
     );
     return base.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Tokens.marca,
-        brightness: brilho,
+        brightness: Brightness.light,
         primary: Tokens.marca,
       ),
       scaffoldBackgroundColor: Tokens.fundo,
+      cardColor: Tokens.superficie,
+      dividerColor: Tokens.borda,
+      extensions: const <ThemeExtension<dynamic>>[CoresRadar.claras()],
       appBarTheme: const AppBarTheme(
         backgroundColor: Tokens.marca,
         foregroundColor: Colors.white,
       ),
       textTheme: base.textTheme.apply(
-        bodyColor: brilho == Brightness.light
-            ? const Color(0xFF102A43)
-            : Colors.white,
-        displayColor: brilho == Brightness.light
-            ? const Color(0xFF102A43)
-            : Colors.white,
+        bodyColor: Tokens.texto,
+        displayColor: Tokens.texto,
       ),
     );
   }
 
-  static ThemeData escuro() => claro(Brightness.dark);
+  static ThemeData escuro() {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'Roboto',
+    );
+    final esquema = ColorScheme.fromSeed(
+      seedColor: Tokens.marcaClara,
+      brightness: Brightness.dark,
+      primary: Tokens.acaoEscura,
+      surface: Tokens.superficieEscura,
+      error: Tokens.perigoEscuro,
+    );
+    return base.copyWith(
+      colorScheme: esquema,
+      scaffoldBackgroundColor: Tokens.fundoEscuro,
+      cardColor: Tokens.superficieEscura,
+      dividerColor: Tokens.bordaEscura,
+      extensions: const <ThemeExtension<dynamic>>[CoresRadar.escuras()],
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Tokens.superficieEscura,
+        foregroundColor: Tokens.textoEscuro,
+        surfaceTintColor: Colors.transparent,
+      ),
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: Tokens.marcaProfunda,
+        surfaceTintColor: Colors.transparent,
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Tokens.textoEscuro,
+        displayColor: Tokens.textoEscuro,
+      ),
+    );
+  }
 }

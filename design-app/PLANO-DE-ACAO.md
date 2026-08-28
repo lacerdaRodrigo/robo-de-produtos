@@ -1,14 +1,24 @@
 # Plano de ação — nova experiência do Radar de Benefícios
 
-**Status:** direção inicial, abertura, Login, Moldura e Início aprovados; os
-Módulos 0 a 3 estão implementados localmente no Flutter. As telas seguintes
-continuam propostas e não estão autorizadas automaticamente.
+**Status histórico:** direção inicial do ciclo anterior de redesign. As
+entregas e decisões registradas abaixo não autorizam automaticamente uma nova
+implementação.
 
 **Data-base da auditoria:** 23 de agosto de 2026
 
 **Protótipo Web:** [`prototipo-web.html`](prototipo-web.html)
 
 **Protótipo Mobile:** [`prototipo-mobile.html`](prototipo-mobile.html)
+
+> **Atualização mobile — 28 de agosto de 2026:** a nova referência compacta
+> passa a ter quatro áreas principais: Início, Livelo, Banco Inter e Buscar
+> produtos. Para o Mobile, o
+> [`PLANO-MIGRACAO-MOBILE.md`](PLANO-MIGRACAO-MOBILE.md) substitui as
+> regras aplicáveis e as recomendações de cinco destinos das seções 0, 3, 6 e 7
+> deste registro. O Web continua com a experiência atual e não faz parte dessa
+> migração. A execução incremental foi autorizada em 28 de agosto de 2026,
+> começando pela fundação visual e aparência; as etapas posteriores dependem
+> dos gates e aceites registrados no plano novo.
 
 **Logo vetorial aprovado:** [`assets/logo-radar.svg`](assets/logo-radar.svg) e
 [`assets/logo-radar-sobre-escuro.svg`](assets/logo-radar-sobre-escuro.svg)

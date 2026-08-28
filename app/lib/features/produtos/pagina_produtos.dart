@@ -80,6 +80,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _conteudo(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final atrasado = coletaProdutosAtrasada(
       _controlador.atualizadoEm,
       DateTime.now(),
@@ -152,7 +153,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             child: Text(
               'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
               '${atrasado ? ' · dados atrasados' : ''}',
-              style: TextStyle(color: atrasado ? Tokens.atencao : null),
+              style: TextStyle(color: atrasado ? cores.atencao : null),
             ),
           ),
         if (_controlador.qualidade == 'degradada')
@@ -193,6 +194,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _corpo() {
+    final cores = CoresRadar.de(context);
     if (!_controlador.termoValido) {
       return const EstadoVazio(
         mensagem: 'Digite pelo menos 2 caracteres para pesquisar no catálogo.',
@@ -232,7 +234,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                         entrada.value.first.atualizadaEm,
                         DateTime.now(),
                       )
-                      ? Tokens.atencao
+                      ? cores.atencao
                       : null,
                 ),
               ),

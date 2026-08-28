@@ -18,6 +18,7 @@ class CartaoProduto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
     final precoCheioDiferente =
         produto.precoCheioTexto != null &&
         produto.precoCheioTexto != produto.precoAtualTexto;
@@ -82,7 +83,7 @@ class CartaoProduto extends StatelessWidget {
                       produto.cashbackPercentualTexto,
                     ].whereType<String>().join(' · '),
                     style: tema.textTheme.titleSmall?.copyWith(
-                      color: Tokens.ganho,
+                      color: cores.ganho,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -92,7 +93,7 @@ class CartaoProduto extends StatelessWidget {
                   rotulo: 'Após cashback',
                   valor: produto.precoLiquidoTexto!,
                   estilo: tema.textTheme.headlineSmall?.copyWith(
-                    color: Tokens.ganho,
+                    color: cores.ganho,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

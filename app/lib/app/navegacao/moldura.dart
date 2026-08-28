@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
 import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/produtos/pagina_produtos.dart';
+import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
@@ -131,9 +133,13 @@ class _CabecalhoCompacto extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final escuro = tema.brightness == Brightness.dark;
+    final superficie = escuro ? tema.colorScheme.surface : Colors.white;
     return AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: superficie,
+      foregroundColor: tema.colorScheme.onSurface,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 1,
       leadingWidth: 64,
@@ -149,6 +155,7 @@ class _CabecalhoCompacto extends StatelessWidget
       title: const _AssinaturaCompacta(),
       centerTitle: true,
       actions: [
+        if (!kIsWeb) const ControleAparenciaRadar.icone(),
         Padding(
           padding: const EdgeInsets.all(8),
           child: IconButton(
@@ -168,6 +175,7 @@ class _AssinaturaCompacta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
     return Semantics(
       label: 'Radar de Benefícios',
       header: true,
@@ -175,7 +183,7 @@ class _AssinaturaCompacta extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const LogoRadar(tamanho: 32),
+          LogoRadar(tamanho: 32, sobreFundoEscuro: escuro),
           const SizedBox(width: 9),
           Flexible(
             child: Text(
@@ -183,7 +191,7 @@ class _AssinaturaCompacta extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Tokens.marca,
+                color: escuro ? Tokens.textoEscuro : Tokens.marca,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -260,6 +268,13 @@ class GavetaRadar extends StatelessWidget {
                 ],
               ),
             ),
+            if (!kIsWeb)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: ControleAparenciaRadar.linha(
+                  cor: Color(0xFFC6D5E2),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
               child: _RodapeVersao(administrador: administrador),

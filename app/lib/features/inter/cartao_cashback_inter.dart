@@ -14,6 +14,7 @@ class CartaoCashbackInter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
     final oferta = loja.cashbackPrincipalTexto ?? 'Oferta não informada';
     return Semantics(
       label: 'Loja ${loja.nome}',
@@ -30,7 +31,7 @@ class CartaoCashbackInter extends StatelessWidget {
                 style: tema.textTheme.titleLarge?.copyWith(
                   // Verde só comunica benefício. Loja ausente é um estado
                   // neutro, não atraso e tampouco cashback zero.
-                  color: loja.encontrada ? Tokens.ganho : null,
+                  color: loja.encontrada ? cores.ganho : null,
                   fontWeight: FontWeight.bold,
                 ),
               ),

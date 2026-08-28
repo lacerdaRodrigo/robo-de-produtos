@@ -533,6 +533,22 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
 | CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
 
+### Migração mobile — Etapa 1, fundação visual e aparência
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-332 | Primeira execução acompanha o sistema | Sem escolha persistida, o app nativo compacto usa `ThemeMode.system` | Preferência falsa sem valor e inspeção do controlador |
+| CT-333 | Aparência persiste localmente | Claro/escuro muda imediatamente e a escolha reaparece em outro controlador | Repositório de preferência em memória compartilhado |
+| CT-334 | Persistência não bloqueia nem volta no tempo | Falha ao salvar mantém a escolha da sessão; leitura atrasada não sobrescreve toque mais recente | Exceção e `Completer` injetados no armazenamento |
+| CT-335 | Escopo mobile preserva o Web | Android/iOS compacto aceita escuro; layout amplo continua claro e sem controle novo | Viewports 390 × 844 e 1440 × 900 com modo escuro injetado |
+| CT-336 | Controle acessível de aparência | Cabeçalho e gaveta informam ação/estado e alternam sem reiniciar a sessão | Widget completo, chave, tooltip, semântica e controlador falso |
+| CT-337 | Fundação funciona nos dois temas | Cabeçalho, cartão, estado, busca, abas e folha usam tokens sem perder interação | Testes de widget parametrizados em claro/escuro |
+
+Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
+`app/test/app/componentes/fundacao_visual_test.dart`. A execução, os goldens e
+os totais permanecem pendentes porque o workspace de 28 de agosto de 2026 não
+possui Flutter/Dart; nenhum resultado verde foi presumido.
+
 ---
 
 ## Fora dos testes automáticos
@@ -618,7 +634,7 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
 | `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
 | **Total (site)** | **CTs catalogados + apoio** | **83** |
-| `app/test/` | CT-257–CT-259, CT-261–CT-327 + fundação | 147 |
+| `app/test/` | CT-257–CT-259, CT-261–CT-337 + fundação | 147 confirmados antes da Etapa 1; novos casos pendentes |
 | **Total (Flutter)** | **CTs catalogados + apoio** | **147** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.

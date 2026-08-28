@@ -99,11 +99,11 @@ para não bloquear Web/iOS antes de esses dois alvos serem observados.
 
 ## Flutter — Fase 4 Android primeiro
 
-**Fase 4.2A concluída em 2026-08-20.** O Samsung SM-M135M usa barra inferior
-com Início, Livelo, Inter, Alertas e Mais; a seleção troca o `IndexedStack` sem
-descartar o estado das áreas. Celular em retrato e paisagem mantém essa barra,
-enquanto telas maiores preservam a lateral. O Flutter Web fica por último por
-decisão do responsável.
+**Fase 4.2A concluída em 2026-08-20.** Essa entrega introduziu no Samsung
+SM-M135M a barra inferior com Início, Livelo, Inter, Alertas e Mais. O ciclo
+posterior de Moldura substituiu a apresentação compacta por cabeçalho e gaveta,
+mantendo cinco destinos e o `IndexedStack`; telas maiores preservam a lateral.
+Este parágrafo registra a evolução histórica, não o alvo do novo ciclo mobile.
 
 - [x] Implementar navegação inferior para celular sem comprimir a barra lateral
 - [x] Preservar os mesmos cinco destinos, rótulos semânticos e estado das abas
@@ -129,11 +129,32 @@ decisão do responsável.
 
 ## Flutter — redesign por telas
 
-O redesign segue o
-[`app/PLANO-REDESIGN-POR-TELAS.md`](../app/PLANO-REDESIGN-POR-TELAS.md)
-e não libera todas as telas de uma vez. Em 23 de agosto de 2026, o plano passou
-a mapear todos os módulos até o fechamento multiplataforma, incluindo
-dependências de API, gates visuais e o roteiro automático no Samsung conectado.
+### Migração visual mobile — plano de 28 de agosto de 2026
+
+O próximo ciclo mobile segue o
+[`PLANO-MIGRACAO-MOBILE.md`](../design-app/PLANO-MIGRACAO-MOBILE.md). O protótipo
+está salvo e o plano está documentado, mas o Flutter ainda não foi alterado para
+essa direção. O primeiro ciclo usa as APIs atuais, oferece quatro áreas
+principais e preserva o Web sem mudança visual. Catálogo Livelo público, central
+histórica de alertas e agregação de melhores ofertas ficam fora até existir
+contrato específico.
+
+- [x] Salvar a nova referência visual mobile com claro/escuro
+- [x] Documentar escopo, etapas, gates, riscos e definição de pronto
+- [x] Revisar e autorizar a Etapa 1 — fundação visual e aparência
+- [x] Implementar localmente controlador, tokens, persistência nativa e
+      componentes fundamentais da Etapa 1
+- [ ] Executar formatação, análise, testes, goldens e builds da Etapa 1 em um
+      ambiente com Flutter; este workspace não possui os SDKs Flutter/Dart
+- [ ] Implementar cada etapa somente após seu aceite
+
+### Registro do ciclo anterior
+
+O redesign anterior não liberou todas as telas de uma vez. Em 23 de agosto de
+2026, o plano passou a mapear os módulos até o fechamento multiplataforma,
+incluindo dependências de API, gates visuais e o roteiro automático no Samsung
+conectado. Os itens concluídos abaixo continuam como histórico do que existe no
+projeto; quando houver conflito de navegação mobile, prevalece o plano novo.
 
 - [x] **Etapa 0:** aprovar nome, símbolo, textos, abertura e estrutura do login
 - [x] Sincronizar os protótipos Web/Mobile e produzir as duas variantes SVG

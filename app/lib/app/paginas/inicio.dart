@@ -148,6 +148,7 @@ class _CabecalhoResumo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,7 +170,7 @@ class _CabecalhoResumo extends StatelessWidget {
                 _dataExtensa(agora),
                 style: Theme.of(
                   context,
-                ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF60758A)),
+                ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
               ),
               const SizedBox(height: 4),
               Text(
@@ -203,14 +204,15 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Material(
-      color: const Color(0xFFFFF4E5),
+      color: cores.atencao.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_outlined, color: Tokens.atencao),
+            Icon(Icons.cloud_off_outlined, color: cores.atencao),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
@@ -290,13 +292,14 @@ class _GradeMetricas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return _GradeResponsiva(
       maximoColunas: 3,
       larguraMinima: 250,
       itens: [
         _Metrica(
           icone: Icons.star_outline,
-          cor: Tokens.marcaClara,
+          cor: cores.acao,
           valor:
               resumo.livelo.estado == EstadoResumo.indisponivel ||
                   resumo.livelo.ultimoSucessoEm == null
@@ -307,7 +310,7 @@ class _GradeMetricas extends StatelessWidget {
         ),
         _Metrica(
           icone: Icons.savings_outlined,
-          cor: Tokens.ganho,
+          cor: cores.ganho,
           valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
@@ -316,7 +319,7 @@ class _GradeMetricas extends StatelessWidget {
         ),
         _Metrica(
           icone: Icons.inventory_2_outlined,
-          cor: const Color(0xFF087E8B),
+          cor: cores.acao,
           valor: resumo.produtos.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.produtos.produtosAtivos),
@@ -345,6 +348,7 @@ class _Metrica extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
@@ -469,7 +473,7 @@ class _Atalho extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(icone, color: Tokens.marcaClara),
+              Icon(icone, color: cores.acao),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -563,7 +567,7 @@ class _LinhaDominio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = _corEstado(estado);
+    final cor = _corEstado(context, estado);
     final indicador = Container(
       width: 42,
       height: 42,
@@ -697,7 +701,7 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = cor ?? Tokens.marcaClara;
+    final base = cor ?? CoresRadar.de(context).acao;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compacto ? 9 : 11,
@@ -783,11 +787,12 @@ String _rotuloEstado(EstadoResumo estado) => switch (estado) {
   EstadoResumo.indisponivel => 'Indisponível',
 };
 
-Color _corEstado(EstadoResumo estado) => switch (estado) {
-  EstadoResumo.atualizado => Tokens.ganho,
-  EstadoResumo.atualizando => Tokens.marcaClara,
-  EstadoResumo.indisponivel || EstadoResumo.falhaRecente => Tokens.perigo,
-  _ => Tokens.atencao,
+Color _corEstado(BuildContext context, EstadoResumo estado) => switch (estado) {
+  EstadoResumo.atualizado => CoresRadar.de(context).ganho,
+  EstadoResumo.atualizando => CoresRadar.de(context).acao,
+  EstadoResumo.indisponivel || EstadoResumo.falhaRecente =>
+    CoresRadar.de(context).perigo,
+  _ => CoresRadar.de(context).atencao,
 };
 
 String _inteiro(int valor) {

@@ -57,6 +57,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
   );
 
   Widget _conteudo(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final atrasada = coletaInterAtrasada(
       _controlador.atualizadoEm,
       DateTime.now(),
@@ -114,7 +115,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
             child: Text(
               'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)}'
               '${atrasada ? ' · dados atrasados' : ''}',
-              style: TextStyle(color: atrasada ? Tokens.atencao : null),
+              style: TextStyle(color: atrasada ? cores.atencao : null),
             ),
           ),
         if (_controlador.atualizadoEm != null && !_controlador.carregando)
@@ -131,7 +132,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
               child: Text(
                 'A última sincronização do Inter falhou. '
                 'Exibindo a última coleta válida.',
-                style: const TextStyle(color: Tokens.perigo),
+                style: TextStyle(color: cores.perigo),
               ),
             ),
           ),
