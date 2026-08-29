@@ -26,7 +26,7 @@ Antes de alterar uma tela mobile, leia apenas:
 1. `design-app/prototipo-mobile.html` — fonte visual de verdade;
 2. `design-app/UI_SPEC.md` — contrato visual e gates;
 3. `design-app/PLANO-EXECUCAO-REDESIGN.md` — ordem de execução;
-4. arquivos Flutter e testes diretamente relacionados à fase atual;
+4. arquivos Flutter e testes unitários/widgets diretamente relacionados à fase atual;
 5. PRD específico do domínio somente quando precisar confirmar regra, dado ou contrato de API.
 
 **Não leia documentação grande sem necessidade.** Não leia `CLAUDE.md`, todos os PRDs, histórico do projeto ou arquivos Web por padrão. Abra somente o necessário para resolver a fase atual.
@@ -45,13 +45,11 @@ Dados ilustrativos do HTML não viram dados reais. Backend, regras e contratos c
 
 Para cada fase:
 
-**implementar → formatar → analisar → testar somente o necessário → golden mobile → renderizar/comparar com HTML → corrigir → repetir até estabilizar**.
+**implementar → formatar → analisar → rodar somente unitários/widgets necessários → renderizar/comparar com HTML quando necessário → corrigir → repetir até estabilizar**.
 
 Uma tela não está pronta só porque compila.
 
-Não peça screenshots ao responsável para diferenças que o HTML, a renderização local ou os goldens mobile conseguem revelar.
-
-Não use `--update-goldens` apenas para fazer um teste passar. Primeiro confirme qual lado está divergente da referência aprovada.
+Não peça screenshots ao responsável para diferenças que possam ser descobertas pelo HTML ou pela renderização local.
 
 ## Regras técnicas que não podem regredir
 
@@ -67,16 +65,28 @@ Não use `--update-goldens` apenas para fazer um teste passar. Primeiro confirme
 
 ## Testes desta branch
 
-Prefira testes direcionados à fase atual para economizar tempo e contexto.
+O objetivo é manter **o mínimo de testes necessário** durante o redesign.
 
-Obrigatórios quando aplicáveis:
+Os únicos tipos de teste autorizados neste ciclo são:
 
-- `dart format` nos arquivos tocados;
-- `flutter analyze`;
-- testes unitários/widget diretamente afetados;
-- golden tests **mobile** da tela/estado alterado.
+- testes unitários diretamente afetados;
+- testes de widgets diretamente afetados.
 
-Não rode golden Web nem suíte Web como gate do redesign mobile. Rode a suíte Flutter completa apenas no fechamento de uma etapa maior ou antes de entrega/merge, quando fizer sentido.
+Não criar, atualizar ou executar como parte deste plano:
+
+- golden tests;
+- testes de integração;
+- E2E;
+- smoke automatizado;
+- performance;
+- regressão visual automatizada;
+- testes Web.
+
+Não apague testes existentes dessas categorias. Eles ficam preservados para um ciclo posterior.
+
+`dart format` e `flutter analyze` continuam obrigatórios porque são validações estáticas, não tipos de teste.
+
+Durante o desenvolvimento, rode somente os arquivos unitários/widgets relacionados ao que mudou. Não execute `flutter test` sem filtro por rotina se isso puxar testes fora do escopo.
 
 ## Definição de pronto
 
@@ -84,8 +94,8 @@ Uma fase está concluída quando:
 
 1. a jornada mobile real continua funcionando;
 2. a tela segue o estado correspondente do HTML;
-3. não há overflow em 320 px nem no viewport de referência;
+3. não há overflow nas larguras cobertas pelos widgets alterados;
 4. claro/escuro funcionam quando aplicáveis;
-5. testes e goldens mobile relevantes passam;
+5. unitários/widgets relevantes passam;
 6. nenhum dado fictício foi promovido a real;
 7. o Codex informa arquivos alterados, comandos executados e divergências restantes.
