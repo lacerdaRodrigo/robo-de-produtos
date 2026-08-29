@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.46.1 (2026-08-29)
+
+### Bug Fixes
+
+- **livelo**: Atualiza contador de alertas em tempo real
+  ([`7520ae8`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/7520ae81c529d0870c58a2dbfe49c8ff0786b44f))
+
+
 ## v1.46.0 (2026-08-29)
 
 ### Code Style
