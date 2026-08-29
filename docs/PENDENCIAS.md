@@ -331,6 +331,7 @@ Quem usa `multiplicador`/`piso_pontos` é o `alertas.py` da V2.2 — hoje eles s
 ## V2.2 — regras de alerta
 
 - [x] Módulo `alertas.py` no núcleo, com RN27 e RN28
+- [x] Preferência explícita do sino por loja no app (migração `014_alerta_no_card.sql`); o resultado histórico `pontuacao.alertou` não é mais usado como escolha do usuário
 - [x] Preferências globais `multiplicador_padrao` e `piso_pontos_padrao` vindas do banco — porta nova `PreferenciasGlobais`, com os padrões do PRD-V2 §6.1 de reserva
 - [x] Sobrescrita por loja
 - [x] Detectar `parityBau` suspeito (RN29, C07) — sem contar dias e sem guardar estado: o sintoma afeta a página inteira de uma vez e é visível numa execução só. Decisão registrada no PRD-V2 §6.3

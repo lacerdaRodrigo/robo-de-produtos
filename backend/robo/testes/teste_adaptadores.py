@@ -236,8 +236,8 @@ def teste_ct111_limiar_invalido_no_arquivo_e_recusado(tmp_path, linha):
 def teste_ct112_catalogo_do_banco_mapeia_as_colunas(monkeypatch):
     """O adaptador le nome, categoria, apelidos, multiplicador e piso_pontos."""
     linhas = [
-        ("Natura", "Beleza", ["Natura Cosmeticos"], Decimal("2.5"), Decimal("6")),
-        ("Magalu", "Marketplace", [], None, None),
+        ("Natura", "Beleza", ["Natura Cosmeticos"], Decimal("2.5"), Decimal("6"), True),
+        ("Magalu", "Marketplace", [], None, None, False),
     ]
     executadas: list[str] = []
 
@@ -274,6 +274,7 @@ def teste_ct112_catalogo_do_banco_mapeia_as_colunas(monkeypatch):
         ("Natura Cosmeticos",),
     )
     assert natura.multiplicador == Decimal("2.5") and natura.piso_pontos == Decimal("6")
+    assert natura.alerta_ativo is True and magalu.alerta_ativo is False
     assert magalu.multiplicador is None and magalu.piso_pontos is None
     assert "multiplicador" in executadas[0] and "piso_pontos" in executadas[0]
 

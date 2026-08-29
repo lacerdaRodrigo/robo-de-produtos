@@ -170,6 +170,36 @@ void main() {
     },
   );
 
+  testWidgets('sino ativa e desativa alerta somente para acompanhada', (
+    at,
+  ) async {
+    final chamadas = <bool>[];
+    final controlador = _controlador();
+    final comAlerta = ControladorCatalogoLivelo(
+      buscar: controlador.buscar,
+      alterarAcompanhamento: controlador.alterarAcompanhamento,
+      alterarAlerta: ({required idExterno, required ativo}) async {
+        chamadas.add(ativo);
+      },
+    );
+    addTearDown(controlador.dispose);
+    addTearDown(comAlerta.dispose);
+    await _abrir(at, comAlerta);
+    await at.drag(
+      find.byKey(const Key('catalogo-livelo-android')),
+      const Offset(0, -700),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('alerta-A')));
+    await at.pumpAndSettle();
+    expect(chamadas, [true]);
+    expect(comAlerta.itens.first.alertaAtivo, isTrue);
+    await at.tap(find.byKey(const Key('alerta-A')));
+    await at.pumpAndSettle();
+    expect(chamadas, [true, false]);
+    expect(comAlerta.itens.first.alertaAtivo, isFalse);
+  });
+
   testWidgets('320 px e texto a 150% continuam roláveis sem overflow', (
     at,
   ) async {

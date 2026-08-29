@@ -78,6 +78,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-110 | Limiar por loja no arquivo vira `Decimal` | RN28 — `multiplicador`/`piso_pontos` opcionais. Ausente significa "usa o padrão global" | TOML com uma loja com limiar e outra sem, checar `Decimal` e `None` |
 | CT-111 | Limiar inválido é recusado | Limiar errado por erro de digitação viraria alerta errado depois, silenciosamente | TOML com texto, com zero e com negativo, checar `ConfiguracaoInvalida` nos três |
 | CT-112 | Catálogo do banco mapeia as colunas | O adaptador lê nome, categoria, apelidos, `multiplicador` e `piso_pontos` (RN28) | Fake de `psycopg` em `sys.modules`, checar mapeamento e as colunas na consulta |
+| CT-114 | Preferência do sino por loja | `alerta_ativo` vem do Postgres e controla se a régua pode gerar alerta | Fake de `psycopg` com a coluna booleana, checar `LojaFavorita.alerta_ativo` |
 | CT-113 | Senha da URL não vaza na mensagem de erro ⚠️ | PRD §9.1 — o log do Actions é público e a exceção original carrega a `DATABASE_URL` inteira | Fake que falha ao conectar, checar ausência da senha no texto e `__cause__` cortado |
 | CT-130 | Preferências padrão sem banco | Quem não tem Neon roda com 2,0x e piso 4 (PRD-V2 §6.1) | `PreferenciasPadrao().carregar()` |
 | CT-131 | Preferências vindas do banco | RN28 — a régua é editável sem `git push` | Fake de `psycopg` devolvendo as três chaves |
@@ -155,6 +156,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-150 | Falha ao guardar não derruba a execução ⚠️ | A consequência é site velho, que o carimbo de RN26 denuncia sozinho. Perder o e-mail do dia seria pior | Repositório que levanta `FalhaAoGuardar`, checar e-mail enviado e `WARNING` |
 | CT-163 | Catálogo vazio avisa no e-mail e no log ⚠️ | Fim a fim: banco sem loja nenhuma não vira "dia sem promoção" | `CatalogoFake([])`, checar assunto próprio e `WARNING` |
 | CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
+| CT-169 | Sino desligado suprime alerta | RN27 — a régua continua calculada, mas só uma loja marcada no sino gera alerta | Retrato com loja acompanhada e `alerta_ativo=False`, checar `alertou is False` |
 
 ## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 

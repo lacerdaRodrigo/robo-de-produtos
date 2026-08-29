@@ -6,6 +6,7 @@ import {
   categoriasEmPortugues,
   filtrarEOrdenarCatalogoLivelo,
   melhorOfertaLivelo,
+  validarAlertaLivelo,
   validarAcompanhamentoLivelo,
 } from "../lib/catalogo-livelo";
 
@@ -87,5 +88,11 @@ describe("catálogo Livelo autenticado", () => {
     });
     expect(validarAcompanhamentoLivelo({ acompanhada: true, nome: "hostil" }).ok).toBe(false);
     expect(validarAcompanhamentoLivelo({ acompanhada: "true" }).ok).toBe(false);
+  });
+
+  it("aceita somente o booleano do sino", () => {
+    expect(validarAlertaLivelo({ ativo: true })).toEqual({ ok: true, ativo: true });
+    expect(validarAlertaLivelo({ ativo: "true" }).ok).toBe(false);
+    expect(validarAlertaLivelo({ ativo: false, nome: "hostil" }).ok).toBe(false);
   });
 });

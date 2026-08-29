@@ -53,7 +53,8 @@ def montar_retrato(
                 # site — mesma decisao que `categorias.agrupar` ja tomava.
                 parceiro=parceiro,
                 valor_de_disparo=alertas.valor_de_disparo(parceiro, loja, preferencias),  # RN30
-                alertou=alertas.merece_alerta(parceiro, loja, preferencias),  # RN27
+                alertou=loja.alerta_ativo
+                and alertas.merece_alerta(parceiro, loja, preferencias),  # RN27
             )
         )
 

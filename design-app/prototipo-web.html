@@ -1169,6 +1169,25 @@
         color: var(--acao-700);
       }
 
+      .botao-alerta-card {
+        display: inline-grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        padding: 0;
+        border: 1px solid var(--borda);
+        border-radius: 11px;
+        background: var(--superficie);
+        color: var(--texto-suave);
+        cursor: pointer;
+      }
+
+      .botao-alerta-card.ativo {
+        border-color: var(--marca-300);
+        background: var(--marca-100);
+        color: var(--marca-700);
+      }
+
       .loja-card p {
         min-height: 42px;
         margin: 7px 0 14px;
@@ -2539,7 +2558,7 @@
         ];
 
         var liveloStores = [
-          { name: 'Magalu', category: 'Marketplace', points: '6 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '7 pts/R$', note: 'Promoção ilustrativa válida até 25/08. Confira as condições da campanha.', alert: true, following: true },
+          { name: 'Magalu', category: 'Marketplace', points: '6 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '7 pts/R$', note: 'Promoção ilustrativa válida até 25/08. Confira as condições da campanha.', alert: true, alertActive: true, following: true },
           { name: 'Casas Bahia', category: 'Marketplace', points: '5 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '6 pts/R$', note: 'Pontuação promocional em categorias selecionadas.', alert: true, following: true },
           { name: 'Renner', category: 'Moda', points: '4 pts/R$', normal: '2 pts/R$', threshold: '4 pts/R$', club: null, note: 'Promoção ilustrativa válida enquanto durar a campanha.', alert: false, following: true },
           { name: 'Riachuelo', category: 'Moda', points: '3 pts/R$', normal: '1 pt/R$', threshold: '2 pts/R$', club: '4 pts/R$', note: 'Clube Livelo possui pontuação própria nesta simulação.', alert: false, following: false },
@@ -2815,6 +2834,28 @@
             value.className = domain === 'livelo' ? 'cashback livelo' : 'cashback';
             value.textContent = domain === 'livelo' ? store.points : store.cashback;
             top.append(titleGroup, value);
+            if (domain === 'livelo') {
+              var alertButton = document.createElement('button');
+              alertButton.type = 'button';
+              alertButton.className = 'botao-alerta-card' + (store.alertActive ? ' ativo' : '');
+              alertButton.setAttribute('aria-label', store.alertActive ? 'Desativar alerta' : 'Ativar alerta');
+              var alertIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+              alertIcon.setAttribute('class', 'icone');
+              var alertUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+              alertUse.setAttribute('href', '#i-bell');
+              alertIcon.appendChild(alertUse);
+              alertButton.appendChild(alertIcon);
+              alertButton.addEventListener('click', function () {
+                if (!store.following) {
+                  showSuccess(domain, 'Acompanhe a loja antes de ativar um alerta.');
+                  return;
+                }
+                store.alertActive = !store.alertActive;
+                renderStores(domain);
+                showSuccess(domain, store.alertActive ? 'Alerta ativado para ' + store.name + '.' : 'Alerta desativado para ' + store.name + '.');
+              });
+              top.appendChild(alertButton);
+            }
 
             var note = document.createElement('p');
             note.textContent = store.note;

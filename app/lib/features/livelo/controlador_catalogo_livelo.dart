@@ -38,15 +38,25 @@ typedef AlterarAcompanhamentoLivelo =
       required bool acompanhada,
     });
 
+typedef AlterarAlertaLivelo =
+    Future<void> Function({required String idExterno, required bool ativo});
+
+Future<void> _ignorarAlerta({
+  required String idExterno,
+  required bool ativo,
+}) async {}
+
 class ControladorCatalogoLivelo extends ChangeNotifier {
   ControladorCatalogoLivelo({
     required this.buscar,
     required this.alterarAcompanhamento,
+    AlterarAlertaLivelo? alterarAlerta,
     this.debounce = const Duration(milliseconds: 350),
-  });
+  }) : alterarAlerta = alterarAlerta ?? _ignorarAlerta;
 
   final BuscarCatalogoLivelo buscar;
   final AlterarAcompanhamentoLivelo alterarAcompanhamento;
+  final AlterarAlertaLivelo alterarAlerta;
   final Duration debounce;
 
   final List<ParceiroCatalogoLivelo> _itens = [];
@@ -175,6 +185,35 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
       return false;
     } finally {
       _mutacoesPendentes.remove(original.idExterno);
+      if (!_descartado) notifyListeners();
+    }
+  }
+
+  Future<bool> alternarAlerta(ParceiroCatalogoLivelo parceiro) async {
+    if (_mutacoesPendentes.contains('alerta:${parceiro.idExterno}')) {
+      return false;
+    }
+    final indice = _itens.indexWhere(
+      (item) => item.idExterno == parceiro.idExterno,
+    );
+    if (indice < 0 || !parceiro.acompanhada) return false;
+    final original = _itens[indice];
+    final ativo = !original.alertaAtivo;
+    final chave = 'alerta:${original.idExterno}';
+    _mutacoesPendentes.add(chave);
+    _itens[indice] = original.copiarCom(alertaAtivo: ativo);
+    notifyListeners();
+    try {
+      await alterarAlerta(idExterno: original.idExterno, ativo: ativo);
+      return true;
+    } catch (_) {
+      if (_itens.length > indice &&
+          _itens[indice].idExterno == original.idExterno) {
+        _itens[indice] = original;
+      }
+      return false;
+    } finally {
+      _mutacoesPendentes.remove(chave);
       if (!_descartado) notifyListeners();
     }
   }

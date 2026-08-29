@@ -30,6 +30,7 @@ backend/api/
 | `livelo/painel` | GET | Painel Livelo paginado | Firebase |
 | `livelo/catalogo` | GET | Catálogo completo, filtros e resumo Livelo | Firebase |
 | `livelo/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhar/remover parceiro do catálogo | admin |
+| `livelo/catalogo/[id_externo]/alerta` | PATCH | Ligar/desligar o sino de alerta de uma loja acompanhada | admin |
 | `livelo/preferencias` | GET/PATCH | Preferências Livelo | admin |
 | `livelo/lojas` | GET/POST | Catálogo/cadastro lojas | admin |
 | `livelo/lojas/[id]` | PATCH/DELETE | Regra/remoção loja | admin |

@@ -80,6 +80,7 @@ export type ParceiroLiveloPersistido = {
   fim_promocao: string | null;
   link: string | null;
   acompanhada: boolean;
+  alerta_ativo?: boolean;
   alerta: boolean;
   atualizado_em: string;
   parceiros_lidos: number;
@@ -96,6 +97,7 @@ export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersisti
            parceiro.descricao_campanha, parceiro.inicio_promocao,
            parceiro.fim_promocao, parceiro.link,
            (loja.id IS NOT NULL) AS acompanhada,
+           COALESCE(loja.alerta_ativo, FALSE) AS alerta_ativo,
            COALESCE(pontuacao.alertou, FALSE) AS alerta,
            execucao.momento AS atualizado_em,
            execucao.parceiros_lidos
@@ -179,6 +181,23 @@ export async function alterarAcompanhamentoParceiroLivelo(entrada: {
     ) AS estado
   `) as Array<{ estado: boolean }>;
   return linhas[0]?.estado === true;
+}
+
+/** Liga/desliga a preferência do sino sem alterar o acompanhamento. */
+export async function alterarAlertaParceiroLivelo(
+  idExterno: string,
+  ativo: boolean,
+): Promise<boolean> {
+  const sql = conectar();
+  const linhas = (await sql`
+    UPDATE loja
+       SET alerta_ativo = ${ativo}
+     WHERE parceiro_livelo_id = (
+       SELECT id FROM parceiro_livelo WHERE id_externo = ${idExterno} AND ativo = TRUE
+     )
+     RETURNING id
+  `) as Array<{ id: number }>;
+  return linhas.length > 0;
 }
 
 /** Recorte agregado da Livelo para o Início do aplicativo.

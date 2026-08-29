@@ -54,6 +54,7 @@ export function apresentarParceiroLivelo(
     fim_promocao: parceiro.fim_promocao,
     link: parceiro.link,
     acompanhada: parceiro.acompanhada,
+    alerta_ativo: parceiro.alerta_ativo ?? false,
     alerta: parceiro.alerta,
     atualizado_em: parceiro.atualizado_em,
   };
@@ -139,4 +140,13 @@ export function validarAcompanhamentoLivelo(
     return { ok: false };
   }
   return { ok: true, acompanhada: objeto.acompanhada };
+}
+
+export function validarAlertaLivelo(
+  corpo: unknown,
+): { ok: true; ativo: boolean } | { ok: false } {
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) return { ok: false };
+  const objeto = corpo as Record<string, unknown>;
+  if (Object.keys(objeto).length !== 1 || typeof objeto.ativo !== "boolean") return { ok: false };
+  return { ok: true, ativo: objeto.ativo };
 }

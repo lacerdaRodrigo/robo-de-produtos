@@ -51,14 +51,16 @@ def json_inter_exemplo() -> str:
 @pytest.fixture
 def favoritas() -> list[LojaFavorita]:
     return [
-        LojaFavorita(nome="Natura", categoria="Beleza"),
-        LojaFavorita(nome="O Boticário", categoria="Beleza"),
-        LojaFavorita(nome="Casas Bahia", categoria="Marketplace / Varejo Geral"),
-        LojaFavorita(nome="Magalu", categoria="Marketplace / Varejo Geral"),
-        LojaFavorita(nome="Pontofrio", categoria="Marketplace / Varejo Geral"),
-        LojaFavorita(nome="Petlove", categoria="Pet"),
-        LojaFavorita(nome="C&A", categoria="Moda", apelidos=("CEA",)),
-        LojaFavorita(nome="Booking.com", categoria="Viagem", apelidos=("Booking com",)),
+        LojaFavorita(nome="Natura", categoria="Beleza", alerta_ativo=True),
+        LojaFavorita(nome="O Boticário", categoria="Beleza", alerta_ativo=True),
+        LojaFavorita(nome="Casas Bahia", categoria="Marketplace / Varejo Geral", alerta_ativo=True),
+        LojaFavorita(nome="Magalu", categoria="Marketplace / Varejo Geral", alerta_ativo=True),
+        LojaFavorita(nome="Pontofrio", categoria="Marketplace / Varejo Geral", alerta_ativo=True),
+        LojaFavorita(nome="Petlove", categoria="Pet", alerta_ativo=True),
+        LojaFavorita(nome="C&A", categoria="Moda", apelidos=("CEA",), alerta_ativo=True),
+        LojaFavorita(
+            nome="Booking.com", categoria="Viagem", apelidos=("Booking com",), alerta_ativo=True
+        ),
     ]
 
 

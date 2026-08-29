@@ -38,9 +38,10 @@ class LojaFavorita:
     """Uma loja monitorada, vinda da configuracao (PRD 5.3).
 
     `multiplicador` e `piso_pontos` sao o limiar proprio da loja (RN28).
+    `alerta_ativo` e a preferencia do sino no card; falso desliga apenas o
+    disparo, sem remover a loja acompanhada.
     `None` significa "usa o padrao global" — a mesma semantica do NULL nas
-    colunas do banco. Ninguem consome esses dois ainda: quem vai usa-los e
-    o `alertas.py` da V2.2. Estao aqui porque o adaptador ja le as colunas.
+    colunas do banco. O adaptador le os tres valores diretamente do Postgres.
     """
 
     nome: str
@@ -48,6 +49,7 @@ class LojaFavorita:
     apelidos: tuple[str, ...] = field(default_factory=tuple)
     multiplicador: Decimal | None = None
     piso_pontos: Decimal | None = None
+    alerta_ativo: bool = False
 
 
 @dataclass(frozen=True, slots=True)

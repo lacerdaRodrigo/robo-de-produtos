@@ -141,7 +141,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN24** | A página exibe **todas** as favoritas, em promoção ou não. É o que permite consultar a pontuação base sem abrir a Livelo (O5) |
 | **RN25** | A página nunca carrega imagem, fonte ou script de domínio externo. Logotipo de parceiro não é hospedado nem apontado por link direto — ver 9.2 |
 | **RN26** | O carimbo de atualização é obrigatório e sempre visível. Sem ele a página não cumpre MS6 |
-| **RN27** | **Uma loja gera alerta quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** Substitui e inverte RN02 |
+| **RN27** | **Uma loja marcada no sino gera alerta quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** O sino é uma preferência independente do resultado histórico `pontuacao.alertou`; loja acompanhada sem sino não gera alerta. |
 | **RN28** | Multiplicador e piso têm valor padrão global, sobrescrevível por loja. Loja sem sobrescrita usa o padrão |
 | **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
@@ -333,11 +333,12 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 |---|---|---|
 | `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
 | `piso_pontos` | `Decimal \| None` | Idem |
+| `alerta_ativo` | `bool` | Preferência do sino no card; `false` não remove o acompanhamento |
 
 ### 8.1 Esquema do banco
 
 ```
-loja        id, nome, categoria, multiplicador?, piso_pontos?, criada_em
+loja        id, nome, categoria, multiplicador?, piso_pontos?, alerta_ativo, criada_em
 apelido     id, loja_id, texto              -- RN04 continua exigindo grafia exata
 preferencia chave, valor                    -- multiplicador e piso padrão, assinante_clube
 execucao    id, momento, parceiros_lidos, alertas, versao          -- V2.3

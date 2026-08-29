@@ -13,9 +13,9 @@ AGORA_TESTE = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
 PADRAO = Preferencias()
 
 FAVORITAS = [
-    LojaFavorita(nome="Natura", categoria="Beleza"),
-    LojaFavorita(nome="C&A", categoria="Moda", apelidos=("CEA",)),
-    LojaFavorita(nome="Magalu", categoria="Marketplace"),
+    LojaFavorita(nome="Natura", categoria="Beleza", alerta_ativo=True),
+    LojaFavorita(nome="C&A", categoria="Moda", apelidos=("CEA",), alerta_ativo=True),
+    LojaFavorita(nome="Magalu", categoria="Marketplace", alerta_ativo=True),
 ]
 
 
@@ -83,3 +83,11 @@ def teste_ct143_retrato_carrega_contagem_e_versao():
     assert retrato.catalogo == tuple(parceiros)
     assert retrato.versao == "9.9.9"
     assert retrato.alertas == 1
+
+
+def teste_ct169_sino_desligado_suprime_alerta_calculado():
+    loja = LojaFavorita(nome="Natura", categoria="Beleza", alerta_ativo=False)
+    retrato = monta([faz_parceiro("Natura", "8", base="2")], favoritas=[loja])
+
+    assert retrato.pontuacoes[0].valor_de_disparo == Decimal("4")
+    assert retrato.pontuacoes[0].alertou is False

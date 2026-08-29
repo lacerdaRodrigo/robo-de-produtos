@@ -177,10 +177,10 @@ class CatalogoPostgres:
                    ARRAY_AGG(a.texto) FILTER (WHERE a.texto IS NOT NULL),
                    ARRAY[]::TEXT[]
                ) AS apelidos,
-               l.multiplicador, l.piso_pontos
+                    l.multiplicador, l.piso_pontos, l.alerta_ativo
           FROM loja l
           LEFT JOIN apelido a ON a.loja_id = l.id
-         GROUP BY l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos
+         GROUP BY l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos, l.alerta_ativo
          ORDER BY l.categoria, l.nome
     """
 
@@ -230,8 +230,9 @@ class CatalogoPostgres:
                 apelidos=tuple(apelidos),
                 multiplicador=multiplicador,
                 piso_pontos=piso_pontos,
+                alerta_ativo=alerta_ativo,
             )
-            for nome, categoria, apelidos, multiplicador, piso_pontos in linhas
+            for nome, categoria, apelidos, multiplicador, piso_pontos, alerta_ativo in linhas
         ]
 
 

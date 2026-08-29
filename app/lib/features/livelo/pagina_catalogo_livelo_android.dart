@@ -52,6 +52,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
               idExterno: idExterno,
               acompanhada: acompanhada,
             ),
+        alterarAlerta: ({required idExterno, required ativo}) =>
+            widget.api.alterarAlertaLivelo(idExterno: idExterno, ativo: ativo),
       );
   late final bool _controladorExterno = widget.controlador != null;
   final _busca = TextEditingController();
@@ -80,6 +82,22 @@ class _EstadoPaginaCatalogoLiveloAndroid
           sucesso
               ? 'Acompanhamento salvo. A regra será aplicada na próxima coleta.'
               : 'Não foi possível salvar. O estado anterior foi restaurado.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _alternarAlerta(ParceiroCatalogoLivelo parceiro) async {
+    final sucesso = await _controlador.alternarAlerta(parceiro);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          sucesso
+              ? (parceiro.alertaAtivo
+                    ? 'Alerta desativado para esta loja.'
+                    : 'Alerta ativado para esta loja.')
+              : 'Não foi possível salvar o alerta.',
         ),
       ),
     );
@@ -295,6 +313,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               ),
               podeAdministrar: widget.administrador,
               aoAlternar: () => _alternar(parceiro),
+              aoAlternarAlerta: () => _alternarAlerta(parceiro),
             );
           },
         ),

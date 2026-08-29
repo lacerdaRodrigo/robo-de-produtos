@@ -81,6 +81,16 @@ class Api {
     );
   }
 
+  Future<void> alterarAlertaLivelo({
+    required String idExterno,
+    required bool ativo,
+  }) async {
+    await cliente.alterar(
+      '/api/livelo/catalogo/$idExterno/alerta',
+      corpo: <String, Object?>{'ativo': ativo},
+    );
+  }
+
   /// Cashback dos Sites parceiros do Inter (PRD-V3), sempre lido da API.
   Future<Pagina<CashbackInter>> painelCashbackInter({
     String q = '',

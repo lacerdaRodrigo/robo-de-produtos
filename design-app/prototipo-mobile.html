@@ -379,7 +379,7 @@
 
       .lojas { display: grid; gap: 10px; margin-top: 14px; }
       .loja { padding: 14px; }
-      .loja-topo { display: grid; grid-template-columns: 46px 1fr auto; gap: 11px; align-items: center; }
+      .loja-topo { display: grid; grid-template-columns: 46px 1fr auto auto; gap: 9px; align-items: center; }
       .loja-marca {
         display: grid;
         place-items: center;
@@ -396,9 +396,19 @@
       .loja-nome strong { font-size: 13px; }
       .loja-nome small { margin-top: 2px; color: var(--suave); font-size: 9px; }
       .beneficio { color: var(--ganho); font-size: 12px; font-weight: 950; text-align: right; }
+      .botao-alerta { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--borda); border-radius: 11px; background: var(--superficie); color: var(--suave); cursor: pointer; }
+      .botao-alerta.ativo { border-color: var(--acao); background: var(--acao-fundo); color: var(--acao); }
       .loja-rodape { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--borda); }
       .status { display: inline-flex; align-items: center; gap: 5px; color: var(--suave); font-size: 9px; }
       .status::before { width: 6px; height: 6px; content: ""; border-radius: 50%; background: var(--ganho); }
+      .campanha { margin-top: 12px; padding: 10px 11px; border-radius: 12px; background: var(--superficie-alt); color: var(--suave); font-size: 10px; line-height: 1.45; }
+      .campanha-texto { max-height: 43px; overflow: hidden; }
+      .campanha.aberta .campanha-texto { max-height: 240px; }
+      .campanha strong { display: block; margin-bottom: 3px; color: var(--texto); font-size: 10px; }
+      .link-externo { display: inline-flex; margin-top: 7px; padding: 0; border: 0; background: transparent; color: var(--acao); font: inherit; font-size: 10px; font-weight: 850; cursor: pointer; }
+      .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+      .tags .tag { margin: 0; padding: 5px 8px; border-radius: 999px; background: var(--superficie-alt); color: var(--suave); font-size: 9px; }
+      .tags .tag.verde { background: var(--ganho-fundo); color: var(--ganho); }
       .acompanhar {
         min-height: 35px;
         padding: 7px 11px;
@@ -744,7 +754,7 @@
             <div class="chips"><button class="chip ativo" type="button">Todas</button><button class="chip" type="button">Moda</button><button class="chip" type="button">Viagem</button><button class="chip" type="button">Tecnologia</button></div>
             <div class="faixa"><svg class="icone"><use href="#i-clock"></use></svg><span>Os cartões abaixo demonstram a composição. Nome, categorias, pontos, campanha e validade virão da API.</span></div>
             <div class="lojas">
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">EX</span><span class="loja-nome"><strong>Parceiro de exemplo</strong><small>Categoria real · campanha quando existir</small></span><span class="beneficio">— pts/R$</span></div><div class="loja-rodape"><span class="status">Validade quando informada</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">LV</span><span class="loja-nome"><strong>Liga Vitória Consórcio</strong><small>Outros · campanha Livelo</small></span><span class="beneficio">100 pts/R$</span><button class="botao-alerta ativo" type="button" data-action="alerta" aria-label="Desativar alerta"><svg class="icone pequeno"><use href="#i-bell"></use></svg></button></div><div class="tags"><span class="tag">Normal 1 ponto por R$ 1</span><span class="tag verde">Promoção</span></div><div class="campanha"><strong>Condições da campanha</strong><div class="campanha-texto">São elegíveis ao acúmulo de Pontos Livelo os participantes que adquirirem produtos e serviços no hotsite parceiro, conforme as regras da oferta. A promoção é válida para compras aprovadas dentro do prazo e não cumulativas com outras condições.</div><button class="link-externo" type="button" data-action="ver-mais">Ver mais</button><button class="link-externo" type="button" data-action="link">Ver regras completas no site da Livelo</button></div><div class="loja-rodape"><span class="status">Válido até 31/08/2026</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhando</button></div></article>
             </div>
           </div>
           <div class="painel" data-painel-grupo="livelo" data-painel="acompanhadas" hidden>
@@ -939,6 +949,12 @@
           botao.textContent = ativo ? (inter ? 'Selecionada' : 'Acompanhando') : (inter ? 'Selecionar' : 'Acompanhar');
           mostrarToast(ativo ? 'Loja adicionada ao seu radar.' : 'Loja removida do seu radar.');
         }
+        function alternarAlerta(botao) {
+          var ativo = !botao.classList.contains('ativo');
+          botao.classList.toggle('ativo', ativo);
+          botao.setAttribute('aria-label', ativo ? 'Desativar alerta' : 'Ativar alerta');
+          mostrarToast(ativo ? 'Alerta ativado para esta loja.' : 'Alerta desativado para esta loja.');
+        }
         function mostrarToast(texto) {
           clearTimeout(timer);
           toast.textContent = texto;
@@ -957,8 +973,14 @@
           if (acao === 'folha') abrirFolha(botao.dataset.folha);
           if (acao === 'fechar-folha') fecharFolha();
           if (acao === 'acompanhar') acompanhar(botao);
+          if (acao === 'alerta') alternarAlerta(botao);
+          if (acao === 'ver-mais') {
+            var campanha = botao.closest('.campanha');
+            var aberta = campanha.classList.toggle('aberta');
+            botao.textContent = aberta ? 'Ver menos' : 'Ver mais';
+          }
           if (acao === 'buscar') mostrarToast('Busca atualizada no catálogo local.');
-          if (acao === 'link') mostrarToast('No app, este botão abrirá um endereço HTTPS validado do Shopping Inter.');
+          if (acao === 'link') mostrarToast('No app, este botão abrirá o endereço HTTPS validado da Livelo.');
           if (acao === 'config') mostrarToast('Utilidade preservada fora dos quatro temas principais.');
         });
         document.addEventListener('keydown', function (evento) { if (evento.key === 'Escape') { fecharMenu(); fecharFolha(); } });

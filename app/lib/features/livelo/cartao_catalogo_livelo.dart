@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
@@ -12,12 +13,14 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     required this.pendente,
     required this.podeAdministrar,
     required this.aoAlternar,
+    required this.aoAlternarAlerta,
   });
 
   final ParceiroCatalogoLivelo parceiro;
   final bool pendente;
   final bool podeAdministrar;
   final VoidCallback aoAlternar;
+  final VoidCallback aoAlternarAlerta;
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +42,37 @@ class CartaoCatalogoLivelo extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        parceiro.nome,
-                        style: tema.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              parceiro.nome,
+                              style: tema.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            key: Key('alerta-${parceiro.idExterno}'),
+                            tooltip: parceiro.alertaAtivo
+                                ? 'Desativar alerta'
+                                : 'Ativar alerta',
+                            onPressed:
+                                parceiro.acompanhada &&
+                                    podeAdministrar &&
+                                    !pendente
+                                ? aoAlternarAlerta
+                                : null,
+                            icon: Icon(
+                              parceiro.alertaAtivo
+                                  ? Icons.notifications_active
+                                  : Icons.notifications_none_outlined,
+                              color: parceiro.alertaAtivo
+                                  ? cores.acao
+                                  : cores.textoSuave,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -99,6 +128,14 @@ class CartaoCatalogoLivelo extends StatelessWidget {
                 tom: TomRadar.atencao,
               ),
             ],
+            if (parceiro.descricaoCampanha != null &&
+                parceiro.descricaoCampanha!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _DescricaoCampanha(
+                texto: parceiro.descricaoCampanha!,
+                link: parceiro.link,
+              ),
+            ],
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -135,6 +172,86 @@ class CartaoCatalogoLivelo extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DescricaoCampanha extends StatefulWidget {
+  const _DescricaoCampanha({required this.texto, this.link});
+  final String texto;
+  final String? link;
+
+  @override
+  State<_DescricaoCampanha> createState() => _DescricaoCampanhaState();
+}
+
+class _DescricaoCampanhaState extends State<_DescricaoCampanha> {
+  bool _aberta = false;
+
+  Future<void> _abrirLink() async {
+    final uri = Uri.tryParse(widget.link ?? '');
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      decoration: BoxDecoration(
+        color: cores.superficieAlternativa,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Condições da campanha',
+            style: tema.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.texto,
+            maxLines: _aberta ? null : 3,
+            overflow: _aberta ? null : TextOverflow.ellipsis,
+            style: tema.textTheme.bodySmall?.copyWith(
+              color: cores.textoSuave,
+              height: 1.35,
+            ),
+          ),
+          if (widget.texto.length > 180)
+            TextButton(
+              onPressed: () => setState(() => _aberta = !_aberta),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(_aberta ? 'Ver menos' : 'Ver mais'),
+            ),
+          if (_linkHttpsValido(widget.link))
+            TextButton.icon(
+              onPressed: _abrirLink,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('Ver regras completas no site da Livelo'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+bool _linkHttpsValido(String? link) {
+  final uri = Uri.tryParse(link ?? '');
+  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
 }
 
 class _Iniciais extends StatelessWidget {

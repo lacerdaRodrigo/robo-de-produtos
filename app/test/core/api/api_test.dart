@@ -302,6 +302,7 @@ void main() {
       pagina: 2,
     );
     await api.alterarAcompanhamentoLivelo(idExterno: 'NAT', acompanhada: true);
+    await api.alterarAlertaLivelo(idExterno: 'NAT', ativo: true);
 
     expect(requisicoes.first.url.path, '/api/livelo/catalogo');
     expect(requisicoes.first.url.queryParameters, {
@@ -312,11 +313,10 @@ void main() {
       'pagina': '2',
       'por_pagina': '20',
     });
-    expect(
-      requisicoes.last.url.path,
-      '/api/livelo/catalogo/NAT/acompanhamento',
-    );
-    expect(requisicoes.last.body, '{"acompanhada":true}');
+    expect(requisicoes[1].url.path, '/api/livelo/catalogo/NAT/acompanhamento');
+    expect(requisicoes[1].body, '{"acompanhada":true}');
+    expect(requisicoes[2].url.path, '/api/livelo/catalogo/NAT/alerta');
+    expect(requisicoes[2].body, '{"ativo":true}');
   });
 
   test('painelCashbackInter preserva a oferta textual e a paginação', () async {

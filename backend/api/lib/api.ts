@@ -70,6 +70,7 @@ export const STATUS: Record<string, number> = {
   NAO_AUTORIZADO: 401,
   PROIBIDO: 403,
   NAO_ACHEI: 404,
+  CONFLITO: 409,
   LIMITE: 429,
   INESPERADO: 500,
 };

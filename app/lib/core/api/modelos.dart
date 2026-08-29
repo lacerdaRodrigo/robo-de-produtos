@@ -679,7 +679,9 @@ class ParceiroCatalogoLivelo {
     required this.inicioPromocao,
     required this.fimPromocao,
     required this.acompanhada,
+    this.alertaAtivo = false,
     required this.alerta,
+    this.link,
   });
 
   factory ParceiroCatalogoLivelo.parse(Map<String, dynamic> objeto) =>
@@ -703,7 +705,9 @@ class ParceiroCatalogoLivelo {
         descricaoCampanha: _textoOpcional(objeto['descricao_campanha']),
         inicioPromocao: _textoOpcional(objeto['inicio_promocao']),
         fimPromocao: _textoOpcional(objeto['fim_promocao']),
+        link: _textoOpcional(objeto['link']),
         acompanhada: _booleano(objeto['acompanhada']),
+        alertaAtivo: _booleano(objeto['alerta_ativo']),
         alerta: _booleano(objeto['alerta']),
       );
 
@@ -722,27 +726,34 @@ class ParceiroCatalogoLivelo {
   final String? inicioPromocao;
   final String? fimPromocao;
   final bool acompanhada;
+  final bool alertaAtivo;
   final bool alerta;
+  final String? link;
 
-  ParceiroCatalogoLivelo copiarCom({bool? acompanhada, bool? alerta}) =>
-      ParceiroCatalogoLivelo(
-        idExterno: idExterno,
-        nome: nome,
-        categorias: categorias,
-        pontosAtuais: pontosAtuais,
-        pontosAnteriores: pontosAnteriores,
-        pontosBase: pontosBase,
-        pontosClube: pontosClube,
-        moeda: moeda,
-        prefixoAte: prefixoAte,
-        emPromocao: emPromocao,
-        campanha: campanha,
-        descricaoCampanha: descricaoCampanha,
-        inicioPromocao: inicioPromocao,
-        fimPromocao: fimPromocao,
-        acompanhada: acompanhada ?? this.acompanhada,
-        alerta: alerta ?? this.alerta,
-      );
+  ParceiroCatalogoLivelo copiarCom({
+    bool? acompanhada,
+    bool? alertaAtivo,
+    bool? alerta,
+  }) => ParceiroCatalogoLivelo(
+    idExterno: idExterno,
+    nome: nome,
+    categorias: categorias,
+    pontosAtuais: pontosAtuais,
+    pontosAnteriores: pontosAnteriores,
+    pontosBase: pontosBase,
+    pontosClube: pontosClube,
+    moeda: moeda,
+    prefixoAte: prefixoAte,
+    emPromocao: emPromocao,
+    campanha: campanha,
+    descricaoCampanha: descricaoCampanha,
+    inicioPromocao: inicioPromocao,
+    fimPromocao: fimPromocao,
+    acompanhada: acompanhada ?? this.acompanhada,
+    alertaAtivo: alertaAtivo ?? this.alertaAtivo,
+    alerta: alerta ?? this.alerta,
+    link: link,
+  );
 }
 
 class MelhorOfertaLivelo {
