@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.47.1 (2026-08-29)
+
+### Bug Fixes
+
+- **ci**: Corrige gates de app e versionamento
+  ([`9b484fd`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9b484fd9014590ab19594a3a576d4ca246dd4a40))
+
+
 ## v1.47.0 (2026-08-29)
 
 ### Features
