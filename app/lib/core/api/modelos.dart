@@ -788,6 +788,7 @@ class ResumoCatalogoLivelo {
     required this.totalCatalogo,
     required this.acompanhadas,
     required this.alertas,
+    this.alertasAtivos = 0,
     required this.melhorOferta,
   });
 
@@ -799,6 +800,7 @@ class ResumoCatalogoLivelo {
       totalCatalogo: _inteiroNaoNegativo(objeto['total_catalogo']),
       acompanhadas: _inteiroNaoNegativo(objeto['acompanhadas']),
       alertas: _inteiroNaoNegativo(objeto['alertas']),
+      alertasAtivos: _inteiroNaoNegativo(objeto['alertas_ativos']),
       melhorOferta: melhor is Map<String, dynamic>
           ? MelhorOfertaLivelo.parse(melhor)
           : null,
@@ -810,17 +812,24 @@ class ResumoCatalogoLivelo {
   final int totalCatalogo;
   final int acompanhadas;
   final int alertas;
+  final int alertasAtivos;
   final MelhorOfertaLivelo? melhorOferta;
 
-  ResumoCatalogoLivelo copiarCom({int? acompanhadas, int? alertas}) {
+  ResumoCatalogoLivelo copiarCom({
+    int? acompanhadas,
+    int? alertas,
+    int? alertasAtivos,
+  }) {
     final novasAcompanhadas = acompanhadas ?? this.acompanhadas;
     final novosAlertas = alertas ?? this.alertas;
+    final novosAlertasAtivos = alertasAtivos ?? this.alertasAtivos;
     return ResumoCatalogoLivelo(
       ultimaColeta: ultimaColeta,
       parceirosLidos: parceirosLidos,
       totalCatalogo: totalCatalogo,
       acompanhadas: novasAcompanhadas < 0 ? 0 : novasAcompanhadas,
       alertas: novosAlertas < 0 ? 0 : novosAlertas,
+      alertasAtivos: novosAlertasAtivos < 0 ? 0 : novosAlertasAtivos,
       melhorOferta: melhorOferta,
     );
   }

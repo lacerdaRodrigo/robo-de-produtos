@@ -48,6 +48,7 @@ export async function GET(requisicao: Request) {
         parceiros_lidos: primeiro?.parceiros_lidos ?? 0,
         total_catalogo: todos.length,
         acompanhadas: todos.filter((parceiro) => parceiro.acompanhada).length,
+        alertas_ativos: todos.filter((parceiro) => parceiro.acompanhada && parceiro.alerta_ativo).length,
         alertas: todos.filter((parceiro) => parceiro.acompanhada && parceiro.alerta).length,
         melhor_oferta: melhorOfertaLivelo(todos),
       },

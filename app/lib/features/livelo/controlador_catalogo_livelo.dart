@@ -154,10 +154,17 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     final resumoOriginal = _resumo;
     final acompanhar = !original.acompanhada;
     _mutacoesPendentes.add(original.idExterno);
-    _itens[indice] = original.copiarCom(acompanhada: acompanhar, alerta: false);
+    _itens[indice] = original.copiarCom(
+      acompanhada: acompanhar,
+      alertaAtivo: acompanhar ? original.alertaAtivo : false,
+      alerta: false,
+    );
     if (_resumo != null) {
       _resumo = _resumo!.copiarCom(
         acompanhadas: _resumo!.acompanhadas + (acompanhar ? 1 : -1),
+        alertasAtivos:
+            _resumo!.alertasAtivos -
+            (!acompanhar && original.alertaAtivo ? 1 : 0),
         alertas: _resumo!.alertas - (!acompanhar && original.alerta ? 1 : 0),
       );
     }
@@ -202,6 +209,12 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     final chave = 'alerta:${original.idExterno}';
     _mutacoesPendentes.add(chave);
     _itens[indice] = original.copiarCom(alertaAtivo: ativo);
+    final resumoOriginal = _resumo;
+    if (_resumo != null) {
+      _resumo = _resumo!.copiarCom(
+        alertasAtivos: _resumo!.alertasAtivos + (ativo ? 1 : -1),
+      );
+    }
     notifyListeners();
     try {
       await alterarAlerta(idExterno: original.idExterno, ativo: ativo);
@@ -211,6 +224,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
           _itens[indice].idExterno == original.idExterno) {
         _itens[indice] = original;
       }
+      _resumo = resumoOriginal;
       return false;
     } finally {
       _mutacoesPendentes.remove(chave);

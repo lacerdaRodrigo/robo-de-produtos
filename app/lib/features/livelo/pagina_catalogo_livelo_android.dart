@@ -452,7 +452,7 @@ class _MetricasCatalogo extends StatelessWidget {
       final metricas = [
         _Metrica(valor: '${resumo.totalCatalogo}', rotulo: 'no catálogo'),
         _Metrica(valor: '${resumo.acompanhadas}', rotulo: 'acompanhadas'),
-        _Metrica(valor: '${resumo.alertas}', rotulo: 'alertas'),
+        _Metrica(valor: '${resumo.alertasAtivos}', rotulo: 'alertas ativos'),
       ];
       if (limites.maxWidth < 240) {
         return Column(

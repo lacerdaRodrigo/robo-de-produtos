@@ -28,7 +28,7 @@ backend/api/
 | `resumo` | GET | Início agregado (Livelo+Inter+produtos) | Firebase |
 | `perfil` | GET | Perfil mínimo (gate de entrada) | Firebase |
 | `livelo/painel` | GET | Painel Livelo paginado | Firebase |
-| `livelo/catalogo` | GET | Catálogo completo, filtros e resumo Livelo | Firebase |
+| `livelo/catalogo` | GET | Catálogo completo, filtros e resumo Livelo (`alertas_ativos` reflete os sinos ligados) | Firebase |
 | `livelo/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhar/remover parceiro do catálogo | admin |
 | `livelo/catalogo/[id_externo]/alerta` | PATCH | Ligar/desligar o sino de alerta de uma loja acompanhada | admin |
 | `livelo/preferencias` | GET/PATCH | Preferências Livelo | admin |
