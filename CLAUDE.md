@@ -15,6 +15,17 @@ Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde q
 
 ## Regra de produto — protótipo antes da implementação
 
+### Regra visual inegociável
+
+Nunca invente ou improvise um design para substituir o protótipo. O protótipo
+que estamos construindo juntos é a fonte visual de verdade: a implementação
+deve seguir sua estrutura, hierarquia, espaçamento, cores, estados e
+navegação. Quando o protótipo não definir algo, peça uma decisão em vez de
+usar uma tela genérica do Material ou criar uma solução visual por conta
+própria.
+
+Protótipo mobile no workspace atual: [`prototipo-mobile.html`](/home/rodrigo/Estudos/robo/design-app/prototipo-mobile.html).
+
 Toda nova funcionalidade visível, tela, jornada ou mudança relevante de
 navegação deve passar primeiro pelos dois protótipos de `design-app/`:
 [`prototipo-web.html`](design-app/prototipo-web.html) e

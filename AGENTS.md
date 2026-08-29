@@ -65,6 +65,16 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 
 ## 6. Trabalho no `app/`
 
+### Regra visual inegociável
+
+Nunca invente ou improvise um design para substituir o protótipo. O protótipo
+que estamos construindo juntos é a fonte visual de verdade: reproduza sua
+estrutura, hierarquia, espaçamento, cores, estados e navegação antes de criar
+ou alterar a interface no Flutter. Se algo não estiver definido nele, pare e
+peça uma decisão; não preencha a lacuna com uma tela genérica do Material.
+
+Protótipo mobile no workspace atual: [`prototipo-mobile.html`](/home/rodrigo/Estudos/robo/design-app/prototipo-mobile.html).
+
 - Não inicialize Flutter, crie telas, banco, API ou workflow apenas porque existe um plano.
 - Quando houver autorização para começar, siga a Fase 1 do plano: inventário e contratos antes de telas.
 - Toda nova funcionalidade visível, tela, jornada ou mudança relevante de navegação deve ser desenhada primeiro nos dois protótipos de `design-app/`: [`prototipo-web.html`](design-app/prototipo-web.html) e [`prototipo-mobile.html`](design-app/prototipo-mobile.html).
