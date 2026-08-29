@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.45.0 (2026-08-29)
+
+### Bug Fixes
+
+- **api**: Corrige comentário no SQL de acompanhamento
+  ([`1c7289d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1c7289df0423e4795139d4cda15e0b2b040adb8d))
+
+### Documentation
+
+- Registra rollout do catalogo Livelo
+  ([`2d32d64`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/2d32d641ea18d1ca463d92141bc5c3742468f1d6))
+
+### Features
+
+- Alinha app mobile ao prototipo e corrige acompanhamento
+  ([`a1b26c9`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a1b26c998b2dde318971304ea85612d1cd7de523))
+
+
 ## v1.44.0 (2026-08-29)
 
 
