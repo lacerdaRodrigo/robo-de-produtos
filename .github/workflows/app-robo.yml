@@ -1,0 +1,43 @@
+name: app-robo
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Mesma regra dos demais workflows: o token nao precisa de escrita.
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Mantem analise, goldens e builds reproduziveis entre execucoes.
+          flutter-version: "3.44.1"
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Analise
+        run: flutter analyze
+
+      - name: Formatacao
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Testes
+        run: flutter test
+
+      # Nesta fase o alvo validado por CI e o Web. Android/iOS entram quando o
+      # plano chegar a essas plataformas; nao ha emulador/dispositivo agora.
+      - name: Build web
+        run: flutter build web

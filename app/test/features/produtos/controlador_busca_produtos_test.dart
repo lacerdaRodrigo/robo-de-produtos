@@ -1,0 +1,184 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:app_robo/core/api/modelos.dart';
+import 'package:app_robo/core/api/pagina.dart';
+import 'package:app_robo/features/produtos/controlador_busca_produtos.dart';
+
+ProdutoDireto _produto(String id, {String loja = 'casas-bahia'}) =>
+    ProdutoDireto(
+      idExterno: id,
+      nome: 'Produto $id',
+      marca: 'Motorola',
+      categoria: 'Celular',
+      caminho: 'produto/$id',
+      precoCheioTexto: 'R\$ 2.000,00',
+      precoCheioValor: '2000',
+      precoAtualTexto: 'R\$ 1.800,00',
+      precoAtualValor: '1800',
+      descontoTexto: null,
+      descontoPercentualTexto: null,
+      cashbackTexto: null,
+      cashbackPercentualTexto: null,
+      precoLiquidoTexto: null,
+      parcelamento: null,
+      estoque: null,
+      etiquetas: const [],
+      lojaSlug: loja,
+      lojaNome: loja == 'casas-bahia' ? 'Casas Bahia' : 'Ponto',
+      atualizadaEm: '2026-08-22T12:00:00Z',
+    );
+
+Pagina<ProdutoDireto> _pagina(
+  List<ProdutoDireto> itens, {
+  int numero = 1,
+  int? total,
+  bool proxima = false,
+}) => Pagina(
+  itens: itens,
+  pagina: numero,
+  porPagina: 20,
+  totalItens: total ?? itens.length,
+  totalPaginas: proxima ? numero + 1 : numero,
+  temProxima: proxima,
+  atualizadoEm: '2026-08-22T12:00:00Z',
+  qualidade: 'completa',
+);
+
+void main() {
+  test(
+    'não pesquisa termo curto e aguarda o debounce antes da primeira página',
+    () async {
+      final chamadas = <String>[];
+      final controlador = ControladorBuscaProdutos(
+        buscar:
+            ({
+              required termo,
+              required pagina,
+              marca,
+              categoria,
+              loja,
+              precoMin,
+              precoMax,
+            }) async {
+              chamadas.add('$termo/$pagina');
+              return _pagina([_produto('1')]);
+            },
+      );
+      addTearDown(controlador.dispose);
+
+      controlador.mudarTermo('a');
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(chamadas, isEmpty);
+
+      controlador.mudarTermo('edge');
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(chamadas, ['edge/1']);
+    },
+  );
+
+  test('pagina, deduplica por loja e ID e para na última página', () async {
+    final controlador = ControladorBuscaProdutos(
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            if (pagina == 1) {
+              return _pagina(
+                [_produto('1'), _produto('2')],
+                total: 3,
+                proxima: true,
+              );
+            }
+            return _pagina([_produto('2'), _produto('3')], numero: 2, total: 3);
+          },
+      debounce: Duration.zero,
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarTermo('edge');
+    await Future<void>.delayed(Duration.zero);
+    await controlador.carregarMais();
+    await controlador.carregarMais();
+
+    expect(controlador.itens.map((item) => item.idExterno), ['1', '2', '3']);
+    expect(controlador.temProxima, isFalse);
+  });
+
+  test('filtros reiniciam a busca e resposta antiga é ignorada', () async {
+    final primeira = Completer<Pagina<ProdutoDireto>>();
+    final filtrosRecebidos = <String?>[];
+    final controlador = ControladorBuscaProdutos(
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) {
+            filtrosRecebidos.add(marca);
+            if (marca == 'Motorola') {
+              return Future.value(_pagina([_produto('novo')]));
+            }
+            return primeira.future;
+          },
+      debounce: Duration.zero,
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarTermo('edge');
+    await Future<void>.delayed(Duration.zero);
+    controlador.mudarFiltros(const FiltrosProdutos(marca: 'Motorola'));
+    primeira.complete(_pagina([_produto('antigo')]));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(filtrosRecebidos, [null, 'Motorola']);
+    expect(controlador.itens.single.idExterno, 'novo');
+  });
+
+  test('erro da página adicional preserva a lista e permite retry', () async {
+    var falha = true;
+    final controlador = ControladorBuscaProdutos(
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            if (pagina == 1) {
+              return _pagina([_produto('1')], total: 2, proxima: true);
+            }
+            if (falha) {
+              falha = false;
+              throw StateError('sem rede');
+            }
+            return _pagina([_produto('2')], numero: 2, total: 2);
+          },
+      debounce: Duration.zero,
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarTermo('edge');
+    await Future<void>.delayed(Duration.zero);
+    await controlador.carregarMais();
+    expect(controlador.itens, hasLength(1));
+    expect(controlador.erroMais, isNotNull);
+    await controlador.carregarMais();
+    expect(controlador.itens, hasLength(2));
+    expect(controlador.erroMais, isNull);
+  });
+}

@@ -6,11 +6,6 @@ on:
     # C02: o cron do Actions nao garante horario exato, atraso e normal.
     - cron: "0 12,17,23 * * *"
   workflow_dispatch:
-    inputs:
-      enviar_email:
-        description: "Enviar e-mail desta execucao (o botao do site desmarca)"
-        type: boolean
-        default: true
 
 # PRD 9.4: o robo nunca escreve no repositorio.
 permissions:
@@ -20,6 +15,9 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend/robo
 
     steps:
       - uses: actions/checkout@v7
@@ -28,6 +26,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/robo/pyproject.toml
 
       - name: Instalar dependencias
         run: pip install -e .
@@ -36,15 +35,9 @@ jobs:
       # notifica sozinho. E o que distingue "sem promocao" de "robo quebrado".
       - name: Verificar promocoes
         env:
-          EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
-          SENHA_APP_GMAIL: ${{ secrets.SENHA_APP_GMAIL }}
-          EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
           # Ausente enquanto o secret nao existir: nesse caso o catalogo vem
           # do TOML, que continua versionado. Presente, o banco manda e o
           # arquivo vira reserva (PRD V2 7.1.1).
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           LIMIAR_PARCEIROS: "150"
-          # Vazio no agendado (schedule nao preenche `inputs`): o robo trata
-          # ausencia como "true". So o disparo manual do site manda "false".
-          ENVIAR_EMAIL: ${{ inputs.enviar_email }}
         run: python -m robo_livelo.principal

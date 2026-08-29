@@ -2,15 +2,233 @@
 
 Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluído" quando a fase inteira fechar.
 
-O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.md), no [`PRD-V3.md`](PRD-V3.md) ou no [`PRD-V4.md`](PRD-V4.md) — aqui fica só o que fazer e em que ordem.
+---
 
-> Atualizado em 2026-08-17. Versão técnica atual: **1.21.0**.
+## Catálogo Livelo completo — Android compacto
+
+**Backend publicado em 2026-08-28.** O protótipo mobile preserva a
+hierarquia aprovada sem apresentar nomes ou números ilustrativos como reais. O
+novo fluxo fica restrito ao Android compacto; Web, iOS e layout amplo continuam
+na experiência anterior.
+
+- [x] Extrair ID externo e categorias, deduplicar por ID e falhar em conflito
+- [x] Criar `migracoes/013_catalogo_livelo.sql` sem alterar produção
+- [x] Publicar execução, catálogo, vínculos e pontuações em uma transação
+- [x] Manter zero acompanhadas como estado válido, sem reidratar o TOML
+- [x] Criar GET paginado e PATCH administrativo idempotente na API
+- [x] Implementar busca com debounce, filtros, paginação e mutação reversível
+- [x] Cobrir Android compacto, iOS/Web anteriores, 320 px e temas claro/escuro
+- [x] Aplicar a migração `013` no Neon e confirmar tabela, vínculo e índice
+- [x] Publicar robô e API; a rota autenticada `/api/livelo/catalogo` está no ar
+- [x] Executar uma coleta real sem e-mail: 252 parceiros ativos foram publicados
+- [ ] Executar o smoke manual no Samsung pelo responsável
+
+Build, instalação, navegação e smoke no aparelho ficam a cargo do responsável.
+
+---
+
+## Reativação — API, robôs e CI (após arquivar o site)
+
+> Em 2026-08-23 reconstruí o shell publicável da API em `backend/api/` e corrigi
+> os workflows para apontarem para `backend/robo`. Registro do que já entrou e
+> do que ainda exige ação operacional (merge, Vercel, segredos, migrações).
+
+- [x] Movido `backend/api/routes/**` → `backend/api/app/api/**` (App Router)
+- [x] Esqueleto do API: `tsconfig.json`, `next-env.d.ts`, `next.config.ts`
+      (headers de segurança + `poweredByHeader:false`), `app/layout.tsx`,
+      `app/page.tsx`, `vitest.config.ts`, teste `lib/api.teste.ts`
+- [x] `GET /status` mínimo `{saudavel:true}` (sem nome de produto)
+- [x] Middleware `backend/api/middleware.ts`: HTTPS + allowlist de origem (CORS)
+      via `ALLOWED_ORIGINS`
+- [x] Workflows `robo.yml`, `inter.yml`, `produtos-inter.yml`: `working-directory:
+      backend/robo` + `cache-dependency-path`
+- [x] `testes.yml`: removido job `site:` (pasta desativada), job `qualidade`
+      corrigido para working dir `backend/robo`
+- [x] Gates API verde: `tsc --noEmit`, vitest (7), `next build`
+- [x] Gates robô verde: ruff, format, `pytest` 94,16%
+- [ ] Cadastrar `ALLOWED_ORIGINS` na Vercel (origin exata do Flutter Web)
+- [x] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
+- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada; a `013`
+      foi aplicada em 2026-08-28)
+- [ ] Conferir segredos `DATABASE_URL`, e-mail e `GITHUB_TOKEN_DISPARO` no GitHub
+- [ ] App Check: inscrever Web (reCAPTCHA) e iOS e recriar token debug do Samsung;
+      só então `EXIGIR_APP_CHECK=true`
+- [ ] Smoke no Samsung: `/status` → login → perfil → resumo → painel/cashback/produtos
+
+---
+
+O **porquê** de cada item está no [`PRD-LIVELO.md`](PRD-LIVELO.md), no [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md), no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md) ou no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md) — aqui fica só o que fazer e em que ordem.
+
+> Atualizado em 2026-08-28. Versão técnica atual: **1.40.0**.
 
 **Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: a barra lateral, a cor de ação (indigo), o Painel (hero com Top 3, botão "Ir para a Livelo") e a tabela de Lojas (coluna Limiar, ícone de remover) já entraram. Em 2026-08-13, pela manhã, você mandou `novo.html` direto na `main` (fora de PR) — mesmo mockup que já estava em mãos, confirmado byte a byte igual ao HTML colado no chat — e cobrou que o Painel estava "totalmente diferente". Comparação lado a lado (prints do Painel e de Lojas logado contra a leitura do mockup, já que o CDN do Tailwind não carrega neste ambiente) mostrou que a barra lateral, o hero, os cartões e os toggles já batiam; a diferença de verdade era estrutural: o mockup ordena numa grade única, o site ainda agrupava por categoria. Resolvido na quarta fatia (ver abaixo) — os controles de ordenar entraram e o agrupamento por categoria saiu, com busca cobrindo o que o índice de categoria fazia antes. O modal de cadastro do mockup segue de fora por não ganhar nada sobre o formulário inline que já funciona sem JavaScript; só a Central de Alertas fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
 **V3 do Shopping Inter:** implementação publicada pela PR #22. A migração `006` está aplicada no Neon e a primeira execução real terminou com sucesso, cadastrando 381 lojas. A conferência visual final na Vercel continua pendente.
 
-**V4 de produtos diretos:** V4.1–V4.5 estão implementadas. A migração incremental `008` foi aplicada no Neon e o primeiro aceite real, somente com Casas Bahia, terminou em sucesso: 94 páginas, 3.363 itens lidos, 3.310 produtos únicos e Edge 60 Pro retornando na busca local. O próximo rollout é Ponto; projeções para 3, 10 e 111 lojas ainda precisam ser fechadas.
+**V4 de produtos diretos:** V4.1–V4.5 estão implementadas. A migração incremental `008` foi aplicada no Neon e o primeiro aceite real, somente com Casas Bahia, terminou em sucesso: 94 páginas, 3.363 itens lidos, 3.310 produtos únicos e Edge 60 Pro retornando na busca local. A correção V4.5.1 para total variável está pronta no código, com a migração `009` ainda pendente no Neon. O próximo rollout é Ponto; projeções para 3, 10 e 111 lojas ainda precisam ser fechadas.
+
+---
+
+## Flutter — Fase 3B (autenticação por convite)
+
+**Fase 3B concluída e validada em produção em 2026-08-20.** O projeto Firebase
+`radarbeneficios` está conectado a Web, Android e iOS. O primeiro convite foi
+vinculado no acesso real, a API protegida respondeu pelo app instalado no Samsung
+SM-M135M e a auditoria registrou o sucesso. A direção final é manter somente a
+interface Flutter; a interface web Next.js (`site/`) foi desativada em 2026-08-24
+e a API v1 foi arquivada em `backend/api/`.
+
+- [x] Definir Firebase Authentication por e-mail/senha, sem cadastro público
+- [x] Conectar Web, Android e iOS pelo FlutterFire, sem segredo administrativo no bundle
+- [x] Criar login, recuperação, confirmação de e-mail e encerramento de sessão
+- [x] Enviar ID token nas chamadas privadas e manter `/api/status` público
+- [x] Validar token e revogação no servidor antes de consultar dados
+- [x] Exigir convite ativo, papel e e-mail verificado no Postgres
+- [x] Implementar rate limit persistente por origem, usuário e operação
+- [x] Auditar com hashes técnicos, sem token, IP, e-mail ou payload bruto
+- [x] Preparar e validar token do App Check nos dois lados, com rollout desligado
+- [x] Instalar build debug no Samsung SM-M135M e abrir o aplicativo
+- [x] Confirmar que o provedor **E-mail/senha** está ativo — criação da conta aceita pelo Firebase
+- [x] Aplicar `migracoes/010_autenticacao_app.sql` no Neon — aplicada em 2026-08-20
+- [x] Criar o primeiro usuário Firebase e inserir o convite `admin` ativo em `usuario_app`
+- [x] Responsável definiu a senha, confirmou o endereço e concluiu o vínculo do UID
+      no primeiro acesso real — validado em 2026-08-20
+- [x] Configurar na Vercel `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`,
+      `SEGREDO_LIMITE_API` e `EXIGIR_APP_CHECK=false`
+- [x] Publicar a API protegida e executar o smoke login → perfil → leitura — APK
+      de produção exibiu `Serviço conectado / API v1`; vínculo e auditoria de
+      sucesso confirmados no Neon em 2026-08-20
+- [x] Habilitar a API Firebase App Check, registrar o token de depuração do Samsung
+      SM-M135M e validar o Android com `ATIVAR_APP_CHECK=true` — concluído em
+      2026-08-20, sem gravar o token no repositório
+- [ ] Registrar/observar App Check em Web e iOS; só depois exigir no servidor
+- [x] Definir retenção de 30 dias para `auditoria_app`; cada nova gravação remove
+      os eventos vencidos na mesma consulta, sem cron ou credencial adicional
+- [ ] Acompanhar atualização de `firebase_app_check`: a versão atual ainda emite aviso
+      de migração futura para Built-in Kotlin, sem quebrar o build atual
+- [ ] Investigar o `next build` do site: Next 16.3.1 compila, mas falha ao ler
+      a saída válida de `tsc --showConfig` com TypeScript 5.9.3; `tsc --noEmit`
+      e os 65 testes Vitest passaram em 2026-08-22
+- [ ] Remover e recriar o token de depuração do App Check do Samsung após o
+      smoke de 2026-08-22: o provedor de depuração o escreveu no log local;
+      nunca registrar ou compartilhar esse valor
+- [x] Tratar a auditoria npm: Next 16.3.1, React 19.2.8 e dependências corrigidas;
+      `npm audit --omit=dev` confirmou zero vulnerabilidades em 2026-08-20
+
+O app Android de teste já envia um token App Check aceito pelo Firebase. A
+obrigatoriedade global permanece desligada na API (`EXIGIR_APP_CHECK=false`)
+para não bloquear Web/iOS antes de esses dois alvos serem observados.
+
+---
+
+## Flutter — Fase 4 Android primeiro
+
+**Fase 4.2A concluída em 2026-08-20.** Essa entrega introduziu no Samsung
+SM-M135M a barra inferior com Início, Livelo, Inter, Alertas e Mais. O ciclo
+posterior de Moldura substituiu a apresentação compacta por cabeçalho e gaveta,
+mantendo cinco destinos e o `IndexedStack`; telas maiores preservam a lateral.
+Este parágrafo registra a evolução histórica, não o alvo do novo ciclo mobile.
+
+- [x] Implementar navegação inferior para celular sem comprimir a barra lateral
+- [x] Preservar os mesmos cinco destinos, rótulos semânticos e estado das abas
+- [x] Testar celular em retrato/paisagem e tela larga
+- [x] Instalar no Samsung e validar seleção de Início → Livelo
+- [x] **Fase 4.2B concluída em 2026-08-22:** substituir o lugar-ocupante de Livelo pelo painel real
+  - [x] consumir `/api/livelo/painel` mantendo decimais como texto
+  - [x] pesquisar loja/categoria e ordenar por pontos, alerta ou nome
+  - [x] carregar todas as páginas sob demanda, sem duplicar itens e ignorando respostas antigas
+  - [x] mostrar pontos atuais, base, disparo, Clube, promoção e alerta
+  - [x] distinguir carregamento, erro/retry, nenhuma coleta, busca vazia, dado atrasado e loja ausente
+  - [x] cobrir modelo, API, paginação e widgets com testes (59 testes Flutter; cobertura crítica 93,00%)
+  - [x] gerar APK local de depuração
+  - [x] validar no Samsung SM-M135M: login real, App Check, busca, filtros e rotação; a API real expôs duas lojas em uma única página, e paginação/deduplicação em várias páginas seguem cobertas pelo CT-269
+  - [x] não inventar coleta parcial/degradada enquanto o endpoint não expuser qualidade
+- [ ] **Fase 4.3:** cashback Inter somente leitura — gates locais concluídos;
+      falta somente o smoke físico no Samsung antes de concluir
+- [ ] **Fase 4.4:** produtos, busca paginada e histórico — gates Flutter locais
+      concluídos (87 testes, cobertura crítica >= 90%, builds Web/APK); falta o
+      smoke físico no Samsung antes de concluir
+
+---
+
+## Flutter — redesign por telas
+
+### Migração visual mobile — plano de 28 de agosto de 2026
+
+O próximo ciclo mobile segue o
+[`PLANO-MIGRACAO-MOBILE.md`](../design-app/PLANO-MIGRACAO-MOBILE.md). O protótipo
+está salvo e o plano está documentado, mas o Flutter ainda não foi alterado para
+essa direção. O primeiro ciclo usa as APIs atuais, oferece quatro áreas
+principais e preserva o Web sem mudança visual. Catálogo Livelo público, central
+histórica de alertas e agregação de melhores ofertas ficam fora até existir
+contrato específico.
+
+- [x] Salvar a nova referência visual mobile com claro/escuro
+- [x] Documentar escopo, etapas, gates, riscos e definição de pronto
+- [x] Revisar e autorizar a Etapa 1 — fundação visual e aparência
+- [x] Implementar localmente controlador, tokens, persistência nativa e
+      componentes fundamentais da Etapa 1
+- [ ] Executar formatação, análise, testes, goldens e builds da Etapa 1 em um
+      ambiente com Flutter; este workspace não possui os SDKs Flutter/Dart
+- [ ] Implementar cada etapa somente após seu aceite
+
+### Registro do ciclo anterior
+
+O redesign anterior não liberou todas as telas de uma vez. Em 23 de agosto de
+2026, o plano passou a mapear os módulos até o fechamento multiplataforma,
+incluindo dependências de API, gates visuais e o roteiro automático no Samsung
+conectado. Os itens concluídos abaixo continuam como histórico do que existe no
+projeto; quando houver conflito de navegação mobile, prevalece o plano novo.
+
+- [x] **Etapa 0:** aprovar nome, símbolo, textos, abertura e estrutura do login
+- [x] Sincronizar os protótipos Web/Mobile e produzir as duas variantes SVG
+- [x] **Etapa 1 local:** aplicar ícones, launch screens e bootstrap Flutter com
+      ciclo mínimo de 1,5 segundo, loop durante a validação, demora honesta,
+      erro seguro, retry e movimento reduzido
+- [x] Passar 137 testes Flutter, análise e formatação
+- [x] Instalar e aprovar visualmente a abertura no Samsung SM-M135M conectado
+- [x] Planejar os Módulos 1 a 12, separando reskin existente, contrato novo,
+      melhoria opcional e funcionalidade futura
+- [x] Registrar a autorização para criar/rodar localmente e testar no Samsung,
+      sem `push`, publicação, migração, disparo ou mutação real automática
+- [ ] Fazer o aceite visual da abertura no navegador quando voltar ao escopo
+- [ ] Validar launch screen e ícone em iOS quando houver macOS/Xcode ou aparelho
+- [x] Aprovar e implementar o **Módulo 1 — Login** sem mudar Firebase, convite
+      ou autorização da API; 131 testes, análise, builds Web/APK e abertura no
+      Samsung passaram
+- [x] Escolher a gaveta como navegação mobile do **Módulo 2 — Moldura** e manter
+      lateral fixa no Web amplo
+- [x] Implementar cinco destinos, hub transitório de Lojas, retorno interno e
+      preservação de estado; análise, 137 testes, cobertura global de 90,16%,
+      builds Web/APK e instalação preservando dados locais passaram
+- [x] Fazer o aceite visual final do Módulo 2 no Samsung já aberto
+- [x] Aprovar os protótipos e o contrato agregado do **Módulo 3 — Início**
+- [x] Implementar localmente `GET /api/resumo` com leituras isoladas de
+      Livelo, Cashback Inter e Produtos, sem chamada direta às fontes
+- [x] Implementar métricas, prioridade por estado, retry preservando o último
+      resumo e quatro atalhos reais no Flutter
+- [x] Passar TypeScript, ESLint, 83 testes e build do site; formatação, análise,
+      147 testes, 91,29% de cobertura e builds Web/APK no Flutter
+- [x] Confirmar que a rota publicada `/api/resumo` continua protegida sem
+      credencial e abrir o Início autenticado no Samsung; o resumo carregou em
+      build debug com App Check desativado, sem mutação de dados
+- [x] Aprovar os protótipos do **Módulo 4 — hub de Lojas**
+- [x] Implementar o hub com resumo real por domínio, estados separados de
+      Livelo/Cashback/Produtos e retorno preservado; 148 testes, análise e
+      builds Web/APK passaram
+- [x] Fazer o aceite visual do Módulo 4 no Samsung com o APK novo
+- [x] Aprovar os protótipos do **Módulo 5 — hub do Shopping Inter**
+- [x] Implementar o hub com Cashback e Produtos separados, retornos explícitos
+      e pedidos administrativos por domínio; 150 testes, análise e builds
+      Web/APK passaram
+- [x] Fazer o aceite visual do Módulo 5 no fluxo aprovado
+- [x] Aprovar os protótipos do **Módulo 6 — Produtos e histórico de 30 dias**
+- [x] Implementar busca, cartão e histórico redesenhados; 153 testes, análise
+      e builds Web/APK passaram
+
+**Execução atual:** Módulos 0 a 5 estão aceitos. O Módulo 6 está pronto
+localmente e aguarda somente o aceite visual do responsável; nenhum `push`,
+publicação, migração, disparo ou mutação foi feito nesta etapa.
 
 ---
 
@@ -42,9 +260,9 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 
 ## V4 — catálogo de produtos do Compre direto no Inter
 
-- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-V4.md`
+- [x] **V4.0:** levantar a fonte pública real, separar Compre direto de Sites parceiros e escrever o `PRD-INTER-PRODUTOS.md`
 - [x] Registrar CT-200 em diante como catálogo de testes planejados
-- [x] **V4.1 de código:** medidor `scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
+- [x] **V4.1 de código:** medidor `backend/robo/scripts/medir_v4.py`, schema/migração `007` e contratos de persistência
 - [ ] **V4.1 — gate físico:** paginação, duração e duplicatas medidas na Casas Bahia; falta registrar bytes totais e projeções
 - [ ] Projetar volume para 3, 10 e 111 lojas, com três rodadas diárias e retenção de 30 dias
 - [x] Fechar em código schema, índices, área de preparação em memória, publicação atômica e expurgo de 30 dias
@@ -52,7 +270,9 @@ O **porquê** de cada item está no [`PRD.md`](PRD.md), no [`PRD-V2.md`](PRD-V2.
 - [x] **V4.3:** seleção de lojas, coleta por loja, snapshot atual e histórico
 - [x] **V4.4:** `/inter/produtos`, seleção administrativa e histórico público
 - [x] **V4.5:** workflow matricial, `max-parallel: 2`, cooldown de 1,5 s e consolidação da rodada
+- [x] **V4.5.1:** total variável conserva até três candidatas completas, publica a maior como degradada e preserva produtos ausentes (`migracoes/009`)
 - [x] Validar a primeira loja: Casas Bahia, 3.310 produtos ativos e Edge 60 Pro confirmado
+- [ ] Aplicar `migracoes/009_coleta_degradada_produtos_inter.sql` no Neon antes de publicar a V4.5.1
 - [ ] Validar Ponto antes de ampliar a seleção
 
 ---
@@ -85,7 +305,7 @@ O que sobrou disso:
 - [x] Tirar o "hipótese não confirmada" do comentário em `extrator.py` e do CT-091 em `docs/TESTES.md` — `"ATE"` está confirmado
 - [x] **`PROMOTION_CLUB` ganhou rótulo próprio.** Decisão de 2026-08-11: `CLUB` continua "exclusivo assinantes Clube"; `PROMOTION_CLUB` passa a exibir "assinantes Clube ganham mais", porque nesses a base subiu para todo mundo (Sephora 1→6 com Clube em 10) e a promoção *serve* ao não assinante. `activeCampaign` virou a fonte primária de RN23, com a comparação numérica de reserva para valor desconhecido. RN23 reescrita no PRD-V2 §6.2. CT-103 a CT-105
 - [x] Ruído no log reduzido: item sem `parity` nenhuma (produto da própria Livelo) cai em `DEBUG` mais um resumo em `INFO`; `parity` presente e ilegível continua `WARNING`, porque aí é sintoma. CT-106 e CT-107
-- [x] `testes/fixtures/payload_parceiros.json` enriquecida com quatro itens copiados da página real de 2026-08-11: Sephora e Coffee Mais (`PROMOTION_CLUB`), Aliexpress (`CLUB` com `separatorSlug: "ATE"`) e Liga Vitória (`parity: null`)
+- [x] `backend/robo/testes/fixtures/payload_parceiros.json` enriquecida com quatro itens copiados da página real de 2026-08-11: Sephora e Coffee Mais (`PROMOTION_CLUB`), Aliexpress (`CLUB` com `separatorSlug: "ATE"`) e Liga Vitória (`parity: null`)
 
 ---
 
@@ -94,7 +314,7 @@ O que sobrou disso:
 - [x] Criar conta e projeto no Neon
 - [x] Esquema com `loja`, `apelido` e `preferencia` (`migracoes/001_esquema.sql`)
 - [x] Adaptador `CatalogoPostgres` implementando a porta existente
-- [x] Script de carga do TOML para o banco (`scripts/carregar_catalogo.py`)
+- [x] Script de carga do TOML para o banco (`backend/robo/scripts/carregar_catalogo.py`)
 - [x] Verificar leitura: 132 lojas, 10 categorias, apelidos preservados
 - [x] `principal.py` escolher o adaptador conforme `DATABASE_URL` existir, com o arquivo como reserva — `montar_catalogo()` mais o adaptador `CatalogoComReserva`. CT-108, CT-109, CT-114 a CT-116
 - [x] Passar `DATABASE_URL` ao workflow `robo.yml`
@@ -242,7 +462,7 @@ Nota de convivência com o resto do trabalho que aconteceu na mesma noite (redes
 - [x] Dependabot: `checkout@v7` e `setup-python@v7` em `testes.yml` e `robo.yml` (PRs #1 e #2, 2026-08-11)
 - [x] Versão **1.2.0** publicada em 2026-08-11, carregando a V2.0
 - [x] **V2.0 validada contra a página real** em 2026-08-11 — 254 parceiros extraídos tanto na execução agendada das 23h27 quanto na conferência local; `separatorSlug: "ATE"` e o conjunto de valores de `activeCampaign` confirmados
-- [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
+- [x] **V2.0** — `extrator.py` reescrito para ler o payload `__NEXT_DATA__` em vez do texto dos cards (RF14); `Parceiro` ganhou `pontos_base`, `inicio_promocao`, `fim_promocao` e `campanha`; RN21 (promoção com `dateEnd` no passado não conta), RN22 (destaque "Termina hoje!") e RN23 (marcação de exclusivo Clube) implementadas; `extrair_parceiros`/`montar` ganharam parâmetro `agora` obrigatório para as duas regras de data sem o núcleo ler o relógio por conta própria (exceção ao PRD-V2 §7.2, documentada lá); fixture `backend/robo/testes/fixtures/payload_parceiros.json` criada; casos CT-080 a CT-102
 - [x] **V2.1** — `montar_catalogo()` escolhe Postgres ou arquivo conforme `DATABASE_URL`; `CatalogoComReserva` protege a execução contra o Neon fora do ar; `multiplicador`/`piso_pontos` lidos das duas fontes; `DATABASE_URL` passado ao `robo.yml`
 - [x] Roteiro do smoke manual CT-050 escrito, com os números de 2026-08-11 como linha de base
 - [x] **V2.2** — `alertas.py` no núcleo com RN27 (múltiplo da base com piso), RN28 (padrão global sobrescrito por loja), RN29 (suspeita de C07 sem guardar estado) e a supressão de RN23 para quem não assina o Clube; porta nova `PreferenciasGlobais` lendo a tabela `preferencia`; `categorias.agrupar` passa a receber o critério em vez de olhar a etiqueta. CT-117 a CT-138

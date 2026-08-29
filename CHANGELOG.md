@@ -2,6 +2,492 @@
 
 <!-- version list -->
 
+## v1.44.0 (2026-08-29)
+
+
+## v1.43.0 (2026-08-26)
+
+### Features
+
+- **app**: Versao do app no rodape da navegacao
+  ([`1f58f78`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1f58f789f94555fdedd7efc5014621b59bcf642d))
+
+
+## v1.42.0 (2026-08-26)
+
+### Chores
+
+- **ci**: Remove workflow temporário de regenerar goldens
+  ([`9b32756`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9b3275665ba97c5780aea55bd851688389a04edd))
+
+### Features
+
+- **api**: Loga detalhe do erro de token quando DEBUG_AUTH=true
+  ([`1a8a0e1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1a8a0e18dc304032ef7c8bebc6d0a13dd916ceca))
+
+
+## v1.41.0 (2026-08-26)
+
+### Bug Fixes
+
+- **api**: Resolve firebase-admin ERR_REQUIRE_ESM no serverless
+  ([`014702c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/014702ca93fb6e60f6fdab3207e60544f5afa285))
+
+- **ci**: Pina GitPython 3.1.50 no versao.yml
+  ([`e37fc4c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e37fc4c7caefe75df504c01b507d935e52d27aa7))
+
+- **ci**: Pina semantic-release em 10.4.1 e corrige caminho do catálogo
+  ([`5cc2542`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5cc254285fc5fd6246e5f00fcbfe69b8a7244814))
+
+### Chores
+
+- **ci**: Workflow temporário de regenerar goldens no runner
+  ([`f171bc1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f171bc1db637cd704950b996b5175f1a761309fe))
+
+### Documentation
+
+- Adiciona README em cada pasta e atualiza raiz
+  ([`5933f5c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5933f5c57939774e38119bc91c962aa1f62367ca))
+
+- Reorganiza docs em subpastas e remove referências ao site legado
+  ([`430ed84`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/430ed84c32caf312907260bf4d1ee2158d5490fd))
+
+- **prd**: Renomeia PRDs por domínio/ação
+  ([`74036ca`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/74036cab4d255f31dd4712bc89355c17ab9b1ab0))
+
+### Features
+
+- Desativa site Next.js e arquiva API em app-robo/apis
+  ([`01aba7d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/01aba7d7ac34465e905d2ac748996f8a63409075))
+
+- **robo**: E-mail opcional — sem credencial roda igual
+  ([`bf8e49a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/bf8e49a52c394cd0de5c4c1c41b466cd808ca218))
+
+### Refactoring
+
+- Consolida backend Python em app-robo/backend
+  ([`1a778e2`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1a778e2c57fc47d61d525b40e4fa34b4cf5f318e))
+
+- Renomeia raiz robo-livelo para robo e reorganiza pastas
+  ([`59ea599`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/59ea5996d8d07a7f45fc17eaa26524f19253e883))
+
+- **api**: Remove prefixo v1 e renomeia para caminhos por domínio
+  ([`93c7e49`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/93c7e497b1f94afd1698ca79d41b0ad2c1b5ea82))
+
+### Testing
+
+- **app**: Regenera golden da lateral Web e remove restos de diff
+  ([`0b4e709`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/0b4e709fb90bae02b31094ef205579932779e654))
+
+- **app**: Usa goldens gerados no runner do CI (referência do gate)
+  ([`a833ee3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a833ee34cfbd1231c8190e0d17beaa88dacc78a3))
+
+
+## v1.40.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Redesenha busca e histórico de produtos
+  ([`ba40f2c`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ba40f2cc6228ddf5aa7f3ec56ebb808f3852955a))
+
+
+## v1.39.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa hubs de lojas e inter
+  ([`20b6d56`](https://github.com/lacerdaRodrigo/robo-livelo/commit/20b6d56724fd1ec88b7440c573840382f05ff137))
+
+
+## v1.38.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa módulos 1 a 3 do redesign
+  ([`b39d357`](https://github.com/lacerdaRodrigo/robo-livelo/commit/b39d357a5ad24e48cb4304b2c7048ee4871a89b5))
+
+
+## v1.37.0 (2026-08-23)
+
+### Features
+
+- **app-robo**: Implementa abertura animada da nova identidade
+  ([`bdbb2ee`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bdbb2ee8deafa663bd2ad473cdce0f52d1fecfee))
+
+
+## v1.36.0 (2026-08-23)
+
+### Bug Fixes
+
+- Usa dominio movel publico no app
+  ([`d032a79`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d032a79d5219834a17121629abe59cb9a8a1572b))
+
+### Documentation
+
+- Atualiza planos e adota prototipo primeiro
+  ([`045df46`](https://github.com/lacerdaRodrigo/robo-livelo/commit/045df465e1c059b9f1a55f29cdf5cd09a6451c17))
+
+### Features
+
+- Adiciona prototipos web e mobile do Radar
+  ([`f58c1db`](https://github.com/lacerdaRodrigo/robo-livelo/commit/f58c1db752d10f12f4f8d974928ea4beeb2ee650))
+
+
+## v1.35.0 (2026-08-22)
+
+### Documentation
+
+- Registra versao 1.34.0
+  ([`d3a3cc4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d3a3cc4df00e72ec06e71064ed75f04ab9e8eed2))
+
+### Features
+
+- Conclui painéis Flutter de benefícios
+  ([`40b33c5`](https://github.com/lacerdaRodrigo/robo-livelo/commit/40b33c5188cab31da2167e9ad4de6a4134c90fd9))
+
+- Publica administracao no app Flutter
+  ([`39dcad4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/39dcad40e1299fbde37a99d3aec23ad8505805f8))
+
+
+## v1.34.0 (2026-08-21)
+
+### Documentation
+
+- Registra versao 1.33.0
+  ([`2776bb0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2776bb0536d464a3294d39ca82e98179e4d2bbad))
+
+### Features
+
+- Adapta navegacao para Android
+  ([`cb3c8b4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/cb3c8b49c0181f6cd68a84becfb71875f7197b5f))
+
+
+## v1.33.0 (2026-08-21)
+
+### Documentation
+
+- Fecha rollout autenticado da fase 3B
+  ([`97341ba`](https://github.com/lacerdaRodrigo/robo-livelo/commit/97341bab849d976867da8f6c9dad0d49c4d132e1))
+
+### Features
+
+- Aplica retencao da auditoria da API
+  ([`d96ec33`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d96ec33f98aa4f89aa4ac407cce570c378786b20))
+
+
+## v1.32.2 (2026-08-21)
+
+### Bug Fixes
+
+- Empacota Firebase Admin na API
+  ([`e796b98`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e796b98a90958e8396d42263eceaea166233fd7b))
+
+
+## v1.32.1 (2026-08-21)
+
+### Bug Fixes
+
+- Adia carregamento do Firebase App Check
+  ([`79c69e0`](https://github.com/lacerdaRodrigo/robo-livelo/commit/79c69e0b44f2b0de75e91ab5e754a3f0c2aa5ec7))
+
+
+## v1.32.0 (2026-08-21)
+
+### Features
+
+- Conclui autenticacao por convite no Flutter
+  ([`28b3166`](https://github.com/lacerdaRodrigo/robo-livelo/commit/28b3166fdca514100f4910dcf32be4c696f35ea4))
+
+
+## v1.31.0 (2026-08-20)
+
+### Documentation
+
+- Adiciona instruções para o Codex
+  ([`62a561a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/62a561a3ce20cf2211d15ac033bea7ffa1c837a5))
+
+- **app-robo**: Adiciona plano do piloto Flutter
+  ([`7b18075`](https://github.com/lacerdaRodrigo/robo-livelo/commit/7b1807597d2e2f1ed5dc77a3e44405bfc035ab05))
+
+- **app-robo**: Detalha catálogo e paginação da API
+  ([`4ec42ee`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4ec42ee910d9a7e4d031cb33fc635a808b7072cb))
+
+### Features
+
+- **app-robo**: Inicio do Flutter e API v1 de leitura
+  ([`732de42`](https://github.com/lacerdaRodrigo/robo-livelo/commit/732de423257fb6ff41a98c512f17437f7048ca48))
+
+
+## v1.30.2 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Preserva paginação e permite descartar lojas
+  ([#33](https://github.com/lacerdaRodrigo/robo-livelo/pull/33),
+  [`e921769`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e92176928f02de4088921e2d98e07af38d033b19))
+
+
+## v1.30.1 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Deixa preço após cashback no mesmo destaque
+  ([#32](https://github.com/lacerdaRodrigo/robo-livelo/pull/32),
+  [`3fd0257`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3fd0257f55f35ac787d5d6dbe37becfecaa92904))
+
+
+## v1.30.0 (2026-08-19)
+
+### Features
+
+- **inter**: Destaca preço após cashback
+  ([#31](https://github.com/lacerdaRodrigo/robo-livelo/pull/31),
+  [`13d60dc`](https://github.com/lacerdaRodrigo/robo-livelo/commit/13d60dc651c6e2ea1932a0dd810627a442bf6fa4))
+
+
+## v1.29.6 (2026-08-19)
+
+### Bug Fixes
+
+- **inter**: Adiciona botão para atualizar produtos selecionados
+  ([`1e66e14`](https://github.com/lacerdaRodrigo/robo-livelo/commit/1e66e148f0028fb6d4cc6a1947fc7a78b19b17d0))
+
+
+## v1.29.5 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Adiciona botao de atualizacao da livelo
+  ([`12cb627`](https://github.com/lacerdaRodrigo/robo-livelo/commit/12cb627dfb2bbf9c53ae93926c039e53052617a7))
+
+
+## v1.29.4 (2026-08-18)
+
+### Bug Fixes
+
+- **inter**: Exibe loja selecionada sem esperar snapshot
+  ([`dc633de`](https://github.com/lacerdaRodrigo/robo-livelo/commit/dc633def22922494d9f390cc86d80af047082c25))
+
+
+## v1.29.3 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Reflete selecao nas consultas imediatamente
+  ([`71ad5e2`](https://github.com/lacerdaRodrigo/robo-livelo/commit/71ad5e2aa4016c74c91b8f291da29824788c58c2))
+
+
+## v1.29.2 (2026-08-18)
+
+### Bug Fixes
+
+- **livelo**: Nao reidrata lojas nao escolhidas
+  ([`3af4f9c`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3af4f9cd96a28cbf1fca4043630f6456b2a09ac3))
+
+
+## v1.29.1 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Mostra total de lojas encontradas
+  ([`e12225e`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e12225e4a22ab60fd14e4d5ab1ec29fc68813550))
+
+
+## v1.29.0 (2026-08-18)
+
+### Features
+
+- **livelo**: Separa descobertas de lojas favoritas
+  ([`d574ddd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/d574ddde70689b6634d57db1ee71c82de65bb0f5))
+
+
+## v1.28.4 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Atualiza inter ao selecionar loja
+  ([`5cef360`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5cef36004b5fed31e84f912b08fa3f36fee831f2))
+
+
+## v1.28.3 (2026-08-18)
+
+### Bug Fixes
+
+- **livelo**: Reidrata catalogo apos limpeza
+  ([`3c67f58`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3c67f587bae91acfe30a9b43ada547be99092c7d))
+
+
+## v1.28.2 (2026-08-18)
+
+### Bug Fixes
+
+- **site**: Inclui oferta atual no reset do Inter
+  ([`8084f82`](https://github.com/lacerdaRodrigo/robo-livelo/commit/8084f8245f402a6ccbdf6a633502374e7c7ee649))
+
+
+## v1.28.1 (2026-08-18)
+
+### Bug Fixes
+
+- **produtos-inter**: Preserve best catalog on unstable totals
+  ([`4141e5b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4141e5bbb986b27d1b80eff3cc55f724bb71c5f9))
+
+
+## v1.28.0 (2026-08-17)
+
+### Features
+
+- **inter**: Contabiliza produtos ativos das lojas
+  ([`79512c4`](https://github.com/lacerdaRodrigo/robo-livelo/commit/79512c49004fa2154fa4328d6bd1a695d4bbdd5b))
+
+- **inter**: Exibe total de produtos coletados
+  ([`0eceadd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/0eceadd2f3e33baf6904c4353d57e6d03f37498f))
+
+
+## v1.27.0 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Preserva busca após selecionar loja
+  ([`ff7884b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ff7884b9c00906582e5457abb6f6048167780030))
+
+### Code Style
+
+- **inter**: Redesenha diálogo de remoção
+  ([`61f5f35`](https://github.com/lacerdaRodrigo/robo-livelo/commit/61f5f353afb3066b1f92eefeaf925cc628fd73c2))
+
+### Features
+
+- **inter**: Adiciona confirmação segura em tela
+  ([`e6b5c09`](https://github.com/lacerdaRodrigo/robo-livelo/commit/e6b5c095c4cc127775a4c8b6eff5db611c19bb9c))
+
+- **inter**: Melhora gestão das lojas de produtos
+  ([`72718af`](https://github.com/lacerdaRodrigo/robo-livelo/commit/72718af120a16437872d0b6aef9614857c394241))
+
+- **inter**: Pagina todas as lojas de produtos
+  ([`5fb1add`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5fb1add289fc35bf47ddff09095cd65631ce2e3f))
+
+
+## v1.26.0 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Corrige resumo responsivo
+  ([`58c260a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/58c260a0fcd74746801d41d4bd1fd2c3029e697c))
+
+- **inter**: Pagina catalogo completo no banco
+  ([`9be5f98`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9be5f98dcbb4c3fb30f78a50dd24490d9aedd235))
+
+### Features
+
+- **inter**: Pagina todas as lojas de dez em dez
+  ([`203fb8b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/203fb8b7a8f780848cd7baa2d3f837edf822b617))
+
+
+## v1.25.0 (2026-08-17)
+
+### Bug Fixes
+
+- **site**: Restaura listas ao limpar a busca
+  ([`a419e2b`](https://github.com/lacerdaRodrigo/robo-livelo/commit/a419e2be50d760bf4585224da80dedd06555f10e))
+
+- **site**: Usa tokens visuais da paginacao
+  ([`ef0fc65`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ef0fc652d2ff34f4fa09f18aebd5028e45d4a41e))
+
+### Features
+
+- **site**: Adiciona busca progressiva reutilizavel
+  ([`07a45fb`](https://github.com/lacerdaRodrigo/robo-livelo/commit/07a45fb64dfc1ca9995d3a4c8c301127633a8941))
+
+- **site**: Adiciona paginacao segura
+  ([`bb732f9`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bb732f9388573f12192e97965e23ef118e89eea4))
+
+- **site**: Ativa busca progressiva nas lojas de produtos
+  ([`bf39672`](https://github.com/lacerdaRodrigo/robo-livelo/commit/bf39672a6f0b4070f906fd7853b7fbb4384c8230))
+
+- **site**: Ativa busca progressiva nas lojas Livelo
+  ([`7a283cd`](https://github.com/lacerdaRodrigo/robo-livelo/commit/7a283cd6f9634feda7ad8c02ff31e595c48ce1fe))
+
+- **site**: Ativa busca progressiva nos produtos Inter
+  ([`b12576a`](https://github.com/lacerdaRodrigo/robo-livelo/commit/b12576a1bff4ac07b5996d4e6c22e6f4904a4707))
+
+- **site**: Estiliza paginacao responsiva
+  ([`5ef7e48`](https://github.com/lacerdaRodrigo/robo-livelo/commit/5ef7e48e4dbc0c67914bea27ca233819b0164521))
+
+- **site**: Simplifica pontos e pagina lojas
+  ([`3f990f6`](https://github.com/lacerdaRodrigo/robo-livelo/commit/3f990f6ebf33ae4035d8c9ce03c205a936be53ab))
+
+### Refactoring
+
+- **site**: Remove busca duplicada do Inter
+  ([`2c1f874`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2c1f8743aa3c9d173d73a318e9d6092f4d3f2e44))
+
+- **site**: Reutiliza busca progressiva nas lojas Inter
+  ([`6e69773`](https://github.com/lacerdaRodrigo/robo-livelo/commit/6e697733001cc6f7af52d6401ca8b4a08a8ff7c1))
+
+- **site**: Reutiliza busca progressiva no cashback
+  ([`c099010`](https://github.com/lacerdaRodrigo/robo-livelo/commit/c0990107d20dca64014a8137e6c584a7a4af217d))
+
+### Testing
+
+- **site**: Cobre paginacao de lojas
+  ([`9b0d6e1`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9b0d6e1160508d64cd8ae46903817a0007df6bba))
+
+
+## v1.24.0 (2026-08-17)
+
+### Bug Fixes
+
+- Remove seletor de areas do Inter
+  ([`4330d70`](https://github.com/lacerdaRodrigo/robo-livelo/commit/4330d70b3c60f6da73fc703dcf30ba334c8d4e8b))
+
+- Remove seletor de areas duplicado
+  ([`117f538`](https://github.com/lacerdaRodrigo/robo-livelo/commit/117f5389df01f656959622d94551f25735104b57))
+
+- Remove seletor de areas duplicado
+  ([`468d932`](https://github.com/lacerdaRodrigo/robo-livelo/commit/468d932b19413f5d4ff228c6286777c58f00465f))
+
+- Remove seletor de areas duplicado
+  ([`922bbb7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/922bbb7ff91cdac566886c41a26894b373b21b6f))
+
+### Code Style
+
+- **ux**: Alinha seletor de duas areas
+  ([`2b2ed24`](https://github.com/lacerdaRodrigo/robo-livelo/commit/2b2ed2447bad3a5ff5059975b79ae956c8e0b695))
+
+- **ux**: Apresenta fluxos em grupos simples
+  ([`338f582`](https://github.com/lacerdaRodrigo/robo-livelo/commit/338f58257e7d3e245b4dddd86df7ec0bb67b5c23))
+
+### Features
+
+- **ux**: Organiza menu por Livelo e Banco Inter
+  ([`ec9b81d`](https://github.com/lacerdaRodrigo/robo-livelo/commit/ec9b81d05d51c467e07857d215bdb058550def9d))
+
+- **ux**: Reduz seletor para Livelo e Banco Inter
+  ([`576e3d7`](https://github.com/lacerdaRodrigo/robo-livelo/commit/576e3d76d3f29ef11bd2ee7e7daf9ba3a4ba0e4a))
+
+### Refactoring
+
+- Remove seletor de areas sem uso
+  ([`9d73933`](https://github.com/lacerdaRodrigo/robo-livelo/commit/9d73933f4983938430d072b03c7da5127e43c956))
+
+
+## v1.23.0 (2026-08-17)
+
+### Features
+
+- **site**: Publica novo front responsivo e estabiliza coleta Inter
+  ([`67deb39`](https://github.com/lacerdaRodrigo/robo-livelo/commit/67deb39f8c26a6eaae15ef0735d1c8be87eb591a))
+
+
+## v1.22.1 (2026-08-17)
+
+### Bug Fixes
+
+- **inter**: Valida contrato real do catalogo V4
+  ([`a6800a1`](https://github.com/lacerdaRodrigo/robo-livelo/commit/a6800a1fb86e41b3d4bd36c5752691d9b74b9f9a))
+
+
 ## v1.22.0 (2026-08-17)
 
 ### Bug Fixes

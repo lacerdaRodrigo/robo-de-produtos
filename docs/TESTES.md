@@ -1,8 +1,8 @@
 # Plano de Testes
 
-Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o site usa `vitest`.
+Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o app e a API usam Flutter/TypeScript.
 
-A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD.md`](PRD.md)**. Este documento é só o catálogo de casos.
+A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD-LIVELO.md`](PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
 
 Convenção: arquivos e funções de teste usam o prefixo `teste_` (em vez do padrão `test_` do pytest), configurado no `pyproject.toml`.
 
@@ -10,7 +10,7 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 
 ---
 
-## `testes/teste_categorias.py` — função `reconhecer()`
+## `backend/robo/testes/teste_categorias.py` — função `reconhecer()`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -23,7 +23,7 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-007 | String vazia | Nome vazio não pode gerar erro | Chamar `reconhecer("")`, checar `None` sem exceção |
 | CT-008 | Espaços extras | " Natura " (com espaços) deve funcionar igual a "Natura" | Testar com espaços sobrando, comparar resultado |
 
-## `testes/teste_extrator.py` — núcleo puro: payload JSON → `Parceiro` (fixture do payload, **nunca** rede)
+## `backend/robo/testes/teste_extrator.py` — núcleo puro: payload JSON → `Parceiro` (fixture do payload, **nunca** rede)
 
 > A V2.0 trocou a raspagem de HTML (`data-testid`, regex sobre texto de card) pela leitura do payload `__NEXT_DATA__` (RF14). CT-015 (nome via atributo `alt`), CT-016 (fallback sem `alt`) e CT-019 (link que não é de parceiro) foram **aposentados**, não adaptados — não existe mais atributo `alt` nem "link solto misturado no HTML" num array JSON, então não há o que testar no lugar. Os números não são reaproveitados.
 
@@ -52,7 +52,7 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 | CT-092 | Moeda preservada (RN11) | Nunca converte, exibe como veio | Item com `currency: "U$"` |
 | CT-093 | `parityClub == parity` não popula `pontos_clube` | Evita ruído de "Clube: N pontos" repetido em toda loja sem distinção real | Item com os dois valores iguais |
 | CT-094 | `parityClub` distinto popula `pontos_clube` | Contraprova de CT-093 | Item com os dois valores diferentes |
-| CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
+| CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `backend/robo/backend/robo/testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
 | CT-106 | Item sem `parity` não vira `WARNING` | São 11 por execução (produtos da própria Livelo: `LVA`, `CIB`, `XXX`...). Descartar está certo; gritar toda vez afogaria o aviso que importa (RNF06). Vai em `DEBUG` mais um resumo em `INFO` | Item com `parity` ausente entre válidos, checar nível dos registros |
 | CT-107 | `parity` presente mas ilegível continua `WARNING` | Contraprova de CT-106: pontuação que existe e não dá para ler é sintoma de mudança na página | Item com `parity.parity` não numérico, checar `WARNING` |
 | CT-166 | `legalTerms` vira texto puro (RN31) | RN07 — só o texto sai daqui, nunca a marcação HTML crua | Item com `legalTerms: "<p>Campanha válida...</p>"`, checar `descricao_campanha` sem as tags |
@@ -60,7 +60,7 @@ A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deix
 
 Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `__NEXT_DATA__` ausente, JSON inválido, payload que não é objeto, componente ou item que não é um objeto, `parity` que não é um objeto, `parityBau`/`parityClub` não numéricos — todos cobertos, contam para o total executado mas não têm CT próprio (mesma convenção dos testes de apoio já existentes no arquivo).
 
-## `testes/teste_adaptadores.py` — implementações das portas (PRD §4.2)
+## `backend/robo/testes/teste_adaptadores.py` — implementações das portas (PRD §4.2)
 
 > Bloco novo. CT-021 a CT-023 vieram de `teste_extrator.py`: o extrator virou núcleo puro e não conhece rede, então falha de conexão é responsabilidade do adaptador `FonteDePagina`.
 
@@ -89,7 +89,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-159 | Banco vazio não é falha ⚠️ | Levantar aqui faria a reserva cair no TOML e ressuscitar as lojas que o dono acabou de apagar pelo site. A reserva cobre indisponibilidade, não vontade | Consulta que devolve zero linhas, checar `[]` e `WARNING` |
 | CT-160 | Banco vazio não aciona a reserva | Contraprova de CT-108: só falha de verdade chega na reserva | Principal vazio com reserva cheia, checar que a reserva não foi chamada |
 
-## `testes/teste_montador_email.py` — função `montar_email()`
+## `backend/robo/testes/teste_montador_email.py` — função `montar_email()`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -124,7 +124,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-172 | Descrição longa corta sem quebrar palavra (C05) | O "resto" atrás do "…mais" tem teto, para o pior caso (132 lojas) caber no limite do Gmail | Descrição com "resto" bem acima do limite, checar corte em fronteira de palavra |
 | CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto hospedado em URL, assinando as duas pontas do e-mail. Não pode usar `data:` URI, que o Gmail descarta | `montar(...)`, contar duas ocorrências de `https://robo-livelo.vercel.app/logo.png` e checar ausência de `data:image` |
 
-## `testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
+## `backend/robo/testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -156,7 +156,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-163 | Catálogo vazio avisa no e-mail e no log ⚠️ | Fim a fim: banco sem loja nenhuma não vira "dia sem promoção" | `CatalogoFake([])`, checar assunto próprio e `WARNING` |
 | CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
 
-## `testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
+## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
 
 > Bloco novo da V2.2. Os números dos casos vêm da medição real de 2026-08-09 e 2026-08-11 registrada no PRD-V2 — são exatamente os exemplos que a V1 errava.
 
@@ -178,7 +178,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 
 Sem ID: página que parou de trazer `parityBau` também levanta suspeita, página vazia não (aí quem falha é RN13), e o critério fechado sobre as preferências chega intacto ao `agrupar`.
 
-## `testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-V2 RF15)
+## `backend/robo/testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-V2 RF15)
 
 > Bloco novo da V2.3. O robô passa a guardar o que viu, para o site ter o que mostrar.
 
@@ -190,15 +190,15 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-142 | Valor de disparo acompanha a régua | RN30 — o número é gravado calculado porque a régua muda com o tempo | Mesmo parceiro com duas réguas |
 | CT-143 | Retrato carrega contagem e versão | RN26 — o carimbo do site sai daqui; a versão torna o defeito rastreável | Checar `momento`, `parceiros_lidos`, `versao`, `alertas` |
 
-## `testes/teste_fronteira.py` — arquitetura (PRD §9.3)
+## `backend/robo/testes/teste_fronteira.py` — arquitetura (PRD §9.3)
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py`, falhar se aparecer `requests`, `smtplib`, `tomllib`, `os`, `pathlib` ou `dotenv` |
 
-## `site/testes/formato.teste.ts` — funções puras do site (vitest)
+## Formatação do app/API (antes `site/testes/formato.teste.ts`, TypeScript)
 
-> Bloco novo da V2.3. O site tem pouca lógica de propósito: o que ele faz é ler o banco e desenhar. O que **tem** regra é a formatação — e é onde um `Number()` distraído desfaria o cuidado que o robô tem com `Decimal` desde a V1.
+> Bloco novo da V2.3. A interface tem pouca lógica de propósito: o que ela faz é ler o banco e desenhar. O que **tem** regra é a formatação — e é onde um `Number()` distraído desfaria o cuidado que o robô tem com `Decimal` desde a V1.
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -214,14 +214,14 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | CT-165 | Barra de progresso do cartão (RN30, redesenho V2.3.3) | `atual`/`base` ausentes (loja não encontrada) devolvem `null`, sem dividir por zero; a largura nunca passa de 100% mesmo com o limiar bem acima do teto calculado | `barraDeProgresso(null, ...)` → `null`; `barraDeProgresso("6", "1", "4")` com valores dentro de 0–100; teto vindo de zero não gera `NaN`/`Infinity` |
 | CT-174 | Ordenação do Painel (redesenho V4.6) | A grade única do Painel troca o agrupamento por categoria por ordenação explícita, sem `Number()` virar texto exibido | Ordenar por maior pontuação, em alerta e nome A-Z, preservando casos sem pontuação |
 
-Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
+Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API agora vive arquivada em `backend/api/`; esses casos de contrato permanecem como registro.
 
 ## Shopping Inter — V3
 
-> Casos da V3 definidos no [`PRD-V3.md`](PRD-V3.md). A suíte padrão usa a
-> fixture sanitizada `testes/fixtures/lojas_inter.json` e nunca toca a rede.
+> Casos da V3 definidos no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md). A suíte padrão usa a
+> fixture sanitizada `backend/robo/testes/fixtures/lojas_inter.json` e nunca toca a rede.
 
-### `testes/teste_extrator_inter.py` — JSON público → `LojaInter`
+### `backend/robo/testes/teste_extrator_inter.py` — JSON público → `LojaInter`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -235,38 +235,38 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
 | CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
 
-### `testes/teste_ranking_inter.py` — ordenação pura
+### `backend/robo/testes/teste_ranking_inter.py` — ordenação pura
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
 
-### `testes/teste_retrato_inter.py` — favoritas da execução
+### `backend/robo/testes/teste_retrato_inter.py` — favoritas da execução
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-184 | Favorita ausente permanece | Fonte não devolver a loja não remove a escolha | Favorita sem loja correspondente vira `encontrada=false` |
 
-### `testes/teste_adaptadores_inter.py` — HTTP e Postgres
+### `backend/robo/testes/teste_adaptadores_inter.py` — HTTP e Postgres
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-185 | Transação é atômica | Falha entre catálogo e snapshot não deixa meia execução visível | Fake de conexão falha e verifica rollback |
 | CT-187 | Uma consulta lógica | Sucesso chama HTTP uma vez; retry só ocorre em falha transitória | Injetar respostas e contar chamadas |
 
-### `testes/teste_fronteira.py` — núcleo do Inter
+### `backend/robo/testes/teste_fronteira.py` — núcleo do Inter
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-188 | Núcleo do Inter não faz I/O | Modelos, extrator, ranking e retrato não importam rede, banco, arquivo ou ambiente | Varrer AST dos módulos novos |
 
-### `testes/teste_principal_inter.py` — orquestração com fakes
+### `backend/robo/testes/teste_principal_inter.py` — orquestração com fakes
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-189 | Falha isolada da Livelo | Processo do Inter usa somente suas portas e devolve código diferente de zero na falha | Fakes do Inter; nenhum módulo da Livelo é chamado |
 
-### `site/testes/formato-inter.teste.ts` — regras puras do Inter
+### Formatação Inter (antes `site/testes/formato-inter.teste.ts`) — regras puras do Inter
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -285,14 +285,14 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 
 ## Produtos do Shopping Inter — V4
 
-> Casos definidos no [`PRD-V4.md`](PRD-V4.md). A primeira implementação usa
-> `testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
-> `site/testes/formato-produtos-inter.teste.ts` para a busca local e a migração
+> Casos definidos no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md). A primeira implementação usa
+> `backend/robo/testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
+> e `backend/api/` (antes `site/testes/formato-produtos-inter.teste.ts`) para a busca local e a migração
 > `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia
 > confirmou 111 vendedores, 94 páginas, 3.310 produtos únicos e o Edge 60 Pro
 > na busca local. Fixtures continuam obrigatórias para o CI não tocar a rede.
 
-### `testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
+### `backend/robo/testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -308,7 +308,7 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-209 | Textos hostis continuam texto | Nome e etiquetas com HTML não são interpretados | Extrair tags maliciosas e renderizar escapado |
 | CT-210 | Vendedor incompatível falha | Página pedida para Casas Bahia não aceita silenciosamente produto de outro vendedor | Fixture com `sellerId` inesperado |
 
-### `testes/teste_paginacao_produtos_inter.py` — catálogo completo exposto
+### `backend/robo/testes/teste_paginacao_produtos_inter.py` — catálogo completo exposto
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -320,7 +320,7 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-216 | Offset sem avanço interrompe | Limite zero ou próximo offset igual ao anterior vira falha de paginação | Página malformada com `limit=0` |
 | CT-217 | União de partições é observável | Totais declarados, lidos, únicos e sobreposições permanecem separados | Janela-base + `smartphone` com ID repetido e Edge só no suplemento |
 
-### `testes/teste_adaptadores_produtos_inter.py` — HTTP responsável
+### `backend/robo/testes/teste_adaptadores_produtos_inter.py` — HTTP responsável
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -329,7 +329,7 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-220 | Retry só em falha transitória | Timeout, 429 e 5xx respeitam limite; 401/403 encerram imediatamente | Parametrizar status e contar tentativas |
 | CT-221 | Resposta grande é recusada | Limite de bytes impede carregar payload sem controle | Stream fake acima do máximo definido na V4.1 |
 
-### `testes/teste_principal_produtos_inter.py` — seleção e isolamento
+### `backend/robo/testes/teste_principal_produtos_inter.py` — seleção e isolamento
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -343,6 +343,9 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-229 | Retenção de 30 dias | Medição no limite permanece; mais antiga é removida sem tocar no catálogo atual | Relógio fixo e datas de fronteira |
 | CT-230 | Log não vaza conteúdo sensível | Erro registra código e contagens, nunca payload, token ou `DATABASE_URL` | Exceções fake com segredos sentinela |
 | CT-231 | Núcleo novo não faz I/O | Modelos, normalização, paginação e deduplicação não importam rede, banco ou ambiente | Ampliar o teste AST de fronteira |
+| CT-245 | Tentativa estável vence | Total variável reinicia a partição; uma tentativa posterior estável é publicada e descarta candidatas instáveis, mesmo maiores | Fonte sequencial com tentativa variável e tentativa estável |
+| CT-246 | Melhor tentativa degradada | Depois de três tentativas completas com total variável, publica a que contém mais produtos únicos válidos | Três candidatas com tamanhos distintos e inspeção do resumo |
+| CT-247 | Ausentes são preservados | Publicação degradada grava encontrados e medições sem executar a inativação; publicação completa continua inativando | Adaptador Postgres com cursor fake nos dois modos |
 
 ### Site V4 — busca e histórico
 
@@ -361,6 +364,213 @@ Rodam com `npm run testar` dentro de `site/`, no mesmo workflow do `pytest`.
 | CT-242 | Sem imagem ou HTML externo | Cards não usam URLs de imagem nem `dangerouslySetInnerHTML` | Inspeção da renderização |
 | CT-243 | Funciona sem JavaScript | Busca por `?q=`, seleção, remoção e histórico possuem HTML e formulários reais | Renderização de servidor e navegação manual |
 | CT-244 | Integrações anteriores não regridem | V4 ausente, vazia ou falhando não muda Livelo nem V3 | Rodar todas as suítes e builds existentes |
+
+### Fase 3B — autenticação da API e Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-248 | Bearer obrigatório | Endpoint privado recusa cabeçalho ausente ou ambíguo antes de ler dados | Dependências falsas e resposta 401 |
+| CT-249 | Token inválido ou revogado | Falhas distintas do provedor viram a mesma resposta neutra | Firebase Admin falso lança exceção |
+| CT-250 | E-mail verificado | Token válido sem e-mail confirmado não atravessa o gate | Claim `email_verified=false`, resposta 403 |
+| CT-251 | Convite ativo | Existir no Firebase não basta; ausente ou inativo é recusado | Repositório de usuários falso |
+| CT-252 | Papel no servidor | Usuário comum não executa operação marcada como admin | Papel exigido `admin`, resposta 403 |
+| CT-253 | App Check em rollout | Quando exigido, token ausente/inválido é recusado antes da identidade | Alternar a dependência `appCheckObrigatorio` |
+| CT-254 | Limite por origem | Excesso antes da autenticação devolve 429 e `Retry-After` | Contador persistente falso bloqueia primeira janela |
+| CT-255 | Limite por usuário/operação | Segundo limite protege conta autenticada e ações sensíveis | Primeira janela aceita e segunda recusa |
+| CT-256 | Falha interna neutra | Erro de banco/provedor não vaza URL ou segredo e conserva request ID | Exceção sentinela e corpo 500 |
+| CT-257 | Tokens no cliente | Flutter envia Bearer/App Check em chamada privada e nunca chama rede privada sem sessão | `MockClient` inspeciona cabeçalhos |
+| CT-258 | Login e recuperação | Tela envia credenciais pela porta injetada e recuperação não enumera e-mail | Testes de widget com autenticador falso |
+| CT-259 | Gate de convite | Perfil autorizado abre o app; 403 mostra acesso negado e permite sair | API e autenticação falsas em widget test |
+| CT-260 | Retenção da auditoria | Cada evento novo também remove registros técnicos anteriores a 30 dias | Banco falso inspeciona a consulta única de inserção e expurgo |
+| CT-261 | Navegação inferior no celular | Os cinco destinos aparecem com ícone/rótulo e trocam o painel | Widget em viewport de telefone toca em Livelo |
+| CT-262 | Navegação realmente adaptativa | Paisagem de celular mantém barra inferior; tela larga conserva lateral | Widgets com menor dimensão abaixo/acima de 600 px |
+
+### Fase 4.2B — painel Livelo no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-263 | Modelo Livelo completo | JSON da API vira `PontuacaoLivelo`, preservando opcionais e decimais como `String` | Fixture em Dart com todos os campos |
+| CT-264 | Decimal textual de pontos | `2.90` vira `2,9` e `6.000` vira `6`, sem `double` | Testar formatador puro |
+| CT-265 | Rótulos do Clube | `CLUB` e `PROMOTION_CLUB` recebem explicações distintas | Testar a função pura de rótulo |
+| CT-266 | Validade e atraso | Data no fuso de Brasília e coleta acima de 12 h usam relógio explícito | Fixar `agora` no teste |
+| CT-267 | Consulta do painel | Cliente envia `q`, `ordenar`, `pagina` e `por_pagina=20` | `MockClient` inspeciona URL e resposta |
+| CT-268 | Primeira página | Controlador expõe itens, total, carimbo e próxima página | Fonte injetada responde envelope válido |
+| CT-269 | Paginação e deduplicação | Próximas páginas chegam só pelo botão e nome canônico repetido não duplica cartão | Duas respostas com uma loja repetida |
+| CT-270 | Concorrência, reset e resposta antiga | Não há duas chamadas de paginação; busca/ordenação limpam a sequência e descartam resposta antiga | `Completer` controla a ordem das respostas |
+| CT-271 | Debounce da busca | Digitação só consulta após 350 ms sem nova entrada | Relógio de teste/fonte injetada |
+| CT-272 | Erro de página adicional | Itens anteriores ficam visíveis e retry tenta apenas a próxima página | Primeira resposta válida, segunda falha e terceira passa |
+| CT-273 | Estados do painel | Loading, falha/retry, sem coleta, catálogo vazio, busca vazia, atraso e loja ausente não se confundem | Testes de widget com controlador injetado |
+| CT-274 | Cartão e condições | Pontos, base, limiar, Clube, promoção, alerta e condições expansíveis são renderizados com texto seguro | Widget com modelo completo |
+| CT-275 | Filtros e fim da lista | Os três controles aparecem; página final informa que não há mais resultados | Tocar controles e carregar a última resposta |
+| CT-276 | Layout e navegação Livelo | Retrato, tela larga e toque em Livelo preservam a moldura e exibem o painel real | Widgets em viewports distintos |
+
+### Fase 4.3 — cashback Inter no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-277 | Modelo e carimbo Inter | Oferta textual, decimais como `String`, opcionais e horário de Brasília são preservados; atraso ocorre somente após 24 h | Fixture Dart e relógio explícito |
+| CT-278 | Consulta do cashback | Cliente envia `q`, `ordenar`, `pagina` e `por_pagina=20` ao endpoint autenticado | `MockClient` inspeciona URL e envelope |
+| CT-279 | Página e deduplicação Inter | Primeira página, próxima página e repetição de ID estável produzem uma lista única | Fonte injetada com duas páginas |
+| CT-280 | Reset e resposta antiga | Busca/ordenação reiniciam a sequência, aguardam 350 ms e descartam a resposta anterior | `Completer` e fonte injetada |
+| CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
+| CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
+| CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
+| CT-284 | Navegação e responsividade Inter | Tocar Inter abre o painel real e a moldura preserva abas, retrato/paisagem e tela larga | Widget da moldura em viewports distintos |
+
+### Fase 4.4 — produtos no Flutter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-285 | Modelo e histórico de produto | Campos comerciais, medições e valores `NUMERIC` permanecem textuais; carimbo usa Brasília e atraso de 12 h | Fixtures Dart e relógio explícito |
+| CT-286 | Contrato de histórico | Cliente envia loja, produto e paginação própria de 30 itens ao endpoint autenticado | `MockClient` inspeciona URL e resposta |
+| CT-287 | Busca paginada local | Termo curto não consulta; busca aguarda 350 ms, pagina e deduplica por loja + ID | Controlador com fonte injetada |
+| CT-288 | Filtros e respostas antigas | Filtros reiniciam a sequência e a resposta de consulta descartada não reaparece | `Completer` controla a ordem |
+| CT-289 | Falha adicional de produtos | Itens existentes permanecem e retry carrega a mesma página | Segunda resposta falha, terceira passa |
+| CT-290 | Estados e cards de produto | Termo mínimo, vazio, falha/retry, qualidade degradada, preço, cashback, líquido e grupos de loja são distintos | Widgets com controlador injetado |
+| CT-291 | Filtros e tela larga | Filtros chegam ao controlador e a grade adapta os cartões sem perder semântica | Bottom sheet e viewport largo |
+| CT-292 | Inter abre Produtos | O atalho interno na aba Inter abre a busca sem descartar o painel de cashback | Teste de widget da navegação interna |
+| CT-293 | Histórico de 30 dias | Mínimo, máximo, medições paginadas, falha e retry aparecem sem converter valores em `double` | Mock autenticado da API e widget |
+
+### Fase 5 — administração compartilhada no Flutter/API
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-294 | Catálogos administrativos | Seleção, favoritas, paginação e deduplicação usam apenas os contratos autenticados da API | Cliente falso, controlador e widgets administrativos |
+| CT-295 | Disparo idempotente e cooldown | Duplo toque não cria dois pedidos; o app exibe aceite/cooldown sem afirmar que a coleta terminou | API falsa, chave opaca e widget do botão de disparo |
+| CT-296 | Decimais administrativos textuais | Pontos, limites, multiplicadores e cashback atravessam Flutter/API como texto, sem `double` | Fixtures e inspeção de corpo JSON |
+| CT-297 | Preferências e regras Livelo | Padrões globais, Clube e exceção por loja usam rotas fechadas e preservam o estado carregado | API falsa e jornada de widget da administração |
+| CT-298 | Limpeza protegida e descartável | Prévia, frase exata, autorização e rollback impedem limpeza acidental; o aceite destrutivo usa somente banco isolado | Widgets, Vitest e roteiro 5.3 do plano Flutter |
+
+### Redesign — Etapa 1, identidade e abertura
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-299 | Logo vetorial aprovado | As variantes clara/escura conservam geometria, semântica e o golden aprovado | `logo_radar_test.dart` com `CustomPainter`, semântica e golden |
+| CT-300 | Bootstrap antes do gate | A raiz de produção desenha a abertura enquanto Firebase/App Check ainda inicializam | `Completer` injetado em `RadarApp.inicializando` |
+| CT-301 | Ciclo visual mínimo | Resultado pronto aguarda somente o ciclo aprovado de 1,5 segundo; inicialização mais lenta não recebe espera adicional | Inicializadores falso imediato e lento com relógio controlado |
+| CT-302 | Inicialização demorada honesta | Após o limiar, o status explica a demora e mantém a marca visível | Relógio do teste avança até `tempoParaAviso` |
+| CT-303 | Falha segura e nova tentativa | Erro oferece retry, não vaza a exceção interna e uma tentativa válida segue o fluxo | Inicializadores pendente, excepcional e válido injetados |
+| CT-304 | Movimento reduzido | A preferência do sistema desativa o ticker e os pulsos da marca | `MediaQueryData(disableAnimations: true)` e inspeção de `TickerMode` |
+
+O APK instalado no Android conectado também validou manifests, ícones e o loop
+dos recursos de abertura nativos e Flutter. O build Web passou antes dos ajustes
+visuais finais do Android e não foi repetido nesta rodada. O
+`LaunchScreen.storyboard` do iOS foi conferido estruturalmente, mas seu build
+depende de Xcode/macOS e permanece parte do smoke físico da etapa.
+
+### Redesign — Módulo 1, login
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-305 | Login responsivo | Celular prioriza o formulário; Web amplo separa apresentação e acesso no breakpoint aprovado | Widgets em 390 × 844 e 1440 × 900 + goldens |
+| CT-306 | Credenciais sem transformação indevida | O e-mail perde somente espaços nas bordas; a senha chega intacta ao `Autenticador` | Autenticador falso inspeciona os argumentos recebidos |
+| CT-307 | Senha acessível | Mostrar/ocultar troca rótulo e obscurecimento sem apagar o conteúdo | Tooltip, `EditableText` e conteúdo controlado |
+| CT-308 | Envio pendente seguro | Loading preserva os dois campos e impede novo envio enquanto a tentativa está pendente | `Completer` injetado e inspeção do formulário |
+| CT-309 | Falha e recuperação neutra | Erro não apaga os campos; recuperação nunca confirma se a conta existe, mesmo diante de falha conhecida do provedor | `FalhaDeAutenticacao` injetada e regiões de mensagem inspecionadas |
+| CT-310 | Tela estreita e texto ampliado | Em 320 × 640 com texto a 150%, campos e ações continuam alcançáveis sem overflow | Viewport e `TextScaler` controlados |
+
+O fechamento do módulo passou por formatação, análise, 131 testes, build Web e
+APK debug. `pagina_entrar.dart` atingiu 233/241 linhas (96,68%); a cobertura
+global observada foi 89,76%. O APK foi aberto no Samsung SM-M135M sem submeter
+credenciais reais, e o responsável aprovou o resultado visual e dispensou o
+restante do roteiro manual.
+
+### Redesign — Módulo 2, moldura e navegação
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-311 | Destinos fixos do redesign | A ordem principal é Início, Lojas, Produtos, Alertas e Mais, sem esconder jornadas existentes | Enum fechado e inspeção dos cinco itens |
+| CT-312 | Gaveta e lateral adaptativas | Mobile/retrato/paisagem usa cabeçalho + gaveta; Web a partir de 920 px usa lateral com a mesma ordem | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
+| CT-313 | Hub transitório de Lojas | Livelo e Shopping Inter continuam alcançáveis sem consultar resumo nem exibir métricas fictícias | API falsa e ações do hub isolado |
+| CT-314 | Voltar na hierarquia interna | Voltar de Livelo/Inter retorna primeiro para Lojas em vez de sair do app | Navegador aninhado e `handlePopRoute` |
+| CT-315 | Estado preservado entre áreas | Trocar de Produtos para outra área e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
+| CT-316 | Alertas e Administração preservados | Atalho do cabeçalho abre o estado honesto de Alertas; Mais mantém Administração para admin | Ações da moldura e API falsa fechada |
+| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, abrir/fechar e os cinco destinos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
+| CT-318 | Moldura visual aprovada | Gaveta Mobile e lateral Web permanecem iguais às referências aprovadas | Goldens dos dois breakpoints |
+
+O fechamento passou por formatação, análise, 137 testes, build Web e APK debug.
+A cobertura global ficou em 2529/2805 linhas (90,16%); `moldura.dart` atingiu
+116/118 (98,31%) e `lojas.dart`, 70/71 (98,59%). O APK foi instalado com
+substituição, preservando os dados locais, e o responsável concluiu o teste
+manual no Samsung SM-M135M com resultado aprovado.
+
+### Redesign — Módulo 3, Início e resumo real
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-319 | Agregação isolada | Livelo, Cashback Inter e Produtos conservam relógios, recortes e contagens próprios | Dependências assíncronas injetadas no agregador TypeScript |
+| CT-320 | Estados e frescor | Atualizado, atraso, atualização, falha recente, parcial, degradado e sem dados não se confundem | Relógio UTC explícito e fixtures de cada domínio |
+| CT-321 | Falha parcial segura | Falha de uma consulta marca somente o domínio como indisponível, sem vazar exceção nem fabricar zero | Uma dependência rejeita e as outras respondem |
+| CT-322 | Contrato Flutter | `/api/resumo` envia autenticação e converte estados, horários e contagens sem aceitar valores hostis | `MockClient` e modelos Dart manuais |
+| CT-323 | Métricas e recortes | Alertas Livelo, lojas de cashback e produtos ativos exibem o recorte real; indisponível usa `—` | Widget com respostas válidas, zero e indisponibilidade |
+| CT-324 | Retry sem apagar resumo | Falha na atualização mantém o último payload visível e oferece nova tentativa | Primeira resposta válida e segunda com erro |
+| CT-325 | Atalhos reais | Lojas, Livelo, Produtos e Cashback Inter abrem as jornadas existentes | Callbacks isolados e moldura completa |
+| CT-326 | Responsividade e acessibilidade | Web amplo, 320 × 640 e texto a 150% permanecem alcançáveis sem overflow | Viewports e `TextScaler` controlados |
+| CT-327 | Início visual aprovado | Topo do Início em Mobile e Web amplo permanece igual às referências aprovadas | Dois goldens próprios, além dos goldens da moldura |
+
+O fechamento local passou por TypeScript, ESLint, 83 testes Vitest e build do
+site legado (removido em 2026-08-24); a rota `/api/resumo` era a raiz do contrato de Início. No Flutter,
+formatação, análise, 147 testes e builds Web/APK debug passaram. A cobertura
+global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
+(100%). Não houve publicação, instalação ou smoke contra produção.
+
+### Redesign — Módulo 4, hub de Lojas
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-328 | Resumos isolados no hub | Livelo, Cashback e Produtos exibem contagens e estados próprios; falha recente e parcial não viram zero nem contaminam outra fonte | Fixture de `/api/resumo` com estados distintos e teste de widget da moldura |
+
+### Redesign — Módulo 5, hub do Shopping Inter
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-329 | Modalidades, atualizações e retornos isolados | O hub distingue Cashback — Sites parceiros de Produtos — Compre direto, preserva seus estados, consulta cada domínio administrativo e retorna de cada jornada ao Shopping Inter antes de Lojas | Fixture de `/api/resumo` e teste de widget da moldura navegando por ambas as modalidades |
+
+### Redesign — Módulo 6, Produtos e histórico
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
+| CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
+
+### Migração mobile — Etapa 1, fundação visual e aparência
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-332 | Primeira execução acompanha o sistema | Sem escolha persistida, o app nativo compacto usa `ThemeMode.system` | Preferência falsa sem valor e inspeção do controlador |
+| CT-333 | Aparência persiste localmente | Claro/escuro muda imediatamente e a escolha reaparece em outro controlador | Repositório de preferência em memória compartilhado |
+| CT-334 | Persistência não bloqueia nem volta no tempo | Falha ao salvar mantém a escolha da sessão; leitura atrasada não sobrescreve toque mais recente | Exceção e `Completer` injetados no armazenamento |
+| CT-335 | Escopo mobile preserva o Web | Android/iOS compacto aceita escuro; layout amplo continua claro e sem controle novo | Viewports 390 × 844 e 1440 × 900 com modo escuro injetado |
+| CT-336 | Controle acessível de aparência | Cabeçalho e gaveta informam ação/estado e alternam sem reiniciar a sessão | Widget completo, chave, tooltip, semântica e controlador falso |
+| CT-337 | Fundação funciona nos dois temas | Cabeçalho, cartão, estado, busca, abas e folha usam tokens sem perder interação | Testes de widget parametrizados em claro/escuro |
+
+Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
+`app/test/app/componentes/fundacao_visual_test.dart`. A execução, os goldens e
+os totais da fundação foram verificados junto com os casos do catálogo Android
+em 28 de agosto de 2026.
+
+### Catálogo Livelo completo — Android compacto
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-338 | Identidade e categorias Livelo | ID externo e categorias saem do payload; `todos` não vira categoria | Itens sintéticos e fixture real no extrator puro |
+| CT-339 | Deduplicação e conflito | Repetição idêntica do ID entra uma vez; IDs distintos com o mesmo nome permanecem; conflito no mesmo ID falha | Variar ID, nome e conteúdo no payload |
+| CT-340 | ID hostil invalida coleta | ID ausente, longo ou com caracteres de caminho não chega ao banco nem à URL da API | Payload hostil e `CatalogoLiveloInvalido` |
+| CT-341 | Publicação atômica | Execução, catálogo, vínculos e pontuações usam uma transação e contagens exatas | Cursor fake com lotes e contadores |
+| CT-342 | Rollback de publicação parcial | Divergência em catálogo, vínculos ou pontuações falha sem registrar sucesso | Injetar contagem parcial e observar exceção sair do contexto transacional |
+| CT-343 | Zero acompanhadas | Catálogo completo é publicado mesmo quando `loja` está vazia; nenhuma pontuação é inventada | Caso de uso com catálogo fake vazio e repositório espião |
+| CT-344 | Consulta e filtros da API | Busca, abas, categoria e ordenação respeitam ID, texto e decimais sem `number` | Vitest das funções puras e contrato de paginação |
+| CT-345 | Categorias em português | Códigos conhecidos recebem rótulo; desconhecidos e ausência viram “Outros” | Tabela de entradas conhecida/hostil |
+| CT-346 | Acompanhamento fechado | Corpo aceita somente `acompanhada: boolean`; nome, link e categoria do cliente são rejeitados | Validador TypeScript e PATCH inspecionado no Flutter |
+| CT-347 | Modelo e API Flutter | IDs, categorias e `NUMERIC` permanecem textuais; GET e PATCH enviam somente parâmetros permitidos | Fixtures Dart e `MockClient` |
+| CT-348 | Debounce e resposta antiga | Busca espera 350 ms e uma resposta descartada não substitui a consulta atual | `Completer`, fonte injetada e relógio de teste |
+| CT-349 | Paginação por ID | Página adicional preserva cartões e deduplica somente por ID externo | Duas páginas com ID repetido |
+| CT-350 | Mutação reversível | Duplo toque não repete PATCH; falha restaura cartão e resumo sem apagar filtros | `Completer` e falha injetada no controlador |
+| CT-351 | Conteúdo Android real | Hero, métricas, abas, busca, categorias e cartões usam somente o payload da API | Widget com controlador injetado |
+| CT-352 | Estados distintos | Loading, falha/retry, nunca sincronizado, busca vazia, zero acompanhadas, zero alertas e atraso não se confundem | Resumos e erros injetados |
+| CT-353 | Tela estreita e texto ampliado | 320 × 640 com texto a 150% rola sem overflow | Viewport e `TextScaler` controlados |
+| CT-354 | Temas do catálogo | Android claro e escuro permanecem iguais às referências versionadas | Dois goldens próprios |
+| CT-355 | Escopo por plataforma | Somente Android compacto usa o catálogo novo; iOS, Web e layout amplo preservam a tela anterior | Override de plataforma e viewports compacta/ampla |
 
 ---
 
@@ -422,8 +632,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | Arquivo | Casos CT | Executados |
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 28 | 36 |
-| `teste_adaptadores.py` | 22 | 27 |
+| `teste_extrator.py` | 28 | 40 |
+| `teste_adaptadores.py` | 22 | 29 |
 | `teste_alertas.py` | 13 | 17 |
 | `teste_retrato.py` | 5 | 5 |
 | `teste_montador_email.py` | 31 | 33 |
@@ -433,16 +643,27 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
-| `teste_produtos_inter.py` | 6 | 14 |
+| `teste_produtos_inter.py` | 9 | 19 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **156** | **205** |
+| **Total (robô)** | **159** | **177** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
 | `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
-| **Total (site)** | **23** | **33** |
+| `site/testes/paginacao.teste.ts` | 0 | 5 |
+| `site/testes/api.teste.ts` | 0 | 9 |
+| `site/testes/limpeza.teste.ts` | 0 | 3 |
+| `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
+| `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
+| `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
+| `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
+| **Total (site)** | **CTs catalogados + apoio** | **83** |
+| `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação | 178 confirmados nesta entrega |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **178** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
 Manuais: CT-050 e CT-051.
 
-Confirme o número real com `pytest --collect-only -q` antes de citá-lo em qualquer documento — foi assim que o total errado de "47 casos" sobreviveu ao planejamento original.
+Confirme o número real com o coletor de cada suíte antes de citá-lo em qualquer
+documento (`pytest --collect-only -q` no robô e `flutter test` no app) — foi
+assim que o total errado de "47 casos" sobreviveu ao planejamento original.

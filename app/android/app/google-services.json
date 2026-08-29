@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "100167816991",
+    "project_id": "radarbeneficios",
+    "storage_bucket": "radarbeneficios.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100167816991:android:570f7af7ffd75b08f9822a",
+        "android_client_info": {
+          "package_name": "br.com.radarbeneficios.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhMVWxrdi-uj3m8yIFWQPBcmBwpM3_lmo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

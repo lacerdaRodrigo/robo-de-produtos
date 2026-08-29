@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/radar_fundo_abertura</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo_radar_abertura_animado</item>
+        <item name="android:windowSplashScreenAnimationDuration">1400</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/radar_fundo_abertura</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

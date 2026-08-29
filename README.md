@@ -1,108 +1,148 @@
 # Radar de Benefícios — Livelo e Shopping Inter
 
-Monitora benefícios em duas fontes públicas: avisa por e-mail quando uma loja favorita está com pontuação turbinada na Livelo e mostra o cashback e as condições das lojas escolhidas no Shopping Inter.
+Monitora benefícios em fontes públicas: avisa por e-mail quando uma loja favorita
+está com pontuação turbinada na Livelo e mostra o cashback e as condições das lojas
+escolhidas no Shopping Inter (incluindo produtos do Compre direto, com busca e
+histórico de 30 dias).
 
-Sem servidor próprio. Os coletores rodam separadamente no GitHub Actions; um Postgres (Neon) guarda os catálogos e retratos, e um site em Next.js mostra cada fonte sem misturar suas regras.
+Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Neon)
+guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) mostra
+cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17: 111 vendedores sincronizados, 94 páginas coletadas, 3.310 produtos ativos e busca local do Motorola Edge 60 Pro confirmada no Neon. Suíte atual: 205 testes no robô e 33 no site, com 94,13% de cobertura do núcleo puro.
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. O
+> catálogo Livelo completo está no Neon e na API autenticada: a primeira coleta
+> publicou 252 parceiros em 2026-08-28. O smoke físico Android fica pendente
+> pelo responsável. A V4 de
+> produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17:
+> 3.310 produtos ativos e busca local confirmada no Neon. O Flutter (app/) está em
+> redesign por telas; a interface Web legada (Next.js) foi desativada em 2026-08-24
+> e a API (sem prefixo de versão) foi arquivada em `backend/api/`.
 
-> **Aceite em andamento:** a V4 possui coletor, persistência, site e workflow matricial. Casas Bahia é a única loja de produtos selecionada; Ponto e o dimensionamento para mais lojas continuam como próximos gates. Veja o [`PRD-V4.md`](docs/PRD-V4.md).
+## Estrutura do repositório
+
+```text
+robo/
+├── app/            # Flutter (Web, Android e iOS) — única interface
+├── backend/
+│   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
+│   └── api/        # API autenticada (arquivada, não roda)
+├── docs/           # PRDs e documentação
+├── migracoes/      # schema do Postgres (Neon) — 001 a 013
+├── design-app/     # protótipos visuais Web/Mobile
+├── .github/        # workflows do GitHub Actions
+└── CLAUDE.md       # contexto para agentes de IA
+```
 
 ## Como funciona
 
 ```text
-Livelo         → extrator próprio → favoritas → alerta e retrato → e-mail + site
-Shopping Inter → extrator próprio → catálogo → favoritas e retrato → site
-Produtos Inter → lojas escolhidas → catálogo paginado + partição segura → busca + histórico
+Livelo         → extrator próprio → catálogo atual + acompanhadas → alerta/retrato
+Shopping Inter → extrator próprio → catálogo → favoritas e retrato
+Produtos Inter → lojas escolhidas → catálogo paginado → busca + histórico
 ```
 
-Os coletores rodam três vezes ao dia e permanecem isolados. A V4 pagina somente lojas escolhidas, com no máximo duas em paralelo e pausa de 1,5 s entre páginas. Nenhuma integração faz login; todas leem apenas fontes públicas.
+Os coletores rodam três vezes ao dia e permanecem isolados. A V4 pagina somente
+lojas escolhidas, com no máximo duas em paralelo. Nenhuma integração faz login;
+todas leem apenas fontes públicas.
 
 ## Documentação
 
 | Documento | Para quê |
 |---|---|
-| **[`PRD.md`](docs/PRD.md)** | **Fonte da verdade.** Visão, requisitos, regras de negócio, arquitetura, modelo de dados, segurança e roadmap |
+| **[`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
 | [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
-| **[`docs/PRD-V2.md`](docs/PRD-V2.md)** | Planejamento da V2: data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional |
-| **[`docs/PRD-V3.md`](docs/PRD-V3.md)** | Fonte da verdade da V3: Shopping Inter separado da Livelo, com cashback e condições da promoção |
-| **[`docs/PRD-V4.md`](docs/PRD-V4.md)** | Especificação da V4: catálogo completo exposto das lojas diretas escolhidas, busca local e histórico de 30 dias |
-| [`docs/ROTEAMENTO_MODELOS_CODEX.md`](docs/ROTEAMENTO_MODELOS_CODEX.md) | Cola para escolher modelo e esforço antes de mudar o projeto |
-| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Histórico. Substituído pelo PRD, mantido pelo dicionário de lojas e categorias |
-| [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA que trabalhem no projeto |
+| [`docs/prd/PRD-LIVELO-V2.md`](docs/prd/PRD-LIVELO-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
+| [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
+| [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
+| [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
+| [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
+| [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Design e lições do e-mail |
+| [`docs/guias/ARQUITETURA.md`](docs/guias/ARQUITETURA.md) | Histórico, substituído pelo PRD |
+| [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
+| [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA |
+| [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
-Decisão técnica não se explica aqui. Se você quer saber *por que* `requests` em vez de Playwright, ou por que não existe histórico entre execuções, está tudo no PRD.
+Cada pasta tem seu próprio `README.md` com contexto local:
+[`app/`](app/README.md), [`backend/robo/`](backend/robo/README.md),
+[`backend/api/`](backend/api/README.md), [`migracoes/`](migracoes/README.md),
+[`design-app/`](design-app/README.md) e [`.github/`](.github/README.md).
 
-## Rodando localmente
+## Como rodar o Flutter
 
 ```bash
+make dev                       # Android conectado, usando a branch atual
+make dev DEVICE=emulator-5554  # escolhe outro Android
+make apk                       # gera o APK de release para instalar manualmente
+```
+
+O alvo detecta o primeiro Android disponível e executa o checkout atual. Para
+trocar a API ou o App Check, passe `API_URL=...` e `APP_CHECK=true` no comando.
+Após `make apk`, o arquivo fica em
+`app/build/app/outputs/flutter-apk/app-release.apk`.
+
+O app consome a API (`/api/*` por domínio, ex.: `/api/livelo`, `/api/inter`), que
+hoje está arquivada — para desenvolvimento local aponte
+`--dart-define=API_URL=...` para uma API em execução. Veja
+[`app/README.md`](app/README.md).
+
+## Como rodar os robôs (backend)
+
+```bash
+cd backend/robo
 python -m venv .venv
-source .venv/bin/activate      # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env           # preencha com seus dados
+cp ../../backend/api/examples/.env.example .env   # preencha com seus dados
 python -m robo_livelo.principal
 python -m robo_livelo.principal_inter
 python -m robo_livelo.principal_produtos_inter
 ```
 
-O coletor do Inter exige `DATABASE_URL`. Para o e-mail da Livelo, você também vai precisar de uma **Senha de Aplicativo** do Gmail — não é a senha da conta:
+Com `DATABASE_URL`, as lojas acompanhadas ficam no Postgres; o TOML é reserva
+somente para indisponibilidade e não repõe um banco que respondeu vazio. O
+coletor do Inter exige `DATABASE_URL`; o e-mail da Livelo exige uma
+**Senha de Aplicativo** do Gmail. Veja [`backend/robo/README.md`](backend/robo/README.md).
 
-1. Ative a verificação em 2 etapas na conta Google
-2. Gere a senha em https://myaccount.google.com/apppasswords
-3. Cole o código de 16 caracteres no `.env`
+## GitHub Actions
 
-### Escolhendo lojas da Livelo
+Em **Settings → Secrets and variables → Actions**, crie os segredos usados pelos
+workflows. Os coletores rodam às 09h, 14h e 20h (produtos às 09h30/14h30/20h30).
+Veja a lista completa em [`.github/README.md`](.github/README.md).
 
-As lojas monitoradas ficam em `config/lojas_favoritas.toml`, fora do código:
-
-```toml
-[[loja]]
-nome = "Casas Bahia"
-apelidos = ["Casas Bahia Oficial"]
-categoria = "Marketplace / Varejo Geral"
-```
-
-O campo `apelidos` existe porque o reconhecimento é por nome exato: se a Livelo passar a exibir uma variação do nome, ela precisa ser cadastrada aqui, senão a loja some do e-mail.
-
-Opcionalmente, uma loja pode ter limiar próprio de alerta — `multiplicador` e `piso_pontos`. Ausentes, valem os padrões globais.
-
-Com `DATABASE_URL` no ambiente, o catálogo passa a vir do Postgres e este arquivo vira **reserva**: se o banco não responder, a execução continua com o TOML e registra um aviso no log. Sem `DATABASE_URL`, o arquivo é a única fonte — que é o caso de quem clona o projeto e roda na própria máquina.
-
-### Escolhendo lojas do Shopping Inter
-
-Depois da primeira execução de `principal_inter`, entre no site, abra **Lojas Inter**, procure por nome e clique em **Acompanhar**. A página pública **Shopping Inter** passa a mostrar o cashback principal, a condição para não-correntista quando existir e a descrição completa da promoção. Todos os cartões usam o link genérico aprovado do Shopping Inter.
-
-### Escolhendo lojas de produtos do Shopping Inter
-
-Depois do job de preparação da V4, entre em **Produtos → Lojas de produtos** e selecione os vendedores desejados. O site nunca consulta o Inter durante uma busca: ele lê o último snapshot válido no Neon. A primeira loja validada é a Casas Bahia; amplie a seleção gradualmente.
-
-## Rodando no GitHub Actions
-
-Em **Settings → Secrets and variables → Actions**, crie:
-
-- `EMAIL_REMETENTE`
-- `SENHA_APP_GMAIL`
-- `EMAIL_DESTINO`
-- `DATABASE_URL` (opcional para a Livelo; obrigatório para o Shopping Inter)
-
-Os workflows `robo.yml` e `inter.yml` rodam às 09h, 14h e 20h. `produtos-inter.yml` começa às 09h30, 14h30 e 20h30, gera uma matriz somente com lojas selecionadas e limita a concorrência a duas. Todos também aceitam disparo manual.
+> **Nota sobre reativação:** com o pacote em `backend/robo/src/`, recolocar o CI
+> de coleta em pé exige rodar a partir de `backend/robo/` e ajustar o caminho de
+> `config/lojas_favoritas.toml`.
 
 ## Testes
 
 ```bash
-pytest --cov --cov-fail-under=90
-cd site
-npm run checar
-npm run testar
-npm run build
+cd backend/robo && ruff check . && python -m pytest --cov --cov-fail-under=90
+cd app && flutter analyze && flutter test
 ```
+
+## Versionamento e rastreabilidade
+
+O projeto usa [Semantic Versioning](https://semver.org/lang/pt-BR/) e
+[Conventional Commits](https://www.conventionalcommits.org/pt-br/). O workflow
+`versao.yml` analisa os commits na `main`, atualiza versão, `CHANGELOG.md`, cria a
+tag e publica uma GitHub Release.
+
+| Prefixo | Impacto |
+|---|---|
+| `fix:` | patch — correção compatível |
+| `feat:` | minor — funcionalidade compatível |
+| `feat!:` ou `BREAKING CHANGE` | major — mudança incompatível |
+| `docs:`, `test:`, `style:`, `chore:` | não cria versão sozinho |
 
 ## Uso responsável
 
-Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas exibidas**. Faz consultas públicas controladas três vezes ao dia, com paginação e cooldown quando necessários, identificando-se honestamente.
+Projeto pessoal e educacional, **sem afiliação com Livelo, Banco Inter ou as lojas
+exibidas**. Faz consultas públicas controladas três vezes ao dia, com paginação e
+cooldown quando necessários, identificando-se honestamente.
 
-Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para. Nenhuma técnica de evasão de bloqueio será usada — a análise completa está na Seção 10 do PRD e nos PRDs V3 e V4.
+Se uma fonte bloquear o acesso ou pedir para parar, o coletor correspondente para.
+Nenhuma técnica de evasão de bloqueio será usada.
 
 ## Licença
 
