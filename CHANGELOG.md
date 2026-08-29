@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.47.0 (2026-08-29)
+
+### Features
+
+- **app**: Atualiza monitoramento livelo e sincroniza versao
+  ([`1b6b65a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1b6b65aa28305438f2e566d1de2efe7c01e161a8))
+
+
 ## v1.46.1 (2026-08-29)
 
 ### Bug Fixes
