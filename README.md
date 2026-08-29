@@ -10,9 +10,9 @@ guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) m
 cada fonte sem misturar suas regras.
 
 > **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. O
-> catálogo Livelo completo para Android está implementado localmente, com a
-> migração `013`, API autenticada e testes; Neon, deploy e smoke físico seguem
-> pendentes. A V4 de
+> catálogo Livelo completo está no Neon e na API autenticada: a primeira coleta
+> publicou 252 parceiros em 2026-08-28. O smoke físico Android fica pendente
+> pelo responsável. A V4 de
 > produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17:
 > 3.310 produtos ativos e busca local confirmada no Neon. O Flutter (app/) está em
 > redesign por telas; a interface Web legada (Next.js) foi desativada em 2026-08-24

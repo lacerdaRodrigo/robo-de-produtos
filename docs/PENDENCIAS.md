@@ -6,7 +6,7 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 ## Catálogo Livelo completo — Android compacto
 
-**Implementação local concluída em 2026-08-28.** O protótipo mobile preserva a
+**Backend publicado em 2026-08-28.** O protótipo mobile preserva a
 hierarquia aprovada sem apresentar nomes ou números ilustrativos como reais. O
 novo fluxo fica restrito ao Android compacto; Web, iOS e layout amplo continuam
 na experiência anterior.
@@ -18,12 +18,12 @@ na experiência anterior.
 - [x] Criar GET paginado e PATCH administrativo idempotente na API
 - [x] Implementar busca com debounce, filtros, paginação e mutação reversível
 - [x] Cobrir Android compacto, iOS/Web anteriores, 320 px e temas claro/escuro
-- [ ] Aplicar a migração `013` no Neon — exige autorização explícita
-- [ ] Publicar robô/API/app — exige autorização explícita
+- [x] Aplicar a migração `013` no Neon e confirmar tabela, vínculo e índice
+- [x] Publicar robô e API; a rota autenticada `/api/livelo/catalogo` está no ar
+- [x] Executar uma coleta real sem e-mail: 252 parceiros ativos foram publicados
 - [ ] Executar o smoke manual no Samsung pelo responsável
 
-Nenhuma migração, publicação, coleta real, instalação ou navegação no aparelho
-foi executada nesta entrega.
+Build, instalação, navegação e smoke no aparelho ficam a cargo do responsável.
 
 ---
 
@@ -47,8 +47,9 @@ foi executada nesta entrega.
 - [x] Gates API verde: `tsc --noEmit`, vitest (7), `next build`
 - [x] Gates robô verde: ruff, format, `pytest` 94,16%
 - [ ] Cadastrar `ALLOWED_ORIGINS` na Vercel (origin exata do Flutter Web)
-- [ ] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
-- [ ] Aplicar migrações `009`, `012` e `013` no Neon (a `011` segue adiada)
+- [x] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
+- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada; a `013`
+      foi aplicada em 2026-08-28)
 - [ ] Conferir segredos `DATABASE_URL`, e-mail e `GITHUB_TOKEN_DISPARO` no GitHub
 - [ ] App Check: inscrever Web (reCAPTCHA) e iOS e recriar token debug do Samsung;
       só então `EXIGIR_APP_CHECK=true`

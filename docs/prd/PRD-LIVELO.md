@@ -1,7 +1,7 @@
 # PRD — Livelo (Robô de Pontuação Turbinada)
 
 **Versão:** v1.1
-**Status:** V1.0 e V2.0–V2.3 da Livelo estão publicadas. O catálogo Livelo completo, a migração `013`, a API autenticada e a experiência Android compacta estão implementados localmente; migração no Neon, deploy e smoke físico continuam pendentes. Web, iOS e layout amplo permanecem na experiência anterior neste ciclo. A interface web Next.js (`site/`) foi desativada em 2026-08-24; o Flutter vive em `app/` e a API em `backend/api/`.
+**Status:** V1.0 e V2.0–V2.3 da Livelo estão publicadas. O catálogo Livelo completo, a migração `013` e a API autenticada estão publicados; a primeira coleta gravou 252 parceiros ativos no Neon em 2026-08-28. O smoke físico Android continua pendente pelo responsável. Web, iOS e layout amplo permanecem na experiência anterior neste ciclo. A interface web Next.js (`site/`) foi desativada em 2026-08-24; o Flutter vive em `app/` e a API em `backend/api/`.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 

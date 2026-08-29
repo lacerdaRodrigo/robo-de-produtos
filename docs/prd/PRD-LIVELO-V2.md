@@ -1,7 +1,7 @@
 # PRD — Livelo V2 (delta: validade, e-mail, banco)
 
 **Versão:** v2.x (documento vivo)
-**Status:** V2.0 a V2.3 publicadas. O ciclo de catálogo completo para Android está implementado localmente; migração `013`, deploy e smoke físico estão pendentes. V2.4 (e-mail condicional/RF16) segue planejada.
+**Status:** V2.0 a V2.3 publicadas. O ciclo de catálogo completo está publicado: a migração `013` está no Neon, a API está no ar e a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável. V2.4 (e-mail condicional/RF16) segue planejada.
 
 > A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
 
@@ -444,7 +444,7 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 | **V2.2** | Regras de alerta RN27 e RN28, ainda com o e-mail diário | Permite calibrar multiplicador e piso **vendo o resultado** antes de depender deles |
 | **V2.3** | Site na Vercel: consulta e edição, com senha | Precisa do banco da V2.1. Entrega O5 |
 | **V2.4** | E-mail condicional (RF16) | **Só depois da V2.3 no ar e verificada.** Antes disso, cortar o e-mail diário reabre o buraco do O3 |
-| **Catálogo Android** | Migração `013`, publicação completa, API autenticada e tela Android compacta | Implementado localmente; Neon, deploy e smoke físico pendentes |
+| **Catálogo Android** | Migração `013`, publicação completa, API autenticada e tela Android compacta | Migração e API publicadas; primeira coleta com 252 parceiros. Smoke físico Android pendente pelo responsável |
 
 > Duas ordens não são negociáveis. **V2.4 depois da V2.3**, senão fica sem sinal de vida nenhum. E **V2.2 antes da V2.4**, porque calibrar limiar recebendo e-mail todo dia é fácil; calibrar limiar quando o e-mail só chega se o limiar estiver certo é adivinhação.
 
