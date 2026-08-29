@@ -196,16 +196,19 @@ class CampoBuscaRadar extends StatelessWidget {
     required this.dica,
     required this.aoMudar,
     this.acao,
+    this.chaveCampo,
   });
 
   final TextEditingController controlador;
   final String dica;
   final ValueChanged<String> aoMudar;
   final Widget? acao;
+  final Key? chaveCampo;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      key: chaveCampo,
       controller: controlador,
       onChanged: aoMudar,
       textInputAction: TextInputAction.search,

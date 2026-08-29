@@ -292,47 +292,28 @@ void main() {
     expect(find.byKey(const Key('voltar-para-lojas')), findsNothing);
   });
 
-  testWidgets(
-    'Shopping Inter separa Cashback e Produtos com retornos próprios',
-    (at) async {
-      await _abrir(
-        at,
-        tamanho: const Size(390, 1500),
-        resumo: _resumoComEstadosIndependentes,
-      );
-      await _irParaCompacto(at, DestinoCompacto.inter);
+  testWidgets('Shopping Inter compacto segue as abas do protótipo', (at) async {
+    await _abrir(
+      at,
+      tamanho: const Size(390, 1500),
+      resumo: _resumoComEstadosIndependentes,
+    );
+    await _irParaCompacto(at, DestinoCompacto.inter);
 
-      expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
-      expect(find.text('Cashback — Sites parceiros'), findsOneWidget);
-      expect(find.text('Produtos — Compre direto'), findsOneWidget);
-      expect(find.text('falha recente'), findsOneWidget);
-      expect(find.text('parcial'), findsOneWidget);
+    expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
+    expect(find.text('Cashback'), findsWidgets);
+    expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.byKey(const Key('busca-cashback-inter')), findsOneWidget);
 
-      await at.tap(find.byKey(const Key('abrir-cashback-inter')));
-      await at.pumpAndSettle();
-      expect(
-        find.byKey(const Key('voltar-para-shopping-inter')),
-        findsOneWidget,
-      );
-      expect(find.widgetWithText(TextField, 'Buscar por loja'), findsOneWidget);
+    await at.tap(find.text('Sites parceiros'));
+    await at.pumpAndSettle();
+    expect(
+      find.byKey(const Key('busca-sites-parceiros-inter')),
+      findsOneWidget,
+    );
+  });
 
-      await at.tap(find.byKey(const Key('voltar-para-shopping-inter')));
-      await at.pumpAndSettle();
-      await at.tap(find.byKey(const Key('abrir-produtos-inter')));
-      await at.pumpAndSettle();
-      expect(
-        find.byKey(const Key('voltar-para-shopping-inter')),
-        findsOneWidget,
-      );
-      expect(find.widgetWithText(TextField, 'Buscar produtos'), findsOneWidget);
-
-      await at.tap(find.byKey(const Key('voltar-para-shopping-inter')));
-      await at.pumpAndSettle();
-      expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
-    },
-  );
-
-  testWidgets('admin recebe atualizações identificadas por modalidade', (
+  testWidgets('atualização continua fora do fluxo compacto do Inter', (
     at,
   ) async {
     final requisicoes = <http.Request>[];
@@ -344,15 +325,15 @@ void main() {
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
 
-    expect(find.text('Atualizar Cashback'), findsOneWidget);
-    expect(find.text('Atualizar Produtos'), findsOneWidget);
+    expect(find.text('Atualizar Cashback'), findsNothing);
+    expect(find.text('Atualizar Produtos'), findsNothing);
     final dominiosConsultados = requisicoes
         .where(
           (requisicao) => requisicao.url.path == '/api/administracao/disparos',
         )
         .map((requisicao) => requisicao.url.queryParameters['dominio'])
         .toSet();
-    expect(dominiosConsultados, {'inter', 'produtos_inter'});
+    expect(dominiosConsultados, isEmpty);
   });
 
   testWidgets('Produtos é destino direto e preserva a busca entre áreas', (

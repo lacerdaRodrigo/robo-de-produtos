@@ -18,6 +18,7 @@ CashbackInter loja(String id, String nome) => CashbackInter(
   descricaoPrincipal: null,
   descricaoSecundaria: null,
   encontrada: true,
+  favorita: false,
 );
 
 Pagina<CashbackInter> respostaPagina(

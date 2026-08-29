@@ -743,3 +743,36 @@ Não restou decisão funcional ou técnica bloqueante. O gate foi executado nest
 Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, Riachuelo e Magalu. A migração `migracoes/006_inter.sql` foi aplicada no Neon e a primeira execução terminou com `estado=sucesso`, 381 lojas no catálogo, zero favoritas e, consequentemente, zero snapshots de favoritas. A suíte fechou com 189 testes Python, 31 testes do site e 91,85% de cobertura Python. O build do Next.js confirmou as rotas dinâmicas `/inter` e `/inter/lojas`.
 
 O estado de publicação é separado do estado de implementação: até o código ser enviado à `main`, o workflow `inter.yml` e as páginas novas não estarão disponíveis no GitHub Actions e na Vercel. Qualquer mudança futura nas decisões fechadas desta seção exige atualizar este PRD antes do código correspondente.
+
+---
+
+## 16. Evolução aprovada — catálogo completo no Cashback
+
+**Decisão de produto em 29 de agosto de 2026, implementada em 29 de agosto de
+2026.** Esta evolução substitui a restrição de listagem inicial da V3.0–V3.3.
+
+- A aba/página **Cashback** passa a mostrar todas as lojas válidas de Sites
+  parceiros retornadas pela última coleta, com seu texto e valor de cashback
+  publicados. A listagem inicial não fica restrita às favoritas.
+- **Acompanhadas** passa a ser um filtro do catálogo completo. A ação de
+  acompanhar/remover continua autenticada e conserva a seleção local atual;
+  ela não inicia uma coleta.
+- A listagem padrão pode ser ordenada por maior `fullCashbackValue`, mantendo
+  texto, condições e estados de valor ausente conforme as regras existentes.
+- O indicador **Melhor oferta** continua existindo, mas significa somente o
+  maior `fullCashbackValue` entre as lojas acompanhadas. Sem acompanhadas ou
+  sem valor numérico, o indicador fica vazio; ele não usa a maior loja de todo
+  o catálogo.
+- O contrato `GET /api/inter/cashback` devolve o catálogo ativo da última
+  coleta, incluindo `favorita` em cada item. Ele usa os campos de oferta de
+  `loja_inter`, atualizados transacionalmente pelo robô na mesma coleta. O
+  snapshot histórico de `cashback_inter` continua restrito às acompanhadas e
+  só complementa uma favorita na execução correspondente; não há mistura de
+  ofertas de execuções diferentes.
+- Produtos de Sites parceiros não fazem parte desta evolução. O PRD de
+  Produtos continua limitado a **Compre direto** até que exista decisão e
+  contrato específicos para a nova fonte.
+
+Em conflito com os trechos históricos de V3 que limitam `/inter` às favoritas,
+esta seção prevalece para o próximo contrato e para os protótipos. Esses trechos
+permanecem como registro fiel da implementação V3.0–V3.3.

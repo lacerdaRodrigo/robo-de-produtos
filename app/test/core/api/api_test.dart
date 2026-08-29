@@ -343,6 +343,7 @@ void main() {
                   'descricao_principal': 'Em itens selecionados',
                   'descricao_secundaria': null,
                   'encontrada': true,
+                  'favorita': false,
                 },
               ],
               'pagina': 1,
@@ -376,6 +377,7 @@ void main() {
     expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
     expect(resposta.itens.single.cashbackPrincipalValor, '12.00');
     expect(resposta.itens.single.encontrada, isTrue);
+    expect(resposta.itens.single.favorita, isFalse);
     expect(resposta.ultimaTentativaEstado, 'falha');
   });
 

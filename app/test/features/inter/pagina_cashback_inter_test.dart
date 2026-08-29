@@ -17,6 +17,7 @@ import 'package:app_robo/features/inter/pagina_cashback_inter.dart';
 CashbackInter _loja({
   String nome = 'Magazine Luiza',
   bool encontrada = true,
+  bool favorita = false,
   String? secundaria = '2% de cashback',
 }) => CashbackInter(
   id: nome.toLowerCase(),
@@ -30,6 +31,7 @@ CashbackInter _loja({
   descricaoPrincipal: 'Em itens selecionados',
   descricaoSecundaria: secundaria == null ? null : 'Para não-correntistas',
   encontrada: encontrada,
+  favorita: favorita,
 );
 
 Pagina<CashbackInter> _pagina(
@@ -61,6 +63,17 @@ Widget _tela(ControladorCashbackInter controlador) => MaterialApp(
   theme: TemaRadar.claro(),
   home: Scaffold(
     body: PaginaCashbackInter(api: _api(), controlador: controlador),
+  ),
+);
+
+Widget _telaCompacta(ControladorCashbackInter controlador) => MaterialApp(
+  theme: TemaRadar.claro(),
+  home: Scaffold(
+    body: PaginaCashbackInter(
+      api: _api(),
+      controlador: controlador,
+      incorporada: true,
+    ),
   ),
 );
 
@@ -117,6 +130,33 @@ void main() {
     );
     expect(find.text('Não encontrada na última coleta'), findsOneWidget);
   });
+
+  testWidgets(
+    'Cashback compacto mostra o catálogo inteiro e filtra acompanhadas',
+    (at) async {
+      final controlador = ControladorCashbackInter(
+        buscar: ({required q, required ordenar, required pagina}) async =>
+            _pagina([
+              _loja(nome: 'Animale'),
+              _loja(nome: 'Aramis', favorita: true),
+            ]),
+      );
+      addTearDown(controlador.dispose);
+
+      await at.pumpWidget(_telaCompacta(controlador));
+      await at.pumpAndSettle();
+
+      expect(find.text('Animale'), findsOneWidget);
+      expect(find.text('Aramis'), findsOneWidget);
+
+      await at.tap(find.text('Acompanhadas'));
+      await at.pumpAndSettle();
+
+      expect(find.text('Animale'), findsNothing);
+      expect(find.text('Aramis'), findsOneWidget);
+      expect(find.text('Acompanhada'), findsOneWidget);
+    },
+  );
 
   testWidgets('distingue falha sem retrato, sem coleta e busca vazia', (
     at,

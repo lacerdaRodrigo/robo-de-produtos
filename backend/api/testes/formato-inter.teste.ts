@@ -98,9 +98,9 @@ describe("CT-282 retrato válido, falha e favorita ausente", () => {
     "utf8",
   );
 
-  it("mantém a favorita ausente e expõe a última tentativa sem trocar o retrato", () => {
-    expect(banco).toContain("WHERE f.loja_inter_id IS NOT NULL");
-    expect(banco).not.toContain("WHERE l.ativa = TRUE");
+  it("expõe o catálogo ativo com o estado de favorita e a última tentativa", () => {
+    expect(banco).toContain("(f.loja_inter_id IS NOT NULL) AS favorita");
+    expect(banco).toContain("WHERE l.ativa = TRUE");
     expect(rota).toContain("ultimaTentativaInter()");
     expect(rota).toContain("ultima_tentativa_estado");
     expect(rota).toContain("atualizado_em: execucao?.concluida_em ?? null");

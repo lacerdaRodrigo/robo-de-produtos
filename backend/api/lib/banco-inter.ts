@@ -35,6 +35,7 @@ export type CashbackInter = {
   descricao_principal: string | null;
   descricao_secundaria: string | null;
   encontrada: boolean;
+  favorita: boolean;
 };
 
 export type LojaCatalogoInter = {
@@ -115,6 +116,10 @@ export async function ultimaExecucaoInterValida(): Promise<TentativaInter | null
   return linhas[0] ?? null;
 }
 
+/**
+ * Catálogo completo da última coleta. A seleção é devolvida por item para a
+ * tela aplicar o filtro "Acompanhadas", mas nunca limita a lista inicial.
+ */
 export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[]> {
   const sql = conectar();
   return (await sql`
@@ -126,15 +131,13 @@ export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[
            COALESCE(c.etiqueta, l.etiqueta) AS etiqueta,
            COALESCE(c.descricao_principal, l.descricao_principal) AS descricao_principal,
            COALESCE(c.descricao_secundaria, l.descricao_secundaria) AS descricao_secundaria,
-           COALESCE(c.encontrada, TRUE) AS encontrada
+           COALESCE(c.encontrada, TRUE) AS encontrada,
+           (f.loja_inter_id IS NOT NULL) AS favorita
       FROM loja_inter l
-      JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
       LEFT JOIN cashback_inter c
         ON c.loja_inter_id = l.id AND c.execucao_inter_id = ${execucaoId}
-     -- RN42: uma favorita que desapareceu da fonte permanece no retrato
-     -- válido, marcada por c.encontrada = false. Filtrar l.ativa aqui a
-     -- esconderia do cliente e a faria parecer removida.
-     WHERE f.loja_inter_id IS NOT NULL
+     WHERE l.ativa = TRUE
   `) as CashbackInter[];
 }
 

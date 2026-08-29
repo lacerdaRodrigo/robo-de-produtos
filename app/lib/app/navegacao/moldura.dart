@@ -116,6 +116,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
                   key: const PageStorageKey('livelo-catalogo-android'),
                   api: widget.api,
                   administrador: widget.administrador,
+                  aoAbrirAlertas: _abrirAlertas,
                 )
               : PaginaPainelLivelo(
                   key: const PageStorageKey('livelo-compacto'),
@@ -370,8 +371,13 @@ class GavetaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       key: const Key('gaveta-principal'),
-      width: MediaQuery.sizeOf(context).width.clamp(280.0, 320.0),
-      shape: const RoundedRectangleBorder(),
+      width: (MediaQuery.sizeOf(context).width - 2).clamp(280.0, 380.0),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(26),
+          bottomRight: Radius.circular(26),
+        ),
+      ),
       backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: SingleChildScrollView(

@@ -241,12 +241,23 @@ digitar nunca chama a Livelo nem inicia coleta.
 
 ### Etapa 5 — Banco Inter
 
+**Decisão visual aprovada em 29 de agosto de 2026:** no protótipo, a aba
+**Cashback** apresenta todas as lojas de Sites parceiros devolvidas pela última
+coleta, com o valor publicado. **Acompanhadas** é um filtro desse mesmo
+catálogo e não limita a listagem inicial. O indicador **Melhor oferta** é o
+maior cashback entre as lojas acompanhadas; sem acompanhadas, ele fica vazio.
+Selecionar ou remover acompanhamento preserva o fluxo autenticado já existente
+e nunca inicia uma nova coleta. Esta decisão não cria, por si, contrato novo de
+produtos para Sites parceiros.
+
 **Entrega**
 
 - criar entrada mobile direta para Banco Inter;
 - organizar Sites parceiros/Cashback e Compre direto sem misturar contratos;
 - reutilizar painel de cashback, catálogo de lojas parceiras e favoritas;
 - reutilizar seleção administrativa das lojas do Compre direto;
+- na aba Cashback, mostrar todas as lojas válidas da última coleta; manter
+  Acompanhadas como filtro e não como fonte exclusiva da tela;
 - explicar que Buscar produtos usa somente lojas selecionadas quando essa for a
   regra retornada pela API.
 

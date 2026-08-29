@@ -356,6 +356,7 @@ class CashbackInter {
     required this.descricaoPrincipal,
     required this.descricaoSecundaria,
     required this.encontrada,
+    required this.favorita,
   });
 
   factory CashbackInter.parse(Map<String, dynamic> objeto) => CashbackInter(
@@ -374,6 +375,7 @@ class CashbackInter {
     descricaoPrincipal: _textoOpcional(objeto['descricao_principal']),
     descricaoSecundaria: _textoOpcional(objeto['descricao_secundaria']),
     encontrada: _booleano(objeto['encontrada']),
+    favorita: _booleano(objeto['favorita']),
   );
 
   final String id;
@@ -387,6 +389,7 @@ class CashbackInter {
   final String? descricaoPrincipal;
   final String? descricaoSecundaria;
   final bool encontrada;
+  final bool favorita;
 }
 
 class StatusApi {

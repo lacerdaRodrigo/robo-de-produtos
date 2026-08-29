@@ -2186,7 +2186,7 @@
             <div class="inter-hero">
               <div>
                 <h2>Resumo por modalidade</h2>
-                <p>Cashback: 3 acompanhadas · último sucesso há 22 min. Produtos: 1 loja selecionada · catálogo completo.</p>
+                <p>Cashback: todas as lojas · 3 acompanhadas · melhor oferta de até 12%. Produtos: 1 loja selecionada · catálogo completo.</p>
               </div>
             </div>
 
@@ -2232,7 +2232,7 @@
               <div>
                 <p class="selo ganho">Sites parceiros</p>
                 <h1>Cashback</h1>
-                <p>Pesquise no catálogo salvo e acompanhe uma loja sem sair desta tela.</p>
+                <p>Veja todas as lojas salvas, filtre por acompanhamento e acompanhe uma loja sem sair desta tela.</p>
               </div>
               <button class="botao-icone" type="button" data-action="update-request" aria-label="Solicitar atualização do cashback">
                 <svg class="icone" aria-hidden="true"><use href="#i-refresh"></use></svg>
@@ -2241,6 +2241,7 @@
 
             <div class="segmentos" aria-label="Filtro de acompanhamento">
               <button class="ativo" type="button" data-domain="inter" data-filter="all">Todas as lojas</button>
+              <button type="button" data-domain="inter" data-filter="best">Maior cashback</button>
               <button type="button" data-domain="inter" data-filter="following">
                 Acompanhadas (<span data-follow-count>3</span>)
               </button>
@@ -2719,12 +2720,20 @@
         function filteredStores(domain) {
           var view = domainView(domain);
           var term = normalize(view.search.value.trim());
-          return view.items.filter(function (store) {
+          var resultados = view.items.filter(function (store) {
             var searchable = store.name + ' ' + (store.category || '');
             var matchesText = normalize(searchable).indexOf(term) !== -1;
-            var matchesFilter = view.filter === 'all' || store.following;
+            var matchesFilter = view.filter !== 'following' || store.following;
             return matchesText && matchesFilter;
           });
+          if (domain === 'inter' && view.filter === 'best') {
+            resultados.sort(function (a, b) {
+              var valorA = Number((a.cashback.match(/\d+(?:[.,]\d+)?/) || ['-1'])[0].replace(',', '.'));
+              var valorB = Number((b.cashback.match(/\d+(?:[.,]\d+)?/) || ['-1'])[0].replace(',', '.'));
+              return valorB - valorA || a.name.localeCompare(b.name, 'pt-BR');
+            });
+          }
+          return resultados;
         }
 
         function addDetail(container, label, value) {

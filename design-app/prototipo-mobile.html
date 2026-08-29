@@ -383,6 +383,7 @@
         white-space: nowrap;
       }
       .chip.ativo { border-color: var(--acao); background: var(--acao-fundo); color: var(--acao); }
+      .contagem-catalogo { margin: 12px 0 -2px; color: var(--suave); font-size: 10px; font-weight: 800; }
 
       .lojas { display: grid; gap: 10px; margin-top: 14px; }
       .loja { padding: 14px; }
@@ -830,34 +831,34 @@
             <h2>Suas lojas do Inter estão em um único lugar.</h2>
             <p>Sites parceiros e produtos diretos continuam com coletas separadas.</p>
             <div class="metricas">
-              <div class="metrica"><strong>3</strong><span>cashback</span></div>
+              <div class="metrica"><strong>3</strong><span>acompanhadas</span></div>
               <div class="metrica"><strong>1</strong><span>produtos</span></div>
               <div class="metrica"><strong>10%</strong><span>melhor oferta</span></div>
             </div>
           </article>
           <div class="abas" role="tablist">
-            <button class="aba ativa" type="button" data-grupo="inter" data-aba="lojas">Escolher lojas</button>
-            <button class="aba" type="button" data-grupo="inter" data-aba="cashback">Cashback</button>
-            <button class="aba" type="button" data-grupo="inter" data-aba="dados">Atualizações</button>
+            <button class="aba ativa" type="button" data-grupo="inter" data-aba="cashback">Cashback</button>
+            <button class="aba" type="button" data-grupo="inter" data-aba="sites">Sites parceiros</button>
           </div>
 
-          <div class="painel" data-painel-grupo="inter" data-painel="lojas">
+          <div class="painel" data-painel-grupo="inter" data-painel="cashback">
             <label class="busca"><svg class="icone"><use href="#i-search"></use></svg><span class="sr-only">Buscar loja do Inter</span><input type="search" placeholder="Buscar entre as lojas do Inter" /><button type="button" aria-label="Filtrar"><svg class="icone pequeno"><use href="#i-filter"></use></svg></button></label>
-            <div class="chips"><button class="chip ativo" type="button">Todas</button><button class="chip" type="button">Sites parceiros</button><button class="chip" type="button">Produtos diretos</button></div>
+            <div class="chips"><button class="chip ativo" type="button" data-inter-filter="todas">Todas as lojas</button><button class="chip" type="button" data-inter-filter="maior">Maior cashback</button><button class="chip" type="button" data-inter-filter="acompanhadas">Acompanhadas</button></div>
             <div class="lojas">
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">CB</span><span class="loja-nome"><strong>Casas Bahia</strong><small>Produtos diretos · catálogo completo</small></span><span class="beneficio">até 12%</span></div><div class="loja-rodape"><span class="status">3.310 produtos</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Selecionada</button></div></article>
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">KB</span><span class="loja-nome"><strong>KaBuM!</strong><small>Site parceiro · tecnologia</small></span><span class="beneficio">até 7%</span></div><div class="loja-rodape"><span class="status">Cashback há 22 min</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Selecionada</button></div></article>
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">NT</span><span class="loja-nome"><strong>Netshoes</strong><small>Site parceiro · esporte</small></span><span class="beneficio">até 10%</span></div><div class="loja-rodape"><span class="status">Condição para correntista</span><button class="acompanhar" type="button" data-action="acompanhar">Selecionar</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">ML</span><span class="loja-nome"><strong>Magazine Luiza</strong><small>Site parceiro · eletrônicos e casa</small></span><span class="beneficio">até 20%</span></div><div class="loja-rodape"><span class="status">Cashback há 22 min</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhada</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">RI</span><span class="loja-nome"><strong>Riachuelo</strong><small>Site parceiro · moda</small></span><span class="beneficio">até 15%</span></div><div class="loja-rodape"><span class="status">Cashback há 22 min</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">CA</span><span class="loja-nome"><strong>C&amp;A</strong><small>Site parceiro · moda</small></span><span class="beneficio">até 12%</span></div><div class="loja-rodape"><span class="status">Condição publicada pelo Inter</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
             </div>
           </div>
-          <div class="painel" data-painel-grupo="inter" data-painel="cashback" hidden>
-            <div class="faixa"><svg class="icone"><use href="#i-wallet"></use></svg><span>O percentual aparece como publicado pelo Inter. O Radar não mistura cashback com pontuação Livelo.</span></div>
-            <div class="grade"><article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-store"></use></svg></span><strong>3</strong><span>sites acompanhados</span></article><article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-wallet"></use></svg></span><strong>10%</strong><span>melhor cashback</span></article></div>
-          </div>
-          <div class="painel" data-painel-grupo="inter" data-painel="dados" hidden>
-            <div class="infos">
-              <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-check"></use></svg></span><div><h3>Cashback concluído</h3><p>381 lojas sincronizadas há 22 minutos.</p></div></article>
-              <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-sync"></use></svg></span><div><h3>Produtos em andamento</h3><p>Casas Bahia mantém o catálogo válido durante a nova coleta.</p></div></article>
+          <div class="painel" data-painel-grupo="inter" data-painel="sites" hidden>
+            <div class="faixa"><svg class="icone"><use href="#i-store"></use></svg><span>Este é o catálogo completo de Sites parceiros retornado pelo robô. Selecionar uma loja não inicia uma nova coleta.</span></div>
+            <label class="busca"><svg class="icone"><use href="#i-search"></use></svg><span class="sr-only">Buscar site parceiro</span><input id="inter-partner-search" type="search" placeholder="Buscar entre os sites parceiros" autocomplete="off" /><button type="button" aria-label="Filtrar"><svg class="icone pequeno"><use href="#i-filter"></use></svg></button></label>
+            <div class="chips"><button class="chip ativo" type="button" data-inter-filter="todas">Todas as lojas</button><button class="chip" type="button" data-inter-filter="maior">Maior cashback</button><button class="chip" type="button" data-inter-filter="acompanhadas">Acompanhadas</button></div>
+            <p class="contagem-catalogo">382 sites parceiros disponíveis</p>
+            <div class="lojas">
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">ML</span><span class="loja-nome"><strong>Magazine Luiza</strong><small>Catálogo do Inter · eletrônicos e casa</small></span><span class="beneficio">até 20%</span></div><div class="loja-rodape"><span class="status">Disponível no catálogo</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhada</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">RI</span><span class="loja-nome"><strong>Riachuelo</strong><small>Catálogo do Inter · moda</small></span><span class="beneficio">até 15%</span></div><div class="loja-rodape"><span class="status">Disponível no catálogo</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">CA</span><span class="loja-nome"><strong>C&amp;A</strong><small>Catálogo do Inter · moda</small></span><span class="beneficio">até 12%</span></div><div class="loja-rodape"><span class="status">Disponível no catálogo</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
             </div>
           </div>
         </section>
@@ -1038,6 +1039,47 @@
         });
         document.addEventListener('keydown', function (evento) { if (evento.key === 'Escape') { fecharMenu(); fecharFolha(); } });
         document.getElementById('busca-produto').addEventListener('keydown', function (evento) { if (evento.key === 'Enter') mostrarToast('Busca atualizada no catálogo local.'); });
+        function valorCashback(loja) {
+          var beneficio = loja.querySelector('.beneficio');
+          var resultado = beneficio && beneficio.textContent.match(/\d+(?:[.,]\d+)?/);
+          return resultado ? Number(resultado[0].replace(',', '.')) : -1;
+        }
+        function atualizarFiltroInter(painel) {
+          var filtro = painel.dataset.filtroInter || 'todas';
+          var campo = painel.querySelector('input[type="search"]');
+          var termo = campo ? campo.value.trim().toLocaleLowerCase() : '';
+          var lista = painel.querySelector('.lojas');
+          var lojas = Array.prototype.slice.call(lista.querySelectorAll('.loja'));
+          lojas.forEach(function (loja, indice) {
+            if (!loja.dataset.ordem) loja.dataset.ordem = String(indice);
+          });
+          lojas.sort(function (a, b) {
+            if (filtro === 'maior') return valorCashback(b) - valorCashback(a);
+            return Number(a.dataset.ordem) - Number(b.dataset.ordem);
+          });
+          lojas.forEach(function (loja) {
+            var nome = loja.querySelector('.loja-nome strong');
+            var correspondeBusca = !termo || (nome && nome.textContent.toLocaleLowerCase().includes(termo));
+            var acompanhada = loja.querySelector('.acompanhar.ativo');
+            loja.hidden = !correspondeBusca || (filtro === 'acompanhadas' && !acompanhada);
+            lista.appendChild(loja);
+          });
+        }
+        document.querySelectorAll('[data-inter-filter]').forEach(function (botao) {
+          botao.addEventListener('click', function () {
+            var painel = botao.closest('[data-painel-grupo="inter"]');
+            painel.dataset.filtroInter = botao.dataset.interFilter;
+            painel.querySelectorAll('[data-inter-filter]').forEach(function (item) {
+              item.classList.toggle('ativo', item === botao);
+            });
+            atualizarFiltroInter(painel);
+          });
+        });
+        document.querySelectorAll('[data-painel-grupo="inter"] input[type="search"]').forEach(function (campo) {
+          campo.addEventListener('input', function () {
+            atualizarFiltroInter(campo.closest('[data-painel-grupo="inter"]'));
+          });
+        });
         atualizarTema();
       })();
     </script>
