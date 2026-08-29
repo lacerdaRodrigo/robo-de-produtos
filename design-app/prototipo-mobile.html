@@ -428,6 +428,24 @@
       }
       .acompanhar.ativo { border-color: transparent; background: var(--ganho-fundo); color: var(--ganho); }
       .acompanhar.ativo::before { content: "✓ "; }
+      .acoes-loja { display: flex; align-items: center; gap: 7px; }
+      .historico { min-height: 35px; padding: 7px 10px; border: 1px solid var(--borda); border-radius: 11px; background: var(--superficie); color: var(--acao); font-size: 10px; font-weight: 850; cursor: pointer; }
+      .historico-card { display: block; padding: 14px; }
+      .historico-resumo { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 11px; border-bottom: 1px solid var(--borda); }
+      .historico-resumo strong { font-size: 16px; }
+      .historico-resumo span { color: var(--ganho); font-size: 9px; font-weight: 850; white-space: nowrap; }
+      .historico-lista { padding: 0; }
+      .historico-linha { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 13px 0; }
+      .historico-linha + .historico-linha { border-top: 1px solid var(--borda); }
+      .historico-linha strong, .historico-linha small { display: block; }
+      .historico-linha strong { font-size: 12px; }
+      .historico-linha small { margin-top: 3px; color: var(--suave); font-size: 9px; }
+      .historico-linha .hora { text-align: right; white-space: nowrap; }
+      @media (max-width: 340px) {
+        .historico-linha { grid-template-columns: 30px minmax(0, 1fr); }
+        .historico-linha .hora { grid-column: 2; text-align: left; margin-top: -6px; }
+        .historico-resumo { align-items: flex-start; flex-direction: column; gap: 3px; }
+      }
 
       .faixa {
         display: flex;
@@ -769,7 +787,7 @@
             <div class="chips"><button class="chip ativo" type="button">Todas</button><button class="chip" type="button">Moda</button><button class="chip" type="button">Viagem</button><button class="chip" type="button">Tecnologia</button></div>
             <div class="faixa"><svg class="icone"><use href="#i-clock"></use></svg><span>Os cartões abaixo demonstram a composição. Nome, categorias, pontos, campanha e validade virão da API.</span></div>
             <div class="lojas">
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">LV</span><span class="loja-nome"><strong>Liga Vitória Consórcio</strong><small>Outros · campanha Livelo</small></span><span class="beneficio">100 pts/R$</span><button class="botao-alerta ativo" type="button" data-action="alerta" aria-label="Desativar alerta"><svg class="icone pequeno"><use href="#i-bell"></use></svg></button></div><div class="tags"><span class="tag">Normal 1 ponto por R$ 1</span><span class="tag verde">Promoção</span></div><div class="campanha"><strong>Condições da campanha</strong><div class="campanha-texto">São elegíveis ao acúmulo de Pontos Livelo os participantes que adquirirem produtos e serviços no hotsite parceiro, conforme as regras da oferta. A promoção é válida para compras aprovadas dentro do prazo e não cumulativas com outras condições.</div><button class="link-externo" type="button" data-action="ver-mais">Ver mais</button><button class="link-externo" type="button" data-action="link">Ver regras completas no site da Livelo</button></div><div class="loja-rodape"><span class="status">Válido até 31/08/2026</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhando</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">LV</span><span class="loja-nome"><strong>Liga Vitória Consórcio</strong><small>Outros · campanha Livelo</small></span><span class="beneficio">100 pts/R$</span><button class="botao-alerta ativo" type="button" data-action="alerta" aria-label="Desativar alerta"><svg class="icone pequeno"><use href="#i-bell"></use></svg></button></div><div class="tags"><span class="tag">Normal 1 ponto por R$ 1</span><span class="tag verde">Promoção</span></div><div class="campanha"><strong>Condições da campanha</strong><div class="campanha-texto">São elegíveis ao acúmulo de Pontos Livelo os participantes que adquirirem produtos e serviços no hotsite parceiro, conforme as regras da oferta. A promoção é válida para compras aprovadas dentro do prazo e não cumulativas com outras condições.</div><button class="link-externo" type="button" data-action="ver-mais">Ver mais</button><button class="link-externo" type="button" data-action="link">Ver regras completas no site da Livelo</button></div><div class="loja-rodape"><span class="status">Válido até 31/08/2026</span><div class="acoes-loja"><button class="historico" type="button" data-screen="historico">Histórico</button><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhando</button></div></div></article>
             </div>
           </div>
           <div class="painel" data-painel-grupo="livelo" data-painel="acompanhadas" hidden>
@@ -781,6 +799,24 @@
               <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-clock"></use></svg></span><div><h3>Três leituras por dia</h3><p>A tela usa o último retrato salvo e não consulta a Livelo ao navegar.</p></div></article>
             </div>
           </div>
+        </section>
+
+        <section id="tela-historico" class="tela" data-title="Histórico">
+          <header class="cabecalho">
+            <button class="link" type="button" data-screen="livelo">← Voltar para Livelo</button>
+            <p class="sobrelinha">Pontuação salva</p>
+            <h1>Histórico</h1>
+            <p>Liga Vitória Consórcio · últimas coletas registradas no banco.</p>
+          </header>
+          <article class="cartao historico-card">
+            <div class="historico-resumo"><strong>100 pontos por R$ 1</strong><span>Melhor atual</span></div>
+            <div class="historico-lista">
+              <div class="historico-linha"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>100 pontos por R$ 1</strong><small>Coleta concluída</small></span><span class="hora">29/08 · 14:50</span></div>
+              <div class="historico-linha"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>100 pontos por R$ 1</strong><small>Coleta concluída</small></span><span class="hora">29/08 · 12:49</span></div>
+              <div class="historico-linha"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>80 pontos por R$ 1</strong><small>Coleta concluída</small></span><span class="hora">28/08 · 20:03</span></div>
+            </div>
+          </article>
+          <div class="faixa"><svg class="icone"><use href="#i-clock"></use></svg><span>O histórico mostra somente medições salvas; navegar aqui não inicia nova coleta.</span></div>
         </section>
 
         <section id="tela-inter" class="tela" data-title="Banco Inter">
@@ -989,6 +1025,7 @@
           if (acao === 'fechar-folha') fecharFolha();
           if (acao === 'acompanhar') acompanhar(botao);
           if (acao === 'alerta') alternarAlerta(botao);
+          if (acao === 'historico') mostrarToast('Histórico da pontuação: últimas coletas salvas no banco.');
           if (acao === 'ver-mais') {
             var campanha = botao.closest('.campanha');
             var aberta = campanha.classList.toggle('aberta');

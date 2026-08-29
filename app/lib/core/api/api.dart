@@ -91,6 +91,13 @@ class Api {
     );
   }
 
+  Future<HistoricoLivelo> historicoLivelo(String idExterno) async {
+    final corpo = await cliente.obter(
+      '/api/livelo/catalogo/$idExterno/historico',
+    );
+    return HistoricoLivelo.parse(corpo);
+  }
+
   /// Cashback dos Sites parceiros do Inter (PRD-V3), sempre lido da API.
   Future<Pagina<CashbackInter>> painelCashbackInter({
     String q = '',

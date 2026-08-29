@@ -14,6 +14,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     required this.podeAdministrar,
     required this.aoAlternar,
     required this.aoAlternarAlerta,
+    required this.aoHistorico,
   });
 
   final ParceiroCatalogoLivelo parceiro;
@@ -21,6 +22,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
   final bool podeAdministrar;
   final VoidCallback aoAlternar;
   final VoidCallback aoAlternarAlerta;
+  final VoidCallback aoHistorico;
 
   @override
   Widget build(BuildContext context) {
@@ -137,35 +139,47 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: parceiro.acompanhada
-                  ? OutlinedButton.icon(
-                      key: Key('acompanhar-${parceiro.idExterno}'),
-                      onPressed: podeAdministrar && !pendente
-                          ? aoAlternar
-                          : null,
-                      icon: pendente
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_circle_outline),
-                      label: Text(pendente ? 'Salvando…' : 'Acompanhando'),
-                    )
-                  : FilledButton.tonalIcon(
-                      key: Key('acompanhar-${parceiro.idExterno}'),
-                      onPressed: podeAdministrar && !pendente
-                          ? aoAlternar
-                          : null,
-                      icon: pendente
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.add),
-                      label: Text(pendente ? 'Salvando…' : 'Acompanhar'),
-                    ),
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: aoHistorico,
+                  child: const Text('Histórico'),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: parceiro.acompanhada
+                      ? OutlinedButton.icon(
+                          key: Key('acompanhar-${parceiro.idExterno}'),
+                          onPressed: podeAdministrar && !pendente
+                              ? aoAlternar
+                              : null,
+                          icon: pendente
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.check_circle_outline),
+                          label: Text(pendente ? 'Salvando…' : 'Acompanhando'),
+                        )
+                      : FilledButton.tonalIcon(
+                          key: Key('acompanhar-${parceiro.idExterno}'),
+                          onPressed: podeAdministrar && !pendente
+                              ? aoAlternar
+                              : null,
+                          icon: pendente
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.add),
+                          label: Text(pendente ? 'Salvando…' : 'Acompanhar'),
+                        ),
+                ),
+              ],
             ),
           ],
         ),

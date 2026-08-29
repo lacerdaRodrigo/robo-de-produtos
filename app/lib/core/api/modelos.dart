@@ -701,6 +701,38 @@ class PontuacaoLivelo {
   final String? fimPromocao;
 }
 
+class MedicaoHistoricoLivelo {
+  const MedicaoHistoricoLivelo({
+    required this.momento,
+    required this.pontos,
+    required this.moeda,
+  });
+  factory MedicaoHistoricoLivelo.parse(Map<String, dynamic> objeto) =>
+      MedicaoHistoricoLivelo(
+        momento: _texto(objeto['momento']),
+        pontos: _textoOpcional(objeto['pontos_atuais']),
+        moeda: _texto(objeto['moeda']),
+      );
+  final String momento;
+  final String? pontos;
+  final String moeda;
+}
+
+class HistoricoLivelo {
+  const HistoricoLivelo({required this.medicoes});
+  factory HistoricoLivelo.parse(Map<String, dynamic> objeto) => HistoricoLivelo(
+    medicoes:
+        (objeto['medicoes'] as List<dynamic>?)
+            ?.map(
+              (item) =>
+                  MedicaoHistoricoLivelo.parse(item as Map<String, dynamic>),
+            )
+            .toList(growable: false) ??
+        const [],
+  );
+  final List<MedicaoHistoricoLivelo> medicoes;
+}
+
 /// Parceiro da última coleta válida da Livelo, acompanhado ou não.
 class ParceiroCatalogoLivelo {
   const ParceiroCatalogoLivelo({

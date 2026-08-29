@@ -86,6 +86,14 @@ export type ParceiroLiveloPersistido = {
   parceiros_lidos: number;
 };
 
+export type MedicaoHistoricoLivelo = {
+  momento: string;
+  pontos_atuais: Numerico;
+  pontos_base: Numerico;
+  pontos_clube: Numerico;
+  moeda: string;
+};
+
 /** Catálogo completo da última publicação válida, já ligado às acompanhadas. */
 export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersistido[]> {
   const sql = conectar();
@@ -110,6 +118,20 @@ export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersisti
      WHERE parceiro.ativo = TRUE
      ORDER BY parceiro.nome, parceiro.id_externo
   `) as ParceiroLiveloPersistido[];
+}
+
+export async function historicoLivelo(idExterno: string): Promise<MedicaoHistoricoLivelo[]> {
+  const sql = conectar();
+  return (await sql`
+    SELECT e.momento, p.pontos_atuais, p.pontos_base, p.pontos_clube, p.moeda
+      FROM pontuacao p
+      JOIN execucao e ON e.id = p.execucao_id
+      JOIN loja l ON l.id = p.loja_id
+      JOIN parceiro_livelo pl ON pl.id = l.parceiro_livelo_id
+     WHERE pl.id_externo = ${idExterno}
+     ORDER BY e.momento DESC
+     LIMIT 30
+  `) as MedicaoHistoricoLivelo[];
 }
 
 export async function parceiroLiveloPorIdExterno(
