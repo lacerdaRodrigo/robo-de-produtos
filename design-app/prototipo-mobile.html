@@ -309,6 +309,11 @@
       .atividade-item strong, .atividade-item small { display: block; }
       .atividade-item strong { font-size: 12px; }
       .atividade-item small, .hora { color: var(--suave); font-size: 9px; }
+      .monitoramento { display: grid; gap: 10px; margin-bottom: 16px; padding: 14px; }
+      .monitoramento strong, .monitoramento small { display: block; }
+      .monitoramento strong { font-size: 13px; }
+      .monitoramento small { margin-top: 3px; color: var(--suave); font-size: 10px; }
+      .monitoramento .acompanhar { width: 100%; }
 
       .abas {
         display: flex;
@@ -333,6 +338,8 @@
         white-space: nowrap;
       }
       .aba.ativa { background: var(--superficie); box-shadow: 0 4px 12px rgba(8,26,45,.08); color: var(--acao); }
+      .aba.atualizar { display: inline-flex; align-items: center; gap: 5px; }
+      .aba.atualizar .icone { width: 15px; height: 15px; }
       .painel { margin-top: 15px; }
 
       .busca {
@@ -605,11 +612,11 @@
         margin: 0 auto;
         padding: 12px 14px;
         transform: translateY(22px);
-        border: 1px solid rgba(255,255,255,.14);
+        border: 1px solid color-mix(in srgb, var(--ganho) 28%, var(--borda));
         border-radius: 14px;
-        background: var(--marca-950);
-        box-shadow: 0 16px 40px rgba(0,0,0,.28);
-        color: #fff;
+        background: var(--superficie);
+        box-shadow: var(--sombra);
+        color: var(--ganho);
         font-size: 10px;
         opacity: 0;
         pointer-events: none;
@@ -677,16 +684,15 @@
             <p>Seus benefícios importantes, sem misturar as regras de cada fonte.</p>
           </header>
           <article class="hero">
-            <span class="hero-selo">Radar atualizado há pouco</span>
-            <h2>Seu radar está atualizado.</h2>
-            <p>Livelo, cashback e produtos continuam em leituras independentes.</p>
+            <span class="hero-selo">Protótipo Samsung · dados ilustrativos</span>
+            <h2>Seu radar acompanha o que já foi salvo.</h2>
+            <p>A API é consultada ao abrir e a cada 30 s enquanto este Início está visível. Navegar ou pesquisar não consulta as fontes.</p>
             <div class="metricas">
               <div class="metrica"><strong>2</strong><span>alertas Livelo</span></div>
               <div class="metrica"><strong>4</strong><span>lojas com cashback</span></div>
               <div class="metrica"><strong>3.310</strong><span>produtos ativos</span></div>
             </div>
           </article>
-
           <section class="secao">
             <div class="secao-topo"><div><h2>Seus espaços</h2><p>Um lugar para cada jornada</p></div></div>
             <div class="modulos">
@@ -714,15 +720,16 @@
               <article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-store"></use></svg></span><strong>7</strong><span>lojas acompanhadas</span></article>
               <article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-chart"></use></svg></span><strong>3.310</strong><span>produtos ativos</span></article>
               <article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-bell"></use></svg></span><strong>3</strong><span>alertas relevantes</span></article>
-              <article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-clock"></use></svg></span><strong>18 min</strong><span>última atualização</span></article>
+              <article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-clock"></use></svg></span><strong>API</strong><span>consultada agora</span></article>
             </div>
           </section>
 
           <section class="secao">
             <div class="secao-topo"><div><h2>Atividade recente</h2><p>Pedido não é conclusão</p></div><button class="link" type="button" data-action="folha" data-folha="alertas">Ver tudo</button></div>
             <div class="cartao atividade">
-              <div class="atividade-item"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>Livelo concluída</strong><small>213 parceiros analisados</small></span><span class="hora">18 min</span></div>
-              <div class="atividade-item"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-sync"></use></svg></span><span><strong>Produtos em atualização</strong><small>Catálogo anterior mantido</small></span><span class="hora">agora</span></div>
+              <div class="atividade-item"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-sync"></use></svg></span><span><strong>Produtos em atualização</strong><small>Catálogo anterior mantido</small></span><span class="hora">12h49</span></div>
+              <div class="atividade-item"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>Livelo concluída</strong><small>252 parceiros analisados</small></span><span class="hora">12h49</span></div>
+              <div class="atividade-item"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-check"></use></svg></span><span><strong>Cashback concluído</strong><small>Último retrato válido preservado</small></span><span class="hora">09h06</span></div>
             </div>
           </section>
         </section>
@@ -734,19 +741,27 @@
             <p>Tudo da Livelo fica aqui: catálogo, acompanhadas, campanhas e alertas.</p>
           </header>
           <article class="hero">
-            <span class="hero-selo">Exemplo visual · sem dados reais</span>
-            <h2>A melhor oferta da última coleta válida aparece aqui.</h2>
-            <p>Até a primeira sincronização, o app mostra um estado honesto em vez de números ilustrativos.</p>
+            <span class="hero-selo">Samsung compacto · dados ilustrativos</span>
+            <h2>Melhor acompanhada agora</h2>
+            <p>Nenhuma loja acompanhada ainda. Escolha uma na aba Lojas; o app não escolhe uma oferta do catálogo geral.</p>
             <div class="metricas">
               <div class="metrica"><strong>0</strong><span>acompanhadas</span></div>
               <div class="metrica"><strong>1</strong><span>alertas ativos</span></div>
               <div class="metrica"><strong>—</strong><span>no catálogo</span></div>
             </div>
           </article>
+          <section class="secao">
+            <div class="secao-topo"><div><h2>Monitoramento da coleta</h2><p>Previsão e atraso são estados diferentes</p></div></div>
+            <article class="cartao monitoramento">
+              <div><strong>Próxima coleta Livelo: 14h00 (em 1 h 12 min)</strong><small>Horário de Brasília; depois da janela, o cartão mostra o atraso do robô.</small></div>
+              <div class="faixa"><svg class="icone"><use href="#i-clock"></use></svg><span>Ao chegar a zero: “Aguardando o robô · atraso de X”. A primeira coleta concluída reinicia o timer.</span></div>
+            </article>
+          </section>
           <div class="abas" role="tablist">
             <button class="aba ativa" type="button" data-grupo="livelo" data-aba="lojas">Lojas</button>
             <button class="aba" type="button" data-grupo="livelo" data-aba="acompanhadas">Acompanhadas</button>
             <button class="aba" type="button" data-grupo="livelo" data-aba="alertas">Alertas</button>
+            <button class="aba atualizar" type="button" data-action="atualizar-livelo">Atualizar</button>
           </div>
 
           <div class="painel" data-painel-grupo="livelo" data-painel="lojas">
@@ -980,6 +995,7 @@
             botao.textContent = aberta ? 'Ver menos' : 'Ver mais';
           }
           if (acao === 'buscar') mostrarToast('Busca atualizada no catálogo local.');
+          if (acao === 'atualizar-livelo') mostrarToast('Pedido aceito. A coleta ainda precisa terminar; o retrato atual foi mantido.');
           if (acao === 'link') mostrarToast('No app, este botão abrirá o endereço HTTPS validado da Livelo.');
           if (acao === 'config') mostrarToast('Utilidade preservada fora dos quatro temas principais.');
         });

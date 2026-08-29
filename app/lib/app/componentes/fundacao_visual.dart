@@ -5,6 +5,46 @@ import '../tema/tokens.dart';
 
 enum TomRadar { neutro, acao, ganho, atencao, perigo }
 
+/// Mensagem padrão de confirmação/erro usada pelas ações do aplicativo.
+/// Mantém o mesmo cartão flutuante e contraste nos temas claro e escuro;
+/// cada tela só precisa fornecer o texto.
+void mostrarMensagemRadar(
+  BuildContext context,
+  String mensagem, {
+  bool sucesso = true,
+}) {
+  final cores = CoresRadar.de(context);
+  final cor = sucesso ? cores.ganho : cores.perigo;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Theme.of(context).cardColor,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: cor.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              sucesso ? Icons.check_circle_outline : Icons.error_outline,
+              color: cor,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                mensagem,
+                style: TextStyle(color: cor, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+}
+
 Color _corDoTom(BuildContext context, TomRadar tom) {
   final cores = CoresRadar.de(context);
   return switch (tom) {
@@ -203,11 +243,13 @@ class AbasRadar extends StatelessWidget {
     required this.rotulos,
     required this.selecionada,
     required this.aoSelecionar,
+    this.acao,
   });
 
   final List<String> rotulos;
   final int selecionada;
   final ValueChanged<int> aoSelecionar;
+  final Widget? acao;
 
   @override
   Widget build(BuildContext context) {
@@ -229,8 +271,9 @@ class AbasRadar extends StatelessWidget {
                 selecionada: indice == selecionada,
                 aoTocar: () => aoSelecionar(indice),
               ),
-              if (indice != rotulos.length - 1) const SizedBox(width: 4),
+              const SizedBox(width: 4),
             ],
+            if (acao != null) acao!,
           ],
         ),
       ),

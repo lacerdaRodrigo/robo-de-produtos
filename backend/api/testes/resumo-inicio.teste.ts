@@ -5,7 +5,7 @@ import {
   type DependenciasResumoInicio,
 } from "../lib/resumo-inicio";
 
-const agora = new Date("2026-08-23T12:00:00.000Z");
+const agora = new Date("2026-08-23T11:00:00.000Z");
 
 function dependencias(): DependenciasResumoInicio {
   return {
@@ -39,8 +39,9 @@ describe("resumo real do Início", () => {
     const resumo = await carregarResumoInicio(dependencias(), agora);
 
     expect(resumo.estado_geral).toBe("atualizado");
-    expect(resumo.gerado_em).toBe("2026-08-23T12:00:00.000Z");
+    expect(resumo.gerado_em).toBe("2026-08-23T11:00:00.000Z");
     expect(resumo.livelo).toMatchObject({ estado: "atualizado", alertas_ultima_coleta: 2 });
+    expect(resumo.livelo.agendamento).toEqual({ estado: "prevista", referencia_em: "2026-08-23T12:00:00.000Z" });
     expect(resumo.cashback_inter).toMatchObject({
       estado: "atualizado",
       lojas_acompanhadas: 4,
@@ -90,7 +91,7 @@ describe("resumo real do Início", () => {
 
     const resumo = await carregarResumoInicio(deps, agora);
 
-    expect(resumo.livelo).toEqual({
+    expect(resumo.livelo).toMatchObject({
       estado: "indisponivel",
       ultimo_sucesso_em: null,
       lojas_acompanhadas: 0,
@@ -99,6 +100,20 @@ describe("resumo real do Início", () => {
     expect(JSON.stringify(resumo)).not.toContain("sensível");
     expect(resumo.cashback_inter.estado).toBe("atualizado");
     expect(resumo.estado_geral).toBe("atencao");
+  });
+
+  it("ordena a atividade por momento e desempata pelo domínio", async () => {
+    const resumo = await carregarResumoInicio(dependencias(), agora);
+    expect(resumo.atividade_recente.map((item) => item.dominio)).toEqual([
+      "livelo",
+      "cashback_inter",
+      "produtos_inter",
+    ]);
+  });
+
+  it("marca a primeira janela não concluída como atraso real", async () => {
+    const resumo = await carregarResumoInicio(dependencias(), new Date("2026-08-23T18:30:00.000Z"));
+    expect(resumo.livelo.agendamento).toEqual({ estado: "aguardando", referencia_em: "2026-08-23T12:00:00.000Z" });
   });
 
   it("distingue ausência total de indisponibilidade total", async () => {

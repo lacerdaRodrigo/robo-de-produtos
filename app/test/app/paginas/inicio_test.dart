@@ -67,6 +67,7 @@ Future<void> abrir(
   VoidCallback? aoAbrirCashback,
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
+  bool compacto = false,
 }) async {
   at.view.devicePixelRatio = 1;
   at.view.physicalSize = tamanho;
@@ -85,6 +86,7 @@ Future<void> abrir(
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
           agora: () => DateTime(2026, 8, 23),
+          experienciaCompacta: compacto,
         ),
       ),
       builder: (context, child) => MediaQuery(
@@ -196,6 +198,22 @@ void main() {
       find.text('A atualização falhou. Mantivemos o último resumo recebido.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Início compacto consulta novamente a cada 30 segundos', (
+    at,
+  ) async {
+    var chamadas = 0;
+    final api = apiQueResponde((_) async {
+      chamadas++;
+      return http.Response(jsonEncode(resumo()), 200);
+    });
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+    expect(chamadas, 1);
+    await at.pump(const Duration(seconds: 30));
+    await at.pumpAndSettle();
+    expect(chamadas, 2);
   });
 
   testWidgets('quatro atalhos chamam jornadas reais', (at) async {

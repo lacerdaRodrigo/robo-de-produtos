@@ -21,6 +21,7 @@ na experiência anterior.
 - [x] Aplicar a migração `013` no Neon e confirmar tabela, vínculo e índice
 - [x] Publicar robô e API; a rota autenticada `/api/livelo/catalogo` está no ar
 - [x] Executar uma coleta real sem e-mail: 252 parceiros ativos foram publicados
+- [x] Aprovar protótipos e implementar monitoramento local do Início/Livelo no Android Samsung: polling restrito, previsão versus atraso, melhor acompanhada e pedido administrativo idempotente
 - [ ] Executar o smoke manual no Samsung pelo responsável
 
 Build, instalação, navegação e smoke no aparelho ficam a cargo do responsável.

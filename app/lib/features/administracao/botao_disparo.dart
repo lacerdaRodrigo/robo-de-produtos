@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../app/componentes/fundacao_visual.dart';
 import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/idempotencia.dart';
 import '../../core/api/modelos.dart';
+import '../../app/tema/tokens.dart';
 
 /// Botão administrativo que pede uma coleta, mas nunca promete que ela acabou.
 ///
@@ -16,12 +20,16 @@ class BotaoDisparo extends StatefulWidget {
     required this.dominio,
     required this.administrador,
     this.rotulo = 'Atualizar agora',
+    this.aoAceitar,
+    this.compacto = false,
   });
 
   final Api api;
   final String dominio;
   final bool administrador;
   final String rotulo;
+  final VoidCallback? aoAceitar;
+  final bool compacto;
 
   @override
   State<BotaoDisparo> createState() => _EstadoBotaoDisparo();
@@ -33,6 +41,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
   bool _carregando = false;
   bool _solicitando = false;
   Object? _erro;
+  Timer? _cooldown;
 
   @override
   void initState() {
@@ -47,7 +56,10 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     });
     try {
       final estado = await widget.api.estadoDisparo(widget.dominio);
-      if (mounted) setState(() => _estado = estado);
+      if (mounted) {
+        setState(() => _estado = estado);
+        _iniciarContagem();
+      }
     } catch (erro) {
       if (mounted) setState(() => _erro = erro);
     } finally {
@@ -73,14 +85,13 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
           ultimoEstado: resultado.estado == 'aceito' ? 'aceita' : 'reservada',
         ),
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            resultado.estado == 'aceito'
-                ? 'Pedido de coleta aceito. Os dados atualizam quando o robô terminar.'
-                : 'Pedido já está sendo processado.',
-          ),
-        ),
+      _iniciarContagem();
+      widget.aoAceitar?.call();
+      mostrarMensagemRadar(
+        context,
+        resultado.estado == 'aceito'
+            ? 'Pedido de coleta aceito. Os dados atualizam quando o robô terminar.'
+            : 'Pedido já está sendo processado.',
       );
     } catch (erro) {
       // Falha final conhecida permite uma nova intenção. Para falha de rede,
@@ -90,13 +101,37 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
         final mensagem = erro is ErroDeApi
             ? erro.mensagem
             : 'Não foi possível solicitar a coleta.';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(mensagem)));
+        mostrarMensagemRadar(context, mensagem, sucesso: false);
       }
     } finally {
       if (mounted) setState(() => _solicitando = false);
     }
+  }
+
+  void _iniciarContagem() {
+    _cooldown?.cancel();
+    if ((_estado?.cooldownSegundos ?? 0) <= 0) return;
+    _cooldown = Timer.periodic(const Duration(seconds: 1), (_) {
+      final estado = _estado;
+      if (!mounted || estado == null || estado.cooldownSegundos <= 0) {
+        _cooldown?.cancel();
+        return;
+      }
+      setState(
+        () => _estado = EstadoDisparoAdministrativo(
+          dominio: estado.dominio,
+          cooldownSegundos: estado.cooldownSegundos - 1,
+          ultimaSolicitacaoEm: estado.ultimaSolicitacaoEm,
+          ultimoEstado: estado.ultimoEstado,
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _cooldown?.cancel();
+    super.dispose();
   }
 
   @override
@@ -120,27 +155,39 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
       );
     }
     final espera = _estado?.cooldownSegundos ?? 0;
+    final texto = _solicitando
+        ? 'Solicitando…'
+        : espera > 0
+        ? 'Aguarde ${_tempo(espera)}'
+        : widget.rotulo;
+    // No compacto o rótulo não muda durante o cooldown: isso preserva a
+    // largura das abas e deixa o estado completo disponível no tooltip.
+    final textoCompacto = _solicitando ? 'Atualizando…' : widget.rotulo;
     return Tooltip(
       message: espera > 0
           ? 'Aguarde ${_tempo(espera)} para pedir nova coleta.'
           : 'Solicitar: ${widget.rotulo}',
-      child: FilledButton.tonalIcon(
-        onPressed: espera > 0 || _solicitando ? null : _solicitar,
-        icon: _solicitando
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.refresh),
-        label: Text(
-          _solicitando
-              ? 'Solicitando…'
-              : espera > 0
-              ? 'Aguarde ${_tempo(espera)}'
-              : widget.rotulo,
-        ),
-      ),
+      child: widget.compacto
+          ? TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 39),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                foregroundColor: CoresRadar.de(context).textoSuave,
+              ),
+              onPressed: espera > 0 || _solicitando ? null : _solicitar,
+              child: Text(textoCompacto),
+            )
+          : FilledButton.tonalIcon(
+              onPressed: espera > 0 || _solicitando ? null : _solicitar,
+              icon: _solicitando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              label: Text(texto),
+            ),
     );
   }
 

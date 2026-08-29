@@ -573,6 +573,10 @@ em 28 de agosto de 2026.
 | CT-353 | Tela estreita e texto ampliado | 320 × 640 com texto a 150% rola sem overflow | Viewport e `TextScaler` controlados |
 | CT-354 | Temas do catálogo | Android claro e escuro permanecem iguais às referências versionadas | Dois goldens próprios |
 | CT-355 | Escopo por plataforma | Somente Android compacto usa o catálogo novo; iOS, Web e layout amplo preservam a tela anterior | Override de plataforma e viewports compacta/ampla |
+| CT-356 | Polling compacto seguro | Início consulta a API a cada 30 s só em primeiro plano e visível; retorno dispara leitura imediata e nunca sobrepõe chamadas | Relógio falso, ciclo de vida e `Completer` |
+| CT-357 | Previsão e atraso Livelo | As três janelas de Brasília, virada do dia e primeira conclusão posterior distinguem previsão de atraso | Relógio UTC explícito no agregador TypeScript |
+| CT-358 | Melhor acompanhada atual | Decimal textual, empate estável e zero acompanhadas não vazam o catálogo geral para o hero | Fixtures do catálogo autenticado |
+| CT-359 | Atualização administrativa preservada | Aceite/cooldown regressivo, idempotência e nova coleta atualizam silenciosamente sem perder aba, busca, páginas ou rolagem | Widget/controlador com API falsa |
 
 ---
 

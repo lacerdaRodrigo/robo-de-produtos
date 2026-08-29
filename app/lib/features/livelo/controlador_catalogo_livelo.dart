@@ -123,6 +123,29 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
 
   Future<void> tentarNovamente() => _reiniciarECarregar();
 
+  /// Relê o primeiro retrato sem trocar aba, busca, filtros, itens já
+  /// carregados nem posição de rolagem. Só aplica quando a coleta mudou.
+  Future<bool> atualizarSilenciosamente() async {
+    if (_carregandoInicial || _carregandoMais) return false;
+    try {
+      final pagina = await _buscar(1);
+      if (_descartado || pagina.resumo.ultimaColeta == _resumo?.ultimaColeta) {
+        return false;
+      }
+      final porId = {for (final item in pagina.itens) item.idExterno: item};
+      for (var indice = 0; indice < _itens.length; indice++) {
+        final atualizado = porId[_itens[indice].idExterno];
+        if (atualizado != null) _itens[indice] = atualizado;
+      }
+      _resumo = pagina.resumo;
+      _categorias = List.unmodifiable(pagina.categorias);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> carregarMais() async {
     if (_carregandoInicial || _carregandoMais || !_temProxima) return;
     final versao = _versaoConsulta;

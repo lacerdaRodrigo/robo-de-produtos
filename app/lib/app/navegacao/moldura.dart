@@ -74,6 +74,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     PaginaInicio(
       api: widget.api,
       agora: widget.agora,
+      ativa: _selecionado == Destino.inicio,
       aoAbrirLojas: () => _selecionar(Destino.lojas),
       aoAbrirLivelo: () => _abrirFonte(FonteLojas.livelo),
       aoAbrirProdutos: () => _selecionar(Destino.produtos),
@@ -104,6 +105,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       api: widget.api,
       agora: widget.agora,
       experienciaCompacta: true,
+      ativa: _selecionadoCompacto == DestinoCompacto.inicio,
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
       aoAbrirProdutos: () => _selecionarCompacto(DestinoCompacto.produtos),

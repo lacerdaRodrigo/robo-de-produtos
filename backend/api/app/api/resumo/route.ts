@@ -10,6 +10,9 @@ export async function GET(requisicao: Request) {
 
   const resumo = await carregarResumoInicio();
   return NextResponse.json(resumo, {
-    headers: { "x-request-id": acesso.requisicaoId },
+    headers: {
+      "cache-control": "no-store, max-age=0",
+      "x-request-id": acesso.requisicaoId,
+    },
   });
 }

@@ -433,6 +433,7 @@ class ResumoLivelo {
     required this.ultimoSucessoEm,
     required this.lojasAcompanhadas,
     required this.alertasUltimaColeta,
+    required this.agendamento,
   });
 
   factory ResumoLivelo.parse(Map<String, dynamic> objeto) => ResumoLivelo(
@@ -440,12 +441,43 @@ class ResumoLivelo {
     ultimoSucessoEm: _textoOpcional(objeto['ultimo_sucesso_em']),
     lojasAcompanhadas: _inteiroNaoNegativo(objeto['lojas_acompanhadas']),
     alertasUltimaColeta: _inteiroNaoNegativo(objeto['alertas_ultima_coleta']),
+    agendamento: AgendamentoLivelo.parse(_mapa(objeto['agendamento'])),
   );
 
   final EstadoResumo estado;
   final String? ultimoSucessoEm;
   final int lojasAcompanhadas;
   final int alertasUltimaColeta;
+  final AgendamentoLivelo agendamento;
+}
+
+class AgendamentoLivelo {
+  const AgendamentoLivelo({required this.estado, required this.referenciaEm});
+  factory AgendamentoLivelo.parse(Map<String, dynamic> objeto) =>
+      AgendamentoLivelo(
+        estado: _texto(objeto['estado']),
+        referenciaEm: _texto(objeto['referencia_em']),
+      );
+  final String estado;
+  final String referenciaEm;
+  bool get aguardando => estado == 'aguardando';
+}
+
+class AtividadeRecente {
+  const AtividadeRecente({
+    required this.dominio,
+    required this.estado,
+    required this.momento,
+  });
+  factory AtividadeRecente.parse(Map<String, dynamic> objeto) =>
+      AtividadeRecente(
+        dominio: _texto(objeto['dominio']),
+        estado: _texto(objeto['estado']),
+        momento: _textoOpcional(objeto['momento']),
+      );
+  final String dominio;
+  final String estado;
+  final String? momento;
 }
 
 class ResumoCashbackInter {
@@ -523,6 +555,7 @@ class ResumoInicio {
     required this.livelo,
     required this.cashbackInter,
     required this.produtos,
+    this.atividadeRecente = const [],
   });
 
   factory ResumoInicio.parse(Map<String, dynamic> objeto) => ResumoInicio(
@@ -531,6 +564,12 @@ class ResumoInicio {
     livelo: ResumoLivelo.parse(_mapa(objeto['livelo'])),
     cashbackInter: ResumoCashbackInter.parse(_mapa(objeto['cashback_inter'])),
     produtos: ResumoProdutos.parse(_mapa(objeto['produtos'])),
+    atividadeRecente:
+        (objeto['atividade_recente'] as List<dynamic>?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(AtividadeRecente.parse)
+            .toList(growable: false) ??
+        const [],
   );
 
   final String geradoEm;
@@ -538,6 +577,7 @@ class ResumoInicio {
   final ResumoLivelo livelo;
   final ResumoCashbackInter cashbackInter;
   final ResumoProdutos produtos;
+  final List<AtividadeRecente> atividadeRecente;
 }
 
 class PerfilUsuario {

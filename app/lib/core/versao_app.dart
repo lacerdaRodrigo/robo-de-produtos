@@ -1,6 +1,6 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// Lê a versão do aplicativo (ex.: "1.0.2") em runtime, sem hardcode.
+/// Lê a versão do aplicativo em runtime, sem hardcode no rodapé.
 abstract final class VersaoApp {
   static Future<String> versao() async {
     try {

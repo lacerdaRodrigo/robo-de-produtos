@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
@@ -19,6 +21,7 @@ class PaginaInicio extends StatefulWidget {
     this.aoAbrirCashback,
     this.agora,
     this.experienciaCompacta = false,
+    this.ativa = true,
   });
 
   final Api api;
@@ -28,23 +31,53 @@ class PaginaInicio extends StatefulWidget {
   final VoidCallback? aoAbrirCashback;
   final DateTime Function()? agora;
   final bool experienciaCompacta;
+  final bool ativa;
 
   @override
   State<PaginaInicio> createState() => _PaginaInicioState();
 }
 
-class _PaginaInicioState extends State<PaginaInicio> {
+class _PaginaInicioState extends State<PaginaInicio>
+    with WidgetsBindingObserver {
   ResumoInicio? _resumo;
   bool _carregando = true;
   bool _falhouAtualizacao = false;
+  bool _consultando = false;
+  bool _emPrimeiroPlano = true;
+  Timer? _polling;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _consultar();
+    _configurarPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant PaginaInicio antigo) {
+    super.didUpdateWidget(antigo);
+    _configurarPolling();
+    if (widget.ativa && !antigo.ativa && _emPrimeiroPlano) _consultar();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    _emPrimeiroPlano = estado == AppLifecycleState.resumed;
+    if (_emPrimeiroPlano && widget.ativa) _consultar();
+  }
+
+  void _configurarPolling() {
+    _polling?.cancel();
+    if (!widget.experienciaCompacta || !widget.ativa) return;
+    _polling = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_emPrimeiroPlano) _consultar();
+    });
   }
 
   Future<void> _consultar() async {
+    if (_consultando || !widget.ativa || !_emPrimeiroPlano) return;
+    _consultando = true;
     if (_resumo != null && mounted) {
       setState(() {
         _carregando = true;
@@ -65,7 +98,16 @@ class _PaginaInicioState extends State<PaginaInicio> {
         _carregando = false;
         _falhouAtualizacao = true;
       });
+    } finally {
+      _consultando = false;
     }
+  }
+
+  @override
+  void dispose() {
+    _polling?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -649,45 +691,74 @@ class _AtividadeRecenteCompacta extends StatelessWidget {
         elevation: 0,
         child: Column(
           children: [
-            _AtividadeLinha(
-              icone: Icons.card_giftcard_outlined,
-              cor: CoresRadar.de(context).acao,
-              titulo: resumo.livelo.estado == EstadoResumo.atualizado
-                  ? 'Livelo concluída'
-                  : 'Livelo em leitura',
-              detalhe:
-                  '${_inteiro(resumo.livelo.lojasAcompanhadas)} lojas acompanhadas',
-              quando: _tempoDesde(
-                resumo.livelo.ultimoSucessoEm ?? resumo.geradoEm,
-                agora,
+            for (
+              var indice = 0;
+              indice < resumo.atividadeRecente.length;
+              indice++
+            ) ...[
+              _AtividadeLinha(
+                icone: _iconeAtividade(resumo.atividadeRecente[indice].dominio),
+                cor: _corAtividade(
+                  context,
+                  resumo.atividadeRecente[indice].dominio,
+                ),
+                titulo: _tituloAtividade(
+                  resumo.atividadeRecente[indice].dominio,
+                  resumo.atividadeRecente[indice].estado,
+                ),
+                detalhe: _detalheAtividade(
+                  resumo.atividadeRecente[indice].dominio,
+                  resumo,
+                ),
+                quando: _tempoDesde(
+                  resumo.atividadeRecente[indice].momento ?? resumo.geradoEm,
+                  agora,
+                ),
               ),
-            ),
-            Divider(
-              height: 1,
-              indent: 16,
-              endIndent: 16,
-              color: CoresRadar.de(context).borda,
-            ),
-            _AtividadeLinha(
-              icone: Icons.inventory_2_outlined,
-              cor: CoresRadar.de(context).integracaoInter,
-              titulo: resumo.produtos.estado == EstadoResumo.atualizando
-                  ? 'Produtos em atualização'
-                  : 'Produtos: ${_rotuloEstado(resumo.produtos.estado).toLowerCase()}',
-              detalhe: resumo.produtos.estado == EstadoResumo.semDados
-                  ? 'Catálogo ainda sem coleta'
-                  : 'Catálogo local mantido',
-              quando: _tempoDesde(
-                resumo.produtos.dadosMaisRecentesEm ?? resumo.geradoEm,
-                agora,
-              ),
-            ),
+              if (indice != resumo.atividadeRecente.length - 1)
+                Divider(
+                  height: 1,
+                  indent: 16,
+                  endIndent: 16,
+                  color: CoresRadar.de(context).borda,
+                ),
+            ],
           ],
         ),
       ),
     ],
   );
 }
+
+IconData _iconeAtividade(String dominio) => switch (dominio) {
+  'livelo' => Icons.card_giftcard_outlined,
+  'cashback_inter' => Icons.account_balance_outlined,
+  _ => Icons.inventory_2_outlined,
+};
+
+Color _corAtividade(BuildContext context, String dominio) => dominio == 'livelo'
+    ? CoresRadar.de(context).acao
+    : CoresRadar.de(context).integracaoInter;
+
+String _tituloAtividade(String dominio, String estado) => switch (dominio) {
+  'livelo' => estado == 'atualizado' ? 'Livelo concluída' : 'Livelo: $estado',
+  'cashback_inter' => 'Cashback: $estado',
+  _ =>
+    estado == 'atualizando' ? 'Produtos em atualização' : 'Produtos: $estado',
+};
+
+String _detalheAtividade(
+  String dominio,
+  ResumoInicio resumo,
+) => switch (dominio) {
+  'livelo' => '${_inteiro(resumo.livelo.lojasAcompanhadas)} lojas acompanhadas',
+  'cashback_inter' =>
+    '${_inteiro(resumo.cashbackInter.lojasAcompanhadas)} lojas acompanhadas',
+  _ =>
+    resumo.produtos.estado == EstadoResumo.semDados
+        ? 'Catálogo ainda sem coleta'
+        : 'Catálogo local mantido',
+};
 
 class _AtividadeLinha extends StatelessWidget {
   const _AtividadeLinha({

@@ -81,6 +81,10 @@ describe("catálogo Livelo autenticado", () => {
     expect(melhorOfertaLivelo(itens)?.id_externo).toBe("B");
   });
 
+  it("não escolhe uma loja geral quando não há acompanhadas", () => {
+    expect(melhorOfertaLivelo([itens[2]])).toBeNull();
+  });
+
   it("aceita somente o booleano de acompanhamento, sem nome ou link do cliente", () => {
     expect(validarAcompanhamentoLivelo({ acompanhada: true })).toEqual({
       ok: true,

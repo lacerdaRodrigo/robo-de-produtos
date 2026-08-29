@@ -55,6 +55,11 @@ export async function GET(requisicao: Request) {
       categorias,
       atualizado_em: primeiro?.atualizado_em ?? null,
       ...paginacaoEnvelope(resultado.totalItens, resultado.pagina, porPagina),
+    }, {
+      headers: {
+        "cache-control": "no-store, max-age=0",
+        "x-request-id": acesso.requisicaoId,
+      },
     });
   } catch {
     return NextResponse.json(corpoErro("inesperado", "nao foi possivel carregar o catalogo Livelo"), {

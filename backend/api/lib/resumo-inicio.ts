@@ -30,9 +30,19 @@ export type EstadoProdutosResumo =
 export type ResumoInicio = {
   gerado_em: string;
   estado_geral: EstadoGeralResumo;
-  livelo: ResumoLiveloPersistido & { estado: EstadoLiveloResumo };
+  livelo: ResumoLiveloPersistido & {
+    estado: EstadoLiveloResumo;
+    agendamento: { estado: "prevista" | "aguardando"; referencia_em: string };
+  };
   cashback_inter: ResumoCashbackInterPersistido & { estado: EstadoCashbackResumo };
   produtos: ResumoProdutosPersistido & { estado: EstadoProdutosResumo };
+  atividade_recente: AtividadeRecente[];
+};
+
+export type AtividadeRecente = {
+  dominio: "livelo" | "cashback_inter" | "produtos_inter";
+  estado: string;
+  momento: string | null;
 };
 
 export type DependenciasResumoInicio = {
@@ -78,6 +88,43 @@ function estadoLivelo(dados: ResumoLiveloPersistido, agora: Date): EstadoLiveloR
     : "atualizado";
 }
 
+const HORARIOS_LIVELO = [9, 14, 20] as const;
+function partesBrasilia(data: Date) {
+  const partes = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(data);
+  const valor = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? "0";
+  return { ano: Number(valor("year")), mes: Number(valor("month")), dia: Number(valor("day")), hora: Number(valor("hour")) };
+}
+function janelaBrasilia(ano: number, mes: number, dia: number, hora: number): Date {
+  return new Date(Date.UTC(ano, mes - 1, dia, hora + 3));
+}
+function agendamentoLivelo(dados: ResumoLiveloPersistido, agora: Date) {
+  const brasilia = partesBrasilia(agora);
+  const janelas = HORARIOS_LIVELO.map((hora) => janelaBrasilia(brasilia.ano, brasilia.mes, brasilia.dia, hora));
+  const sucesso = instante(dados.ultimo_sucesso_em);
+  const pendente = janelas.find((janela) => janela <= agora && (sucesso === null || sucesso < janela));
+  if (pendente) return { estado: "aguardando" as const, referencia_em: pendente.toISOString() };
+  const proxima = janelas.find((janela) => janela > agora);
+  if (proxima) return { estado: "prevista" as const, referencia_em: proxima.toISOString() };
+  const amanha = new Date(Date.UTC(brasilia.ano, brasilia.mes - 1, brasilia.dia + 1));
+  return { estado: "prevista" as const, referencia_em: janelaBrasilia(amanha.getUTCFullYear(), amanha.getUTCMonth() + 1, amanha.getUTCDate(), 9).toISOString() };
+}
+
+function atividadeRecente(
+  livelo: ResumoInicio["livelo"],
+  cashback: ResumoInicio["cashback_inter"],
+  produtos: ResumoInicio["produtos"],
+): AtividadeRecente[] {
+  const atividade: AtividadeRecente[] = [
+    { dominio: "livelo", estado: livelo.estado, momento: livelo.ultimo_sucesso_em },
+    { dominio: "cashback_inter", estado: cashback.estado, momento: cashback.ultima_tentativa_em ?? cashback.ultimo_sucesso_em },
+    { dominio: "produtos_inter", estado: produtos.estado, momento: produtos.ultima_tentativa_em ?? produtos.dados_mais_recentes_em },
+  ];
+  return atividade.sort((a, b) => {
+    const diferenca = (instante(b.momento) ?? -Infinity) - (instante(a.momento) ?? -Infinity);
+    return diferenca || a.dominio.localeCompare(b.dominio);
+  });
+}
+
 function estadoCashback(
   dados: ResumoCashbackInterPersistido,
   agora: Date,
@@ -117,6 +164,7 @@ const liveloIndisponivel: ResumoInicio["livelo"] = {
   ultimo_sucesso_em: null,
   lojas_acompanhadas: 0,
   alertas_ultima_coleta: 0,
+  agendamento: { estado: "prevista", referencia_em: "" },
 };
 const cashbackIndisponivel: ResumoInicio["cashback_inter"] = {
   estado: "indisponivel",
@@ -150,8 +198,8 @@ export async function carregarResumoInicio(
 
   const livelo: ResumoInicio["livelo"] =
     liveloLido.status === "fulfilled"
-      ? { ...liveloLido.value, estado: estadoLivelo(liveloLido.value, agora) }
-      : liveloIndisponivel;
+      ? { ...liveloLido.value, estado: estadoLivelo(liveloLido.value, agora), agendamento: agendamentoLivelo(liveloLido.value, agora) }
+      : { ...liveloIndisponivel, agendamento: agendamentoLivelo(liveloIndisponivel, agora) };
   const cashback: ResumoInicio["cashback_inter"] =
     cashbackLido.status === "fulfilled"
       ? { ...cashbackLido.value, estado: estadoCashback(cashbackLido.value, agora) }
@@ -176,5 +224,6 @@ export async function carregarResumoInicio(
     livelo,
     cashback_inter: cashback,
     produtos,
+    atividade_recente: atividadeRecente(livelo, cashback, produtos),
   };
 }

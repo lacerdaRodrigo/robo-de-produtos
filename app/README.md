@@ -17,6 +17,11 @@ usa a API paginada, preserva filtros e posição nas mutações e mantém Web, i
 layout amplo na experiência anterior. Migração, deploy e smoke físico não fazem
 parte da entrega local.
 
+No Android Samsung compacto, o Início relê o resumo salvo a cada 30 segundos
+somente quando visível e em primeiro plano. A Livelo destaca apenas a melhor
+loja acompanhada, mostra a próxima janela/atraso do robô e usa o botão
+administrativo idempotente para pedir uma coleta sem chamar Livelo diretamente.
+
 ## Plataformas e identificadores
 
 - projeto Firebase: `radarbeneficios`;

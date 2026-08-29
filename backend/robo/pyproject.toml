@@ -63,6 +63,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 version_toml = ["backend/robo/pyproject.toml:project.version"]
 version_variables = [
     "backend/robo/src/robo_livelo/__init__.py:__version__",
+    "app/pubspec.yaml:version",
 ]
 commit_message = "chore(release): {version}"
 changelog_file = "CHANGELOG.md"

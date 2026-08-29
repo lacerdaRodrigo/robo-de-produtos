@@ -154,6 +154,10 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN37** | Busca e filtros consultam somente o Postgres. O Flutter nunca consulta a Livelo nem recebe o catálogo completo em uma resposta |
 | **RN38** | Categorias conhecidas recebem rótulos em português; código desconhecido ou ausência de categoria aparece como “Outros” |
 | **RN39** | Nome e categoria usados ao acompanhar vêm do catálogo no servidor. O cliente não escolhe nome, link nem categoria |
+| **RN40** | No Android compacto Samsung, o Início consulta `/api/resumo` ao abrir, ao voltar para a tela, ao retomar o app e a cada 30 segundos enquanto estiver visível. Consultas não se sobrepõem; falha mantém o último resumo válido. Web, iOS e layout amplo não mudam neste ciclo. |
+| **RN41** | O agendamento Livelo é calculado no servidor para 09h, 14h e 20h de Brasília. Antes da janela, informa a próxima previsão; depois dela e sem execução nova, informa o atraso real do GitHub. |
+| **RN42** | `melhor_oferta` do catálogo Livelo significa a maior pontuação entre lojas acompanhadas no retrato atual. Sem acompanhadas, retorna vazio; não escolhe parceiro do catálogo geral. |
+| **RN43** | A atividade do Início traz o último evento de Livelo, Cashback e Produtos, ordenado por momento real decrescente e com desempate estável por domínio. Navegar ou pesquisar não consulta Livelo/Inter; somente o botão administrativo idempotente solicita workflow. |
 
 ### 6.1 O novo critério de alerta
 

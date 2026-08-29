@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
@@ -5,6 +7,7 @@ import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
+import '../administracao/botao_disparo.dart';
 import 'cartao_catalogo_livelo.dart';
 import 'controlador_catalogo_livelo.dart';
 import 'formato_livelo.dart';
@@ -58,48 +61,76 @@ class _EstadoPaginaCatalogoLiveloAndroid
   late final bool _controladorExterno = widget.controlador != null;
   final _busca = TextEditingController();
   final _rolagem = ScrollController();
+  ResumoInicio? _resumoInicio;
+  Timer? _timerMonitoramento;
+  Timer? _atualizacaoSilenciosa;
+  bool _resumoConsultando = false;
+  bool _retratoAtualizando = false;
 
   @override
   void initState() {
     super.initState();
     _controlador.carregarInicial();
+    _carregarResumoInicio();
+    _timerMonitoramento = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _carregarResumoInicio() async {
+    if (_resumoConsultando) return;
+    _resumoConsultando = true;
+    try {
+      final resumo = await widget.api.resumo();
+      if (mounted) setState(() => _resumoInicio = resumo);
+    } catch (_) {
+      // O catálogo continua útil com o último retrato mesmo se o resumo falhar.
+    } finally {
+      _resumoConsultando = false;
+    }
   }
 
   @override
   void dispose() {
     _busca.dispose();
     _rolagem.dispose();
+    _timerMonitoramento?.cancel();
+    _atualizacaoSilenciosa?.cancel();
     if (!_controladorExterno) _controlador.dispose();
     super.dispose();
   }
 
   Future<void> _alternar(ParceiroCatalogoLivelo parceiro) async {
+    final acompanhava = parceiro.acompanhada;
     final sucesso = await _controlador.alternarAcompanhamento(parceiro);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          sucesso
-              ? 'Acompanhamento salvo. A regra será aplicada na próxima coleta.'
-              : 'Não foi possível salvar. O estado anterior foi restaurado.',
-        ),
-      ),
+    if (sucesso) {
+      mostrarMensagemRadar(
+        context,
+        acompanhava
+            ? 'Loja removida do acompanhamento.'
+            : 'Loja adicionada ao acompanhamento.',
+      );
+      return;
+    }
+    mostrarMensagemRadar(
+      context,
+      'Não foi possível salvar. O estado anterior foi restaurado.',
+      sucesso: false,
     );
   }
 
   Future<void> _alternarAlerta(ParceiroCatalogoLivelo parceiro) async {
     final sucesso = await _controlador.alternarAlerta(parceiro);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          sucesso
-              ? (parceiro.alertaAtivo
-                    ? 'Alerta desativado para esta loja.'
-                    : 'Alerta ativado para esta loja.')
-              : 'Não foi possível salvar o alerta.',
-        ),
-      ),
+    mostrarMensagemRadar(
+      context,
+      sucesso
+          ? (parceiro.alertaAtivo
+                ? 'Alerta desativado para esta loja.'
+                : 'Alerta ativado para esta loja.')
+          : 'Não foi possível salvar o alerta.',
+      sucesso: sucesso,
     );
   }
 
@@ -141,9 +172,27 @@ class _EstadoPaginaCatalogoLiveloAndroid
               selecionada: _controlador.aba.index,
               aoSelecionar: (indice) =>
                   _controlador.mudarAba(AbaCatalogoLivelo.values[indice]),
+              acao: BotaoDisparo(
+                api: widget.api,
+                dominio: 'livelo',
+                administrador: widget.administrador,
+                rotulo: 'Atualizar',
+                aoAceitar: _acompanharNovaColeta,
+                compacto: true,
+              ),
             ),
           ),
         ),
+        if (_resumoInicio != null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+            sliver: SliverToBoxAdapter(
+              child: _MonitoramentoLivelo(
+                agendamento: _resumoInicio!.livelo.agendamento,
+                agora: (widget.agora ?? DateTime.now)(),
+              ),
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
           sliver: SliverToBoxAdapter(
@@ -175,6 +224,26 @@ class _EstadoPaginaCatalogoLiveloAndroid
       ],
     ),
   );
+
+  void _acompanharNovaColeta() {
+    _atualizacaoSilenciosa?.cancel();
+    unawaited(_atualizarRetratoSilencioso());
+    _atualizacaoSilenciosa = Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_atualizarRetratoSilencioso());
+    });
+  }
+
+  Future<void> _atualizarRetratoSilencioso() async {
+    if (_retratoAtualizando) return;
+    _retratoAtualizando = true;
+    try {
+      await _carregarResumoInicio();
+      final mudou = await _controlador.atualizarSilenciosamente();
+      if (mudou) _atualizacaoSilenciosa?.cancel();
+    } finally {
+      _retratoAtualizando = false;
+    }
+  }
 
   Future<void> _abrirFiltros() => showModalBottomSheet<void>(
     context: context,
@@ -384,8 +453,8 @@ class _HeroCatalogo extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   melhor == null
-                      ? 'Nenhuma oferta válida foi encontrada nesta coleta.'
-                      : '${pontosLivelo(melhor.pontosAtuais, moeda: melhor.moeda)} é a melhor oferta agora.',
+                      ? 'Nenhuma loja acompanhada agora.'
+                      : '${pontosLivelo(melhor.pontosAtuais, moeda: melhor.moeda)} é a melhor acompanhada agora.',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -397,6 +466,12 @@ class _HeroCatalogo extends StatelessWidget {
                   Text(
                     melhor.nome,
                     style: const TextStyle(color: Colors.white70),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 7),
+                  const Text(
+                    'Escolha uma loja na aba Lojas para acompanhar a pontuação atual.',
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -413,6 +488,70 @@ class _HeroCatalogo extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MonitoramentoLivelo extends StatelessWidget {
+  const _MonitoramentoLivelo({required this.agendamento, required this.agora});
+  final AgendamentoLivelo agendamento;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    final referencia = DateTime.tryParse(agendamento.referenciaEm)?.toLocal();
+    final diferenca = referencia?.difference(agora.toLocal());
+    final horario = referencia == null
+        ? null
+        : '${referencia.hour.toString().padLeft(2, '0')}:${referencia.minute.toString().padLeft(2, '0')}';
+    final texto = agendamento.aguardando
+        ? 'Aguardando o robô · atraso de ${_duracao(diferenca == null ? null : -diferenca)}'
+        : (diferenca == null ||
+              diferenca.isNegative ||
+              diferenca == Duration.zero)
+        ? 'Aguardando o robô · atraso de ${_duracao(diferenca == null ? null : -diferenca)}'
+        : 'Próxima coleta Livelo: ${horario ?? '—'} (em ${_duracao(diferenca)})';
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Monitoramento da coleta',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text(texto),
+            const SizedBox(height: 3),
+            Text(
+              agendamento.aguardando ||
+                      diferenca == null ||
+                      diferenca.isNegative ||
+                      diferenca == Duration.zero
+                  ? 'Janela ${horario ?? '—'} · a primeira execução concluída encerra o atraso.'
+                  : 'Prevista pelo cron às ${horario ?? '—'} · horário de Brasília.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: CoresRadar.de(context).textoSuave,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _duracao(Duration? duracao) {
+  if (duracao == null) return '—';
+  final segundos = duracao.inSeconds.clamp(0, 1 << 31).toInt();
+  if (segundos < 60) return 'menos de 1 min';
+  final minutos = segundos ~/ 60;
+  final horas = minutos ~/ 60;
+  final resto = minutos % 60;
+  if (horas == 0) return '$minutos min';
+  return resto == 0 ? '$horas h' : '$horas h $resto min';
 }
 
 class _ArcosDoHero extends StatelessWidget {

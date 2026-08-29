@@ -115,9 +115,11 @@ export function filtrarEOrdenarCatalogoLivelo(
 export function melhorOfertaLivelo(
   parceiros: ParceiroCatalogoLivelo[],
 ): Pick<ParceiroCatalogoLivelo, "id_externo" | "nome" | "pontos_atuais" | "moeda" | "prefixo_ate"> | null {
+  // O destaque é uma decisão sobre as escolhas do usuário no retrato atual,
+  // não um ranking do catálogo geral nem um pico histórico.
   const primeira = filtrarEOrdenarCatalogoLivelo(parceiros, {
     q: "",
-    aba: "todas",
+    aba: "acompanhadas",
     categoria: "",
     ordenar: "pontos",
   })[0];
