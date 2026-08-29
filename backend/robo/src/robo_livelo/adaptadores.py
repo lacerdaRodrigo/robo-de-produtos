@@ -263,13 +263,20 @@ class RepositorioPostgres:
 
     INSERE_PONTUACAO = """
         INSERT INTO pontuacao (
-            execucao_id, loja_id, parceiro_livelo_id, nome, pontos_atuais, pontos_base, pontos_clube,
+            execucao_id, loja_id, parceiro_livelo_id, nome, pontos_atuais,
+            pontos_base, pontos_clube,
             valor_de_disparo, moeda, prefixo_ate, em_promocao, alertou, campanha,
             descricao_campanha, fim_promocao, link
         )
         VALUES (
             %(execucao_id)s,
-            (SELECT id FROM loja WHERE parceiro_livelo_id = (SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s)),
+            (
+                SELECT id FROM loja
+                 WHERE parceiro_livelo_id = (
+                    SELECT id FROM parceiro_livelo
+                     WHERE id_externo = %(id_externo)s
+                )
+            ),
             (SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s),
             %(nome)s, %(pontos_atuais)s, %(pontos_base)s, %(pontos_clube)s,
             %(valor_de_disparo)s, %(moeda)s, %(prefixo_ate)s, %(em_promocao)s,
