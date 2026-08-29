@@ -36,7 +36,7 @@ class ZonaPerigoAdministrativa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const corErro = Tokens.perigo;
+    final corErro = CoresRadar.de(context).perigo;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -93,7 +93,7 @@ class _CartaoDominio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const corErro = Tokens.perigo;
+    final corErro = CoresRadar.de(context).perigo;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -232,7 +232,7 @@ class _EstadoPaginaConfirmacaoLimpeza extends State<PaginaConfirmacaoLimpeza> {
 
   Widget _conteudo(BuildContext context) {
     final resumo = _resumo!;
-    const corErro = Tokens.perigo;
+    final corErro = CoresRadar.de(context).perigo;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -290,7 +290,10 @@ class _EstadoPaginaConfirmacaoLimpeza extends State<PaginaConfirmacaoLimpeza> {
         FilledButton.icon(
           key: const Key('confirmar-limpeza'),
           onPressed: _confirmacaoValida && !_executando ? _executar : null,
-          style: FilledButton.styleFrom(backgroundColor: corErro),
+          style: FilledButton.styleFrom(
+            backgroundColor: corErro,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
           icon: _executando
               ? const SizedBox(
                   width: 18,
@@ -314,13 +317,14 @@ class _SucessoLimpeza extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ganho = CoresRadar.de(context).ganho;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline, size: 48, color: Tokens.ganho),
+            Icon(Icons.check_circle_outline, size: 48, color: ganho),
             const SizedBox(height: 12),
             Text(
               livelo

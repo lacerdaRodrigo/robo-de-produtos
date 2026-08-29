@@ -14,6 +14,11 @@ void main() {
     expect(Tokens.atencao.toARGB32(), const Color(0xFFB7791F).toARGB32());
     expect(Tokens.perigo.toARGB32(), const Color(0xFFC53030).toARGB32());
     expect(Tokens.fundo.toARGB32(), const Color(0xFFF5F7FA).toARGB32());
+    expect(
+      Tokens.superficieEscura.toARGB32(),
+      const Color(0xFF0D2032).toARGB32(),
+    );
+    expect(Tokens.textoEscuro.toARGB32(), const Color(0xFFEDF7FF).toARGB32());
   });
 
   test('tema gera um ColorScheme material', () {
@@ -24,5 +29,8 @@ void main() {
   test('tema escuro existe como base', () {
     final tema = TemaRadar.escuro();
     expect(tema.brightness, Brightness.dark);
+    expect(tema.scaffoldBackgroundColor, Tokens.fundoEscuro);
+    expect(tema.cardColor, Tokens.superficieEscura);
+    expect(tema.extension<CoresRadar>()?.acao, Tokens.acaoEscura);
   });
 }

@@ -37,3 +37,33 @@ jobs:
       # PRD 8.4: minimo de 90% no nucleo puro.
       - name: Testes e cobertura
         run: pytest --cov --cov-fail-under=90
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/api
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend/api/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tipos
+        run: npm run checar
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes
+        run: npm run testar
+
+      - name: Build
+        run: npm run build

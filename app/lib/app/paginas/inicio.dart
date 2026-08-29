@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../componentes/estados.dart';
+import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
 import '../tema/tokens.dart';
 
@@ -17,6 +18,7 @@ class PaginaInicio extends StatefulWidget {
     this.aoAbrirProdutos,
     this.aoAbrirCashback,
     this.agora,
+    this.experienciaCompacta = false,
   });
 
   final Api api;
@@ -25,6 +27,7 @@ class PaginaInicio extends StatefulWidget {
   final VoidCallback? aoAbrirProdutos;
   final VoidCallback? aoAbrirCashback;
   final DateTime Function()? agora;
+  final bool experienciaCompacta;
 
   @override
   State<PaginaInicio> createState() => _PaginaInicioState();
@@ -90,39 +93,83 @@ class _PaginaInicioState extends State<PaginaInicio> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
               sliver: SliverList.list(
                 children: [
-                  _CabecalhoResumo(
-                    resumo: resumo,
-                    carregando: _carregando,
-                    agora: (widget.agora ?? DateTime.now)(),
-                    aoAtualizar: _carregando ? null : _consultar,
-                  ),
+                  if (widget.experienciaCompacta)
+                    _CabecalhoResumoCompacto(
+                      resumo: resumo,
+                      carregando: _carregando,
+                      agora: (widget.agora ?? DateTime.now)(),
+                      aoAtualizar: _carregando ? null : _consultar,
+                    )
+                  else
+                    _CabecalhoResumo(
+                      resumo: resumo,
+                      carregando: _carregando,
+                      agora: (widget.agora ?? DateTime.now)(),
+                      aoAtualizar: _carregando ? null : _consultar,
+                    ),
                   if (_falhouAtualizacao) ...[
                     const SizedBox(height: 16),
                     _AvisoFalhaAtualizacao(aoTentarNovamente: _consultar),
                   ],
                   const SizedBox(height: 20),
-                  _DestaqueEstado(resumo: resumo),
-                  const SizedBox(height: 20),
-                  _GradeMetricas(resumo: resumo),
-                  const SizedBox(height: 30),
-                  const _TituloSecao(
-                    titulo: 'Atalhos',
-                    complemento: 'Fixos nesta fase',
-                  ),
-                  const SizedBox(height: 12),
-                  _GradeAtalhos(
-                    aoAbrirLojas: widget.aoAbrirLojas,
-                    aoAbrirLivelo: widget.aoAbrirLivelo,
-                    aoAbrirProdutos: widget.aoAbrirProdutos,
-                    aoAbrirCashback: widget.aoAbrirCashback,
-                  ),
-                  const SizedBox(height: 30),
-                  const _TituloSecao(
-                    titulo: 'Estado por domínio',
-                    complemento: 'Dados reais',
-                  ),
-                  const SizedBox(height: 12),
-                  _EstadoDominios(resumo: resumo),
+                  widget.experienciaCompacta
+                      ? _DestaqueInicioCompacto(
+                          resumo: resumo,
+                          agora: (widget.agora ?? DateTime.now)(),
+                        )
+                      : _DestaqueEstado(resumo: resumo),
+                  if (widget.experienciaCompacta) ...[
+                    const SizedBox(height: 30),
+                    const _TituloSecao(
+                      titulo: 'Seus espaços',
+                      complemento: 'Um lugar para cada jornada',
+                    ),
+                    const SizedBox(height: 12),
+                    _EspacosCompactos(
+                      aoAbrirLivelo: widget.aoAbrirLivelo,
+                      aoAbrirInter: widget.aoAbrirCashback,
+                      aoAbrirProdutos: widget.aoAbrirProdutos,
+                    ),
+                    const SizedBox(height: 30),
+                    const _TituloSecao(
+                      titulo: 'Resumo agora',
+                      complemento: 'Últimos retratos válidos',
+                    ),
+                    const SizedBox(height: 12),
+                    _GradeMetricasCompactas(
+                      resumo: resumo,
+                      agora: (widget.agora ?? DateTime.now)(),
+                    ),
+                    const SizedBox(height: 30),
+                    _AtividadeRecenteCompacta(
+                      resumo: resumo,
+                      agora: (widget.agora ?? DateTime.now)(),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 20),
+                    _GradeMetricas(resumo: resumo),
+                    const SizedBox(height: 30),
+                    const _TituloSecao(
+                      titulo: 'Atalhos',
+                      complemento: 'Fixos nesta fase',
+                    ),
+                    const SizedBox(height: 12),
+                    _GradeAtalhos(
+                      aoAbrirLojas: widget.aoAbrirLojas,
+                      aoAbrirLivelo: widget.aoAbrirLivelo,
+                      aoAbrirProdutos: widget.aoAbrirProdutos,
+                      aoAbrirCashback: widget.aoAbrirCashback,
+                    ),
+                  ],
+                  if (!widget.experienciaCompacta) ...[
+                    const SizedBox(height: 30),
+                    const _TituloSecao(
+                      titulo: 'Estado por domínio',
+                      complemento: 'Dados reais',
+                    ),
+                    const SizedBox(height: 12),
+                    _EstadoDominios(resumo: resumo),
+                  ],
                 ],
               ),
             ),
@@ -148,6 +195,7 @@ class _CabecalhoResumo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,7 +217,7 @@ class _CabecalhoResumo extends StatelessWidget {
                 _dataExtensa(agora),
                 style: Theme.of(
                   context,
-                ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF60758A)),
+                ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
               ),
               const SizedBox(height: 4),
               Text(
@@ -196,6 +244,53 @@ class _CabecalhoResumo extends StatelessWidget {
   }
 }
 
+class _CabecalhoResumoCompacto extends StatelessWidget {
+  const _CabecalhoResumoCompacto({
+    required this.resumo,
+    required this.carregando,
+    required this.agora,
+    required this.aoAtualizar,
+  });
+
+  final ResumoInicio resumo;
+  final bool carregando;
+  final DateTime agora;
+  final VoidCallback? aoAtualizar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CabecalhoSecaoRadar(
+          sobrelinha: _dataExtensa(agora),
+          titulo: _saudacao(agora),
+          descricao:
+              'Seus benefícios importantes, sem misturar as regras de cada fonte.',
+          acao: IconButton.filledTonal(
+            key: const Key('atualizar-resumo'),
+            tooltip: 'Atualizar resumo',
+            onPressed: aoAtualizar,
+            icon: carregando
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Resumo gerado ${_dataHora(resumo.geradoEm)}',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _AvisoFalhaAtualizacao extends StatelessWidget {
   const _AvisoFalhaAtualizacao({required this.aoTentarNovamente});
 
@@ -203,14 +298,15 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Material(
-      color: const Color(0xFFFFF4E5),
+      color: cores.atencao.withValues(alpha: 0.10),
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_outlined, color: Tokens.atencao),
+            Icon(Icons.cloud_off_outlined, color: cores.atencao),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
@@ -226,6 +322,430 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DestaqueInicioCompacto extends StatelessWidget {
+  const _DestaqueInicioCompacto({required this.resumo, required this.agora});
+
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    final prioridade = _prioridade(resumo);
+    final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
+        children: [
+          Container(
+            color: Tokens.marcaProfunda,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SeloHeroCompacto(texto: _textoAtualizacao(resumo, agora)),
+                const SizedBox(height: 14),
+                Text(
+                  atualizado ? 'Seu radar está atualizado.' : prioridade.titulo,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  atualizado
+                      ? 'Livelo, cashback e produtos continuam em leituras independentes.'
+                      : prioridade.descricao,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFFD7E3ED),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _MetricasHeroCompactas(resumo: resumo),
+              ],
+            ),
+          ),
+          const Positioned(
+            right: -46,
+            bottom: -74,
+            child: _ArcoHeroInicio(tamanho: 190),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeloHeroCompacto extends StatelessWidget {
+  const _SeloHeroCompacto({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.circle, size: 8, color: Color(0xFF55D6A3)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                texto,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricasHeroCompactas extends StatelessWidget {
+  const _MetricasHeroCompactas({required this.resumo});
+
+  final ResumoInicio resumo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _MetricaHero(valor: _valorLivelo(resumo), titulo: 'alertas Livelo'),
+        const SizedBox(width: 8),
+        _MetricaHero(
+          valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
+              ? '—'
+              : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
+          titulo: 'lojas com cashback',
+        ),
+        const SizedBox(width: 8),
+        _MetricaHero(
+          valor: resumo.produtos.estado == EstadoResumo.indisponivel
+              ? '—'
+              : _inteiro(resumo.produtos.produtosAtivos),
+          titulo: 'produtos ativos',
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricaHero extends StatelessWidget {
+  const _MetricaHero({required this.valor, required this.titulo});
+
+  final String valor;
+  final String titulo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              valor,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              titulo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: const Color(0xFFD7E3ED),
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArcoHeroInicio extends StatelessWidget {
+  const _ArcoHeroInicio({required this.tamanho});
+
+  final double tamanho;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox.square(
+        dimension: tamanho,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF8EC5F4).withValues(alpha: 0.10),
+              width: 18,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF8EC5F4).withValues(alpha: 0.12),
+                  width: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GradeMetricasCompactas extends StatelessWidget {
+  const _GradeMetricasCompactas({required this.resumo, required this.agora});
+
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GradeResponsiva(
+      maximoColunas: 2,
+      larguraMinima: 150,
+      itens: [
+        _MetricaResumoCompacta(
+          icone: Icons.storefront_outlined,
+          cor: CoresRadar.de(context).acao,
+          valor: _valorDisponivel(resumo.livelo.estado)
+              ? _inteiro(resumo.livelo.lojasAcompanhadas)
+              : '—',
+          titulo: 'lojas acompanhadas',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.inventory_2_outlined,
+          cor: CoresRadar.de(context).integracaoInter,
+          valor: _valorDisponivel(resumo.produtos.estado)
+              ? _inteiro(resumo.produtos.produtosAtivos)
+              : '—',
+          titulo: 'produtos ativos',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.notifications_none,
+          cor: CoresRadar.de(context).atencao,
+          valor: _valorLivelo(resumo),
+          titulo: 'alertas relevantes',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.schedule_outlined,
+          cor: CoresRadar.de(context).ganho,
+          valor: _tempoDesde(resumo.geradoEm, agora),
+          titulo: 'última atualização',
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricaResumoCompacta extends StatelessWidget {
+  const _MetricaResumoCompacta({
+    required this.icone,
+    required this.cor,
+    required this.valor,
+    required this.titulo,
+  });
+  final IconData icone;
+  final Color cor;
+  final String valor;
+  final String titulo;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    elevation: 0,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: cor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: SizedBox.square(
+              dimension: 36,
+              child: Icon(icone, color: cor, size: 20),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            valor,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            titulo,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AtividadeRecenteCompacta extends StatelessWidget {
+  const _AtividadeRecenteCompacta({required this.resumo, required this.agora});
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const _TituloSecao(
+        titulo: 'Atividade recente',
+        complemento: 'Pedido não é conclusão',
+      ),
+      const SizedBox(height: 12),
+      Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        child: Column(
+          children: [
+            _AtividadeLinha(
+              icone: Icons.card_giftcard_outlined,
+              cor: CoresRadar.de(context).acao,
+              titulo: resumo.livelo.estado == EstadoResumo.atualizado
+                  ? 'Livelo concluída'
+                  : 'Livelo em leitura',
+              detalhe:
+                  '${_inteiro(resumo.livelo.lojasAcompanhadas)} lojas acompanhadas',
+              quando: _tempoDesde(
+                resumo.livelo.ultimoSucessoEm ?? resumo.geradoEm,
+                agora,
+              ),
+            ),
+            Divider(
+              height: 1,
+              indent: 16,
+              endIndent: 16,
+              color: CoresRadar.de(context).borda,
+            ),
+            _AtividadeLinha(
+              icone: Icons.inventory_2_outlined,
+              cor: CoresRadar.de(context).integracaoInter,
+              titulo: resumo.produtos.estado == EstadoResumo.atualizando
+                  ? 'Produtos em atualização'
+                  : 'Produtos: ${_rotuloEstado(resumo.produtos.estado).toLowerCase()}',
+              detalhe: resumo.produtos.estado == EstadoResumo.semDados
+                  ? 'Catálogo ainda sem coleta'
+                  : 'Catálogo local mantido',
+              quando: _tempoDesde(
+                resumo.produtos.dadosMaisRecentesEm ?? resumo.geradoEm,
+                agora,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _AtividadeLinha extends StatelessWidget {
+  const _AtividadeLinha({
+    required this.icone,
+    required this.cor,
+    required this.titulo,
+    required this.detalhe,
+    required this.quando,
+  });
+  final IconData icone;
+  final Color cor;
+  final String titulo;
+  final String detalhe;
+  final String quando;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(14),
+    child: Row(
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: cor.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: SizedBox.square(
+            dimension: 34,
+            child: Icon(icone, color: cor, size: 19),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titulo,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              Text(
+                detalhe,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: CoresRadar.de(context).textoSuave,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          quando,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _DestaqueEstado extends StatelessWidget {
@@ -290,13 +810,14 @@ class _GradeMetricas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return _GradeResponsiva(
       maximoColunas: 3,
       larguraMinima: 250,
       itens: [
         _Metrica(
           icone: Icons.star_outline,
-          cor: Tokens.marcaClara,
+          cor: cores.acao,
           valor:
               resumo.livelo.estado == EstadoResumo.indisponivel ||
                   resumo.livelo.ultimoSucessoEm == null
@@ -307,7 +828,7 @@ class _GradeMetricas extends StatelessWidget {
         ),
         _Metrica(
           icone: Icons.savings_outlined,
-          cor: Tokens.ganho,
+          cor: cores.ganho,
           valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
@@ -316,7 +837,7 @@ class _GradeMetricas extends StatelessWidget {
         ),
         _Metrica(
           icone: Icons.inventory_2_outlined,
-          cor: const Color(0xFF087E8B),
+          cor: cores.integracaoInter,
           valor: resumo.produtos.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.produtos.produtosAtivos),
@@ -382,6 +903,120 @@ class _Metrica extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(titulo, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EspacosCompactos extends StatelessWidget {
+  const _EspacosCompactos({
+    required this.aoAbrirLivelo,
+    required this.aoAbrirInter,
+    required this.aoAbrirProdutos,
+  });
+
+  final VoidCallback? aoAbrirLivelo;
+  final VoidCallback? aoAbrirInter;
+  final VoidCallback? aoAbrirProdutos;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Column(
+      children: [
+        _EspacoCompacto(
+          chave: const Key('atalho-livelo'),
+          icone: Icons.card_giftcard_outlined,
+          cor: cores.acao,
+          titulo: 'Livelo',
+          descricao: 'Pontos, lojas, campanhas e alertas',
+          aoTocar: aoAbrirLivelo,
+        ),
+        const SizedBox(height: 10),
+        _EspacoCompacto(
+          chave: const Key('atalho-inter'),
+          icone: Icons.account_balance_outlined,
+          cor: cores.integracaoInter,
+          titulo: 'Banco Inter',
+          descricao: 'Cashback e produtos em processos separados',
+          aoTocar: aoAbrirInter,
+        ),
+        const SizedBox(height: 10),
+        _EspacoCompacto(
+          chave: const Key('atalho-produtos'),
+          icone: Icons.search,
+          cor: cores.ganho,
+          titulo: 'Buscar produtos',
+          descricao: 'Catálogo local das lojas selecionadas',
+          aoTocar: aoAbrirProdutos,
+        ),
+      ],
+    );
+  }
+}
+
+class _EspacoCompacto extends StatelessWidget {
+  const _EspacoCompacto({
+    required this.chave,
+    required this.icone,
+    required this.cor,
+    required this.titulo,
+    required this.descricao,
+    required this.aoTocar,
+  });
+
+  final Key chave;
+  final IconData icone;
+  final Color cor;
+  final String titulo;
+  final String descricao;
+  final VoidCallback? aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return CartaoRadar(
+      aoTocar: aoTocar,
+      padding: EdgeInsets.zero,
+      child: Ink(
+        key: chave,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: SizedBox.square(
+                dimension: 48,
+                child: Icon(icone, color: cor),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    descricao,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CoresRadar.de(context).textoSuave,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right),
           ],
         ),
       ),
@@ -458,6 +1093,7 @@ class _Atalho extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
@@ -469,7 +1105,7 @@ class _Atalho extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(icone, color: Tokens.marcaClara),
+              Icon(icone, color: cores.acao),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -563,7 +1199,7 @@ class _LinhaDominio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = _corEstado(estado);
+    final cor = _corEstado(context, estado);
     final indicador = Container(
       width: 42,
       height: 42,
@@ -697,7 +1333,7 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = cor ?? Tokens.marcaClara;
+    final base = cor ?? CoresRadar.de(context).acao;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compacto ? 9 : 11,
@@ -783,11 +1419,12 @@ String _rotuloEstado(EstadoResumo estado) => switch (estado) {
   EstadoResumo.indisponivel => 'Indisponível',
 };
 
-Color _corEstado(EstadoResumo estado) => switch (estado) {
-  EstadoResumo.atualizado => Tokens.ganho,
-  EstadoResumo.atualizando => Tokens.marcaClara,
-  EstadoResumo.indisponivel || EstadoResumo.falhaRecente => Tokens.perigo,
-  _ => Tokens.atencao,
+Color _corEstado(BuildContext context, EstadoResumo estado) => switch (estado) {
+  EstadoResumo.atualizado => CoresRadar.de(context).ganho,
+  EstadoResumo.atualizando => CoresRadar.de(context).acao,
+  EstadoResumo.indisponivel ||
+  EstadoResumo.falhaRecente => CoresRadar.de(context).perigo,
+  _ => CoresRadar.de(context).atencao,
 };
 
 String _inteiro(int valor) {
@@ -800,12 +1437,51 @@ String _inteiro(int valor) {
   return resultado.toString();
 }
 
+bool _valorDisponivel(EstadoResumo estado) =>
+    estado != EstadoResumo.indisponivel;
+
+String _valorLivelo(ResumoInicio resumo) {
+  if (!_valorDisponivel(resumo.livelo.estado) ||
+      resumo.livelo.ultimoSucessoEm == null) {
+    return '—';
+  }
+  return _inteiro(resumo.livelo.alertasUltimaColeta);
+}
+
+String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {
+  final data = DateTime.tryParse(resumo.geradoEm)?.toLocal();
+  if (data == null) return 'Radar atualizado';
+  final minutos = agora.toLocal().difference(data).inMinutes;
+  if (minutos <= 1) return 'Radar atualizado há pouco';
+  if (minutos < 60) return 'Radar atualizado há $minutos min';
+  final horas = minutos ~/ 60;
+  if (horas < 24) return 'Radar atualizado há $horas h';
+  return 'Radar atualizado há ${horas ~/ 24} d';
+}
+
+String _tempoDesde(String iso, DateTime agora) {
+  final data = DateTime.tryParse(iso)?.toLocal();
+  if (data == null) return '—';
+  final minutos = agora.toLocal().difference(data).inMinutes;
+  if (minutos <= 1) return 'agora';
+  if (minutos < 60) return '$minutos min';
+  final horas = minutos ~/ 60;
+  if (horas < 24) return '${horas}h';
+  return '${horas ~/ 24}d';
+}
+
 String _dataHora(String? iso) {
   final data = iso == null ? null : DateTime.tryParse(iso)?.toLocal();
   if (data == null) return 'ainda não disponível';
   String dois(int valor) => valor.toString().padLeft(2, '0');
   return '${dois(data.day)}/${dois(data.month)} às '
       '${dois(data.hour)}:${dois(data.minute)}';
+}
+
+String _saudacao(DateTime momento) {
+  if (momento.hour < 12) return 'Bom dia.';
+  if (momento.hour < 18) return 'Boa tarde.';
+  return 'Boa noite.';
 }
 
 String _dataExtensa(DateTime data) {

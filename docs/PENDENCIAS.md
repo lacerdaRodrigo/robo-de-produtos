@@ -4,6 +4,29 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 ---
 
+## Catálogo Livelo completo — Android compacto
+
+**Backend publicado em 2026-08-28.** O protótipo mobile preserva a
+hierarquia aprovada sem apresentar nomes ou números ilustrativos como reais. O
+novo fluxo fica restrito ao Android compacto; Web, iOS e layout amplo continuam
+na experiência anterior.
+
+- [x] Extrair ID externo e categorias, deduplicar por ID e falhar em conflito
+- [x] Criar `migracoes/013_catalogo_livelo.sql` sem alterar produção
+- [x] Publicar execução, catálogo, vínculos e pontuações em uma transação
+- [x] Manter zero acompanhadas como estado válido, sem reidratar o TOML
+- [x] Criar GET paginado e PATCH administrativo idempotente na API
+- [x] Implementar busca com debounce, filtros, paginação e mutação reversível
+- [x] Cobrir Android compacto, iOS/Web anteriores, 320 px e temas claro/escuro
+- [x] Aplicar a migração `013` no Neon e confirmar tabela, vínculo e índice
+- [x] Publicar robô e API; a rota autenticada `/api/livelo/catalogo` está no ar
+- [x] Executar uma coleta real sem e-mail: 252 parceiros ativos foram publicados
+- [ ] Executar o smoke manual no Samsung pelo responsável
+
+Build, instalação, navegação e smoke no aparelho ficam a cargo do responsável.
+
+---
+
 ## Reativação — API, robôs e CI (após arquivar o site)
 
 > Em 2026-08-23 reconstruí o shell publicável da API em `backend/api/` e corrigi
@@ -24,8 +47,9 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 - [x] Gates API verde: `tsc --noEmit`, vitest (7), `next build`
 - [x] Gates robô verde: ruff, format, `pytest` 94,16%
 - [ ] Cadastrar `ALLOWED_ORIGINS` na Vercel (origin exata do Flutter Web)
-- [ ] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
-- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada)
+- [x] Publicar a API no Vercel (Projeto `app-robo`, Root `backend/api`, Node 22)
+- [ ] Aplicar migrações `009` e `012` no Neon (a `011` segue adiada; a `013`
+      foi aplicada em 2026-08-28)
 - [ ] Conferir segredos `DATABASE_URL`, e-mail e `GITHUB_TOKEN_DISPARO` no GitHub
 - [ ] App Check: inscrever Web (reCAPTCHA) e iOS e recriar token debug do Samsung;
       só então `EXIGIR_APP_CHECK=true`
@@ -35,7 +59,7 @@ Lista viva do que falta. Marcar `[x]` conforme for feito e mover para "Concluíd
 
 O **porquê** de cada item está no [`PRD-LIVELO.md`](PRD-LIVELO.md), no [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md), no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md) ou no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md) — aqui fica só o que fazer e em que ordem.
 
-> Atualizado em 2026-08-23. Versão técnica atual: **1.34.0**.
+> Atualizado em 2026-08-28. Versão técnica atual: **1.40.0**.
 
 **Onde estamos:** V2.0 a V2.3 fechadas, incluindo V2.3.1 (redesenho de informação), V2.3.2 (banco manda, e o site dispara o robô), V2.3.3 (redesenho visual: grade de cartões, barra de progresso, tema claro/escuro) e V2.3.4 (flags de funcionalidade em `/configuracoes`, como interruptores estilo liga/desliga, verde sempre significando "sumiu da tela": esconder a regra de aviso opcional no cadastro de loja e esconder a tela de Alertas inteira — ambas desligadas por padrão, guardadas em cookie, sem tabela nem migração. Corrigido em 2026-08-12: antes o flag do aviso opcional tinha a lógica invertida da de Alertas — ligado escondia os campos em vez de mostrar — e o padrão de quem nunca mexeu virou campo visível, não mais escondido). O Painel também passou a mostrar a letra miúda da campanha (`legalTerms`/RN31, migração `005` aplicada em 2026-08-12). O site está publicado na Vercel e lê o retrato de cada execução. `GITHUB_TOKEN_DISPARO` cadastrado na Vercel desde 2026-08-13 — botão "Forçar atualização" confirmado habilitado em produção. O parâmetro `enviar_email` no `robo.yml` está feito desde 2026-08-13 — o disparo manual do site já roda em silêncio. Você verificou o site publicado em 2026-08-13 (carimbo, RN30, sem JavaScript) — a V2.4 está destravada, ainda não iniciada. Na madrugada de 2026-08-12 para 13, o e-mail foi redesenhado com marca própria "Pontuação Livelo" (ver `docs/EMAIL.md`) e começou o redesenho de navegação apelidado "V4.6" pelo mockup que o originou — ver seção própria abaixo: a barra lateral, a cor de ação (indigo), o Painel (hero com Top 3, botão "Ir para a Livelo") e a tabela de Lojas (coluna Limiar, ícone de remover) já entraram. Em 2026-08-13, pela manhã, você mandou `novo.html` direto na `main` (fora de PR) — mesmo mockup que já estava em mãos, confirmado byte a byte igual ao HTML colado no chat — e cobrou que o Painel estava "totalmente diferente". Comparação lado a lado (prints do Painel e de Lojas logado contra a leitura do mockup, já que o CDN do Tailwind não carrega neste ambiente) mostrou que a barra lateral, o hero, os cartões e os toggles já batiam; a diferença de verdade era estrutural: o mockup ordena numa grade única, o site ainda agrupava por categoria. Resolvido na quarta fatia (ver abaixo) — os controles de ordenar entraram e o agrupamento por categoria saiu, com busca cobrindo o que o índice de categoria fazia antes. O modal de cadastro do mockup segue de fora por não ganhar nada sobre o formulário inline que já funciona sem JavaScript; só a Central de Alertas fica pendente. O catálogo vem do Neon com o TOML de reserva, e o alerta é decidido por múltiplo da base (RN27), não pela etiqueta da Livelo. O e-mail continua diário de propósito, para calibrar a régua vendo o resultado.
 
@@ -99,11 +123,11 @@ para não bloquear Web/iOS antes de esses dois alvos serem observados.
 
 ## Flutter — Fase 4 Android primeiro
 
-**Fase 4.2A concluída em 2026-08-20.** O Samsung SM-M135M usa barra inferior
-com Início, Livelo, Inter, Alertas e Mais; a seleção troca o `IndexedStack` sem
-descartar o estado das áreas. Celular em retrato e paisagem mantém essa barra,
-enquanto telas maiores preservam a lateral. O Flutter Web fica por último por
-decisão do responsável.
+**Fase 4.2A concluída em 2026-08-20.** Essa entrega introduziu no Samsung
+SM-M135M a barra inferior com Início, Livelo, Inter, Alertas e Mais. O ciclo
+posterior de Moldura substituiu a apresentação compacta por cabeçalho e gaveta,
+mantendo cinco destinos e o `IndexedStack`; telas maiores preservam a lateral.
+Este parágrafo registra a evolução histórica, não o alvo do novo ciclo mobile.
 
 - [x] Implementar navegação inferior para celular sem comprimir a barra lateral
 - [x] Preservar os mesmos cinco destinos, rótulos semânticos e estado das abas
@@ -129,11 +153,32 @@ decisão do responsável.
 
 ## Flutter — redesign por telas
 
-O redesign segue o
-[`app/PLANO-REDESIGN-POR-TELAS.md`](../app/PLANO-REDESIGN-POR-TELAS.md)
-e não libera todas as telas de uma vez. Em 23 de agosto de 2026, o plano passou
-a mapear todos os módulos até o fechamento multiplataforma, incluindo
-dependências de API, gates visuais e o roteiro automático no Samsung conectado.
+### Migração visual mobile — plano de 28 de agosto de 2026
+
+O próximo ciclo mobile segue o
+[`PLANO-MIGRACAO-MOBILE.md`](../design-app/PLANO-MIGRACAO-MOBILE.md). O protótipo
+está salvo e o plano está documentado, mas o Flutter ainda não foi alterado para
+essa direção. O primeiro ciclo usa as APIs atuais, oferece quatro áreas
+principais e preserva o Web sem mudança visual. Catálogo Livelo público, central
+histórica de alertas e agregação de melhores ofertas ficam fora até existir
+contrato específico.
+
+- [x] Salvar a nova referência visual mobile com claro/escuro
+- [x] Documentar escopo, etapas, gates, riscos e definição de pronto
+- [x] Revisar e autorizar a Etapa 1 — fundação visual e aparência
+- [x] Implementar localmente controlador, tokens, persistência nativa e
+      componentes fundamentais da Etapa 1
+- [ ] Executar formatação, análise, testes, goldens e builds da Etapa 1 em um
+      ambiente com Flutter; este workspace não possui os SDKs Flutter/Dart
+- [ ] Implementar cada etapa somente após seu aceite
+
+### Registro do ciclo anterior
+
+O redesign anterior não liberou todas as telas de uma vez. Em 23 de agosto de
+2026, o plano passou a mapear os módulos até o fechamento multiplataforma,
+incluindo dependências de API, gates visuais e o roteiro automático no Samsung
+conectado. Os itens concluídos abaixo continuam como histórico do que existe no
+projeto; quando houver conflito de navegação mobile, prevalece o plano novo.
 
 - [x] **Etapa 0:** aprovar nome, símbolo, textos, abertura e estrutura do login
 - [x] Sincronizar os protótipos Web/Mobile e produzir as duas variantes SVG

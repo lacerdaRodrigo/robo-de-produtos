@@ -1,10 +1,10 @@
 # Lojas favoritas monitoradas pelo robô.
 # Schema: PRD §5.3. Regra de reconhecimento: PRD RN04 (match exato, sem substring).
 #
-# `nome`     — nome canônico, usado na exibição do e-mail
+# `nome`     — nome canônico, usado no retrato e nos clientes da API
 # `apelidos` — variações exatas que a Livelo exibe e que a normalização de RN03
 #              (acento, caixa, espaços nas bordas) NÃO resolve sozinha
-# `categoria`— agrupamento no e-mail (RN01: uma loja, uma categoria)
+# `categoria`— agrupamento dos alertas (RN01: uma loja, uma categoria)
 #
 # Nomes conferidos contra a página real em 2026-08-09. Loja favorita que não
 # aparecer numa execução é registrada no log (RN19) — sinal de que o nome mudou.
@@ -703,5 +703,4 @@ categoria = "Moda"
 nome = "Zattini"
 apelidos = []
 categoria = "Moda"
-
 

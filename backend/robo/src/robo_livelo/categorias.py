@@ -75,7 +75,7 @@ def agrupar(
             continue
         # RN01: categoria fixa por loja. O nome exibido passa a ser o canonico
         # do catalogo, nao o do site: a Livelo escreve "CEA", "Booking com" e
-        # "O Boticario", e quem le o e-mail espera "C&A", "Booking.com" e
+        # "O Boticario", e quem usa o app espera "C&A", "Booking.com" e
         # "O Boticario" com acento. O nome do site ja cumpriu seu papel no
         # reconhecimento (RN04).
         agrupado.setdefault(loja.categoria, []).append(replace(parceiro, nome=loja.nome))
@@ -91,7 +91,7 @@ def favoritas_ausentes(parceiros: list[Parceiro], favoritas: list[LojaFavorita])
     """RN19: favoritas que nao apareceram na pagina.
 
     Contrapeso de RN04. Um apelido novo criado pela Livelo faria a loja
-    sumir do e-mail em silencio; esta lista vai para o log.
+    sumir dos clientes em silencio; esta lista vai para o log.
     """
     encontradas = {normalizar(p.nome) for p in parceiros}
     ausentes = [

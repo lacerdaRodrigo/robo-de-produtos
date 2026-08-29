@@ -74,7 +74,9 @@ Future<void> abrir(
   addTearDown(at.view.resetPhysicalSize);
   await at.pumpWidget(
     MaterialApp(
-      theme: TemaRadar.claro(),
+      theme: tamanho.width >= 920
+          ? TemaRadar.legadoClaroComCores()
+          : TemaRadar.claro(),
       home: Scaffold(
         body: PaginaInicio(
           api: api,
@@ -82,7 +84,7 @@ Future<void> abrir(
           aoAbrirLivelo: aoAbrirLivelo,
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
-          agora: () => DateTime.utc(2026, 8, 23),
+          agora: () => DateTime(2026, 8, 23),
         ),
       ),
       builder: (context, child) => MediaQuery(

@@ -6,6 +6,7 @@ import '../../features/administracao/botao_disparo.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/produtos/pagina_produtos.dart';
+import '../componentes/fundacao_visual.dart';
 import '../tema/tokens.dart';
 
 enum FonteLojas { livelo, cashbackInter }
@@ -81,10 +82,14 @@ class PaginaHubShoppingInter extends StatefulWidget {
     super.key,
     required this.api,
     required this.administrador,
+    this.experienciaCompacta = false,
+    this.ativa = true,
   });
 
   final Api api;
   final bool administrador;
+  final bool experienciaCompacta;
+  final bool ativa;
 
   @override
   State<PaginaHubShoppingInter> createState() => _EstadoHubShoppingInter();
@@ -126,6 +131,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
   @override
   Widget build(BuildContext context) {
     return NavigatorPopHandler<void>(
+      enabled: widget.ativa,
       onPopWithResult: (_) => _navegador.currentState?.pop(),
       child: Navigator(
         key: _navegador,
@@ -135,6 +141,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
             api: widget.api,
             administrador: widget.administrador,
             aoAbrir: _abrir,
+            experienciaCompacta: widget.experienciaCompacta,
           ),
         ),
       ),
@@ -149,11 +156,13 @@ class _HubShoppingInter extends StatefulWidget {
     required this.api,
     required this.administrador,
     required this.aoAbrir,
+    required this.experienciaCompacta,
   });
 
   final Api api;
   final bool administrador;
   final ValueChanged<_ModalidadeInter> aoAbrir;
+  final bool experienciaCompacta;
 
   @override
   State<_HubShoppingInter> createState() => _EstadoHubShoppingInterConteudo();
@@ -172,6 +181,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return FutureBuilder<ResumoInicio>(
       future: _resumo,
       builder: (context, estado) => SafeArea(
@@ -179,17 +189,26 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
           key: const Key('hub-shopping-inter'),
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
           children: [
-            Text(
-              'Shopping Inter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Escolha entre cashback dos Sites parceiros e produtos do Compre direto.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF60758A)),
-            ),
+            if (widget.experienciaCompacta)
+              const CabecalhoSecaoRadar(
+                sobrelinha: 'Shopping e cashback',
+                titulo: 'Banco Inter',
+                descricao:
+                    'Sites parceiros e Compre direto ficam juntos nesta área, mas continuam com dados e coletas separados.',
+              )
+            else ...[
+              Text(
+                'Shopping Inter',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Escolha entre cashback dos Sites parceiros e produtos do Compre direto.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
+              ),
+            ],
             if (estado.connectionState != ConnectionState.done) ...[
               const SizedBox(height: 20),
               const LinearProgressIndicator(),
@@ -202,7 +221,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             _AcessoModalidadeInter(
               chaveAcao: const Key('abrir-cashback-inter'),
               icone: Icons.percent_outlined,
-              cor: const Color(0xFF087E8B),
+              cor: cores.integracaoInter,
               titulo: 'Cashback — Sites parceiros',
               descricao:
                   'Acompanhe as lojas parceiras e as condições de cashback do Inter.',
@@ -219,7 +238,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             _AcessoModalidadeInter(
               chaveAcao: const Key('abrir-produtos-inter'),
               icone: Icons.inventory_2_outlined,
-              cor: Tokens.marcaClara,
+              cor: cores.acao,
               titulo: 'Produtos — Compre direto',
               descricao:
                   'Pesquise o catálogo já coletado das lojas diretas selecionadas.',
@@ -449,6 +468,7 @@ class _ConteudoHubLojas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return SafeArea(
       child: ListView(
         key: const Key('hub-lojas'),
@@ -460,7 +480,7 @@ class _ConteudoHubLojas extends StatelessWidget {
             'Escolha a fonte primeiro. Cada uma mantém suas próprias regras e ações.',
             style: Theme.of(
               context,
-            ).textTheme.bodyLarge?.copyWith(color: const Color(0xFF60758A)),
+            ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
           ),
           if (carregando) ...[
             const SizedBox(height: 20),
@@ -474,7 +494,7 @@ class _ConteudoHubLojas extends StatelessWidget {
           _AcessoFonte(
             key: const Key('abrir-lojas-livelo'),
             icone: Icons.star_outline,
-            cor: Tokens.marcaClara,
+            cor: cores.acao,
             titulo: 'Livelo',
             descricao:
                 'Acompanhe pontos por real, promoções, Clube e sua regra de alerta.',
@@ -485,7 +505,7 @@ class _ConteudoHubLojas extends StatelessWidget {
           _AcessoFonte(
             key: const Key('abrir-lojas-inter'),
             icone: Icons.shopping_bag_outlined,
-            cor: const Color(0xFF087E8B),
+            cor: cores.integracaoInter,
             titulo: 'Shopping Inter',
             descricao:
                 'Entre em Cashback dos Sites parceiros ou Produtos do Compre direto.',
@@ -507,25 +527,31 @@ class _FalhaResumo extends StatelessWidget {
   final VoidCallback aoTentarNovamente;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: const Color(0xFFFFF4E5),
-    borderRadius: BorderRadius.circular(16),
-    child: Padding(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          const Icon(Icons.cloud_off_outlined, color: Tokens.atencao),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'Não foi possível carregar os resumos. Você ainda pode abrir cada fonte.',
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Material(
+      color: cores.atencao.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off_outlined, color: cores.atencao),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Não foi possível carregar os resumos. Você ainda pode abrir cada fonte.',
+              ),
             ),
-          ),
-          TextButton(onPressed: aoTentarNovamente, child: const Text('Tentar')),
-        ],
+            TextButton(
+              onPressed: aoTentarNovamente,
+              child: const Text('Tentar'),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _AcessoFonte extends StatelessWidget {
@@ -646,20 +672,24 @@ class _ChipResumo extends StatelessWidget {
   final bool ganho;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: ganho ? const Color(0xFFE3F3E8) : const Color(0xFFF0F4F7),
-      borderRadius: BorderRadius.circular(999),
-    ),
-    child: Text(
-      texto,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: ganho ? Tokens.ganho : const Color(0xFF4D6274),
-        fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final cor = ganho ? cores.ganho : cores.textoSuave;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(999),
       ),
-    ),
-  );
+      child: Text(
+        texto,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: cor,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
 }
 
 String _tituloEstado(EstadoResumo estado) => switch (estado) {

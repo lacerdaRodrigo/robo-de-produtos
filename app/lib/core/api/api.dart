@@ -50,6 +50,37 @@ class Api {
     return Pagina.parse(corpo, PontuacaoLivelo.parse);
   }
 
+  Future<PaginaCatalogoLivelo> catalogoLivelo({
+    String q = '',
+    String aba = 'todas',
+    String categoria = '',
+    String ordenar = 'pontos',
+    int pagina = 1,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/livelo/catalogo',
+      consulta: <String, String>{
+        'q': q,
+        'aba': aba,
+        'categoria': categoria,
+        'ordenar': ordenar,
+        'pagina': '$pagina',
+        'por_pagina': '$paginaPadrao',
+      },
+    );
+    return PaginaCatalogoLivelo.parse(corpo);
+  }
+
+  Future<void> alterarAcompanhamentoLivelo({
+    required String idExterno,
+    required bool acompanhada,
+  }) async {
+    await cliente.alterar(
+      '/api/livelo/catalogo/$idExterno/acompanhamento',
+      corpo: <String, Object?>{'acompanhada': acompanhada},
+    );
+  }
+
   /// Cashback dos Sites parceiros do Inter (PRD-V3), sempre lido da API.
   Future<Pagina<CashbackInter>> painelCashbackInter({
     String q = '',

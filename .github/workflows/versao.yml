@@ -32,6 +32,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/robo/pyproject.toml
 
       - name: Instalar semantic-release
         # Pina semantic-release e GitPython: a versão 10.5+ quebra com
@@ -47,4 +48,4 @@ jobs:
       - name: Calcular e publicar versao
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: semantic-release version
+        run: semantic-release -c backend/robo/pyproject.toml version

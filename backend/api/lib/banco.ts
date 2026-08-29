@@ -63,6 +63,124 @@ export type ResumoLiveloPersistido = {
   alertas_ultima_coleta: number;
 };
 
+export type ParceiroLiveloPersistido = {
+  id_externo: string;
+  nome: string;
+  categorias: string[];
+  pontos_atuais: string;
+  pontos_anteriores: Numerico;
+  pontos_base: Numerico;
+  pontos_clube: Numerico;
+  moeda: string;
+  prefixo_ate: boolean;
+  em_promocao: boolean;
+  campanha: string | null;
+  descricao_campanha: string | null;
+  inicio_promocao: string | null;
+  fim_promocao: string | null;
+  link: string | null;
+  acompanhada: boolean;
+  alerta: boolean;
+  atualizado_em: string;
+  parceiros_lidos: number;
+};
+
+/** Catálogo completo da última publicação válida, já ligado às acompanhadas. */
+export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersistido[]> {
+  const sql = conectar();
+  return (await sql`
+    SELECT parceiro.id_externo, parceiro.nome, parceiro.categorias,
+           parceiro.pontos_atuais, parceiro.pontos_anteriores,
+           parceiro.pontos_base, parceiro.pontos_clube, parceiro.moeda,
+           parceiro.prefixo_ate, parceiro.em_promocao, parceiro.campanha,
+           parceiro.descricao_campanha, parceiro.inicio_promocao,
+           parceiro.fim_promocao, parceiro.link,
+           (loja.id IS NOT NULL) AS acompanhada,
+           COALESCE(pontuacao.alertou, FALSE) AS alerta,
+           execucao.momento AS atualizado_em,
+           execucao.parceiros_lidos
+      FROM parceiro_livelo parceiro
+      JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
+      LEFT JOIN loja ON loja.parceiro_livelo_id = parceiro.id
+      LEFT JOIN pontuacao
+        ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
+       AND pontuacao.loja_id = loja.id
+     WHERE parceiro.ativo = TRUE
+     ORDER BY parceiro.nome, parceiro.id_externo
+  `) as ParceiroLiveloPersistido[];
+}
+
+export async function parceiroLiveloPorIdExterno(
+  idExterno: string,
+): Promise<Pick<ParceiroLiveloPersistido, "id_externo" | "nome" | "categorias"> | null> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT id_externo, nome, categorias
+      FROM parceiro_livelo
+     WHERE id_externo = ${idExterno} AND ativo = TRUE
+     LIMIT 1
+  `) as Array<Pick<ParceiroLiveloPersistido, "id_externo" | "nome" | "categorias">>;
+  return linhas[0] ?? null;
+}
+
+/** Acompanhamento idempotente. Nome e categoria vêm do catálogo do servidor. */
+export async function alterarAcompanhamentoParceiroLivelo(entrada: {
+  idExterno: string;
+  nome: string;
+  categoria: string;
+  acompanhada: boolean;
+}): Promise<boolean> {
+  const sql = conectar();
+  if (!entrada.acompanhada) {
+    const linhas = (await sql`
+      WITH parceiro AS (
+        SELECT id FROM parceiro_livelo WHERE id_externo = ${entrada.idExterno}
+      ), removida AS (
+        DELETE FROM loja
+         WHERE parceiro_livelo_id = (SELECT id FROM parceiro)
+         RETURNING id
+      )
+      -- Assim como na inclusão, reler loja nesta instrução enxerga o
+      -- retrato anterior ao DELETE. Se a remoção não levantou erro, o estado
+      -- desejado já foi aplicado; sem vínculo prévio ela também é idempotente.
+      SELECT TRUE AS confirmado FROM parceiro
+    `) as Array<{ confirmado: boolean }>;
+    return linhas[0]?.confirmado === true;
+  }
+
+  const linhas = (await sql`
+    WITH parceiro AS (
+      SELECT id FROM parceiro_livelo
+       WHERE id_externo = ${entrada.idExterno} AND ativo = TRUE
+    ), atualizada AS (
+      UPDATE loja
+         SET parceiro_livelo_id = parceiro.id,
+             nome = ${entrada.nome},
+             categoria = ${entrada.categoria}
+        FROM parceiro
+       WHERE loja.parceiro_livelo_id = parceiro.id
+          OR (loja.parceiro_livelo_id IS NULL AND loja.nome = ${entrada.nome})
+       RETURNING loja.id
+    ), inserida AS (
+      INSERT INTO loja (nome, categoria, parceiro_livelo_id)
+      SELECT ${entrada.nome}, ${entrada.categoria}, parceiro.id
+        FROM parceiro
+       WHERE NOT EXISTS (SELECT 1 FROM atualizada)
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    )
+    -- CTEs que alteram dados não ficam visíveis ao SELECT final pela tabela
+    -- base nesta mesma instrução. Confirmamos pelo RETURNING das próprias
+    -- CTEs; reler loja aqui fazia um acompanhamento novo parecer falho.
+    SELECT EXISTS (
+      SELECT 1 FROM atualizada
+      UNION ALL
+      SELECT 1 FROM inserida
+    ) AS estado
+  `) as Array<{ estado: boolean }>;
+  return linhas[0]?.estado === true;
+}
+
 /** Recorte agregado da Livelo para o Início do aplicativo.
  *
  * `execucao` só recebe retratos concluídos e atômicos. A contagem de lojas
@@ -115,7 +233,6 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
       FROM loja l
       LEFT JOIN pontuacao p
         ON p.loja_id = l.id AND p.execucao_id = ${execucaoId}
-     WHERE l.favorita = TRUE
      ORDER BY l.categoria NULLS LAST, p.alertou DESC, p.pontos_atuais DESC NULLS LAST, p.nome
   `) as PontuacaoDeLoja[];
 }

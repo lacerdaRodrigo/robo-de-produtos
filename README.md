@@ -9,7 +9,10 @@ Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Ne
 guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) mostra
 cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. A V4 de
+> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. O
+> catálogo Livelo completo está no Neon e na API autenticada: a primeira coleta
+> publicou 252 parceiros em 2026-08-28. O smoke físico Android fica pendente
+> pelo responsável. A V4 de
 > produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17:
 > 3.310 produtos ativos e busca local confirmada no Neon. O Flutter (app/) está em
 > redesign por telas; a interface Web legada (Next.js) foi desativada em 2026-08-24
@@ -24,7 +27,7 @@ robo/
 │   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
 │   └── api/        # API autenticada (arquivada, não roda)
 ├── docs/           # PRDs e documentação
-├── migracoes/      # schema do Postgres (Neon) — 001 a 012
+├── migracoes/      # schema do Postgres (Neon) — 001 a 013
 ├── design-app/     # protótipos visuais Web/Mobile
 ├── .github/        # workflows do GitHub Actions
 └── CLAUDE.md       # contexto para agentes de IA
@@ -33,7 +36,7 @@ robo/
 ## Como funciona
 
 ```text
-Livelo         → extrator próprio → favoritas → alerta e retrato → e-mail
+Livelo         → extrator próprio → catálogo atual + acompanhadas → alerta/retrato
 Shopping Inter → extrator próprio → catálogo → favoritas e retrato
 Produtos Inter → lojas escolhidas → catálogo paginado → busca + histórico
 ```
@@ -68,12 +71,15 @@ Cada pasta tem seu próprio `README.md` com contexto local:
 ## Como rodar o Flutter
 
 ```bash
-cd app
-flutter pub get
-flutter run -d chrome          # web
-flutter run -d <id-android>    # android
-flutter build web
+make dev                       # Android conectado, usando a branch atual
+make dev DEVICE=emulator-5554  # escolhe outro Android
+make apk                       # gera o APK de release para instalar manualmente
 ```
+
+O alvo detecta o primeiro Android disponível e executa o checkout atual. Para
+trocar a API ou o App Check, passe `API_URL=...` e `APP_CHECK=true` no comando.
+Após `make apk`, o arquivo fica em
+`app/build/app/outputs/flutter-apk/app-release.apk`.
 
 O app consome a API (`/api/*` por domínio, ex.: `/api/livelo`, `/api/inter`), que
 hoje está arquivada — para desenvolvimento local aponte
@@ -93,8 +99,9 @@ python -m robo_livelo.principal_inter
 python -m robo_livelo.principal_produtos_inter
 ```
 
-As lojas monitoradas ficam em `backend/robo/config/lojas_favoritas.toml`, fora do
-código. O coletor do Inter exige `DATABASE_URL`; o e-mail da Livelo exige uma
+Com `DATABASE_URL`, as lojas acompanhadas ficam no Postgres; o TOML é reserva
+somente para indisponibilidade e não repõe um banco que respondeu vazio. O
+coletor do Inter exige `DATABASE_URL`; o e-mail da Livelo exige uma
 **Senha de Aplicativo** do Gmail. Veja [`backend/robo/README.md`](backend/robo/README.md).
 
 ## GitHub Actions

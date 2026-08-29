@@ -12,6 +12,7 @@ class CartaoLivelo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
     final clube = rotuloClube(loja.campanha);
     final pontosAtuais = loja.pontosAtuais;
     final tituloAtual = pontosAtuais == null
@@ -50,7 +51,7 @@ class CartaoLivelo extends StatelessWidget {
               Text(
                 tituloAtual,
                 style: tema.textTheme.titleLarge?.copyWith(
-                  color: pontosAtuais == null ? Tokens.atencao : Tokens.marca,
+                  color: pontosAtuais == null ? cores.atencao : cores.acao,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -85,16 +86,14 @@ class CartaoLivelo extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 6,
                     children: [
-                      if (loja.prefixoAte)
-                        const _Selo(texto: 'Até', cor: Tokens.marcaClara),
+                      if (loja.prefixoAte) _Selo(texto: 'Até', cor: cores.acao),
                       if (loja.emPromocao)
-                        const _Selo(texto: 'Promoção', cor: Tokens.ganho),
-                      if (clube != null)
-                        _Selo(texto: clube, cor: Tokens.marcaClara),
+                        _Selo(texto: 'Promoção', cor: cores.ganho),
+                      if (clube != null) _Selo(texto: clube, cor: cores.acao),
                       if (loja.fimPromocao != null)
                         _Selo(
                           texto: validadeLivelo(loja.fimPromocao),
-                          cor: Tokens.atencao,
+                          cor: cores.atencao,
                         ),
                     ],
                   ),
@@ -142,7 +141,7 @@ class _SeloAlerta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Selo(texto: 'Alerta ativo', cor: Tokens.perigo);
+    return _Selo(texto: 'Alerta ativo', cor: CoresRadar.de(context).perigo);
   }
 }
 

@@ -63,7 +63,7 @@ def teste_ct120_aumento_sem_etiqueta_dispara():
 def teste_ct121_etiqueta_sem_aumento_nao_dispara():
     """RN27: `O Boticário` 3 -> 3 com etiqueta de promocao.
 
-    Era o falso positivo da V1 — o e-mail que chegava sem motivo.
+    Era o falso positivo da V1 — alerta sem aumento real.
     """
     parceiro = faz_parceiro("O Boticário", "3", base="3", em_promocao=True)
     assert merece_alerta(parceiro, loja("O Boticário"), PADRAO) is False

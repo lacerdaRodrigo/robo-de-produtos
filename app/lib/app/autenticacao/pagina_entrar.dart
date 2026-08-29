@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/autenticacao/autenticador.dart';
 import '../identidade/logo_radar.dart';
+import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
 class PaginaEntrar extends StatefulWidget {
@@ -89,7 +90,7 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final pagina = Scaffold(
       backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, limites) {
@@ -119,6 +120,8 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
         },
       ),
     );
+    if (Theme.of(context).brightness == Brightness.light) return pagina;
+    return Theme(data: TemaRadar.legadoClaro(), child: pagina);
   }
 }
 

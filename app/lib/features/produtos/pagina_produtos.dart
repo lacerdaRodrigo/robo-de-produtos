@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
+import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
@@ -21,6 +22,7 @@ class PaginaProdutos extends StatefulWidget {
     this.administrador = false,
     this.incorporada = false,
     this.mostrarTituloInterno = true,
+    this.experienciaCompacta = false,
   });
 
   final Api api;
@@ -28,6 +30,7 @@ class PaginaProdutos extends StatefulWidget {
   final bool administrador;
   final bool incorporada;
   final bool mostrarTituloInterno;
+  final bool experienciaCompacta;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -80,6 +83,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _conteudo(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final atrasado = coletaProdutosAtrasada(
       _controlador.atualizadoEm,
       DateTime.now(),
@@ -87,112 +91,156 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.incorporada && widget.mostrarTituloInterno)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-            child: Text(
-              'Produtos',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-          ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            widget.incorporada && widget.mostrarTituloInterno ? 12 : 16,
-            24,
-            0,
-          ),
-          child: BotaoDisparo(
-            api: widget.api,
-            dominio: 'produtos_inter',
-            administrador: widget.administrador,
-            rotulo: 'Atualizar Produtos',
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          child: TextField(
-            controller: _campoBusca,
-            onChanged: _controlador.mudarTermo,
-            textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
-              labelText: 'Buscar produtos',
-              hintText: 'Ex.: celular Motorola Edge 60 Pro',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _abrirFiltros,
-                icon: const Icon(Icons.tune),
-                label: Text(
-                  _controlador.filtros.estaVazio ? 'Filtros' : 'Filtros ativos',
-                ),
-              ),
-              if (!_controlador.filtros.estaVazio)
-                TextButton(
-                  onPressed: () {
-                    _controlador.mudarFiltros(const FiltrosProdutos());
-                  },
-                  child: const Text('Limpar filtros'),
-                ),
-            ],
-          ),
-        ),
-        if (_controlador.atualizadoEm != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-            child: Text(
-              'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
-              '${atrasado ? ' · dados atrasados' : ''}',
-              style: TextStyle(color: atrasado ? Tokens.atencao : null),
-            ),
-          ),
-        if (_controlador.qualidade == 'degradada')
-          const Padding(
-            padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
-            child: Text(
-              'A última coleta foi degradada; produtos ausentes não foram removidos.',
-            ),
-          ),
-        if (_controlador.termoValido &&
-            !_controlador.carregando &&
-            _controlador.erro == null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+        Flexible(
+          flex: 2,
+          fit: FlexFit.loose,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Chip(
-                  label: Text(
-                    '${_controlador.totalItens} produtos · página '
-                    '${_controlador.pagina} · ${_controlador.porPagina} por página',
+                if (widget.incorporada && widget.mostrarTituloInterno)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      widget.experienciaCompacta ? 20 : 24,
+                      24,
+                      widget.experienciaCompacta ? 20 : 24,
+                      0,
+                    ),
+                    child: widget.experienciaCompacta
+                        ? const CabecalhoSecaoRadar(
+                            sobrelinha: 'Catálogo local',
+                            titulo: 'Buscar produtos',
+                            descricao:
+                                'A busca usa somente o catálogo salvo das lojas selecionadas. Digitar não consulta o Inter ao vivo.',
+                          )
+                        : Text(
+                            'Produtos',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                  ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    widget.experienciaCompacta ? 20 : 24,
+                    widget.incorporada && widget.mostrarTituloInterno ? 12 : 16,
+                    widget.experienciaCompacta ? 20 : 24,
+                    0,
+                  ),
+                  child: BotaoDisparo(
+                    api: widget.api,
+                    dominio: 'produtos_inter',
+                    administrador: widget.administrador,
+                    rotulo: 'Atualizar Produtos',
                   ),
                 ),
-                Chip(
-                  label: Text(
-                    _controlador.qualidade == 'degradada'
-                        ? 'Catálogo degradado'
-                        : 'Catálogo completo',
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    widget.experienciaCompacta ? 20 : 24,
+                    20,
+                    widget.experienciaCompacta ? 20 : 24,
+                    8,
+                  ),
+                  child: widget.experienciaCompacta
+                      ? CampoBuscaRadar(
+                          controlador: _campoBusca,
+                          dica: 'Buscar produtos',
+                          aoMudar: _controlador.mudarTermo,
+                        )
+                      : TextField(
+                          controller: _campoBusca,
+                          onChanged: _controlador.mudarTermo,
+                          textInputAction: TextInputAction.search,
+                          decoration: const InputDecoration(
+                            labelText: 'Buscar produtos',
+                            hintText: 'Ex.: celular Motorola Edge 60 Pro',
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.experienciaCompacta ? 20 : 24,
+                  ),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _abrirFiltros,
+                        icon: const Icon(Icons.tune),
+                        label: Text(
+                          _controlador.filtros.estaVazio
+                              ? 'Filtros'
+                              : 'Filtros ativos',
+                        ),
+                      ),
+                      if (!_controlador.filtros.estaVazio)
+                        TextButton(
+                          onPressed: () {
+                            _controlador.mudarFiltros(const FiltrosProdutos());
+                          },
+                          child: const Text('Limpar filtros'),
+                        ),
+                    ],
                   ),
                 ),
+                if (_controlador.atualizadoEm != null)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      widget.experienciaCompacta ? 20 : 24,
+                      12,
+                      widget.experienciaCompacta ? 20 : 24,
+                      0,
+                    ),
+                    child: Text(
+                      'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
+                      '${atrasado ? ' · dados atrasados' : ''}',
+                      style: TextStyle(color: atrasado ? cores.atencao : null),
+                    ),
+                  ),
+                if (_controlador.qualidade == 'degradada')
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
+                    child: Text(
+                      'A última coleta foi degradada; produtos ausentes não foram removidos.',
+                    ),
+                  ),
+                if (_controlador.termoValido &&
+                    !_controlador.carregando &&
+                    _controlador.erro == null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          label: Text(
+                            '${_controlador.totalItens} produtos · página '
+                            '${_controlador.pagina} · ${_controlador.porPagina} por página',
+                          ),
+                        ),
+                        Chip(
+                          label: Text(
+                            _controlador.qualidade == 'degradada'
+                                ? 'Catálogo degradado'
+                                : 'Catálogo completo',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
-        Expanded(child: _corpo()),
+        ),
+        Expanded(flex: 3, child: _corpo()),
       ],
     );
   }
 
   Widget _corpo() {
+    final cores = CoresRadar.de(context);
     if (!_controlador.termoValido) {
       return const EstadoVazio(
         mensagem: 'Digite pelo menos 2 caracteres para pesquisar no catálogo.',
@@ -232,7 +280,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                         entrada.value.first.atualizadaEm,
                         DateTime.now(),
                       )
-                      ? Tokens.atencao
+                      ? cores.atencao
                       : null,
                 ),
               ),

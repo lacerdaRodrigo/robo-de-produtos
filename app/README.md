@@ -12,78 +12,14 @@ o mesmo código, consumindo somente a API arquivada em `../backend/api/`.
 > ainda precisam de aceite visual. O plano técnico está em [`PLANO.md`](PLANO.md) e a
 > ordem visual por telas em [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md).
 
+O catálogo Livelo completo está implementado somente no Android compacto. Ele
+usa a API paginada, preserva filtros e posição nas mutações e mantém Web, iOS e
+layout amplo na experiência anterior. Migração, deploy e smoke físico não fazem
+parte da entrega local.
+
 ## Plataformas e identificadores
 
 - projeto Firebase: `radarbeneficios`;
 - Android `applicationId`: `br.com.radarbeneficios.app`;
 - iOS bundle ID: `br.com.radarbeneficios.app`;
-- Web, Android e iOS usam as opções públicas geradas em `lib/firebase_options.dart`;
-- não existe chave administrativa, senha de usuário nem acesso ao Neon no bundle.
-
-## Preparação do Firebase
-
-No Console Firebase, habilite **Authentication → E-mail/senha**. O piloto não
-possui cadastro público: o usuário é criado pelo responsável no console e seu
-e-mail também precisa estar convidado e ativo na tabela `usuario_app` da API.
-
-Para atualizar a configuração depois de alterar os apps registrados:
-
-```bash
-flutterfire configure \
-  --project=radarbeneficios \
-  --platforms=android,ios,web \
-  --android-package-name=br.com.radarbeneficios.app \
-  --ios-bundle-id=br.com.radarbeneficios.app
-```
-
-`firebase_options.dart` e `google-services.json` contêm configuração pública do
-cliente Firebase, não credenciais do Firebase Admin.
-
-## Como rodar
-
-```bash
-flutter pub get
-flutter run -d chrome
-flutter run -d <id-android>
-flutter build web
-```
-
-`API_URL` pode ser definido com `--dart-define=API_URL=https://...`. Chamadas
-privadas enviam o ID token no Bearer automaticamente. O endpoint
-`/api/status` permanece público; `/api/resumo` é autenticado e lê somente
-o Postgres do servidor, sem chamar Livelo ou Inter ao atualizar o Início.
-
-O piloto publicado usa a URL pública da API. Configuração local pode apontar
-para uma API em desenvolvimento via `--dart-define`.
-
-App Check deve ser ativado em rollout: primeiro registre e observe os provedores
-no Console Firebase; depois compile com `--dart-define=ATIVAR_APP_CHECK=true`.
-No Web, informe também `FIREBASE_RECAPTCHA_SITE_KEY`. Só após validar tokens nas
-três plataformas defina `EXIGIR_APP_CHECK=true` na API.
-
-Builds debug usam os provedores de depuração oficiais do App Check. O token que
-aparece no console deve ser cadastrado no Firebase para teste, nunca commitado.
-Builds release usam Play Integrity no Android, App Attest com fallback no iOS e
-reCAPTCHA v3 no Web.
-
-## Qualidade (gates)
-
-```bash
-flutter analyze
-dart format --output=none --set-exit-if-changed lib test
-flutter test
-flutter build web
-```
-
-O CI roda esses gates em `.github/workflows/app-robo.yml` a cada push/PR.
-
-## Referência de design
-
-- Paleta e direção visual aprovadas: `PLANO.md §10.2`
-- Ordem e aceite das novas telas: `PLANO-REDESIGN-POR-TELAS.md`
-- Fontes vetoriais da marca: `../design-app/assets/logo-radar.svg`
-- Segurança e dinheiro (sem `double`, sem segredo no cliente): `PLANO.md §6`
-- Contrato da API (paginação e erros): `../backend/api/lib/api.ts`
-
-Leia o contexto completo do projeto em [`../README.md`](../README.md) e em
-[`../CLAUDE.md`](../CLAUDE.md).
+-

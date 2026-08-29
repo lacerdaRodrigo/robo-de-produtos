@@ -20,6 +20,8 @@ class Parceiro:
     pontos_atuais: Decimal
     moeda: str
     link: str
+    id_externo: str = ""
+    categorias: tuple[str, ...] = field(default_factory=tuple)
     em_promocao: bool = False
     pontos_anteriores: Decimal | None = None
     pontos_clube: Decimal | None = None
@@ -53,8 +55,8 @@ class Preferencias:
     """Padroes globais de alerta (RN28) e o tier do leitor (RN23).
 
     Os valores default sao os do PRD-V2 §6.1, calibrados contra a medicao de
-    2026-08-09: com 2,0 e piso 4, aquele dia produziria um e-mail com 12
-    lojas de 126 favoritas. Existem aqui para o projeto rodar sem banco.
+    2026-08-09: com 2,0 e piso 4, aquele dia produziria 12 alertas entre
+    126 favoritas. Existem aqui para o projeto rodar sem banco.
     """
 
     multiplicador_padrao: Decimal = Decimal("2.0")
@@ -89,17 +91,9 @@ class RetratoDaExecucao:
     momento: datetime
     parceiros_lidos: int
     versao: str
+    catalogo: tuple[Parceiro, ...] = field(default_factory=tuple)
     pontuacoes: tuple[PontuacaoDeLoja, ...] = field(default_factory=tuple)
 
     @property
     def alertas(self) -> int:
         return sum(1 for p in self.pontuacoes if p.alertou)
-
-
-@dataclass(frozen=True, slots=True)
-class Mensagem:
-    """O e-mail pronto para envio (RF07, RF08)."""
-
-    assunto: str
-    corpo_html: str
-    corpo_texto: str

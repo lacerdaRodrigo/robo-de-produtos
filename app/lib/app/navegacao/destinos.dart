@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Destinos fixos da navegação principal do redesign.
-///
-/// Integrações continuam separadas internamente: [lojas] apenas organiza o
-/// acesso a Livelo e Shopping Inter, e [produtos] abre a busca local da API.
+/// Destinos preservados na navegação ampla durante a migração do mobile.
 enum Destino {
   inicio(Icons.home_outlined, 'Início'),
   lojas(Icons.storefront_outlined, 'Lojas'),
@@ -15,4 +12,25 @@ enum Destino {
 
   final IconData icone;
   final String titulo;
+}
+
+/// Quatro áreas principais aprovadas para a experiência compacta.
+///
+/// Alertas, conta e administração são utilidades e, por isso, não entram nesta
+/// enumeração nem ocupam um quinto tópico do menu mobile.
+enum DestinoCompacto {
+  inicio(Icons.home_outlined, 'Início', 'Visão geral do seu radar'),
+  livelo(Icons.card_giftcard_outlined, 'Livelo', 'Lojas, pontos e alertas'),
+  inter(
+    Icons.account_balance_outlined,
+    'Banco Inter',
+    'Cashback e produtos separados',
+  ),
+  produtos(Icons.search, 'Buscar produtos', 'Catálogo das lojas selecionadas');
+
+  const DestinoCompacto(this.icone, this.titulo, this.descricao);
+
+  final IconData icone;
+  final String titulo;
+  final String descricao;
 }

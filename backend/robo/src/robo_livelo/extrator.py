@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
@@ -27,6 +28,11 @@ TITULO_SECAO_PARCEIROS = "C&P - Site/App - Listagem de Parceiros"
 # separatorSlug "ATE" para o prefixo "Ate X pontos" (RN12). Confirmado contra
 # a pagina real em 2026-08-11: 36 dos 270 itens usavam "ATE", 223 "IGUAL".
 _ATE_SEPARATOR_SLUG = "ATE"
+_ID_EXTERNO_VALIDO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$")
+
+
+class CatalogoLiveloInvalido(ValueError):
+    """O payload possui identidades conflitantes e não pode ser publicado."""
 
 
 def _texto_do_payload(html: str) -> str | None:
@@ -89,12 +95,38 @@ def _texto_legal(bruto) -> str | None:
     return texto or None
 
 
+def _categorias_do_item(bruto) -> tuple[str, ...]:
+    """Preserva os códigos de categoria fornecidos pela Livelo.
+
+    O payload real usa uma string separada por espaços. ``todos`` é apenas o
+    filtro geral da página, não uma categoria de negócio. Uma lista também é
+    aceita para tolerar uma evolução compatível do payload.
+    """
+    if isinstance(bruto, str):
+        candidatas = bruto.split()
+    elif isinstance(bruto, list):
+        candidatas = [str(valor) for valor in bruto]
+    else:
+        candidatas = []
+
+    resultado: list[str] = []
+    vistos: set[str] = set()
+    for candidata in candidatas:
+        categoria = candidata.strip().casefold()
+        if not categoria or categoria == "todos" or categoria in vistos:
+            continue
+        vistos.add(categoria)
+        resultado.append(categoria)
+    return tuple(resultado)
+
+
 def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
     if not isinstance(item, dict):
         _log.warning("Item do payload nao e um objeto, descartado: %r", item)
         return None
 
     nome = item.get("name")
+    id_externo = str(item.get("id") or "").strip()
     parity_bruta = item.get("parity")
     parity = parity_bruta or {}
     if not isinstance(parity, dict):
@@ -118,6 +150,11 @@ def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
                 "Item do payload sem nome ou pontuacao legivel, descartado: %r", item.get("id")
             )
         return None
+
+    if not _ID_EXTERNO_VALIDO.fullmatch(id_externo):
+        raise CatalogoLiveloInvalido(
+            f"ID externo ausente ou inválido no catálogo Livelo: {id_externo!r}."
+        )
 
     pontos_base = None
     if parity.get("parityBau") is not None:
@@ -147,6 +184,8 @@ def _para_parceiro(item: dict, *, agora: datetime) -> Parceiro | None:
         pontos_atuais=pontos_atuais,
         moeda=parity.get("currency") or "",
         link=(item.get("link") or item.get("partnerDetailsPage") or "").strip(),
+        id_externo=id_externo,
+        categorias=_categorias_do_item(item.get("categories")),
         em_promocao=em_promocao,
         pontos_clube=pontos_clube,
         prefixo_ate=(parity.get("separatorSlug") or "").strip().upper() == _ATE_SEPARATOR_SLUG,
@@ -180,16 +219,21 @@ def extrair_parceiros(html: str, *, agora: datetime) -> list[Parceiro]:
         return []
 
     parceiros: list[Parceiro] = []
-    vistos: set[str] = set()
+    por_id: dict[str, Parceiro] = {}
     descartados = 0
     for item in _config_partners(dados):
         parceiro = _para_parceiro(item, agora=agora)
         if parceiro is None:
             descartados += 1
             continue
-        if parceiro.nome in vistos:  # RN06
+        anterior = por_id.get(parceiro.id_externo)
+        if anterior is not None:
+            if anterior != parceiro:
+                raise CatalogoLiveloInvalido(
+                    f"ID externo conflitante no catálogo Livelo: {parceiro.id_externo!r}."
+                )
             continue
-        vistos.add(parceiro.nome)
+        por_id[parceiro.id_externo] = parceiro
         parceiros.append(parceiro)
 
     if descartados:

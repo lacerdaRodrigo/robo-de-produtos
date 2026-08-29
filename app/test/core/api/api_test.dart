@@ -266,6 +266,59 @@ void main() {
     expect(resposta.itens.single.alertou, isTrue);
   });
 
+  test('catálogo Livelo envia filtros e acompanhamento mínimo', () async {
+    final requisicoes = <http.Request>[];
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          requisicoes.add(requisicao);
+          if (requisicao.method == 'PATCH') {
+            return http.Response(
+              '{"id_externo":"NAT","acompanhada":true,'
+              '"aplicada_na_proxima_coleta":true}',
+              200,
+            );
+          }
+          return http.Response(
+            '{"itens":[],"resumo":{"ultima_coleta":null,'
+            '"parceiros_lidos":0,"total_catalogo":0,"acompanhadas":0,'
+            '"alertas":0,"melhor_oferta":null},"categorias":[],'
+            '"pagina":2,"por_pagina":20,"total_itens":0,'
+            '"total_paginas":1,"tem_proxima":false}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    await api.catalogoLivelo(
+      q: 'natura',
+      aba: 'acompanhadas',
+      categoria: 'Beleza',
+      ordenar: 'nome',
+      pagina: 2,
+    );
+    await api.alterarAcompanhamentoLivelo(idExterno: 'NAT', acompanhada: true);
+
+    expect(requisicoes.first.url.path, '/api/livelo/catalogo');
+    expect(requisicoes.first.url.queryParameters, {
+      'q': 'natura',
+      'aba': 'acompanhadas',
+      'categoria': 'Beleza',
+      'ordenar': 'nome',
+      'pagina': '2',
+      'por_pagina': '20',
+    });
+    expect(
+      requisicoes.last.url.path,
+      '/api/livelo/catalogo/NAT/acompanhamento',
+    );
+    expect(requisicoes.last.body, '{"acompanhada":true}');
+  });
+
   test('painelCashbackInter preserva a oferta textual e a paginação', () async {
     Uri? consulta;
     final api = Api(

@@ -21,7 +21,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          # Mantem analise, goldens e builds reproduziveis entre execucoes.
+          flutter-version: "3.44.1"
           cache: true
 
       - name: Dependencias

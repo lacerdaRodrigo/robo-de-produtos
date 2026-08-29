@@ -378,10 +378,20 @@ def teste_ct133_preferencias_caem_para_o_padrao_quando_o_banco_falha(caplog):
 
 
 class CursorGravador:
-    def __init__(self, erro=None):
+    def __init__(
+        self,
+        erro=None,
+        *,
+        catalogo_publicado=0,
+        vinculos_publicados=0,
+        pontuacoes_publicadas=0,
+    ):
         self.executados = []
         self.lotes = []
         self._erro = erro
+        self.catalogo_publicado = catalogo_publicado
+        self.vinculos_publicados = vinculos_publicados
+        self.pontuacoes_publicadas = pontuacoes_publicadas
 
     def execute(self, consulta, parametros=None):
         if self._erro:
@@ -392,7 +402,16 @@ class CursorGravador:
         self.lotes.append((consulta, list(lote)))
 
     def fetchone(self):
-        return (42,)
+        consulta = self.executados[-1][0]
+        if "INSERT INTO execucao" in consulta:
+            return (42,)
+        if "FROM parceiro_livelo" in consulta:
+            return (self.catalogo_publicado,)
+        if "FROM loja WHERE parceiro_livelo_id" in consulta:
+            return (self.vinculos_publicados,)
+        if "FROM pontuacao WHERE execucao_id" in consulta:
+            return (self.pontuacoes_publicadas,)
+        raise AssertionError(f"Consulta sem resposta fake: {consulta}")
 
     def __enter__(self):
         return self
@@ -438,6 +457,7 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
         momento=momento,
         parceiros_lidos=254,
         versao="1.4.0",
+        catalogo=(parceiro,),
         pontuacoes=(
             PontuacaoDeLoja(
                 loja=loja_encontrada,
@@ -449,13 +469,24 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
         ),
     )
 
-    cursor = CursorGravador()
+    cursor = CursorGravador(
+        catalogo_publicado=1,
+        vinculos_publicados=1,
+        pontuacoes_publicadas=2,
+    )
     repositorio_fake(monkeypatch, cursor).registrar(snapshot)
 
     _, parametros = cursor.executados[0]
     assert parametros == (momento, 254, 1, "1.4.0")
 
-    _, linhas = cursor.lotes[0]
+    _, catalogo = cursor.lotes[0]
+    assert catalogo[0]["id_externo"] == parceiro.id_externo
+    assert catalogo[0]["pontos_atuais"] == Decimal("8")
+
+    _, vinculos = cursor.lotes[1]
+    assert vinculos == [{"nome_loja": "Natura", "id_externo": parceiro.id_externo}]
+
+    _, linhas = cursor.lotes[2]
     assert len(linhas) == 2
     assert linhas[0]["nome"] == "Natura"  # RN01: nome canonico do catalogo
     assert linhas[0]["pontos_atuais"] == Decimal("8")
@@ -470,20 +501,59 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):
-    """RN08 vale para o site tambem: link arbitrario nao entra na pagina."""
+    """RN08 vale para a API tambem: link arbitrario nao entra no banco."""
     hostil = faz_parceiro("Natura", "8", base="2", link="https://site-malicioso.example/x")
     snapshot = RetratoDaExecucao(
         momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
         parceiros_lidos=1,
         versao="1.4.0",
+        catalogo=(hostil,),
         pontuacoes=(
             PontuacaoDeLoja(loja=LojaFavorita(nome="Natura", categoria="Beleza"), parceiro=hostil),
         ),
     )
 
-    cursor = CursorGravador()
+    cursor = CursorGravador(
+        catalogo_publicado=1,
+        vinculos_publicados=1,
+        pontuacoes_publicadas=1,
+    )
     repositorio_fake(monkeypatch, cursor).registrar(snapshot)
     assert cursor.lotes[0][1][0]["link"] is None
+    assert cursor.lotes[2][1][0]["link"] is None
+
+
+def teste_publicacao_parcial_do_catalogo_faz_rollback(monkeypatch):
+    parceiro = faz_parceiro("Natura", "8", base="2", id_externo="NAT")
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=1,
+        versao="1.4.0",
+        catalogo=(parceiro,),
+    )
+    cursor = CursorGravador(catalogo_publicado=0)
+    estado = {"rollback": False}
+
+    class ConexaoFake:
+        def cursor(self):
+            return cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, *_):
+            estado["rollback"] = tipo is FalhaAoGuardar
+            return False
+
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg",
+        types.SimpleNamespace(connect=lambda url: ConexaoFake(), Error=RuntimeError),
+    )
+
+    with pytest.raises(FalhaAoGuardar, match="Publicacao parcial"):
+        RepositorioPostgres("postgresql://fake").registrar(snapshot)
+    assert estado["rollback"] is True
 
 
 def teste_ct146_falha_ao_gravar_nao_vaza_a_senha(monkeypatch):
@@ -523,7 +593,7 @@ def teste_ct146_falha_ao_gravar_nao_vaza_a_senha(monkeypatch):
 
 
 def teste_repositorio_nulo_nao_quebra_sem_banco(caplog):
-    """Quem clonou o projeto sem Neon continua recebendo e-mail."""
+    """Quem clonou o projeto sem Neon consegue executar um diagnostico local."""
     snapshot = RetratoDaExecucao(
         momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
         parceiros_lidos=1,

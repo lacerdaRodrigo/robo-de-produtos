@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robo-livelo"
-version = "1.40.0"
+version = "1.44.0"
 description = "Radar de beneficios da Livelo e do Shopping Inter"
 requires-python = ">=3.11"
 dependencies = [
@@ -41,7 +41,6 @@ include = [
     "*/robo_livelo/modelos.py",
     "*/robo_livelo/extrator.py",
     "*/robo_livelo/categorias.py",
-    "*/robo_livelo/montador_email.py",
     "*/robo_livelo/alertas.py",
     "*/robo_livelo/retrato.py",
     "*/robo_livelo/modelos_inter.py",
@@ -61,9 +60,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.semantic_release]
 # Versao vem dos commits: fix -> patch, feat -> minor, feat! -> major.
-version_toml = ["pyproject.toml:project.version"]
+version_toml = ["backend/robo/pyproject.toml:project.version"]
 version_variables = [
-    "src/robo_livelo/__init__.py:__version__",
+    "backend/robo/src/robo_livelo/__init__.py:__version__",
 ]
 commit_message = "chore(release): {version}"
 changelog_file = "CHANGELOG.md"

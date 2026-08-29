@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  corpoErro,
+  MAXIMO_HISTORICO_POR_PAGINA,
   MAXIMO_POR_PAGINA,
+  PADRAO_HISTORICO_POR_PAGINA,
   PADRAO_POR_PAGINA,
   paginacaoEnvelope,
   paginaValida,
@@ -50,5 +53,22 @@ describe("porPaginaValida", () => {
   it("usa o padrao quando ausente ou invalido", () => {
     expect(porPaginaValida(null)).toBe(PADRAO_POR_PAGINA);
     expect(porPaginaValida("-1")).toBe(PADRAO_POR_PAGINA);
+  });
+
+  it("aplica o padrao e o teto proprios do historico", () => {
+    expect(
+      porPaginaValida(null, PADRAO_HISTORICO_POR_PAGINA, MAXIMO_HISTORICO_POR_PAGINA),
+    ).toBe(PADRAO_HISTORICO_POR_PAGINA);
+    expect(
+      porPaginaValida("120", PADRAO_HISTORICO_POR_PAGINA, MAXIMO_HISTORICO_POR_PAGINA),
+    ).toBe(MAXIMO_HISTORICO_POR_PAGINA);
+  });
+});
+
+describe("corpoErro", () => {
+  it("devolve o contrato JSON de erro da API", () => {
+    expect(corpoErro("validacao", "termo invalido")).toEqual({
+      erro: { codigo: "validacao", mensagem: "termo invalido" },
+    });
   });
 });

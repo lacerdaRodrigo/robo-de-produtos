@@ -1,7 +1,7 @@
 # PRD — Livelo (Robô de Pontuação Turbinada)
 
 **Versão:** v1.1
-**Status:** V1.0 e V2.0–V2.3 da Livelo estão em produção. A V3 do Shopping Inter está publicada, com migração `006` e 381 lojas sincronizadas. A V4 de produtos diretos está em aceite progressivo: schemas `007`/`008` aplicados, migração `009` pronta, coletor e workflow matricial implementados; a primeira carga real da Casas Bahia terminou em 2026-08-17 com 3.310 produtos ativos e o Edge 60 Pro confirmado na busca local. 210 testes verdes no robô, com 94,16% de cobertura do núcleo puro. A interface web Next.js (`site/`) foi desativada em 2026-08-24 e substituída pelo Flutter em `app/`; a API v1 (antigo `site/app/api/v1/`) foi arquivada em `backend/api/`.
+**Status:** V1.0 e V2.0–V2.3 da Livelo estão publicadas. O catálogo Livelo completo, a migração `013` e a API autenticada estão publicados; a primeira coleta gravou 252 parceiros ativos no Neon em 2026-08-28. O smoke físico Android continua pendente pelo responsável. Web, iOS e layout amplo permanecem na experiência anterior neste ciclo. A interface web Next.js (`site/`) foi desativada em 2026-08-24; o Flutter vive em `app/` e a API em `backend/api/`.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -84,7 +84,7 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | ID | Requisito |
 |---|---|
 | **RF01** | Buscar a página pública de parceiros da Livelo, fazendo **1 única requisição HTTP por execução**. |
-| **RF02** | Extrair, de cada parceiro listado: nome, pontos atuais, pontos anteriores, pontos do Clube Livelo, moeda, link do parceiro e indicador de promoção ativa. |
+| **RF02** | Extrair, de cada parceiro listado: ID externo estável, nome, categorias fornecidas pela Livelo, pontos atuais, pontos anteriores, pontos do Clube Livelo, moeda, link do parceiro e indicador de promoção ativa. |
 | **RF03** | Manter apenas os parceiros que constam na lista de lojas favoritas. |
 | **RF04** | Descartar as lojas favoritas que não estão em promoção no momento da execução. |
 | **RF05** | Agrupar as lojas restantes por categoria. |
@@ -154,7 +154,7 @@ Regras numeradas e referenciadas pelo restante do documento. Qualquer mudança a
 | **RN03** | A comparação de nomes é feita sobre o nome **normalizado**: sem acentuação, em caixa única e sem espaços nas bordas. |
 | **RN04** | O reconhecimento de uma loja favorita é por **correspondência exata** contra o nome canônico ou contra um dos apelidos cadastrados para ela. Correspondência parcial por substring é **proibida** — é o que garante que "Ponto" jamais capture "Pontofrio". |
 | **RN05** | Parceiro que não consta na lista de favoritas é ignorado **silenciosamente**. Não é erro nem gera aviso. |
-| **RN06** | Parceiro repetido na página conta **uma única vez** no resultado. |
+| **RN06** | Parceiro repetido na página conta **uma única vez por ID externo**. O mesmo nome com IDs distintos permanece distinto; o mesmo ID com conteúdo conflitante invalida a coleta. |
 | **RN09** | A Amazon nunca entra na lista de favoritas: não é parceira de acúmulo da Livelo. |
 | **RN15** | O nome do parceiro é lido do atributo `alt` da imagem. Na ausência do `alt`, usa-se o texto do link como alternativa, e a extração **nunca quebra** por causa disso. |
 | **RN16** | Uma categoria nova só se justifica quando reúne 2 ou mais lojas. É o motivo do descarte da categoria "Papelaria". |

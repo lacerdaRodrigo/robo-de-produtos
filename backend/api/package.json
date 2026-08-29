@@ -1,7 +1,8 @@
 {
-  "name": "robo-de-produtos-site",
+  "name": "robo-de-produtos-api",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": "22.x"
   },

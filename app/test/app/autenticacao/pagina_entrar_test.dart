@@ -60,7 +60,7 @@ Future<void> _abrir(
   addTearDown(autenticador.fechar);
   await at.pumpWidget(
     MaterialApp(
-      theme: TemaRadar.claro(),
+      theme: TemaRadar.legadoClaro(),
       home: PaginaEntrar(autenticador: autenticador),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(

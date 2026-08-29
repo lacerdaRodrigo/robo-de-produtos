@@ -15,7 +15,7 @@ O banco Neon reúne três conjuntos independentes:
 
 | Domínio | Conteúdo | Área relacionada |
 |---|---|---|
-| Livelo | lojas, regras, execuções e pontuações | Painel e Lojas |
+| Livelo | catálogo de parceiros, acompanhadas, regras, execuções e pontuações | Painel e Lojas |
 | Inter — Sites parceiros | catálogo, favoritas, execuções e cashback | /inter |
 | Inter — Compre direto | vendedores, produtos e medições | /inter/produtos |
 
@@ -70,6 +70,7 @@ Usar uma lista fixa de tabelas em TRUNCATE ... RESTART IDENTITY, sem cascade gen
     execucao
     apelido
     loja
+    parceiro_livelo
     preferencia
     disparo_manual
 
@@ -79,7 +80,7 @@ Na mesma transação, recriar as preferências padrão:
     piso_pontos_padrao   = 4
     assinante_clube      = false
 
-tentativa_login, sessão, tema e flags de interface permanecem intactos. O próximo processamento da Livelo continua agendado e, se o catálogo estiver vazio, reidrata as lojas padrão do TOML antes de gravar o novo retrato.
+tentativa_login, sessão, tema e flags de interface permanecem intactos. O próximo processamento da Livelo continua agendado, recompõe `parceiro_livelo` a partir da fonte pública e mantém zero acompanhadas. O TOML não restaura automaticamente as 132 escolhas antigas quando o banco respondeu vazio.
 
 ### 4.2 Inter
 
@@ -150,7 +151,7 @@ Também haverá uma função pura para validar a frase esperada por domínio. N�
 
 - Frase correta, vazia, errada e trocada entre domínios.
 - Resumo com contagens e banco indisponível.
-- Livelo limpa somente Livelo e restaura os três padrões.
+- Livelo limpa somente Livelo, inclusive `parceiro_livelo`, e restaura os três padrões.
 - Inter limpa V3 e V4, sem tocar Livelo ou autenticação.
 - Cada fluxo usa uma única transação.
 - Falha no meio não produz sucesso parcial.

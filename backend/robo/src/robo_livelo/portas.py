@@ -7,15 +7,11 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from robo_livelo.modelos import LojaFavorita, Mensagem, Preferencias, RetratoDaExecucao
+from robo_livelo.modelos import LojaFavorita, Preferencias, RetratoDaExecucao
 
 
 class FalhaAoObterPagina(RuntimeError):
     """A pagina nao pode ser obtida apos esgotar as tentativas (RF11)."""
-
-
-class FalhaAoNotificar(RuntimeError):
-    """A mensagem nao pode ser entregue."""
 
 
 class ConfiguracaoInvalida(RuntimeError):
@@ -43,13 +39,6 @@ class FonteDePagina(Protocol):
     """
 
     def obter_html(self) -> str: ...
-
-
-@runtime_checkable
-class Notificador(Protocol):
-    """Entrega a mensagem montada."""
-
-    def enviar(self, mensagem: Mensagem) -> None: ...
 
 
 @runtime_checkable

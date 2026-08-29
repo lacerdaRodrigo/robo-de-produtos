@@ -9,10 +9,8 @@
  * O token vive so no servidor, como a DATABASE_URL. Nada aqui tem prefixo
  * NEXT_PUBLIC_, entao nada chega ao navegador.
  *
- * `enviar_email: "false"` cala o notificador so nesta execucao — o
- * agendado continua mandando e-mail sempre. Cadastrar dez lojas numa tarde
- * geraria dez e-mails identicos, e o robo ja grava o retrato de qualquer
- * forma; o site le o resultado direto do banco.
+ * Tanto o disparo manual quanto o agendado executam a mesma coleta e gravam
+ * o retrato no Postgres. A API le o resultado direto do banco.
  */
 
 const REPOSITORIO = "lacerdaRodrigo/robo-de-produtos";
@@ -25,7 +23,7 @@ export function temTokenDeDisparo(): boolean {
 export type ResultadoDoDisparo = { ok: true } | { ok: false; motivo: string };
 
 export async function dispararRobo(): Promise<ResultadoDoDisparo> {
-  return dispararWorkflow("robo.yml", { enviar_email: "false" });
+  return dispararWorkflow("robo.yml");
 }
 
 export function temTokenDeDisparoInter(): boolean {
@@ -33,17 +31,14 @@ export function temTokenDeDisparoInter(): boolean {
 }
 
 export async function dispararRoboInter(): Promise<ResultadoDoDisparo> {
-  return dispararWorkflow("inter.yml", {});
+  return dispararWorkflow("inter.yml");
 }
 
 export async function dispararProdutosInter(): Promise<ResultadoDoDisparo> {
-  return dispararWorkflow("produtos-inter.yml", {});
+  return dispararWorkflow("produtos-inter.yml");
 }
 
-async function dispararWorkflow(
-  workflow: string,
-  inputs: Record<string, string>,
-): Promise<ResultadoDoDisparo> {
+async function dispararWorkflow(workflow: string): Promise<ResultadoDoDisparo> {
   const token = process.env.GITHUB_TOKEN_DISPARO;
   if (!token) {
     return { ok: false, motivo: "sem-token" };
@@ -59,9 +54,7 @@ async function dispararWorkflow(
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
       },
-      // "false" como string: a API de dispatch so aceita valores de input
-      // como texto, mesmo quando o workflow declara `type: boolean`.
-      body: JSON.stringify({ ref: RAMO, inputs }),
+      body: JSON.stringify({ ref: RAMO }),
     },
   );
 
