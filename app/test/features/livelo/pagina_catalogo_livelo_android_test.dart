@@ -138,6 +138,38 @@ void main() {
     expect(controlador.itens.last.acompanhada, isFalse);
   });
 
+  testWidgets(
+    'parar de acompanhar envia false e devolve o cartão ao estado disponível',
+    (at) async {
+      final chamadas = <bool>[];
+      final controlador = _controlador(
+        alterar: ({required idExterno, required acompanhada}) async {
+          chamadas.add(acompanhada);
+        },
+      );
+      addTearDown(controlador.dispose);
+      await _abrir(at, controlador);
+
+      await at.drag(
+        find.byKey(const Key('catalogo-livelo-android')),
+        const Offset(0, -700),
+      );
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('acompanhar-A')));
+      await at.pumpAndSettle();
+
+      expect(chamadas, [false]);
+      expect(controlador.itens.first.acompanhada, isFalse);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('acompanhar-A')),
+          matching: find.text('Acompanhar'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('320 px e texto a 150% continuam roláveis sem overflow', (
     at,
   ) async {

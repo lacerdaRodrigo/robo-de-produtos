@@ -73,10 +73,13 @@ Cada pasta tem seu próprio `README.md` com contexto local:
 ```bash
 make dev                       # Android conectado, usando a branch atual
 make dev DEVICE=emulator-5554  # escolhe outro Android
+make apk                       # gera o APK de release para instalar manualmente
 ```
 
 O alvo detecta o primeiro Android disponível e executa o checkout atual. Para
 trocar a API ou o App Check, passe `API_URL=...` e `APP_CHECK=true` no comando.
+Após `make apk`, o arquivo fica em
+`app/build/app/outputs/flutter-apk/app-release.apk`.
 
 O app consome a API (`/api/*` por domínio, ex.: `/api/livelo`, `/api/inter`), que
 hoje está arquivada — para desenvolvimento local aponte

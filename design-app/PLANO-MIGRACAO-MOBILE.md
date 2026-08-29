@@ -197,7 +197,10 @@ revisar o resultado, e uma etapa rejeitada não deve contaminar as seguintes.
 
 Enquanto a API não informar as melhores ofertas, cartões como “12x”, “10%” e
 “218 ofertas” não aparecem como números reais. A composição pode ser mantida
-com estado da coleta, lojas acompanhadas, produtos ativos e última atualização.
+com estado da coleta, alertas Livelo, lojas com cashback, produtos ativos e
+última atualização. A referência visual foi ajustada para essas três métricas
+em 29 de agosto de 2026; cada valor deve vir do resumo real e pode aparecer como
+“—” quando o respectivo domínio estiver indisponível.
 
 **Gate de aceite**
 

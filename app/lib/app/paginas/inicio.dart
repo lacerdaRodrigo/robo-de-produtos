@@ -112,7 +112,12 @@ class _PaginaInicioState extends State<PaginaInicio> {
                     _AvisoFalhaAtualizacao(aoTentarNovamente: _consultar),
                   ],
                   const SizedBox(height: 20),
-                  _DestaqueEstado(resumo: resumo),
+                  widget.experienciaCompacta
+                      ? _DestaqueInicioCompacto(
+                          resumo: resumo,
+                          agora: (widget.agora ?? DateTime.now)(),
+                        )
+                      : _DestaqueEstado(resumo: resumo),
                   if (widget.experienciaCompacta) ...[
                     const SizedBox(height: 30),
                     const _TituloSecao(
@@ -131,7 +136,15 @@ class _PaginaInicioState extends State<PaginaInicio> {
                       complemento: 'Últimos retratos válidos',
                     ),
                     const SizedBox(height: 12),
-                    _GradeMetricas(resumo: resumo),
+                    _GradeMetricasCompactas(
+                      resumo: resumo,
+                      agora: (widget.agora ?? DateTime.now)(),
+                    ),
+                    const SizedBox(height: 30),
+                    _AtividadeRecenteCompacta(
+                      resumo: resumo,
+                      agora: (widget.agora ?? DateTime.now)(),
+                    ),
                   ] else ...[
                     const SizedBox(height: 20),
                     _GradeMetricas(resumo: resumo),
@@ -148,13 +161,15 @@ class _PaginaInicioState extends State<PaginaInicio> {
                       aoAbrirCashback: widget.aoAbrirCashback,
                     ),
                   ],
-                  const SizedBox(height: 30),
-                  const _TituloSecao(
-                    titulo: 'Estado por domínio',
-                    complemento: 'Dados reais',
-                  ),
-                  const SizedBox(height: 12),
-                  _EstadoDominios(resumo: resumo),
+                  if (!widget.experienciaCompacta) ...[
+                    const SizedBox(height: 30),
+                    const _TituloSecao(
+                      titulo: 'Estado por domínio',
+                      complemento: 'Dados reais',
+                    ),
+                    const SizedBox(height: 12),
+                    _EstadoDominios(resumo: resumo),
+                  ],
                 ],
               ),
             ),
@@ -307,6 +322,430 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DestaqueInicioCompacto extends StatelessWidget {
+  const _DestaqueInicioCompacto({required this.resumo, required this.agora});
+
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    final prioridade = _prioridade(resumo);
+    final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Stack(
+        children: [
+          Container(
+            color: Tokens.marcaProfunda,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SeloHeroCompacto(texto: _textoAtualizacao(resumo, agora)),
+                const SizedBox(height: 14),
+                Text(
+                  atualizado ? 'Seu radar está atualizado.' : prioridade.titulo,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  atualizado
+                      ? 'Livelo, cashback e produtos continuam em leituras independentes.'
+                      : prioridade.descricao,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFFD7E3ED),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _MetricasHeroCompactas(resumo: resumo),
+              ],
+            ),
+          ),
+          const Positioned(
+            right: -46,
+            bottom: -74,
+            child: _ArcoHeroInicio(tamanho: 190),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeloHeroCompacto extends StatelessWidget {
+  const _SeloHeroCompacto({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.circle, size: 8, color: Color(0xFF55D6A3)),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                texto,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricasHeroCompactas extends StatelessWidget {
+  const _MetricasHeroCompactas({required this.resumo});
+
+  final ResumoInicio resumo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _MetricaHero(valor: _valorLivelo(resumo), titulo: 'alertas Livelo'),
+        const SizedBox(width: 8),
+        _MetricaHero(
+          valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
+              ? '—'
+              : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
+          titulo: 'lojas com cashback',
+        ),
+        const SizedBox(width: 8),
+        _MetricaHero(
+          valor: resumo.produtos.estado == EstadoResumo.indisponivel
+              ? '—'
+              : _inteiro(resumo.produtos.produtosAtivos),
+          titulo: 'produtos ativos',
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricaHero extends StatelessWidget {
+  const _MetricaHero({required this.valor, required this.titulo});
+
+  final String valor;
+  final String titulo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              valor,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              titulo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: const Color(0xFFD7E3ED),
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArcoHeroInicio extends StatelessWidget {
+  const _ArcoHeroInicio({required this.tamanho});
+
+  final double tamanho;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox.square(
+        dimension: tamanho,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF8EC5F4).withValues(alpha: 0.10),
+              width: 18,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF8EC5F4).withValues(alpha: 0.12),
+                  width: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GradeMetricasCompactas extends StatelessWidget {
+  const _GradeMetricasCompactas({required this.resumo, required this.agora});
+
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GradeResponsiva(
+      maximoColunas: 2,
+      larguraMinima: 150,
+      itens: [
+        _MetricaResumoCompacta(
+          icone: Icons.storefront_outlined,
+          cor: CoresRadar.de(context).acao,
+          valor: _valorDisponivel(resumo.livelo.estado)
+              ? _inteiro(resumo.livelo.lojasAcompanhadas)
+              : '—',
+          titulo: 'lojas acompanhadas',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.inventory_2_outlined,
+          cor: CoresRadar.de(context).integracaoInter,
+          valor: _valorDisponivel(resumo.produtos.estado)
+              ? _inteiro(resumo.produtos.produtosAtivos)
+              : '—',
+          titulo: 'produtos ativos',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.notifications_none,
+          cor: CoresRadar.de(context).atencao,
+          valor: _valorLivelo(resumo),
+          titulo: 'alertas relevantes',
+        ),
+        _MetricaResumoCompacta(
+          icone: Icons.schedule_outlined,
+          cor: CoresRadar.de(context).ganho,
+          valor: _tempoDesde(resumo.geradoEm, agora),
+          titulo: 'última atualização',
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricaResumoCompacta extends StatelessWidget {
+  const _MetricaResumoCompacta({
+    required this.icone,
+    required this.cor,
+    required this.valor,
+    required this.titulo,
+  });
+  final IconData icone;
+  final Color cor;
+  final String valor;
+  final String titulo;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    elevation: 0,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: cor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: SizedBox.square(
+              dimension: 36,
+              child: Icon(icone, color: cor, size: 20),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            valor,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            titulo,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _AtividadeRecenteCompacta extends StatelessWidget {
+  const _AtividadeRecenteCompacta({required this.resumo, required this.agora});
+  final ResumoInicio resumo;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const _TituloSecao(
+        titulo: 'Atividade recente',
+        complemento: 'Pedido não é conclusão',
+      ),
+      const SizedBox(height: 12),
+      Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        child: Column(
+          children: [
+            _AtividadeLinha(
+              icone: Icons.card_giftcard_outlined,
+              cor: CoresRadar.de(context).acao,
+              titulo: resumo.livelo.estado == EstadoResumo.atualizado
+                  ? 'Livelo concluída'
+                  : 'Livelo em leitura',
+              detalhe:
+                  '${_inteiro(resumo.livelo.lojasAcompanhadas)} lojas acompanhadas',
+              quando: _tempoDesde(
+                resumo.livelo.ultimoSucessoEm ?? resumo.geradoEm,
+                agora,
+              ),
+            ),
+            Divider(
+              height: 1,
+              indent: 16,
+              endIndent: 16,
+              color: CoresRadar.de(context).borda,
+            ),
+            _AtividadeLinha(
+              icone: Icons.inventory_2_outlined,
+              cor: CoresRadar.de(context).integracaoInter,
+              titulo: resumo.produtos.estado == EstadoResumo.atualizando
+                  ? 'Produtos em atualização'
+                  : 'Produtos: ${_rotuloEstado(resumo.produtos.estado).toLowerCase()}',
+              detalhe: resumo.produtos.estado == EstadoResumo.semDados
+                  ? 'Catálogo ainda sem coleta'
+                  : 'Catálogo local mantido',
+              quando: _tempoDesde(
+                resumo.produtos.dadosMaisRecentesEm ?? resumo.geradoEm,
+                agora,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _AtividadeLinha extends StatelessWidget {
+  const _AtividadeLinha({
+    required this.icone,
+    required this.cor,
+    required this.titulo,
+    required this.detalhe,
+    required this.quando,
+  });
+  final IconData icone;
+  final Color cor;
+  final String titulo;
+  final String detalhe;
+  final String quando;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.all(14),
+    child: Row(
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: cor.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: SizedBox.square(
+            dimension: 34,
+            child: Icon(icone, color: cor, size: 19),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titulo,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              Text(
+                detalhe,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: CoresRadar.de(context).textoSuave,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          quando,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _DestaqueEstado extends StatelessWidget {
@@ -996,6 +1435,39 @@ String _inteiro(int valor) {
     resultado.write(texto[indice]);
   }
   return resultado.toString();
+}
+
+bool _valorDisponivel(EstadoResumo estado) =>
+    estado != EstadoResumo.indisponivel;
+
+String _valorLivelo(ResumoInicio resumo) {
+  if (!_valorDisponivel(resumo.livelo.estado) ||
+      resumo.livelo.ultimoSucessoEm == null) {
+    return '—';
+  }
+  return _inteiro(resumo.livelo.alertasUltimaColeta);
+}
+
+String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {
+  final data = DateTime.tryParse(resumo.geradoEm)?.toLocal();
+  if (data == null) return 'Radar atualizado';
+  final minutos = agora.toLocal().difference(data).inMinutes;
+  if (minutos <= 1) return 'Radar atualizado há pouco';
+  if (minutos < 60) return 'Radar atualizado há $minutos min';
+  final horas = minutos ~/ 60;
+  if (horas < 24) return 'Radar atualizado há $horas h';
+  return 'Radar atualizado há ${horas ~/ 24} d';
+}
+
+String _tempoDesde(String iso, DateTime agora) {
+  final data = DateTime.tryParse(iso)?.toLocal();
+  if (data == null) return '—';
+  final minutos = agora.toLocal().difference(data).inMinutes;
+  if (minutos <= 1) return 'agora';
+  if (minutos < 60) return '$minutos min';
+  final horas = minutos ~/ 60;
+  if (horas < 24) return '${horas}h';
+  return '${horas ~/ 24}d';
 }
 
 String _dataHora(String? iso) {

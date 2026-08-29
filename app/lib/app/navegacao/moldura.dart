@@ -370,15 +370,18 @@ class GavetaRadar extends StatelessWidget {
       key: const Key('gaveta-principal'),
       width: MediaQuery.sizeOf(context).width.clamp(280.0, 320.0),
       shape: const RoundedRectangleBorder(),
-      backgroundColor: Tokens.marcaProfunda,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 10, 12),
-                child: Row(
+              Container(
+                color: Tokens.marcaProfunda,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 10, 12),
+                  child: Row(
                   children: [
                     const LogoRadar(tamanho: 44, sobreFundoEscuro: true),
                     const SizedBox(width: 12),
@@ -413,9 +416,11 @@ class GavetaRadar extends StatelessWidget {
                       icon: const Icon(Icons.close),
                     ),
                   ],
+                  ),
                 ),
               ),
-              Padding(
+              Container(
+                color: Tokens.marcaProfunda,
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                 child: Material(
                   color: Colors.white.withValues(alpha: 0.08),
@@ -472,10 +477,20 @@ class GavetaRadar extends StatelessWidget {
                   ],
                 ),
               ),
+              SizedBox(height: MediaQuery.sizeOf(context).height * 0.08),
               if (!kIsWeb)
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(12, 4, 12, 8),
-                  child: ControleAparenciaRadar.linha(cor: Color(0xFFC6D5E2)),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border(top: BorderSide(color: Color(0xFFD3E0EA))),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12, 6, 12, 8),
+                    child: ControleAparenciaRadar.linha(
+                      cor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFD7E3ED)
+                          : const Color(0xFF173B57),
+                    ),
+                  ),
                 ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -508,7 +523,7 @@ class GavetaRadar extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
+                padding: const EdgeInsets.fromLTRB(22, 10, 22, 14),
                 child: _RodapeVersao(administrador: administrador),
               ),
             ],
@@ -534,12 +549,17 @@ class _BotaoUtilidadeGaveta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
     return OutlinedButton.icon(
       key: chave,
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFC6D5E2),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        foregroundColor: escuro ? const Color(0xFFC6D5E2) : const Color(0xFF526E83),
+        side: BorderSide(
+          color: escuro
+              ? Colors.white.withValues(alpha: 0.14)
+              : const Color(0xFFD3E0EA),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       ),
       onPressed: aoTocar,
       icon: Icon(icone, size: 18),
@@ -557,11 +577,11 @@ class _RodapeVersao extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          administrador ? 'Acesso administrador' : 'Acesso padrão',
-          style: const TextStyle(color: Color(0xFF93AABD), fontSize: 12),
+          'Radar de Benefícios',
+          style: const TextStyle(color: Color(0xFF8195A5), fontSize: 10),
         ),
         FutureBuilder<String>(
           future: VersaoApp.versao(),
@@ -574,7 +594,7 @@ class _RodapeVersao extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 texto,
-                style: const TextStyle(color: Color(0xFF93AABD), fontSize: 11),
+                style: const TextStyle(color: Color(0xFF8195A5), fontSize: 10),
               ),
             );
           },
@@ -708,6 +728,8 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final texto = escuro ? const Color(0xFFD7E3ED) : Tokens.marca;
     return Semantics(
       selected: selecionado,
       button: true,
@@ -715,16 +737,22 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 6),
         child: ListTile(
           selected: selecionado,
-          selectedColor: Colors.white,
-          textColor: const Color(0xFFC6D5E2),
-          iconColor: const Color(0xFFC6D5E2),
-          selectedTileColor: Colors.white.withValues(alpha: 0.13),
+          selectedColor: escuro ? Colors.white : Tokens.marca,
+          textColor: texto,
+          iconColor: texto,
+          selectedTileColor: escuro
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFDDEEFF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
           leading: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: selecionado ? 0.12 : 0.06),
+              color: escuro
+                  ? Colors.white.withValues(alpha: selecionado ? 0.12 : 0.06)
+                  : (selecionado
+                      ? const Color(0xFFDDEEFF)
+                      : const Color(0xFFEDF4F8)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: SizedBox.square(
@@ -742,7 +770,10 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
             destino.descricao,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xFF93AABD), fontSize: 11),
+            style: TextStyle(
+              color: escuro ? const Color(0xFF93AABD) : const Color(0xFF61788B),
+              fontSize: 11,
+            ),
           ),
           trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: aoTocar,
@@ -870,7 +901,7 @@ class _FolhaConta extends StatelessWidget {
   Widget build(BuildContext context) {
     return FolhaRadar(
       titulo: 'Conta e sistema',
-      descricao: 'Aparência, acesso e ferramentas fora do menu principal.',
+      descricao: 'Utilidades não ocupam um tema principal.',
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.62,
@@ -878,19 +909,14 @@ class _FolhaConta extends StatelessWidget {
         child: ListView(
           shrinkWrap: true,
           children: [
-            CartaoRadar(
-              child: _LinhaFolha(
-                icone: Icons.person_outline,
-                titulo: identificacaoConta ?? 'Conta do Radar',
-                descricao: administrador
-                    ? 'Acesso administrador'
-                    : 'Acesso padrão',
+            Text(
+              administrador ? 'Acesso administrador' : 'Acesso padrão',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: CoresRadar.de(context).textoSuave,
               ),
             ),
-            const SizedBox(height: 10),
-            const CartaoRadar(child: ControleAparenciaRadar.linha()),
+            const SizedBox(height: 8),
             if (aoAdministrar != null) ...[
-              const SizedBox(height: 10),
               CartaoRadar(
                 aoTocar: aoAdministrar,
                 child: const _LinhaFolha(
@@ -901,6 +927,22 @@ class _FolhaConta extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 10),
+            const CartaoRadar(
+              child: _LinhaFolha(
+                icone: Icons.shield_outlined,
+                titulo: 'Segurança e acesso',
+                descricao: 'Sessão, convite e permissões',
+              ),
+            ),
+            const SizedBox(height: 10),
+            const CartaoRadar(
+              child: _LinhaFolha(
+                icone: Icons.add,
+                titulo: 'Integrações',
+                descricao: 'Pronto para novos bancos e programas',
+              ),
+            ),
             if (podeSair) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(

@@ -172,9 +172,21 @@ class CampoBuscaRadar extends StatelessWidget {
       decoration: InputDecoration(
         hintText: dica,
         prefixIcon: const Icon(Icons.search),
-        suffixIcon: acao,
+        suffixIcon: acao == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.all(6),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: CoresRadar.de(context).superficieAlternativa,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: acao,
+                ),
+              ),
         filled: true,
         fillColor: Theme.of(context).cardColor,
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: CoresRadar.de(context).borda),
@@ -199,19 +211,63 @@ class AbasRadar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var indice = 0; indice < rotulos.length; indice++) ...[
-            ChoiceChip(
-              label: Text(rotulos[indice]),
-              selected: indice == selecionada,
-              onSelected: (_) => aoSelecionar(indice),
-            ),
-            if (indice != rotulos.length - 1) const SizedBox(width: 7),
+    final cores = CoresRadar.de(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cores.superficieAlternativa,
+        border: Border.all(color: cores.borda),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(5),
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var indice = 0; indice < rotulos.length; indice++) ...[
+              _AbaRadar(
+                rotulo: rotulos[indice],
+                selecionada: indice == selecionada,
+                aoTocar: () => aoSelecionar(indice),
+              ),
+              if (indice != rotulos.length - 1) const SizedBox(width: 4),
+            ],
           ],
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AbaRadar extends StatelessWidget {
+  const _AbaRadar({
+    required this.rotulo,
+    required this.selecionada,
+    required this.aoTocar,
+  });
+
+  final String rotulo;
+  final bool selecionada;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Material(
+      color: selecionada ? Theme.of(context).cardColor : Colors.transparent,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(11),
+        onTap: aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Text(
+            rotulo,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: selecionada ? cores.acao : cores.textoSuave,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
       ),
     );
   }

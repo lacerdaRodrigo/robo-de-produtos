@@ -140,9 +140,10 @@ export async function alterarAcompanhamentoParceiroLivelo(entrada: {
          WHERE parceiro_livelo_id = (SELECT id FROM parceiro)
          RETURNING id
       )
-      SELECT NOT EXISTS (
-        SELECT 1 FROM loja WHERE parceiro_livelo_id = (SELECT id FROM parceiro)
-      ) AS confirmado
+      -- Assim como na inclusão, reler `loja` nesta instrução enxerga o
+      -- retrato anterior ao DELETE. Se a remoção não levantou erro, o estado
+      -- desejado já foi aplicado; sem vínculo prévio ela também é idempotente.
+      SELECT TRUE AS confirmado FROM parceiro
     `) as Array<{ confirmado: boolean }>;
     return linhas[0]?.confirmado === true;
   }
@@ -168,10 +169,13 @@ export async function alterarAcompanhamentoParceiroLivelo(entrada: {
       ON CONFLICT DO NOTHING
       RETURNING id
     )
+    -- CTEs que alteram dados não ficam visíveis ao SELECT final pela tabela
+    -- base nesta mesma instrução. Confirmamos pelo RETURNING das próprias
+    -- CTEs; reler `loja` aqui fazia um acompanhamento novo parecer falho.
     SELECT EXISTS (
-      SELECT 1
-        FROM loja
-       WHERE parceiro_livelo_id = (SELECT id FROM parceiro)
+      SELECT 1 FROM atualizada
+      UNION ALL
+      SELECT 1 FROM inserida
     ) AS estado
   `) as Array<{ estado: boolean }>;
   return linhas[0]?.estado === true;

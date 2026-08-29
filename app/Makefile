@@ -1,7 +1,7 @@
 # Atalhos de build, validação e dispositivos do app Flutter.
 #
 # Rode `make help` (ou `make`) para listar os alvos.
-# Uso: `make build-release`, `make log`, etc.
+# Uso: `make apk`, `make log`, etc.
 
 API_URL ?= https://robo-de-produtos.vercel.app
 APP_CHECK ?= false
@@ -12,7 +12,7 @@ APP_ID := br.com.radarbeneficios.app
 
 .DEFAULT_GOAL := help
 
-.PHONY: help dev build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
+.PHONY: help dev apk build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
 
 ## Lista todos os alvos disponíveis.
 help: ## Lista todos os alvos disponíveis
@@ -31,6 +31,10 @@ dev: ## Executa o checkout atual no primeiro Android conectado
 		--dart-define=ATIVAR_APP_CHECK=$(APP_CHECK)
 
 # ── Build ──────────────────────────────────────────────────────────────────
+
+apk: build-release ## Gera o APK de release para copiar e instalar em outro Android
+	@echo ""
+	@echo "APK pronto: $(abspath $(APK_RELEASE))"
 
 build-release: ## Gera o APK de release apontando para a API de produção, sem App Check
 	flutter build apk --release \
