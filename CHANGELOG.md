@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.48.0 (2026-08-29)
+
+### Features
+
+- **livelo**: Adiciona historico de pontuacao
+  ([`051a1db`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/051a1dbe53f95a78cec668ba33ed14822622cf9f))
+
+
 ## v1.47.1 (2026-08-29)
 
 ### Bug Fixes
