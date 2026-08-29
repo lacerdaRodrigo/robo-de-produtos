@@ -18,12 +18,14 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
     super.key,
     required this.api,
     required this.administrador,
+    this.aoAbrirAlertas,
     this.controlador,
     this.agora,
   });
 
   final Api api;
   final bool administrador;
+  final VoidCallback? aoAbrirAlertas;
   final ControladorCatalogoLivelo? controlador;
   final DateTime Function()? agora;
 
@@ -138,8 +140,11 @@ class _EstadoPaginaCatalogoLiveloAndroid
   Future<void> _abrirHistorico(ParceiroCatalogoLivelo parceiro) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            PaginaHistoricoLiveloAndroid(api: widget.api, parceiro: parceiro),
+        builder: (_) => PaginaHistoricoLiveloAndroid(
+          api: widget.api,
+          parceiro: parceiro,
+          aoAbrirAlertas: widget.aoAbrirAlertas,
+        ),
       ),
     );
   }
