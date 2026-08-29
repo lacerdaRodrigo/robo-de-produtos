@@ -2,7 +2,8 @@
 
 **Branch:** `re-design`  
 **Fonte visual de verdade:** [`prototipo-mobile.html`](prototipo-mobile.html)  
-**Escopo:** somente Flutter mobile compacto. **Web está fora deste ciclo.**
+**Escopo:** somente Flutter mobile compacto. **Web está fora deste ciclo.**  
+**Testes neste ciclo:** somente **unitários e widgets**.
 
 ## 1. Regra principal
 
@@ -12,7 +13,7 @@ Se o HTML mostrar dado ilustrativo sem contrato real, preserve a composição e 
 
 ## 2. Viewports
 
-- referência principal: **390 × 844 logical pixels, DPR 1 nos testes**;
+- referência principal: **390 × 844 logical pixels**;
 - largura mínima: **320 px**;
 - composição do protótipo: até aproximadamente **430 px**;
 - validar tema claro e escuro quando aplicável;
@@ -117,42 +118,42 @@ Alertas, conta, administração, aparência e saída são utilidades.
 - nunca carregar catálogo inteiro no Flutter;
 - não usar `double` para regra financeira.
 
-## 7. Goldens mobile
+## 7. Política de testes desta branch
 
-Para cada fatia estável:
+Neste ciclo, os únicos tipos de teste autorizados são:
 
-1. dados determinísticos;
-2. viewport/DPR fixos;
-3. claro/escuro quando aplicável;
-4. `matchesGoldenFile`;
-5. comparar visualmente com o HTML;
-6. corrigir Flutter antes de atualizar referência.
+- **testes unitários** para lógica, mapeamentos, estado e regras locais alteradas;
+- **testes de widgets** para renderização, interação e estados visíveis alterados.
 
-Cobertura desejada:
+Testar somente o necessário para a fase atual. Priorizar poucos testes úteis em vez de ampliar cobertura por quantidade.
 
-- Início claro/escuro;
-- gaveta aberta;
-- Livelo claro/escuro;
-- Banco Inter claro/escuro;
-- Buscar produtos claro/escuro;
-- estados vazios/erro/parcial que alterem bastante a composição.
+Ficam adiados para outro ciclo:
 
-**Não criar, executar ou atualizar golden Web neste ciclo.**
+- golden tests;
+- integração;
+- E2E;
+- smoke automatizado;
+- performance;
+- regressão visual automatizada;
+- testes Web.
+
+Não apagar testes existentes dessas categorias. Apenas não criar, atualizar ou executar como gate deste redesign.
+
+`dart format` e `flutter analyze` continuam obrigatórios e não contam como tipos de teste.
 
 ## 8. Ciclo do Codex
 
 1. ler somente `AGENTS.md`, este arquivo, o HTML mobile e o plano da branch;
-2. abrir apenas código/testes da fase atual;
+2. abrir apenas código e testes unitários/widgets da fase atual;
 3. consultar PRD específico somente quando surgir dúvida de regra/API;
 4. implementar a menor fatia coerente;
 5. formatar/analisar;
-6. executar testes relevantes;
-7. executar goldens mobile relevantes;
-8. renderizar no viewport de referência e comparar com HTML;
-9. corrigir e repetir até estabilizar.
+6. executar somente unitários/widgets relevantes;
+7. renderizar o app quando necessário e comparar visualmente com o HTML;
+8. corrigir e repetir apenas as validações necessárias até estabilizar.
 
 Não pedir screenshot para diferenças que possam ser identificadas localmente.
 
 ## 9. Pronto visual
 
-A fatia está pronta quando o comportamento mobile funciona, a composição segue o HTML, não há overflow em 320 px, claro/escuro estão corretos, goldens mobile passam e nenhum dado fictício virou dado real.
+A fatia está pronta quando o comportamento mobile funciona, a composição segue o HTML, não há overflow nas larguras cobertas pelos widgets, claro/escuro estão corretos quando aplicáveis, unitários/widgets relevantes passam e nenhum dado fictício virou dado real.
