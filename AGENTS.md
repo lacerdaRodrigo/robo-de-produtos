@@ -67,23 +67,24 @@ Se o escopo mudar materialmente, faça uma nova classificação. Um pedido de im
 
 ### Regra visual inegociável
 
-Nunca invente ou improvise um design para substituir o protótipo. O protótipo
-que estamos construindo juntos é a fonte visual de verdade: reproduza sua
-estrutura, hierarquia, espaçamento, cores, estados e navegação antes de criar
-ou alterar a interface no Flutter. Se algo não estiver definido nele, pare e
-peça uma decisão; não preencha a lacuna com uma tela genérica do Material.
+Nunca invente ou improvise um design para substituir o protótipo. O protótipo mobile versionado no próprio repositório é a fonte visual de verdade para o redesign compacto: [`design-app/prototipo-mobile.html`](design-app/prototipo-mobile.html).
 
-Protótipo mobile no workspace atual: [`prototipo-mobile.html`](/home/rodrigo/Estudos/robo/design-app/prototipo-mobile.html).
+O contrato operacional que transforma o HTML em especificação verificável é [`design-app/UI_SPEC.md`](design-app/UI_SPEC.md). Antes de alterar qualquer tela mobile, leia os dois arquivos por completo.
+
+Reproduza estrutura, hierarquia, espaçamento, cores, estados e navegação do protótipo antes de criar ou alterar a interface no Flutter. Não use screenshot enviado pelo responsável como fonte primária quando o estado já estiver definido no HTML. Se algo não estiver definido no protótipo nem no contrato, pare e peça uma decisão; não preencha a lacuna com uma tela genérica do Material.
+
+Para mudanças visuais do redesign, o ciclo obrigatório é: **implementar → formatar/analisar/testar → renderizar no viewport de referência → comparar com a referência visual/golden → corrigir diferenças → repetir até estabilizar**. Uma tarefa visual não está concluída só porque compila.
 
 - Não inicialize Flutter, crie telas, banco, API ou workflow apenas porque existe um plano.
 - Quando houver autorização para começar, siga a Fase 1 do plano: inventário e contratos antes de telas.
-- Toda nova funcionalidade visível, tela, jornada ou mudança relevante de navegação deve ser desenhada primeiro nos dois protótipos de `design-app/`: [`prototipo-web.html`](design-app/prototipo-web.html) e [`prototipo-mobile.html`](design-app/prototipo-mobile.html).
+- Toda nova funcionalidade visível, tela, jornada ou mudança relevante de navegação deve ser desenhada primeiro nos protótipos aplicáveis de `design-app/`. O redesign desta branch é mobile; o Web só muda mediante decisão explícita.
 - A implementação real só começa depois que o responsável validar a experiência no protótipo. Se a mudança afetar apenas uma plataforma, registre o motivo e mantenha a outra coerente.
 - O protótipo não substitui requisitos nem autoriza inventar contrato, dado ou backend. Depois da aprovação visual, atualize PRD/contratos quando necessário e só então implemente com testes.
 - Correção interna sem mudança visual não exige criar uma tela nova. Se uma correção alterar comportamento percebido, atualize também os protótipos para evitar divergência.
 - Um único projeto Flutter deve atender Web, Android e iOS com layout adaptativo.
-- Preserve os tokens e as regras de design aprovados no plano.
-- Escreva muitos testes unitários e de widgets/componentes; mantenha os testes de integração nas jornadas críticas.
+- Preserve os tokens e as regras de design aprovados no plano e no `UI_SPEC.md`.
+- Prefira componentes reutilizáveis para padrões repetidos: hero, métricas, módulos, cartões de loja/produto, busca, filtros/abas, gaveta, folhas e feedback.
+- Escreva muitos testes unitários e de widgets/componentes; mantenha os testes de integração nas jornadas críticas e goldens para estados visuais estáveis.
 - A estrutura por `features` em `app/` é uma exceção deliberada à convenção plana dos módulos Python. Não reorganize o Python por causa dela.
 - Itens da seção de melhorias opcionais do plano não estão autorizados automaticamente.
 
@@ -109,5 +110,5 @@ Uma tarefa só está concluída quando:
 2. as regras existentes foram preservadas ou a mudança foi documentada;
 3. os testes relevantes passaram, ou a impossibilidade foi informada;
 4. segurança, compatibilidade do site legado e dados históricos foram considerados;
-5. para mudança visível, os protótipos Web e Mobile foram aprovados e continuam coerentes com a implementação;
+5. para mudança visível, o protótipo aplicável, o `UI_SPEC.md` e a implementação continuam coerentes e os goldens relevantes foram conferidos;
 6. o responsável recebeu um resumo simples dos arquivos, validações e decisões ainda abertas.
