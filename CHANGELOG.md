@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.49.0 (2026-08-29)
+
+### Chores
+
+- Executa robo do inter a cada push
+  ([`6468ca6`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6468ca6e2201739607475b659fdabfd11a5adf23))
+
+### Features
+
+- Exibe catalogo completo de cashback inter
+  ([`4adce1b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4adce1b839863ca6d4a7bf57175f279470599744))
+
+
 ## v1.48.0 (2026-08-29)
 
 ### Features
