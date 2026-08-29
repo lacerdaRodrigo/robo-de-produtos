@@ -200,6 +200,57 @@ void main() {
     expect(comAlerta.itens.first.alertaAtivo, isFalse);
   });
 
+  testWidgets(
+    'qualquer loja do catálogo abre seu histórico, mesmo sem acompanhamento',
+    (at) async {
+      final controlador = _controlador();
+      addTearDown(controlador.dispose);
+      final requisicoes = <http.Request>[];
+      final api = Api(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: 'http://localhost:3000',
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            requisicoes.add(requisicao);
+            return http.Response(
+              r'{"id_externo":"B","medicoes":[{"momento":"2026-08-29T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":null,"moeda":"R$"}]}',
+              200,
+            );
+          }),
+        ),
+      );
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: PaginaCatalogoLiveloAndroid(
+              api: api,
+              administrador: true,
+              controlador: controlador,
+            ),
+          ),
+        ),
+      );
+      await at.pumpAndSettle();
+      await at.drag(
+        find.byKey(const Key('catalogo-livelo-android')),
+        const Offset(0, -700),
+      );
+      await at.pumpAndSettle();
+
+      await at.tap(find.byKey(const Key('historico-B')));
+      await at.pumpAndSettle();
+
+      expect(find.text('Loja Comum'), findsOneWidget);
+      expect(find.text('5 pontos por R\$ 1'), findsOneWidget);
+      expect(
+        requisicoes.map((requisicao) => requisicao.url.path),
+        contains('/api/livelo/catalogo/B/historico'),
+      );
+    },
+  );
+
   testWidgets('320 px e texto a 150% continuam roláveis sem overflow', (
     at,
   ) async {

@@ -573,9 +573,10 @@ em 28 de agosto de 2026.
 | CT-353 | Tela estreita e texto ampliado | 320 × 640 com texto a 150% rola sem overflow | Viewport e `TextScaler` controlados |
 | CT-354 | Temas do catálogo | Android claro e escuro permanecem iguais às referências versionadas | Dois goldens próprios |
 | CT-355 | Escopo por plataforma | Somente Android compacto usa o catálogo novo; iOS, Web e layout amplo preservam a tela anterior | Override de plataforma e viewports compacta/ampla |
-| CT-356 | Histórico Livelo por loja | Botão do card abre histórico somente leitura, com medições em ordem decrescente e estado vazio válido | Widget com API fake, loja acompanhada e resposta vazia |
+| CT-356 | Histórico Livelo por loja | Botão do card abre histórico somente leitura para acompanhada ou não acompanhada, com medições em ordem decrescente e estado vazio válido | Widget com API fake e resposta vazia |
 | CT-357 | Contrato do histórico Livelo | Cliente chama o ID externo correto, mantém pontuação decimal como texto e não inicia coleta | Mock autenticado da rota `/api/livelo/catalogo/{id_externo}/historico` |
 | CT-358 | Limite e identidade do histórico | API retorna no máximo 30 medições da loja solicitada e não mistura lojas ou parceiros | Banco fake com execuções repetidas, IDs distintos e ordenação por momento |
+| CT-360 | Coleta completa Livelo | Cada execução grava pontuação para todos os parceiros válidos; alerta e limiar continuam exclusivos das acompanhadas | Retrato com parceira acompanhada, não acompanhada e ausente |
 | CT-356 | Polling compacto seguro | Início consulta a API a cada 30 s só em primeiro plano e visível; retorno dispara leitura imediata e nunca sobrepõe chamadas | Relógio falso, ciclo de vida e `Completer` |
 | CT-357 | Previsão e atraso Livelo | As três janelas de Brasília, virada do dia e primeira conclusão posterior distinguem previsão de atraso | Relógio UTC explícito no agregador TypeScript |
 | CT-358 | Melhor acompanhada atual | Decimal textual, empate estável e zero acompanhadas não vazam o catálogo geral para o hero | Fixtures do catálogo autenticado |

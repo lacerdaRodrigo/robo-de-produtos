@@ -21,7 +21,7 @@ No Android Samsung compacto, o Início relê o resumo salvo a cada 30 segundos
 somente quando visível e em primeiro plano. A Livelo destaca apenas a melhor
 loja acompanhada, mostra a próxima janela/atraso do robô e usa o botão
 administrativo idempotente para pedir uma coleta sem chamar Livelo diretamente.
-Cada card acompanhado também permite consultar as últimas 30 pontuações salvas;
+Cada card também permite consultar as últimas 30 pontuações salvas;
 abrir o histórico nunca inicia uma coleta.
 
 ## Plataformas e identificadores

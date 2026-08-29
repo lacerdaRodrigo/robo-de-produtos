@@ -434,6 +434,43 @@ void main() {
   );
 
   test(
+    'historicoLivelo usa o ID externo do parceiro e preserva pontuação textual',
+    () async {
+      Uri? consulta;
+      final api = Api(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            consulta = requisicao.url;
+            return http.Response(
+              jsonEncode({
+                'id_externo': 'NTR',
+                'medicoes': [
+                  {
+                    'momento': '2026-08-29T17:00:00Z',
+                    'pontos_atuais': '12.50',
+                    'pontos_base': '1.00',
+                    'pontos_clube': null,
+                    'moeda': 'R\$',
+                  },
+                ],
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+
+      final resposta = await api.historicoLivelo('NTR');
+
+      expect(consulta!.path, '/api/livelo/catalogo/NTR/historico');
+      expect(resposta.medicoes.single.pontos, '12.50');
+    },
+  );
+
+  test(
     'catálogos administrativos usam páginas e PATCH com o estado desejado',
     () async {
       final requisicoes = <http.Request>[];

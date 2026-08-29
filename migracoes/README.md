@@ -21,11 +21,13 @@ cria o `001` e carrega o catálogo.
 | `011_disparos_api_idempotentes.sql` | `solicitacao_disparo_app` (cooldown API) | app (API) |
 | `012_oferta_direta_inter_atual.sql` | `oferta_direta_inter_atual` (limpeza V5) | V4 |
 | `013_catalogo_livelo.sql` | catálogo completo e vínculo opcional com `loja` | Livelo |
+| `014_alerta_no_card.sql` | alerta calculado no retrato atual | Livelo |
+| `015_historico_catalogo_livelo.sql` | identidade da medição por parceiro e índice do histórico completo | Livelo |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009` e `013` (coleta Livelo/Inter/produtos e catálogo Livelo).
-- API do app: `010`–`013` (autenticação, disparos e catálogos).
+- Robôs: `001`–`009` e `013`–`015` (coleta Livelo/Inter/produtos e histórico Livelo).
+- API do app: `010`–`015` (autenticação, disparos e catálogos).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de

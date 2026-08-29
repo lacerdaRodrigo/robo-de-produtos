@@ -11,6 +11,7 @@ import '../administracao/botao_disparo.dart';
 import 'cartao_catalogo_livelo.dart';
 import 'controlador_catalogo_livelo.dart';
 import 'formato_livelo.dart';
+import 'pagina_historico_livelo_android.dart';
 
 class PaginaCatalogoLiveloAndroid extends StatefulWidget {
   const PaginaCatalogoLiveloAndroid({
@@ -135,58 +136,12 @@ class _EstadoPaginaCatalogoLiveloAndroid
   }
 
   Future<void> _abrirHistorico(ParceiroCatalogoLivelo parceiro) async {
-    try {
-      final historico = await widget.api.historicoLivelo(parceiro.idExterno);
-      if (!mounted) return;
-      await showModalBottomSheet<void>(
-        context: context,
-        showDragHandle: true,
-        builder: (contexto) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Histórico de ${parceiro.nome}',
-                style: Theme.of(
-                  contexto,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Últimas coletas salvas',
-                style: Theme.of(contexto).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 14),
-              if (historico.medicoes.isEmpty)
-                const Text('Ainda não há medições históricas para esta loja.')
-              else
-                ...historico.medicoes
-                    .take(10)
-                    .map(
-                      (medicao) => ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          pontosLivelo(medicao.pontos, moeda: medicao.moeda),
-                        ),
-                        trailing: Text(dataHoraLivelo(medicao.momento)),
-                      ),
-                    ),
-            ],
-          ),
-        ),
-      );
-    } catch (_) {
-      if (mounted) {
-        mostrarMensagemRadar(
-          context,
-          'Não foi possível carregar o histórico.',
-          sucesso: false,
-        );
-      }
-    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            PaginaHistoricoLiveloAndroid(api: widget.api, parceiro: parceiro),
+      ),
+    );
   }
 
   @override

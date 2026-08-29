@@ -27,7 +27,7 @@ robo/
 │   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
 │   └── api/        # API autenticada (arquivada, não roda)
 ├── docs/           # PRDs e documentação
-├── migracoes/      # schema do Postgres (Neon) — 001 a 013
+├── migracoes/      # schema do Postgres (Neon) — 001 a 015
 ├── design-app/     # protótipos visuais Web/Mobile
 ├── .github/        # workflows do GitHub Actions
 └── CLAUDE.md       # contexto para agentes de IA
@@ -36,7 +36,7 @@ robo/
 ## Como funciona
 
 ```text
-Livelo         → extrator próprio → catálogo atual + acompanhadas → alerta/retrato
+Livelo         → extrator próprio → catálogo atual + histórico completo → alerta das acompanhadas
 Shopping Inter → extrator próprio → catálogo → favoritas e retrato
 Produtos Inter → lojas escolhidas → catálogo paginado → busca + histórico
 ```

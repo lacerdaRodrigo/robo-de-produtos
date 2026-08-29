@@ -263,13 +263,14 @@ class RepositorioPostgres:
 
     INSERE_PONTUACAO = """
         INSERT INTO pontuacao (
-            execucao_id, loja_id, nome, pontos_atuais, pontos_base, pontos_clube,
+            execucao_id, loja_id, parceiro_livelo_id, nome, pontos_atuais, pontos_base, pontos_clube,
             valor_de_disparo, moeda, prefixo_ate, em_promocao, alertou, campanha,
             descricao_campanha, fim_promocao, link
         )
         VALUES (
             %(execucao_id)s,
-            (SELECT id FROM loja WHERE nome = %(nome)s),
+            (SELECT id FROM loja WHERE parceiro_livelo_id = (SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s)),
+            (SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s),
             %(nome)s, %(pontos_atuais)s, %(pontos_base)s, %(pontos_clube)s,
             %(valor_de_disparo)s, %(moeda)s, %(prefixo_ate)s, %(em_promocao)s,
             %(alertou)s, %(campanha)s, %(descricao_campanha)s, %(fim_promocao)s, %(link)s
@@ -382,15 +383,32 @@ class RepositorioPostgres:
                         f"esperados {len(vinculos)}, gravados {vinculos_publicados}."
                     )
 
-                linhas_pontuacao = [_linha_de_pontuacao(p, execucao_id) for p in retrato.pontuacoes]
+                por_id = {
+                    pontuacao.parceiro.id_externo: pontuacao
+                    for pontuacao in retrato.pontuacoes
+                    if pontuacao.parceiro is not None
+                }
+                linhas_pontuacao = [
+                    _linha_de_pontuacao_catalogo(
+                        parceiro, execucao_id, por_id.get(parceiro.id_externo)
+                    )
+                    for parceiro in retrato.catalogo
+                ]
+                # Mantém a indicação histórica de uma acompanhada que não
+                # apareceu na fonte, sem fingir que ela é parte do catálogo.
+                linhas_pontuacao.extend(
+                    _linha_de_pontuacao(pontuacao, execucao_id)
+                    for pontuacao in retrato.pontuacoes
+                    if pontuacao.parceiro is None
+                )
                 if linhas_pontuacao:
                     cursor.executemany(self.INSERE_PONTUACAO, linhas_pontuacao)
                 cursor.execute(self.CONTA_PONTUACOES, (execucao_id,))
                 (pontuacoes_publicadas,) = cursor.fetchone()
-                if pontuacoes_publicadas != len(retrato.pontuacoes):
+                if pontuacoes_publicadas != len(linhas_pontuacao):
                     raise FalhaAoGuardar(
                         "Publicacao parcial das pontuacoes Livelo: "
-                        f"esperadas {len(retrato.pontuacoes)}, gravadas {pontuacoes_publicadas}."
+                        f"esperadas {len(linhas_pontuacao)}, gravadas {pontuacoes_publicadas}."
                     )
         except FalhaAoGuardar:
             raise
@@ -422,10 +440,35 @@ def _linha_de_parceiro(parceiro: Parceiro, execucao_id: int) -> dict:
     }
 
 
+def _linha_de_pontuacao_catalogo(
+    parceiro: Parceiro,
+    execucao_id: int,
+    acompanhada: PontuacaoDeLoja | None,
+) -> dict:
+    return {
+        "execucao_id": execucao_id,
+        "id_externo": parceiro.id_externo,
+        "nome": parceiro.nome,
+        "pontos_atuais": parceiro.pontos_atuais,
+        "pontos_base": parceiro.pontos_base,
+        "pontos_clube": parceiro.pontos_clube,
+        "valor_de_disparo": acompanhada.valor_de_disparo if acompanhada else None,
+        "moeda": parceiro.moeda,
+        "prefixo_ate": parceiro.prefixo_ate,
+        "em_promocao": parceiro.em_promocao,
+        "alertou": acompanhada.alertou if acompanhada else False,
+        "campanha": parceiro.campanha,
+        "descricao_campanha": parceiro.descricao_campanha,
+        "fim_promocao": parceiro.fim_promocao,
+        "link": parceiro.link if _link_confiavel(parceiro.link) else None,
+    }
+
+
 def _linha_de_pontuacao(pontuacao: PontuacaoDeLoja, execucao_id: int) -> dict:
     parceiro = pontuacao.parceiro
     return {
         "execucao_id": execucao_id,
+        "id_externo": None,
         # RN01: grava o nome canonico do catalogo, nao a grafia do site.
         "nome": pontuacao.loja.nome,
         "pontos_atuais": parceiro.pontos_atuais if parceiro else None,

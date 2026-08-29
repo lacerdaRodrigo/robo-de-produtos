@@ -58,7 +58,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 ### 3.2 Fora
 
 - Multiusuário, cadastro, recuperação de senha. O site tem um único dono.
-- Gráfico de tendência e histórico do catálogo inteiro. O Android compacto exibe somente as últimas 30 medições das lojas acompanhadas, já persistidas em `pontuacao`.
+- Gráfico de tendência. O histórico em lista das últimas 30 medições faz parte do catálogo Livelo; cada coleta grava todos os parceiros válidos.
 - Hospedar logotipos ou imagens dos parceiros — ver 9.2.
 - Compra, clique automático ou qualquer autenticação na Livelo.
 
@@ -105,11 +105,11 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja. Uma tela por tarefa: `/avisos` para o padrão global e para editar o limiar de loja já cadastrada, `/lojas` para o cadastro — que também aceita, opcionalmente, o limiar próprio da loja no momento de criá-la (RN28: em branco usa o padrão global). **A tela usa linguagem comum** — "vezes acima do normal" e "mínimo de pontos" — e o termo técnico deste PRD aparece só no tooltip de ajuda |
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
-| **RF20** | Persistir todos os parceiros válidos da última coleta Livelo, com identidade por ID externo e categorias da fonte, sem criar histórico completo do catálogo |
+| **RF20** | Persistir todos os parceiros válidos de cada coleta Livelo, com identidade por ID externo, categorias e pontuação, para formar o histórico completo do catálogo |
 | **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação de 20 itens, limitada a 50 por resposta |
 | **RF22** | Permitir que somente administrador acompanhe ou deixe de acompanhar um parceiro pelo ID externo, em operação idempotente e sem iniciar coleta |
 | **RF23** | Aplicar o novo catálogo somente ao Android em largura compacta; Web, iOS e layout amplo mantêm a experiência anterior neste ciclo |
-| **RF24** | No Android compacto, permitir abrir o histórico de uma loja e consultar as últimas 30 pontuações persistidas, sem iniciar coleta e sem expor o catálogo histórico completo |
+| **RF24** | No Android compacto, permitir abrir o histórico de qualquer loja do catálogo e consultar as últimas 30 pontuações persistidas, sem iniciar coleta |
 
 ### 5.2 Não-funcionais
 
@@ -147,7 +147,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
 | **RN31** | Quando a Livelo publica letra miúda para a campanha (`legalTerms`), o Painel exibe o texto por extenso na loja. É o que permite decidir se a promoção vale para a compra pretendida sem abrir o app da Livelo (O5) |
-| **RN32** | `loja` representa somente as acompanhadas; `parceiro_livelo` representa o catálogo completo atual; `pontuacao` guarda o retrato histórico somente das acompanhadas |
+| **RN32** | `loja` representa somente as acompanhadas; `parceiro_livelo` representa o catálogo completo; `pontuacao` guarda o retrato histórico de todos os parceiros por `parceiro_livelo_id` |
 | **RN33** | ID externo ausente ou inválido e o mesmo ID com conteúdo conflitante invalidam a coleta. Repetição idêntica do mesmo ID é deduplicada |
 | **RN34** | Zero lojas acompanhadas é estado válido. Banco vazio não aciona o TOML e a coleta seguinte não restaura automaticamente as 132 escolhas antigas |
 | **RN35** | Execução, catálogo, vínculos e pontuações são publicados em uma única transação; contagem divergente causa rollback e falha ruidosa |
@@ -159,7 +159,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN41** | O agendamento Livelo é calculado no servidor para 09h, 14h e 20h de Brasília. Antes da janela, informa a próxima previsão; depois dela e sem execução nova, informa o atraso real do GitHub. |
 | **RN42** | `melhor_oferta` do catálogo Livelo significa a maior pontuação entre lojas acompanhadas no retrato atual. Sem acompanhadas, retorna vazio; não escolhe parceiro do catálogo geral. |
 | **RN43** | A atividade do Início traz o último evento de Livelo, Cashback e Produtos, ordenado por momento real decrescente e com desempate estável por domínio. Navegar ou pesquisar não consulta Livelo/Inter; somente o botão administrativo idempotente solicita workflow. |
-| **RN44** | O histórico Livelo é somente leitura, pertence à loja acompanhada identificada pelo ID externo e retorna no máximo 30 medições em ordem decrescente de execução. Ausência de medições é estado vazio válido; abrir a tela não dispara robô. |
+| **RN44** | O histórico Livelo é somente leitura, pertence ao parceiro identificado pelo ID externo e retorna no máximo 30 medições em ordem decrescente de execução. Acompanhamento não limita a série; ausência de medições é estado vazio válido; abrir a tela não dispara robô. |
 
 ### 6.1 O novo critério de alerta
 

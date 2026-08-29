@@ -149,8 +149,9 @@ Este parágrafo registra a evolução histórica, não o alvo do novo ciclo mobi
 - [ ] **Fase 4.4:** produtos, busca paginada e histórico — gates Flutter locais
       concluídos (87 testes, cobertura crítica >= 90%, builds Web/APK); falta o
       smoke físico no Samsung antes de concluir
-- [x] Histórico de pontuação Livelo no Android compacto: botão no card, tela de
-      leitura das últimas 30 medições e rota autenticada sem nova coleta
+- [x] Histórico completo de pontuação Livelo: `pontuacao` identifica cada parceiro,
+      o robô grava todas as lojas válidas em cada coleta e o Android compacto expõe
+      a série. A migração `015` continua pendente de aplicação explícita em produção.
 
 ---
 

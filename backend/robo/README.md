@@ -46,8 +46,9 @@ python -m robo_livelo.principal_produtos_inter
 - O e-mail da Livelo exige uma **Senha de Aplicativo** do Gmail (não é a senha).
 - Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
   válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.
-- A publicação da Livelo grava o catálogo atual em `parceiro_livelo` e o retrato
-  das acompanhadas em uma única transação.
+- A publicação da Livelo grava o catálogo atual em `parceiro_livelo` e uma
+  medição histórica de cada parceiro válido em `pontuacao`, em uma única
+  transação. Acompanhamento e alertas continuam exclusivos de `loja`.
 
 ## Qualidade (gates)
 

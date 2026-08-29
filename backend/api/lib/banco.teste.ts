@@ -16,7 +16,11 @@ vi.mock("@neondatabase/serverless", () => ({
   }),
 }));
 
-import { alterarAcompanhamentoParceiroLivelo, pontuacoes } from "@/lib/banco";
+import {
+  alterarAcompanhamentoParceiroLivelo,
+  historicoLivelo,
+  pontuacoes,
+} from "@/lib/banco";
 
 describe("pontuacoes", () => {
   beforeEach(() => {
@@ -64,5 +68,14 @@ describe("pontuacoes", () => {
 
     expect(bancoFalso.consultas[0]).toContain("DELETE FROM loja");
     expect(bancoFalso.consultas[0]).toContain("SELECT TRUE AS confirmado FROM parceiro");
+  });
+
+  it("consulta o histórico pela identidade estável do parceiro, sem exigir acompanhamento", async () => {
+    await historicoLivelo("NTR");
+
+    expect(bancoFalso.consultas).toHaveLength(1);
+    expect(bancoFalso.consultas[0]).toContain("p.parceiro_livelo_id = pl.id");
+    expect(bancoFalso.consultas[0]).toContain("pl.id_externo = NTR");
+    expect(bancoFalso.consultas[0]).toContain("LIMIT 30");
   });
 });

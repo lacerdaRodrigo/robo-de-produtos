@@ -454,11 +454,12 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     )
 
     momento = datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA)
+    parceiro_nao_acompanhado = faz_parceiro("KaBuM!", "5", base="1")
     snapshot = RetratoDaExecucao(
         momento=momento,
         parceiros_lidos=254,
         versao="1.4.0",
-        catalogo=(parceiro,),
+        catalogo=(parceiro, parceiro_nao_acompanhado),
         pontuacoes=(
             PontuacaoDeLoja(
                 loja=loja_encontrada,
@@ -471,9 +472,9 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     )
 
     cursor = CursorGravador(
-        catalogo_publicado=1,
+        catalogo_publicado=2,
         vinculos_publicados=1,
-        pontuacoes_publicadas=2,
+        pontuacoes_publicadas=3,
     )
     repositorio_fake(monkeypatch, cursor).registrar(snapshot)
 
@@ -488,17 +489,21 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     assert vinculos == [{"nome_loja": "Natura", "id_externo": parceiro.id_externo}]
 
     _, linhas = cursor.lotes[2]
-    assert len(linhas) == 2
+    assert len(linhas) == 3
     assert linhas[0]["nome"] == "Natura"  # RN01: nome canonico do catalogo
     assert linhas[0]["pontos_atuais"] == Decimal("8")
     assert linhas[0]["valor_de_disparo"] == Decimal("4")
     assert linhas[0]["alertou"] is True
     assert linhas[0]["descricao_campanha"] == "Campanha válida de 11 a 13/08/2026."
-    # RN19: favorita ausente vira linha vazia, nao desaparece
-    assert linhas[1]["nome"] == "Magalu"
-    assert linhas[1]["pontos_atuais"] is None
+    # Toda loja do catálogo entra no histórico, mesmo sem acompanhamento.
+    assert linhas[1]["nome"] == "KaBuM!"
+    assert linhas[1]["valor_de_disparo"] is None
     assert linhas[1]["alertou"] is False
-    assert linhas[1]["descricao_campanha"] is None
+    # RN19: favorita ausente vira linha vazia, nao desaparece
+    assert linhas[2]["nome"] == "Magalu"
+    assert linhas[2]["pontos_atuais"] is None
+    assert linhas[2]["alertou"] is False
+    assert linhas[2]["descricao_campanha"] is None
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):

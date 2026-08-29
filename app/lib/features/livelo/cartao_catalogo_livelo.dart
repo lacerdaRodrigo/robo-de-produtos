@@ -142,6 +142,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
             Row(
               children: [
                 OutlinedButton(
+                  key: Key('historico-${parceiro.idExterno}'),
                   onPressed: aoHistorico,
                   child: const Text('Histórico'),
                 ),

@@ -127,8 +127,13 @@ export async function historicoLivelo(idExterno: string): Promise<MedicaoHistori
       FROM pontuacao p
       JOIN execucao e ON e.id = p.execucao_id
       JOIN parceiro_livelo pl ON pl.id_externo = ${idExterno}
-     WHERE regexp_replace(lower(translate(p.nome, 'áàãâäéèêëíìîïóòõôöúùûüç', 'aaaaaeeeeiiiiooooouuuuc')), '[^a-z0-9]', '', 'g') = regexp_replace(lower(translate(pl.nome, 'áàãâäéèêëíìîïóòõôöúùûüç', 'aaaaaeeeeiiiiooooouuuuc')), '[^a-z0-9]', '', 'g')
-        OR EXISTS (SELECT 1 FROM loja l WHERE l.parceiro_livelo_id = pl.id AND l.id = p.loja_id)
+     WHERE p.parceiro_livelo_id = pl.id
+        -- Fallback apenas para retratos antigos, gravados antes da migração
+        -- 015 e portanto sem a identidade estável do parceiro.
+        OR EXISTS (
+          SELECT 1 FROM loja l
+           WHERE l.parceiro_livelo_id = pl.id AND l.id = p.loja_id
+        )
      ORDER BY e.momento DESC
      LIMIT 30
   `) as MedicaoHistoricoLivelo[];
