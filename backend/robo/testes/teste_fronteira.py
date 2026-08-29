@@ -75,6 +75,7 @@ def teste_versionamento_aponta_para_os_arquivos_apos_reorganizacao():
 
     assert configuracao["version_toml"] == ["backend/robo/pyproject.toml:project.version"]
     assert configuracao["version_variables"] == [
-        "backend/robo/src/robo_livelo/__init__.py:__version__"
+        "backend/robo/src/robo_livelo/__init__.py:__version__",
+        "app/pubspec.yaml:version",
     ]
     assert "semantic-release -c backend/robo/pyproject.toml version" in workflow

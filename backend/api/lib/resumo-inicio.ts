@@ -101,7 +101,7 @@ function agendamentoLivelo(dados: ResumoLiveloPersistido, agora: Date) {
   const brasilia = partesBrasilia(agora);
   const janelas = HORARIOS_LIVELO.map((hora) => janelaBrasilia(brasilia.ano, brasilia.mes, brasilia.dia, hora));
   const sucesso = instante(dados.ultimo_sucesso_em);
-  const pendente = janelas.find((janela) => janela <= agora && (sucesso === null || sucesso < janela));
+  const pendente = janelas.find((janela) => janela <= agora && (sucesso === null || sucesso < janela.getTime()));
   if (pendente) return { estado: "aguardando" as const, referencia_em: pendente.toISOString() };
   const proxima = janelas.find((janela) => janela > agora);
   if (proxima) return { estado: "prevista" as const, referencia_em: proxima.toISOString() };
