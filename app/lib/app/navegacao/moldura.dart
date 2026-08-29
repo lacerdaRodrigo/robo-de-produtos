@@ -382,40 +382,40 @@ class GavetaRadar extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 14, 10, 12),
                   child: Row(
-                  children: [
-                    const LogoRadar(tamanho: 44, sobreFundoEscuro: true),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Radar de Benefícios',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
+                    children: [
+                      const LogoRadar(tamanho: 44, sobreFundoEscuro: true),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Radar de Benefícios',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Pontos, cashback e preços',
-                            style: TextStyle(
-                              color: Color(0xFF93AABD),
-                              fontSize: 11,
+                            SizedBox(height: 2),
+                            Text(
+                              'Pontos, cashback e preços',
+                              style: TextStyle(
+                                color: Color(0xFF93AABD),
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      key: const Key('fechar-menu-principal'),
-                      tooltip: 'Fechar menu principal',
-                      onPressed: () => Navigator.of(context).pop(),
-                      color: Colors.white,
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                      IconButton(
+                        key: const Key('fechar-menu-principal'),
+                        tooltip: 'Fechar menu principal',
+                        onPressed: () => Navigator.of(context).pop(),
+                        color: Colors.white,
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -553,7 +553,9 @@ class _BotaoUtilidadeGaveta extends StatelessWidget {
     return OutlinedButton.icon(
       key: chave,
       style: OutlinedButton.styleFrom(
-        foregroundColor: escuro ? const Color(0xFFC6D5E2) : const Color(0xFF526E83),
+        foregroundColor: escuro
+            ? const Color(0xFFC6D5E2)
+            : const Color(0xFF526E83),
         side: BorderSide(
           color: escuro
               ? Colors.white.withValues(alpha: 0.14)
@@ -751,8 +753,8 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
               color: escuro
                   ? Colors.white.withValues(alpha: selecionado ? 0.12 : 0.06)
                   : (selecionado
-                      ? const Color(0xFFDDEEFF)
-                      : const Color(0xFFEDF4F8)),
+                        ? const Color(0xFFDDEEFF)
+                        : const Color(0xFFEDF4F8)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: SizedBox.square(
