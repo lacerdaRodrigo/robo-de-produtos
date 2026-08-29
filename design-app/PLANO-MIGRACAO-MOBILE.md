@@ -207,26 +207,34 @@ com estado da coleta, lojas acompanhadas, produtos ativos e última atualizaçã
 
 ### Etapa 4 — Livelo
 
+**Delta aprovado em 2026-08-28:** esta etapa ganhou contrato próprio de catálogo
+completo e, neste ciclo, a nova apresentação é exclusiva do Android compacto.
+O iOS compacto, o Web e o layout amplo permanecem na experiência anterior. Essa
+é uma exceção deliberada ao escopo geral Android+iOS deste plano.
+
 **Entrega**
 
 - transformar Livelo em área mobile direta, sem passar pelo hub de Lojas;
-- reutilizar painel, busca, ordenação, paginação e cartões já existentes;
-- reunir, para administradores, lojas configuradas, regras e preferências já
-  suportadas pela API;
+- consumir `GET /api/livelo/catalogo` com todos os parceiros da última coleta
+  válida, busca, abas, categoria, ordenação e paginação;
+- permitir que administradores acompanhem ou removam uma loja pelo contrato
+  fechado `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento`;
 - preservar confirmação, busca, página e resposta visual nas mutações;
 - apresentar horários e estado da coleta sem sugerir consulta ao vivo à Livelo.
 
 **Limite do ciclo**
 
-“Catálogo” significa o painel coletado e as lojas administrativas que a API já
-expõe. Descobrir e acompanhar qualquer loja de um catálogo público completo
-fica adiado até existir contrato próprio.
+“Catálogo” significa todos os parceiros válidos publicados pela última coleta.
+`loja` continua sendo apenas a seleção acompanhada e `pontuacao`, o retrato
+histórico dessas acompanhadas. O Flutter consulta somente o Postgres pela API;
+digitar nunca chama a Livelo nem inicia coleta.
 
 **Gate de aceite**
 
 - todas as funções Livelo atuais ficam alcançáveis dentro da área;
 - paginação não duplica nem perde itens;
 - valores de pontos e regras permanecem textualmente fiéis à API.
+- Android compacto segue o novo protótipo e Web/iOS/layout amplo não mudam.
 
 ### Etapa 5 — Banco Inter
 

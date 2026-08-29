@@ -31,6 +31,11 @@ async function popularBanco() {
       "VALUES (1, now(), 1, 1, 'aceite')",
   );
   await sql(
+    "INSERT INTO parceiro_livelo (id, id_externo, nome, pontos_atuais, moeda, " +
+      "atualizado_execucao_id) VALUES (1, 'LIV-1', 'Loja aceite', 2.90, 'R$', 1)",
+  );
+  await sql("UPDATE loja SET parceiro_livelo_id = 1 WHERE id = 1");
+  await sql(
     "INSERT INTO pontuacao (id, execucao_id, loja_id, nome, pontos_atuais) " +
       "VALUES (1, 1, 1, 'Loja aceite', 2.90)",
   );
@@ -131,6 +136,7 @@ describe.skipIf(!habilitado)("aceite destrutivo Fase 5 em banco descartável", (
       await popularBanco();
 
       expect(await resumoDadosLivelo()).toEqual({
+        parceirosCatalogo: 1,
         lojas: 1,
         apelidos: 1,
         execucoes: 1,
@@ -167,6 +173,7 @@ describe.skipIf(!habilitado)("aceite destrutivo Fase 5 em banco descartável", (
 
       await apagarDadosLivelo();
       expect(await resumoDadosLivelo()).toEqual({
+        parceirosCatalogo: 0,
         lojas: 0,
         apelidos: 0,
         execucoes: 0,

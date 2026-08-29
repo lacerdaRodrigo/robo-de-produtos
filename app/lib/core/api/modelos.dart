@@ -661,6 +661,207 @@ class PontuacaoLivelo {
   final String? fimPromocao;
 }
 
+/// Parceiro da última coleta válida da Livelo, acompanhado ou não.
+class ParceiroCatalogoLivelo {
+  const ParceiroCatalogoLivelo({
+    required this.idExterno,
+    required this.nome,
+    required this.categorias,
+    required this.pontosAtuais,
+    required this.pontosAnteriores,
+    required this.pontosBase,
+    required this.pontosClube,
+    required this.moeda,
+    required this.prefixoAte,
+    required this.emPromocao,
+    required this.campanha,
+    required this.descricaoCampanha,
+    required this.inicioPromocao,
+    required this.fimPromocao,
+    required this.acompanhada,
+    required this.alerta,
+  });
+
+  factory ParceiroCatalogoLivelo.parse(Map<String, dynamic> objeto) =>
+      ParceiroCatalogoLivelo(
+        idExterno: _texto(objeto['id_externo']),
+        nome: _texto(objeto['nome']),
+        categorias:
+            (objeto['categorias'] as List<dynamic>?)
+                ?.map(_texto)
+                .where((item) => item.isNotEmpty)
+                .toList(growable: false) ??
+            const <String>['Outros'],
+        pontosAtuais: _texto(objeto['pontos_atuais']),
+        pontosAnteriores: _textoOpcional(objeto['pontos_anteriores']),
+        pontosBase: _textoOpcional(objeto['pontos_base']),
+        pontosClube: _textoOpcional(objeto['pontos_clube']),
+        moeda: _texto(objeto['moeda']),
+        prefixoAte: _booleano(objeto['prefixo_ate']),
+        emPromocao: _booleano(objeto['em_promocao']),
+        campanha: _textoOpcional(objeto['campanha']),
+        descricaoCampanha: _textoOpcional(objeto['descricao_campanha']),
+        inicioPromocao: _textoOpcional(objeto['inicio_promocao']),
+        fimPromocao: _textoOpcional(objeto['fim_promocao']),
+        acompanhada: _booleano(objeto['acompanhada']),
+        alerta: _booleano(objeto['alerta']),
+      );
+
+  final String idExterno;
+  final String nome;
+  final List<String> categorias;
+  final String pontosAtuais;
+  final String? pontosAnteriores;
+  final String? pontosBase;
+  final String? pontosClube;
+  final String moeda;
+  final bool prefixoAte;
+  final bool emPromocao;
+  final String? campanha;
+  final String? descricaoCampanha;
+  final String? inicioPromocao;
+  final String? fimPromocao;
+  final bool acompanhada;
+  final bool alerta;
+
+  ParceiroCatalogoLivelo copiarCom({bool? acompanhada, bool? alerta}) =>
+      ParceiroCatalogoLivelo(
+        idExterno: idExterno,
+        nome: nome,
+        categorias: categorias,
+        pontosAtuais: pontosAtuais,
+        pontosAnteriores: pontosAnteriores,
+        pontosBase: pontosBase,
+        pontosClube: pontosClube,
+        moeda: moeda,
+        prefixoAte: prefixoAte,
+        emPromocao: emPromocao,
+        campanha: campanha,
+        descricaoCampanha: descricaoCampanha,
+        inicioPromocao: inicioPromocao,
+        fimPromocao: fimPromocao,
+        acompanhada: acompanhada ?? this.acompanhada,
+        alerta: alerta ?? this.alerta,
+      );
+}
+
+class MelhorOfertaLivelo {
+  const MelhorOfertaLivelo({
+    required this.idExterno,
+    required this.nome,
+    required this.pontosAtuais,
+    required this.moeda,
+    required this.prefixoAte,
+  });
+
+  factory MelhorOfertaLivelo.parse(Map<String, dynamic> objeto) =>
+      MelhorOfertaLivelo(
+        idExterno: _texto(objeto['id_externo']),
+        nome: _texto(objeto['nome']),
+        pontosAtuais: _texto(objeto['pontos_atuais']),
+        moeda: _texto(objeto['moeda']),
+        prefixoAte: _booleano(objeto['prefixo_ate']),
+      );
+
+  final String idExterno;
+  final String nome;
+  final String pontosAtuais;
+  final String moeda;
+  final bool prefixoAte;
+}
+
+class ResumoCatalogoLivelo {
+  const ResumoCatalogoLivelo({
+    required this.ultimaColeta,
+    required this.parceirosLidos,
+    required this.totalCatalogo,
+    required this.acompanhadas,
+    required this.alertas,
+    required this.melhorOferta,
+  });
+
+  factory ResumoCatalogoLivelo.parse(Map<String, dynamic> objeto) {
+    final melhor = objeto['melhor_oferta'];
+    return ResumoCatalogoLivelo(
+      ultimaColeta: _textoOpcional(objeto['ultima_coleta']),
+      parceirosLidos: _inteiroNaoNegativo(objeto['parceiros_lidos']),
+      totalCatalogo: _inteiroNaoNegativo(objeto['total_catalogo']),
+      acompanhadas: _inteiroNaoNegativo(objeto['acompanhadas']),
+      alertas: _inteiroNaoNegativo(objeto['alertas']),
+      melhorOferta: melhor is Map<String, dynamic>
+          ? MelhorOfertaLivelo.parse(melhor)
+          : null,
+    );
+  }
+
+  final String? ultimaColeta;
+  final int parceirosLidos;
+  final int totalCatalogo;
+  final int acompanhadas;
+  final int alertas;
+  final MelhorOfertaLivelo? melhorOferta;
+
+  ResumoCatalogoLivelo copiarCom({int? acompanhadas, int? alertas}) {
+    final novasAcompanhadas = acompanhadas ?? this.acompanhadas;
+    final novosAlertas = alertas ?? this.alertas;
+    return ResumoCatalogoLivelo(
+      ultimaColeta: ultimaColeta,
+      parceirosLidos: parceirosLidos,
+      totalCatalogo: totalCatalogo,
+      acompanhadas: novasAcompanhadas < 0 ? 0 : novasAcompanhadas,
+      alertas: novosAlertas < 0 ? 0 : novosAlertas,
+      melhorOferta: melhorOferta,
+    );
+  }
+}
+
+class PaginaCatalogoLivelo {
+  const PaginaCatalogoLivelo({
+    required this.itens,
+    required this.resumo,
+    required this.categorias,
+    required this.pagina,
+    required this.porPagina,
+    required this.totalItens,
+    required this.totalPaginas,
+    required this.temProxima,
+  });
+
+  factory PaginaCatalogoLivelo.parse(Map<String, dynamic> objeto) =>
+      PaginaCatalogoLivelo(
+        itens:
+            (objeto['itens'] as List<dynamic>?)
+                ?.map(
+                  (item) => ParceiroCatalogoLivelo.parse(
+                    item as Map<String, dynamic>,
+                  ),
+                )
+                .toList(growable: false) ??
+            const <ParceiroCatalogoLivelo>[],
+        resumo: ResumoCatalogoLivelo.parse(_mapa(objeto['resumo'])),
+        categorias:
+            (objeto['categorias'] as List<dynamic>?)
+                ?.map(_texto)
+                .where((item) => item.isNotEmpty)
+                .toList(growable: false) ??
+            const <String>[],
+        pagina: (objeto['pagina'] as num?)?.toInt() ?? 1,
+        porPagina: (objeto['por_pagina'] as num?)?.toInt() ?? 20,
+        totalItens: (objeto['total_itens'] as num?)?.toInt() ?? 0,
+        totalPaginas: (objeto['total_paginas'] as num?)?.toInt() ?? 1,
+        temProxima: _booleano(objeto['tem_proxima']),
+      );
+
+  final List<ParceiroCatalogoLivelo> itens;
+  final ResumoCatalogoLivelo resumo;
+  final List<String> categorias;
+  final int pagina;
+  final int porPagina;
+  final int totalItens;
+  final int totalPaginas;
+  final bool temProxima;
+}
+
 String _texto(Object? valor) => valor?.toString() ?? '';
 
 String? _textoOpcional(Object? valor) {

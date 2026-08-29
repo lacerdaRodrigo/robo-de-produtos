@@ -14,7 +14,13 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 
-from robo_livelo.extrator import TITULO_SECAO_PARCEIROS, extrair_parceiros
+import pytest
+
+from robo_livelo.extrator import (
+    TITULO_SECAO_PARCEIROS,
+    CatalogoLiveloInvalido,
+    extrair_parceiros,
+)
 from testes.conftest import (
     FUSO_BRASILIA,
     TITULO_SECAO_DESTAQUE,
@@ -71,7 +77,7 @@ def teste_ct014_moeda_em_dolar():
 
 
 def teste_ct017_parceiro_duplicado():
-    """RN06: repetido conta uma vez so."""
+    """RN06: o mesmo ID e o mesmo conteúdo contam uma vez só."""
     itens = [monta_item_parceiro(nome="Natura"), monta_item_parceiro(nome="Natura")]
     assert len(extrair_parceiros(pagina(*itens), agora=AGORA_TESTE)) == 1
 
@@ -108,6 +114,7 @@ def teste_ct080_mapeamento_completo_rf14():
     assert parceiro.inicio_promocao == datetime(2026, 8, 5, 0, 0, tzinfo=FUSO_BRASILIA)
     assert parceiro.fim_promocao == datetime(2026, 8, 20, 23, 59, tzinfo=FUSO_BRASILIA)
     assert parceiro.campanha == "PROMOTION"
+    assert parceiro.id_externo == "NAT"
 
 
 def teste_ct081_fracionario_sem_residuo_de_float():
@@ -214,6 +221,52 @@ def teste_ct089_sem_nome_e_descartado():
 def teste_ct090_dedup_por_nome():
     itens = [monta_item_parceiro(nome="Petlove"), monta_item_parceiro(nome="Petlove")]
     assert len(extrair_parceiros(pagina(*itens), agora=AGORA_TESTE)) == 1
+
+
+def teste_catalogo_deduplica_por_id_externo_e_preserva_categorias():
+    repetido = monta_item_parceiro(
+        id="XPTO",
+        nome="Loja Exemplo",
+        categories="todos eletrodomesticos casaedecoracao eletrodomesticos",
+    )
+    parceiros = extrair_parceiros(pagina(repetido, repetido.copy()), agora=AGORA_TESTE)
+
+    assert len(parceiros) == 1
+    assert parceiros[0].id_externo == "XPTO"
+    assert parceiros[0].categorias == ("eletrodomesticos", "casaedecoracao")
+
+
+def teste_mesmo_nome_com_ids_distintos_nao_e_mesclado():
+    parceiros = extrair_parceiros(
+        pagina(
+            monta_item_parceiro(id="LOJA-A", nome="Loja"),
+            monta_item_parceiro(id="LOJA-B", nome="Loja"),
+        ),
+        agora=AGORA_TESTE,
+    )
+    assert [parceiro.id_externo for parceiro in parceiros] == ["LOJA-A", "LOJA-B"]
+
+
+def teste_mesmo_id_com_conteudo_conflitante_falha_a_coleta():
+    with pytest.raises(CatalogoLiveloInvalido, match="ID externo conflitante"):
+        extrair_parceiros(
+            pagina(
+                monta_item_parceiro(id="LOJA", nome="Nome antigo"),
+                monta_item_parceiro(id="LOJA", nome="Nome novo"),
+            ),
+            agora=AGORA_TESTE,
+        )
+
+
+def teste_id_externo_invalido_falha_o_catalogo():
+    with pytest.raises(CatalogoLiveloInvalido, match="ausente ou inválido"):
+        extrair_parceiros(
+            pagina(
+                monta_item_parceiro(id="../../hostil", nome="Hostil"),
+                monta_item_parceiro(id="OK", nome="Válida"),
+            ),
+            agora=AGORA_TESTE,
+        )
 
 
 def teste_ct091_separator_slug_ate_hipotese():

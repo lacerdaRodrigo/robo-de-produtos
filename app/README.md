@@ -12,6 +12,11 @@ o mesmo código, consumindo somente a API arquivada em `../backend/api/`.
 > ainda precisam de aceite visual. O plano técnico está em [`PLANO.md`](PLANO.md) e a
 > ordem visual por telas em [`PLANO-REDESIGN-POR-TELAS.md`](PLANO-REDESIGN-POR-TELAS.md).
 
+O catálogo Livelo completo está implementado somente no Android compacto. Ele
+usa a API paginada, preserva filtros e posição nas mutações e mantém Web, iOS e
+layout amplo na experiência anterior. Migração, deploy e smoke físico não fazem
+parte da entrega local.
+
 ## Plataformas e identificadores
 
 - projeto Firebase: `radarbeneficios`;

@@ -13,6 +13,7 @@ function conectar() {
 }
 
 export type ResumoDadosLivelo = {
+  parceirosCatalogo: number;
   lojas: number;
   apelidos: number;
   execucoes: number;
@@ -36,13 +37,21 @@ export type ResumoDadosInter = {
 export async function resumoDadosLivelo(): Promise<ResumoDadosLivelo> {
   const sql = conectar();
   const linhas = (await sql(
-    "SELECT (SELECT count(*)::int FROM loja) AS lojas, " +
+    'SELECT (SELECT count(*)::int FROM parceiro_livelo) AS "parceirosCatalogo", ' +
+      "(SELECT count(*)::int FROM loja) AS lojas, " +
       "(SELECT count(*)::int FROM apelido) AS apelidos, " +
       "(SELECT count(*)::int FROM execucao) AS execucoes, " +
       "(SELECT count(*)::int FROM pontuacao) AS pontuacoes, " +
       "(SELECT count(*)::int FROM disparo_manual) AS disparos",
   )) as ResumoDadosLivelo[];
-  return linhas[0] ?? { lojas: 0, apelidos: 0, execucoes: 0, pontuacoes: 0, disparos: 0 };
+  return linhas[0] ?? {
+    parceirosCatalogo: 0,
+    lojas: 0,
+    apelidos: 0,
+    execucoes: 0,
+    pontuacoes: 0,
+    disparos: 0,
+  };
 }
 
 export async function resumoDadosInter(): Promise<ResumoDadosInter> {
@@ -77,9 +86,10 @@ export async function resumoDadosInter(): Promise<ResumoDadosInter> {
 
 const TABELAS_LIVELO = [
   "pontuacao",
-  "execucao",
   "apelido",
   "loja",
+  "parceiro_livelo",
+  "execucao",
   "preferencia",
   "disparo_manual",
 ];

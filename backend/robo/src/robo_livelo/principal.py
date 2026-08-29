@@ -112,8 +112,8 @@ def verificar_promocoes(
     favoritas = catalogo.listar()
     _log.info("Lojas favoritas carregadas: %d", len(favoritas))
 
-    # Um banco vazio e reidratado pelo CatalogoComReserva antes de chegar aqui.
-    # Este aviso cobre apenas quem roda sem banco e sem lojas no TOML (O3).
+    # Banco vazio é um estado válido e não aciona a reserva em TOML. Assim uma
+    # limpeza não ressuscita escolhas antigas na coleta seguinte.
     if not favoritas:
         _log.warning("Nenhuma loja cadastrada. Nada sera monitorado.")
 

@@ -46,6 +46,52 @@ void main() {
     expect(loja.campanha, isNull);
   });
 
+  test('catálogo Livelo preserva ID, categorias e decimais textuais', () {
+    final pagina = PaginaCatalogoLivelo.parse({
+      'itens': [
+        {
+          'id_externo': 'NAT',
+          'nome': 'Natura',
+          'categorias': ['Beleza'],
+          'pontos_atuais': '2.90',
+          'pontos_base': '1.00',
+          'pontos_clube': '3.50',
+          'moeda': 'R\$',
+          'prefixo_ate': true,
+          'em_promocao': true,
+          'acompanhada': false,
+          'alerta': false,
+        },
+      ],
+      'resumo': {
+        'ultima_coleta': '2026-08-28T12:00:00Z',
+        'parceiros_lidos': 252,
+        'total_catalogo': 252,
+        'acompanhadas': 0,
+        'alertas': 0,
+        'melhor_oferta': {
+          'id_externo': 'NAT',
+          'nome': 'Natura',
+          'pontos_atuais': '2.90',
+          'moeda': 'R\$',
+          'prefixo_ate': true,
+        },
+      },
+      'categorias': ['Beleza'],
+      'pagina': 1,
+      'por_pagina': 20,
+      'total_itens': 252,
+      'total_paginas': 13,
+      'tem_proxima': true,
+    });
+
+    expect(pagina.itens.single.idExterno, 'NAT');
+    expect(pagina.itens.single.pontosAtuais, '2.90');
+    expect(pagina.itens.single.pontosClube, '3.50');
+    expect(pagina.resumo.melhorOferta!.pontosAtuais, '2.90');
+    expect(pagina.totalPaginas, 13);
+  });
+
   test('decimal remove zeros sem usar double', () {
     expect(decimal('2.90'), '2,9');
     expect(decimal('6.000'), '6');

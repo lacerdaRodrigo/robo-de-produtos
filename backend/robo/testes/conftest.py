@@ -77,12 +77,16 @@ def faz_parceiro(
     fim: datetime | None = None,
     campanha: str | None = None,
     descricao_campanha: str | None = None,
+    id_externo: str | None = None,
+    categorias: tuple[str, ...] = (),
 ) -> Parceiro:
     return Parceiro(
         nome=nome,
         pontos_atuais=Decimal(pontos),
         moeda=moeda,
         link=link,
+        id_externo=id_externo or nome.casefold().replace(" ", "-").replace("&", "e"),
+        categorias=categorias,
         em_promocao=em_promocao,
         pontos_anteriores=Decimal(anteriores) if anteriores is not None else None,
         pontos_clube=Decimal(clube) if clube is not None else None,
@@ -133,7 +137,7 @@ def envolver_payload_em_html(json_texto: str) -> str:
 
 def monta_item_parceiro(
     *,
-    id: str = "NAT",
+    id: str | None = None,
     nome: str = "Natura",
     link: str = "https://www.livelo.com.br/juntar-pontos/parceiros/natura/NAT",
     currency: str = "R$",
@@ -146,8 +150,20 @@ def monta_item_parceiro(
     active_campaign: str = "BAU",
     separator_slug: str = "IGUAL",
     legal_terms: str = "",
+    categories: str | list[str] = "todos",
 ) -> dict:
     """Item sintetico no formato real de `configPartners` (RF14)."""
+    if id is None:
+        id = (
+            "NAT"
+            if nome == "Natura"
+            else "".join(
+                caractere
+                for caractere in nome.upper()
+                if caractere.isascii() and caractere.isalnum()
+            )[:100]
+        )
+
     bloco_parity: dict = {
         "currency": currency,
         "currencyValue": 1,
@@ -171,7 +187,7 @@ def monta_item_parceiro(
         "name": nome,
         "link": link,
         "partnerDetailsPage": link,
-        "categories": "todos",
+        "categories": categories,
         "parity": bloco_parity,
     }
 

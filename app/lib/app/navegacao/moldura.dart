@@ -6,6 +6,7 @@ import '../../core/api/modelos.dart';
 import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
+import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
@@ -108,12 +109,18 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       aoAbrirProdutos: () => _selecionarCompacto(DestinoCompacto.produtos),
     ),
     _visitadosCompactos.contains(DestinoCompacto.livelo)
-        ? PaginaPainelLivelo(
-            key: const PageStorageKey('livelo-compacto'),
-            api: widget.api,
-            administrador: widget.administrador,
-            experienciaCompacta: true,
-          )
+        ? (!kIsWeb && defaultTargetPlatform == TargetPlatform.android
+              ? PaginaCatalogoLiveloAndroid(
+                  key: const PageStorageKey('livelo-catalogo-android'),
+                  api: widget.api,
+                  administrador: widget.administrador,
+                )
+              : PaginaPainelLivelo(
+                  key: const PageStorageKey('livelo-compacto'),
+                  api: widget.api,
+                  administrador: widget.administrador,
+                  experienciaCompacta: true,
+                ))
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.inter)
         ? PaginaHubShoppingInter(

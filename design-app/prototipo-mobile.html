@@ -724,13 +724,13 @@
             <p>Tudo da Livelo fica aqui: catálogo, acompanhadas, campanhas e alertas.</p>
           </header>
           <article class="hero">
-            <span class="hero-selo">Última coleta concluída</span>
-            <h2>12 pontos por real é a melhor oferta agora.</h2>
-            <p>Seis lojas acompanhadas e duas campanhas acima do seu piso.</p>
+            <span class="hero-selo">Exemplo visual · sem dados reais</span>
+            <h2>A melhor oferta da última coleta válida aparece aqui.</h2>
+            <p>Até a primeira sincronização, o app mostra um estado honesto em vez de números ilustrativos.</p>
             <div class="metricas">
-              <div class="metrica"><strong>6</strong><span>acompanhadas</span></div>
-              <div class="metrica"><strong>2</strong><span>alertas ativos</span></div>
-              <div class="metrica"><strong>213</strong><span>no catálogo</span></div>
+              <div class="metrica"><strong>0</strong><span>acompanhadas</span></div>
+              <div class="metrica"><strong>0</strong><span>alertas ativos</span></div>
+              <div class="metrica"><strong>—</strong><span>no catálogo</span></div>
             </div>
           </article>
           <div class="abas" role="tablist">
@@ -742,19 +742,17 @@
           <div class="painel" data-painel-grupo="livelo" data-painel="lojas">
             <label class="busca"><svg class="icone"><use href="#i-search"></use></svg><span class="sr-only">Buscar na Livelo</span><input type="search" placeholder="Buscar loja ou categoria" /><button type="button" aria-label="Filtrar"><svg class="icone pequeno"><use href="#i-filter"></use></svg></button></label>
             <div class="chips"><button class="chip ativo" type="button">Todas</button><button class="chip" type="button">Moda</button><button class="chip" type="button">Viagem</button><button class="chip" type="button">Tecnologia</button></div>
+            <div class="faixa"><svg class="icone"><use href="#i-clock"></use></svg><span>Os cartões abaixo demonstram a composição. Nome, categorias, pontos, campanha e validade virão da API.</span></div>
             <div class="lojas">
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">NB</span><span class="loja-nome"><strong>Netshoes</strong><small>Esporte · campanha ativa</small></span><span class="beneficio">12 pts/R$</span></div><div class="loja-rodape"><span class="status">Válido até 30 ago.</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhando</button></div></article>
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">AM</span><span class="loja-nome"><strong>Amazon</strong><small>Marketplace · padrão 1 ponto</small></span><span class="beneficio">7 pts/R$</span></div><div class="loja-rodape"><span class="status">Clube: 8 pts/R$</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
-              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">RE</span><span class="loja-nome"><strong>Renner</strong><small>Moda · oferta turbinada</small></span><span class="beneficio">5 pts/R$</span></div><div class="loja-rodape"><span class="status">Atualizado há 18 min</span><button class="acompanhar ativo" type="button" data-action="acompanhar">Acompanhando</button></div></article>
+              <article class="cartao loja"><div class="loja-topo"><span class="loja-marca">EX</span><span class="loja-nome"><strong>Parceiro de exemplo</strong><small>Categoria real · campanha quando existir</small></span><span class="beneficio">— pts/R$</span></div><div class="loja-rodape"><span class="status">Validade quando informada</span><button class="acompanhar" type="button" data-action="acompanhar">Acompanhar</button></div></article>
             </div>
           </div>
           <div class="painel" data-painel-grupo="livelo" data-painel="acompanhadas" hidden>
-            <div class="faixa"><svg class="icone"><use href="#i-check"></use></svg><span>Seis lojas estão no seu radar. Mudanças aparecem na hora e são confirmadas pela API em segundo plano.</span></div>
-            <div class="grade"><article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-store"></use></svg></span><strong>6</strong><span>lojas monitoradas</span></article><article class="cartao numero"><span class="mini-icone"><svg class="icone pequeno"><use href="#i-gift"></use></svg></span><strong>2</strong><span>campanhas turbinadas</span></article></div>
+            <div class="faixa"><svg class="icone"><use href="#i-store"></use></svg><span>Nenhuma loja acompanhada ainda. Escolha uma na aba Lojas; a regra será usada na próxima coleta.</span></div>
           </div>
           <div class="painel" data-painel-grupo="livelo" data-painel="alertas" hidden>
             <div class="infos">
-              <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-bell"></use></svg></span><div><h3>Piso de alerta</h3><p>Avisar quando uma acompanhada chegar a 4 pontos por real.</p></div></article>
+              <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-bell"></use></svg></span><div><h3>Nenhum alerta na última coleta</h3><p>Esta aba mostra somente acompanhadas que cruzaram a própria régua.</p></div></article>
               <article class="cartao info"><span class="mini-icone"><svg class="icone"><use href="#i-clock"></use></svg></span><div><h3>Três leituras por dia</h3><p>A tela usa o último retrato salvo e não consulta a Livelo ao navegar.</p></div></article>
             </div>
           </div>

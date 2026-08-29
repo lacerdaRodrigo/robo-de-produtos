@@ -296,13 +296,17 @@ def teste_ct150_falha_ao_guardar_derruba_a_execucao(favoritas):
 
 
 def teste_ct163_catalogo_vazio_avisa_no_log(caplog):
+    repositorio = RepositorioFake()
     with caplog.at_level(logging.WARNING, logger="robo_livelo"):
         total = verificar_promocoes(
             fonte=FonteFake(pagina(("Natura", "4", True))),
             catalogo=CatalogoFake([]),
             limiar=1,
             agora=AGORA_TESTE,
+            repositorio=repositorio,
         )
 
     assert total == 0
+    assert repositorio.retratos[0].pontuacoes == ()
+    assert len(repositorio.retratos[0].catalogo) == 1
     assert any("Nenhuma loja cadastrada" in registro.getMessage() for registro in caplog.records)

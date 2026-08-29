@@ -1,7 +1,7 @@
 # PRD — Livelo V2 (delta: validade, e-mail, banco)
 
 **Versão:** v2.x (documento vivo)
-**Status:** V2.0 a V2.3 implementadas e em produção. V2.4 (e-mail condicional/RF16) segue planejada e pendente.
+**Status:** V2.0 a V2.3 publicadas. O ciclo de catálogo completo para Android está implementado localmente; migração `013`, deploy e smoke físico estão pendentes. V2.4 (e-mail condicional/RF16) segue planejada.
 
 > A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
 
@@ -105,6 +105,10 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja. Uma tela por tarefa: `/avisos` para o padrão global e para editar o limiar de loja já cadastrada, `/lojas` para o cadastro — que também aceita, opcionalmente, o limiar próprio da loja no momento de criá-la (RN28: em branco usa o padrão global). **A tela usa linguagem comum** — "vezes acima do normal" e "mínimo de pontos" — e o termo técnico deste PRD aparece só no tooltip de ajuda |
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
+| **RF20** | Persistir todos os parceiros válidos da última coleta Livelo, com identidade por ID externo e categorias da fonte, sem criar histórico completo do catálogo |
+| **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação de 20 itens, limitada a 50 por resposta |
+| **RF22** | Permitir que somente administrador acompanhe ou deixe de acompanhar um parceiro pelo ID externo, em operação idempotente e sem iniciar coleta |
+| **RF23** | Aplicar o novo catálogo somente ao Android em largura compacta; Web, iOS e layout amplo mantêm a experiência anterior neste ciclo |
 
 ### 5.2 Não-funcionais
 
@@ -142,6 +146,14 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
 | **RN31** | Quando a Livelo publica letra miúda para a campanha (`legalTerms`), o Painel exibe o texto por extenso na loja. É o que permite decidir se a promoção vale para a compra pretendida sem abrir o app da Livelo (O5) |
+| **RN32** | `loja` representa somente as acompanhadas; `parceiro_livelo` representa o catálogo completo atual; `pontuacao` guarda o retrato histórico somente das acompanhadas |
+| **RN33** | ID externo ausente ou inválido e o mesmo ID com conteúdo conflitante invalidam a coleta. Repetição idêntica do mesmo ID é deduplicada |
+| **RN34** | Zero lojas acompanhadas é estado válido. Banco vazio não aciona o TOML e a coleta seguinte não restaura automaticamente as 132 escolhas antigas |
+| **RN35** | Execução, catálogo, vínculos e pontuações são publicados em uma única transação; contagem divergente causa rollback e falha ruidosa |
+| **RN36** | No catálogo, Lojas contém todos os parceiros ativos; Acompanhadas contém as escolhidas; Alertas contém as acompanhadas que cruzaram a régua na última coleta |
+| **RN37** | Busca e filtros consultam somente o Postgres. O Flutter nunca consulta a Livelo nem recebe o catálogo completo em uma resposta |
+| **RN38** | Categorias conhecidas recebem rótulos em português; código desconhecido ou ausência de categoria aparece como “Outros” |
+| **RN39** | Nome e categoria usados ao acompanhar vêm do catálogo no servidor. O cliente não escolhe nome, link nem categoria |
 
 ### 6.1 O novo critério de alerta
 
@@ -303,10 +315,12 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 
 ## 8. Modelo de dados
 
-`Parceiro` ganha cinco campos, todos opcionais para não quebrar o que existe:
+`Parceiro` mantém os campos da V2 e ganha identidade e categorias da fonte:
 
 | Campo | Tipo | Regra |
 |---|---|---|
+| `id_externo` | `str` | Identidade estável fornecida pela Livelo; base de RN06 e RN33 |
+| `categorias` | `tuple[str, ...]` | Códigos fornecidos pela Livelo, sem o filtro técnico `todos` |
 | `pontos_base` | `Decimal \| None` | `parityBau` — a pontuação normal, fora de promoção |
 | `inicio_promocao` | `datetime \| None` | `dateStart` |
 | `fim_promocao` | `datetime \| None` | `dateEnd`, base de RN21 e RN22 |
@@ -328,13 +342,15 @@ apelido     id, loja_id, texto              -- RN04 continua exigindo grafia exa
 preferencia chave, valor                    -- multiplicador e piso padrão, assinante_clube
 execucao    id, momento, parceiros_lidos, alertas, versao          -- V2.3
 pontuacao   id, execucao_id, loja_id?, nome, pontos_*, valor_de_disparo, ...  -- V2.3
+parceiro_livelo id, id_externo, nome, categorias[], pontos_*, campanha,
+                 validade, link, ativo, atualizado_execucao_id       -- migração 013
 ```
 
-As duas últimas entraram na V2.3 (`migracoes/002_execucao.sql`). Guardam **apenas as 132 favoritas**, não os 254 parceiros: é o mesmo recorte que a página pública exibe (§9.3) e mantém o volume irrelevante diante de C08. `loja_id` nulo significa favorita que não apareceu na página naquela rodada (RN19) — a linha existe para o site dizer "não encontrada" em vez de sumir com a loja.
+`execucao` e `pontuacao` entraram na V2.3 (`migracoes/002_execucao.sql`). `pontuacao` continua guardando somente as acompanhadas. `parceiro_livelo`, criado pela migração `013`, guarda a oferta atual de todos os parceiros válidos da última coleta, sem série histórica própria. A ligação opcional e única `loja.parceiro_livelo_id` separa seleção de catálogo.
 
 **A reserva cobre indisponibilidade, não vontade.** Banco que responde com zero lojas devolve lista vazia, e isso chega ao caso de uso como resultado legítimo — não como falha. A distinção existe porque a primeira versão não a fazia: apagar o catálogo pelo site fazia o TOML ressuscitar as 132 lojas na execução seguinte, e o banco nunca era de fato a fonte da verdade. Catálogo vazio gera e-mail com assunto próprio ("nenhuma loja cadastrada"), que é diferente de "nenhuma promoção hoje" — dizer a mesma frase nos dois casos esconderia que o robô está rodando no vazio.
 
-**Gravar não é crítico.** Falha ao guardar o retrato vira `WARNING` e a execução segue: a consequência é o site ficar velho, e o carimbo de RN26 denuncia isso sozinho na própria página. Perder o e-mail do dia por causa do Neon seria pior — por isso a gravação acontece **depois** do envio, e por isso `FalhaAoGuardar` existe separada de `ConfiguracaoInvalida`.
+**Publicar é crítico.** Sem outro caminho para alimentar API e Flutter, falha ou contagem parcial na gravação encerra a execução com erro. A transação reverte execução, catálogo, vínculos e pontuações juntos; a última coleta válida continua disponível.
 
 Três tabelas. Restrições que o banco garante, e não o código — a garantia mora na camada mais baixa possível:
 
@@ -384,7 +400,7 @@ A Seção 10.1 do PRD V1 continua valendo integralmente, **com uma diferença qu
 
 Isso enfraquece o argumento de "uso exclusivamente pessoal" que sustenta a análise legal atual. Mitigações adotadas:
 
-- A página mostra apenas as 132 favoritas, não os 254 parceiros — é uma seleção pessoal, não um espelho do site deles.
+- O painel legado continua mostrando apenas acompanhadas. O catálogo completo é servido somente a usuários autenticados pela API e não inclui logotipos externos.
 - Nenhum logotipo, nenhuma imagem, nenhum texto de regulamento copiado.
 - Aviso de não afiliação e link para a Livelo em cada loja (RN08).
 - Nenhuma monetização, nenhum anúncio.
@@ -428,6 +444,7 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 | **V2.2** | Regras de alerta RN27 e RN28, ainda com o e-mail diário | Permite calibrar multiplicador e piso **vendo o resultado** antes de depender deles |
 | **V2.3** | Site na Vercel: consulta e edição, com senha | Precisa do banco da V2.1. Entrega O5 |
 | **V2.4** | E-mail condicional (RF16) | **Só depois da V2.3 no ar e verificada.** Antes disso, cortar o e-mail diário reabre o buraco do O3 |
+| **Catálogo Android** | Migração `013`, publicação completa, API autenticada e tela Android compacta | Implementado localmente; Neon, deploy e smoke físico pendentes |
 
 > Duas ordens não são negociáveis. **V2.4 depois da V2.3**, senão fica sem sinal de vida nenhum. E **V2.2 antes da V2.4**, porque calibrar limiar recebendo e-mail todo dia é fácil; calibrar limiar quando o e-mail só chega se o limiar estiver certo é adivinhação.
 

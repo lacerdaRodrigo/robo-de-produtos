@@ -17,6 +17,7 @@ import requests
 from robo_livelo.modelos import (
     DOMINIO_LIVELO,
     LojaFavorita,
+    Parceiro,
     PontuacaoDeLoja,
     Preferencias,
     RetratoDaExecucao,
@@ -246,7 +247,7 @@ class RepositorioNulo:
 
 
 class RepositorioPostgres:
-    """Guarda o retrato da execucao (PRD V2 RF15, migracao 002).
+    """Publica execução, catálogo e retrato em uma transação.
 
     Uma transacao por rodada: ou o retrato inteiro entra, ou nao entra
     nada. Retrato pela metade no banco viraria pagina mentindo, que e pior
@@ -274,6 +275,64 @@ class RepositorioPostgres:
         )
     """
 
+    DESATIVA_CATALOGO = """
+        UPDATE parceiro_livelo
+           SET ativo = FALSE, atualizado_em = now()
+         WHERE ativo = TRUE
+    """
+
+    PUBLICA_PARCEIRO = """
+        INSERT INTO parceiro_livelo (
+            id_externo, nome, categorias, pontos_atuais, pontos_anteriores,
+            pontos_base, pontos_clube, moeda, prefixo_ate, em_promocao,
+            campanha, descricao_campanha, inicio_promocao, fim_promocao,
+            link, ativo, atualizado_execucao_id, atualizado_em
+        ) VALUES (
+            %(id_externo)s, %(nome)s, %(categorias)s, %(pontos_atuais)s,
+            %(pontos_anteriores)s, %(pontos_base)s, %(pontos_clube)s,
+            %(moeda)s, %(prefixo_ate)s, %(em_promocao)s, %(campanha)s,
+            %(descricao_campanha)s, %(inicio_promocao)s, %(fim_promocao)s,
+            %(link)s, TRUE, %(execucao_id)s, now()
+        )
+        ON CONFLICT (id_externo) DO UPDATE SET
+            nome = EXCLUDED.nome,
+            categorias = EXCLUDED.categorias,
+            pontos_atuais = EXCLUDED.pontos_atuais,
+            pontos_anteriores = EXCLUDED.pontos_anteriores,
+            pontos_base = EXCLUDED.pontos_base,
+            pontos_clube = EXCLUDED.pontos_clube,
+            moeda = EXCLUDED.moeda,
+            prefixo_ate = EXCLUDED.prefixo_ate,
+            em_promocao = EXCLUDED.em_promocao,
+            campanha = EXCLUDED.campanha,
+            descricao_campanha = EXCLUDED.descricao_campanha,
+            inicio_promocao = EXCLUDED.inicio_promocao,
+            fim_promocao = EXCLUDED.fim_promocao,
+            link = EXCLUDED.link,
+            ativo = TRUE,
+            atualizado_execucao_id = EXCLUDED.atualizado_execucao_id,
+            atualizado_em = now()
+    """
+
+    CONTA_CATALOGO_PUBLICADO = """
+        SELECT count(*)
+          FROM parceiro_livelo
+         WHERE ativo = TRUE AND atualizado_execucao_id = %s
+    """
+
+    LIMPA_VINCULOS = "UPDATE loja SET parceiro_livelo_id = NULL"
+
+    VINCULA_LOJA = """
+        UPDATE loja
+           SET parceiro_livelo_id = (
+               SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s
+           )
+         WHERE nome = %(nome_loja)s
+    """
+
+    CONTA_VINCULOS = "SELECT count(*) FROM loja WHERE parceiro_livelo_id IS NOT NULL"
+    CONTA_PONTUACOES = "SELECT count(*) FROM pontuacao WHERE execucao_id = %s"
+
     def __init__(self, url: str) -> None:
         if not url:
             raise ConfiguracaoInvalida("DATABASE_URL nao configurada.")
@@ -289,15 +348,77 @@ class RepositorioPostgres:
                     (retrato.momento, retrato.parceiros_lidos, retrato.alertas, retrato.versao),
                 )
                 (execucao_id,) = cursor.fetchone()
-                cursor.executemany(
-                    self.INSERE_PONTUACAO,
-                    [_linha_de_pontuacao(p, execucao_id) for p in retrato.pontuacoes],
-                )
+                cursor.execute(self.DESATIVA_CATALOGO)
+                linhas_catalogo = [
+                    _linha_de_parceiro(parceiro, execucao_id) for parceiro in retrato.catalogo
+                ]
+                if linhas_catalogo:
+                    cursor.executemany(self.PUBLICA_PARCEIRO, linhas_catalogo)
+                cursor.execute(self.CONTA_CATALOGO_PUBLICADO, (execucao_id,))
+                (catalogo_publicado,) = cursor.fetchone()
+                if catalogo_publicado != len(retrato.catalogo):
+                    raise FalhaAoGuardar(
+                        "Publicacao parcial do catalogo Livelo: "
+                        f"esperados {len(retrato.catalogo)}, gravados {catalogo_publicado}."
+                    )
+
+                cursor.execute(self.LIMPA_VINCULOS)
+                vinculos = [
+                    {
+                        "nome_loja": pontuacao.loja.nome,
+                        "id_externo": pontuacao.parceiro.id_externo,
+                    }
+                    for pontuacao in retrato.pontuacoes
+                    if pontuacao.parceiro is not None
+                ]
+                if vinculos:
+                    cursor.executemany(self.VINCULA_LOJA, vinculos)
+                cursor.execute(self.CONTA_VINCULOS)
+                (vinculos_publicados,) = cursor.fetchone()
+                if vinculos_publicados != len(vinculos):
+                    raise FalhaAoGuardar(
+                        "Publicacao parcial dos vinculos Livelo: "
+                        f"esperados {len(vinculos)}, gravados {vinculos_publicados}."
+                    )
+
+                linhas_pontuacao = [_linha_de_pontuacao(p, execucao_id) for p in retrato.pontuacoes]
+                if linhas_pontuacao:
+                    cursor.executemany(self.INSERE_PONTUACAO, linhas_pontuacao)
+                cursor.execute(self.CONTA_PONTUACOES, (execucao_id,))
+                (pontuacoes_publicadas,) = cursor.fetchone()
+                if pontuacoes_publicadas != len(retrato.pontuacoes):
+                    raise FalhaAoGuardar(
+                        "Publicacao parcial das pontuacoes Livelo: "
+                        f"esperadas {len(retrato.pontuacoes)}, gravadas {pontuacoes_publicadas}."
+                    )
+        except FalhaAoGuardar:
+            raise
         except psycopg.Error as erro:
             # Mensagem propria: a original pode carregar a senha da URL.
             raise FalhaAoGuardar(
                 f"Falha ao guardar o retrato da execucao: {type(erro).__name__}"
             ) from None
+
+
+def _linha_de_parceiro(parceiro: Parceiro, execucao_id: int) -> dict:
+    return {
+        "execucao_id": execucao_id,
+        "id_externo": parceiro.id_externo,
+        "nome": parceiro.nome,
+        "categorias": list(parceiro.categorias),
+        "pontos_atuais": parceiro.pontos_atuais,
+        "pontos_anteriores": parceiro.pontos_anteriores,
+        "pontos_base": parceiro.pontos_base,
+        "pontos_clube": parceiro.pontos_clube,
+        "moeda": parceiro.moeda,
+        "prefixo_ate": parceiro.prefixo_ate,
+        "em_promocao": parceiro.em_promocao,
+        "campanha": parceiro.campanha,
+        "descricao_campanha": parceiro.descricao_campanha,
+        "inicio_promocao": parceiro.inicio_promocao,
+        "fim_promocao": parceiro.fim_promocao,
+        "link": parceiro.link if _link_confiavel(parceiro.link) else None,
+    }
 
 
 def _linha_de_pontuacao(pontuacao: PontuacaoDeLoja, execucao_id: int) -> dict:

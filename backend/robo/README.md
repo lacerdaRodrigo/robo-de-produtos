@@ -9,8 +9,9 @@ Actions a cada 3×/dia; não tem servidor próprio.
 São **três integrações independentes**, cada uma com código, tabelas e workflow
 próprios — não misturam regras nem se afetam:
 
-1. **Livelo** — filtra lojas favoritas e alerta por e-mail quando a pontuação
-   cruza a régua (V2). Entrada: `src/robo_livelo/principal.py`.
+1. **Livelo** — publica o catálogo completo atual, calcula o retrato somente das
+   acompanhadas e alerta quando a pontuação cruza a régua (V2). Entrada:
+   `src/robo_livelo/principal.py`.
 2. **Inter — Sites parceiros** — catálogo de cashback (V3). Entrada:
    `src/robo_livelo/principal_inter.py`.
 3. **Inter — Compre direto** — coleta de produtos das lojas escolhidas, com busca
@@ -22,7 +23,7 @@ próprios — não misturam regras nem se afetam:
 backend/robo/
 ├── src/robo_livelo/   # código (domínio puro + portas + adaptadores)
 ├── testes/            # pytest (prefixo teste_)
-├── config/            # lojas_favoritas.toml (catálogo Livelo)
+├── config/            # lojas_favoritas.toml (reserva local da seleção Livelo)
 ├── scripts/           # utilitários (carregar_catalogo.py, medir_v4.py)
 └── pyproject.toml     # dependências, versão, gates
 ```
@@ -43,7 +44,10 @@ python -m robo_livelo.principal_produtos_inter
 
 - O coletor do Inter exige `DATABASE_URL`.
 - O e-mail da Livelo exige uma **Senha de Aplicativo** do Gmail (não é a senha).
-- As lojas monitoradas ficam em `config/lojas_favoritas.toml`, fora do código.
+- Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
+  válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.
+- A publicação da Livelo grava o catálogo atual em `parceiro_livelo` e o retrato
+  das acompanhadas em uma única transação.
 
 ## Qualidade (gates)
 

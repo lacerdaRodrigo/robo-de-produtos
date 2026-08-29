@@ -20,6 +20,8 @@ class Parceiro:
     pontos_atuais: Decimal
     moeda: str
     link: str
+    id_externo: str = ""
+    categorias: tuple[str, ...] = field(default_factory=tuple)
     em_promocao: bool = False
     pontos_anteriores: Decimal | None = None
     pontos_clube: Decimal | None = None
@@ -89,6 +91,7 @@ class RetratoDaExecucao:
     momento: datetime
     parceiros_lidos: int
     versao: str
+    catalogo: tuple[Parceiro, ...] = field(default_factory=tuple)
     pontuacoes: tuple[PontuacaoDeLoja, ...] = field(default_factory=tuple)
 
     @property

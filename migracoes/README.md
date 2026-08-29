@@ -20,11 +20,12 @@ cria o `001` e carrega o catálogo.
 | `010_autenticacao_app.sql` | `usuario_app`, `auditoria_app` (Firebase) | app (API) |
 | `011_disparos_api_idempotentes.sql` | `solicitacao_disparo_app` (cooldown API) | app (API) |
 | `012_oferta_direta_inter_atual.sql` | `oferta_direta_inter_atual` (limpeza V5) | V4 |
+| `013_catalogo_livelo.sql` | catálogo completo e vínculo opcional com `loja` | Livelo |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009` (coleta Livelo/Inter/produtos).
-- API do app: `010`–`012` (autenticação, disparos, catálogo de produtos).
+- Robôs: `001`–`009` e `013` (coleta Livelo/Inter/produtos e catálogo Livelo).
+- API do app: `010`–`013` (autenticação, disparos e catálogos).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de

@@ -5,20 +5,30 @@
 
 API_URL ?= https://robo-de-produtos.vercel.app
 APP_CHECK ?= false
+DEVICE ?= $(shell adb devices 2>/dev/null | awk 'NR > 1 && $$2 == "device" { print $$1; exit }')
 APK_DEBUG := build/app/outputs/flutter-apk/app-debug.apk
 APK_RELEASE := build/app/outputs/flutter-apk/app-release.apk
 APP_ID := br.com.radarbeneficios.app
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
+.PHONY: help dev build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
 
 ## Lista todos os alvos disponíveis.
 help: ## Lista todos os alvos disponíveis
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 	@echo ""
-	@echo "Uso: make <alvo> [API_URL=...] [APP_CHECK=true|false]"
-	@echo "Ex.: make build-release API_URL=https://meu-app.vercel.app"
+	@echo "Uso: make <alvo> [DEVICE=...] [API_URL=...] [APP_CHECK=true|false]"
+	@echo "Ex.: make dev"
+	@echo "Ex.: make dev DEVICE=emulator-5554"
+
+# ── Desenvolvimento ────────────────────────────────────────────────────────
+
+dev: ## Executa o checkout atual no primeiro Android conectado
+	@test -n "$(DEVICE)" || { echo "Nenhum Android conectado. Confira com: adb devices"; exit 1; }
+	flutter run -d "$(DEVICE)" \
+		--dart-define=API_URL=$(API_URL) \
+		--dart-define=ATIVAR_APP_CHECK=$(APP_CHECK)
 
 # ── Build ──────────────────────────────────────────────────────────────────
 

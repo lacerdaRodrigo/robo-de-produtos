@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
@@ -153,6 +154,40 @@ void main() {
     expect(find.byType(BarraLateral), findsNothing);
     await _abrirGaveta(at);
     expect(find.byKey(const Key('destino-produtos')), findsOneWidget);
+  });
+
+  testWidgets('somente Android compacto usa o catálogo Livelo novo', (
+    at,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    try {
+      await _abrir(at);
+      await _irParaCompacto(at, DestinoCompacto.livelo);
+
+      expect(find.byKey(const Key('catalogo-livelo-android')), findsOneWidget);
+    } finally {
+      await at.pumpWidget(const SizedBox.shrink());
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('iOS compacto preserva a experiência Livelo anterior', (
+    at,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      await _abrir(at);
+      await _irParaCompacto(at, DestinoCompacto.livelo);
+
+      expect(find.byKey(const Key('catalogo-livelo-android')), findsNothing);
+      expect(
+        find.text('Ainda não há uma coleta da Livelo para mostrar.'),
+        findsOneWidget,
+      );
+    } finally {
+      await at.pumpWidget(const SizedBox.shrink());
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('Web amplo usa lateral com os mesmos cinco destinos', (at) async {

@@ -80,5 +80,6 @@ def teste_ct143_retrato_carrega_contagem_e_versao():
 
     assert retrato.momento == AGORA_TESTE
     assert retrato.parceiros_lidos == 2  # a pagina inteira, nao so as favoritas
+    assert retrato.catalogo == tuple(parceiros)
     assert retrato.versao == "9.9.9"
     assert retrato.alertas == 1

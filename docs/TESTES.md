@@ -546,8 +546,31 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução, os goldens e
-os totais permanecem pendentes porque o workspace de 28 de agosto de 2026 não
-possui Flutter/Dart; nenhum resultado verde foi presumido.
+os totais da fundação foram verificados junto com os casos do catálogo Android
+em 28 de agosto de 2026.
+
+### Catálogo Livelo completo — Android compacto
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-338 | Identidade e categorias Livelo | ID externo e categorias saem do payload; `todos` não vira categoria | Itens sintéticos e fixture real no extrator puro |
+| CT-339 | Deduplicação e conflito | Repetição idêntica do ID entra uma vez; IDs distintos com o mesmo nome permanecem; conflito no mesmo ID falha | Variar ID, nome e conteúdo no payload |
+| CT-340 | ID hostil invalida coleta | ID ausente, longo ou com caracteres de caminho não chega ao banco nem à URL da API | Payload hostil e `CatalogoLiveloInvalido` |
+| CT-341 | Publicação atômica | Execução, catálogo, vínculos e pontuações usam uma transação e contagens exatas | Cursor fake com lotes e contadores |
+| CT-342 | Rollback de publicação parcial | Divergência em catálogo, vínculos ou pontuações falha sem registrar sucesso | Injetar contagem parcial e observar exceção sair do contexto transacional |
+| CT-343 | Zero acompanhadas | Catálogo completo é publicado mesmo quando `loja` está vazia; nenhuma pontuação é inventada | Caso de uso com catálogo fake vazio e repositório espião |
+| CT-344 | Consulta e filtros da API | Busca, abas, categoria e ordenação respeitam ID, texto e decimais sem `number` | Vitest das funções puras e contrato de paginação |
+| CT-345 | Categorias em português | Códigos conhecidos recebem rótulo; desconhecidos e ausência viram “Outros” | Tabela de entradas conhecida/hostil |
+| CT-346 | Acompanhamento fechado | Corpo aceita somente `acompanhada: boolean`; nome, link e categoria do cliente são rejeitados | Validador TypeScript e PATCH inspecionado no Flutter |
+| CT-347 | Modelo e API Flutter | IDs, categorias e `NUMERIC` permanecem textuais; GET e PATCH enviam somente parâmetros permitidos | Fixtures Dart e `MockClient` |
+| CT-348 | Debounce e resposta antiga | Busca espera 350 ms e uma resposta descartada não substitui a consulta atual | `Completer`, fonte injetada e relógio de teste |
+| CT-349 | Paginação por ID | Página adicional preserva cartões e deduplica somente por ID externo | Duas páginas com ID repetido |
+| CT-350 | Mutação reversível | Duplo toque não repete PATCH; falha restaura cartão e resumo sem apagar filtros | `Completer` e falha injetada no controlador |
+| CT-351 | Conteúdo Android real | Hero, métricas, abas, busca, categorias e cartões usam somente o payload da API | Widget com controlador injetado |
+| CT-352 | Estados distintos | Loading, falha/retry, nunca sincronizado, busca vazia, zero acompanhadas, zero alertas e atraso não se confundem | Resumos e erros injetados |
+| CT-353 | Tela estreita e texto ampliado | 320 × 640 com texto a 150% rola sem overflow | Viewport e `TextScaler` controlados |
+| CT-354 | Temas do catálogo | Android claro e escuro permanecem iguais às referências versionadas | Dois goldens próprios |
+| CT-355 | Escopo por plataforma | Somente Android compacto usa o catálogo novo; iOS, Web e layout amplo preservam a tela anterior | Override de plataforma e viewports compacta/ampla |
 
 ---
 
@@ -609,8 +632,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | Arquivo | Casos CT | Executados |
 |---|---|---|
 | `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 28 | 36 |
-| `teste_adaptadores.py` | 22 | 27 |
+| `teste_extrator.py` | 28 | 40 |
+| `teste_adaptadores.py` | 22 | 29 |
 | `teste_alertas.py` | 13 | 17 |
 | `teste_retrato.py` | 5 | 5 |
 | `teste_montador_email.py` | 31 | 33 |
@@ -622,7 +645,7 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_principal_inter.py` | 1 | 3 |
 | `teste_produtos_inter.py` | 9 | 19 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **159** | **211** |
+| **Total (robô)** | **159** | **177** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
 | `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
@@ -634,8 +657,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
 | `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
 | **Total (site)** | **CTs catalogados + apoio** | **83** |
-| `app/test/` | CT-257–CT-259, CT-261–CT-337 + fundação | 147 confirmados antes da Etapa 1; novos casos pendentes |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **147** |
+| `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação | 178 confirmados nesta entrega |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **178** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 
