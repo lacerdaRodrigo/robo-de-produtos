@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.46.0 (2026-08-29)
+
+### Code Style
+
+- **app**: Aplica formatacao da gaveta mobile
+  ([`114ee31`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/114ee31717b795ed08912caa1e83686186bb36ad))
+
+### Features
+
+- **livelo**: Adiciona sino de alerta nos cards
+  ([`041cd54`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/041cd542d0875dfaf6edbb1f1cdabfee74b74077))
+
+### Testing
+
+- **app**: Atualiza goldens do redesign aprovado
+  ([`3a21687`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3a216873cbfb3f9fb5bed59bc97461736e1d399f))
+
+
 ## v1.45.0 (2026-08-29)
 
 ### Bug Fixes
