@@ -58,7 +58,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 ### 3.2 Fora
 
 - Multiusuário, cadastro, recuperação de senha. O site tem um único dono.
-- Histórico entre execuções e gráfico de tendência. **A decisão de 1.4 do PRD segue valendo** — o banco guarda configuração, não série temporal.
+- Gráfico de tendência e histórico do catálogo inteiro. O Android compacto exibe somente as últimas 30 medições das lojas acompanhadas, já persistidas em `pontuacao`.
 - Hospedar logotipos ou imagens dos parceiros — ver 9.2.
 - Compra, clique automático ou qualquer autenticação na Livelo.
 
@@ -109,6 +109,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação de 20 itens, limitada a 50 por resposta |
 | **RF22** | Permitir que somente administrador acompanhe ou deixe de acompanhar um parceiro pelo ID externo, em operação idempotente e sem iniciar coleta |
 | **RF23** | Aplicar o novo catálogo somente ao Android em largura compacta; Web, iOS e layout amplo mantêm a experiência anterior neste ciclo |
+| **RF24** | No Android compacto, permitir abrir o histórico de uma loja e consultar as últimas 30 pontuações persistidas, sem iniciar coleta e sem expor o catálogo histórico completo |
 
 ### 5.2 Não-funcionais
 
@@ -158,6 +159,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN41** | O agendamento Livelo é calculado no servidor para 09h, 14h e 20h de Brasília. Antes da janela, informa a próxima previsão; depois dela e sem execução nova, informa o atraso real do GitHub. |
 | **RN42** | `melhor_oferta` do catálogo Livelo significa a maior pontuação entre lojas acompanhadas no retrato atual. Sem acompanhadas, retorna vazio; não escolhe parceiro do catálogo geral. |
 | **RN43** | A atividade do Início traz o último evento de Livelo, Cashback e Produtos, ordenado por momento real decrescente e com desempate estável por domínio. Navegar ou pesquisar não consulta Livelo/Inter; somente o botão administrativo idempotente solicita workflow. |
+| **RN44** | O histórico Livelo é somente leitura, pertence à loja acompanhada identificada pelo ID externo e retorna no máximo 30 medições em ordem decrescente de execução. Ausência de medições é estado vazio válido; abrir a tela não dispara robô. |
 
 ### 6.1 O novo critério de alerta
 

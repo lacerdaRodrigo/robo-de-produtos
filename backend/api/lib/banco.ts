@@ -126,9 +126,9 @@ export async function historicoLivelo(idExterno: string): Promise<MedicaoHistori
     SELECT e.momento, p.pontos_atuais, p.pontos_base, p.pontos_clube, p.moeda
       FROM pontuacao p
       JOIN execucao e ON e.id = p.execucao_id
-      JOIN loja l ON l.id = p.loja_id
-      JOIN parceiro_livelo pl ON pl.id = l.parceiro_livelo_id
-     WHERE pl.id_externo = ${idExterno}
+      JOIN parceiro_livelo pl
+        ON pl.id_externo = ${idExterno}
+       AND p.nome = pl.nome
      ORDER BY e.momento DESC
      LIMIT 30
   `) as MedicaoHistoricoLivelo[];
