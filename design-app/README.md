@@ -1,33 +1,38 @@
-# `design-app/` — Protótipos visuais (Web e Mobile)
+# `design-app/` — redesign mobile
 
-Protótipos HTML usados para **validar a experiência visual** das novas telas do Flutter antes de escrever código. No redesign mobile, o HTML aprovado não é apenas inspiração: ele é a **fonte visual de verdade** e deve ser aplicado junto do contrato verificável em [`UI_SPEC.md`](UI_SPEC.md).
+Nesta branch, o trabalho visual está focado **somente no aplicativo mobile Flutter**.
 
-PRDs e contratos de API continuam mandando em regra de negócio, dados e segurança. O protótipo manda em estrutura, hierarquia, espaçamento, cores, estados e navegação da experiência aprovada.
+A referência obrigatória é:
 
-## Arquivos
+- [`prototipo-mobile.html`](prototipo-mobile.html) — fonte visual de verdade;
+- [`UI_SPEC.md`](UI_SPEC.md) — contrato visual e gates;
+- [`PLANO-EXECUCAO-REDESIGN.md`](PLANO-EXECUCAO-REDESIGN.md) — ordem de implementação;
+- `assets/` — identidade visual usada pelo protótipo.
 
-| Arquivo | Para quê |
-|---|---|
-| [`prototipo-web.html`](prototipo-web.html) | Visual do app na largura de Web (tela larga / lateral) |
-| [`prototipo-mobile.html`](prototipo-mobile.html) | Fonte visual de verdade do redesign mobile: gaveta com quatro áreas principais e temas claro/escuro |
-| [`UI_SPEC.md`](UI_SPEC.md) | Contrato para transformar o HTML em implementação verificável, incluindo tokens, componentes, viewports e golden tests |
-| [`PLANO-MIGRACAO-MOBILE.md`](PLANO-MIGRACAO-MOBILE.md) | Roteiro incremental para levar o novo protótipo ao Flutter sem redesenhar o Web |
-| [`PLANO-DE-ACAO.md`](PLANO-DE-ACAO.md) | Registro e direção do ciclo anterior de redesign |
-| `assets/` | Fontes vetoriais da marca (`logo-radar.svg` etc.) |
+## Web fora do ciclo
 
-## Como usar no redesign mobile
+`prototipo-web.html` e o restante da experiência Web continuam no repositório por histórico e manutenção do produto, mas **não fazem parte do redesign desta branch**.
 
-1. leia `prototipo-mobile.html` e `UI_SPEC.md` por completo;
-2. localize a tela, estado e componentes equivalentes no Flutter;
-3. preserve contratos e dados reais existentes — números do HTML são ilustrativos;
-4. implemente usando tokens/componentes reutilizáveis, sem improvisar uma tela Material genérica;
-5. rode formatação, análise e testes relevantes;
-6. renderize no viewport de referência e rode os goldens aplicáveis;
-7. compare a saída com o HTML, corrija diferenças e repita até estabilizar;
-8. só atualize um golden depois de confirmar que a mudança visual foi aprovada no HTML/`UI_SPEC.md`.
+Durante `re-design`:
 
-Não é necessário pedir screenshots ao responsável para descobrir diferenças que o HTML, a renderização local ou os goldens já conseguem revelar.
+- não redesenhar Web;
+- não comparar com protótipo Web;
+- não executar/update golden Web como rotina;
+- não abrir arquivos Web para contexto sem necessidade concreta de compilação compartilhada;
+- não sincronizar mudanças visuais mobile com desktop.
 
-Os protótipos **não** são código real nem substituem requisitos. Eles ilustram dados para decisão visual e não provam que um endpoint ou regra existe.
+Isso é intencional para concentrar tempo e tokens no celular.
 
-O protótipo mobile é a referência do ciclo compacto. O Web permanece protegido contra regressão e só muda mediante decisão explícita.
+## Fluxo mobile
+
+1. ler `prototipo-mobile.html` e `UI_SPEC.md`;
+2. abrir somente o código/testes da fase atual;
+3. implementar sem inventar UI;
+4. formatar e analisar;
+5. rodar testes direcionados;
+6. rodar goldens mobile;
+7. renderizar no viewport de referência;
+8. comparar com o HTML e corrigir diferenças;
+9. repetir até estabilizar.
+
+Dados do protótipo são ilustrativos. Regras e dados reais continuam vindo dos contratos existentes.
