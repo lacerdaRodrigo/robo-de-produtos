@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.49.1 (2026-08-29)
+
+### Bug Fixes
+
+- Conecta alertas ao catalogo livelo
+  ([`60656bd`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/60656bdc13c49e1001b28f0b00fa420141894ac4))
+
+
 ## v1.49.0 (2026-08-29)
 
 ### Chores
