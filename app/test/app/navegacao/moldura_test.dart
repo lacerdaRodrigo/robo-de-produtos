@@ -14,6 +14,23 @@ const _paginaVazia =
     '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,'
     '"total_paginas":1,"tem_proxima":false,"atualizado_em":null}';
 
+const _cashbackInter =
+    '{"itens":[{"id":"magalu","slug":"magalu","nome":"Magazine Luiza",'
+    '"cashback_principal_texto":"Até 20% de cashback",'
+    '"cashback_principal_valor":"20.00","cashback_secundario_texto":null,'
+    '"cashback_secundario_valor":null,"etiqueta":null,'
+    '"descricao_principal":null,"descricao_secundaria":null,'
+    '"encontrada":true,"favorita":true}],"pagina":1,"por_pagina":20,'
+    '"total_itens":1,"total_paginas":1,"tem_proxima":false,'
+    '"atualizado_em":"2026-08-23T11:38:00Z"}';
+
+const _sitesParceirosInter =
+    '{"itens":[{"id":"magalu","id_externo":"1","slug":"magalu",'
+    '"nome":"Magazine Luiza","cashback_principal_texto":"Até 20%",'
+    '"cashback_principal_valor":"20.00","ativa":true,"favorita":true}],'
+    '"pagina":1,"por_pagina":20,"total_itens":382,"total_paginas":20,'
+    '"tem_proxima":true,"atualizado_em":null}';
+
 const _resumo =
     '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"sem_dados",'
     '"livelo":{"estado":"sem_dados","ultimo_sucesso_em":null,'
@@ -38,7 +55,12 @@ const _resumoComEstadosIndependentes =
     '"dados_mais_recentes_em":"2026-08-23T11:00:00Z","qualidade":"completa",'
     '"lojas_selecionadas":2,"lojas_sem_coleta":1,"produtos_ativos":15}}';
 
-Api _api({String resumo = _resumo, List<http.Request>? requisicoes}) => Api(
+Api _api({
+  String resumo = _resumo,
+  String cashback = _paginaVazia,
+  String sitesParceiros = _paginaVazia,
+  List<http.Request>? requisicoes,
+}) => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
@@ -50,6 +72,13 @@ Api _api({String resumo = _resumo, List<http.Request>? requisicoes}) => Api(
       }
       if (requisicao.url.path == '/api/resumo') {
         return http.Response(resumo, 200);
+      }
+      if (requisicao.url.path == '/api/inter/cashback') {
+        return http.Response(cashback, 200);
+      }
+      if (requisicao.url.path == '/api/inter/lojas' &&
+          requisicao.method == 'GET') {
+        return http.Response(sitesParceiros, 200);
       }
       if (requisicao.url.path == '/api/livelo/preferencias') {
         return http.Response(
@@ -79,6 +108,8 @@ Future<void> _abrir(
   bool administrador = false,
   bool escuro = false,
   String resumo = _resumo,
+  String cashback = _paginaVazia,
+  String sitesParceiros = _paginaVazia,
   List<http.Request>? requisicoes,
 }) async {
   at.view.devicePixelRatio = 1;
@@ -93,7 +124,12 @@ Future<void> _abrir(
           ? TemaRadar.legadoClaroComCores()
           : TemaRadar.claro(),
       home: MolduraRadar(
-        api: _api(resumo: resumo, requisicoes: requisicoes),
+        api: _api(
+          resumo: resumo,
+          cashback: cashback,
+          sitesParceiros: sitesParceiros,
+          requisicoes: requisicoes,
+        ),
         administrador: administrador,
         agora: () => DateTime(2026, 8, 26),
       ),
@@ -117,6 +153,7 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
   await _abrirGaveta(at);
   final item = find.byKey(Key('destino-${destino.name}'));
   await at.ensureVisible(item);
+  await at.pumpAndSettle();
   await at.tap(item);
   await at.pumpAndSettle();
 }
@@ -145,6 +182,12 @@ void main() {
     expect(find.byKey(const Key('abrir-alertas-gaveta')), findsOneWidget);
     expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
     expect(find.text('Acesso padrão'), findsWidgets);
+    expect(find.text('Escolha lojas e veja cashback'), findsOneWidget);
+    expect(find.text('Resultados das lojas escolhidas'), findsOneWidget);
+    expect(
+      at.getSize(find.byKey(const Key('gaveta-principal'))).width,
+      closeTo(343.2, 0.1),
+    );
   });
 
   testWidgets('celular em paisagem continua com a gaveta', (at) async {
@@ -171,7 +214,7 @@ void main() {
     }
   });
 
-  testWidgets('iOS compacto preserva a experiência Livelo anterior', (
+  testWidgets('iOS compacto usa a mesma experiência Livelo aprovada', (
     at,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -179,11 +222,7 @@ void main() {
       await _abrir(at);
       await _irParaCompacto(at, DestinoCompacto.livelo);
 
-      expect(find.byKey(const Key('catalogo-livelo-android')), findsNothing);
-      expect(
-        find.text('Ainda não há uma coleta da Livelo para mostrar.'),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('catalogo-livelo-android')), findsOneWidget);
     } finally {
       await at.pumpWidget(const SizedBox.shrink());
       debugDefaultTargetPlatformOverride = null;
@@ -293,23 +332,83 @@ void main() {
   });
 
   testWidgets('Shopping Inter compacto segue as abas do protótipo', (at) async {
+    final requisicoes = <http.Request>[];
     await _abrir(
       at,
       tamanho: const Size(390, 1500),
+      administrador: true,
       resumo: _resumoComEstadosIndependentes,
+      cashback: _cashbackInter,
+      sitesParceiros: _sitesParceirosInter,
+      requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
     expect(find.text('Cashback'), findsWidgets);
     expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.text('SHOPPING E CASHBACK'), findsOneWidget);
+    expect(
+      find.text('Suas lojas do Inter estão em um único lugar.'),
+      findsOneWidget,
+    );
+    expect(find.text('Integração com atenção'), findsOneWidget);
+    expect(find.text('20%'), findsOneWidget);
+    expect(find.text('melhor oferta'), findsOneWidget);
     expect(find.byKey(const Key('busca-cashback-inter')), findsOneWidget);
+    await at.enterText(
+      find.byKey(const Key('busca-cashback-inter')),
+      'magazine',
+    );
 
     await at.tap(find.text('Sites parceiros'));
     await at.pumpAndSettle();
     expect(
       find.byKey(const Key('busca-sites-parceiros-inter')),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('Selecionar uma loja não inicia uma nova coleta.'),
+      findsOneWidget,
+    );
+    expect(find.text('382 sites parceiros disponíveis'), findsOneWidget);
+    expect(find.text('Catálogo do Inter'), findsOneWidget);
+    await at.tap(find.text('Acompanhada'));
+    await at.pumpAndSettle();
+    expect(find.text('Acompanhar'), findsOneWidget);
+    expect(
+      requisicoes.any(
+        (requisicao) =>
+            requisicao.method == 'PATCH' &&
+            requisicao.url.path == '/api/inter/lojas',
+      ),
+      isTrue,
+    );
+    await at.enterText(
+      find.byKey(const Key('busca-sites-parceiros-inter')),
+      'magalu',
+    );
+
+    await at.tap(find.text('Cashback'));
+    await at.pumpAndSettle();
+    expect(
+      at
+          .widget<TextField>(find.byKey(const Key('busca-cashback-inter')))
+          .controller
+          ?.text,
+      'magazine',
+    );
+
+    await at.tap(find.text('Sites parceiros'));
+    await at.pumpAndSettle();
+    expect(
+      at
+          .widget<TextField>(
+            find.byKey(const Key('busca-sites-parceiros-inter')),
+          )
+          .controller
+          ?.text,
+      'magalu',
     );
   });
 
@@ -336,13 +435,51 @@ void main() {
     expect(dominiosConsultados, isEmpty);
   });
 
+  testWidgets('Banco Inter completo não estoura em 320 px no tema escuro', (
+    at,
+  ) async {
+    await _abrir(
+      at,
+      tamanho: const Size(320, 900),
+      escalaTexto: 1.5,
+      escuro: true,
+      administrador: true,
+      resumo: _resumoComEstadosIndependentes,
+      cashback: _cashbackInter,
+      sitesParceiros: _sitesParceirosInter,
+    );
+    await _irParaCompacto(at, DestinoCompacto.inter);
+
+    expect(at.takeException(), isNull);
+    await at.ensureVisible(find.text('Sites parceiros'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Sites parceiros'));
+    await at.pumpAndSettle();
+    expect(at.takeException(), isNull);
+
+    await at.scrollUntilVisible(
+      find.text('Carregar mais'),
+      500,
+      scrollable: find
+          .descendant(
+            of: find.byKey(
+              const PageStorageKey('rolagem-sites-parceiros-inter'),
+            ),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(at.takeException(), isNull);
+    expect(find.text('Carregar mais'), findsOneWidget);
+  });
+
   testWidgets('Produtos é destino direto e preserva a busca entre áreas', (
     at,
   ) async {
     await _abrir(at);
     await _irParaCompacto(at, DestinoCompacto.produtos);
 
-    final busca = find.widgetWithText(TextField, 'Buscar produtos');
+    final busca = find.byKey(const Key('busca-produtos'));
     expect(busca, findsOneWidget);
     await at.enterText(busca, 'x');
 
@@ -361,12 +498,18 @@ void main() {
 
     expect(find.text('Alertas'), findsOneWidget);
     expect(
-      find.text(
-        'Estados importantes do retrato atual, sem simular uma caixa de entrada.',
-      ),
+      find.text('Eventos importantes, fora do menu principal.'),
       findsOneWidget,
     );
-    expect(find.textContaining('caixa de entrada'), findsWidgets);
+    expect(
+      find.textContaining('Histórico, lidos e não lidos dependem'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
+
+    await at.tap(find.byKey(const Key('fechar-folha-radar')));
+    await at.pumpAndSettle();
+    expect(find.text('Alertas'), findsNothing);
   });
 
   testWidgets('conta oferece administração fora das quatro áreas', (at) async {
@@ -378,6 +521,18 @@ void main() {
     expect(find.text('Administração'), findsOneWidget);
     expect(find.text('Conta e sistema'), findsOneWidget);
     expect(find.text('Acesso administrador'), findsOneWidget);
+  });
+
+  testWidgets('conta padrão não oferece administração', (at) async {
+    await _abrir(at, tamanho: const Size(320, 640), escalaTexto: 1.5);
+    await _abrirGaveta(at);
+    await at.tap(find.byKey(const Key('abrir-conta-gaveta')));
+    await at.pumpAndSettle();
+
+    expect(at.takeException(), isNull);
+    expect(find.text('Conta e sistema'), findsOneWidget);
+    expect(find.text('Acesso padrão'), findsOneWidget);
+    expect(find.text('Administração'), findsNothing);
   });
 
   testWidgets('gaveta aceita texto ampliado sem perder destinos', (at) async {
@@ -399,7 +554,7 @@ void main() {
       await _irParaCompacto(at, destino);
       expect(at.takeException(), isNull, reason: destino.titulo);
     }
-    expect(find.widgetWithText(TextField, 'Buscar produtos'), findsOneWidget);
+    expect(find.byKey(const Key('busca-produtos')), findsOneWidget);
   });
 
   testWidgets('gaveta mobile confere com o golden aprovado', (at) async {

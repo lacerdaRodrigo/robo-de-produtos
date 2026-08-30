@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/inter/controlador_cashback_inter.dart';
+import 'package:app_robo/features/inter/formato_cashback_inter.dart';
 
 CashbackInter loja(String id, String nome) => CashbackInter(
   id: id,
@@ -40,6 +41,13 @@ Pagina<CashbackInter> respostaPagina(
 );
 
 void main() {
+  test('ordena cashback decimal exatamente sem double', () {
+    final valores = <String?>['9.90', '12', '100.005', '12,01', null];
+    valores.sort((a, b) => compararDecimaisInter(b, a));
+
+    expect(valores, ['100.005', '12,01', '12', '9.90', null]);
+  });
+
   test('carrega, pagina e deduplica pelo ID estável da loja', () async {
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async {

@@ -33,4 +33,17 @@ void main() {
     expect(coletaInterAtrasada('2026-08-22T12:00:00Z', agora), isFalse);
     expect(coletaInterAtrasada('2026-08-22T11:59:00Z', agora), isTrue);
   });
+
+  test('resume instante e percentual sem converter decimal para double', () {
+    final agora = DateTime.utc(2026, 8, 23, 12);
+
+    expect(
+      tempoColetaInter('2026-08-23T11:38:00Z', agora),
+      'Cashback há 22 min',
+    );
+    expect(tempoColetaInter(null, agora), 'Condição publicada pelo Inter');
+    expect(percentualCompactoInter('20.00'), '20%');
+    expect(percentualCompactoInter('7.50'), '7,5%');
+    expect(percentualCompactoInter('não informado'), isNull);
+  });
 }

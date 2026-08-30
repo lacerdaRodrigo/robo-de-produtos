@@ -158,6 +158,88 @@ void main() {
     },
   );
 
+  testWidgets('acompanhamento compacto é imediato e confirma após a API', (
+    at,
+  ) async {
+    final resposta = Completer<http.Response>();
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((_) => resposta.future),
+      ),
+    );
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([_loja()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaCashbackInter(
+            api: api,
+            controlador: controlador,
+            incorporada: true,
+            administrador: true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.text('Acompanhar'));
+    await at.pump();
+
+    expect(find.text('Salvando…'), findsOneWidget);
+    resposta.complete(http.Response('{}', 200));
+    await at.pumpAndSettle();
+    expect(find.text('Acompanhada'), findsOneWidget);
+  });
+
+  testWidgets('Cashback compacto não estoura em 320 px no tema escuro', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([_loja()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.escuro(),
+        home: Scaffold(
+          body: PaginaCashbackInter(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+          ),
+        ),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(1.5)),
+          child: child!,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    expect(at.takeException(), isNull);
+    await at.drag(
+      find.byKey(const Key('cashback-inter-compacto')),
+      const Offset(0, -300),
+    );
+    await at.pump();
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('distingue falha sem retrato, sem coleta e busca vazia', (
     at,
   ) async {

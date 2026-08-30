@@ -13,14 +13,19 @@ abstract final class TemaRadar {
     );
     return base.copyWith(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Tokens.marca,
+        seedColor: Tokens.marcaClara,
         brightness: Brightness.light,
-        primary: Tokens.marca,
+        primary: Tokens.marcaClara,
+        surface: Tokens.superficie,
+        error: Tokens.perigo,
+        onSurface: Tokens.texto,
+        outline: Tokens.borda,
       ),
       scaffoldBackgroundColor: Tokens.fundo,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Tokens.marca,
-        foregroundColor: Colors.white,
+        backgroundColor: Tokens.superficie,
+        foregroundColor: Tokens.texto,
+        surfaceTintColor: Colors.transparent,
       ),
       textTheme: base.textTheme.apply(
         bodyColor: Tokens.texto,
@@ -73,6 +78,8 @@ abstract final class TemaRadar {
       primary: Tokens.acaoEscura,
       surface: Tokens.superficieEscura,
       error: Tokens.perigoEscuro,
+      onSurface: Tokens.textoEscuro,
+      outline: Tokens.bordaEscura,
     );
     return base.copyWith(
       colorScheme: esquema,
@@ -86,7 +93,7 @@ abstract final class TemaRadar {
         surfaceTintColor: Colors.transparent,
       ),
       drawerTheme: const DrawerThemeData(
-        backgroundColor: Tokens.marcaProfunda,
+        backgroundColor: Tokens.superficieEscura,
         surfaceTintColor: Colors.transparent,
       ),
       textTheme: base.textTheme.apply(

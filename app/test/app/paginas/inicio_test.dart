@@ -216,6 +216,42 @@ void main() {
     expect(chamadas, 2);
   });
 
+  testWidgets('Início compacto reproduz a hierarquia com dados reais', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+
+    expect(find.text('Bom dia.'), findsOneWidget);
+    expect(find.text('Seu radar está atualizado.'), findsOneWidget);
+    expect(find.text('Seus espaços'), findsOneWidget);
+    await at.scrollUntilVisible(find.text('Resumo agora'), 300);
+    expect(find.text('130'), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
+  });
+
+  testWidgets('Início compacto não estoura em 320 px com texto ampliado', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(
+      at,
+      api,
+      compacto: true,
+      tamanho: const Size(320, 640),
+      escalaTexto: 1.5,
+    );
+    await at.pumpAndSettle();
+    expect(at.takeException(), isNull);
+    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('quatro atalhos chamam jornadas reais', (at) async {
     final abertos = <String>[];
     final api = apiQueResponde(

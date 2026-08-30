@@ -4,7 +4,9 @@ import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../../features/administracao/botao_disparo.dart';
 import '../../features/administracao/controlador_catalogo_administracao.dart';
+import '../../features/inter/controlador_cashback_inter.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
+import '../../features/inter/formato_cashback_inter.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../componentes/estados.dart';
@@ -172,12 +174,41 @@ class _HubShoppingInter extends StatefulWidget {
 
 class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   late Future<ResumoInicio> _resumo;
+  late final ControladorCashbackInter _cashback = ControladorCashbackInter(
+    buscar: ({required q, required ordenar, required pagina}) =>
+        widget.api.painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+  );
+  String? _melhorOferta;
   var _aba = 0;
 
   @override
   void initState() {
     super.initState();
     _resumo = widget.api.resumo();
+    _cashback.addListener(_capturarMelhorOferta);
+  }
+
+  void _capturarMelhorOferta() {
+    if (_melhorOferta != null ||
+        _cashback.busca.isNotEmpty ||
+        _cashback.itens.isEmpty) {
+      return;
+    }
+    String? oferta;
+    for (final loja in _cashback.itens) {
+      if (!loja.encontrada) continue;
+      oferta = percentualCompactoInter(loja.cashbackPrincipalValor);
+      if (oferta != null) break;
+    }
+    if (oferta != null && mounted) setState(() => _melhorOferta = oferta);
+  }
+
+  @override
+  void dispose() {
+    _cashback
+      ..removeListener(_capturarMelhorOferta)
+      ..dispose();
+    super.dispose();
   }
 
   void _tentarNovamente() => setState(() => _resumo = widget.api.resumo());
@@ -192,8 +223,10 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
           return _BancoInterCompacto(
             api: widget.api,
             administrador: widget.administrador,
+            controladorCashback: _cashback,
             aba: _aba,
             resumo: estado.data,
+            melhorOferta: _melhorOferta,
             carregandoResumo: estado.connectionState != ConnectionState.done,
             erroResumo: estado.hasError,
             aoTentarResumo: _tentarNovamente,
@@ -240,6 +273,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
               _HeroInter(resumo: estado.data),
               const SizedBox(height: 12),
               _AbasInter(
+                compacta: false,
                 selecionada: _aba,
                 aoSelecionar: (aba) => setState(() => _aba = aba),
               ),
@@ -296,8 +330,10 @@ class _BancoInterCompacto extends StatelessWidget {
   const _BancoInterCompacto({
     required this.api,
     required this.administrador,
+    required this.controladorCashback,
     required this.aba,
     required this.resumo,
+    required this.melhorOferta,
     required this.carregandoResumo,
     required this.erroResumo,
     required this.aoTentarResumo,
@@ -306,8 +342,10 @@ class _BancoInterCompacto extends StatelessWidget {
 
   final Api api;
   final bool administrador;
+  final ControladorCashbackInter controladorCashback;
   final int aba;
   final ResumoInicio? resumo;
+  final String? melhorOferta;
   final bool carregandoResumo;
   final bool erroResumo;
   final VoidCallback aoTentarResumo;
@@ -316,24 +354,31 @@ class _BancoInterCompacto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cabecalho = _cabecalho();
-    if (aba == 0) {
-      return SafeArea(
-        child: PaginaCashbackInter(
-          api: api,
-          administrador: administrador,
-          incorporada: true,
-          mostrarAtualizacao: false,
-          chaveRolagemCompacta: const Key('hub-shopping-inter'),
-          sliversAntesDoCashback: cabecalho,
-        ),
-      );
-    }
     return SafeArea(
-      child: _CatalogoSitesParceiros(
-        api: api,
-        administrador: administrador,
-        chaveRolagem: const Key('hub-shopping-inter'),
-        sliversAntesDoCatalogo: cabecalho,
+      child: IndexedStack(
+        key: const Key('hub-shopping-inter'),
+        index: aba,
+        children: [
+          PaginaCashbackInter(
+            key: const PageStorageKey('painel-cashback-inter'),
+            api: api,
+            controlador: controladorCashback,
+            administrador: administrador,
+            incorporada: true,
+            mostrarAtualizacao: false,
+            chaveRolagemCompacta: const PageStorageKey(
+              'rolagem-cashback-inter',
+            ),
+            sliversAntesDoCashback: cabecalho,
+          ),
+          _CatalogoSitesParceiros(
+            key: const PageStorageKey('painel-sites-parceiros-inter'),
+            api: api,
+            administrador: administrador,
+            chaveRolagem: const PageStorageKey('rolagem-sites-parceiros-inter'),
+            sliversAntesDoCatalogo: cabecalho,
+          ),
+        ],
       ),
     );
   }
@@ -343,7 +388,7 @@ class _BancoInterCompacto extends StatelessWidget {
       child: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
+            padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
             child: CabecalhoSecaoRadar(
               sobrelinha: 'Shopping e cashback',
               titulo: 'Banco Inter',
@@ -354,17 +399,17 @@ class _BancoInterCompacto extends StatelessWidget {
           if (carregandoResumo) const LinearProgressIndicator(),
           if (erroResumo)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
               child: _FalhaResumo(aoTentarNovamente: aoTentarResumo),
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: _HeroInter(resumo: resumo),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: _HeroInter(resumo: resumo, melhorOferta: melhorOferta),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-            child: _AbasInter(
-              compacta: true,
+            padding: const EdgeInsets.fromLTRB(18, 24, 18, 15),
+            child: AbasRadar(
+              rotulos: const ['Cashback', 'Sites parceiros'],
               selecionada: aba,
               aoSelecionar: aoSelecionarAba,
             ),
@@ -376,77 +421,192 @@ class _BancoInterCompacto extends StatelessWidget {
 }
 
 class _HeroInter extends StatelessWidget {
-  const _HeroInter({required this.resumo});
+  const _HeroInter({required this.resumo, this.melhorOferta});
 
   final ResumoInicio? resumo;
+  final String? melhorOferta;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final cashback = resumo?.cashbackInter.lojasAcompanhadas ?? 0;
-    final produtos = resumo?.produtos.lojasSelecionadas ?? 0;
+    final cashback =
+        resumo == null ||
+            resumo!.cashbackInter.estado == EstadoResumo.indisponivel
+        ? '—'
+        : '${resumo!.cashbackInter.lojasAcompanhadas}';
+    final produtos =
+        resumo == null || resumo!.produtos.estado == EstadoResumo.indisponivel
+        ? '—'
+        : '${resumo!.produtos.produtosAtivos}';
+    final (estadoIntegracao, corEstado) = _estadoHeroInter(context, resumo);
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF08283F), Color(0xFF07556D)],
+          colors: [Tokens.marcaProfunda, Tokens.marcaMedia],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: <BoxShadow>[SombraRadar.para(Theme.of(context).brightness)],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Stack(
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            Positioned(
+              right: -42,
+              top: -54,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      Tokens.ciano.withValues(alpha: 0.34),
+                      Tokens.ciano.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+                child: const SizedBox.square(dimension: 224),
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                child: Text(
-                  '● Integração saudável',
-                  style: TextStyle(color: Colors.white, fontSize: 11),
+            ),
+            Positioned(
+              right: -48,
+              bottom: -62,
+              child: Container(
+                width: 178,
+                height: 178,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      spreadRadius: 28,
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.03),
+                      spreadRadius: 58,
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            const Text(
-              'Suas lojas do Inter estão\nem um único lugar.',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                height: 1.1,
-                fontWeight: FontWeight.w900,
+            Padding(
+              padding: const EdgeInsets.all(21),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: corEstado,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: corEstado.withValues(alpha: 0.14),
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: const SizedBox.square(dimension: 7),
+                          ),
+                          const SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              estadoIntegracao,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFDFF8FF),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 17),
+                  const Text(
+                    'Suas lojas do Inter estão em um único lugar.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sites parceiros e produtos diretos continuam com coletas separadas.',
+                    style: TextStyle(
+                      color: Color(0xFFC6D8E7),
+                      fontSize: 12,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      _MetricaInter(valor: cashback, rotulo: 'acompanhadas'),
+                      const SizedBox(width: 7),
+                      _MetricaInter(valor: produtos, rotulo: 'produtos'),
+                      const SizedBox(width: 7),
+                      _MetricaInter(
+                        valor: melhorOferta ?? '—',
+                        rotulo: 'melhor oferta',
+                        cor: cores.ganho,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sites parceiros e produtos diretos continuam com coletas separadas.',
-              style: TextStyle(color: Color(0xFFD7E9F2), height: 1.3),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                _MetricaInter(valor: '$cashback', rotulo: 'acompanhadas'),
-                const SizedBox(width: 8),
-                _MetricaInter(valor: '$produtos', rotulo: 'produtos'),
-                const SizedBox(width: 8),
-                _MetricaInter(
-                  valor: '—',
-                  rotulo: 'melhor oferta',
-                  cor: cores.ganho,
-                ),
-              ],
             ),
           ],
         ),
       ),
     );
   }
+}
+
+(String, Color) _estadoHeroInter(BuildContext context, ResumoInicio? resumo) {
+  final cores = CoresRadar.de(context);
+  if (resumo == null) return ('Consultando integração', cores.atencao);
+  final estados = <EstadoResumo>{
+    resumo.cashbackInter.estado,
+    resumo.produtos.estado,
+  };
+  if (estados.every((estado) => estado == EstadoResumo.atualizado)) {
+    return ('Integração saudável', cores.ganho);
+  }
+  if (estados.contains(EstadoResumo.atualizando)) {
+    return ('Integração atualizando', cores.atencao);
+  }
+  if (estados.every(
+    (estado) =>
+        estado == EstadoResumo.semDados || estado == EstadoResumo.indisponivel,
+  )) {
+    return ('Integração sem dados', cores.textoSuave);
+  }
+  return ('Integração com atenção', cores.atencao);
 }
 
 class _MetricaInter extends StatelessWidget {
@@ -461,11 +621,11 @@ class _MetricaInter extends StatelessWidget {
     child: DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 10, 8, 9),
+        padding: const EdgeInsets.fromLTRB(9, 11, 9, 11),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -480,7 +640,9 @@ class _MetricaInter extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               rotulo,
-              style: const TextStyle(color: Color(0xFFB5D3E1), fontSize: 10),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Color(0xFFB9CEDF), fontSize: 9),
             ),
           ],
         ),
@@ -539,6 +701,7 @@ class _AbasInter extends StatelessWidget {
 
 class _CatalogoSitesParceiros extends StatefulWidget {
   const _CatalogoSitesParceiros({
+    super.key,
     required this.api,
     required this.administrador,
     this.sliversAntesDoCatalogo = const [],
@@ -581,10 +744,27 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
   Future<void> _alternar(LojaCatalogoInter loja) async {
     if (!widget.administrador || _alterando.contains(loja.id)) return;
     setState(() => _alterando.add(loja.id));
+    final favorita = !loja.favorita;
+    _controlador.substituir(loja.id, loja.copiarCom(favorita: favorita));
     try {
-      final favorita = !loja.favorita;
       await widget.api.alterarFavoritaInter(id: loja.id, favorita: favorita);
-      _controlador.substituir(loja.id, loja.copiarCom(favorita: favorita));
+      if (mounted) {
+        mostrarMensagemRadar(
+          context,
+          favorita
+              ? 'Loja adicionada ao acompanhamento.'
+              : 'Loja removida do acompanhamento.',
+        );
+      }
+    } catch (_) {
+      _controlador.substituir(loja.id, loja);
+      if (mounted) {
+        mostrarMensagemRadar(
+          context,
+          'Não foi possível salvar o acompanhamento.',
+          sucesso: false,
+        );
+      }
     } finally {
       if (mounted) setState(() => _alterando.remove(loja.id));
     }
@@ -598,11 +778,11 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
       slivers: [
         ...widget.sliversAntesDoCatalogo,
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 13),
           sliver: SliverToBoxAdapter(child: _avisoCatalogo(context)),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
           sliver: SliverToBoxAdapter(
             child: CampoBuscaRadar(
               controlador: _campoBusca,
@@ -617,19 +797,17 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
             ),
           ),
         ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-          sliver: SliverToBoxAdapter(child: _filtros(context)),
-        ),
+        SliverToBoxAdapter(child: _filtros(context)),
         if (!_controlador.carregandoInicial && _controlador.erroInicial == null)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
             sliver: SliverToBoxAdapter(
               child: Text(
                 '${_controlador.total} sites parceiros disponíveis',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: CoresRadar.de(context).textoSuave,
                   fontWeight: FontWeight.w700,
+                  fontSize: 10,
                 ),
               ),
             ),
@@ -641,22 +819,32 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
 
   Widget _avisoCatalogo(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: const Color(0xFFD7F8E5),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Tokens.ganhoFundoEscuro
+          : Tokens.ganhoFundo,
       borderRadius: BorderRadius.circular(15),
       border: Border.all(color: Tokens.ganho.withValues(alpha: 0.35)),
     ),
-    child: const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.storefront_outlined, color: Tokens.ganho, size: 20),
-          SizedBox(width: 10),
+          Icon(
+            Icons.storefront_outlined,
+            color: CoresRadar.de(context).ganho,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Este é o catálogo completo de Sites parceiros retornado pelo robô.\n'
+              'Este é o catálogo completo de Sites parceiros retornado pelo robô. '
               'Selecionar uma loja não inicia uma nova coleta.',
-              style: TextStyle(color: Tokens.ganho, fontSize: 11, height: 1.35),
+              style: TextStyle(
+                color: CoresRadar.de(context).ganho,
+                fontSize: 10,
+                height: 1.45,
+              ),
             ),
           ),
         ],
@@ -665,6 +853,7 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
   );
 
   Widget _filtros(BuildContext context) => SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(18, 11, 18, 0),
     scrollDirection: Axis.horizontal,
     child: Row(
       children: [
@@ -673,13 +862,13 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
           ativo: _filtro == 0,
           aoTocar: () => setState(() => _filtro = 0),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _FiltroCatalogo(
           rotulo: 'Maior cashback',
           ativo: _filtro == 1,
           aoTocar: () => setState(() => _filtro = 1),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _FiltroCatalogo(
           rotulo: 'Acompanhadas',
           ativo: _filtro == 2,
@@ -720,7 +909,7 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 38),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             for (final loja in lojas)
@@ -730,11 +919,32 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
                 podeAdministrar: widget.administrador,
                 aoAcompanhar: () => _alternar(loja),
               ),
-            if (_controlador.temProxima)
+            if (_controlador.carregandoMais)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_controlador.erroMais != null)
               Center(
-                child: TextButton(
+                child: OutlinedButton(
+                  onPressed: _controlador.carregarMais,
+                  child: const Text('Tentar carregar mais'),
+                ),
+              )
+            else if (_controlador.temProxima)
+              Center(
+                child: OutlinedButton(
                   onPressed: _controlador.carregarMais,
                   child: const Text('Carregar mais'),
+                ),
+              )
+            else
+              Text(
+                'Todos os sites parceiros foram carregados.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: CoresRadar.de(context).textoSuave,
+                  fontSize: 10,
                 ),
               ),
           ]),
@@ -748,8 +958,9 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
     if (_filtro == 2) lojas = lojas.where((loja) => loja.favorita).toList();
     if (_filtro == 1) {
       lojas.sort(
-        (a, b) => (b.cashbackPrincipalValor ?? '').compareTo(
-          a.cashbackPrincipalValor ?? '',
+        (a, b) => compararDecimaisInter(
+          b.cashbackPrincipalValor,
+          a.cashbackPrincipalValor,
         ),
       );
     }
@@ -772,19 +983,27 @@ class _FiltroCatalogo extends StatelessWidget {
   Widget build(BuildContext context) => TextButton(
     onPressed: aoTocar,
     style: TextButton.styleFrom(
-      minimumSize: const Size(0, 38),
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      backgroundColor: ativo ? const Color(0xFFE1F1FF) : Colors.white,
-      foregroundColor: ativo ? Tokens.marca : CoresRadar.de(context).textoSuave,
+      minimumSize: const Size(0, 37),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      backgroundColor: ativo
+          ? (Theme.of(context).brightness == Brightness.dark
+                ? Tokens.acaoFundoEscuro
+                : Tokens.acaoFundo)
+          : Theme.of(context).colorScheme.surface,
+      foregroundColor: ativo
+          ? CoresRadar.de(context).acao
+          : CoresRadar.de(context).textoSuave,
       shape: StadiumBorder(
         side: BorderSide(
-          color: ativo ? Tokens.marca : CoresRadar.de(context).borda,
+          color: ativo
+              ? CoresRadar.de(context).acao
+              : CoresRadar.de(context).borda,
         ),
       ),
     ),
     child: Text(
       rotulo,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
     ),
   );
 }
@@ -810,8 +1029,9 @@ class _CartaoSiteParceiro extends StatelessWidget {
         ? 'Oferta disponível'
         : loja.cashbackPrincipalTexto;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: CartaoRadar(
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -823,18 +1043,30 @@ class _CartaoSiteParceiro extends StatelessWidget {
                   height: 46,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDDF3FD),
-                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      colors: <Color>[
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Tokens.acaoFundoEscuro
+                            : Tokens.acaoFundo,
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Tokens.cianoFundoEscuro
+                            : Tokens.cianoFundo,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: Text(
                     _iniciais(loja.nome),
-                    style: const TextStyle(
-                      color: Tokens.marca,
+                    style: TextStyle(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFDFF8FF)
+                          : Tokens.marca,
+                      fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 9),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -842,82 +1074,111 @@ class _CartaoSiteParceiro extends StatelessWidget {
                       Text(
                         loja.nome,
                         style: tema.textTheme.titleMedium?.copyWith(
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Site parceiro · cashback publicado',
+                        'Catálogo do Inter',
                         style: tema.textTheme.bodySmall?.copyWith(
                           color: cores.textoSuave,
+                          fontSize: 9,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  loja.ativa ? cashback : 'Indisponível',
-                  style: tema.textTheme.titleSmall?.copyWith(
-                    color: loja.ativa ? Tokens.ganho : cores.textoSuave,
-                    fontWeight: FontWeight.w900,
+                Flexible(
+                  child: Text(
+                    loja.ativa ? cashback : 'Indisponível',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: tema.textTheme.labelMedium?.copyWith(
+                      color: loja.ativa ? cores.ganho : cores.textoSuave,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Divider(height: 1),
-            ),
+            const SizedBox(height: 13),
+            const Divider(height: 1),
+            const SizedBox(height: 11),
             Row(
               children: [
                 Expanded(
                   child: Row(
                     children: [
-                      const Icon(Icons.circle, color: Tokens.ganho, size: 7),
+                      Icon(Icons.circle, color: cores.ganho, size: 7),
                       const SizedBox(width: 6),
-                      Text(
-                        loja.ativa
-                            ? 'Disponível no catálogo'
-                            : 'Indisponível no catálogo',
-                        style: tema.textTheme.bodySmall?.copyWith(
-                          color: cores.textoSuave,
+                      Expanded(
+                        child: Text(
+                          loja.ativa
+                              ? 'Disponível no catálogo'
+                              : 'Indisponível no catálogo',
+                          style: tema.textTheme.bodySmall?.copyWith(
+                            color: cores.textoSuave,
+                            fontSize: 9,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (alterando)
-                  const SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  FilledButton.tonalIcon(
-                    onPressed: podeAdministrar && loja.ativa
-                        ? aoAcompanhar
-                        : null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFD7F8E5),
-                      foregroundColor: Tokens.ganho,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
+                OutlinedButton(
+                  onPressed: podeAdministrar && loja.ativa && !alterando
+                      ? aoAcompanhar
+                      : null,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 35),
+                    backgroundColor: loja.favorita
+                        ? (Theme.of(context).brightness == Brightness.dark
+                              ? Tokens.ganhoFundoEscuro
+                              : Tokens.ganhoFundo)
+                        : Colors.transparent,
+                    foregroundColor: loja.favorita ? cores.ganho : cores.acao,
+                    side: BorderSide(
+                      color: loja.favorita ? Colors.transparent : cores.acao,
                     ),
-                    icon: Icon(
-                      loja.favorita
-                          ? Icons.check_circle_outline
-                          : Icons.add_circle_outline,
-                      size: 16,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 7,
                     ),
-                    label: Text(loja.favorita ? 'Acompanhada' : 'Acompanhar'),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
                   ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (alterando) ...[
+                        const SizedBox.square(
+                          dimension: 13,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 6),
+                      ] else if (loja.favorita) ...[
+                        const Icon(Icons.check, size: 13),
+                        const SizedBox(width: 3),
+                      ],
+                      Text(
+                        alterando
+                            ? 'Salvando…'
+                            : loja.favorita
+                            ? 'Acompanhada'
+                            : 'Acompanhar',
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],
@@ -951,7 +1212,9 @@ class _AbaInter extends StatelessWidget {
       child: TextButton(
         onPressed: aoTocar,
         style: TextButton.styleFrom(
-          backgroundColor: ativa ? Colors.white : Colors.transparent,
+          backgroundColor: ativa
+              ? Theme.of(context).colorScheme.surface
+              : Colors.transparent,
           foregroundColor: ativa
               ? Tokens.marcaClara
               : CoresRadar.de(context).textoSuave,

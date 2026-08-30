@@ -132,15 +132,14 @@ class _PaginaInicioState extends State<PaginaInicio>
         slivers: [
           SliverSafeArea(
             sliver: SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
+              padding: widget.experienciaCompacta
+                  ? const EdgeInsets.fromLTRB(18, 22, 18, 38)
+                  : const EdgeInsets.fromLTRB(20, 24, 20, 44),
               sliver: SliverList.list(
                 children: [
                   if (widget.experienciaCompacta)
                     _CabecalhoResumoCompacto(
-                      resumo: resumo,
-                      carregando: _carregando,
                       agora: (widget.agora ?? DateTime.now)(),
-                      aoAtualizar: _carregando ? null : _consultar,
                     )
                   else
                     _CabecalhoResumo(
@@ -161,10 +160,11 @@ class _PaginaInicioState extends State<PaginaInicio>
                         )
                       : _DestaqueEstado(resumo: resumo),
                   if (widget.experienciaCompacta) ...[
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     const _TituloSecao(
                       titulo: 'Seus espaços',
                       complemento: 'Um lugar para cada jornada',
+                      compactoMobile: true,
                     ),
                     const SizedBox(height: 12),
                     _EspacosCompactos(
@@ -172,17 +172,18 @@ class _PaginaInicioState extends State<PaginaInicio>
                       aoAbrirInter: widget.aoAbrirCashback,
                       aoAbrirProdutos: widget.aoAbrirProdutos,
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     const _TituloSecao(
                       titulo: 'Resumo agora',
                       complemento: 'Últimos retratos válidos',
+                      compactoMobile: true,
                     ),
                     const SizedBox(height: 12),
                     _GradeMetricasCompactas(
                       resumo: resumo,
                       agora: (widget.agora ?? DateTime.now)(),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     _AtividadeRecenteCompacta(
                       resumo: resumo,
                       agora: (widget.agora ?? DateTime.now)(),
@@ -287,17 +288,9 @@ class _CabecalhoResumo extends StatelessWidget {
 }
 
 class _CabecalhoResumoCompacto extends StatelessWidget {
-  const _CabecalhoResumoCompacto({
-    required this.resumo,
-    required this.carregando,
-    required this.agora,
-    required this.aoAtualizar,
-  });
+  const _CabecalhoResumoCompacto({required this.agora});
 
-  final ResumoInicio resumo;
-  final bool carregando;
   final DateTime agora;
-  final VoidCallback? aoAtualizar;
 
   @override
   Widget build(BuildContext context) {
@@ -309,24 +302,6 @@ class _CabecalhoResumoCompacto extends StatelessWidget {
           titulo: _saudacao(agora),
           descricao:
               'Seus benefícios importantes, sem misturar as regras de cada fonte.',
-          acao: IconButton.filledTonal(
-            key: const Key('atualizar-resumo'),
-            tooltip: 'Atualizar resumo',
-            onPressed: aoAtualizar,
-            icon: carregando
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.refresh),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Resumo gerado ${_dataHora(resumo.geradoEm)}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-          ),
         ),
       ],
     );
@@ -377,12 +352,18 @@ class _DestaqueInicioCompacto extends StatelessWidget {
     final prioridade = _prioridade(resumo);
     final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(26),
       child: Stack(
         children: [
           Container(
-            color: Tokens.marcaProfunda,
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[Tokens.marcaProfunda, Tokens.marcaMedia],
+              ),
+            ),
+            padding: const EdgeInsets.all(21),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -413,6 +394,25 @@ class _DestaqueInicioCompacto extends StatelessWidget {
                 const SizedBox(height: 18),
                 _MetricasHeroCompactas(resumo: resumo),
               ],
+            ),
+          ),
+          Positioned(
+            right: -95,
+            top: -120,
+            child: IgnorePointer(
+              child: SizedBox.square(
+                dimension: 260,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: <Color>[
+                        Tokens.ciano.withValues(alpha: 0.34),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
           const Positioned(
@@ -474,14 +474,14 @@ class _MetricasHeroCompactas extends StatelessWidget {
     return Row(
       children: [
         _MetricaHero(valor: _valorLivelo(resumo), titulo: 'alertas Livelo'),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _MetricaHero(
           valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
           titulo: 'lojas com cashback',
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _MetricaHero(
           valor: resumo.produtos.estado == EstadoResumo.indisponivel
               ? '—'
@@ -503,11 +503,11 @@ class _MetricaHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+        padding: const EdgeInsets.fromLTRB(9, 11, 9, 11),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.10),
           border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,9 +589,7 @@ class _GradeMetricasCompactas extends StatelessWidget {
         _MetricaResumoCompacta(
           icone: Icons.storefront_outlined,
           cor: CoresRadar.de(context).acao,
-          valor: _valorDisponivel(resumo.livelo.estado)
-              ? _inteiro(resumo.livelo.lojasAcompanhadas)
-              : '—',
+          valor: _totalLojasAcompanhadas(resumo),
           titulo: 'lojas acompanhadas',
         ),
         _MetricaResumoCompacta(
@@ -632,42 +630,38 @@ class _MetricaResumoCompacta extends StatelessWidget {
   final String titulo;
 
   @override
-  Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: cor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: SizedBox.square(
-              dimension: 36,
-              child: Icon(icone, color: cor, size: 20),
-            ),
+  Widget build(BuildContext context) => CartaoRadar(
+    padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: cor.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(11),
           ),
-          const SizedBox(height: 12),
-          Text(
-            valor,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          child: SizedBox.square(
+            dimension: 35,
+            child: Icon(icone, color: cor, size: 20),
           ),
-          const SizedBox(height: 2),
-          Text(
-            titulo,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-            ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          valor,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          titulo,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
@@ -684,11 +678,11 @@ class _AtividadeRecenteCompacta extends StatelessWidget {
       const _TituloSecao(
         titulo: 'Atividade recente',
         complemento: 'Pedido não é conclusão',
+        compactoMobile: true,
       ),
       const SizedBox(height: 12),
-      Card(
-        margin: EdgeInsets.zero,
-        elevation: 0,
+      CartaoRadar(
+        padding: EdgeInsets.zero,
         child: Column(
           children: [
             for (
@@ -1000,7 +994,7 @@ class _EspacosCompactos extends StatelessWidget {
         _EspacoCompacto(
           chave: const Key('atalho-livelo'),
           icone: Icons.card_giftcard_outlined,
-          cor: cores.acao,
+          cor: cores.integracaoInter,
           titulo: 'Livelo',
           descricao: 'Pontos, lojas, campanhas e alertas',
           aoTocar: aoAbrirLivelo,
@@ -1009,16 +1003,16 @@ class _EspacosCompactos extends StatelessWidget {
         _EspacoCompacto(
           chave: const Key('atalho-inter'),
           icone: Icons.account_balance_outlined,
-          cor: cores.integracaoInter,
+          cor: cores.ganho,
           titulo: 'Banco Inter',
-          descricao: 'Cashback e produtos em processos separados',
+          descricao: 'Lojas escolhidas, cashback e coletas',
           aoTocar: aoAbrirInter,
         ),
         const SizedBox(height: 10),
         _EspacoCompacto(
           chave: const Key('atalho-produtos'),
           icone: Icons.search,
-          cor: cores.ganho,
+          cor: cores.acao,
           titulo: 'Buscar produtos',
           descricao: 'Catálogo local das lojas selecionadas',
           aoTocar: aoAbrirProdutos,
@@ -1052,7 +1046,7 @@ class _EspacoCompacto extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Ink(
         key: chave,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(13),
         child: Row(
           children: [
             DecoratedBox(
@@ -1061,11 +1055,11 @@ class _EspacoCompacto extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: SizedBox.square(
-                dimension: 48,
+                dimension: 47,
                 child: Icon(icone, color: cor),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1354,13 +1348,42 @@ class _GradeResponsiva extends StatelessWidget {
 }
 
 class _TituloSecao extends StatelessWidget {
-  const _TituloSecao({required this.titulo, required this.complemento});
+  const _TituloSecao({
+    required this.titulo,
+    required this.complemento,
+    this.compactoMobile = false,
+  });
 
   final String titulo;
   final String complemento;
+  final bool compactoMobile;
 
   @override
   Widget build(BuildContext context) {
+    if (compactoMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+              letterSpacing: -0.7,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            complemento,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      );
+    }
     final tituloWidget = Text(
       titulo,
       style: Theme.of(
@@ -1517,6 +1540,16 @@ String _valorLivelo(ResumoInicio resumo) {
     return '—';
   }
   return _inteiro(resumo.livelo.alertasUltimaColeta);
+}
+
+String _totalLojasAcompanhadas(ResumoInicio resumo) {
+  if (!_valorDisponivel(resumo.livelo.estado) ||
+      !_valorDisponivel(resumo.cashbackInter.estado)) {
+    return '—';
+  }
+  return _inteiro(
+    resumo.livelo.lojasAcompanhadas + resumo.cashbackInter.lojasAcompanhadas,
+  );
 }
 
 String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {

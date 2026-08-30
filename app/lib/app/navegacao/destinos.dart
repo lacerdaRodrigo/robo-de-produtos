@@ -24,9 +24,9 @@ enum DestinoCompacto {
   inter(
     Icons.account_balance_outlined,
     'Banco Inter',
-    'Cashback e produtos separados',
+    'Escolha lojas e veja cashback',
   ),
-  produtos(Icons.search, 'Buscar produtos', 'Catálogo das lojas selecionadas');
+  produtos(Icons.search, 'Buscar produtos', 'Resultados das lojas escolhidas');
 
   const DestinoCompacto(this.icone, this.titulo, this.descricao);
 

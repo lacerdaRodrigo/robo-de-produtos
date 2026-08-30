@@ -42,7 +42,7 @@ abstract final class Tokens {
   static const Color fundoEscuro = Color(0xFF06111E);
   static const Color superficieEscura = Color(0xFF0D2032);
   static const Color superficieAlternativaEscura = Color(0xFF132B40);
-  static const Color bordaEscura = Color(0x2430D9EE);
+  static const Color bordaEscura = Color(0x24BED9EE);
   static const Color acaoFundoEscuro = Color(0xFF173B56);
   static const Color cianoFundoEscuro = Color(0xFF103A47);
   static const Color ganhoFundoEscuro = Color(0xFF113A27);
@@ -50,10 +50,9 @@ abstract final class Tokens {
   static const Color atencaoFundoEscuro = Color(0xFF402F14);
   static const Color atencaoEscuro = Color(0xFFFFD17A);
 
-  // Ação no tema escuro mantém contraste alto no Flutter. O HTML usa o mesmo
-  // --acao base; esta adaptação já existia no app e permanece semântica.
-  static const Color acaoEscura = Color(0xFF65DFF5);
-  static const Color perigoEscuro = Color(0xFFFF8A8A);
+  // O HTML não redefine estes tokens no escuro.
+  static const Color acaoEscura = marcaClara;
+  static const Color perigoEscuro = perigo;
 }
 
 /// Escala estrutural para evitar números mágicos espalhados pelo redesign.
@@ -87,6 +86,9 @@ abstract final class SombraRadar {
     blurRadius: 42,
     offset: Offset(0, 18),
   );
+
+  static BoxShadow para(Brightness brilho) =>
+      brilho == Brightness.dark ? escura : clara;
 }
 
 /// Cores semânticas que mudam junto do tema sem alterar o significado.
@@ -115,7 +117,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   const CoresRadar.escuras()
     : acao = Tokens.acaoEscura,
-      integracaoInter = Tokens.acaoEscura,
+      integracaoInter = Tokens.ciano,
       ganho = Tokens.ganhoEscuro,
       atencao = Tokens.atencaoEscuro,
       perigo = Tokens.perigoEscuro,

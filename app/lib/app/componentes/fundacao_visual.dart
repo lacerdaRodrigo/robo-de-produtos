@@ -79,13 +79,34 @@ class CabecalhoSecaoRadar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (sobrelinha != null) ...[
-          Text(
-            sobrelinha!.toUpperCase(),
-            style: tema.textTheme.labelSmall?.copyWith(
-              color: cores.acao,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
+          Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Tokens.ciano,
+                  shape: BoxShape.circle,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Tokens.ciano.withValues(alpha: 0.12),
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: const SizedBox.square(dimension: 7),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  sobrelinha!.toUpperCase(),
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: cores.acao,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.88,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 7),
         ],
@@ -96,8 +117,13 @@ class CabecalhoSecaoRadar extends StatelessWidget {
               child: Text(
                 titulo,
                 style: tema.textTheme.headlineMedium?.copyWith(
+                  fontSize: (MediaQuery.sizeOf(context).width * 0.08).clamp(
+                    28.0,
+                    36.0,
+                  ),
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -1.1,
+                  height: 1.08,
+                  letterSpacing: -1.35,
                 ),
               ),
             ),
@@ -109,6 +135,7 @@ class CabecalhoSecaoRadar extends StatelessWidget {
           descricao,
           style: tema.textTheme.bodyMedium?.copyWith(
             color: cores.textoSuave,
+            fontSize: 13,
             height: 1.4,
           ),
         ),
@@ -139,13 +166,19 @@ class CartaoRadar extends StatelessWidget {
       side: BorderSide(color: cores.borda),
     );
     final conteudo = Padding(padding: padding, child: child);
-    return Material(
-      color: tema.cardColor,
-      shape: forma,
-      clipBehavior: Clip.antiAlias,
-      child: aoTocar == null
-          ? conteudo
-          : InkWell(onTap: aoTocar, child: conteudo),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(21),
+        boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+      ),
+      child: Material(
+        color: tema.cardColor,
+        shape: forma,
+        clipBehavior: Clip.antiAlias,
+        child: aoTocar == null
+            ? conteudo
+            : InkWell(onTap: aoTocar, child: conteudo),
+      ),
     );
   }
 }
@@ -338,7 +371,7 @@ class FolhaRadar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        padding: const EdgeInsets.fromLTRB(17, 8, 17, 21),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,28 +379,62 @@ class FolhaRadar extends StatelessWidget {
             Align(
               child: Container(
                 width: 42,
-                height: 4,
+                height: 5,
                 decoration: BoxDecoration(
                   color: CoresRadar.de(context).borda,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            Text(
-              titulo,
-              style: tema.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(height: 17),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: tema.textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        descricao,
+                        style: tema.textTheme.bodySmall?.copyWith(
+                          color: CoresRadar.de(context).textoSuave,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 11),
+                IconButton(
+                  key: const Key('fechar-folha-radar'),
+                  tooltip: 'Fechar painel',
+                  onPressed: () => Navigator.maybePop(context),
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size.square(42),
+                    maximumSize: const Size.square(42),
+                    padding: EdgeInsets.zero,
+                    backgroundColor: CoresRadar.de(
+                      context,
+                    ).superficieAlternativa,
+                    side: BorderSide(color: CoresRadar.de(context).borda),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
-            const SizedBox(height: 5),
-            Text(
-              descricao,
-              style: tema.textTheme.bodySmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
-              ),
-            ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             child,
           ],
         ),

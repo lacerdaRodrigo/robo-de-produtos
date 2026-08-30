@@ -18,10 +18,7 @@ void main() {
     expect(Tokens.ganho.toARGB32(), const Color(0xFF16803C).toARGB32());
     expect(Tokens.ganhoFundo.toARGB32(), const Color(0xFFDCFCE7).toARGB32());
     expect(Tokens.atencao.toARGB32(), const Color(0xFF8B5A12).toARGB32());
-    expect(
-      Tokens.atencaoFundo.toARGB32(),
-      const Color(0xFFFFF2D7).toARGB32(),
-    );
+    expect(Tokens.atencaoFundo.toARGB32(), const Color(0xFFFFF2D7).toARGB32());
     expect(Tokens.perigo.toARGB32(), const Color(0xFFC53030).toARGB32());
     expect(Tokens.fundo.toARGB32(), const Color(0xFFF3F7FB).toARGB32());
     expect(Tokens.superficie.toARGB32(), const Color(0xFFFFFFFF).toARGB32());
@@ -64,10 +61,10 @@ void main() {
       const Color(0xFF402F14).toARGB32(),
     );
     expect(Tokens.ganhoEscuro.toARGB32(), const Color(0xFF65D98B).toARGB32());
-    expect(
-      Tokens.atencaoEscuro.toARGB32(),
-      const Color(0xFFFFD17A).toARGB32(),
-    );
+    expect(Tokens.atencaoEscuro.toARGB32(), const Color(0xFFFFD17A).toARGB32());
+    expect(Tokens.bordaEscura.toARGB32(), const Color(0x24BED9EE).toARGB32());
+    expect(Tokens.acaoEscura, Tokens.marcaClara);
+    expect(Tokens.perigoEscuro, Tokens.perigo);
   });
 
   test('escala estrutural do redesign permanece estável', () {
@@ -91,5 +88,6 @@ void main() {
     expect(tema.scaffoldBackgroundColor, Tokens.fundoEscuro);
     expect(tema.cardColor, Tokens.superficieEscura);
     expect(tema.extension<CoresRadar>()?.acao, Tokens.acaoEscura);
+    expect(tema.extension<CoresRadar>()?.integracaoInter, Tokens.ciano);
   });
 }
