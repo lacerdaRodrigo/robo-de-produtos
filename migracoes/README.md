@@ -23,12 +23,14 @@ cria o `001` e carrega o catálogo.
 | `013_catalogo_livelo.sql` | catálogo completo e vínculo opcional com `loja` | Livelo |
 | `014_alerta_no_card.sql` | alerta calculado no retrato atual | Livelo |
 | `015_historico_catalogo_livelo.sql` | identidade da medição por parceiro e índice do histórico completo | Livelo |
+| `016_preserva_historico_livelo.sql` | separa acompanhamento da identidade histórica | Livelo |
+| `017_qualidade_livelo.sql` | registra RN29 sem substituir o último snapshot completo | Livelo |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009` e `013`–`015` (coleta Livelo/Inter/produtos e histórico Livelo).
-- API do app: `010`–`015` (autenticação, disparos e catálogos).
+- Robôs: `001`–`009` e `013`–`017` (coleta Livelo/Inter/produtos e histórico Livelo).
+- API do app: `010`–`017` (autenticação, disparos e catálogos).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de
-> rodar uma migração ainda não aplicada (ex.: `009`, `011`).
+> rodar uma migração ainda não aplicada (ex.: `009`, `011`, `016`, `017`).

@@ -68,6 +68,7 @@ void main() {
     expect(pagina.itens.single.nome, 'Camiseta');
     expect(pagina.itens.single.precoAtualValor, '999');
     expect(pagina.itens.single.lojaNome, 'Casas Bahia');
+    expect(pagina.itens.single.ativo, isNull);
     expect(pagina.totalItens, 45);
     expect(pagina.totalPaginas, 3);
     expect(pagina.temProxima, isTrue);
@@ -136,6 +137,8 @@ void main() {
               'estado_geral': 'atencao',
               'livelo': {
                 'estado': 'atualizado',
+                'ultima_tentativa_em': '2026-08-23T08:30:00.000Z',
+                'qualidade': 'completa',
                 'ultimo_sucesso_em': '2026-08-23T08:00:00.000Z',
                 'lojas_acompanhadas': 126,
                 'alertas_ultima_coleta': 2,
@@ -171,6 +174,8 @@ void main() {
     expect(consulta!.path, '/api/resumo');
     expect(resposta.estadoGeral, EstadoResumo.atencao);
     expect(resposta.livelo.alertasUltimaColeta, 2);
+    expect(resposta.livelo.ultimaTentativaEm, isNotNull);
+    expect(resposta.livelo.qualidade, 'completa');
     expect(resposta.cashbackInter.estado, EstadoResumo.falhaRecente);
     expect(resposta.cashbackInter.ultimoSucessoEm, isNotNull);
     expect(resposta.produtos.estado, EstadoResumo.degradado);
@@ -284,6 +289,8 @@ void main() {
           }
           return http.Response(
             '{"itens":[],"resumo":{"ultima_coleta":null,'
+            '"ultima_tentativa_em":"2026-08-28T12:05:00Z",'
+            '"qualidade":"degradada",'
             '"parceiros_lidos":0,"total_catalogo":0,"acompanhadas":0,'
             '"alertas":0,"melhor_oferta":null},"categorias":[],'
             '"pagina":2,"por_pagina":20,"total_itens":0,'
@@ -294,7 +301,7 @@ void main() {
       ),
     );
 
-    await api.catalogoLivelo(
+    final catalogo = await api.catalogoLivelo(
       q: 'natura',
       aba: 'acompanhadas',
       categoria: 'Beleza',
@@ -303,6 +310,9 @@ void main() {
     );
     await api.alterarAcompanhamentoLivelo(idExterno: 'NAT', acompanhada: true);
     await api.alterarAlertaLivelo(idExterno: 'NAT', ativo: true);
+
+    expect(catalogo.resumo.qualidade, 'degradada');
+    expect(catalogo.resumo.ultimaTentativaEm, '2026-08-28T12:05:00Z');
 
     expect(requisicoes.first.url.path, '/api/livelo/catalogo');
     expect(requisicoes.first.url.queryParameters, {
@@ -397,7 +407,7 @@ void main() {
             consulta = requisicao.url;
             return http.Response(
               jsonEncode({
-                'produto': _itens.single,
+                'produto': {..._itens.single, 'ativo': false},
                 'minimo': '900.00',
                 'maximo': '1200.00',
                 'medicoes': [
@@ -435,6 +445,7 @@ void main() {
       });
       expect(resposta.minimo, '900.00');
       expect(resposta.medicoes.single.precoLiquidoValor, '939.00');
+      expect(resposta.produto.ativo, isFalse);
     },
   );
 
@@ -510,6 +521,32 @@ void main() {
                 200,
               );
             }
+            if (requisicao.url.path == '/api/inter/produtos/lojas' &&
+                requisicao.method == 'GET') {
+              return http.Response(
+                jsonEncode({
+                  'itens': [
+                    {
+                      'id': 'direta-1',
+                      'id_externo': 'direta-externa-1',
+                      'slug': 'direta',
+                      'nome': 'Loja direta',
+                      'selecionada': true,
+                      'ativa': true,
+                      'ultima_execucao': '2026-08-30T15:00:00Z',
+                      'ultimo_estado': 'sucesso',
+                      'paginas': 12,
+                    },
+                  ],
+                  'pagina': 1,
+                  'por_pagina': 20,
+                  'total_itens': 1,
+                  'total_paginas': 1,
+                  'tem_proxima': false,
+                }),
+                200,
+              );
+            }
             if (requisicao.method == 'PATCH') {
               return http.Response('{"id":"direta-1","selecionada":true}', 200);
             }
@@ -523,11 +560,14 @@ void main() {
 
       final parceiras = await api.lojasInter(q: 'loja', pagina: 2);
       await api.alterarFavoritaInter(id: 'parceira-1', favorita: true);
-      await api.lojasDiretas();
+      final diretas = await api.lojasDiretas();
       await api.alterarSelecaoLojaDireta(id: 'direta-1', selecionada: true);
 
       expect(parceiras.itens.single.cashbackPrincipalValor, '5.00');
       expect(parceiras.itens.single.favorita, isFalse);
+      expect(diretas.itens.single.ultimaExecucao, '2026-08-30T15:00:00Z');
+      expect(diretas.itens.single.ultimoEstado, 'sucesso');
+      expect(diretas.itens.single.paginas, 12);
       expect(requisicoes[0].url.queryParameters['q'], 'loja');
       expect(requisicoes[0].url.queryParameters['pagina'], '2');
       expect(requisicoes[1].method, 'PATCH');

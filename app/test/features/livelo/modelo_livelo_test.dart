@@ -65,6 +65,8 @@ void main() {
       ],
       'resumo': {
         'ultima_coleta': '2026-08-28T12:00:00Z',
+        'ultima_tentativa_em': '2026-08-28T12:05:00Z',
+        'qualidade': 'degradada',
         'parceiros_lidos': 252,
         'total_catalogo': 252,
         'acompanhadas': 0,
@@ -89,7 +91,13 @@ void main() {
     expect(pagina.itens.single.pontosAtuais, '2.90');
     expect(pagina.itens.single.pontosClube, '3.50');
     expect(pagina.resumo.melhorOferta!.pontosAtuais, '2.90');
+    expect(pagina.resumo.ultimaTentativaEm, '2026-08-28T12:05:00Z');
+    expect(pagina.resumo.qualidade, 'degradada');
     expect(pagina.totalPaginas, 13);
+
+    final legado = ResumoCatalogoLivelo.parse(<String, dynamic>{});
+    expect(legado.ultimaTentativaEm, isNull);
+    expect(legado.qualidade, isNull);
   });
 
   test('decimal remove zeros sem usar double', () {

@@ -19,7 +19,7 @@ vi.mock("@/lib/resumo-inicio", () => ({
 }));
 
 vi.mock("@/lib/banco-inter", () => ({
-  cashbacksInter: dependencias.cashbacks,
+  buscarCashbacksInter: dependencias.cashbacks,
   ultimaExecucaoInterValida: dependencias.execucaoInter,
   ultimaTentativaInter: dependencias.tentativaInter,
 }));

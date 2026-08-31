@@ -10,6 +10,8 @@ const agora = new Date("2026-08-23T11:00:00.000Z");
 function dependencias(): DependenciasResumoInicio {
   return {
     livelo: async () => ({
+      ultima_tentativa_em: "2026-08-23T08:00:00.000Z",
+      qualidade: "completa",
       ultimo_sucesso_em: "2026-08-23T08:00:00.000Z",
       lojas_acompanhadas: 126,
       alertas_ultima_coleta: 2,
@@ -63,6 +65,24 @@ describe("resumo real do Início", () => {
 
     expect(resumo.cashback_inter.estado).toBe("falha_recente");
     expect(resumo.cashback_inter.ultimo_sucesso_em).toBe("2026-08-23T07:10:00.000Z");
+    expect(resumo.estado_geral).toBe("atencao");
+  });
+
+  it("RN29 deixa a Livelo degradada e preserva o último sucesso", async () => {
+    const deps = dependencias();
+    deps.livelo = async () => ({
+      ultima_tentativa_em: "2026-08-23T10:30:00.000Z",
+      qualidade: "degradada",
+      ultimo_sucesso_em: "2026-08-23T08:00:00.000Z",
+      lojas_acompanhadas: 126,
+      alertas_ultima_coleta: 2,
+    });
+
+    const resumo = await carregarResumoInicio(deps, agora);
+
+    expect(resumo.livelo.estado).toBe("degradado");
+    expect(resumo.livelo.qualidade).toBe("degradada");
+    expect(resumo.livelo.ultimo_sucesso_em).toBe("2026-08-23T08:00:00.000Z");
     expect(resumo.estado_geral).toBe("atencao");
   });
 
@@ -136,6 +156,8 @@ describe("resumo real do Início", () => {
   it("distingue ausência total de indisponibilidade total", async () => {
     const vazias: DependenciasResumoInicio = {
       livelo: async () => ({
+        ultima_tentativa_em: null,
+        qualidade: null,
         ultimo_sucesso_em: null,
         lojas_acompanhadas: 0,
         alertas_ultima_coleta: 0,

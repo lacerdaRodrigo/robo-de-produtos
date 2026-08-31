@@ -5,6 +5,7 @@ import {
   apresentarParceiroLivelo,
   categoriasEmPortugues,
   filtrarEOrdenarCatalogoLivelo,
+  filtrosSqlCatalogoLivelo,
   melhorOfertaLivelo,
   validarAlertaLivelo,
   validarAcompanhamentoLivelo,
@@ -53,6 +54,16 @@ describe("catálogo Livelo autenticado", () => {
       "Casa e decoração",
       "Outros",
     ]);
+    expect(filtrosSqlCatalogoLivelo("decoracao", "Casa e decoração")).toMatchObject({
+      busca: "decoracao",
+      codigosBusca: ["casaedecoracao"],
+      codigosCategoria: ["casaedecoracao"],
+      categoriaIncluiOutros: false,
+    });
+    expect(filtrosSqlCatalogoLivelo("out", "Outros")).toMatchObject({
+      buscaIncluiOutros: true,
+      categoriaIncluiOutros: true,
+    });
   });
 
   it("filtra busca, aba e categoria sem perder identidade", () => {

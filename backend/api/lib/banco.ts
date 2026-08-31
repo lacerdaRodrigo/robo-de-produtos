@@ -21,6 +21,7 @@ export type Execucao = {
   parceiros_lidos: number;
   alertas: number;
   versao: string;
+  qualidade: "completa" | "degradada";
 };
 
 export type PontuacaoDeLoja = {
@@ -58,6 +59,8 @@ export type Preferencias = {
 };
 
 export type ResumoLiveloPersistido = {
+  ultima_tentativa_em: string | null;
+  qualidade: "completa" | "degradada" | null;
   ultimo_sucesso_em: string | null;
   lojas_acompanhadas: number;
   alertas_ultima_coleta: number;
@@ -86,6 +89,41 @@ export type ParceiroLiveloPersistido = {
   parceiros_lidos: number;
 };
 
+export type FiltrosCatalogoLiveloPersistido = {
+  busca: string;
+  codigosBusca: string[];
+  buscaIncluiOutros: boolean;
+  aba: "todas" | "acompanhadas" | "alertas";
+  categoriaAtiva: boolean;
+  codigosCategoria: string[];
+  categoriaIncluiOutros: boolean;
+  codigosConhecidos: string[];
+  ordenar: "pontos" | "nome";
+};
+
+export type PaginaCatalogoLiveloPersistido = {
+  itens: ParceiroLiveloPersistido[];
+  total: number;
+  pagina: number;
+};
+
+export type ResumoCatalogoLiveloPersistido = {
+  ultima_coleta: string | null;
+  ultima_tentativa_em: string | null;
+  qualidade: "completa" | "degradada" | null;
+  parceiros_lidos: number;
+  total_catalogo: number;
+  acompanhadas: number;
+  alertas_ativos: number;
+  alertas: number;
+  categorias: string[];
+  melhor_oferta_id_externo: string | null;
+  melhor_oferta_nome: string | null;
+  melhor_oferta_pontos_atuais: string | null;
+  melhor_oferta_moeda: string | null;
+  melhor_oferta_prefixo_ate: boolean | null;
+};
+
 export type MedicaoHistoricoLivelo = {
   momento: string;
   pontos_atuais: Numerico;
@@ -94,10 +132,82 @@ export type MedicaoHistoricoLivelo = {
   moeda: string;
 };
 
-/** Catálogo completo da última publicação válida, já ligado às acompanhadas. */
-export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersistido[]> {
+/** Busca, filtra, ordena e pagina o catálogo ativo inteiramente no Postgres. */
+export async function buscarCatalogoLiveloPersistido(
+  filtros: FiltrosCatalogoLiveloPersistido,
+  pagina: number,
+  porPagina: number,
+): Promise<PaginaCatalogoLiveloPersistido> {
   const sql = conectar();
-  return (await sql`
+  const busca = filtros.busca;
+  const paginaSolicitada = Math.max(1, Math.floor(pagina));
+  const limite = Math.min(50, Math.max(1, Math.floor(porPagina)));
+  const totais = (await sql`
+    SELECT count(*)::int AS total
+      FROM parceiro_livelo parceiro
+      LEFT JOIN loja
+        ON loja.parceiro_livelo_id = parceiro.id
+       AND loja.acompanhada = TRUE
+      LEFT JOIN pontuacao
+        ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
+       AND pontuacao.loja_id = loja.id
+     WHERE parceiro.ativo = TRUE
+       AND (${filtros.aba === "todas"} OR loja.id IS NOT NULL)
+       AND (${filtros.aba !== "alertas"} OR COALESCE(pontuacao.alertou, FALSE))
+       AND (
+         ${filtros.busca === ""}
+         OR strpos(
+              regexp_replace(
+                translate(
+                  lower(parceiro.nome),
+                  'áàâãäéèêëíìîïóòôõöúùûüç',
+                  'aaaaaeeeeiiiiooooouuuuc'
+                ),
+                '[[:space:]]+', ' ', 'g'
+              ),
+              ${busca}
+            ) > 0
+         OR parceiro.categorias && ${filtros.codigosBusca}::text[]
+         OR (
+           ${filtros.buscaIncluiOutros}
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+             )
+             OR EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+                  AND NOT (categoria = ANY(${filtros.codigosConhecidos}::text[]))
+             )
+           )
+         )
+       )
+       AND (
+         ${!filtros.categoriaAtiva}
+         OR parceiro.categorias && ${filtros.codigosCategoria}::text[]
+         OR (
+           ${filtros.categoriaIncluiOutros}
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+             )
+             OR EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+                  AND NOT (categoria = ANY(${filtros.codigosConhecidos}::text[]))
+             )
+           )
+         )
+       )
+  `) as Array<{ total: number }>;
+  const total = totais[0]?.total ?? 0;
+  const totalPaginas = Math.max(1, Math.ceil(total / limite));
+  const paginaFinal = Math.min(paginaSolicitada, totalPaginas);
+  const deslocamento = (paginaFinal - 1) * limite;
+
+  const itens = (await sql`
     SELECT parceiro.id_externo, parceiro.nome, parceiro.categorias,
            parceiro.pontos_atuais, parceiro.pontos_anteriores,
            parceiro.pontos_base, parceiro.pontos_clube, parceiro.moeda,
@@ -115,11 +225,150 @@ export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersisti
         ON loja.parceiro_livelo_id = parceiro.id
        AND loja.acompanhada = TRUE
       LEFT JOIN pontuacao
-        ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
+       ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
        AND pontuacao.loja_id = loja.id
      WHERE parceiro.ativo = TRUE
-     ORDER BY parceiro.nome, parceiro.id_externo
+       AND (${filtros.aba === "todas"} OR loja.id IS NOT NULL)
+       AND (${filtros.aba !== "alertas"} OR COALESCE(pontuacao.alertou, FALSE))
+       AND (
+         ${filtros.busca === ""}
+         OR strpos(
+              regexp_replace(
+                translate(
+                  lower(parceiro.nome),
+                  'áàâãäéèêëíìîïóòôõöúùûüç',
+                  'aaaaaeeeeiiiiooooouuuuc'
+                ),
+                '[[:space:]]+', ' ', 'g'
+              ),
+              ${busca}
+            ) > 0
+         OR parceiro.categorias && ${filtros.codigosBusca}::text[]
+         OR (
+           ${filtros.buscaIncluiOutros}
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+             )
+             OR EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+                  AND NOT (categoria = ANY(${filtros.codigosConhecidos}::text[]))
+             )
+           )
+         )
+       )
+       AND (
+         ${!filtros.categoriaAtiva}
+         OR parceiro.categorias && ${filtros.codigosCategoria}::text[]
+         OR (
+           ${filtros.categoriaIncluiOutros}
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+             )
+             OR EXISTS (
+               SELECT 1 FROM unnest(parceiro.categorias) categoria
+                WHERE categoria <> 'todos'
+                  AND NOT (categoria = ANY(${filtros.codigosConhecidos}::text[]))
+             )
+           )
+         )
+       )
+     ORDER BY
+       CASE WHEN ${filtros.ordenar === "pontos"} THEN parceiro.pontos_atuais END DESC,
+       parceiro.nome,
+       parceiro.id_externo
+     LIMIT ${limite}
+    OFFSET ${deslocamento}
   `) as ParceiroLiveloPersistido[];
+  return { itens, total, pagina: paginaFinal };
+}
+
+/** Agregados globais do catálogo, sem materializar seus parceiros no Node. */
+export async function resumoCatalogoLiveloPersistido(): Promise<ResumoCatalogoLiveloPersistido> {
+  const sql = conectar();
+  const linhas = (await sql`
+    WITH catalogo AS (
+      SELECT parceiro.id_externo, parceiro.nome, parceiro.categorias,
+             parceiro.pontos_atuais, parceiro.moeda, parceiro.prefixo_ate,
+             (loja.id IS NOT NULL) AS acompanhada,
+             COALESCE(loja.alerta_ativo, FALSE) AS alerta_ativo,
+             COALESCE(pontuacao.alertou, FALSE) AS alerta,
+             execucao.momento AS atualizado_em,
+             execucao.parceiros_lidos
+        FROM parceiro_livelo parceiro
+        JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
+        LEFT JOIN loja
+          ON loja.parceiro_livelo_id = parceiro.id
+         AND loja.acompanhada = TRUE
+        LEFT JOIN pontuacao
+          ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
+         AND pontuacao.loja_id = loja.id
+       WHERE parceiro.ativo = TRUE
+    ), contagens AS (
+      SELECT count(*)::int AS total_catalogo,
+             count(*) FILTER (WHERE acompanhada)::int AS acompanhadas,
+             count(*) FILTER (WHERE acompanhada AND alerta_ativo)::int AS alertas_ativos,
+             count(*) FILTER (WHERE acompanhada AND alerta)::int AS alertas
+        FROM catalogo
+    )
+    SELECT ultima.atualizado_em AS ultima_coleta,
+           tentativa.momento AS ultima_tentativa_em,
+           tentativa.qualidade,
+           COALESCE(ultima.parceiros_lidos, 0)::int AS parceiros_lidos,
+           contagens.total_catalogo, contagens.acompanhadas,
+           contagens.alertas_ativos, contagens.alertas,
+           ARRAY(
+             SELECT DISTINCT categoria
+               FROM catalogo
+               CROSS JOIN LATERAL unnest(categorias) categoria
+              ORDER BY categoria
+           ) AS categorias,
+           melhor.id_externo AS melhor_oferta_id_externo,
+           melhor.nome AS melhor_oferta_nome,
+           melhor.pontos_atuais AS melhor_oferta_pontos_atuais,
+           melhor.moeda AS melhor_oferta_moeda,
+           melhor.prefixo_ate AS melhor_oferta_prefixo_ate
+      FROM contagens
+      LEFT JOIN LATERAL (
+        SELECT atualizado_em, parceiros_lidos
+          FROM catalogo
+         ORDER BY atualizado_em DESC, id_externo
+         LIMIT 1
+      ) ultima ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT momento, qualidade
+          FROM execucao
+         ORDER BY momento DESC, id DESC
+         LIMIT 1
+      ) tentativa ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT id_externo, nome, pontos_atuais, moeda, prefixo_ate
+          FROM catalogo
+         WHERE acompanhada
+         ORDER BY pontos_atuais DESC, nome, id_externo
+         LIMIT 1
+      ) melhor ON TRUE
+  `) as ResumoCatalogoLiveloPersistido[];
+  return linhas[0] ?? {
+    ultima_coleta: null,
+    ultima_tentativa_em: null,
+    qualidade: null,
+    parceiros_lidos: 0,
+    total_catalogo: 0,
+    acompanhadas: 0,
+    alertas_ativos: 0,
+    alertas: 0,
+    categorias: [],
+    melhor_oferta_id_externo: null,
+    melhor_oferta_nome: null,
+    melhor_oferta_pontos_atuais: null,
+    melhor_oferta_moeda: null,
+    melhor_oferta_prefixo_ate: null,
+  };
 }
 
 export async function historicoLivelo(idExterno: string): Promise<MedicaoHistoricoLivelo[]> {
@@ -234,25 +483,35 @@ export async function alterarAlertaParceiroLivelo(
 
 /** Recorte agregado da Livelo para o Início do aplicativo.
  *
- * `execucao` só recebe retratos concluídos e atômicos. A contagem de lojas
- * vem do catálogo acompanhado atual; ausência de execução continua distinta
- * de uma coleta válida com zero alertas.
+ * Tentativas degradadas ficam em `execucao`, mas o sucesso e seus alertas
+ * continuam vindo exclusivamente do último snapshot completo.
  */
 export async function resumoLiveloPersistido(): Promise<ResumoLiveloPersistido> {
   const sql = conectar();
   const linhas = (await sql`
-    SELECT ultima.momento AS ultimo_sucesso_em,
+    SELECT tentativa.momento AS ultima_tentativa_em,
+           tentativa.qualidade,
+           sucesso.momento AS ultimo_sucesso_em,
            (SELECT count(*)::int FROM loja WHERE acompanhada = TRUE) AS lojas_acompanhadas,
-           COALESCE(ultima.alertas, 0)::int AS alertas_ultima_coleta
+           COALESCE(sucesso.alertas, 0)::int AS alertas_ultima_coleta
       FROM (SELECT 1) base
       LEFT JOIN LATERAL (
         SELECT momento, alertas
           FROM execucao
+         WHERE qualidade = 'completa'
          ORDER BY momento DESC, id DESC
          LIMIT 1
-      ) ultima ON TRUE
+      ) sucesso ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT momento, qualidade
+          FROM execucao
+         ORDER BY momento DESC, id DESC
+         LIMIT 1
+      ) tentativa ON TRUE
   `) as ResumoLiveloPersistido[];
   return linhas[0] ?? {
+    ultima_tentativa_em: null,
+    qualidade: null,
     ultimo_sucesso_em: null,
     lojas_acompanhadas: 0,
     alertas_ultima_coleta: 0,
@@ -264,8 +523,9 @@ export async function resumoLiveloPersistido(): Promise<ResumoLiveloPersistido> 
 export async function ultimaExecucao(): Promise<Execucao | null> {
   const sql = conectar();
   const linhas = (await sql`
-    SELECT id, momento, parceiros_lidos, alertas, versao
+    SELECT id, momento, parceiros_lidos, alertas, versao, qualidade
       FROM execucao
+     WHERE qualidade = 'completa'
      ORDER BY momento DESC
      LIMIT 1
   `) as Execucao[];
@@ -287,20 +547,6 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
      WHERE l.acompanhada = TRUE
      ORDER BY l.categoria NULLS LAST, p.alertou DESC, p.pontos_atuais DESC NULLS LAST, p.nome
   `) as PontuacaoDeLoja[];
-}
-
-/** Só as lojas com regra própria (RN28). A tela de avisos mostra estas, e
- *  não as 132 — pedir 132 decisões é o erro que o PRD-V2 §6.1 alerta. */
-export async function lojasComExcecao(): Promise<Loja[]> {
-  const sql = conectar();
-  return (await sql`
-    SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
-           ARRAY[]::TEXT[] AS apelidos
-      FROM loja l
-     WHERE l.acompanhada = TRUE
-       AND (l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL)
-     ORDER BY l.nome
-  `) as Loja[];
 }
 
 export async function loja(id: number): Promise<Loja | null> {
@@ -359,49 +605,6 @@ export async function salvarPreferencias(entrada: {
       ('piso_pontos_padrao', ${entrada.piso}),
       ('assinante_clube', ${entrada.assinanteClube ? "true" : "false"})
     ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor
-  `;
-}
-
-/** `null` nos limiares significa "usa o padrao global" (RN28) — a mesma
- *  semantica do NULL na coluna e do `None` no robo. */
-export async function salvarLimiarDaLoja(
-  id: number,
-  multiplicador: string | null,
-  piso: string | null,
-): Promise<void> {
-  const sql = conectar();
-  await sql`
-    UPDATE loja SET multiplicador = ${multiplicador}, piso_pontos = ${piso}
-     WHERE id = ${id}
-  `;
-}
-
-export async function adicionarLoja(
-  nome: string,
-  categoria: string,
-  apelidos: string[],
-): Promise<number> {
-  const sql = conectar();
-  const linhas = (await sql`
-    INSERT INTO loja (nome, categoria) VALUES (${nome}, ${categoria})
-    RETURNING id
-  `) as { id: number }[];
-
-  // RN04: apelido e unico entre TODAS as lojas. A restricao mora no banco,
-  // entao grafia repetida vira erro aqui e nao ambiguidade silenciosa.
-  for (const apelido of apelidos) {
-    await sql`INSERT INTO apelido (loja_id, texto) VALUES (${linhas[0].id}, ${apelido})`;
-  }
-
-  return linhas[0].id;
-}
-
-export async function removerLoja(id: number): Promise<void> {
-  const sql = conectar();
-  await sql`
-    UPDATE loja
-       SET acompanhada = FALSE, alerta_ativo = FALSE
-     WHERE id = ${id}
   `;
 }
 
@@ -490,33 +693,3 @@ export async function registrarTentativa(origem: string, sucesso: boolean): Prom
 
 export const LIMITE_DE_TENTATIVAS = TENTATIVAS_MAXIMAS;
 export const JANELA_DE_BLOQUEIO_MINUTOS = JANELA_MINUTOS;
-
-// --- Disparo manual do robô (RNF02, migração 004) ---
-
-/** RNF02: intervalo mínimo entre pedidos manuais. O projeto se propõe a bater
- *  na página da Livelo poucas vezes por dia, e um botão sem trava
- *  transformaria isso em dezenas de requisições numa tarde de cadastro. */
-export const INTERVALO_MINIMO_MINUTOS = 5;
-
-/** Segundos que ainda faltam para o próximo disparo poder acontecer.
- *  Zero significa liberado. */
-export async function esperaAteProximoDisparo(): Promise<number> {
-  const sql = conectar();
-  const linhas = (await sql`
-    SELECT GREATEST(
-             0,
-             CEIL(EXTRACT(EPOCH FROM (
-               momento + (${INTERVALO_MINIMO_MINUTOS} || ' minutes')::interval - now()
-             )))
-           )::int AS falta
-      FROM disparo_manual
-     ORDER BY momento DESC
-     LIMIT 1
-  `) as { falta: number }[];
-  return linhas[0]?.falta ?? 0;
-}
-
-export async function registrarDisparo(): Promise<void> {
-  const sql = conectar();
-  await sql`INSERT INTO disparo_manual DEFAULT VALUES`;
-}

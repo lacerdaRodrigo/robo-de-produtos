@@ -111,6 +111,7 @@ describe("CT-282 retrato válido, falha e favorita ausente", () => {
     expect(rota).toContain("ultimaTentativaInter()");
     expect(rota).toContain("ultima_tentativa_estado");
     expect(rota).toContain("atualizado_em: execucao?.concluida_em ?? null");
-    expect(rota).toContain("catalogo.filter((loja) => loja.favorita)");
+    expect(rota).toContain("buscarCashbacksInter(execucao.id");
+    expect(rota).not.toContain(".filter((loja)");
   });
 });

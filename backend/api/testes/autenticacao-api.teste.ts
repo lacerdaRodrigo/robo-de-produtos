@@ -73,6 +73,7 @@ describe("gate de autenticacao da API v1", () => {
     if (!resultado.ok) return;
     expect(resultado.usuario).toEqual(usuarioAtivo);
     expect(resultado.requisicaoId).toBe("req-teste-1");
+    expect(deps.verificarAppCheck).not.toHaveBeenCalled();
     expect(deps.consumirLimite).toHaveBeenCalledTimes(2);
     expect(deps.registrarAuditoria).toHaveBeenLastCalledWith(
       expect.objectContaining({ resultado: "sucesso", codigo: "permitido" }),
@@ -163,6 +164,7 @@ describe("gate de autenticacao da API v1", () => {
       ausente,
     );
     expect((await corpoDaRecusa(resultadoAusente)).erro.codigo).toBe("app-check");
+    if (!resultadoAusente.ok) expect(resultadoAusente.resposta.status).toBe(401);
     expect(ausente.verificarIdToken).not.toHaveBeenCalled();
 
     const invalido = dependencias({
@@ -176,7 +178,38 @@ describe("gate de autenticacao da API v1", () => {
       { operacao: "perfil.ler" },
       invalido,
     );
-    expect((await corpoDaRecusa(resultadoInvalido)).erro.codigo).toBe("app-check");
+    const erroInvalido = (await corpoDaRecusa(resultadoInvalido)).erro;
+    expect(erroInvalido).toEqual({
+      codigo: "app-check",
+      mensagem: "aplicativo nao verificado",
+    });
+    if (!resultadoInvalido.ok) expect(resultadoInvalido.resposta.status).toBe(401);
+
+    const valido = dependencias({ appCheckObrigatorio: true });
+    const resultadoValido = await autenticarRequisicao(
+      requisicao({ "x-firebase-appcheck": "app-check-valido" }),
+      { operacao: "perfil.ler" },
+      valido,
+    );
+    expect(resultadoValido.ok).toBe(true);
+    expect(valido.verificarAppCheck).toHaveBeenCalledWith("app-check-valido");
+    expect(valido.verificarIdToken).toHaveBeenCalledWith("token-valido");
+  });
+
+  it("App Check obrigatorio nao substitui a autenticacao Firebase", async () => {
+    const deps = dependencias({ appCheckObrigatorio: true });
+    const resultado = await autenticarRequisicao(
+      requisicao({
+        authorization: "",
+        "x-firebase-appcheck": "app-check-valido",
+      }),
+      { operacao: "perfil.ler" },
+      deps,
+    );
+
+    expect((await corpoDaRecusa(resultado)).erro.codigo).toBe("autenticacao");
+    expect(deps.verificarAppCheck).toHaveBeenCalledWith("app-check-valido");
+    expect(deps.verificarIdToken).not.toHaveBeenCalled();
   });
 
   it("devolve 429 e Retry-After para limite por IP", async () => {

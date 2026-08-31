@@ -23,6 +23,8 @@ Map<String, Object?> resumo({
       : 'atencao',
   'livelo': {
     'estado': livelo,
+    'ultima_tentativa_em': '2026-08-23T10:30:00.000Z',
+    'qualidade': livelo == 'degradado' ? 'degradada' : 'completa',
     'ultimo_sucesso_em': '2026-08-23T08:00:00.000Z',
     'lojas_acompanhadas': 126,
     'alertas_ultima_coleta': 2,
@@ -147,6 +149,23 @@ void main() {
     await at.scrollUntilVisible(find.text('Estado por domínio'), 400);
     expect(find.text('Parcial'), findsOneWidget);
     expect(find.textContaining('1 sem coleta'), findsOneWidget);
+  });
+
+  testWidgets('RN29 comunica qualidade reduzida e snapshot preservado', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo(livelo: 'degradado')), 200),
+    );
+    await abrir(at, api);
+    await at.pumpAndSettle();
+
+    expect(find.text('Livelo: degradado'), findsOneWidget);
+    expect(
+      find.textContaining('O último retrato válido foi preservado.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('RN29'), findsNothing);
   });
 
   testWidgets('domínio indisponível usa traço em vez de zero inventado', (

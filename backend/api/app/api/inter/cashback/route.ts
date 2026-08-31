@@ -9,16 +9,10 @@ import {
   STATUS,
 } from "@/lib/api";
 import {
-  cashbacksInter,
+  buscarCashbacksInter,
   ultimaExecucaoInterValida,
   ultimaTentativaInter,
 } from "@/lib/banco-inter";
-import {
-  filtrarCashbacksInter,
-  ordenarCashbacksInter,
-  ordenarCashbacksPorNome,
-} from "@/lib/formato-inter";
-import { paginar } from "@/lib/paginacao";
 
 /**
  * GET /api/v1/inter/cashback?q=&ordenar=&acompanhadas=&pagina=&por_pagina=
@@ -60,19 +54,18 @@ export async function GET(requisicao: Request) {
       );
     }
 
-    const catalogo = await cashbacksInter(execucao.id);
-    const filtradas = filtrarCashbacksInter(
-      apenasAcompanhadas ? catalogo.filter((loja) => loja.favorita) : catalogo,
+    const resultado = await buscarCashbacksInter(execucao.id, {
       q,
-    );
-    const ordenadas =
-      ordenar === "nome" ? ordenarCashbacksPorNome(filtradas) : ordenarCashbacksInter(filtradas);
-    const paginado = paginar(ordenadas, pagina, porPagina);
+      ordenar,
+      apenasAcompanhadas,
+      pagina,
+      porPagina,
+    });
 
     return NextResponse.json({
-      itens: paginado.itens,
+      itens: resultado.itens,
       ...atualizacao,
-      ...paginacaoEnvelope(paginado.totalItens, pagina, porPagina),
+      ...paginacaoEnvelope(resultado.total, resultado.pagina, porPagina),
     });
   } catch {
     return NextResponse.json(

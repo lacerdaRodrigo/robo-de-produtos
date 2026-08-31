@@ -480,7 +480,7 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     repositorio_fake(monkeypatch, cursor).registrar(snapshot)
 
     _, parametros = cursor.executados[0]
-    assert parametros == (momento, 254, 1, "1.4.0")
+    assert parametros == (momento, 254, 1, "1.4.0", "completa")
 
     _, catalogo = cursor.lotes[0]
     assert catalogo[0]["id_externo"] == parceiro.id_externo
@@ -517,6 +517,26 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
         "FROM loja WHERE acompanhada = TRUE AND parceiro_livelo_id IS NOT NULL" in consulta
         for consulta in consultas_simples
     )
+
+
+def teste_rn29_registra_qualidade_sem_substituir_snapshot(monkeypatch):
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=254,
+        versao="1.4.0",
+        qualidade="degradada",
+        catalogo=(faz_parceiro("Natura", "3", base="3"),),
+    )
+    cursor = CursorGravador()
+
+    repositorio_fake(monkeypatch, cursor).registrar(snapshot)
+
+    assert len(cursor.executados) == 1
+    consulta, parametros = cursor.executados[0]
+    assert "qualidade" in consulta
+    assert parametros == (snapshot.momento, 254, 0, "1.4.0", "degradada")
+    assert cursor.lotes == []
+    assert all("UPDATE parceiro_livelo" not in sql for sql, _ in cursor.executados)
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):

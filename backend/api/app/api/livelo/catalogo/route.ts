@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 
 import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import { corpoErro, paginacaoEnvelope, paginaValida, porPaginaValida, STATUS } from "@/lib/api";
-import { catalogoLiveloPersistido } from "@/lib/banco";
+import {
+  buscarCatalogoLiveloPersistido,
+  resumoCatalogoLiveloPersistido,
+} from "@/lib/banco";
 import {
   apresentarParceiroLivelo,
-  filtrarEOrdenarCatalogoLivelo,
-  melhorOfertaLivelo,
+  categoriasEmPortugues,
+  filtrosSqlCatalogoLivelo,
   type AbaCatalogoLivelo,
   type OrdenacaoCatalogoLivelo,
 } from "@/lib/catalogo-livelo";
-import { paginar } from "@/lib/paginacao";
 
-/** Catálogo completo da última coleta válida, paginado para o Flutter. */
+/** Catálogo da última coleta válida, filtrado e paginado no Postgres. */
 export async function GET(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, { operacao: "livelo.catalogo.ler" });
   if (!acesso.ok) return acesso.resposta;
@@ -27,34 +29,44 @@ export async function GET(requisicao: Request) {
       : "todas";
     const ordenarBruto = url.searchParams.get("ordenar") ?? "pontos";
     const ordenar: OrdenacaoCatalogoLivelo = ordenarBruto === "nome" ? "nome" : "pontos";
-
-    const persistidos = await catalogoLiveloPersistido();
-    const todos = persistidos.map(apresentarParceiroLivelo);
-    const filtrados = filtrarEOrdenarCatalogoLivelo(todos, {
-      q: url.searchParams.get("q") ?? "",
-      aba,
-      categoria: url.searchParams.get("categoria") ?? "",
-      ordenar,
-    });
-    const resultado = paginar(filtrados, paginaSolicitada, porPagina);
-    const primeiro = persistidos[0];
-    const categorias = [...new Set(todos.flatMap((parceiro) => parceiro.categorias))]
-      .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const q = url.searchParams.get("q") ?? "";
+    const categoria = url.searchParams.get("categoria") ?? "";
+    const filtrosCategorias = filtrosSqlCatalogoLivelo(q, categoria);
+    const [resultado, resumo] = await Promise.all([
+      buscarCatalogoLiveloPersistido({
+        ...filtrosCategorias,
+        aba,
+        ordenar,
+      }, paginaSolicitada, porPagina),
+      resumoCatalogoLiveloPersistido(),
+    ]);
+    const itens = resultado.itens.map(apresentarParceiroLivelo);
+    const melhorOferta = resumo.melhor_oferta_id_externo === null
+      ? null
+      : {
+          id_externo: resumo.melhor_oferta_id_externo,
+          nome: resumo.melhor_oferta_nome!,
+          pontos_atuais: resumo.melhor_oferta_pontos_atuais!,
+          moeda: resumo.melhor_oferta_moeda!,
+          prefixo_ate: resumo.melhor_oferta_prefixo_ate!,
+        };
 
     return NextResponse.json({
-      itens: resultado.itens,
+      itens,
       resumo: {
-        ultima_coleta: primeiro?.atualizado_em ?? null,
-        parceiros_lidos: primeiro?.parceiros_lidos ?? 0,
-        total_catalogo: todos.length,
-        acompanhadas: todos.filter((parceiro) => parceiro.acompanhada).length,
-        alertas_ativos: todos.filter((parceiro) => parceiro.acompanhada && parceiro.alerta_ativo).length,
-        alertas: todos.filter((parceiro) => parceiro.acompanhada && parceiro.alerta).length,
-        melhor_oferta: melhorOfertaLivelo(todos),
+        ultima_coleta: resumo.ultima_coleta,
+        ultima_tentativa_em: resumo.ultima_tentativa_em,
+        qualidade: resumo.qualidade,
+        parceiros_lidos: resumo.parceiros_lidos,
+        total_catalogo: resumo.total_catalogo,
+        acompanhadas: resumo.acompanhadas,
+        alertas_ativos: resumo.alertas_ativos,
+        alertas: resumo.alertas,
+        melhor_oferta: melhorOferta,
       },
-      categorias,
-      atualizado_em: primeiro?.atualizado_em ?? null,
-      ...paginacaoEnvelope(resultado.totalItens, resultado.pagina, porPagina),
+      categorias: categoriasEmPortugues(resumo.categorias),
+      atualizado_em: resumo.ultima_coleta,
+      ...paginacaoEnvelope(resultado.total, resultado.pagina, porPagina),
     }, {
       headers: {
         "cache-control": "no-store, max-age=0",

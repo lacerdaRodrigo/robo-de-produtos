@@ -113,6 +113,15 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
         ),
         const SizedBox(height: 4),
         Text(resumo.produto.lojaNome),
+        if (resumo.produto.ativo == false) ...[
+          const SizedBox(height: 12),
+          const ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.info_outline),
+            title: Text('Oferta não está mais ativa'),
+            subtitle: Text('O histórico de preços continua disponível.'),
+          ),
+        ],
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,

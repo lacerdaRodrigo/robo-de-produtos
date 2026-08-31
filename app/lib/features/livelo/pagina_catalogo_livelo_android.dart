@@ -36,6 +36,10 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
 
 class _EstadoPaginaCatalogoLiveloAndroid
     extends State<PaginaCatalogoLiveloAndroid> {
+  static const _intervaloAcompanhamento = Duration(seconds: 30);
+  static const _maximoTentativasAcompanhamento = 21;
+  static const _maximoFalhasConsecutivas = 3;
+
   late final ControladorCatalogoLivelo _controlador =
       widget.controlador ??
       ControladorCatalogoLivelo(
@@ -69,6 +73,9 @@ class _EstadoPaginaCatalogoLiveloAndroid
   Timer? _atualizacaoSilenciosa;
   bool _resumoConsultando = false;
   bool _retratoAtualizando = false;
+  int _versaoAcompanhamento = 0;
+  int _tentativasAcompanhamento = 0;
+  int _falhasConsecutivas = 0;
 
   @override
   void initState() {
@@ -98,7 +105,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
     _busca.dispose();
     _rolagem.dispose();
     _timerMonitoramento?.cancel();
-    _atualizacaoSilenciosa?.cancel();
+    _encerrarAcompanhamento();
     if (!_controladorExterno) _controlador.dispose();
     super.dispose();
   }
@@ -241,23 +248,74 @@ class _EstadoPaginaCatalogoLiveloAndroid
   );
 
   void _acompanharNovaColeta() {
-    _atualizacaoSilenciosa?.cancel();
-    unawaited(_atualizarRetratoSilencioso());
-    _atualizacaoSilenciosa = Timer.periodic(const Duration(seconds: 30), (_) {
-      unawaited(_atualizarRetratoSilencioso());
+    _encerrarAcompanhamento();
+    final versao = _versaoAcompanhamento;
+    _tentativasAcompanhamento = 0;
+    _falhasConsecutivas = 0;
+    unawaited(_atualizarRetratoSilencioso(versao));
+    _atualizacaoSilenciosa = Timer.periodic(_intervaloAcompanhamento, (_) {
+      unawaited(_atualizarRetratoSilencioso(versao));
     });
   }
 
-  Future<void> _atualizarRetratoSilencioso() async {
-    if (_retratoAtualizando) return;
+  Future<void> _atualizarRetratoSilencioso(int versao) async {
+    if (_retratoAtualizando || versao != _versaoAcompanhamento) return;
     _retratoAtualizando = true;
+    _tentativasAcompanhamento += 1;
     try {
       await _carregarResumoInicio();
-      final mudou = await _controlador.atualizarSilenciosamente();
-      if (mudou) _atualizacaoSilenciosa?.cancel();
+      if (!mounted || versao != _versaoAcompanhamento) return;
+      final resultado = await _controlador.atualizarSilenciosamente();
+      if (!mounted || versao != _versaoAcompanhamento) return;
+      switch (resultado) {
+        case ResultadoAtualizacaoSilenciosa.alterada:
+          _encerrarAcompanhamento();
+          mostrarMensagemRadar(context, 'Atualização concluída.');
+          break;
+        case ResultadoAtualizacaoSilenciosa.degradada:
+          _encerrarAcompanhamento();
+          mostrarMensagemRadar(
+            context,
+            'Atualização com qualidade reduzida. '
+            'Mantivemos a última coleta válida.',
+            sucesso: false,
+          );
+          break;
+        case ResultadoAtualizacaoSilenciosa.falha:
+          _falhasConsecutivas += 1;
+          if (_falhasConsecutivas >= _maximoFalhasConsecutivas) {
+            _encerrarAcompanhamento();
+            mostrarMensagemRadar(
+              context,
+              'Não foi possível acompanhar a atualização. '
+              'Ela pode continuar em segundo plano.',
+              sucesso: false,
+            );
+          }
+          break;
+        case ResultadoAtualizacaoSilenciosa.inalterada:
+          _falhasConsecutivas = 0;
+          break;
+      }
+      if (versao == _versaoAcompanhamento &&
+          _tentativasAcompanhamento >= _maximoTentativasAcompanhamento) {
+        _encerrarAcompanhamento();
+        mostrarMensagemRadar(
+          context,
+          'A conclusão ainda não foi confirmada. '
+          'A atualização pode continuar em segundo plano.',
+          sucesso: false,
+        );
+      }
     } finally {
       _retratoAtualizando = false;
     }
+  }
+
+  void _encerrarAcompanhamento() {
+    _atualizacaoSilenciosa?.cancel();
+    _atualizacaoSilenciosa = null;
+    _versaoAcompanhamento += 1;
   }
 
   Future<void> _abrirFiltros() => showModalBottomSheet<void>(
@@ -443,6 +501,7 @@ class _HeroCatalogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final melhor = resumo.melhorOferta;
     final atrasada = coletaAtrasada(resumo.ultimaColeta, agora);
+    final degradada = resumo.qualidade == 'degradada';
     return ClipRRect(
       borderRadius: BorderRadius.circular(26),
       child: Stack(
@@ -470,12 +529,22 @@ class _HeroCatalogo extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SeloHeroLivelo(
-                  texto: atrasada
+                  texto: degradada
+                      ? 'Dados com qualidade reduzida'
+                      : atrasada
                       ? 'Dados atrasados'
                       : 'Última coleta concluída',
-                  atencao: atrasada,
+                  atencao: degradada || atrasada,
                 ),
                 const SizedBox(height: 12),
+                if (degradada) ...[
+                  const Text(
+                    'A última atualização foi incompleta. '
+                    'Exibindo a última coleta válida.',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   melhor == null
                       ? 'Nenhuma loja acompanhada agora.'

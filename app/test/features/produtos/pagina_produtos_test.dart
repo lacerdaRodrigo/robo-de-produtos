@@ -63,7 +63,11 @@ Api _api() => Api(
   ),
 );
 
-Api _apiHistorico({bool primeiraFalha = false, bool falhaPaginaDois = false}) {
+Api _apiHistorico({
+  bool primeiraFalha = false,
+  bool falhaPaginaDois = false,
+  bool? ativo,
+}) {
   var chamadas = 0;
   var falhaPaginaDoisPendente = falhaPaginaDois;
   return Api(
@@ -104,6 +108,7 @@ Api _apiHistorico({bool primeiraFalha = false, bool falhaPaginaDois = false}) {
               'loja_slug': 'casas-bahia',
               'loja_nome': 'Casas Bahia',
               'atualizada_em': '2026-08-22T12:00:00Z',
+              'ativo': ativo,
             },
             'minimo': '3500.00',
             'maximo': '4000.00',
@@ -381,6 +386,29 @@ void main() {
     await at.tap(find.text('Carregar mais medições'));
     await at.pumpAndSettle();
     expect(find.text('R\$ 3.600,00'), findsOneWidget);
+  });
+
+  testWidgets('histórico mantém medições de produto que ficou inativo', (
+    at,
+  ) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaHistoricoProduto(
+          api: _apiHistorico(ativo: false),
+          produto: _produto(),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('Oferta não está mais ativa'), findsOneWidget);
+    expect(
+      find.text('O histórico de preços continua disponível.'),
+      findsOneWidget,
+    );
+    expect(find.text('R\$ 3.500,00'), findsOneWidget);
+    expect(find.text('Medições'), findsOneWidget);
   });
 
   testWidgets('histórico com falha inicial permite nova tentativa', (at) async {

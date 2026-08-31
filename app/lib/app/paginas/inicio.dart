@@ -1471,7 +1471,9 @@ class _Pill extends StatelessWidget {
       if (dominio.$2 == estado) {
         return (
           titulo: '${dominio.$1}: ${_rotuloEstado(estado).toLowerCase()}',
-          descricao: _descricaoEstado(estado),
+          descricao: dominio.$1 == 'Livelo' && estado == EstadoResumo.degradado
+              ? 'A última base recebida teve qualidade reduzida. O último retrato válido foi preservado.'
+              : _descricaoEstado(estado),
         );
       }
     }

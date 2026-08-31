@@ -258,8 +258,8 @@ class RepositorioPostgres:
     """
 
     INSERE_EXECUCAO = """
-        INSERT INTO execucao (momento, parceiros_lidos, alertas, versao)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO execucao (momento, parceiros_lidos, alertas, versao, qualidade)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id
     """
 
@@ -359,9 +359,19 @@ class RepositorioPostgres:
             with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
                 cursor.execute(
                     self.INSERE_EXECUCAO,
-                    (retrato.momento, retrato.parceiros_lidos, retrato.alertas, retrato.versao),
+                    (
+                        retrato.momento,
+                        retrato.parceiros_lidos,
+                        retrato.alertas,
+                        retrato.versao,
+                        retrato.qualidade,
+                    ),
                 )
                 (execucao_id,) = cursor.fetchone()
+                # RN29 registra a tentativa, mas não publica números suspeitos
+                # nem substitui o último catálogo completo.
+                if retrato.qualidade == "degradada":
+                    return
                 cursor.execute(self.DESATIVA_CATALOGO)
                 linhas_catalogo = [
                     _linha_de_parceiro(parceiro, execucao_id) for parceiro in retrato.catalogo

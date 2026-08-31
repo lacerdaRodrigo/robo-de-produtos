@@ -192,8 +192,7 @@ export async function resumoProdutosPersistido(): Promise<ResumoProdutosPersisti
   };
 }
 
-/** Colunas de produto + a medição mais recente, igual a `buscarProdutosDiretos`
- *  mas com `?` para parâmetros posicionais e um apelido de tabela reutilizável. */
+/** Colunas de produto + a medição mais recente compartilhadas pelas consultas. */
 const COLUNAS_PRODUTO = `
   p.id_externo, p.nome, p.marca, p.categoria, p.caminho,
   m.preco_lista_texto AS preco_cheio_texto,
@@ -308,54 +307,6 @@ export async function buscarProdutosDiretosPaginado(
     itens: itens as ProdutoDireto[],
     total,
   };
-}
-
-export async function buscarProdutosDiretos(termo: string): Promise<ProdutoDireto[]> {
-  const busca = normalizarBuscaProdutosInter(termo);
-  if (!busca) return [];
-  const sql = conectar();
-  return (await sql`
-    SELECT p.id_externo, p.nome, p.marca, p.categoria, p.caminho,
-           m.preco_lista_texto AS preco_cheio_texto,
-           m.preco_lista AS preco_cheio_valor,
-           m.preco_atual_texto, m.preco_atual AS preco_atual_valor,
-           m.desconto_texto, m.desconto_percentual_texto,
-           m.cashback_texto, m.cashback_percentual_texto,
-           m.preco_liquido_texto, m.parcelamento, m.estoque, m.etiquetas,
-           m.momento AS atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome
-      FROM produto_direto_inter p
-      JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
-      JOIN LATERAL (
-        SELECT med.*
-          FROM medicao_produto_direto_inter med
-          JOIN execucao_loja_produtos_inter e
-            ON e.id = med.execucao_loja_produtos_inter_id AND e.estado = 'sucesso'
-         WHERE med.produto_direto_inter_id = p.id
-         ORDER BY med.momento DESC
-         LIMIT 1
-      ) m ON TRUE
-     WHERE p.ativo = TRUE AND l.selecionada = TRUE AND l.ativa = TRUE
-       AND NOT EXISTS (
-            SELECT 1
-              FROM unnest(string_to_array(${busca}, ' ')) AS termo(token)
-             WHERE p.nome_busca NOT LIKE '%' || termo.token || '%'
-       )
-     ORDER BY m.preco_atual ASC, p.nome, p.id_externo
-     LIMIT 500
-  `) as ProdutoDireto[];
-}
-
-export async function totalProdutosDiretos(): Promise<number> {
-  const sql = conectar();
-  const linhas = (await sql`
-    SELECT count(*)::int AS total
-      FROM produto_direto_inter p
-      JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
-     WHERE p.ativo = TRUE
-       AND l.selecionada = TRUE
-       AND l.ativa = TRUE
-  `) as Array<{ total: number }>;
-  return Number(linhas[0]?.total ?? 0);
 }
 
 export async function buscarLojasDiretas(

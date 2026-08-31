@@ -21,6 +21,35 @@ Api _api() => Api(
   ),
 );
 
+Api _apiDisparo(List<http.Request> requisicoes) => Api(
+  paginaPadrao: 20,
+  cliente: ClienteApi(
+    baseUrl: 'http://localhost:3000',
+    provedorToken: () async => 'token-teste',
+    cliente: http_testing.MockClient((requisicao) async {
+      requisicoes.add(requisicao);
+      if (requisicao.method == 'POST') {
+        return http.Response(
+          '{"dominio":"livelo","estado":"aceito",'
+          '"cooldown_segundos":0}',
+          202,
+        );
+      }
+      if (requisicao.url.path == '/api/administracao/disparos') {
+        return http.Response(
+          '{"dominio":"livelo","cooldown_segundos":0,'
+          '"ultima_solicitacao_em":null,"ultimo_estado":null}',
+          200,
+        );
+      }
+      if (requisicao.url.path == '/api/resumo') {
+        return http.Response('{}', 500);
+      }
+      return http.Response('{}', 404);
+    }),
+  ),
+);
+
 ControladorCatalogoLivelo _controlador({
   Future<void> Function({required String idExterno, required bool acompanhada})?
   alterar,
@@ -52,6 +81,7 @@ ControladorCatalogoLivelo _controlador({
 Future<void> _abrir(
   WidgetTester at,
   ControladorCatalogoLivelo controlador, {
+  Api? api,
   Brightness brilho = Brightness.light,
   Size tamanho = const Size(390, 844),
   double escala = 1,
@@ -70,7 +100,7 @@ Future<void> _abrir(
         ),
         child: Scaffold(
           body: PaginaCatalogoLiveloAndroid(
-            api: _api(),
+            api: api ?? _api(),
             administrador: true,
             controlador: controlador,
             agora: () => DateTime.utc(2026, 8, 28, 15),
@@ -82,7 +112,176 @@ Future<void> _abrir(
   await at.pumpAndSettle();
 }
 
+Future<void> _dispararAtualizacao(WidgetTester at) async {
+  await at.ensureVisible(find.text('Atualizar'));
+  await at.pump();
+  await at.tap(find.text('Atualizar'));
+  await at.pump();
+  await at.pump(const Duration(milliseconds: 300));
+  await at.pump();
+}
+
 void main() {
+  testWidgets('polling encerra ao receber novo retrato', (at) async {
+    var consultas = 0;
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async {
+            consultas += 1;
+            return dados.montarPagina(
+              [dados.parceiro('A')],
+              resumoDaPagina: dados.resumo(
+                ultimaColeta: consultas == 1
+                    ? '2026-08-28T12:00:00Z'
+                    : '2026-08-28T12:05:00Z',
+              ),
+            );
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    final requisicoes = <http.Request>[];
+    await _abrir(at, controlador, api: _apiDisparo(requisicoes));
+
+    await _dispararAtualizacao(at);
+
+    expect(find.text('Atualização concluída.'), findsOneWidget);
+    expect(controlador.resumo?.ultimaColeta, '2026-08-28T12:05:00Z');
+    expect(consultas, 2);
+    await at.pump(const Duration(minutes: 1));
+    expect(consultas, 2);
+  });
+
+  testWidgets('polling para após dez minutos sem inventar falha backend', (
+    at,
+  ) async {
+    var consultas = 0;
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async {
+            consultas += 1;
+            return dados.montarPagina([dados.parceiro('A')]);
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    final requisicoes = <http.Request>[];
+    await _abrir(at, controlador, api: _apiDisparo(requisicoes));
+
+    await _dispararAtualizacao(at);
+    for (var tentativa = 0; tentativa < 20; tentativa++) {
+      await at.pump(const Duration(seconds: 30));
+      await at.pump();
+    }
+
+    expect(
+      find.textContaining('A atualização pode continuar em segundo plano.'),
+      findsOneWidget,
+    );
+    expect(consultas, 22);
+    expect(
+      requisicoes.where((requisicao) => requisicao.method == 'POST').length,
+      1,
+    );
+    expect(
+      requisicoes.where(
+        (requisicao) =>
+            requisicao.method == 'PATCH' || requisicao.method == 'DELETE',
+      ),
+      isEmpty,
+    );
+    await at.pump(const Duration(minutes: 1));
+    expect(consultas, 22);
+  });
+
+  testWidgets('três erros consecutivos encerram o polling', (at) async {
+    var consultas = 0;
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async {
+            consultas += 1;
+            if (consultas > 1) throw StateError('sem rede');
+            return dados.montarPagina([dados.parceiro('A')]);
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador, api: _apiDisparo(<http.Request>[]));
+
+    await _dispararAtualizacao(at);
+    await at.pump(const Duration(seconds: 30));
+    await at.pump();
+    await at.pump();
+    await at.pump(const Duration(seconds: 30));
+    await at.pump();
+    await at.pump();
+    await at.pump(const Duration(milliseconds: 300));
+
+    expect(consultas, 4);
+    expect(
+      find.textContaining('pode continuar em segundo plano'),
+      findsOneWidget,
+    );
+    await at.pump(const Duration(minutes: 1));
+    expect(consultas, 4);
+  });
+
+  testWidgets('dispose cancela polling e novo disparo substitui o anterior', (
+    at,
+  ) async {
+    var consultas = 0;
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async {
+            consultas += 1;
+            return dados.montarPagina([dados.parceiro('A')]);
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador, api: _apiDisparo(<http.Request>[]));
+
+    await _dispararAtualizacao(at);
+    await _dispararAtualizacao(at);
+    expect(consultas, 3);
+
+    await at.pump(const Duration(seconds: 30));
+    await at.pump();
+    expect(consultas, 4, reason: 'somente o polling mais recente permanece');
+
+    await at.pumpWidget(const SizedBox.shrink());
+    await at.pump(const Duration(minutes: 1));
+    expect(consultas, 4);
+  });
+
   testWidgets('hero, abas, busca, categorias e cartões usam dados reais', (
     at,
   ) async {
@@ -108,6 +307,39 @@ void main() {
     expect(find.text('Loja Clube'), findsOneWidget);
     expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.text('Alerta ativo'), findsOneWidget);
+  });
+
+  testWidgets('RN29 mostra qualidade reduzida sem expor código técnico', (
+    at,
+  ) async {
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async => dados.montarPagina(
+            [dados.parceiro('A')],
+            resumoDaPagina: dados.resumo(
+              ultimaColeta: '2026-08-28T12:00:00Z',
+              ultimaTentativaEm: '2026-08-28T12:05:00Z',
+              qualidade: 'degradada',
+            ),
+          ),
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador);
+
+    expect(find.text('Dados com qualidade reduzida'), findsOneWidget);
+    expect(
+      find.textContaining('Exibindo a última coleta válida.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('RN29'), findsNothing);
   });
 
   testWidgets('mutação mostra pendência, bloqueia repetição e informa falha', (

@@ -29,6 +29,17 @@ void main() {
             );
           }
           if (requisicao.url.path != '/api/inter/lojas') {
+            if (requisicao.url.path == '/api/inter/produtos/lojas') {
+              return http.Response(
+                '{"itens":[{"id":"2","id_externo":"direta-2",'
+                '"slug":"direta","nome":"Loja direta","selecionada":true,'
+                '"ativa":true,"ultima_execucao":"2026-08-30T15:00:00Z",'
+                '"ultimo_estado":"sucesso","paginas":12}],"pagina":1,'
+                '"por_pagina":20,"total_itens":1,"total_paginas":1,'
+                '"tem_proxima":false}',
+                200,
+              );
+            }
             return http.Response(
               '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
               200,
@@ -73,6 +84,16 @@ void main() {
     final patch = chamadas.where((chamada) => chamada.method == 'PATCH').single;
     expect(patch.url.path, '/api/inter/lojas');
     expect(patch.body, '{"id":"1","favorita":true}');
+
+    await at.tap(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    expect(find.text('Loja direta'), findsOneWidget);
+    expect(
+      find.text(
+        'Selecionada: sim · Atualizada em 30/08/2026, 12:00 · 12 páginas',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('administra preferências e loja Livelo pelo contrato seguro', (

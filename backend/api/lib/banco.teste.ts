@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const bancoFalso = vi.hoisted(() => ({
   consultas: [] as string[],
   resposta: [] as unknown[],
+  respostas: [] as unknown[][],
 }));
 
 vi.mock("@neondatabase/serverless", () => ({
@@ -15,23 +16,26 @@ vi.mock("@neondatabase/serverless", () => ({
         (consulta, parte, indice) => consulta + String(valores[indice - 1] ?? "") + parte,
       ),
     );
-    return bancoFalso.resposta;
+    return bancoFalso.respostas.shift() ?? bancoFalso.resposta;
   }),
 }));
 
 import {
   alterarAcompanhamentoParceiroLivelo,
   alterarAlertaParceiroLivelo,
-  catalogoLiveloPersistido,
+  buscarCatalogoLiveloPersistido,
   historicoLivelo,
   pontuacoes,
+  resumoCatalogoLiveloPersistido,
   resumoLiveloPersistido,
 } from "@/lib/banco";
+import { filtrosSqlCatalogoLivelo } from "@/lib/catalogo-livelo";
 
 describe("pontuacoes", () => {
   beforeEach(() => {
     bancoFalso.consultas.length = 0;
     bancoFalso.resposta = [];
+    bancoFalso.respostas.length = 0;
     process.env.DATABASE_URL = "postgresql://teste:teste@localhost/teste";
   });
 
@@ -105,11 +109,94 @@ describe("pontuacoes", () => {
   });
 
   it("catálogo e resumo expõem somente acompanhamentos ativos", async () => {
-    await catalogoLiveloPersistido();
+    bancoFalso.respostas.push([{ total: 0 }], [], []);
+    await buscarCatalogoLiveloPersistido({
+      ...filtrosSqlCatalogoLivelo("", ""),
+      aba: "todas",
+      ordenar: "pontos",
+    }, 1, 20);
+    await resumoCatalogoLiveloPersistido();
     await resumoLiveloPersistido();
 
-    expect(bancoFalso.consultas[0]).toContain("loja.acompanhada = TRUE");
-    expect(bancoFalso.consultas[1]).toContain("FROM loja WHERE acompanhada = TRUE");
+    expect(bancoFalso.consultas[0]).toContain("count(*)::int AS total");
+    expect(bancoFalso.consultas[1]).toContain("LIMIT 20");
+    expect(bancoFalso.consultas[1]).toContain("OFFSET 0");
+    expect(bancoFalso.consultas[2]).toContain("count(*) FILTER (WHERE acompanhada)");
+    expect(bancoFalso.consultas[2]).toContain("tentativa.qualidade");
+    expect(bancoFalso.consultas[3]).toContain("FROM loja WHERE acompanhada = TRUE");
+    expect(bancoFalso.consultas[3]).toContain("WHERE qualidade = 'completa'");
+  });
+
+  it("expõe RN29 sem trocar o instante do último snapshot completo", async () => {
+    bancoFalso.resposta = [{
+      ultima_coleta: "2026-08-23T08:00:00.000Z",
+      ultima_tentativa_em: "2026-08-23T10:30:00.000Z",
+      qualidade: "degradada",
+      parceiros_lidos: 250,
+      total_catalogo: 250,
+      acompanhadas: 3,
+      alertas_ativos: 2,
+      alertas: 1,
+      categorias: [],
+      melhor_oferta_id_externo: null,
+      melhor_oferta_nome: null,
+      melhor_oferta_pontos_atuais: null,
+      melhor_oferta_moeda: null,
+      melhor_oferta_prefixo_ate: null,
+    }];
+
+    const resumo = await resumoCatalogoLiveloPersistido();
+
+    expect(resumo.qualidade).toBe("degradada");
+    expect(resumo.ultima_coleta).toBe("2026-08-23T08:00:00.000Z");
+    expect(resumo.ultima_tentativa_em).toBe("2026-08-23T10:30:00.000Z");
+  });
+
+  it("pagina o catálogo Livelo no SQL e preserva o total filtrado", async () => {
+    bancoFalso.respostas.push([{ total: 21 }], []);
+
+    const primeira = await buscarCatalogoLiveloPersistido({
+      ...filtrosSqlCatalogoLivelo("", ""),
+      aba: "todas",
+      ordenar: "pontos",
+    }, 1, 10);
+
+    expect(primeira).toEqual({ itens: [], total: 21, pagina: 1 });
+    expect(bancoFalso.consultas[0]).toContain("count(*)::int AS total");
+    expect(bancoFalso.consultas[1]).toContain("parceiro.pontos_atuais END DESC");
+    expect(bancoFalso.consultas[1]).toContain("LIMIT 10");
+    expect(bancoFalso.consultas[1]).toContain("OFFSET 0");
+
+    bancoFalso.consultas.length = 0;
+    bancoFalso.respostas.push([{ total: 21 }], []);
+    const seguinte = await buscarCatalogoLiveloPersistido({
+      ...filtrosSqlCatalogoLivelo("", ""),
+      aba: "todas",
+      ordenar: "nome",
+    }, 2, 10);
+
+    expect(seguinte.pagina).toBe(2);
+    expect(bancoFalso.consultas[1]).toContain("LIMIT 10");
+    expect(bancoFalso.consultas[1]).toContain("OFFSET 10");
+  });
+
+  it("aplica busca, aba e categoria antes da contagem e da página Livelo", async () => {
+    bancoFalso.respostas.push([{ total: 0 }], []);
+    const filtros = filtrosSqlCatalogoLivelo("decoração", "Casa e decoração");
+
+    const resultado = await buscarCatalogoLiveloPersistido({
+      ...filtros,
+      aba: "acompanhadas",
+      ordenar: "nome",
+    }, 1, 20);
+
+    expect(resultado).toEqual({ itens: [], total: 0, pagina: 1 });
+    for (const consulta of bancoFalso.consultas) {
+      expect(consulta).toContain("loja.id IS NOT NULL");
+      expect(consulta).toContain("parceiro.categorias && casaedecoracao::text[]");
+      expect(consulta).toContain("strpos(");
+      expect(consulta).toContain("decoracao");
+    }
   });
 
   it("protege medições legadas contra exclusão física da loja", () => {
