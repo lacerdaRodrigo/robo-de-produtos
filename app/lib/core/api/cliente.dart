@@ -31,9 +31,8 @@ class ClienteApi {
     Map<String, String>? consulta,
     bool autenticado = true,
   }) async {
-    final uri = Uri.parse(
-      '$baseUrl$caminho',
-    ).replace(queryParameters: consulta);
+    final uri = Uri.parse('$baseUrl$caminho')
+        .replace(queryParameters: consulta);
     final cabecalhos = await _cabecalhos(autenticado: autenticado);
 
     final resposta = await _http
@@ -100,7 +99,14 @@ class ClienteApi {
     }
     cabecalhos['authorization'] = 'Bearer $token';
 
-    final appCheck = await provedorAppCheck?.call();
+    String? appCheck;
+    try {
+      appCheck = await provedorAppCheck?.call();
+    } catch (_) {
+      // Erros nativos do provider podem conter detalhes internos. Para o app,
+      // a falha continua sendo um erro normal e seguro da camada de cliente.
+      throw ErroDeRede('Não foi possível validar este aplicativo.');
+    }
     if (appCheck != null && appCheck.isNotEmpty) {
       cabecalhos['x-firebase-appcheck'] = appCheck;
     }

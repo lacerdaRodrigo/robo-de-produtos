@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   autenticarRequisicao,
+  lerAppCheckObrigatorio,
   tokenBearer,
   type DependenciasDeAcesso,
 } from "../lib/autenticacao-api";
@@ -57,6 +58,16 @@ describe("token Bearer", () => {
     expect(tokenBearer("Bearer")).toBeNull();
     expect(tokenBearer("Bearer abc extra")).toBeNull();
     expect(tokenBearer(null)).toBeNull();
+  });
+});
+
+describe("flag de enforcement do App Check", () => {
+  it("fica desligada quando ausente ou false e liga somente com true", () => {
+    expect(lerAppCheckObrigatorio(undefined)).toBe(false);
+    expect(lerAppCheckObrigatorio("")).toBe(false);
+    expect(lerAppCheckObrigatorio("false")).toBe(false);
+    expect(lerAppCheckObrigatorio("TRUE")).toBe(false);
+    expect(lerAppCheckObrigatorio("true")).toBe(true);
   });
 });
 
@@ -163,8 +174,12 @@ describe("gate de autenticacao da API v1", () => {
       { operacao: "perfil.ler" },
       ausente,
     );
-    expect((await corpoDaRecusa(resultadoAusente)).erro.codigo).toBe("app-check");
-    if (!resultadoAusente.ok) expect(resultadoAusente.resposta.status).toBe(401);
+    const corpoAusente = await corpoDaRecusa(resultadoAusente);
+    expect(corpoAusente.erro.codigo).toBe("app-check");
+    expect(corpoAusente).not.toHaveProperty("stack");
+    if (!resultadoAusente.ok) {
+      expect(resultadoAusente.resposta.status).toBe(401);
+    }
     expect(ausente.verificarIdToken).not.toHaveBeenCalled();
 
     const invalido = dependencias({

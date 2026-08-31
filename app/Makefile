@@ -12,7 +12,7 @@ APP_ID := br.com.radarbeneficios.app
 
 .DEFAULT_GOAL := help
 
-.PHONY: help dev apk build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
+.PHONY: help dev dev-app-check apk build-release build-debug release-install install install-debug open stop log log-now log-sys analyze format test clean
 
 ## Lista todos os alvos disponíveis.
 help: ## Lista todos os alvos disponíveis
@@ -29,6 +29,10 @@ dev: ## Executa o checkout atual no primeiro Android conectado
 	flutter run -d "$(DEVICE)" \
 		--dart-define=API_URL=$(API_URL) \
 		--dart-define=ATIVAR_APP_CHECK=$(APP_CHECK)
+
+dev-app-check: ## Executa debug Android com App Check somente contra uma API não produtiva
+	@test "$(API_URL)" != "https://robo-de-produtos.vercel.app" || { echo "Defina API_URL para o backend local/de teste."; exit 1; }
+	@$(MAKE) dev APP_CHECK=true API_URL="$(API_URL)" DEVICE="$(DEVICE)"
 
 # ── Build ──────────────────────────────────────────────────────────────────
 

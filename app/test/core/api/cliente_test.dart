@@ -72,6 +72,54 @@ void main() {
     expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
   });
 
+  test('trata rejeição estruturada de App Check como ErroDeApi', () async {
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient(
+        (_) async => http.Response(
+          '{"erro":{"codigo":"app-check","mensagem":"aplicativo nao verificado"}}',
+          401,
+        ),
+      ),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
+    );
+
+    await expectLater(
+      api.obter('/api/perfil'),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 401)
+            .having((erro) => erro.codigo, 'codigo', 'app-check'),
+      ),
+    );
+  });
+
+  test('normaliza falha do provider sem expor o erro nativo', () async {
+    var chamouRede = false;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((_) async {
+        chamouRede = true;
+        return http.Response('{}', 200);
+      }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => throw StateError('detalhe sensível'),
+    );
+
+    await expectLater(
+      api.obter('/api/perfil'),
+      throwsA(
+        isA<ErroDeRede>().having(
+          (erro) => erro.motivo,
+          'motivo',
+          'Não foi possível validar este aplicativo.',
+        ),
+      ),
+    );
+    expect(chamouRede, isFalse);
+  });
+
   test('PATCH administrativo leva tokens e corpo JSON', () async {
     late http.Request chamada;
     final api = ClienteApi(
