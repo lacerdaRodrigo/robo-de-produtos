@@ -297,7 +297,7 @@ void main() {
       await at.tap(atalho);
     }
     expect(abertos, ['lojas', 'livelo', 'produtos', 'cashback']);
-  });
+  }, tags: 'web');
 
   testWidgets('layout amplo e texto ampliado não estouram', (at) async {
     final api = apiQueResponde(
@@ -308,7 +308,7 @@ void main() {
 
     expect(at.takeException(), isNull);
     expect(find.text('Produtos ativos'), findsOneWidget);
-  });
+  }, tags: 'web');
 
   testWidgets('celular estreito com texto ampliado alcança todos os estados', (
     at,
@@ -336,7 +336,7 @@ void main() {
       find.byType(PaginaInicio),
       matchesGoldenFile('../../goldens/inicio_mobile.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('Início Web amplo confere com o golden aprovado', (at) async {
     final api = apiQueResponde(
@@ -349,5 +349,5 @@ void main() {
       find.byType(PaginaInicio),
       matchesGoldenFile('../../goldens/inicio_web.png'),
     );
-  });
+  }, tags: 'golden');
 }

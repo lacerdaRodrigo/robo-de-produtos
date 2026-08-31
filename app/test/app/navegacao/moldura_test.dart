@@ -240,7 +240,7 @@ void main() {
         findsOneWidget,
       );
     }
-  });
+  }, tags: 'web');
 
   testWidgets('Início aparece por padrão e consome o resumo da API', (
     at,
@@ -277,7 +277,7 @@ void main() {
     await at.pumpAndSettle();
     expect(find.byKey(const Key('voltar-para-lojas')), findsOneWidget);
     expect(find.text('Shopping Inter'), findsWidgets);
-  });
+  }, tags: 'web');
 
   testWidgets('Lojas permanece íntegra na experiência ampla', (at) async {
     await _abrir(at, tamanho: const Size(1440, 900));
@@ -295,7 +295,7 @@ void main() {
       find.text('Ainda não há uma coleta da Livelo para mostrar.'),
       findsOneWidget,
     );
-  });
+  }, tags: 'web');
 
   testWidgets('hub de Lojas mostra estados reais sem misturar os domínios', (
     at,
@@ -313,7 +313,7 @@ void main() {
     expect(find.text('Cashback: falha recente'), findsOneWidget);
     expect(find.text('2 lojas selecionadas em Produtos'), findsOneWidget);
     expect(find.text('Produtos: parcial'), findsOneWidget);
-  });
+  }, tags: 'web');
 
   testWidgets('Voltar do domínio interno retorna primeiro ao hub de Lojas', (
     at,
@@ -329,7 +329,7 @@ void main() {
 
     expect(find.byKey(const Key('hub-lojas')), findsOneWidget);
     expect(find.byKey(const Key('voltar-para-lojas')), findsNothing);
-  });
+  }, tags: 'web');
 
   testWidgets('Shopping Inter compacto segue as abas do protótipo', (at) async {
     final requisicoes = <http.Request>[];
@@ -573,7 +573,7 @@ void main() {
       find.byType(MolduraRadar),
       matchesGoldenFile('../../goldens/moldura_mobile_gaveta.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('Início mobile novo confere com o golden claro', (at) async {
     await _abrir(at, resumo: _resumoComEstadosIndependentes);
@@ -582,7 +582,7 @@ void main() {
       find.byType(MolduraRadar),
       matchesGoldenFile('../../goldens/moldura_mobile_inicio.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('Início mobile novo confere com o golden escuro', (at) async {
     await _abrir(at, resumo: _resumoComEstadosIndependentes, escuro: true);
@@ -591,7 +591,7 @@ void main() {
       find.byType(MolduraRadar),
       matchesGoldenFile('../../goldens/moldura_mobile_inicio_escuro.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('lateral Web confere com o golden aprovado', (at) async {
     await _abrir(at, tamanho: const Size(1440, 900));
@@ -600,5 +600,5 @@ void main() {
       find.byType(MolduraRadar),
       matchesGoldenFile('../../goldens/moldura_web_lateral.png'),
     );
-  });
+  }, tags: 'golden');
 }

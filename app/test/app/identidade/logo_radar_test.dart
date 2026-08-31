@@ -66,7 +66,7 @@ void main() {
       find.byKey(chave),
       matchesGoldenFile('../../goldens/logo_radar_sobre_escuro.png'),
     );
-  });
+  }, tags: 'golden');
 
   test('pintor só repinta quando a variante muda', () {
     const claro = PintorLogoRadar(sobreFundoEscuro: false);

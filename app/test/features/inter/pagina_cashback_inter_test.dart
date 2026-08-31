@@ -365,7 +365,7 @@ void main() {
     paginaDois.complete(_pagina([_loja(nome: 'C&A')], total: 3));
     await at.pumpAndSettle();
     expect(find.text('C&A'), findsOneWidget);
-  });
+  }, tags: 'web');
 
   testWidgets('página de Cashback mantém o foco nos Sites parceiros', (
     at,

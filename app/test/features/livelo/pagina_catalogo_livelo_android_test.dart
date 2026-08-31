@@ -508,7 +508,7 @@ void main() {
       find.byKey(const Key('catalogo-livelo-android')),
       matchesGoldenFile('../../goldens/catalogo_livelo_android_claro.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('golden Android escuro', (at) async {
     final controlador = _controlador();
@@ -518,5 +518,5 @@ void main() {
       find.byKey(const Key('catalogo-livelo-android')),
       matchesGoldenFile('../../goldens/catalogo_livelo_android_escuro.png'),
     );
-  });
+  }, tags: 'golden');
 }

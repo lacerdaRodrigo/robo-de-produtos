@@ -187,5 +187,5 @@ void main() {
       Brightness.light,
     );
     expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
-  });
+  }, tags: 'web');
 }

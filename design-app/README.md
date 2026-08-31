@@ -17,7 +17,7 @@ Durante `re-design`:
 
 - não redesenhar Web;
 - não comparar com protótipo Web;
-- não executar/update golden Web como rotina;
+- não executar ou atualizar golden Web como rotina;
 - não abrir arquivos Web para contexto sem necessidade concreta de compilação compartilhada;
 - não sincronizar mudanças visuais mobile com desktop.
 
@@ -29,10 +29,9 @@ Isso é intencional para concentrar tempo e tokens no celular.
 2. abrir somente o código/testes da fase atual;
 3. implementar sem inventar UI;
 4. formatar e analisar;
-5. rodar testes direcionados;
-6. rodar goldens mobile;
-7. renderizar no viewport de referência;
-8. comparar com o HTML e corrigir diferenças;
-9. repetir até estabilizar.
+5. rodar somente unitários/widgets diretamente afetados;
+6. renderizar no viewport de referência quando necessário;
+7. comparar com o HTML e corrigir diferenças;
+8. repetir até estabilizar.
 
 Dados do protótipo são ilustrativos. Regras e dados reais continuam vindo dos contratos existentes.

@@ -368,7 +368,7 @@ void main() {
 
     expect(find.byType(Card), findsNWidgets(2));
     expect(find.byType(Wrap), findsAtLeastNWidgets(2));
-  });
+  }, tags: 'web');
 
   testWidgets('histórico mostra mínimo, máximo e pagina as medições', (
     at,
