@@ -103,6 +103,8 @@ class Api {
     String q = '',
     String ordenar = 'cashback',
     int pagina = 1,
+    bool apenasAcompanhadas = false,
+    int? porPagina,
   }) async {
     final corpo = await cliente.obter(
       '/api/inter/cashback',
@@ -110,7 +112,8 @@ class Api {
         'q': q,
         'ordenar': ordenar,
         'pagina': '$pagina',
-        'por_pagina': '$paginaPadrao',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (apenasAcompanhadas) 'acompanhadas': 'true',
       },
     );
     return Pagina.parse(corpo, CashbackInter.parse);

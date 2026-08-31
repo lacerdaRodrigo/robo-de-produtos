@@ -83,6 +83,23 @@ describe("resumo real do Início", () => {
     expect((await carregarResumoInicio(deps, agora)).produtos.estado).toBe("atrasado");
   });
 
+  it("não mantém produtos atualizando após uma execução abandonada reconciliada", async () => {
+    const deps = dependencias();
+    const base = await deps.produtos();
+    deps.produtos = async () => ({
+      ...base,
+      ultima_tentativa_em: "2026-08-23T10:00:00.000Z",
+      ultima_tentativa_estado: "falha",
+      qualidade: "degradada",
+    });
+
+    const resumo = await carregarResumoInicio(deps, agora);
+
+    expect(resumo.produtos.estado).toBe("falha_recente");
+    expect(resumo.produtos.produtos_ativos).toBe(3310);
+    expect(resumo.produtos.qualidade).toBe("degradada");
+  });
+
   it("isola falha de leitura sem fabricar zero para o domínio", async () => {
     const deps = dependencias();
     deps.livelo = async () => {

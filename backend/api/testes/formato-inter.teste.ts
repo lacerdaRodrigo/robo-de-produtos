@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DESCRICAO_INTER_AUSENTE,
+  compararDecimaisInter,
   descricaoInter,
   estadoInter,
   filtrarCashbacksInter,
@@ -43,6 +44,12 @@ describe("CT-191 ranking do cashback", () => {
       item("Ausente", null, false),
     ]).map((loja) => loja.nome);
     expect(nomes).toEqual(["Magalu", "Riachuelo", "Amazon", "Sem número", "Ausente"]);
+  });
+
+  it("compara precisão decimal sem Number", () => {
+    expect(compararDecimaisInter("9007199254740992.0000002", "9007199254740992.0000001")).toBe(1);
+    expect(compararDecimaisInter("12,010", "12.01")).toBe(0);
+    expect(compararDecimaisInter(null, "0")).toBe(-1);
   });
 });
 
@@ -104,5 +111,6 @@ describe("CT-282 retrato válido, falha e favorita ausente", () => {
     expect(rota).toContain("ultimaTentativaInter()");
     expect(rota).toContain("ultima_tentativa_estado");
     expect(rota).toContain("atualizado_em: execucao?.concluida_em ?? null");
+    expect(rota).toContain("catalogo.filter((loja) => loja.favorita)");
   });
 });

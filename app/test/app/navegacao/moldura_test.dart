@@ -355,6 +355,15 @@ void main() {
     expect(find.text('Integração com atenção'), findsOneWidget);
     expect(find.text('20%'), findsOneWidget);
     expect(find.text('melhor oferta'), findsOneWidget);
+    expect(
+      requisicoes.any(
+        (requisicao) =>
+            requisicao.url.path == '/api/inter/cashback' &&
+            requisicao.url.queryParameters['acompanhadas'] == 'true' &&
+            requisicao.url.queryParameters['por_pagina'] == '1',
+      ),
+      isTrue,
+    );
     expect(find.byKey(const Key('busca-cashback-inter')), findsOneWidget);
     await at.enterText(
       find.byKey(const Key('busca-cashback-inter')),
@@ -363,16 +372,13 @@ void main() {
 
     await at.tap(find.text('Sites parceiros'));
     await at.pumpAndSettle();
+    expect(find.byKey(const Key('busca-cashback-inter')), findsOneWidget);
     expect(
-      find.byKey(const Key('busca-sites-parceiros-inter')),
+      find.textContaining('Navegar e filtrar não inicia uma nova coleta.'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('Selecionar uma loja não inicia uma nova coleta.'),
-      findsOneWidget,
-    );
-    expect(find.text('382 sites parceiros disponíveis'), findsOneWidget);
-    expect(find.text('Catálogo do Inter'), findsOneWidget);
+    expect(find.text('1 site parceiro disponível'), findsOneWidget);
+    expect(find.text('Site parceiro'), findsOneWidget);
     await at.tap(find.text('Acompanhada'));
     await at.pumpAndSettle();
     expect(find.text('Acompanhar'), findsOneWidget);
@@ -384,10 +390,7 @@ void main() {
       ),
       isTrue,
     );
-    await at.enterText(
-      find.byKey(const Key('busca-sites-parceiros-inter')),
-      'magalu',
-    );
+    await at.enterText(find.byKey(const Key('busca-cashback-inter')), 'magalu');
 
     await at.tap(find.text('Cashback'));
     await at.pumpAndSettle();
@@ -396,20 +399,32 @@ void main() {
           .widget<TextField>(find.byKey(const Key('busca-cashback-inter')))
           .controller
           ?.text,
-      'magazine',
-    );
-
-    await at.tap(find.text('Sites parceiros'));
-    await at.pumpAndSettle();
-    expect(
-      at
-          .widget<TextField>(
-            find.byKey(const Key('busca-sites-parceiros-inter')),
-          )
-          .controller
-          ?.text,
       'magalu',
     );
+  });
+
+  testWidgets('usuário comum lê Sites parceiros sem acessar rota admin', (
+    at,
+  ) async {
+    final requisicoes = <http.Request>[];
+    await _abrir(
+      at,
+      tamanho: const Size(390, 1500),
+      cashback: _cashbackInter,
+      requisicoes: requisicoes,
+    );
+    await _irParaCompacto(at, DestinoCompacto.inter);
+    await at.tap(find.text('Sites parceiros'));
+    await at.pumpAndSettle();
+
+    expect(
+      requisicoes.where(
+        (requisicao) => requisicao.url.path == '/api/inter/lojas',
+      ),
+      isEmpty,
+    );
+    expect(find.text('Acompanhar'), findsNothing);
+    expect(find.text('✓ Acompanhada'), findsOneWidget);
   });
 
   testWidgets('atualização continua fora do fluxo compacto do Inter', (
@@ -457,20 +472,13 @@ void main() {
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
 
-    await at.scrollUntilVisible(
-      find.text('Carregar mais'),
-      500,
-      scrollable: find
-          .descendant(
-            of: find.byKey(
-              const PageStorageKey('rolagem-sites-parceiros-inter'),
-            ),
-            matching: find.byType(Scrollable),
-          )
-          .first,
+    await at.drag(
+      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      const Offset(0, -500),
     );
+    await at.pump();
     expect(at.takeException(), isNull);
-    expect(find.text('Carregar mais'), findsOneWidget);
+    expect(find.text('Magazine Luiza'), findsOneWidget);
   });
 
   testWidgets('Produtos é destino direto e preserva a busca entre áreas', (

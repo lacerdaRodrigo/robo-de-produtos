@@ -177,6 +177,13 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   late final ControladorCashbackInter _cashback = ControladorCashbackInter(
     buscar: ({required q, required ordenar, required pagina}) =>
         widget.api.painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+    buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
+        widget.api.painelCashbackInter(
+          q: q,
+          ordenar: ordenar,
+          pagina: pagina,
+          apenasAcompanhadas: true,
+        ),
   );
   String? _melhorOferta;
   var _aba = 0;
@@ -185,33 +192,37 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   void initState() {
     super.initState();
     _resumo = widget.api.resumo();
-    _cashback.addListener(_capturarMelhorOferta);
+    _carregarMelhorOferta();
   }
 
-  void _capturarMelhorOferta() {
-    if (_melhorOferta != null ||
-        _cashback.busca.isNotEmpty ||
-        _cashback.itens.isEmpty) {
-      return;
+  Future<void> _carregarMelhorOferta() async {
+    try {
+      final pagina = await widget.api.painelCashbackInter(
+        apenasAcompanhadas: true,
+        porPagina: 1,
+      );
+      String? oferta;
+      for (final loja in pagina.itens) {
+        if (!loja.favorita || !loja.encontrada) continue;
+        oferta = percentualCompactoInter(loja.cashbackPrincipalValor);
+        if (oferta != null) break;
+      }
+      if (mounted) setState(() => _melhorOferta = oferta);
+    } on Object {
+      if (mounted) setState(() => _melhorOferta = null);
     }
-    String? oferta;
-    for (final loja in _cashback.itens) {
-      if (!loja.encontrada) continue;
-      oferta = percentualCompactoInter(loja.cashbackPrincipalValor);
-      if (oferta != null) break;
-    }
-    if (oferta != null && mounted) setState(() => _melhorOferta = oferta);
   }
 
   @override
   void dispose() {
-    _cashback
-      ..removeListener(_capturarMelhorOferta)
-      ..dispose();
+    _cashback.dispose();
     super.dispose();
   }
 
-  void _tentarNovamente() => setState(() => _resumo = widget.api.resumo());
+  void _tentarNovamente() {
+    setState(() => _resumo = widget.api.resumo());
+    _carregarMelhorOferta();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +242,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             erroResumo: estado.hasError,
             aoTentarResumo: _tentarNovamente,
             aoSelecionarAba: (aba) => setState(() => _aba = aba),
+            aoAlterarAcompanhamento: _carregarMelhorOferta,
           );
         }
         return SafeArea(
@@ -338,6 +350,7 @@ class _BancoInterCompacto extends StatelessWidget {
     required this.erroResumo,
     required this.aoTentarResumo,
     required this.aoSelecionarAba,
+    required this.aoAlterarAcompanhamento,
   });
 
   final Api api;
@@ -350,35 +363,22 @@ class _BancoInterCompacto extends StatelessWidget {
   final bool erroResumo;
   final VoidCallback aoTentarResumo;
   final ValueChanged<int> aoSelecionarAba;
+  final VoidCallback aoAlterarAcompanhamento;
 
   @override
   Widget build(BuildContext context) {
     final cabecalho = _cabecalho();
     return SafeArea(
-      child: IndexedStack(
+      child: PaginaCashbackInter(
         key: const Key('hub-shopping-inter'),
-        index: aba,
-        children: [
-          PaginaCashbackInter(
-            key: const PageStorageKey('painel-cashback-inter'),
-            api: api,
-            controlador: controladorCashback,
-            administrador: administrador,
-            incorporada: true,
-            mostrarAtualizacao: false,
-            chaveRolagemCompacta: const PageStorageKey(
-              'rolagem-cashback-inter',
-            ),
-            sliversAntesDoCashback: cabecalho,
-          ),
-          _CatalogoSitesParceiros(
-            key: const PageStorageKey('painel-sites-parceiros-inter'),
-            api: api,
-            administrador: administrador,
-            chaveRolagem: const PageStorageKey('rolagem-sites-parceiros-inter'),
-            sliversAntesDoCatalogo: cabecalho,
-          ),
-        ],
+        api: api,
+        controlador: controladorCashback,
+        administrador: administrador,
+        incorporada: true,
+        mostrarAtualizacao: false,
+        chaveRolagemCompacta: const PageStorageKey('rolagem-cashback-inter'),
+        sliversAntesDoCashback: cabecalho,
+        aoAlterarAcompanhamento: aoAlterarAcompanhamento,
       ),
     );
   }
@@ -414,10 +414,81 @@ class _BancoInterCompacto extends StatelessWidget {
               aoSelecionar: aoSelecionarAba,
             ),
           ),
+          if (aba == 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _AvisoCatalogoInter(),
+                  const SizedBox(height: 12),
+                  AnimatedBuilder(
+                    animation: controladorCashback,
+                    builder: (context, _) {
+                      if (controladorCashback.carregando ||
+                          controladorCashback.erro != null) {
+                        return const SizedBox.shrink();
+                      }
+                      final total = controladorCashback.totalItens;
+                      return Text(
+                        total == 1
+                            ? '1 site parceiro disponível'
+                            : '$total sites parceiros disponíveis',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: CoresRadar.de(context).textoSuave,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     ),
   ];
+}
+
+class _AvisoCatalogoInter extends StatelessWidget {
+  const _AvisoCatalogoInter();
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Tokens.ganhoFundoEscuro
+          : Tokens.ganhoFundo,
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: Tokens.ganho.withValues(alpha: 0.35)),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.storefront_outlined,
+            color: CoresRadar.de(context).ganho,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Este catálogo de Sites parceiros usa o último retrato válido. '
+              'Navegar e filtrar não inicia uma nova coleta.',
+              style: TextStyle(
+                color: CoresRadar.de(context).ganho,
+                fontSize: 10,
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _HeroInter extends StatelessWidget {
@@ -701,17 +772,12 @@ class _AbasInter extends StatelessWidget {
 
 class _CatalogoSitesParceiros extends StatefulWidget {
   const _CatalogoSitesParceiros({
-    super.key,
     required this.api,
     required this.administrador,
-    this.sliversAntesDoCatalogo = const [],
-    this.chaveRolagem,
   });
 
   final Api api;
   final bool administrador;
-  final List<Widget> sliversAntesDoCatalogo;
-  final Key? chaveRolagem;
 
   @override
   State<_CatalogoSitesParceiros> createState() =>
@@ -774,9 +840,8 @@ class _EstadoCatalogoSitesParceiros extends State<_CatalogoSitesParceiros> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _controlador,
     builder: (context, _) => CustomScrollView(
-      key: widget.chaveRolagem ?? const Key('catalogo-sites-parceiros-inter'),
+      key: const Key('catalogo-sites-parceiros-inter'),
       slivers: [
-        ...widget.sliversAntesDoCatalogo,
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 13),
           sliver: SliverToBoxAdapter(child: _avisoCatalogo(context)),

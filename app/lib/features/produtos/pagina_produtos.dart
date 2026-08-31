@@ -196,7 +196,8 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                       0,
                     ),
                     child: Text(
-                      'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
+                      'Atualização mais antiga destes resultados: '
+                      '${dataHoraProduto(_controlador.atualizadoEm)}'
                       '${atrasado ? ' · dados atrasados' : ''}',
                       style: TextStyle(color: atrasado ? cores.atencao : null),
                     ),
@@ -205,8 +206,13 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                   const Padding(
                     padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
                     child: Text(
-                      'A última coleta foi degradada; produtos ausentes não foram removidos.',
+                      'Uma das lojas teve coleta degradada; produtos ausentes não foram removidos.',
                     ),
+                  ),
+                if (_avisoDaTentativa() case final aviso?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                    child: Text(aviso),
                   ),
                 if (_controlador.termoValido &&
                     !_controlador.carregando &&
@@ -223,13 +229,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                             '${_controlador.pagina} · ${_controlador.porPagina} por página',
                           ),
                         ),
-                        Chip(
-                          label: Text(
-                            _controlador.qualidade == 'degradada'
-                                ? 'Catálogo degradado'
-                                : 'Catálogo completo',
-                          ),
-                        ),
+                        Chip(label: Text(_rotuloQualidade())),
                       ],
                     ),
                   ),
@@ -283,7 +283,8 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
             sliver: SliverToBoxAdapter(
               child: Text(
-                'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
+                'Atualização mais antiga destes resultados: '
+                '${dataHoraProduto(_controlador.atualizadoEm)}'
                 '${atrasado ? ' · dados atrasados' : ''}',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: atrasado ? cores.atencao : cores.textoSuave,
@@ -296,9 +297,14 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             padding: EdgeInsets.fromLTRB(18, 8, 18, 0),
             sliver: SliverToBoxAdapter(
               child: Text(
-                'A última coleta foi degradada; produtos ausentes não foram removidos.',
+                'Uma das lojas teve coleta degradada; produtos ausentes não foram removidos.',
               ),
             ),
+          ),
+        if (_avisoDaTentativa() case final aviso?)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+            sliver: SliverToBoxAdapter(child: Text(aviso)),
           ),
         if (_controlador.termoValido &&
             !_controlador.carregando &&
@@ -334,6 +340,20 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       ],
     );
   }
+
+  String? _avisoDaTentativa() => switch (_controlador.ultimaTentativaEstado) {
+    'iniciada' => 'As lojas destes resultados estão sendo atualizadas.',
+    'parcial' => 'A atualização das lojas destes resultados foi parcial.',
+    'falha' =>
+      'A atualização destas lojas falhou; exibindo o último catálogo válido.',
+    _ => null,
+  };
+
+  String _rotuloQualidade() => switch (_controlador.qualidade) {
+    'completa' => 'Catálogo completo',
+    'degradada' => 'Catálogo degradado',
+    _ => 'Qualidade indisponível',
+  };
 
   Widget _filtrosCompactos() => SingleChildScrollView(
     padding: const EdgeInsets.symmetric(horizontal: 18),

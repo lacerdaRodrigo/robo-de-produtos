@@ -365,6 +365,8 @@ void main() {
       q: 'loja',
       ordenar: 'nome',
       pagina: 2,
+      apenasAcompanhadas: true,
+      porPagina: 1,
     );
 
     expect(consulta!.path, '/api/inter/cashback');
@@ -372,7 +374,8 @@ void main() {
       'q': 'loja',
       'ordenar': 'nome',
       'pagina': '2',
-      'por_pagina': '20',
+      'por_pagina': '1',
+      'acompanhadas': 'true',
     });
     expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
     expect(resposta.itens.single.cashbackPrincipalValor, '12.00');

@@ -154,7 +154,7 @@ void main() {
 
       expect(find.text('Animale'), findsNothing);
       expect(find.text('Aramis'), findsOneWidget);
-      expect(find.text('Acompanhada'), findsOneWidget);
+      expect(find.text('✓ Acompanhada'), findsOneWidget);
     },
   );
 

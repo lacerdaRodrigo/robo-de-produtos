@@ -21,6 +21,7 @@ class PaginaCashbackInter extends StatefulWidget {
     this.mostrarAtualizacao = true,
     this.sliversAntesDoCashback = const [],
     this.chaveRolagemCompacta,
+    this.aoAlterarAcompanhamento,
   });
 
   final Api api;
@@ -32,6 +33,7 @@ class PaginaCashbackInter extends StatefulWidget {
   /// Conteúdo que deve rolar antes da busca na experiência mobile integrada.
   final List<Widget> sliversAntesDoCashback;
   final Key? chaveRolagemCompacta;
+  final VoidCallback? aoAlterarAcompanhamento;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
@@ -43,6 +45,13 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
       ControladorCashbackInter(
         buscar: ({required q, required ordenar, required pagina}) => widget.api
             .painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+        buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
+            widget.api.painelCashbackInter(
+              q: q,
+              ordenar: ordenar,
+              pagina: pagina,
+              apenasAcompanhadas: true,
+            ),
       );
   late final bool _externo = widget.controlador != null;
   final _campoBusca = TextEditingController();
@@ -83,6 +92,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
             ? 'Loja adicionada ao acompanhamento.'
             : 'Loja removida do acompanhamento.',
       );
+      widget.aoAlterarAcompanhamento?.call();
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -250,9 +260,12 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
           selecionado: _filtroCompacto,
           aoSelecionar: (indice) {
             setState(() => _filtroCompacto = indice);
-            if (indice == 1) {
-              _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
-            }
+            _controlador.mudarConsulta(
+              filtro: indice == 2
+                  ? FiltroCashbackInter.acompanhadas
+                  : FiltroCashbackInter.todas,
+              ordenacao: OrdenacaoCashbackInter.cashback,
+            );
           },
         ),
       ),

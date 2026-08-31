@@ -98,7 +98,24 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
       // mantém a chave: o próximo toque consulta a mesma reserva no servidor.
       if (erro is ErroDeApi && erro.codigo == 'disparo') _chave = null;
       if (mounted) {
-        final mensagem = erro is ErroDeApi
+        final espera = erro is ErroDeApi && erro.codigo == 'cooldown'
+            ? erro.retryAfterSeconds
+            : null;
+        if (espera != null) {
+          final estado = _estado;
+          setState(
+            () => _estado = EstadoDisparoAdministrativo(
+              dominio: widget.dominio,
+              cooldownSegundos: espera,
+              ultimaSolicitacaoEm: estado?.ultimaSolicitacaoEm,
+              ultimoEstado: estado?.ultimoEstado,
+            ),
+          );
+          _iniciarContagem();
+        }
+        final mensagem = espera != null
+            ? 'Aguarde ${_tempo(espera)} antes de solicitar uma nova atualização.'
+            : erro is ErroDeApi
             ? erro.mensagem
             : 'Não foi possível solicitar a coleta.';
         mostrarMensagemRadar(context, mensagem, sucesso: false);

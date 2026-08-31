@@ -61,22 +61,31 @@ export async function GET(requisicao: Request) {
     );
   }
 
-  const { itens, total } = await buscarProdutosDiretosPaginado(q, pagina, porPagina, {
-    marca: url.searchParams.get("marca") ? String(url.searchParams.get("marca")) : null,
-    categoria: url.searchParams.get("categoria")
-      ? String(url.searchParams.get("categoria"))
-      : null,
-    loja: url.searchParams.get("loja") ? String(url.searchParams.get("loja")) : null,
-    preco_min: precoMin,
-    preco_max: precoMax,
-  });
+  try {
+    const { itens, total } = await buscarProdutosDiretosPaginado(q, pagina, porPagina, {
+      marca: url.searchParams.get("marca") ? String(url.searchParams.get("marca")) : null,
+      categoria: url.searchParams.get("categoria")
+        ? String(url.searchParams.get("categoria"))
+        : null,
+      loja: url.searchParams.get("loja") ? String(url.searchParams.get("loja")) : null,
+      preco_min: precoMin,
+      preco_max: precoMax,
+    });
 
-  const status = await statusCatalogoProdutos();
+    const status = await statusCatalogoProdutos(itens);
 
-  return NextResponse.json({
-    itens,
-    ...paginacaoEnvelope(total, pagina, porPagina),
-    atualizado_em: status.atualizado_em,
-    qualidade: status.qualidade,
-  });
+    return NextResponse.json({
+      itens,
+      ...paginacaoEnvelope(total, pagina, porPagina),
+      atualizado_em: status.atualizado_em,
+      qualidade: status.qualidade,
+      ultima_tentativa_em: status.ultima_tentativa_em,
+      ultima_tentativa_estado: status.ultima_tentativa_estado,
+    });
+  } catch {
+    return NextResponse.json(corpoErro("inesperado", "nao foi possivel buscar os produtos"), {
+      status: STATUS.INESPERADO,
+      headers: { "x-request-id": acesso.requisicaoId },
+    });
+  }
 }

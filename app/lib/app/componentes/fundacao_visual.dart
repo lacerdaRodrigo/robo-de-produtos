@@ -483,22 +483,25 @@ class ControleAparenciaRadar extends StatelessWidget {
       );
     }
 
-    return Semantics(
-      key: const Key('alternar-tema-gaveta'),
-      button: true,
-      toggled: escuro,
-      label: rotulo,
-      child: ListTile(
-        textColor: cor,
-        iconColor: cor,
-        leading: Icon(icone),
-        title: const Text('Aparência'),
-        subtitle: Text(escuro ? 'Tema escuro' : 'Tema claro'),
-        trailing: Switch(
-          value: escuro,
-          onChanged: controlador == null ? null : (_) => _alternar(context),
+    return Material(
+      type: MaterialType.transparency,
+      child: Semantics(
+        key: const Key('alternar-tema-gaveta'),
+        button: true,
+        toggled: escuro,
+        label: rotulo,
+        child: ListTile(
+          textColor: cor,
+          iconColor: cor,
+          leading: Icon(icone),
+          title: const Text('Aparência'),
+          subtitle: Text(escuro ? 'Tema escuro' : 'Tema claro'),
+          trailing: Switch(
+            value: escuro,
+            onChanged: controlador == null ? null : (_) => _alternar(context),
+          ),
+          onTap: controlador == null ? null : () => _alternar(context),
         ),
-        onTap: controlador == null ? null : () => _alternar(context),
       ),
     );
   }

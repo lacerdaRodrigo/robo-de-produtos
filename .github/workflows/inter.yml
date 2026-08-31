@@ -1,7 +1,6 @@
 name: shopping-inter
 
 on:
-  push:
   schedule:
     # 12h/17h/23h UTC = 09h/14h/20h de Brasilia (UTC-3).
     - cron: "0 12,17,23 * * *"

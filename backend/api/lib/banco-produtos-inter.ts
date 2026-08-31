@@ -8,6 +8,56 @@ function conectar() {
   return neon(url);
 }
 
+/**
+ * Margem operacional para uma rodada matricial. As execuções recentes do
+ * workflow terminam em até 11 minutos; quatro horas também ficam abaixo do
+ * menor intervalo entre os agendamentos (cinco horas) e evitam falso abandono.
+ */
+export const EXPIRACAO_EXECUCAO_PRODUTOS_SEGUNDOS = 4 * 60 * 60;
+
+async function reconciliarExecucoesProdutosAbandonadas(): Promise<void> {
+  const sql = conectar();
+  await sql`
+    WITH abandonadas AS (
+      SELECT id
+        FROM execucao_produtos_inter
+       WHERE estado = 'iniciada'
+         AND iniciada_em <= now() - make_interval(
+           secs => ${EXPIRACAO_EXECUCAO_PRODUTOS_SEGUNDOS}
+         )
+       FOR UPDATE
+    ), lojas_finalizadas AS (
+      UPDATE execucao_loja_produtos_inter loja
+         SET concluida_em = now(), estado = 'falha', codigo_falha = 'inesperada'
+        FROM abandonadas
+       WHERE loja.execucao_produtos_inter_id = abandonadas.id
+         AND loja.estado = 'iniciada'
+      RETURNING loja.id
+    )
+    UPDATE execucao_produtos_inter rodada
+       SET concluida_em = now(), estado = 'falha',
+           lojas_sucesso = (
+             SELECT count(*)::int
+               FROM execucao_loja_produtos_inter loja
+              WHERE loja.execucao_produtos_inter_id = rodada.id
+                AND loja.estado = 'sucesso'
+           ),
+           lojas_falha = GREATEST(
+             rodada.lojas_planejadas - (
+               SELECT count(*)::int
+                 FROM execucao_loja_produtos_inter loja
+                WHERE loja.execucao_produtos_inter_id = rodada.id
+                  AND loja.estado = 'sucesso'
+             ),
+             0
+           ),
+           codigo_falha = 'inesperada'
+      FROM abandonadas
+     WHERE rodada.id = abandonadas.id
+       AND rodada.estado = 'iniciada'
+  `;
+}
+
 export type ProdutoDireto = {
   id_externo: string;
   nome: string;
@@ -87,6 +137,7 @@ export type ResumoProdutosPersistido = {
  * continuam independentes; produtos vêm apenas do catálogo ativo local.
  */
 export async function resumoProdutosPersistido(): Promise<ResumoProdutosPersistido> {
+  await reconciliarExecucoesProdutosAbandonadas();
   const sql = conectar();
   const linhas = (await sql`
     WITH selecionadas AS (
@@ -422,19 +473,136 @@ export async function historicoProdutoDireto(
 
 export type StatusCatalogoProdutos = {
   atualizado_em: string | null;
-  qualidade: string | null;
+  qualidade: "completa" | "degradada" | null;
+  ultima_tentativa_em: string | null;
+  ultima_tentativa_estado: EstadoTentativaProdutos | null;
 };
 
-/** Resumo da última execução de produtos, para o envelope da busca pública
- *  (`atualizado_em` e `qualidade`). null quando a
- *  V4 ainda não coletou nada. */
-export async function statusCatalogoProdutos(): Promise<StatusCatalogoProdutos> {
+type StatusLojaCatalogoProdutos = {
+  loja_slug: string;
+  qualidade: "completa" | "degradada" | null;
+  ultima_tentativa_em: string | null;
+  ultima_tentativa_estado: "iniciada" | "sucesso" | "falha" | null;
+};
+
+const STATUS_CATALOGO_VAZIO: StatusCatalogoProdutos = {
+  atualizado_em: null,
+  qualidade: null,
+  ultima_tentativa_em: null,
+  ultima_tentativa_estado: null,
+};
+
+function instanteLimite(
+  valores: Array<string | null>,
+  escolher: (atual: number, candidato: number) => boolean,
+): string | null {
+  let escolhido: string | null = null;
+  let instanteEscolhido = 0;
+  for (const valor of valores) {
+    if (!valor) continue;
+    const instante = Date.parse(valor);
+    if (Number.isNaN(instante)) continue;
+    if (escolhido === null || escolher(instanteEscolhido, instante)) {
+      escolhido = valor;
+      instanteEscolhido = instante;
+    }
+  }
+  return escolhido;
+}
+
+function consolidarEstadoTentativas(
+  linhas: StatusLojaCatalogoProdutos[],
+  totalLojas: number,
+): EstadoTentativaProdutos | null {
+  const estados = linhas
+    .map((linha) => linha.ultima_tentativa_estado)
+    .filter((estado): estado is NonNullable<typeof estado> => estado !== null);
+  if (estados.length === 0) return null;
+  if (estados.includes("iniciada")) return "iniciada";
+  if (estados.length < totalLojas) return "parcial";
+  if (estados.every((estado) => estado === "sucesso")) return "sucesso";
+  if (estados.every((estado) => estado === "falha")) return "falha";
+  return "parcial";
+}
+
+function estadoTentativaEfetivo(
+  estado: StatusLojaCatalogoProdutos["ultima_tentativa_estado"],
+  iniciadaEm: string | null,
+  agora: Date,
+): StatusLojaCatalogoProdutos["ultima_tentativa_estado"] {
+  if (estado !== "iniciada" || !iniciadaEm) return estado;
+  const inicio = Date.parse(iniciadaEm);
+  if (Number.isNaN(inicio)) return "falha";
+  return agora.getTime() - inicio >= EXPIRACAO_EXECUCAO_PRODUTOS_SEGUNDOS * 1000
+    ? "falha"
+    : "iniciada";
+}
+
+/** Estado do conjunto efetivamente devolvido na página. O frescor usa a
+ * medição mais antiga mostrada; a qualidade e as tentativas consultam somente
+ * as lojas desses itens, sem deixar uma execução global de outra loja rotular
+ * o resultado. */
+export async function statusCatalogoProdutos(
+  itens: ReadonlyArray<Pick<ProdutoDireto, "loja_slug" | "atualizada_em">>,
+  agora = new Date(),
+): Promise<StatusCatalogoProdutos> {
+  const lojas = [...new Set(itens.map((item) => item.loja_slug))];
+  if (lojas.length === 0) return { ...STATUS_CATALOGO_VAZIO };
+
   const sql = conectar();
   const linhas = (await sql`
-    SELECT concluida_em AS atualizado_em, qualidade
-      FROM execucao_loja_produtos_inter
-     ORDER BY iniciada_em DESC
-     LIMIT 1
-  `) as StatusCatalogoProdutos[];
-  return linhas[0] ?? { atualizado_em: null, qualidade: null };
+    SELECT loja.slug AS loja_slug,
+           sucesso.qualidade,
+           tentativa.iniciada_em AS ultima_tentativa_em,
+           tentativa.estado AS ultima_tentativa_estado
+      FROM loja_direta_inter loja
+      LEFT JOIN LATERAL (
+        SELECT qualidade
+          FROM execucao_loja_produtos_inter
+         WHERE loja_direta_inter_id = loja.id AND estado = 'sucesso'
+         ORDER BY concluida_em DESC, id DESC
+         LIMIT 1
+      ) sucesso ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT iniciada_em, estado
+          FROM execucao_loja_produtos_inter
+         WHERE loja_direta_inter_id = loja.id
+         ORDER BY iniciada_em DESC, id DESC
+         LIMIT 1
+      ) tentativa ON TRUE
+     WHERE loja.slug = ANY(${lojas}::text[])
+  `) as StatusLojaCatalogoProdutos[];
+
+  const lojasRelevantes = new Set(lojas);
+  const relacionadas = linhas
+    .filter((linha) => lojasRelevantes.has(linha.loja_slug))
+    .map((linha) => ({
+      ...linha,
+      ultima_tentativa_estado: estadoTentativaEfetivo(
+        linha.ultima_tentativa_estado,
+        linha.ultima_tentativa_em,
+        agora,
+      ),
+    }));
+  const qualidades = relacionadas
+    .map((linha) => linha.qualidade)
+    .filter((qualidade): qualidade is NonNullable<typeof qualidade> => qualidade !== null);
+  const qualidade = qualidades.includes("degradada")
+    ? "degradada"
+    : qualidades.length === lojas.length && qualidades.every((valor) => valor === "completa")
+      ? "completa"
+      : null;
+
+  return {
+    atualizado_em: instanteLimite(
+      itens.map((item) => item.atualizada_em),
+      (atual, candidato) => candidato < atual,
+    ),
+    qualidade,
+    ultima_tentativa_em: instanteLimite(
+      relacionadas.map((linha) => linha.ultima_tentativa_em),
+      (atual, candidato) => candidato > atual,
+    ),
+    ultima_tentativa_estado: consolidarEstadoTentativas(relacionadas, lojas.length),
+  };
 }

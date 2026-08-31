@@ -111,7 +111,9 @@ export async function catalogoLiveloPersistido(): Promise<ParceiroLiveloPersisti
            execucao.parceiros_lidos
       FROM parceiro_livelo parceiro
       JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
-      LEFT JOIN loja ON loja.parceiro_livelo_id = parceiro.id
+      LEFT JOIN loja
+        ON loja.parceiro_livelo_id = parceiro.id
+       AND loja.acompanhada = TRUE
       LEFT JOIN pontuacao
         ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
        AND pontuacao.loja_id = loja.id
@@ -164,14 +166,15 @@ export async function alterarAcompanhamentoParceiroLivelo(entrada: {
     const linhas = (await sql`
       WITH parceiro AS (
         SELECT id FROM parceiro_livelo WHERE id_externo = ${entrada.idExterno}
-      ), removida AS (
-        DELETE FROM loja
+      ), atualizada AS (
+        UPDATE loja
+           SET acompanhada = FALSE,
+               alerta_ativo = FALSE
          WHERE parceiro_livelo_id = (SELECT id FROM parceiro)
          RETURNING id
       )
-      -- Assim como na inclusão, reler loja nesta instrução enxerga o
-      -- retrato anterior ao DELETE. Se a remoção não levantou erro, o estado
-      -- desejado já foi aplicado; sem vínculo prévio ela também é idempotente.
+      -- Sem vínculo prévio, o estado desejado já existe e a operação também
+      -- é idempotente. A linha permanece como identidade para o histórico.
       SELECT TRUE AS confirmado FROM parceiro
     `) as Array<{ confirmado: boolean }>;
     return linhas[0]?.confirmado === true;
@@ -185,14 +188,15 @@ export async function alterarAcompanhamentoParceiroLivelo(entrada: {
       UPDATE loja
          SET parceiro_livelo_id = parceiro.id,
              nome = ${entrada.nome},
-             categoria = ${entrada.categoria}
+             categoria = ${entrada.categoria},
+             acompanhada = TRUE
         FROM parceiro
        WHERE loja.parceiro_livelo_id = parceiro.id
           OR (loja.parceiro_livelo_id IS NULL AND loja.nome = ${entrada.nome})
        RETURNING loja.id
     ), inserida AS (
-      INSERT INTO loja (nome, categoria, parceiro_livelo_id)
-      SELECT ${entrada.nome}, ${entrada.categoria}, parceiro.id
+      INSERT INTO loja (nome, categoria, parceiro_livelo_id, acompanhada)
+      SELECT ${entrada.nome}, ${entrada.categoria}, parceiro.id, TRUE
         FROM parceiro
        WHERE NOT EXISTS (SELECT 1 FROM atualizada)
       ON CONFLICT DO NOTHING
@@ -222,6 +226,7 @@ export async function alterarAlertaParceiroLivelo(
      WHERE parceiro_livelo_id = (
        SELECT id FROM parceiro_livelo WHERE id_externo = ${idExterno} AND ativo = TRUE
      )
+       AND acompanhada = TRUE
      RETURNING id
   `) as Array<{ id: number }>;
   return linhas.length > 0;
@@ -237,7 +242,7 @@ export async function resumoLiveloPersistido(): Promise<ResumoLiveloPersistido> 
   const sql = conectar();
   const linhas = (await sql`
     SELECT ultima.momento AS ultimo_sucesso_em,
-           (SELECT count(*)::int FROM loja) AS lojas_acompanhadas,
+           (SELECT count(*)::int FROM loja WHERE acompanhada = TRUE) AS lojas_acompanhadas,
            COALESCE(ultima.alertas, 0)::int AS alertas_ultima_coleta
       FROM (SELECT 1) base
       LEFT JOIN LATERAL (
@@ -279,6 +284,7 @@ export async function pontuacoes(execucaoId: number): Promise<PontuacaoDeLoja[]>
       FROM loja l
       LEFT JOIN pontuacao p
         ON p.loja_id = l.id AND p.execucao_id = ${execucaoId}
+     WHERE l.acompanhada = TRUE
      ORDER BY l.categoria NULLS LAST, p.alertou DESC, p.pontos_atuais DESC NULLS LAST, p.nome
   `) as PontuacaoDeLoja[];
 }
@@ -291,7 +297,8 @@ export async function lojasComExcecao(): Promise<Loja[]> {
     SELECT l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos,
            ARRAY[]::TEXT[] AS apelidos
       FROM loja l
-     WHERE l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL
+     WHERE l.acompanhada = TRUE
+       AND (l.multiplicador IS NOT NULL OR l.piso_pontos IS NOT NULL)
      ORDER BY l.nome
   `) as Loja[];
 }
@@ -318,6 +325,7 @@ export async function catalogo(): Promise<Loja[]> {
                AS apelidos
       FROM loja l
       LEFT JOIN apelido a ON a.loja_id = l.id
+     WHERE l.acompanhada = TRUE
      GROUP BY l.id
      ORDER BY l.categoria, l.nome
   `) as Loja[];
@@ -390,7 +398,11 @@ export async function adicionarLoja(
 
 export async function removerLoja(id: number): Promise<void> {
   const sql = conectar();
-  await sql`DELETE FROM loja WHERE id = ${id}`;
+  await sql`
+    UPDATE loja
+       SET acompanhada = FALSE, alerta_ativo = FALSE
+     WHERE id = ${id}
+  `;
 }
 
 /** Cadastro atômico usado pela API v1: loja, regra e apelidos entram juntos. */
@@ -434,16 +446,22 @@ export async function salvarLimiarDaLojaSeExistir(
 
 export async function removerLojaSeExistir(id: number): Promise<boolean> {
   const sql = conectar();
-  const linhas = (await sql`DELETE FROM loja WHERE id = ${id} RETURNING id`) as Array<{
-    id: number;
-  }>;
+  const linhas = (await sql`
+    UPDATE loja
+       SET acompanhada = FALSE, alerta_ativo = FALSE
+     WHERE id = ${id}
+     RETURNING id
+  `) as Array<{ id: number }>;
   return linhas.length > 0;
 }
 
 export async function categorias(): Promise<string[]> {
   const sql = conectar();
   const linhas = (await sql`
-    SELECT DISTINCT categoria FROM loja ORDER BY categoria
+    SELECT DISTINCT categoria
+      FROM loja
+     WHERE acompanhada = TRUE
+     ORDER BY categoria
   `) as { categoria: string }[];
   return linhas.map((l) => l.categoria);
 }

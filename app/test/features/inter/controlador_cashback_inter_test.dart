@@ -150,4 +150,29 @@ void main() {
     expect(controlador.ultimaTentativaFalhou, isTrue);
     controlador.dispose();
   });
+
+  test('filtro acompanhadas consulta o catálogo global no servidor', () async {
+    final consultas = <String>[];
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async {
+        consultas.add('todas/$pagina');
+        return respostaPagina([loja('1', 'Primeira página')], proxima: true);
+      },
+      buscarAcompanhadas:
+          ({required q, required ordenar, required pagina}) async {
+            consultas.add('acompanhadas/$pagina');
+            return respostaPagina([
+              loja('2', 'Acompanhada fora da página carregada'),
+            ]);
+          },
+    );
+
+    await controlador.carregarInicial();
+    await controlador.mudarFiltro(FiltroCashbackInter.acompanhadas);
+
+    expect(consultas, ['todas/1', 'acompanhadas/1']);
+    expect(controlador.itens.single.id, '2');
+    expect(controlador.totalItens, 1);
+    controlador.dispose();
+  });
 }

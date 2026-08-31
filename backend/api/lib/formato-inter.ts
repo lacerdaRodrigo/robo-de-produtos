@@ -9,6 +9,34 @@ export type CashbackOrdenavel = {
   encontrada: boolean;
 };
 
+function partesDecimais(valor: string | null): [string, string] | null {
+  if (valor === null) return null;
+  const resultado = valor.trim().replace(",", ".").match(/^\+?(\d+)(?:\.(\d+))?$/);
+  if (!resultado) return null;
+  const inteiro = resultado[1].replace(/^0+(?=\d)/, "");
+  const fracao = (resultado[2] ?? "").replace(/0+$/, "");
+  return [inteiro, fracao];
+}
+
+/** Compara decimais textuais sem converter a regra financeira para Number. */
+export function compararDecimaisInter(a: string | null, b: string | null): number {
+  const partesA = partesDecimais(a);
+  const partesB = partesDecimais(b);
+  if (partesA === null || partesB === null) {
+    if (partesA === partesB) return 0;
+    return partesA === null ? -1 : 1;
+  }
+  if (partesA[0].length !== partesB[0].length) {
+    return partesA[0].length < partesB[0].length ? -1 : 1;
+  }
+  if (partesA[0] !== partesB[0]) return partesA[0] < partesB[0] ? -1 : 1;
+  const escala = Math.max(partesA[1].length, partesB[1].length);
+  const fracaoA = partesA[1].padEnd(escala, "0");
+  const fracaoB = partesB[1].padEnd(escala, "0");
+  if (fracaoA === fracaoB) return 0;
+  return fracaoA < fracaoB ? -1 : 1;
+}
+
 /** PRD-V3 §15.3: mesma normalização persistida em `*_busca` no Postgres. */
 export function normalizarBuscaInter(texto: string): string {
   return texto
@@ -42,16 +70,14 @@ export function ordenarCashbacksInter<T extends CashbackOrdenavel>(itens: T[]): 
     }
     const valorA = a.cashback_principal_valor;
     const valorB = b.cashback_principal_valor;
-    const positivoA = valorA !== null && Number(valorA) > 0;
-    const positivoB = valorB !== null && Number(valorB) > 0;
+    const positivoA = compararDecimaisInter(valorA, "0") > 0;
+    const positivoB = compararDecimaisInter(valorB, "0") > 0;
     if (positivoA !== positivoB) {
       return positivoA ? -1 : 1;
     }
     if (positivoA && positivoB) {
-      const diferenca = Number(valorB) - Number(valorA);
-      if (diferenca !== 0) {
-        return diferenca;
-      }
+      const diferenca = compararDecimaisInter(valorB, valorA);
+      if (diferenca !== 0) return diferenca;
     }
     return a.nome.localeCompare(b.nome, "pt-BR");
   });

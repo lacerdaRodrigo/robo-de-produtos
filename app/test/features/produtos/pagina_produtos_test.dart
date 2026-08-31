@@ -51,6 +51,8 @@ Pagina<ProdutoDireto> _pagina(
   temProxima: proxima,
   atualizadoEm: '2026-08-22T12:00:00Z',
   qualidade: 'degradada',
+  ultimaTentativaEm: '2026-08-22T13:00:00Z',
+  ultimaTentativaEstado: 'parcial',
 );
 
 Api _api() => Api(
@@ -175,7 +177,13 @@ void main() {
     expect(find.text('Motorola Edge 60 Pro'), findsAtLeastNWidgets(1));
     expect(find.text('Após cashback'), findsAtLeastNWidgets(1));
     expect(find.text('R\$ 3.356,89'), findsAtLeastNWidgets(1));
-    expect(find.textContaining('última coleta foi degradada'), findsOneWidget);
+    expect(find.textContaining('lojas teve coleta degradada'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'atualização das lojas destes resultados foi parcial',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('filtros são aplicados e erro inicial oferece retry', (at) async {

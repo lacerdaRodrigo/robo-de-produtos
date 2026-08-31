@@ -180,56 +180,66 @@ class _CartaoCompacto extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              OutlinedButton(
-                onPressed: podeAdministrar && !alterando ? aoAcompanhar : null,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 35),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
-                  foregroundColor: acompanhada ? cores.ganho : cores.acao,
-                  backgroundColor: acompanhada
-                      ? (Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.ganhoFundoEscuro
-                            : Tokens.ganhoFundo)
-                      : Colors.transparent,
-                  side: BorderSide(
-                    color: acompanhada ? Colors.transparent : cores.acao,
-                  ),
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (alterando)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 6),
-                        child: SizedBox.square(
-                          dimension: 13,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    else if (acompanhada) ...[
-                      const Icon(Icons.check, size: 13),
-                      const SizedBox(width: 3),
-                    ],
-                    Text(
-                      alterando
-                          ? 'Salvando…'
-                          : acompanhada
-                          ? 'Acompanhada'
-                          : 'Acompanhar',
+              if (podeAdministrar)
+                OutlinedButton(
+                  onPressed: !alterando ? aoAcompanhar : null,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 35),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 7,
                     ),
-                  ],
+                    foregroundColor: acompanhada ? cores.ganho : cores.acao,
+                    backgroundColor: acompanhada
+                        ? (Theme.of(context).brightness == Brightness.dark
+                              ? Tokens.ganhoFundoEscuro
+                              : Tokens.ganhoFundo)
+                        : Colors.transparent,
+                    side: BorderSide(
+                      color: acompanhada ? Colors.transparent : cores.acao,
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (alterando)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 6),
+                          child: SizedBox.square(
+                            dimension: 13,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      else if (acompanhada) ...[
+                        const Icon(Icons.check, size: 13),
+                        const SizedBox(width: 3),
+                      ],
+                      Text(
+                        alterando
+                            ? 'Salvando…'
+                            : acompanhada
+                            ? 'Acompanhada'
+                            : 'Acompanhar',
+                      ),
+                    ],
+                  ),
+                )
+              else if (acompanhada)
+                Text(
+                  '✓ Acompanhada',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: cores.ganho,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
             ],
           ),
         ],

@@ -170,6 +170,53 @@ void main() {
     expect(acao, throwsA(isA<ErroDeRede>()));
   });
 
+  test('erro interno não JSON continua sendo erro HTTP seguro', () async {
+    Future<void> acao() async {
+      await cliente(
+        http.Response(
+          '<html>DATABASE_URL=segredo SELECT * FROM usuarios</html>',
+          500,
+        ),
+      ).obter('/x');
+    }
+
+    await expectLater(
+      acao(),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 500)
+            .having((erro) => erro.codigo, 'codigo', 'inesperado')
+            .having(
+              (erro) => erro.mensagem,
+              'mensagem',
+              'Erro interno do servidor.',
+            ),
+      ),
+    );
+  });
+
+  test('interpreta cooldown estruturado e o tempo restante', () async {
+    Future<void> acao() async {
+      await cliente(
+        http.Response(
+          '{"erro":{"codigo":"cooldown","mensagem":"aguarde","retry_after_seconds":91}}',
+          429,
+          headers: {'retry-after': '90'},
+        ),
+      ).criar('/x', corpo: const {});
+    }
+
+    await expectLater(
+      acao(),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 429)
+            .having((erro) => erro.codigo, 'codigo', 'cooldown')
+            .having((erro) => erro.retryAfterSeconds, 'espera', 91),
+      ),
+    );
+  });
+
   test('corpo fora do formato vira ErroDeRede', () async {
     Future<void> acao() async {
       await cliente(http.Response('[1,2]', 200)).obter('/x');

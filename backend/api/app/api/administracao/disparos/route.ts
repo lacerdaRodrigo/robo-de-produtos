@@ -130,7 +130,9 @@ export async function POST(requisicao: Request) {
     );
     if (resultado.estado === "cooldown") {
       return respostaComRequisicao(
-        corpoErro("cooldown", "aguarde antes de solicitar outra coleta"),
+        corpoErro("cooldown", "aguarde antes de solicitar outra coleta", {
+          retryAfterSeconds: resultado.cooldownSegundos,
+        }),
         acesso.requisicaoId,
         STATUS.LIMITE,
         resultado.cooldownSegundos,

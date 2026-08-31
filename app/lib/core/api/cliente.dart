@@ -40,19 +40,7 @@ class ClienteApi {
         .get(uri, headers: cabecalhos)
         .timeout(const Duration(seconds: 20));
 
-    final Map<String, dynamic> corpo = _decodificar(resposta);
-
-    if (resposta.statusCode >= 400) {
-      final erro = corpo['erro'];
-      final codigo = erro is Map
-          ? (erro['codigo']?.toString() ?? 'inesperado')
-          : 'inesperado';
-      final mensagem = erro is Map
-          ? (erro['mensagem']?.toString() ?? 'erro na API')
-          : 'erro na API';
-      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
-    }
-    return corpo;
+    return _processar(resposta);
   }
 
   /// Envia uma mutação JSON autenticada para a API v1.
@@ -70,18 +58,7 @@ class ClienteApi {
     final resposta = await _http
         .patch(uri, headers: cabecalhos, body: jsonEncode(corpo))
         .timeout(const Duration(seconds: 20));
-    final decodificado = _decodificar(resposta);
-    if (resposta.statusCode >= 400) {
-      final erro = decodificado['erro'];
-      final codigo = erro is Map
-          ? (erro['codigo']?.toString() ?? 'inesperado')
-          : 'inesperado';
-      final mensagem = erro is Map
-          ? (erro['mensagem']?.toString() ?? 'erro na API')
-          : 'erro na API';
-      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
-    }
-    return decodificado;
+    return _processar(resposta);
   }
 
   /// Cria uma solicitação JSON autenticada na API v1.
@@ -100,18 +77,7 @@ class ClienteApi {
     final resposta = await _http
         .post(uri, headers: cabecalhos, body: jsonEncode(corpo))
         .timeout(const Duration(seconds: 20));
-    final decodificado = _decodificar(resposta);
-    if (resposta.statusCode >= 400) {
-      final erro = decodificado['erro'];
-      final codigo = erro is Map
-          ? (erro['codigo']?.toString() ?? 'inesperado')
-          : 'inesperado';
-      final mensagem = erro is Map
-          ? (erro['mensagem']?.toString() ?? 'erro na API')
-          : 'erro na API';
-      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
-    }
-    return decodificado;
+    return _processar(resposta);
   }
 
   /// Remove um recurso administrativo identificado pela própria API.
@@ -121,18 +87,7 @@ class ClienteApi {
     final resposta = await _http
         .delete(uri, headers: cabecalhos)
         .timeout(const Duration(seconds: 20));
-    final decodificado = _decodificar(resposta);
-    if (resposta.statusCode >= 400) {
-      final erro = decodificado['erro'];
-      final codigo = erro is Map
-          ? (erro['codigo']?.toString() ?? 'inesperado')
-          : 'inesperado';
-      final mensagem = erro is Map
-          ? (erro['mensagem']?.toString() ?? 'erro na API')
-          : 'erro na API';
-      throw ErroDeApi(resposta.statusCode, codigo, mensagem);
-    }
-    return decodificado;
+    return _processar(resposta);
   }
 
   Future<Map<String, String>> _cabecalhos({bool autenticado = true}) async {
@@ -165,5 +120,51 @@ class ClienteApi {
       throw ErroDeRede('resposta JSON inválida');
     }
     throw ErroDeRede('corpo da API fora do formato esperado');
+  }
+
+  Map<String, dynamic> _processar(http.Response resposta) {
+    Map<String, dynamic> corpo;
+    try {
+      corpo = _decodificar(resposta);
+    } on ErroDeRede {
+      if (resposta.statusCode < 400) rethrow;
+      throw ErroDeApi(
+        resposta.statusCode,
+        resposta.statusCode >= 500 ? 'inesperado' : 'resposta-invalida',
+        resposta.statusCode >= 500
+            ? 'Erro interno do servidor.'
+            : 'A API devolveu uma resposta inválida.',
+        retryAfterSeconds: _inteiroPositivo(resposta.headers['retry-after']),
+      );
+    }
+
+    if (resposta.statusCode < 400) return corpo;
+
+    final erro = corpo['erro'];
+    final codigo = erro is Map
+        ? (erro['codigo']?.toString() ?? 'inesperado')
+        : 'inesperado';
+    final mensagem = erro is Map
+        ? (erro['mensagem']?.toString() ?? 'erro na API')
+        : 'erro na API';
+    final retryAfter = _inteiroPositivo(
+      erro is Map ? erro['retry_after_seconds'] : null,
+    );
+    throw ErroDeApi(
+      resposta.statusCode,
+      codigo,
+      mensagem,
+      retryAfterSeconds:
+          retryAfter ??
+          _inteiroPositivo(corpo['retry_after_seconds']) ??
+          _inteiroPositivo(resposta.headers['retry-after']),
+    );
+  }
+
+  int? _inteiroPositivo(Object? valor) {
+    final numero = valor is num
+        ? valor.ceil()
+        : double.tryParse(valor?.toString() ?? '')?.ceil();
+    return numero != null && numero > 0 ? numero : null;
   }
 }

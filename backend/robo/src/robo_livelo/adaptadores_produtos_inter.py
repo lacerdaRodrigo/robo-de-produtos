@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 
@@ -35,6 +35,7 @@ USER_AGENT_PRODUTOS_INTER = (
 )
 TAMANHO_MAXIMO_PRODUTOS_INTER = 5 * 1024 * 1024
 STATUS_TRANSITORIOS = {408, 429}
+EXPIRACAO_EXECUCAO_PRODUTOS = timedelta(hours=4)
 
 
 class FonteLojasDiretasInterHttp:
@@ -204,6 +205,37 @@ class RepositorioProdutosInterPostgres:
             iniciada_em, estado, lojas_planejadas, versao
         ) VALUES (%s, 'iniciada', %s, %s)
         RETURNING id
+    """
+    RECONCILIA_LOJAS_ABANDONADAS = """
+        UPDATE execucao_loja_produtos_inter loja
+           SET concluida_em = %s, estado = 'falha', codigo_falha = 'inesperada'
+          FROM execucao_produtos_inter rodada
+         WHERE loja.execucao_produtos_inter_id = rodada.id
+           AND rodada.estado = 'iniciada'
+           AND rodada.iniciada_em <= %s
+           AND loja.estado = 'iniciada'
+    """
+    RECONCILIA_RODADAS_ABANDONADAS = """
+        UPDATE execucao_produtos_inter rodada
+           SET concluida_em = %s, estado = 'falha',
+               lojas_sucesso = (
+                   SELECT count(*)::int
+                     FROM execucao_loja_produtos_inter loja
+                    WHERE loja.execucao_produtos_inter_id = rodada.id
+                      AND loja.estado = 'sucesso'
+               ),
+               lojas_falha = GREATEST(
+                   rodada.lojas_planejadas - (
+                       SELECT count(*)::int
+                         FROM execucao_loja_produtos_inter loja
+                        WHERE loja.execucao_produtos_inter_id = rodada.id
+                          AND loja.estado = 'sucesso'
+                   ),
+                   0
+               ),
+               codigo_falha = 'inesperada'
+         WHERE rodada.estado = 'iniciada'
+           AND rodada.iniciada_em <= %s
     """
     INICIA_LOJA = """
         INSERT INTO execucao_loja_produtos_inter (
@@ -383,6 +415,9 @@ class RepositorioProdutosInterPostgres:
 
         try:
             with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
+                limite = momento - EXPIRACAO_EXECUCAO_PRODUTOS
+                cursor.execute(self.RECONCILIA_LOJAS_ABANDONADAS, (momento, limite))
+                cursor.execute(self.RECONCILIA_RODADAS_ABANDONADAS, (momento, limite))
                 cursor.execute(self.INICIA_RODADA, (momento, lojas_planejadas, versao))
                 linha = cursor.fetchone()
                 if not linha:
