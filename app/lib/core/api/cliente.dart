@@ -31,8 +31,9 @@ class ClienteApi {
     Map<String, String>? consulta,
     bool autenticado = true,
   }) async {
-    final uri = Uri.parse('$baseUrl$caminho')
-        .replace(queryParameters: consulta);
+    final uri = Uri.parse(
+      '$baseUrl$caminho',
+    ).replace(queryParameters: consulta);
     final cabecalhos = await _cabecalhos(autenticado: autenticado);
 
     final resposta = await _http
