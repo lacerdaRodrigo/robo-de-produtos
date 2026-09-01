@@ -2,6 +2,94 @@
 
 <!-- version list -->
 
+## v1.50.0 (2026-09-01)
+
+### Bug Fixes
+
+- Estabiliza jornadas mobile e coletores
+  ([`003e398`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/003e398ae656947fb8ffde8d5644ad8e331a5c52))
+
+- Fechar configuracao do App Check
+  ([`891edf4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/891edf478216edd42d5d8ad806b2bd860bd75629))
+
+### Chores
+
+- Registrar pausa antes do aceite manual
+  ([`30d4a8d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/30d4a8de4ed192ea05fd8f7372f1adabda08a808))
+
+- **ci**: Alinhar gates ao ciclo mobile-only
+  ([`d04ade7`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/d04ade78a91b32786b6179a01c44929058ceba42))
+
+### Code Style
+
+- Alinhar formatacao ao Flutter do CI
+  ([`d623399`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/d623399caf28e333308c2433cfcb42a479bfb5ea))
+
+### Continuous Integration
+
+- Deixar geração de APK sob demanda
+  ([`62ac4f5`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/62ac4f5d48f9ae9977379914dafe3813ebd8ff4e))
+
+- Gerar APK debug para aceite manual
+  ([`4bbf682`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4bbf682ff92f3a6bba0ffa349707f254d2e52e44))
+
+### Documentation
+
+- Adicionar contrato visual verificável do redesign
+  ([`bc9792b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/bc9792bcdfd23e6aa9d37729495493e1c8b249a8))
+
+- Adicionar plano executável do redesign
+  ([`cb31422`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/cb31422c0b21d7415721c7242728142953b209de))
+
+- Documentar fluxo de comparação visual
+  ([`1325901`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/13259010af85c8e92d74c4428f82906c700f647f))
+
+- Focar branch re-design somente no mobile
+  ([`1dfb48f`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1dfb48f9fe8e0b53dbf36190969a3db2bb68ee49))
+
+- Focar documentação de design no mobile
+  ([`85e206e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/85e206e6192a05218bbe4698db6fda21d902cbd1))
+
+- Limitar agentes a testes unitarios e widgets
+  ([`36a4294`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/36a429455e0885ea2f6c94ee4bf9352ad274df66))
+
+- Limitar testes do redesign a unitarios e widgets
+  ([`5d1082e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5d1082e3b6a312f22823a9f3d2167f804ee84217))
+
+- Refazer plano como mobile only
+  ([`a7290c3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a7290c3f8dc1528c8c029d3b159a5588cd14bbb3))
+
+- Remover espacos finais do plano mobile
+  ([`0bc24f4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/0bc24f4e446dd3fa21936857951a72fc00a7e0b4))
+
+- Remover goldens e testes extras do UI spec
+  ([`37c0123`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/37c0123753e1b4f180fed9b1bdd3eba963cd0e4e))
+
+- Remover Web do contrato visual do redesign
+  ([`592b1de`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/592b1dea0cc583d0b394bab02d3932dd7952a9c8))
+
+- Tornar protótipo contrato visual do redesign
+  ([`f6db3f2`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f6db3f224e944dc8320dc718ec6fb98a0d352ef4))
+
+### Features
+
+- Adicionar prototipo mobile V12
+  ([`9222cb4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9222cb4c84c6274a884d774c6c6f4fa29fc9e741))
+
+- Integrar experiencia mobile do Banco Inter
+  ([`623d585`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/623d585e07949ebda7e8ccf8a3d32dfa255c6f7c))
+
+### Refactoring
+
+- Alinhar tokens Flutter ao protótipo mobile
+  ([`24ff47a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/24ff47a73c62a4f889ddb80795c56a6404804573))
+
+### Testing
+
+- Travar tokens visuais do redesign
+  ([`06dbf54`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/06dbf54d063779bf8141c223f279f329cdc2f6a0))
+
+
 ## v1.49.1 (2026-08-29)
 
 ### Bug Fixes
