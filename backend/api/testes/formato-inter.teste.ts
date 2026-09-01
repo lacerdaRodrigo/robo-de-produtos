@@ -20,10 +20,19 @@ describe("CT-190 busca normalizada do Inter", () => {
     { nome: "Riachuelo", slug: "riachuelo" },
   ];
 
-  it("busca por nome ou slug sem diferenciar acento, caixa e espaços", () => {
-    expect(normalizarBuscaInter("  SÃO   PAULO ")).toBe("sao paulo");
+  it("busca por nome ou slug sem diferenciar símbolos, acento, caixa e espaços", () => {
+    expect(normalizarBuscaInter("  SÃO   PAULO ")).toBe("saopaulo");
+    expect(normalizarBuscaInter("C&A")).toBe("cea");
+    expect(normalizarBuscaInter(" C E A ")).toBe("cea");
+    expect(filtrarCashbacksInter(lojas, "cea")).toEqual([lojas[0]]);
     expect(filtrarCashbacksInter(lojas, "c&a")).toEqual([lojas[0]]);
     expect(filtrarCashbacksInter(lojas, "CA")).toEqual([lojas[0]]);
+    expect(
+      filtrarCashbacksInter([{ nome: "São Paulo", slug: "sao-paulo" }], "sao"),
+    ).toHaveLength(1);
+    expect(
+      filtrarCashbacksInter([{ nome: "Magalu", slug: "magalu" }], "  MAGALU  "),
+    ).toHaveLength(1);
   });
 });
 

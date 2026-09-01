@@ -24,9 +24,11 @@ vi.mock("@neondatabase/serverless", () => ({
 
 import {
   EXPIRACAO_EXECUCAO_PRODUTOS_SEGUNDOS,
+  buscarLojasDiretas,
   buscarProdutosDiretosPaginado,
   resumoProdutosPersistido,
   statusCatalogoProdutos,
+  totalLojasDiretas,
 } from "@/lib/banco-produtos-inter";
 
 const item = (loja: string, atualizadaEm: string) => ({
@@ -218,5 +220,73 @@ describe("qualidade e frescor dos resultados de produtos", () => {
     expect(reconciliacao).toContain("rodada.estado = 'iniciada'");
     expect(reconciliacao).not.toContain("UPDATE produto_direto_inter");
     expect(reconciliacao).not.toContain("DELETE FROM");
+  });
+
+  it("agrega quantidade e cashback somente da última coleta bem-sucedida", async () => {
+    bancoFalso.respostas.push([
+      {
+        id: "1",
+        nome: "Amazon",
+        ultima_tentativa_estado: "falha",
+        ultima_coleta_sucesso_em: "2026-08-29T10:00:00Z",
+        produtos_encontrados: 18,
+        cashback_resumo_texto: "Até 6% de cashback",
+      },
+    ]);
+
+    const lojas = await buscarLojasDiretas("ama", 1, 20);
+
+    expect(lojas[0]).toMatchObject({
+      ultima_tentativa_estado: "falha",
+      produtos_encontrados: 18,
+      cashback_resumo_texto: "Até 6% de cashback",
+    });
+    const consulta = bancoFalso.consultas[0].texto;
+    expect(consulta).toContain("estado = 'sucesso'");
+    expect(consulta).toContain("sucesso.produtos_unicos AS produtos_encontrados");
+    expect(consulta).toContain("max(m.cashback_percentual)");
+    expect(consulta).toContain("m.execucao_loja_produtos_inter_id = sucesso.id");
+    expect(consulta).toContain("cashback_resumo_valor::text");
+    expect(consulta).not.toMatch(/::(double precision|real)/i);
+  });
+
+  it("distingue snapshot ausente de coleta vazia durante tentativa em andamento", async () => {
+    bancoFalso.respostas.push([
+      {
+        id: "sem-snapshot",
+        ultima_tentativa_estado: "iniciada",
+        ultima_coleta_sucesso_em: null,
+        produtos_encontrados: null,
+        cashback_resumo_texto: null,
+      },
+      {
+        id: "coleta-vazia",
+        ultima_tentativa_estado: "iniciada",
+        ultima_coleta_sucesso_em: "2026-08-29T10:00:00Z",
+        produtos_encontrados: 0,
+        cashback_resumo_texto: null,
+      },
+    ]);
+
+    const lojas = await buscarLojasDiretas("", 1, 20);
+
+    expect(lojas[0].produtos_encontrados).toBeNull();
+    expect(lojas[1].produtos_encontrados).toBe(0);
+    expect(lojas[1].ultima_tentativa_estado).toBe("iniciada");
+  });
+
+  it("filtra e pagina acompanhadas já ordenadas por NUMERIC no banco", async () => {
+    bancoFalso.respostas.push([], [{ total: 21 }]);
+
+    await buscarLojasDiretas("", 2, 10, "cashback", "acompanhadas");
+    await expect(totalLojasDiretas("", "acompanhadas")).resolves.toBe(21);
+
+    const lista = bancoFalso.consultas[0].texto;
+    const total = bancoFalso.consultas[1].texto;
+    expect(lista).toContain("OR l.selecionada = TRUE");
+    expect(lista).toContain("cashback_resumo_valor END DESC NULLS LAST");
+    expect(lista).toContain("LIMIT 10");
+    expect(lista).toContain("OFFSET 10");
+    expect(total).toContain("OR l.selecionada = TRUE");
   });
 });

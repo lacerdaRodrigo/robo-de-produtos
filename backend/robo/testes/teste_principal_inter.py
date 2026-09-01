@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 import pytest
@@ -81,6 +82,35 @@ def teste_sucesso_grava_retrato_e_favorita(json_inter_exemplo):
     assert retrato.lojas_validas == 5
     assert retrato.favoritas_encontradas == 1
     assert len(repositorio.concluidas) == 1
+    assert repositorio.falhas == []
+
+
+@pytest.mark.parametrize("total", [110, 130])
+def teste_total_de_lojas_de_cashback_e_dinamico(total):
+    catalogo = json.dumps(
+        [
+            {
+                "id": f"cashback-{indice}",
+                "slug": f"loja-{indice}",
+                "name": f"Loja {indice}",
+                "fullCashback": "5% de cashback",
+                "fullCashbackValue": 5,
+            }
+            for indice in range(total)
+        ]
+    )
+    repositorio = RepositorioFakeInter()
+
+    retrato = verificar_cashbacks_inter(
+        FonteFakeInter(catalogo),
+        CatalogoFakeInter(),
+        repositorio,
+        limiar=100,
+        agora=AGORA,
+    )
+
+    assert retrato.lojas_validas == total
+    assert len(repositorio.concluidas[0][1]) == total
     assert repositorio.falhas == []
 
 

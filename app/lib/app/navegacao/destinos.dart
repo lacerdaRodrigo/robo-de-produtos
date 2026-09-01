@@ -14,12 +14,18 @@ enum Destino {
   final String titulo;
 }
 
-/// Quatro áreas principais aprovadas para a experiência compacta.
+/// Destinos preservados no `IndexedStack` compacto.
 ///
-/// Alertas, conta e administração são utilidades e, por isso, não entram nesta
-/// enumeração nem ocupam um quinto tópico do menu mobile.
+/// Somente Início, Programas e Produtos aparecem na barra inferior. Livelo e
+/// Inter são subáreas de Programas, mas continuam como destinos próprios para
+/// preservar busca, filtros, página e rolagem ao alternar de área.
 enum DestinoCompacto {
   inicio(Icons.home_outlined, 'Início', 'Visão geral do seu radar'),
+  programas(
+    Icons.space_dashboard_outlined,
+    'Programas',
+    'Pontos, cashback e integrações',
+  ),
   livelo(Icons.card_giftcard_outlined, 'Livelo', 'Lojas, pontos e alertas'),
   inter(
     Icons.account_balance_outlined,
@@ -33,4 +39,11 @@ enum DestinoCompacto {
   final IconData icone;
   final String titulo;
   final String descricao;
+
+  bool get principal => this == inicio || this == programas || this == produtos;
+
+  DestinoCompacto get destinoDaBarra => switch (this) {
+    livelo || inter => programas,
+    _ => this,
+  };
 }

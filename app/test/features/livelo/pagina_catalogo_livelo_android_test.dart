@@ -282,7 +282,7 @@ void main() {
     expect(consultas, 4);
   });
 
-  testWidgets('hero, abas, busca, categorias e cartões usam dados reais', (
+  testWidgets('hero, abas essenciais, busca e cartões usam dados reais', (
     at,
   ) async {
     final controlador = _controlador();
@@ -293,7 +293,10 @@ void main() {
     expect(find.text('Melhor Loja'), findsOneWidget);
     expect(find.text('Lojas'), findsOneWidget);
     expect(find.text('Acompanhadas'), findsOneWidget);
-    expect(find.text('Alertas'), findsOneWidget);
+    expect(find.text('Alertas'), findsNothing);
+    expect(find.text('Monitoramento da coleta'), findsNothing);
+    expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
+    expect(find.widgetWithText(ChoiceChip, 'Marketplace'), findsNothing);
     expect(
       find.widgetWithText(TextField, 'Buscar loja ou categoria'),
       findsOneWidget,
@@ -303,7 +306,6 @@ void main() {
       const Offset(0, -700),
     );
     await at.pumpAndSettle();
-    expect(find.text('Marketplace'), findsWidgets);
     expect(find.text('Loja Clube'), findsOneWidget);
     expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.text('Alerta ativo'), findsOneWidget);

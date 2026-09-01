@@ -22,6 +22,7 @@ class BotaoDisparo extends StatefulWidget {
     this.rotulo = 'Atualizar agora',
     this.aoAceitar,
     this.compacto = false,
+    this.destaque = false,
   });
 
   final Api api;
@@ -30,6 +31,7 @@ class BotaoDisparo extends StatefulWidget {
   final String rotulo;
   final VoidCallback? aoAceitar;
   final bool compacto;
+  final bool destaque;
 
   @override
   State<BotaoDisparo> createState() => _EstadoBotaoDisparo();
@@ -193,6 +195,29 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
               ),
               onPressed: espera > 0 || _solicitando ? null : _solicitar,
               child: Text(textoCompacto),
+            )
+          : widget.destaque
+          ? FilledButton.icon(
+              onPressed: espera > 0 || _solicitando ? null : _solicitar,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 42),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                backgroundColor: CoresRadar.de(context).acao,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+              icon: _solicitando
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.refresh, size: 18),
+              label: Text(texto),
             )
           : FilledButton.tonalIcon(
               onPressed: espera > 0 || _solicitando ? null : _solicitar,

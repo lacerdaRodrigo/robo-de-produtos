@@ -7,20 +7,21 @@ import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/inter/controlador_cashback_inter.dart';
 import 'package:app_robo/features/inter/formato_cashback_inter.dart';
 
-CashbackInter loja(String id, String nome) => CashbackInter(
-  id: id,
-  slug: nome.toLowerCase(),
-  nome: nome,
-  cashbackPrincipalTexto: 'Até 10% de cashback',
-  cashbackPrincipalValor: '10',
-  cashbackSecundarioTexto: null,
-  cashbackSecundarioValor: null,
-  etiqueta: null,
-  descricaoPrincipal: null,
-  descricaoSecundaria: null,
-  encontrada: true,
-  favorita: false,
-);
+CashbackInter loja(String id, String nome, {bool favorita = false}) =>
+    CashbackInter(
+      id: id,
+      slug: nome.toLowerCase(),
+      nome: nome,
+      cashbackPrincipalTexto: 'Até 10% de cashback',
+      cashbackPrincipalValor: '10',
+      cashbackSecundarioTexto: null,
+      cashbackSecundarioValor: null,
+      etiqueta: null,
+      descricaoPrincipal: null,
+      descricaoSecundaria: null,
+      encontrada: true,
+      favorita: favorita,
+    );
 
 Pagina<CashbackInter> respostaPagina(
   List<CashbackInter> itens, {
@@ -175,4 +176,37 @@ void main() {
     expect(controlador.totalItens, 1);
     controlador.dispose();
   });
+
+  test(
+    'mutação confirmada mantém card, total e filtro acompanhadas coerentes',
+    () async {
+      var acompanhada = false;
+      final controlador = ControladorCashbackInter(
+        buscar: ({required q, required ordenar, required pagina}) async =>
+            respostaPagina([loja('1', 'C&A', favorita: acompanhada)]),
+        buscarAcompanhadas:
+            ({required q, required ordenar, required pagina}) async =>
+                respostaPagina(
+                  acompanhada
+                      ? [loja('1', 'C&A', favorita: true)]
+                      : <CashbackInter>[],
+                ),
+      );
+
+      await controlador.carregarInicial();
+      acompanhada = true;
+      controlador.sincronizarAcompanhamento(controlador.itens.single, true);
+      expect(controlador.itens.single.favorita, isTrue);
+
+      await controlador.mudarFiltro(FiltroCashbackInter.acompanhadas);
+      expect(controlador.itens.single.nome, 'C&A');
+      expect(controlador.totalItens, 1);
+
+      acompanhada = false;
+      controlador.sincronizarAcompanhamento(controlador.itens.single, false);
+      expect(controlador.itens, isEmpty);
+      expect(controlador.totalItens, 0);
+      controlador.dispose();
+    },
+  );
 }

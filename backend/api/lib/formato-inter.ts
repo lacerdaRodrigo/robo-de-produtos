@@ -37,14 +37,21 @@ export function compararDecimaisInter(a: string | null, b: string | null): numbe
   return fracaoA < fracaoB ? -1 : 1;
 }
 
-/** PRD-V3 §15.3: mesma normalização persistida em `*_busca` no Postgres. */
+/**
+ * Forma canônica usada pela busca do Inter.
+ *
+ * O `e` aproxima o uso comercial de `&`; os demais separadores não carregam
+ * significado para a busca. A consulta SQL aplica a mesma transformação aos
+ * campos `*_busca` já persistidos, sem exigir migration ou recarga do catálogo.
+ */
 export function normalizarBuscaInter(texto: string): string {
   return texto
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, " ");
+    .replace(/&/g, "e")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 export function filtrarCashbacksInter<T extends { nome: string; slug: string }>(

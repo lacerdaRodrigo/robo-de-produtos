@@ -21,4 +21,21 @@ void main() {
       expect(linkSeguroShoppingInter(caminho), isNull);
     }
   });
+
+  test('aceita somente URL absoluta HTTPS do Shopping Inter', () {
+    expect(
+      linkAbsolutoSeguroShoppingInter(
+        'https://shopping.inter.co/site-parceiro/lojas',
+      ),
+      Uri.parse('https://shopping.inter.co/site-parceiro/lojas'),
+    );
+    for (final destino in [
+      'http://shopping.inter.co/site-parceiro/lojas',
+      'https://outro.example/site-parceiro/lojas',
+      'https://usuario@shopping.inter.co/site-parceiro/lojas',
+      null,
+    ]) {
+      expect(linkAbsolutoSeguroShoppingInter(destino), isNull);
+    }
+  });
 }

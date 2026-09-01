@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
@@ -6,6 +9,7 @@ import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
+import '../produtos/link_shopping_inter.dart';
 import 'cartao_cashback_inter.dart';
 import 'controlador_cashback_inter.dart';
 import 'formato_cashback_inter.dart';
@@ -22,6 +26,9 @@ class PaginaCashbackInter extends StatefulWidget {
     this.sliversAntesDoCashback = const [],
     this.chaveRolagemCompacta,
     this.aoAlterarAcompanhamento,
+    this.aoVariarAcompanhadas,
+    this.aoAtualizar,
+    this.abrirUrlExterna,
   });
 
   final Api api;
@@ -34,12 +41,16 @@ class PaginaCashbackInter extends StatefulWidget {
   final List<Widget> sliversAntesDoCashback;
   final Key? chaveRolagemCompacta;
   final VoidCallback? aoAlterarAcompanhamento;
+  final ValueChanged<int>? aoVariarAcompanhadas;
+  final Future<void> Function()? aoAtualizar;
+  final Future<bool> Function(Uri uri)? abrirUrlExterna;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
 }
 
-class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
+class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
+    with WidgetsBindingObserver {
   late final ControladorCashbackInter _controlador =
       widget.controlador ??
       ControladorCashbackInter(
@@ -54,25 +65,42 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
             ),
       );
   late final bool _externo = widget.controlador != null;
-  final _campoBusca = TextEditingController();
+  late final _campoBusca = TextEditingController(text: _controlador.busca);
   final _acompanhamentoAlterado = <String, bool>{};
   final _alterandoAcompanhamento = <String>{};
+  final _salvamentosAcompanhamento = <String, Future<void>>{};
   var _filtroCompacto = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controlador.carregarInicial();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _campoBusca.dispose();
     if (!_externo) _controlador.dispose();
     super.dispose();
   }
 
-  Future<void> _alternarAcompanhamento(CashbackInter loja) async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_atualizarDados());
+    }
+  }
+
+  Future<void> _atualizarDados() async {
+    final tarefas = <Future<void>>[_controlador.tentarNovamente()];
+    final atualizarResumo = widget.aoAtualizar;
+    if (atualizarResumo != null) tarefas.add(atualizarResumo());
+    await Future.wait(tarefas);
+  }
+
+  void _alternarAcompanhamento(CashbackInter loja) {
     if (!widget.administrador || _alterandoAcompanhamento.contains(loja.id)) {
       return;
     }
@@ -83,9 +111,25 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
       _alterandoAcompanhamento.add(loja.id);
       _acompanhamentoAlterado[loja.id] = acompanhada;
     });
+    widget.aoVariarAcompanhadas?.call(acompanhada ? 1 : -1);
+    _salvamentosAcompanhamento[loja.id] = _salvarAcompanhamento(
+      loja: loja,
+      acompanhada: acompanhada,
+      tinhaAlteracao: tinhaAlteracao,
+      valorAnterior: valorAnterior,
+    );
+  }
+
+  Future<void> _salvarAcompanhamento({
+    required CashbackInter loja,
+    required bool acompanhada,
+    required bool tinhaAlteracao,
+    required bool? valorAnterior,
+  }) async {
     try {
       await widget.api.alterarFavoritaInter(id: loja.id, favorita: acompanhada);
       if (!mounted) return;
+      _controlador.sincronizarAcompanhamento(loja, acompanhada);
       mostrarMensagemRadar(
         context,
         acompanhada
@@ -102,6 +146,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
             _acompanhamentoAlterado.remove(loja.id);
           }
         });
+        widget.aoVariarAcompanhadas?.call(acompanhada ? -1 : 1);
         mostrarMensagemRadar(
           context,
           'Não foi possível salvar o acompanhamento.',
@@ -109,6 +154,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
         );
       }
     } finally {
+      _salvamentosAcompanhamento.remove(loja.id);
       if (mounted) {
         setState(() => _alterandoAcompanhamento.remove(loja.id));
       }
@@ -117,6 +163,41 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
 
   bool _estaAcompanhada(CashbackInter loja) =>
       _acompanhamentoAlterado[loja.id] ?? loja.favorita;
+
+  Future<void> _selecionarFiltroCompacto(int indice) async {
+    setState(() => _filtroCompacto = indice);
+    final salvamentosPendentes = _salvamentosAcompanhamento.values.toList();
+    if (salvamentosPendentes.isNotEmpty) {
+      await Future.wait(salvamentosPendentes);
+    }
+    if (!mounted || _filtroCompacto != indice) return;
+    await _controlador.mudarConsulta(
+      filtro: indice == 2
+          ? FiltroCashbackInter.acompanhadas
+          : FiltroCashbackInter.todas,
+      ordenacao: OrdenacaoCashbackInter.cashback,
+    );
+  }
+
+  Future<void> _abrirParceiro(CashbackInter loja) async {
+    final link = linkAbsolutoSeguroShoppingInter(loja.link);
+    if (link == null) return;
+    final abriu =
+        await (widget.abrirUrlExterna?.call(link) ??
+            launchUrl(link, mode: LaunchMode.externalApplication));
+    if (!abriu && mounted) {
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível abrir o Banco Inter.',
+        sucesso: false,
+      );
+    }
+  }
+
+  VoidCallback? _acaoAbrirParceiro(CashbackInter loja) =>
+      linkAbsolutoSeguroShoppingInter(loja.link) == null
+      ? null
+      : () => _abrirParceiro(loja);
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -142,7 +223,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Text(
-            'Cashback — Sites parceiros',
+            'Sites parceiros',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
@@ -220,58 +301,55 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
   Widget _conteudoCompacto(
     BuildContext context,
     double margem,
-  ) => CustomScrollView(
-    key: widget.chaveRolagemCompacta ?? const Key('cashback-inter-compacto'),
-    slivers: [
-      ...widget.sliversAntesDoCashback,
-      if (widget.mostrarAtualizacao)
+  ) => RefreshIndicator(
+    key: const Key('puxar-atualizar-cashback-inter'),
+    onRefresh: _atualizarDados,
+    child: CustomScrollView(
+      key: widget.chaveRolagemCompacta ?? const Key('cashback-inter-compacto'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        ...widget.sliversAntesDoCashback,
+        if (widget.mostrarAtualizacao)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(margem, 16, margem, 8),
+            sliver: SliverToBoxAdapter(
+              child: BotaoDisparo(
+                api: widget.api,
+                dominio: 'inter',
+                administrador: widget.administrador,
+                rotulo: 'Atualizar Cashback',
+              ),
+            ),
+          ),
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(margem, 16, margem, 8),
+          padding: EdgeInsets.fromLTRB(margem, 0, margem, 0),
           sliver: SliverToBoxAdapter(
-            child: BotaoDisparo(
-              api: widget.api,
-              dominio: 'inter',
-              administrador: widget.administrador,
-              rotulo: 'Atualizar Cashback',
+            child: CampoBuscaRadar(
+              controlador: _campoBusca,
+              chaveCampo: const Key('busca-cashback-inter'),
+              dica: 'Buscar entre as lojas do Inter',
+              aoMudar: _controlador.mudarBusca,
+              acao: IconButton(
+                tooltip: 'Ordenar por maior cashback',
+                onPressed: () {
+                  setState(() => _filtroCompacto = 1);
+                  _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
+                },
+                icon: const Icon(Icons.tune_rounded, size: 18),
+              ),
             ),
           ),
         ),
-      SliverPadding(
-        padding: EdgeInsets.fromLTRB(margem, 0, margem, 0),
-        sliver: SliverToBoxAdapter(
-          child: CampoBuscaRadar(
-            controlador: _campoBusca,
-            chaveCampo: const Key('busca-cashback-inter'),
-            dica: 'Buscar entre as lojas do Inter',
-            aoMudar: _controlador.mudarBusca,
-            acao: IconButton(
-              tooltip: 'Ordenar por maior cashback',
-              onPressed: () {
-                setState(() => _filtroCompacto = 1);
-                _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
-              },
-              icon: const Icon(Icons.tune_rounded, size: 18),
-            ),
+        SliverToBoxAdapter(
+          child: _FiltrosCompactosInter(
+            selecionado: _filtroCompacto,
+            aoSelecionar: _selecionarFiltroCompacto,
           ),
         ),
-      ),
-      SliverToBoxAdapter(
-        child: _FiltrosCompactosInter(
-          selecionado: _filtroCompacto,
-          aoSelecionar: (indice) {
-            setState(() => _filtroCompacto = indice);
-            _controlador.mudarConsulta(
-              filtro: indice == 2
-                  ? FiltroCashbackInter.acompanhadas
-                  : FiltroCashbackInter.todas,
-              ordenacao: OrdenacaoCashbackInter.cashback,
-            );
-          },
-        ),
-      ),
-      ..._estadoCompacto(margem),
-      ..._corpoCompacto(),
-    ],
+        ..._estadoCompacto(margem),
+        ..._corpoCompacto(),
+      ],
+    ),
   );
 
   List<Widget> _corpoCompacto() {
@@ -340,6 +418,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                 atualizadoEm: _controlador.atualizadoEm,
                 podeAdministrar: widget.administrador,
                 aoAcompanhar: () => _alternarAcompanhamento(loja),
+                aoAbrirParceiro: _acaoAbrirParceiro(loja),
               ),
             const SizedBox(height: 4),
             _paginacao(),
@@ -432,6 +511,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                   alterando: _alterandoAcompanhamento.contains(loja.id),
                   podeAdministrar: widget.administrador,
                   aoAcompanhar: () => _alternarAcompanhamento(loja),
+                  aoAbrirParceiro: _acaoAbrirParceiro(loja),
                 )
             else
               Wrap(
@@ -448,6 +528,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                         alterando: _alterandoAcompanhamento.contains(loja.id),
                         podeAdministrar: widget.administrador,
                         aoAcompanhar: () => _alternarAcompanhamento(loja),
+                        aoAbrirParceiro: _acaoAbrirParceiro(loja),
                       ),
                     ),
                 ],

@@ -30,3 +30,21 @@ Uri? linkSeguroShoppingInter(String caminho) {
         : origem.queryParametersAll,
   );
 }
+
+/// Aceita um destino absoluto fornecido pela API somente quando ele permanece
+/// em HTTPS no host comercial já aprovado do Shopping Inter.
+Uri? linkAbsolutoSeguroShoppingInter(String? destino) {
+  final uri = Uri.tryParse(destino?.trim() ?? '');
+  if (uri == null ||
+      uri.scheme != 'https' ||
+      uri.host != 'shopping.inter.co' ||
+      uri.userInfo.isNotEmpty ||
+      uri.hasPort ||
+      uri.pathSegments.any((segmento) {
+        final decodificado = Uri.decodeComponent(segmento);
+        return decodificado == '.' || decodificado == '..';
+      })) {
+    return null;
+  }
+  return uri;
+}

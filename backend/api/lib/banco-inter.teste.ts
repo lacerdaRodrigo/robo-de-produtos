@@ -26,7 +26,18 @@ describe("catálogo paginado de cashback Inter", () => {
   });
 
   it("devolve primeira página e total global após o filtro", async () => {
-    bancoFalso.respostas.push([{ total: 37 }], []);
+    bancoFalso.respostas.push(
+      [{ total: 37 }],
+      [
+        {
+          id: "1",
+          id_externo: "cea",
+          slug: "ca",
+          nome: "C&A",
+          favorita: false,
+        },
+      ],
+    );
 
     const resultado = await buscarCashbacksInter("42", {
       q: "",
@@ -36,7 +47,12 @@ describe("catálogo paginado de cashback Inter", () => {
       porPagina: 20,
     });
 
-    expect(resultado).toEqual({ itens: [], total: 37, pagina: 1 });
+    expect(resultado.itens[0]).toMatchObject({
+      nome: "C&A",
+      link: "https://shopping.inter.co/site-parceiro/lojas",
+    });
+    expect(resultado.total).toBe(37);
+    expect(resultado.pagina).toBe(1);
     expect(bancoFalso.consultas[0]).toContain("count(*)::int AS total");
     expect(bancoFalso.consultas[1]).toContain("LIMIT 20");
     expect(bancoFalso.consultas[1]).toContain("OFFSET 0");
@@ -62,7 +78,7 @@ describe("catálogo paginado de cashback Inter", () => {
     bancoFalso.respostas.push([{ total: 0 }], []);
 
     const resultado = await buscarCashbacksInter("42", {
-      q: "C&A",
+      q: "cea",
       ordenar: "cashback",
       apenasAcompanhadas: true,
       pagina: 1,
@@ -72,8 +88,9 @@ describe("catálogo paginado de cashback Inter", () => {
     expect(resultado).toEqual({ itens: [], total: 0, pagina: 1 });
     for (const consulta of bancoFalso.consultas) {
       expect(consulta).toContain("f.loja_inter_id IS NOT NULL");
-      expect(consulta).toContain("strpos(l.nome_busca, c&a) > 0");
-      expect(consulta).toContain("strpos(l.slug_busca, c&a) > 0");
+      expect(consulta).toContain("regexp_replace(replace(l.nome_busca, '&', 'e')");
+      expect(consulta).toContain("regexp_replace(replace(l.slug_busca, '&', 'e')");
+      expect(consulta).toContain("cea");
     }
   });
 

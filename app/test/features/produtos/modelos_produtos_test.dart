@@ -69,6 +69,11 @@ void main() {
       'ultima_execucao': '2026-08-30T15:00:00Z',
       'ultimo_estado': 'sucesso',
       'paginas': 12,
+      'ultima_tentativa_em': '2026-08-30T14:55:00Z',
+      'ultima_tentativa_estado': 'falha',
+      'ultima_coleta_sucesso_em': '2026-08-29T15:00:00Z',
+      'produtos_encontrados': 0,
+      'cashback_resumo_texto': 'Até 6% de cashback',
     });
 
     expect(loja.id, '12');
@@ -78,7 +83,15 @@ void main() {
     expect(loja.ultimaExecucao, '2026-08-30T15:00:00Z');
     expect(loja.ultimoEstado, 'sucesso');
     expect(loja.paginas, 12);
+    expect(loja.ultimaTentativaEstado, 'falha');
+    expect(loja.ultimaColetaSucessoEm, '2026-08-29T15:00:00Z');
+    expect(loja.produtosEncontrados, 0);
+    expect(loja.cashbackResumoTexto, 'Até 6% de cashback');
     expect(loja.copiarCom(selecionada: false).ultimoEstado, 'sucesso');
+    expect(
+      loja.copiarCom(selecionada: false).cashbackResumoTexto,
+      'Até 6% de cashback',
+    );
   });
 
   test('metadados opcionais ausentes não inventam estado', () {
@@ -105,5 +118,9 @@ void main() {
     expect(loja.ultimaExecucao, isNull);
     expect(loja.ultimoEstado, isNull);
     expect(loja.paginas, isNull);
+    expect(loja.ultimaTentativaEstado, isNull);
+    expect(loja.ultimaColetaSucessoEm, isNull);
+    expect(loja.produtosEncontrados, isNull);
+    expect(loja.cashbackResumoTexto, isNull);
   });
 }

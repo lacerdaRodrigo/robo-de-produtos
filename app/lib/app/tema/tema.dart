@@ -4,6 +4,35 @@ import 'tokens.dart';
 
 /// Temas do Radar com a mesma identidade e sem misturar ação com ganho.
 abstract final class TemaRadar {
+  /// Base visual congelada da tela de login, fora do redesign V12.
+  static ThemeData loginLegado() {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      fontFamily: 'Roboto',
+    );
+    const marca = Color(0xFF102A43);
+    const texto = Color(0xFF102A43);
+    const fundo = Color(0xFFF3F7FB);
+    const superficie = Color(0xFFFFFFFF);
+    const borda = Color(0xFFDCE6EE);
+    return base.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: marca,
+        brightness: Brightness.light,
+        primary: marca,
+      ),
+      scaffoldBackgroundColor: fundo,
+      cardColor: superficie,
+      dividerColor: borda,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: marca,
+        foregroundColor: Colors.white,
+      ),
+      textTheme: base.textTheme.apply(bodyColor: texto, displayColor: texto),
+    );
+  }
+
   /// Tema congelado de jornadas que não fazem parte do ciclo mobile.
   static ThemeData legadoClaro() {
     final base = ThemeData(
@@ -47,17 +76,34 @@ abstract final class TemaRadar {
     );
     return base.copyWith(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Tokens.marca,
+        seedColor: Tokens.marcaClara,
         brightness: Brightness.light,
-        primary: Tokens.marca,
+        primary: Tokens.marcaClara,
+        onPrimary: Colors.white,
+        surface: Tokens.superficie,
+        onSurface: Tokens.texto,
+        outline: Tokens.borda,
+        error: Tokens.perigo,
       ),
       scaffoldBackgroundColor: Tokens.fundo,
       cardColor: Tokens.superficie,
       dividerColor: Tokens.borda,
       extensions: const <ThemeExtension<dynamic>>[CoresRadar.claras()],
       appBarTheme: const AppBarTheme(
-        backgroundColor: Tokens.marca,
-        foregroundColor: Colors.white,
+        backgroundColor: Tokens.fundo,
+        foregroundColor: Tokens.texto,
+        surfaceTintColor: Colors.transparent,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Tokens.superficie,
+        indicatorColor: Tokens.marcaClara,
+        iconTheme: WidgetStateProperty.resolveWith((estados) {
+          return IconThemeData(
+            color: estados.contains(WidgetState.selected)
+                ? Colors.white
+                : Tokens.textoSuave,
+          );
+        }),
       ),
       textTheme: base.textTheme.apply(
         bodyColor: Tokens.texto,
@@ -76,6 +122,7 @@ abstract final class TemaRadar {
       seedColor: Tokens.marcaClara,
       brightness: Brightness.dark,
       primary: Tokens.acaoEscura,
+      onPrimary: const Color(0xFF16303B),
       surface: Tokens.superficieEscura,
       error: Tokens.perigoEscuro,
       onSurface: Tokens.textoEscuro,
@@ -93,7 +140,7 @@ abstract final class TemaRadar {
         surfaceTintColor: Colors.transparent,
       ),
       drawerTheme: const DrawerThemeData(
-        backgroundColor: Tokens.superficieEscura,
+        backgroundColor: Tokens.fundoEscuro,
         surfaceTintColor: Colors.transparent,
       ),
       textTheme: base.textTheme.apply(

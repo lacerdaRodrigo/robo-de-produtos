@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/tema/tema.dart';
+import 'package:app_robo/app/paginas/lojas.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
@@ -19,6 +21,7 @@ CashbackInter _loja({
   bool encontrada = true,
   bool favorita = false,
   String? secundaria = '2% de cashback',
+  String? link = 'https://shopping.inter.co/site-parceiro/lojas',
 }) => CashbackInter(
   id: nome.toLowerCase(),
   slug: nome.toLowerCase(),
@@ -32,6 +35,7 @@ CashbackInter _loja({
   descricaoSecundaria: secundaria == null ? null : 'Para não-correntistas',
   encontrada: encontrada,
   favorita: favorita,
+  link: link,
 );
 
 Pagina<CashbackInter> _pagina(
@@ -98,10 +102,12 @@ void main() {
     expect(find.text('Nome A–Z'), findsOneWidget);
     expect(find.text('Magazine Luiza'), findsOneWidget);
     expect(find.text('Até 12% de cashback'), findsOneWidget);
-    expect(find.text('Cliente Inter Shopping'), findsOneWidget);
+    expect(find.text('Para correntista'), findsOneWidget);
+    expect(find.text('Para não-correntista'), findsOneWidget);
+    expect(find.text('Para correntista'), findsOneWidget);
     expect(find.text('Oferta especial'), findsOneWidget);
-    expect(find.text('Não-correntista'), findsOneWidget);
-    await at.tap(find.text('Não-correntista'));
+    expect(find.text('Para não-correntista'), findsOneWidget);
+    await at.tap(find.text('Para não-correntista'));
     await at.pumpAndSettle();
     expect(find.textContaining('Para não-correntistas'), findsOneWidget);
     expect(controlador.temProxima, isFalse);
@@ -158,21 +164,14 @@ void main() {
     },
   );
 
-  testWidgets('acompanhamento compacto é imediato e confirma após a API', (
-    at,
-  ) async {
-    final resposta = Completer<http.Response>();
-    final api = Api(
-      paginaPadrao: 20,
-      cliente: ClienteApi(
-        baseUrl: 'http://localhost:3000',
-        provedorToken: () async => 'token-teste',
-        cliente: http_testing.MockClient((_) => resposta.future),
-      ),
-    );
+  testWidgets('puxar e voltar ao app atualizam cashback e resumo', (at) async {
+    var consultas = 0;
+    var atualizacoesResumo = 0;
     final controlador = ControladorCashbackInter(
-      buscar: ({required q, required ordenar, required pagina}) async =>
-          _pagina([_loja()]),
+      buscar: ({required q, required ordenar, required pagina}) async {
+        consultas++;
+        return _pagina([_loja()]);
+      },
     );
     addTearDown(controlador.dispose);
 
@@ -181,22 +180,182 @@ void main() {
         theme: TemaRadar.claro(),
         home: Scaffold(
           body: PaginaCashbackInter(
-            api: api,
+            api: _api(),
             controlador: controlador,
             incorporada: true,
-            administrador: true,
+            aoAtualizar: () async => atualizacoesResumo++,
           ),
         ),
       ),
     );
     await at.pumpAndSettle();
+    expect(consultas, 1);
+
+    await at.drag(
+      find.byKey(const Key('cashback-inter-compacto')),
+      const Offset(0, 360),
+    );
+    await at.pumpAndSettle();
+    expect(consultas, 2);
+    expect(atualizacoesResumo, 1);
+
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await at.pumpAndSettle();
+    expect(consultas, 3);
+    expect(atualizacoesResumo, 2);
+  });
+
+  testWidgets('acompanhar sincroniza painel e aba antes e depois da API', (
+    at,
+  ) async {
+    var acompanhada = false;
+    var alteracoes = 0;
+    final primeiraAlteracao = Completer<void>();
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          if (requisicao.url.path == '/api/resumo') {
+            return http.Response(
+              jsonEncode({
+                'gerado_em': '2026-08-23T12:00:00Z',
+                'estado_geral': 'atualizado',
+                'livelo': {
+                  'estado': 'sem_dados',
+                  'ultimo_sucesso_em': null,
+                  'lojas_acompanhadas': 0,
+                  'alertas_ultima_coleta': 0,
+                },
+                'cashback_inter': {
+                  'estado': 'atualizado',
+                  'ultima_tentativa_em': '2026-08-23T12:00:00Z',
+                  'ultima_tentativa_estado': 'sucesso',
+                  'ultimo_sucesso_em': '2026-08-23T12:00:00Z',
+                  'lojas_acompanhadas': 0,
+                  'lojas_encontradas_ultima_coleta': 0,
+                },
+                'produtos': {
+                  'estado': 'sem_dados',
+                  'ultima_tentativa_em': null,
+                  'ultima_tentativa_estado': null,
+                  'dados_mais_antigos_em': null,
+                  'dados_mais_recentes_em': null,
+                  'qualidade': null,
+                  'lojas_selecionadas': 0,
+                  'lojas_sem_coleta': 0,
+                  'produtos_ativos': 0,
+                },
+              }),
+              200,
+            );
+          }
+          if (requisicao.url.path == '/api/inter/cashback') {
+            final somenteAcompanhadas =
+                requisicao.url.queryParameters['acompanhadas'] == 'true';
+            final itens = somenteAcompanhadas && !acompanhada
+                ? <Map<String, Object?>>[]
+                : [
+                    {
+                      'id': 'cea',
+                      'slug': 'ca',
+                      'nome': 'C&A',
+                      'cashback_principal_texto': 'Até 10% de cashback',
+                      'cashback_principal_valor': '10.00',
+                      'cashback_secundario_texto': null,
+                      'cashback_secundario_valor': null,
+                      'etiqueta': null,
+                      'descricao_principal': null,
+                      'descricao_secundaria': null,
+                      'encontrada': true,
+                      'favorita': acompanhada,
+                    },
+                  ];
+            return http.Response(
+              jsonEncode({
+                'itens': itens,
+                'pagina': 1,
+                'por_pagina': 20,
+                'total_itens': itens.length,
+                'total_paginas': 1,
+                'tem_proxima': false,
+                'atualizado_em': '2026-08-23T12:00:00Z',
+              }),
+              200,
+            );
+          }
+          if (requisicao.url.path == '/api/inter/lojas' &&
+              requisicao.method == 'PATCH') {
+            alteracoes++;
+            if (alteracoes == 1) await primeiraAlteracao.future;
+            acompanhada =
+                (jsonDecode(requisicao.body)
+                        as Map<String, dynamic>)['favorita']
+                    as bool;
+            return http.Response('{}', 200);
+          }
+          return http.Response('{}', 404);
+        }),
+      ),
+    );
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaHubShoppingInter(
+            api: api,
+            administrador: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    final metrica = find.byKey(const Key('inter-total-acompanhadas'));
+    expect(
+      find.descendant(of: metrica, matching: find.text('0')),
+      findsOneWidget,
+    );
+    await at.drag(
+      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      const Offset(0, -520),
+    );
+    await at.pumpAndSettle();
+
     await at.tap(find.text('Acompanhar'));
     await at.pump();
-
     expect(find.text('Salvando…'), findsOneWidget);
-    resposta.complete(http.Response('{}', 200));
+    expect(
+      find.descendant(of: metrica, matching: find.text('1')),
+      findsOneWidget,
+    );
+
+    await at.tap(find.text('Acompanhadas'));
+    await at.pump();
+    expect(find.text('C&A'), findsOneWidget);
+
+    primeiraAlteracao.complete();
     await at.pumpAndSettle();
-    expect(find.text('Acompanhada'), findsOneWidget);
+    expect(find.text('Deixar de acompanhar'), findsOneWidget);
+    expect(find.text('C&A'), findsOneWidget);
+    expect(
+      find.descendant(of: metrica, matching: find.text('1')),
+      findsOneWidget,
+    );
+
+    await at.tap(find.text('Deixar de acompanhar'));
+    await at.pumpAndSettle();
+    expect(
+      find.descendant(of: metrica, matching: find.text('0')),
+      findsOneWidget,
+    );
+    expect(find.text('C&A'), findsNothing);
+    expect(find.text('Nenhuma loja está acompanhada ainda.'), findsOneWidget);
   });
 
   testWidgets('Cashback compacto não estoura em 320 px no tema escuro', (
@@ -208,7 +367,7 @@ void main() {
     addTearDown(at.view.resetPhysicalSize);
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async =>
-          _pagina([_loja()]),
+          _pagina([_loja(favorita: true)]),
     );
     addTearDown(controlador.dispose);
 
@@ -220,6 +379,7 @@ void main() {
             api: _api(),
             controlador: controlador,
             incorporada: true,
+            administrador: true,
           ),
         ),
         builder: (context, child) => MediaQuery(
@@ -231,6 +391,8 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
+    expect(find.text('Deixar de acompanhar'), findsOneWidget);
+    expect(find.text('Ir para o Inter'), findsOneWidget);
     expect(at.takeException(), isNull);
     await at.drag(
       find.byKey(const Key('cashback-inter-compacto')),
@@ -302,6 +464,68 @@ void main() {
     expect(find.text('0% de cashback'), findsNothing);
   });
 
+  testWidgets('Sites parceiros abre exatamente a URL real fornecida pela API', (
+    at,
+  ) async {
+    Uri? aberta;
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([_loja(nome: 'C&A')]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaCashbackInter(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            abrirUrlExterna: (uri) async {
+              aberta = uri;
+              return true;
+            },
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Ir para o Inter'));
+    await at.pumpAndSettle();
+    expect(aberta, Uri.parse('https://shopping.inter.co/site-parceiro/lojas'));
+  });
+
+  testWidgets('Sites parceiros informa quando o sistema não abre o destino', (
+    at,
+  ) async {
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([_loja(nome: 'C&A')]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaCashbackInter(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            abrirUrlExterna: (_) async => false,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Ir para o Inter'));
+    await at.pump();
+    expect(find.text('Não foi possível abrir o Banco Inter.'), findsOneWidget);
+  });
+
   testWidgets('falha inicial oferece nova tentativa', (at) async {
     var chamadas = 0;
     final controlador = ControladorCashbackInter(
@@ -367,9 +591,7 @@ void main() {
     expect(find.text('C&A'), findsOneWidget);
   }, tags: 'web');
 
-  testWidgets('página de Cashback mantém o foco nos Sites parceiros', (
-    at,
-  ) async {
+  testWidgets('página mantém o foco nos Sites parceiros', (at) async {
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async =>
           _pagina([], atualizadaEm: null),
@@ -379,7 +601,7 @@ void main() {
     await at.pumpWidget(_tela(controlador));
     await at.pumpAndSettle();
 
-    expect(find.text('Cashback — Sites parceiros'), findsOneWidget);
+    expect(find.text('Sites parceiros'), findsOneWidget);
     expect(find.byTooltip('Produtos no Inter'), findsNothing);
   });
 }

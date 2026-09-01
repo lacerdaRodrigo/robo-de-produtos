@@ -73,12 +73,14 @@ const _cashback =
     '"cashback_principal_texto":"até 20%","cashback_principal_valor":"20.00",'
     '"cashback_secundario_texto":null,"cashback_secundario_valor":null,'
     '"etiqueta":null,"descricao_principal":null,"descricao_secundaria":null,'
-    '"encontrada":true,"favorita":true},'
+    '"encontrada":true,"favorita":true,'
+    '"link":"https://shopping.inter.co/site-parceiro/lojas"},'
     '{"id":"riachuelo","slug":"riachuelo","nome":"Riachuelo",'
     '"cashback_principal_texto":"até 15%","cashback_principal_valor":"15.00",'
     '"cashback_secundario_texto":null,"cashback_secundario_valor":null,'
     '"etiqueta":null,"descricao_principal":null,"descricao_secundaria":null,'
-    '"encontrada":true,"favorita":false}],'
+    '"encontrada":true,"favorita":false,'
+    '"link":"https://shopping.inter.co/site-parceiro/lojas"}],'
     '"pagina":1,"por_pagina":20,"total_itens":2,"total_paginas":1,'
     '"tem_proxima":false,"atualizado_em":"2026-08-29T20:00:00Z"}';
 

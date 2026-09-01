@@ -9,8 +9,7 @@ nunca em arquivo versionado.
 | Workflow | O que faz | Agenda | Segredos que usa |
 |---|---|---|---|
 | [`robo.yml`](workflows/robo.yml) | Coleta Livelo e publica catálogo/retrato | 09h/14h/20h + manual | `DATABASE_URL` |
-| [`inter.yml`](workflows/inter.yml) | Roda o coletor de cashback do Shopping Inter | 09h/14h/20h + manual | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
-| [`produtos-inter.yml`](workflows/produtos-inter.yml) | Coleta produtos do Compre direto (lojas selecionadas) | 09h30/14h30/20h30 + manual | `DATABASE_URL` |
+| [`inter.yml`](workflows/inter.yml) | Atualiza cashback, sincroniza as lojas e coleta os produtos selecionados do Shopping Inter | 09h/14h/20h + botão do app | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
 | [`testes.yml`](workflows/testes.yml) | CI de robôs/API: Ruff, Pytest, TypeScript, ESLint e Vitest | a cada push/PR | nenhum |
 | [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
 | [`app-robo.yml`](workflows/app-robo.yml) | CI mobile: format, analyze e unitários/widgets permitidos | a cada push/PR | nenhum |

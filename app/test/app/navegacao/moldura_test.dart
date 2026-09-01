@@ -20,7 +20,9 @@ const _cashbackInter =
     '"cashback_principal_valor":"20.00","cashback_secundario_texto":null,'
     '"cashback_secundario_valor":null,"etiqueta":null,'
     '"descricao_principal":null,"descricao_secundaria":null,'
-    '"encontrada":true,"favorita":true}],"pagina":1,"por_pagina":20,'
+    '"encontrada":true,"favorita":true,'
+    '"link":"https://shopping.inter.co/site-parceiro/lojas"}],'
+    '"pagina":1,"por_pagina":20,'
     '"total_itens":1,"total_paginas":1,"tem_proxima":false,'
     '"atualizado_em":"2026-08-23T11:38:00Z"}';
 
@@ -30,6 +32,14 @@ const _sitesParceirosInter =
     '"cashback_principal_valor":"20.00","ativa":true,"favorita":true}],'
     '"pagina":1,"por_pagina":20,"total_itens":382,"total_paginas":20,'
     '"tem_proxima":true,"atualizado_em":null}';
+
+const _lojasDiretasInter =
+    '{"itens":[{"id":"amazon","id_externo":"1","slug":"amazon",'
+    '"nome":"Amazon","selecionada":true,"ativa":true,'
+    '"ultima_execucao":"2026-08-23T11:00:00Z",'
+    '"ultimo_estado":"sucesso","paginas":12}],'
+    '"pagina":1,"por_pagina":20,"total_itens":1,"total_paginas":1,'
+    '"tem_proxima":false,"atualizado_em":null}';
 
 const _resumo =
     '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"sem_dados",'
@@ -59,6 +69,7 @@ Api _api({
   String resumo = _resumo,
   String cashback = _paginaVazia,
   String sitesParceiros = _paginaVazia,
+  String lojasDiretas = _paginaVazia,
   List<http.Request>? requisicoes,
 }) => Api(
   paginaPadrao: 20,
@@ -80,6 +91,14 @@ Api _api({
           requisicao.method == 'GET') {
         return http.Response(sitesParceiros, 200);
       }
+      if (requisicao.url.path == '/api/inter/produtos/lojas' &&
+          requisicao.method == 'GET') {
+        return http.Response(lojasDiretas, 200);
+      }
+      if (requisicao.url.path == '/api/inter/produtos/lojas' &&
+          requisicao.method == 'PATCH') {
+        return http.Response('{}', 200);
+      }
       if (requisicao.url.path == '/api/livelo/preferencias') {
         return http.Response(
           '{"multiplicador_padrao":"2.00",'
@@ -88,6 +107,18 @@ Api _api({
         );
       }
       if (requisicao.url.path == '/api/administracao/disparos') {
+        if (requisicao.method == 'POST') {
+          final dominio = requisicao.body.contains('produtos_inter')
+              ? 'produtos_inter'
+              : requisicao.body.contains('inter')
+              ? 'inter'
+              : 'livelo';
+          return http.Response(
+            '{"dominio":"$dominio","estado":"aceito",'
+            '"cooldown_segundos":0}',
+            202,
+          );
+        }
         final dominio = requisicao.url.queryParameters['dominio'] ?? '';
         return http.Response(
           '{"dominio":"$dominio",'
@@ -110,6 +141,7 @@ Future<void> _abrir(
   String resumo = _resumo,
   String cashback = _paginaVazia,
   String sitesParceiros = _paginaVazia,
+  String lojasDiretas = _paginaVazia,
   List<http.Request>? requisicoes,
 }) async {
   at.view.devicePixelRatio = 1;
@@ -128,6 +160,7 @@ Future<void> _abrir(
           resumo: resumo,
           cashback: cashback,
           sitesParceiros: sitesParceiros,
+          lojasDiretas: lojasDiretas,
           requisicoes: requisicoes,
         ),
         administrador: administrador,
@@ -150,12 +183,30 @@ Future<void> _abrirGaveta(WidgetTester at) async {
 }
 
 Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
-  await _abrirGaveta(at);
-  final item = find.byKey(Key('destino-${destino.name}'));
-  await at.ensureVisible(item);
+  final principal = destino.destinoDaBarra;
+  await at.tap(find.byKey(Key('barra-${principal.name}')));
   await at.pumpAndSettle();
-  await at.tap(item);
-  await at.pumpAndSettle();
+  final rolagemProgramas = find
+      .descendant(
+        of: find.byKey(const Key('pagina-programas')),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+  if (destino == DestinoCompacto.livelo) {
+    final programa = find.byKey(const Key('programa-livelo'));
+    await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
+    await at.ensureVisible(programa);
+    await at.pumpAndSettle();
+    await at.tap(programa);
+    await at.pumpAndSettle();
+  } else if (destino == DestinoCompacto.inter) {
+    final programa = find.byKey(const Key('programa-inter'));
+    await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
+    await at.ensureVisible(programa);
+    await at.pumpAndSettle();
+    await at.tap(programa);
+    await at.pumpAndSettle();
+  }
 }
 
 Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
@@ -164,16 +215,16 @@ Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho e gaveta com quatro áreas aprovadas', (
-    at,
-  ) async {
+  testWidgets('celular usa cabeçalho, barra inferior e gaveta V12', (at) async {
     await _abrir(at);
 
     expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
     await _abrirGaveta(at);
 
-    for (final destino in DestinoCompacto.values) {
+    for (final destino in DestinoCompacto.values.where(
+      (destino) => destino.principal,
+    )) {
       expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
       expect(find.text(destino.titulo), findsWidgets);
     }
@@ -182,7 +233,7 @@ void main() {
     expect(find.byKey(const Key('abrir-alertas-gaveta')), findsOneWidget);
     expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
     expect(find.text('Acesso padrão'), findsWidgets);
-    expect(find.text('Escolha lojas e veja cashback'), findsOneWidget);
+    expect(find.text('Pontos, cashback e integrações'), findsOneWidget);
     expect(find.text('Resultados das lojas escolhidas'), findsOneWidget);
     expect(
       at.getSize(find.byKey(const Key('gaveta-principal'))).width,
@@ -247,8 +298,20 @@ void main() {
   ) async {
     await _abrir(at);
 
-    expect(find.text('Bom dia.'), findsOneWidget);
-    expect(find.text('Livelo: sem dados'), findsOneWidget);
+    expect(find.text('Seu radar hoje'), findsOneWidget);
+    expect(find.text('alertas Livelo'), findsOneWidget);
+  });
+
+  testWidgets('Programas agrega Livelo e Inter com busca local', (at) async {
+    await _abrir(at, tamanho: const Size(390, 1200));
+    await _irParaCompacto(at, DestinoCompacto.programas);
+
+    expect(find.byKey(const Key('programa-livelo')), findsOneWidget);
+    expect(find.byKey(const Key('programa-inter')), findsOneWidget);
+    await at.enterText(find.byKey(const Key('busca-programas')), 'inter');
+    await at.pump();
+    expect(find.byKey(const Key('programa-livelo')), findsNothing);
+    expect(find.byKey(const Key('programa-inter')), findsOneWidget);
   });
 
   testWidgets('atalhos do Início abrem Produtos e os dois domínios de Lojas', (
@@ -331,7 +394,9 @@ void main() {
     expect(find.byKey(const Key('voltar-para-lojas')), findsNothing);
   }, tags: 'web');
 
-  testWidgets('Shopping Inter compacto segue as abas do protótipo', (at) async {
+  testWidgets('Shopping Inter compacto possui somente os dois modos reais', (
+    at,
+  ) async {
     final requisicoes = <http.Request>[];
     await _abrir(
       at,
@@ -345,11 +410,12 @@ void main() {
     await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
-    expect(find.text('Cashback'), findsWidgets);
+    expect(find.text('Cashback'), findsNothing);
     expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.text('Compre direto'), findsOneWidget);
     expect(find.text('SHOPPING E CASHBACK'), findsOneWidget);
     expect(
-      find.text('Suas lojas do Inter estão em um único lugar.'),
+      find.text('20% é o melhor cashback acompanhado agora.'),
       findsOneWidget,
     );
     expect(find.text('Integração com atenção'), findsOneWidget);
@@ -370,8 +436,6 @@ void main() {
       'magazine',
     );
 
-    await at.tap(find.text('Sites parceiros'));
-    await at.pumpAndSettle();
     expect(find.byKey(const Key('busca-cashback-inter')), findsOneWidget);
     expect(
       find.textContaining('Navegar e filtrar não inicia uma nova coleta.'),
@@ -392,7 +456,9 @@ void main() {
     );
     await at.enterText(find.byKey(const Key('busca-cashback-inter')), 'magalu');
 
-    await at.tap(find.text('Cashback'));
+    await at.tap(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Sites parceiros'));
     await at.pumpAndSettle();
     expect(
       at
@@ -401,6 +467,77 @@ void main() {
           ?.text,
       'magalu',
     );
+  });
+
+  testWidgets('Compre direto usa catálogo real e preserva autorização', (
+    at,
+  ) async {
+    final requisicoes = <http.Request>[];
+    await _abrir(
+      at,
+      tamanho: const Size(320, 1000),
+      escalaTexto: 1.3,
+      administrador: true,
+      resumo: _resumoComEstadosIndependentes,
+      cashback: _cashbackInter,
+      lojasDiretas: _lojasDiretasInter,
+      requisicoes: requisicoes,
+    );
+    await _irParaCompacto(at, DestinoCompacto.inter);
+    await at.drag(
+      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      const Offset(0, -700),
+    );
+    await at.pumpAndSettle();
+    final compreDireto = find.text('Compre direto');
+    final abas = find.ancestor(
+      of: compreDireto,
+      matching: find.byType(SingleChildScrollView),
+    );
+    await at.drag(abas, const Offset(-220, 0));
+    await at.drag(abas, const Offset(-220, 0));
+    await at.pumpAndSettle();
+    await at.tap(compreDireto);
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('compre-direto-inter')), findsOneWidget);
+    await at.drag(
+      find.byKey(const PageStorageKey('compre-direto-inter')),
+      const Offset(0, -700),
+    );
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('busca-compre-direto')), findsOneWidget);
+    expect(find.text('Amazon'), findsOneWidget);
+    expect(find.textContaining('12 páginas processadas'), findsOneWidget);
+    expect(find.text('Selecionada'), findsOneWidget);
+    expect(find.text('Coletar'), findsOneWidget);
+    await at.ensureVisible(find.text('Selecionada'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Selecionada'));
+    await at.pumpAndSettle();
+    expect(find.text('Selecionar'), findsOneWidget);
+    await at.ensureVisible(find.text('Selecionar'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Selecionar'));
+    await at.pumpAndSettle();
+    expect(find.text('Selecionada'), findsOneWidget);
+    expect(
+      requisicoes.any(
+        (requisicao) =>
+            requisicao.url.path == '/api/inter/produtos/lojas' &&
+            requisicao.method == 'GET',
+      ),
+      isTrue,
+    );
+    final alteracoes = requisicoes.where(
+      (requisicao) =>
+          requisicao.url.path == '/api/inter/produtos/lojas' &&
+          requisicao.method == 'PATCH',
+    );
+    expect(alteracoes.map((requisicao) => requisicao.body), [
+      '{"id":"amazon","selecionada":false}',
+      '{"id":"amazon","selecionada":true}',
+    ]);
   });
 
   testWidgets('usuário comum lê Sites parceiros sem acessar rota admin', (
@@ -425,9 +562,48 @@ void main() {
     );
     expect(find.text('Acompanhar'), findsNothing);
     expect(find.text('✓ Acompanhada'), findsOneWidget);
+    expect(find.text('Atualizar dados'), findsNothing);
+    expect(
+      requisicoes.where(
+        (requisicao) => requisicao.url.path == '/api/administracao/disparos',
+      ),
+      isEmpty,
+    );
   });
 
-  testWidgets('atualização continua fora do fluxo compacto do Inter', (
+  testWidgets('Compre direto não expõe seleção a usuário comum', (at) async {
+    final requisicoes = <http.Request>[];
+    await _abrir(
+      at,
+      tamanho: const Size(390, 1500),
+      resumo: _resumoComEstadosIndependentes,
+      cashback: _cashbackInter,
+      requisicoes: requisicoes,
+    );
+    await _irParaCompacto(at, DestinoCompacto.inter);
+    final compreDireto = find.text('Compre direto');
+    final abas = find.ancestor(
+      of: compreDireto,
+      matching: find.byType(SingleChildScrollView),
+    );
+    await at.drag(abas, const Offset(-220, 0));
+    await at.pumpAndSettle();
+    await at.tap(compreDireto);
+    await at.pumpAndSettle();
+
+    expect(
+      find.textContaining('exige autorização administrativa'),
+      findsOneWidget,
+    );
+    expect(
+      requisicoes.where(
+        (requisicao) => requisicao.url.path == '/api/inter/produtos/lojas',
+      ),
+      isEmpty,
+    );
+  });
+
+  testWidgets('Banco Inter compacto oferece atualização do domínio visível', (
     at,
   ) async {
     final requisicoes = <http.Request>[];
@@ -439,15 +615,42 @@ void main() {
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
 
-    expect(find.text('Atualizar Cashback'), findsNothing);
-    expect(find.text('Atualizar Produtos'), findsNothing);
+    expect(find.text('Atualizar dados'), findsOneWidget);
+    expect(find.byKey(const ValueKey('atualizar-dados-inter')), findsOneWidget);
+    await at.tap(find.text('Atualizar dados'));
+    await at.pumpAndSettle();
+    expect(
+      requisicoes.where(
+        (requisicao) =>
+            requisicao.url.path == '/api/administracao/disparos' &&
+            requisicao.method == 'POST' &&
+            requisicao.body == '{"dominio":"inter"}',
+      ),
+      hasLength(1),
+    );
+    expect(
+      find.text(
+        'Pedido de coleta aceito. Os dados atualizam quando o robô terminar.',
+      ),
+      findsOneWidget,
+    );
+
+    await at.tap(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('atualizar-dados-produtos_inter')),
+      findsOneWidget,
+    );
     final dominiosConsultados = requisicoes
         .where(
           (requisicao) => requisicao.url.path == '/api/administracao/disparos',
         )
         .map((requisicao) => requisicao.url.queryParameters['dominio'])
         .toSet();
-    expect(dominiosConsultados, isEmpty);
+    expect(
+      dominiosConsultados,
+      containsAll(<String>{'inter', 'produtos_inter'}),
+    );
   });
 
   testWidgets('Banco Inter completo não estoura em 320 px no tema escuro', (
@@ -497,11 +700,12 @@ void main() {
     expect(at.widget<TextField>(busca).controller?.text, 'x');
   });
 
-  testWidgets('atalho do cabeçalho abre Alertas sem passar pela gaveta', (
+  testWidgets('Alertas existentes continuam acessíveis pela gaveta', (
     at,
   ) async {
     await _abrir(at);
-    await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
+    await _abrirGaveta(at);
+    await at.tap(find.byKey(const Key('abrir-alertas-gaveta')));
     await at.pumpAndSettle();
 
     expect(find.text('Alertas'), findsOneWidget);
@@ -520,7 +724,7 @@ void main() {
     expect(find.text('Alertas'), findsNothing);
   });
 
-  testWidgets('conta oferece administração fora das quatro áreas', (at) async {
+  testWidgets('conta oferece administração fora das três áreas', (at) async {
     await _abrir(at, administrador: true);
     await _abrirGaveta(at);
     await at.tap(find.byKey(const Key('abrir-sistema-gaveta')));
@@ -548,12 +752,14 @@ void main() {
     await _abrirGaveta(at);
 
     expect(at.takeException(), isNull);
-    for (final destino in DestinoCompacto.values) {
+    for (final destino in DestinoCompacto.values.where(
+      (destino) => destino.principal,
+    )) {
       expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
     }
   });
 
-  testWidgets('quatro áreas continuam alcançáveis com texto ampliado', (
+  testWidgets('áreas e subáreas continuam alcançáveis com texto ampliado', (
     at,
   ) async {
     await _abrir(at, tamanho: const Size(320, 640), escalaTexto: 1.5);

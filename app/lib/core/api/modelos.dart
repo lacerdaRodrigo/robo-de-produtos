@@ -167,6 +167,11 @@ class LojaDireto {
     this.ultimaExecucao,
     this.ultimoEstado,
     this.paginas,
+    this.ultimaTentativaEm,
+    this.ultimaTentativaEstado,
+    this.ultimaColetaSucessoEm,
+    this.produtosEncontrados,
+    this.cashbackResumoTexto,
   });
 
   factory LojaDireto.parse(Map<String, dynamic> objeto) {
@@ -180,6 +185,13 @@ class LojaDireto {
       ultimaExecucao: _textoOpcional(objeto['ultima_execucao']),
       ultimoEstado: _textoOpcional(objeto['ultimo_estado']),
       paginas: (objeto['paginas'] as num?)?.toInt(),
+      ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+      ultimaTentativaEstado: _textoOpcional(
+        objeto['ultima_tentativa_estado'] ?? objeto['ultimo_estado'],
+      ),
+      ultimaColetaSucessoEm: _textoOpcional(objeto['ultima_coleta_sucesso_em']),
+      produtosEncontrados: (objeto['produtos_encontrados'] as num?)?.toInt(),
+      cashbackResumoTexto: _textoOpcional(objeto['cashback_resumo_texto']),
     );
   }
 
@@ -192,6 +204,11 @@ class LojaDireto {
   final String? ultimaExecucao;
   final String? ultimoEstado;
   final int? paginas;
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
+  final String? ultimaColetaSucessoEm;
+  final int? produtosEncontrados;
+  final String? cashbackResumoTexto;
 
   LojaDireto copiarCom({bool? selecionada}) => LojaDireto(
     id: id,
@@ -203,6 +220,11 @@ class LojaDireto {
     ultimaExecucao: ultimaExecucao,
     ultimoEstado: ultimoEstado,
     paginas: paginas,
+    ultimaTentativaEm: ultimaTentativaEm,
+    ultimaTentativaEstado: ultimaTentativaEstado,
+    ultimaColetaSucessoEm: ultimaColetaSucessoEm,
+    produtosEncontrados: produtosEncontrados,
+    cashbackResumoTexto: cashbackResumoTexto,
   );
 }
 
@@ -374,6 +396,7 @@ class CashbackInter {
     required this.descricaoSecundaria,
     required this.encontrada,
     required this.favorita,
+    this.link,
   });
 
   factory CashbackInter.parse(Map<String, dynamic> objeto) => CashbackInter(
@@ -393,6 +416,7 @@ class CashbackInter {
     descricaoSecundaria: _textoOpcional(objeto['descricao_secundaria']),
     encontrada: _booleano(objeto['encontrada']),
     favorita: _booleano(objeto['favorita']),
+    link: _textoOpcional(objeto['link']),
   );
 
   final String id;
@@ -407,6 +431,23 @@ class CashbackInter {
   final String? descricaoSecundaria;
   final bool encontrada;
   final bool favorita;
+  final String? link;
+
+  CashbackInter copiarCom({bool? favorita}) => CashbackInter(
+    id: id,
+    slug: slug,
+    nome: nome,
+    cashbackPrincipalTexto: cashbackPrincipalTexto,
+    cashbackPrincipalValor: cashbackPrincipalValor,
+    cashbackSecundarioTexto: cashbackSecundarioTexto,
+    cashbackSecundarioValor: cashbackSecundarioValor,
+    etiqueta: etiqueta,
+    descricaoPrincipal: descricaoPrincipal,
+    descricaoSecundaria: descricaoSecundaria,
+    encontrada: encontrada,
+    favorita: favorita ?? this.favorita,
+    link: link,
+  );
 }
 
 class StatusApi {

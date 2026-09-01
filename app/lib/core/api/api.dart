@@ -196,11 +196,15 @@ class Api {
   Future<Pagina<LojaDireto>> lojasDiretas({
     String q = '',
     int pagina = 1,
+    String ordenar = 'nome',
+    String filtro = 'todas',
   }) async {
     final corpo = await cliente.obter(
       '/api/inter/produtos/lojas',
       consulta: <String, String>{
         'q': q,
+        'ordenar': ordenar,
+        'filtro': filtro,
         'pagina': '$pagina',
         'por_pagina': '$paginaPadrao',
       },

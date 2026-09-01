@@ -32,6 +32,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
+        corDestaque: CoresRadar.de(context).acao,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

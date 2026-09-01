@@ -91,7 +91,15 @@ export type LojaDireta = {
   ultima_execucao: string | null;
   ultimo_estado: string | null;
   paginas: number | null;
+  ultima_tentativa_em: string | null;
+  ultima_tentativa_estado: "iniciada" | "sucesso" | "falha" | null;
+  ultima_coleta_sucesso_em: string | null;
+  produtos_encontrados: number | null;
+  cashback_resumo_texto: string | null;
 };
+
+export type OrdenacaoLojasDiretas = "nome" | "cashback";
+export type FiltroLojasDiretas = "todas" | "acompanhadas";
 
 export type HistoricoProduto = {
   produto: ProdutoDireto & { ativo: boolean };
@@ -313,6 +321,8 @@ export async function buscarLojasDiretas(
   termo: string,
   pagina = 1,
   porPagina = 10,
+  ordenar: OrdenacaoLojasDiretas = "nome",
+  filtro: FiltroLojasDiretas = "todas",
 ): Promise<LojaDireta[]> {
   const sql = conectar();
   const busca = normalizarBuscaProdutosInter(termo);
@@ -321,30 +331,77 @@ export async function buscarLojasDiretas(
     Number.isFinite(porPagina) && porPagina > 0 ? Math.floor(porPagina) : 10;
   const deslocamento = (paginaSegura - 1) * tamanhoSeguro;
   const linhas = (await sql`
-    SELECT l.id, l.id_externo, l.slug, l.nome, l.selecionada, l.ativa,
-           e.concluida_em AS ultima_execucao, e.estado AS ultimo_estado, e.paginas
-      FROM loja_direta_inter l
+    WITH lojas AS (
+      SELECT l.id, l.id_externo, l.slug, l.nome, l.selecionada, l.ativa,
+             tentativa.concluida_em AS ultima_execucao,
+             tentativa.estado AS ultimo_estado,
+             tentativa.paginas,
+             tentativa.iniciada_em AS ultima_tentativa_em,
+             tentativa.estado AS ultima_tentativa_estado,
+             sucesso.concluida_em AS ultima_coleta_sucesso_em,
+             sucesso.produtos_unicos AS produtos_encontrados,
+             cashback.cashback_resumo_valor
+        FROM loja_direta_inter l
       LEFT JOIN LATERAL (
-        SELECT concluida_em, estado, paginas
+        SELECT iniciada_em, concluida_em, estado, paginas
           FROM execucao_loja_produtos_inter
          WHERE loja_direta_inter_id = l.id
-         ORDER BY iniciada_em DESC LIMIT 1
-      ) e ON TRUE
-     WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`})
-     ORDER BY l.nome, l.id_externo
+         ORDER BY iniciada_em DESC, id DESC
+         LIMIT 1
+      ) tentativa ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT id, concluida_em, produtos_unicos
+          FROM execucao_loja_produtos_inter
+         WHERE loja_direta_inter_id = l.id AND estado = 'sucesso'
+         ORDER BY concluida_em DESC, id DESC
+         LIMIT 1
+      ) sucesso ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT max(m.cashback_percentual) AS cashback_resumo_valor
+          FROM medicao_produto_direto_inter m
+         WHERE m.execucao_loja_produtos_inter_id = sucesso.id
+      ) cashback ON TRUE
+       WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`})
+         AND (${filtro === "todas"} OR l.selecionada = TRUE)
+    )
+    SELECT id, id_externo, slug, nome, selecionada, ativa,
+           ultima_execucao, ultimo_estado, paginas,
+           ultima_tentativa_em, ultima_tentativa_estado,
+           ultima_coleta_sucesso_em, produtos_encontrados,
+           CASE WHEN cashback_resumo_valor IS NULL THEN NULL
+                ELSE 'Até ' || replace(
+                  regexp_replace(
+                    regexp_replace(
+                      cashback_resumo_valor::text,
+                      '(\\.[0-9]*?)0+$', '\\1'
+                    ),
+                    '\\.$', ''
+                  ),
+                  '.', ','
+                ) || '% de cashback'
+           END AS cashback_resumo_texto
+      FROM lojas
+     ORDER BY
+       CASE WHEN ${ordenar === "cashback"} THEN cashback_resumo_valor END DESC NULLS LAST,
+       nome,
+       id_externo
      LIMIT ${tamanhoSeguro}
     OFFSET ${deslocamento}
   `) as LojaDireta[];
   return linhas;
 }
 
-export async function totalLojasDiretas(termo = ""): Promise<number> {
+export async function totalLojasDiretas(
+  termo = "",
+  filtro: FiltroLojasDiretas = "todas",
+): Promise<number> {
   const sql = conectar();
   const busca = normalizarBuscaProdutosInter(termo);
   const linhas = (await sql`
     SELECT count(*)::int AS total
-      FROM loja_direta_inter l
+     FROM loja_direta_inter l
      WHERE (${busca} = '' OR l.nome_busca LIKE ${`%${busca}%`})
+       AND (${filtro === "todas"} OR l.selecionada = TRUE)
   `) as Array<{ total: number }>;
   return Number(linhas[0]?.total ?? 0);
 }

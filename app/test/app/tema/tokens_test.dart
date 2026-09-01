@@ -8,63 +8,65 @@ import 'package:app_robo/app/tema/tokens.dart';
 
 void main() {
   test('tokens carregam os valores do protótipo mobile', () {
-    expect(Tokens.marcaProfunda.toARGB32(), const Color(0xFF081A2D).toARGB32());
-    expect(Tokens.marca.toARGB32(), const Color(0xFF102A43).toARGB32());
-    expect(Tokens.marcaMedia.toARGB32(), const Color(0xFF163B5C).toARGB32());
-    expect(Tokens.marcaClara.toARGB32(), const Color(0xFF1769AA).toARGB32());
-    expect(Tokens.acaoFundo.toARGB32(), const Color(0xFFDCEEFF).toARGB32());
-    expect(Tokens.ciano.toARGB32(), const Color(0xFF25B8D8).toARGB32());
-    expect(Tokens.cianoFundo.toARGB32(), const Color(0xFFDEF8FD).toARGB32());
-    expect(Tokens.ganho.toARGB32(), const Color(0xFF16803C).toARGB32());
-    expect(Tokens.ganhoFundo.toARGB32(), const Color(0xFFDCFCE7).toARGB32());
+    expect(Tokens.marcaProfunda.toARGB32(), const Color(0xFF18212A).toARGB32());
+    expect(Tokens.marca.toARGB32(), const Color(0xFF1788B8).toARGB32());
+    expect(Tokens.marcaMedia.toARGB32(), const Color(0xFF126F97).toARGB32());
+    expect(Tokens.marcaClara.toARGB32(), const Color(0xFF1788B8).toARGB32());
+    expect(Tokens.acaoFundo.toARGB32(), const Color(0xFFE1F3FA).toARGB32());
+    expect(Tokens.ciano.toARGB32(), const Color(0xFF1788B8).toARGB32());
+    expect(Tokens.cianoFundo.toARGB32(), const Color(0xFFE1F3FA).toARGB32());
+    expect(Tokens.ganho.toARGB32(), const Color(0xFF16835F).toARGB32());
+    expect(Tokens.ganhoFundo.toARGB32(), const Color(0xFFE0F4EB).toARGB32());
     expect(Tokens.atencao.toARGB32(), const Color(0xFF8B5A12).toARGB32());
     expect(Tokens.atencaoFundo.toARGB32(), const Color(0xFFFFF2D7).toARGB32());
-    expect(Tokens.perigo.toARGB32(), const Color(0xFFC53030).toARGB32());
-    expect(Tokens.fundo.toARGB32(), const Color(0xFFF3F7FB).toARGB32());
+    expect(Tokens.perigo.toARGB32(), const Color(0xFFD44747).toARGB32());
+    expect(Tokens.pagina.toARGB32(), const Color(0xFFDBE5EE).toARGB32());
+    expect(Tokens.fundo.toARGB32(), const Color(0xFFEAF0F5).toARGB32());
     expect(Tokens.superficie.toARGB32(), const Color(0xFFFFFFFF).toARGB32());
     expect(
       Tokens.superficieAlternativa.toARGB32(),
-      const Color(0xFFEDF3F8).toARGB32(),
+      const Color(0xFFE1EAF2).toARGB32(),
     );
-    expect(Tokens.borda.toARGB32(), const Color(0xFFDCE6EE).toARGB32());
+    expect(Tokens.borda.toARGB32(), const Color(0xFFC4D2DE).toARGB32());
   });
 
   test('tokens escuros carregam os valores do protótipo mobile', () {
-    expect(Tokens.fundoEscuro.toARGB32(), const Color(0xFF06111E).toARGB32());
+    expect(Tokens.paginaEscura.toARGB32(), const Color(0xFF2C3035).toARGB32());
+    expect(Tokens.fundoEscuro.toARGB32(), const Color(0xFF33383E).toARGB32());
     expect(
       Tokens.superficieEscura.toARGB32(),
-      const Color(0xFF0D2032).toARGB32(),
+      const Color(0xFF3E444B).toARGB32(),
     );
     expect(
       Tokens.superficieAlternativaEscura.toARGB32(),
-      const Color(0xFF132B40).toARGB32(),
+      const Color(0xFF474E56).toARGB32(),
     );
-    expect(Tokens.textoEscuro.toARGB32(), const Color(0xFFEDF7FF).toARGB32());
+    expect(Tokens.textoEscuro.toARGB32(), const Color(0xFFF4F7FA).toARGB32());
     expect(
       Tokens.textoSuaveEscuro.toARGB32(),
-      const Color(0xFF9FB3C5).toARGB32(),
+      const Color(0xFFC0C7CF).toARGB32(),
     );
     expect(
       Tokens.acaoFundoEscuro.toARGB32(),
-      const Color(0xFF173B56).toARGB32(),
+      const Color(0xFF415B68).toARGB32(),
     );
     expect(
       Tokens.cianoFundoEscuro.toARGB32(),
-      const Color(0xFF103A47).toARGB32(),
+      const Color(0xFF415B68).toARGB32(),
     );
     expect(
       Tokens.ganhoFundoEscuro.toARGB32(),
-      const Color(0xFF113A27).toARGB32(),
+      const Color(0xFF3D5648).toARGB32(),
     );
     expect(
       Tokens.atencaoFundoEscuro.toARGB32(),
       const Color(0xFF402F14).toARGB32(),
     );
-    expect(Tokens.ganhoEscuro.toARGB32(), const Color(0xFF65D98B).toARGB32());
+    expect(Tokens.ganhoEscuro.toARGB32(), const Color(0xFF81E4AD).toARGB32());
     expect(Tokens.atencaoEscuro.toARGB32(), const Color(0xFFFFD17A).toARGB32());
-    expect(Tokens.bordaEscura.toARGB32(), const Color(0x24BED9EE).toARGB32());
-    expect(Tokens.acaoEscura, Tokens.marcaClara);
-    expect(Tokens.perigoEscuro, Tokens.perigo);
+    expect(Tokens.bordaEscura.toARGB32(), const Color(0xFF5C6670).toARGB32());
+    expect(Tokens.acaoEscura.toARGB32(), const Color(0xFF70CEF3).toARGB32());
+    expect(Tokens.perigoEscuro.toARGB32(), const Color(0xFFFF8585).toARGB32());
   });
 
   test('escala estrutural do redesign permanece estável', () {

@@ -64,6 +64,7 @@ Future<void> abrir(
   WidgetTester at,
   Api api, {
   VoidCallback? aoAbrirLojas,
+  VoidCallback? aoAbrirProgramas,
   VoidCallback? aoAbrirLivelo,
   VoidCallback? aoAbrirProdutos,
   VoidCallback? aoAbrirCashback,
@@ -84,6 +85,7 @@ Future<void> abrir(
         body: PaginaInicio(
           api: api,
           aoAbrirLojas: aoAbrirLojas,
+          aoAbrirProgramas: aoAbrirProgramas,
           aoAbrirLivelo: aoAbrirLivelo,
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
@@ -244,10 +246,13 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Bom dia.'), findsOneWidget);
-    expect(find.text('Seu radar está atualizado.'), findsOneWidget);
-    expect(find.text('Seus espaços'), findsOneWidget);
-    await at.scrollUntilVisible(find.text('Resumo agora'), 300);
+    expect(find.text('Seu radar hoje'), findsOneWidget);
+    expect(
+      find.text('As melhores oportunidades continuam ativas.'),
+      findsOneWidget,
+    );
+    expect(find.text('Explorar'), findsOneWidget);
+    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
     expect(find.text('130'), findsOneWidget);
     expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
   });

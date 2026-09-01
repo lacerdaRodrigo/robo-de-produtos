@@ -13,6 +13,7 @@ import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
 import '../paginas/lugar.dart';
+import '../paginas/programas.dart';
 import '../tema/tokens.dart';
 import 'destinos.dart';
 
@@ -106,32 +107,50 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       agora: widget.agora,
       experienciaCompacta: true,
       ativa: _selecionadoCompacto == DestinoCompacto.inicio,
+      aoAbrirProgramas: () => _selecionarCompacto(DestinoCompacto.programas),
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
       aoAbrirProdutos: () => _selecionarCompacto(DestinoCompacto.produtos),
     ),
+    _visitadosCompactos.contains(DestinoCompacto.programas)
+        ? PaginaProgramas(
+            key: const PageStorageKey('programas-compacto'),
+            api: widget.api,
+            ativa: _selecionadoCompacto == DestinoCompacto.programas,
+            aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
+            aoAbrirInter: () => _selecionarCompacto(DestinoCompacto.inter),
+          )
+        : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.livelo)
-        ? (!kIsWeb
-              ? PaginaCatalogoLiveloAndroid(
-                  key: const PageStorageKey('livelo-catalogo-nativo'),
-                  api: widget.api,
-                  administrador: widget.administrador,
-                  aoAbrirAlertas: _abrirAlertas,
-                )
-              : PaginaPainelLivelo(
-                  key: const PageStorageKey('livelo-compacto'),
-                  api: widget.api,
-                  administrador: widget.administrador,
-                  experienciaCompacta: true,
-                ))
+        ? _PaginaProgramaInterna(
+            chaveVoltar: const Key('voltar-programas-livelo'),
+            aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
+            child: !kIsWeb
+                ? PaginaCatalogoLiveloAndroid(
+                    key: const PageStorageKey('livelo-catalogo-nativo'),
+                    api: widget.api,
+                    administrador: widget.administrador,
+                    aoAbrirAlertas: _abrirAlertas,
+                  )
+                : PaginaPainelLivelo(
+                    key: const PageStorageKey('livelo-compacto'),
+                    api: widget.api,
+                    administrador: widget.administrador,
+                    experienciaCompacta: true,
+                  ),
+          )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.inter)
-        ? PaginaHubShoppingInter(
-            key: const PageStorageKey('inter-compacto'),
-            api: widget.api,
-            administrador: widget.administrador,
-            experienciaCompacta: true,
-            ativa: _selecionadoCompacto == DestinoCompacto.inter,
+        ? _PaginaProgramaInterna(
+            chaveVoltar: const Key('voltar-programas-inter'),
+            aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
+            child: PaginaHubShoppingInter(
+              key: const PageStorageKey('inter-compacto'),
+              api: widget.api,
+              administrador: widget.administrador,
+              experienciaCompacta: true,
+              ativa: _selecionadoCompacto == DestinoCompacto.inter,
+            ),
           )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.produtos)
@@ -228,7 +247,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           appBar: _CabecalhoCompacto(
             titulo: _selecionadoCompacto.titulo,
             aoAbrirMenu: () => _scaffold.currentState?.openDrawer(),
-            aoAbrirAlertas: _abrirAlertas,
           ),
           drawer: GavetaRadar(
             selecionado: _selecionadoCompacto,
@@ -239,6 +257,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             identificacaoConta: widget.identificacaoConta,
           ),
           body: conteudo,
+          bottomNavigationBar: _BarraInferiorRadar(
+            selecionado: _selecionadoCompacto.destinoDaBarra,
+            aoSelecionar: _selecionarCompacto,
+          ),
         );
       },
     );
@@ -247,15 +269,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
 class _CabecalhoCompacto extends StatelessWidget
     implements PreferredSizeWidget {
-  const _CabecalhoCompacto({
-    required this.titulo,
-    required this.aoAbrirMenu,
-    required this.aoAbrirAlertas,
-  });
+  const _CabecalhoCompacto({required this.titulo, required this.aoAbrirMenu});
 
   final String titulo;
   final VoidCallback aoAbrirMenu;
-  final VoidCallback aoAbrirAlertas;
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
@@ -271,7 +288,7 @@ class _CabecalhoCompacto extends StatelessWidget
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      shape: Border(bottom: BorderSide(color: cores.borda)),
+      shape: const Border(),
       leadingWidth: 59,
       leading: Padding(
         padding: const EdgeInsets.only(left: 15),
@@ -295,27 +312,149 @@ class _CabecalhoCompacto extends StatelessWidget
       title: _AssinaturaCompacta(titulo: titulo),
       titleSpacing: 0,
       centerTitle: false,
-      actions: [
-        if (!kIsWeb)
-          const SizedBox.square(
-            dimension: 38,
-            child: ControleAparenciaRadar.icone(),
-          ),
-        Padding(
-          padding: const EdgeInsets.only(right: 15),
-          child: SizedBox.square(
-            dimension: 38,
-            child: IconButton(
-              key: const Key('abrir-alertas-cabecalho'),
-              tooltip: 'Abrir alertas',
-              onPressed: aoAbrirAlertas,
-              icon: const Icon(Icons.notifications_outlined),
-            ),
-          ),
-        ),
-      ],
+      actions: const [SizedBox(width: 15)],
     );
   }
+}
+
+class _BarraInferiorRadar extends StatelessWidget {
+  const _BarraInferiorRadar({
+    required this.selecionado,
+    required this.aoSelecionar,
+  });
+
+  final DestinoCompacto selecionado;
+  final ValueChanged<DestinoCompacto> aoSelecionar;
+
+  static const _destinos = <DestinoCompacto>[
+    DestinoCompacto.inicio,
+    DestinoCompacto.programas,
+    DestinoCompacto.produtos,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final tema = Theme.of(context);
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tema.cardColor,
+          border: Border.all(color: cores.borda),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+        ),
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              for (final destino in _destinos)
+                Expanded(
+                  child: _DestinoBarraInferior(
+                    destino: destino,
+                    selecionado: selecionado == destino,
+                    aoTocar: () => aoSelecionar(destino),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DestinoBarraInferior extends StatelessWidget {
+  const _DestinoBarraInferior({
+    required this.destino,
+    required this.selecionado,
+    required this.aoTocar,
+  });
+
+  final DestinoCompacto destino;
+  final bool selecionado;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final onBrand = Theme.of(context).colorScheme.onPrimary;
+    return Semantics(
+      selected: selecionado,
+      button: true,
+      label: destino.titulo,
+      child: InkWell(
+        key: Key('barra-${destino.name}'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: selecionado ? 36 : 28,
+                height: selecionado ? 34 : 28,
+                decoration: BoxDecoration(
+                  color: selecionado ? cores.acao : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  destino.icone,
+                  size: 21,
+                  color: selecionado ? onBrand : cores.textoSuave,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                destino.titulo,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: selecionado ? cores.acao : cores.textoSuave,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaginaProgramaInterna extends StatelessWidget {
+  const _PaginaProgramaInterna({
+    required this.chaveVoltar,
+    required this.aoVoltar,
+    required this.child,
+  });
+
+  final Key chaveVoltar;
+  final VoidCallback aoVoltar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+          child: TextButton.icon(
+            key: chaveVoltar,
+            onPressed: aoVoltar,
+            icon: const Icon(Icons.arrow_back, size: 17),
+            label: const Text('Todos os programas'),
+          ),
+        ),
+      ),
+      Expanded(child: child),
+    ],
+  );
 }
 
 class _AssinaturaCompacta extends StatelessWidget {
@@ -395,7 +534,7 @@ class GavetaRadar extends StatelessWidget {
           .clamp(0.0, 360.0)
           .toDouble(),
       shape: const RoundedRectangleBorder(),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: CustomScrollView(
         physics: const ClampingScrollPhysics(),
         slivers: [
@@ -415,7 +554,7 @@ class GavetaRadar extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(8, 0, 8, 9),
                     child: Text(
-                      '4 ESPAÇOS PRINCIPAIS',
+                      'NAVEGAÇÃO PRINCIPAL',
                       style: TextStyle(
                         color: CoresRadar.de(context).textoSuave,
                         fontSize: 9,
@@ -424,7 +563,9 @@ class GavetaRadar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  for (final destino in DestinoCompacto.values)
+                  for (final destino in DestinoCompacto.values.where(
+                    (destino) => destino.principal,
+                  ))
                     _ItemNavegacaoCompacto(
                       key: Key('destino-${destino.name}'),
                       destino: destino,
@@ -479,17 +620,13 @@ class _TopoGaveta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final identificacao = identificacaoConta ?? 'Conta do Radar';
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final escuro = tema.brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Tokens.marcaProfunda,
-        gradient: RadialGradient(
-          center: const Alignment(1, -1),
-          radius: 2.1,
-          colors: <Color>[
-            Tokens.ciano.withValues(alpha: 0.38),
-            Tokens.marcaProfunda,
-          ],
-        ),
+        color: tema.scaffoldBackgroundColor,
+        border: Border(bottom: BorderSide(color: cores.borda)),
       ),
       child: SafeArea(
         bottom: false,
@@ -499,16 +636,15 @@ class _TopoGaveta extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const LogoRadar(tamanho: 42, sobreFundoEscuro: true),
+                  LogoRadar(tamanho: 42, sobreFundoEscuro: escuro),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Radar de Benefícios',
                           style: TextStyle(
-                            color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
                           ),
@@ -516,7 +652,7 @@ class _TopoGaveta extends StatelessWidget {
                         Text(
                           'Pontos, cashback e preços',
                           style: TextStyle(
-                            color: Color(0xFFA9C0D2),
+                            color: cores.textoSuave,
                             fontSize: 9,
                           ),
                         ),
@@ -527,14 +663,12 @@ class _TopoGaveta extends StatelessWidget {
                     key: const Key('fechar-menu-principal'),
                     tooltip: 'Fechar menu principal',
                     onPressed: () => Navigator.of(context).pop(),
-                    color: Colors.white,
+                    color: cores.textoSuave,
                     style: IconButton.styleFrom(
                       minimumSize: const Size.square(42),
                       maximumSize: const Size.square(42),
-                      backgroundColor: Colors.white.withValues(alpha: 0.10),
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.16),
-                      ),
+                      backgroundColor: cores.superficieAlternativa,
+                      side: BorderSide(color: cores.borda),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -545,21 +679,23 @@ class _TopoGaveta extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Material(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: tema.cardColor,
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.13)),
+                  side: BorderSide(color: cores.borda),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: ListTile(
                   key: const Key('abrir-conta-gaveta'),
                   contentPadding: const EdgeInsets.all(11),
-                  textColor: Colors.white,
-                  iconColor: const Color(0xFFA9C0D2),
+                  textColor: tema.colorScheme.onSurface,
+                  iconColor: cores.textoSuave,
                   leading: CircleAvatar(
                     radius: 20.5,
-                    backgroundColor: Tokens.ciano,
-                    foregroundColor: Tokens.marcaProfunda,
+                    backgroundColor: escuro
+                        ? Tokens.acaoFundoEscuro
+                        : Tokens.acaoFundo,
+                    foregroundColor: cores.acao,
                     child: Text(
                       _iniciaisConta(identificacao),
                       style: const TextStyle(
@@ -579,10 +715,7 @@ class _TopoGaveta extends StatelessWidget {
                   ),
                   subtitle: Text(
                     administrador ? 'Acesso administrador' : 'Acesso padrão',
-                    style: const TextStyle(
-                      color: Color(0xFFA9C0D2),
-                      fontSize: 9,
-                    ),
+                    style: TextStyle(color: cores.textoSuave, fontSize: 9),
                   ),
                   trailing: const Icon(Icons.chevron_right, size: 18),
                   onTap: () {

@@ -28,11 +28,63 @@ from robo_livelo.modelos_produtos_inter import (
     ResumoColetaProdutosInter,
 )
 from robo_livelo.portas_produtos_inter import FalhaProdutosInter, PaginacaoProdutosInterInvalida
-from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja
+from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja, preparar_rodada
 from testes.conftest import FUSO_BRASILIA
 
 AGORA = datetime(2026, 8, 16, 20, 0, tzinfo=FUSO_BRASILIA)
 LOJA = LojaDiretaInter("loja-1", "casas-bahia", "Casas Bahia", selecionada=True)
+
+
+class FonteFakeLojasDiretas:
+    def __init__(self, total: int):
+        self.total = total
+
+    def obter_json(self):
+        return json.dumps(
+            {
+                "sellers": [
+                    {
+                        "id": f"vendedor-{indice}",
+                        "slug": f"loja-{indice}",
+                        "name": f"Loja {indice}",
+                    }
+                    for indice in range(self.total)
+                ]
+            }
+        )
+
+
+class RepositorioFakeLojasDiretas:
+    def __init__(self):
+        self.sincronizadas = ()
+        self.rodadas = []
+
+    def sincronizar_lojas(self, lojas):
+        self.sincronizadas = lojas
+
+    def listar_selecionadas(self):
+        return []
+
+    def iniciar_rodada(self, momento, versao, lojas_planejadas):
+        self.rodadas.append((momento, versao, lojas_planejadas))
+        return 91
+
+
+@pytest.mark.parametrize("total", [110, 130])
+def teste_total_de_lojas_do_compre_direto_e_dinamico(total):
+    repositorio = RepositorioFakeLojasDiretas()
+
+    rodada_id, selecionadas = preparar_rodada(
+        FonteFakeLojasDiretas(total),
+        repositorio,
+        agora=AGORA,
+        versao="9.9.9",
+    )
+
+    assert rodada_id == 91
+    assert selecionadas == []
+    assert len(repositorio.sincronizadas) == total
+    assert repositorio.rodadas == [(AGORA, "9.9.9", 0)]
 
 
 def pagina(offset: int, ultima: bool, *produtos: dict, total: int = 3, limite: int = 36) -> str:

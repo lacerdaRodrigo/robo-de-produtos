@@ -234,6 +234,14 @@
       .tag { padding: 6px 8px; border-radius: 999px; background: var(--surface-soft); color: var(--muted); font-size: 10px; font-weight: 700; }
       .follow { padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
       .follow.active { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--accent-soft); color: var(--accent); }
+      .partner-offers { display: grid; gap: 7px; margin-top: 13px; padding: 10px 11px; border-radius: 13px; background: var(--surface-soft); }
+      .partner-offer { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 10px; }
+      .partner-offer strong { color: var(--success); font-size: 11px; text-align: right; }
+      .partner-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+      .partner-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+      .store-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+      .partner-link { display: inline-flex; align-items: center; gap: 5px; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--brand); color: var(--on-brand); font-size: 11px; font-weight: 800; cursor: pointer; }
+      .partner-link svg { width: 15px; height: 15px; }
 
       .catalog-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 10px; }
       .catalog-count strong, .catalog-count span { display: block; }
@@ -311,7 +319,20 @@
       .empty-state{display:none;margin-top:14px;padding:22px 16px;border:1px dashed var(--line);border-radius:18px;background:var(--surface);color:var(--muted);text-align:center}
       .empty-state.visible{display:block}
       .product .after{margin-top:8px;padding:8px 10px;border-radius:11px;background:var(--success-soft);color:var(--success);font-size:11px;font-weight:850}
-      .direct-card{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;padding:15px}
+      .direct-card{display:grid;gap:11px;padding:15px}
+      .direct-head{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:start;gap:12px}
+      .direct-head>.status-chip{grid-column:2;justify-self:start}
+      .direct-status-text{color:var(--muted);font-size:11px;line-height:1.45}
+      .direct-data{display:grid;gap:7px;padding-top:11px;border-top:1px solid var(--line)}
+      .direct-data-title{color:var(--muted);font-size:10px;font-weight:850}
+      .direct-data-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px}
+      .direct-data-row strong{color:var(--text);font-size:10px;text-align:right}
+      .direct-benefit{color:var(--success);font-size:11px;font-weight:900;text-align:right}
+      .direct-data,.direct-snapshot-benefit{display:none}
+      .direct-list.followed-view .direct-data{display:grid}
+      .direct-list.followed-view .direct-snapshot-benefit{display:block}
+      .direct-list.followed-view .direct-benefit{display:none}
+      .direct-snapshot-benefit{padding:10px;border-radius:12px;background:var(--success-soft);color:var(--success);font-size:11px;font-weight:900}
       .direct-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
       .mini-action{padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);color:var(--muted);font-size:10px;font-weight:800;cursor:pointer}
       .mini-action.primary{background:var(--brand-soft);color:var(--brand)}
@@ -371,8 +392,8 @@
         .screen{padding-right:14px;padding-left:14px}
         .appbar{padding-right:14px;padding-left:14px}
         .store-head{grid-template-columns:40px 1fr}.store-logo{width:40px;height:40px}.benefit{grid-column:2;justify-self:start;margin-top:2px}
-        .store-meta{align-items:flex-start;flex-direction:column}.follow{width:100%}
-        .direct-card{grid-template-columns:42px 1fr}.direct-card>.status-chip{grid-column:2;justify-self:start}
+        .store-meta{align-items:flex-start;flex-direction:column}.store-actions{width:100%;justify-content:stretch}.follow,.partner-link{flex:1;justify-content:center}
+        .direct-head{grid-template-columns:42px 1fr}.direct-head>.status-chip{grid-column:2;justify-self:start}
         .metrics{gap:5px}.metric{padding:11px 5px}.metric strong{font-size:17px}
         .bottom-nav{margin-right:8px;margin-left:8px}
       }
@@ -599,8 +620,16 @@
                  <div class="chips" id="site-chips"><button class="chip active" type="button" data-site-filter="best">Melhor cashback</button><button class="chip" type="button" data-site-filter="followed">Acompanhadas</button><button class="chip" type="button" data-site-filter="all">Todos</button></div>
                  <div class="catalog-toolbar"><span class="catalog-count"><strong id="site-count">2 sites nesta demonstração</strong><span>18 sites no catálogo atual</span></span><button class="sort-button" type="button" data-sort-list="sites"><svg><path d="M3 6h18M6 12h12M9 18h6" /></svg><span>Maior cashback</span></button></div>
                  <div class="list" id="site-list">
-                   <article class="card store-card" data-store="Amazon marketplace" data-followed="false" data-cashback="6"><div class="store-head"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Site parceiro</small></span><span class="benefit">6%</span></div><div class="store-meta"><div class="tags"><span class="tag">Melhor cashback</span></div><button class="follow" type="button">Acompanhar</button></div></article>
-                   <article class="card store-card" data-store="Samsung eletronicos" data-followed="true" data-cashback="5"><div class="store-head"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Site parceiro</small></span><span class="benefit">5%</span></div><div class="store-meta"><div class="tags"><span class="tag">Cashback ativo</span></div><button class="follow active" type="button">Acompanhando</button></div></article>
+                   <article class="card store-card" data-store="Amazon marketplace" data-followed="false" data-cashback="6">
+                     <div class="store-head"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Site parceiro</small></span><span class="benefit">6%</span></div>
+                     <div class="partner-offers"><div class="partner-offer"><span>Para correntista</span><strong>6% de cashback</strong></div><div class="partner-offer"><span>Para não-correntista</span><strong>2% de cashback</strong></div></div>
+                     <div class="store-meta"><span class="partner-status">Cashback há 22 min</span><div class="store-actions"><button class="follow" type="button">Acompanhar</button><button class="partner-link" type="button" data-toast="No Flutter, esta ação abre o link HTTPS real fornecido pela API.">Ir para o Inter <svg><path d="M14 4h6v6M20 4l-9 9M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6" /></svg></button></div></div>
+                   </article>
+                   <article class="card store-card" data-store="Samsung eletronicos" data-followed="true" data-cashback="5">
+                     <div class="store-head"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Site parceiro</small></span><span class="benefit">5%</span></div>
+                     <div class="partner-offers"><div class="partner-offer"><span>Para correntista</span><strong>5% de cashback</strong></div></div>
+                     <div class="store-meta"><span class="partner-status">Condição publicada pelo Inter</span><div class="store-actions"><button class="follow active" type="button">Deixar de acompanhar</button><button class="partner-link" type="button" data-toast="No Flutter, esta ação abre o link HTTPS real fornecido pela API.">Ir para o Inter <svg><path d="M14 4h6v6M20 4l-9 9M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6" /></svg></button></div></div>
+                   </article>
                  </div>
                  <div class="empty-state" id="site-empty">Nenhum site parceiro encontrado.</div>
                  <div class="catalog-footer"><span id="sites-page-status">Página 1 de 2 · 18 sites</span><div class="pager" aria-label="Paginação de sites parceiros"><button class="page-button" type="button" data-page-group="sites" data-page="prev">‹</button><button class="page-button active" type="button" data-page-group="sites" data-page="1">1</button><button class="page-button" type="button" data-page-group="sites" data-page="2">2</button><button class="page-button" type="button" data-page-group="sites" data-page="next">›</button></div></div>
@@ -608,13 +637,34 @@
                </div>
 
                <div class="subview" data-inter-panel="direto">
-                 <div class="prototype-note"><strong>Compre direto:</strong> seleção de lojas e última execução reaproveitam os endpoints/metadados atuais.</div>
+                 <div class="prototype-note"><strong>Compre direto:</strong> busca, filtros, ordenação e paginação são aplicados pela API. Falhas preservam o último snapshot válido.</div>
                  <div class="status-row"><span class="catalog-count"><strong id="direct-count">1 de 3 selecionadas</strong><span>Somente lojas ativas entram na coleta</span></span><button class="refresh-action" type="button" data-refresh="Compre direto"><svg><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg><span>Coletar selecionadas</span></button></div>
-                 <div class="list">
-                   <article class="card direct-card" data-direct-active="true"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Última execução concluída · 12 páginas processadas</small><span class="direct-actions"><button class="mini-action primary active select-store" type="button" data-selected="true">Selecionada</button><button class="mini-action" type="button" data-toast="Execução concluída: 12 páginas processadas.">Ver execução</button></span></span><span class="status-chip">Ativa</span></article>
-                   <article class="card direct-card" data-direct-active="true"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Última execução concluída · páginas não informadas</small><span class="direct-actions"><button class="mini-action select-store" type="button" data-selected="false">Selecionar</button><button class="mini-action" type="button" data-toast="Execução concluída; quantidade de páginas indisponível.">Ver execução</button></span></span><span class="status-chip">Ativa</span></article>
-                   <article class="card direct-card inactive" data-direct-active="false"><span class="store-logo">CB</span><span class="store-name"><strong>Casas Bahia</strong><small>Loja inativa · sem execução recente</small><span class="direct-actions"><button class="mini-action select-store" type="button" disabled data-selected="false">Indisponível</button><button class="mini-action" type="button" data-toast="Nenhuma execução disponível para esta loja.">Ver execução</button></span></span><span class="status-chip neutral">Inativa</span></article>
+                 <div class="chips" id="direct-chips"><button class="chip active" type="button" data-direct-filter="all">Todas as lojas</button><button class="chip" type="button" data-direct-filter="best">Maior cashback</button><button class="chip" type="button" data-direct-filter="followed">Acompanhadas</button></div>
+                 <div class="prototype-note hidden" id="direct-filter-note"></div>
+                 <div class="list" id="direct-list">
+                   <article class="card direct-card" data-direct-card data-store="Amazon" data-selected="true" data-cashback="6">
+                     <div class="direct-head"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Compre direto</small></span><span class="direct-benefit">Cashback: até 6%</span><span class="status-chip">Ativa</span></div>
+                     <div class="direct-status-text">Última tentativa falhou · exibindo a coleta válida</div>
+                     <div class="direct-data"><span class="direct-data-title">Último snapshot válido</span><div class="direct-data-row"><span>Produtos encontrados</span><strong>18 produtos</strong></div><div class="direct-data-row"><span>Última coleta concluída</span><strong>23/08/2026, 08:00</strong></div></div>
+                     <div class="direct-snapshot-benefit">Cashback: até 6%</div>
+                     <div class="direct-actions"><button class="mini-action primary active select-store" type="button" data-selected="true">Selecionada</button></div>
+                   </article>
+                   <article class="card direct-card" data-direct-card data-store="Samsung" data-selected="false" data-cashback="0">
+                     <div class="direct-head"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Compre direto</small></span><span class="direct-benefit">Cashback indisponível</span><span class="status-chip">Ativa</span></div>
+                     <div class="direct-status-text">Coleta em andamento · sem snapshot anterior</div>
+                     <div class="direct-data"><span class="direct-data-title">Último snapshot válido</span><div class="direct-data-row"><span>Produtos encontrados</span><strong>Indisponível</strong></div><div class="direct-data-row"><span>Última coleta concluída</span><strong>Indisponível</strong></div></div>
+                     <div class="direct-snapshot-benefit">Cashback indisponível</div>
+                     <div class="direct-actions"><button class="mini-action select-store" type="button" data-selected="false">Selecionar</button></div>
+                   </article>
+                   <article class="card direct-card inactive" data-direct-card data-store="Casas Bahia" data-selected="false" data-cashback="0">
+                     <div class="direct-head"><span class="store-logo">CB</span><span class="store-name"><strong>Casas Bahia</strong><small>Compre direto</small></span><span class="direct-benefit">Cashback indisponível</span><span class="status-chip neutral">Inativa</span></div>
+                     <div class="direct-status-text">Loja inativa · sem tentativa recente</div>
+                     <div class="direct-data"><span class="direct-data-title">Último snapshot válido</span><div class="direct-data-row"><span>Produtos encontrados</span><strong>0 produtos</strong></div><div class="direct-data-row"><span>Última coleta concluída</span><strong>22/08/2026, 14:20</strong></div></div>
+                     <div class="direct-snapshot-benefit">Cashback indisponível</div>
+                     <div class="direct-actions"><button class="mini-action select-store" type="button" disabled data-selected="false">Indisponível</button></div>
+                   </article>
                  </div>
+                 <div class="empty-state" id="direct-empty">Nenhuma loja está selecionada para coleta.</div>
                  <div class="collect-status"><svg><path d="m5 12 4 4L19 6" /></svg><span>Metadados da última coleta aparecem quando disponíveis.</span></div>
                </div>
 
@@ -670,7 +720,7 @@
         const toast = document.getElementById('toast');
         const names = { inicio: 'Início', programas: 'Programas', livelo: 'Livelo', inter: 'Banco Inter', produtos: 'Buscar produtos' };
         const pages = { livelo: 1, inter: 1, sites: 1, products: 1 };
-        const filters = { livelo: 'all', inter: 'best', sites: 'best', products: 'all' };
+        const filters = { livelo: 'all', inter: 'best', sites: 'best', direct: 'all', products: 'all' };
         const maxPages = { livelo: 13, inter: 2, sites: 2, products: 3 };
         let toastTimer;
 
@@ -767,6 +817,30 @@
           });
           count.textContent = `${visible} ${visible === 1 ? 'parceiro visível' : 'parceiros visíveis'} nesta demonstração`;
           setVisible(empty, visible === 0);
+        }
+
+        function applyDirectFilters() {
+          const cards = [...document.querySelectorAll('#direct-list [data-direct-card]')];
+          const list = document.getElementById('direct-list');
+          const note = document.getElementById('direct-filter-note');
+          const filter = filters.direct;
+          if (filter === 'best') cards.sort((a, b) => Number(b.dataset.cashback) - Number(a.dataset.cashback));
+          else cards.sort((a, b) => a.dataset.store?.localeCompare(b.dataset.store || '') || 0);
+          cards.forEach((card) => list.appendChild(card));
+          list.classList.toggle('followed-view', filter === 'followed');
+          let visible = 0;
+          cards.forEach((card) => {
+            const show = filter !== 'followed' || card.dataset.selected === 'true';
+            card.classList.toggle('hidden', !show);
+            if (show) visible += 1;
+          });
+          if (filter === 'followed') {
+            note.innerHTML = '<strong>Acompanhadas:</strong> nesta área, a aba representa as lojas selecionadas para a coleta.';
+          } else {
+            note.textContent = '';
+          }
+          note.classList.toggle('hidden', filter !== 'followed');
+          setVisible(document.getElementById('direct-empty'), visible === 0);
         }
 
         function applyProductFilters() {
@@ -878,11 +952,17 @@
           applyPartnerFilters('sites');
           showToast(`${button.textContent.trim()} aplicado.`);
         }));
+        document.querySelectorAll('[data-direct-filter]').forEach((button) => button.addEventListener('click', () => {
+          filters.direct = button.dataset.directFilter;
+          button.parentElement.querySelectorAll('.chip').forEach((chip) => chip.classList.toggle('active', chip === button));
+          applyDirectFilters();
+          showToast(`${button.textContent.trim()} aplicado.`);
+        }));
 
         document.querySelectorAll('.follow').forEach((button) => button.addEventListener('click', () => {
           const active = !button.classList.contains('active');
           button.classList.toggle('active', active);
-          button.textContent = active ? 'Acompanhando' : 'Acompanhar';
+          button.textContent = active ? 'Deixar de acompanhar' : 'Acompanhar';
           const card = button.closest('.store-card');
           card.dataset.followed = String(active);
           if (card.closest('#livelo-list')) applyLiveloFilters();
@@ -897,9 +977,12 @@
           button.classList.toggle('active', selected);
           button.classList.toggle('primary', selected);
           button.textContent = selected ? 'Selecionada' : 'Selecionar';
-          const total = document.querySelectorAll('.select-store:not(:disabled)').length;
+          const card = button.closest('[data-direct-card]');
+          card.dataset.selected = String(selected);
+          const total = document.querySelectorAll('[data-direct-card]').length;
           const selectedCount = document.querySelectorAll('.select-store[data-selected="true"]').length;
-          document.getElementById('direct-count').textContent = `${selectedCount} de ${total + 1} selecionadas`;
+          document.getElementById('direct-count').textContent = `${selectedCount} de ${total} selecionadas`;
+          applyDirectFilters();
           showToast(selected ? 'Loja selecionada para coleta.' : 'Loja removida da próxima coleta.');
         }));
 
@@ -958,6 +1041,7 @@
         applyLiveloFilters();
         applyPartnerFilters('inter');
         applyPartnerFilters('sites');
+        applyDirectFilters();
         applyProductFilters();
       })();
     </script>

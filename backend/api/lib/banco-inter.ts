@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
-import { normalizarBuscaInter } from "./formato-inter";
+import { LINK_SHOPPING_INTER, normalizarBuscaInter } from "./formato-inter";
 
 function conectar() {
   const url = process.env.DATABASE_URL;
@@ -36,6 +36,7 @@ export type CashbackInter = {
   descricao_secundaria: string | null;
   encontrada: boolean;
   favorita: boolean;
+  link: string;
 };
 
 export type LojaCatalogoInter = {
@@ -145,8 +146,14 @@ export async function buscarCashbacksInter(
        AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
        AND (
          ${busca === ""}
-         OR strpos(l.nome_busca, ${busca}) > 0
-         OR strpos(l.slug_busca, ${busca}) > 0
+         OR strpos(
+              regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+         OR strpos(
+              regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
        )
   `) as Array<{ total: number }>;
   const total = totais[0]?.total ?? 0;
@@ -154,7 +161,7 @@ export async function buscarCashbacksInter(
   const paginaFinal = Math.min(paginaSolicitada, totalPaginas);
   const deslocamento = (paginaFinal - 1) * limite;
 
-  const itens = (await sql`
+  const itensPersistidos = (await sql`
     SELECT l.id, l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
            COALESCE(c.cashback_principal_texto, l.cashback_principal_texto) AS cashback_principal_texto,
            COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) AS cashback_principal_valor,
@@ -173,8 +180,14 @@ export async function buscarCashbacksInter(
        AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
        AND (
          ${busca === ""}
-         OR strpos(l.nome_busca, ${busca}) > 0
-         OR strpos(l.slug_busca, ${busca}) > 0
+         OR strpos(
+              regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+         OR strpos(
+              regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
        )
      ORDER BY
        CASE WHEN ${opcoes.ordenar === "cashback"}
@@ -191,7 +204,11 @@ export async function buscarCashbacksInter(
        l.id
      LIMIT ${limite}
     OFFSET ${deslocamento}
-  `) as CashbackInter[];
+  `) as Array<Omit<CashbackInter, "link">>;
+  const itens = itensPersistidos.map((item) => ({
+    ...item,
+    link: LINK_SHOPPING_INTER,
+  }));
   return { itens, total, pagina: paginaFinal };
 }
 
@@ -211,7 +228,10 @@ export async function buscarLojasInter(
            (f.loja_inter_id IS NOT NULL) AS favorita
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
-     WHERE l.nome_busca LIKE ${busca} OR l.slug_busca LIKE ${busca}
+     WHERE regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
+        OR regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
      ORDER BY l.nome
      LIMIT ${limite}
     OFFSET ${deslocamento}
@@ -224,7 +244,10 @@ export async function totalLojasInter(termo = ""): Promise<number> {
   const linhas = (await sql`
     SELECT count(*)::int AS total
       FROM loja_inter
-     WHERE nome_busca LIKE ${busca} OR slug_busca LIKE ${busca}
+     WHERE regexp_replace(replace(nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
+        OR regexp_replace(replace(slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
   `) as { total: number }[];
   return linhas[0]?.total ?? 0;
 }

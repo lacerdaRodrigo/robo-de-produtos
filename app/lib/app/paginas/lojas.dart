@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
@@ -5,6 +7,7 @@ import '../../core/api/modelos.dart';
 import '../../features/administracao/botao_disparo.dart';
 import '../../features/administracao/controlador_catalogo_administracao.dart';
 import '../../features/inter/controlador_cashback_inter.dart';
+import '../../features/inter/pagina_compre_direto_inter.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
 import '../../features/inter/formato_cashback_inter.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
@@ -106,16 +109,16 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
     final navegador = _navegador.currentState;
     if (navegador == null) return;
     final (titulo, pagina) = switch (modalidade) {
-      _ModalidadeInter.cashback => (
-        'Cashback — Sites parceiros',
+      _ModalidadeInter.sitesParceiros => (
+        'Sites parceiros',
         PaginaCashbackInter(
           api: widget.api,
           administrador: widget.administrador,
           incorporada: true,
         ),
       ),
-      _ModalidadeInter.produtos => (
-        'Produtos — Compre direto',
+      _ModalidadeInter.compreDireto => (
+        'Compre direto',
         PaginaProdutos(
           api: widget.api,
           administrador: widget.administrador,
@@ -153,7 +156,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
   }
 }
 
-enum _ModalidadeInter { cashback, produtos }
+enum _ModalidadeInter { sitesParceiros, compreDireto }
 
 class _HubShoppingInter extends StatefulWidget {
   const _HubShoppingInter({
@@ -174,6 +177,8 @@ class _HubShoppingInter extends StatefulWidget {
 
 class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   late Future<ResumoInicio> _resumo;
+  var _ordenacaoDiretas = 'nome';
+  var _filtroDiretas = 'todas';
   late final ControladorCashbackInter _cashback = ControladorCashbackInter(
     buscar: ({required q, required ordenar, required pagina}) =>
         widget.api.painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
@@ -185,8 +190,19 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
           apenasAcompanhadas: true,
         ),
   );
+  late final ControladorCatalogoAdministracao<LojaDireto> _diretas =
+      ControladorCatalogoAdministracao<LojaDireto>(
+        buscar: ({required q, required pagina}) => widget.api.lojasDiretas(
+          q: q,
+          pagina: pagina,
+          ordenar: _ordenacaoDiretas,
+          filtro: _filtroDiretas,
+        ),
+        identificar: (loja) => loja.id,
+      );
   String? _melhorOferta;
   var _aba = 0;
+  var _variacaoAcompanhadas = 0;
 
   @override
   void initState() {
@@ -216,13 +232,45 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   @override
   void dispose() {
     _cashback.dispose();
+    _diretas.dispose();
     super.dispose();
   }
 
-  void _tentarNovamente() {
-    setState(() => _resumo = widget.api.resumo());
-    _carregarMelhorOferta();
+  Future<void> _atualizarResumo() async {
+    final resumo = widget.api.resumo();
+    final melhorOferta = _carregarMelhorOferta();
+    setState(() {
+      _variacaoAcompanhadas = 0;
+      _resumo = resumo;
+    });
+    try {
+      await resumo;
+    } on Object {
+      // O FutureBuilder apresenta a falha e mantém a ação de tentar novamente.
+    }
+    await melhorOferta;
   }
+
+  void _mudarConsultaDiretas({
+    required String ordenar,
+    required String filtro,
+  }) {
+    _ordenacaoDiretas = ordenar;
+    _filtroDiretas = filtro;
+  }
+
+  void _tentarNovamente() => unawaited(_atualizarResumo());
+
+  void _variarAcompanhadas(int variacao) {
+    setState(() => _variacaoAcompanhadas += variacao);
+  }
+
+  int? _totalAcompanhadas(ResumoInicio? resumo) => resumo == null
+      ? null
+      : (resumo.cashbackInter.lojasAcompanhadas + _variacaoAcompanhadas).clamp(
+          0,
+          1 << 31,
+        );
 
   @override
   Widget build(BuildContext context) {
@@ -235,14 +283,21 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             api: widget.api,
             administrador: widget.administrador,
             controladorCashback: _cashback,
+            controladorDiretas: _diretas,
             aba: _aba,
             resumo: estado.data,
             melhorOferta: _melhorOferta,
             carregandoResumo: estado.connectionState != ConnectionState.done,
             erroResumo: estado.hasError,
+            totalAcompanhadas: _totalAcompanhadas(estado.data),
             aoTentarResumo: _tentarNovamente,
+            aoAtualizarResumo: _atualizarResumo,
+            ordenacaoDiretas: _ordenacaoDiretas,
+            filtroDiretas: _filtroDiretas,
+            aoMudarConsultaDiretas: _mudarConsultaDiretas,
             aoSelecionarAba: (aba) => setState(() => _aba = aba),
             aoAlterarAcompanhamento: _carregarMelhorOferta,
+            aoVariarAcompanhadas: _variarAcompanhadas,
           );
         }
         return SafeArea(
@@ -282,22 +337,24 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
                 _FalhaResumo(aoTentarNovamente: _tentarNovamente),
               ],
               const SizedBox(height: 12),
-              _HeroInter(resumo: estado.data),
+              _HeroInter(
+                resumo: estado.data,
+                totalAcompanhadas: _totalAcompanhadas(estado.data),
+              ),
               const SizedBox(height: 12),
               _AbasInter(
-                compacta: false,
                 selecionada: _aba,
                 aoSelecionar: (aba) => setState(() => _aba = aba),
               ),
               const SizedBox(height: 16),
               if (_aba == 0) ...[
                 _AcessoModalidadeInter(
-                  chaveAcao: const Key('abrir-cashback-inter'),
+                  chaveAcao: const Key('abrir-sites-parceiros-inter'),
                   icone: Icons.percent_outlined,
                   cor: cores.integracaoInter,
-                  titulo: 'Cashback — Sites parceiros',
+                  titulo: 'Sites parceiros',
                   descricao:
-                      'Acompanhe as lojas parceiras e as condições de cashback do Inter.',
+                      'Consulte cashback, acompanhe lojas e abra o destino no Banco Inter.',
                   resumo: _ResumoModalidade.cashback(
                     estado.data?.cashbackInter,
                   ),
@@ -307,16 +364,19 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
                     administrador: widget.administrador,
                     rotulo: 'Atualizar Cashback',
                   ),
-                  aoAbrir: () => widget.aoAbrir(_ModalidadeInter.cashback),
+                  aoAbrir: () =>
+                      widget.aoAbrir(_ModalidadeInter.sitesParceiros),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
+                _ResumoInter(resumo: estado.data?.cashbackInter),
+              ] else ...[
                 _AcessoModalidadeInter(
                   chaveAcao: const Key('abrir-produtos-inter'),
                   icone: Icons.inventory_2_outlined,
                   cor: cores.acao,
-                  titulo: 'Produtos — Compre direto',
+                  titulo: 'Compre direto',
                   descricao:
-                      'Pesquise o catálogo já coletado das lojas diretas selecionadas.',
+                      'Selecione lojas para coletar produtos exibidos na área Produtos.',
                   resumo: _ResumoModalidade.produtos(estado.data?.produtos),
                   botaoAtualizacao: BotaoDisparo(
                     api: widget.api,
@@ -324,12 +384,11 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
                     administrador: widget.administrador,
                     rotulo: 'Atualizar Produtos',
                   ),
-                  aoAbrir: () => widget.aoAbrir(_ModalidadeInter.produtos),
+                  aoAbrir: () => widget.aoAbrir(_ModalidadeInter.compreDireto),
                 ),
-              ] else if (_aba == 1)
-                _ResumoInter(resumo: estado.data?.cashbackInter)
-              else
+                const SizedBox(height: 16),
                 _AtualizacoesInter(resumo: estado.data),
+              ],
             ],
           ),
         );
@@ -343,43 +402,74 @@ class _BancoInterCompacto extends StatelessWidget {
     required this.api,
     required this.administrador,
     required this.controladorCashback,
+    required this.controladorDiretas,
     required this.aba,
     required this.resumo,
     required this.melhorOferta,
     required this.carregandoResumo,
     required this.erroResumo,
+    required this.totalAcompanhadas,
     required this.aoTentarResumo,
+    required this.aoAtualizarResumo,
+    required this.ordenacaoDiretas,
+    required this.filtroDiretas,
+    required this.aoMudarConsultaDiretas,
     required this.aoSelecionarAba,
     required this.aoAlterarAcompanhamento,
+    required this.aoVariarAcompanhadas,
   });
 
   final Api api;
   final bool administrador;
   final ControladorCashbackInter controladorCashback;
+  final ControladorCatalogoAdministracao<LojaDireto> controladorDiretas;
   final int aba;
   final ResumoInicio? resumo;
   final String? melhorOferta;
   final bool carregandoResumo;
   final bool erroResumo;
+  final int? totalAcompanhadas;
   final VoidCallback aoTentarResumo;
+  final Future<void> Function() aoAtualizarResumo;
+  final String ordenacaoDiretas;
+  final String filtroDiretas;
+  final void Function({required String ordenar, required String filtro})
+  aoMudarConsultaDiretas;
   final ValueChanged<int> aoSelecionarAba;
   final VoidCallback aoAlterarAcompanhamento;
+  final ValueChanged<int> aoVariarAcompanhadas;
 
   @override
   Widget build(BuildContext context) {
     final cabecalho = _cabecalho();
     return SafeArea(
-      child: PaginaCashbackInter(
-        key: const Key('hub-shopping-inter'),
-        api: api,
-        controlador: controladorCashback,
-        administrador: administrador,
-        incorporada: true,
-        mostrarAtualizacao: false,
-        chaveRolagemCompacta: const PageStorageKey('rolagem-cashback-inter'),
-        sliversAntesDoCashback: cabecalho,
-        aoAlterarAcompanhamento: aoAlterarAcompanhamento,
-      ),
+      child: aba == 1
+          ? PaginaCompreDiretoInter(
+              key: const Key('compre-direto-inter'),
+              api: api,
+              administrador: administrador,
+              controlador: controladorDiretas,
+              sliversAntes: cabecalho,
+              aoAtualizar: aoAtualizarResumo,
+              ordenacaoInicial: ordenacaoDiretas,
+              filtroInicial: filtroDiretas,
+              aoMudarConsulta: aoMudarConsultaDiretas,
+            )
+          : PaginaCashbackInter(
+              key: const Key('hub-shopping-inter'),
+              api: api,
+              controlador: controladorCashback,
+              administrador: administrador,
+              incorporada: true,
+              mostrarAtualizacao: false,
+              chaveRolagemCompacta: const PageStorageKey(
+                'rolagem-cashback-inter',
+              ),
+              sliversAntesDoCashback: cabecalho,
+              aoAtualizar: aoAtualizarResumo,
+              aoAlterarAcompanhamento: aoAlterarAcompanhamento,
+              aoVariarAcompanhadas: aoVariarAcompanhadas,
+            ),
     );
   }
 
@@ -387,13 +477,12 @@ class _BancoInterCompacto extends StatelessWidget {
     SliverToBoxAdapter(
       child: Column(
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
-            child: CabecalhoSecaoRadar(
-              sobrelinha: 'Shopping e cashback',
-              titulo: 'Banco Inter',
-              descricao:
-                  'Escolha as lojas e acompanhe o cashback sem espalhar ações pelo menu.',
+            child: _CabecalhoBancoInter(
+              api: api,
+              administrador: administrador,
+              dominio: aba == 1 ? 'produtos_inter' : 'inter',
             ),
           ),
           if (carregandoResumo) const LinearProgressIndicator(),
@@ -404,17 +493,21 @@ class _BancoInterCompacto extends StatelessWidget {
             ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: _HeroInter(resumo: resumo, melhorOferta: melhorOferta),
+            child: _HeroInter(
+              resumo: resumo,
+              melhorOferta: melhorOferta,
+              totalAcompanhadas: totalAcompanhadas,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 24, 18, 15),
             child: AbasRadar(
-              rotulos: const ['Cashback', 'Sites parceiros'],
+              rotulos: const ['Sites parceiros', 'Compre direto'],
               selecionada: aba,
               aoSelecionar: aoSelecionarAba,
             ),
           ),
-          if (aba == 1)
+          if (aba == 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 13),
               child: Column(
@@ -449,6 +542,49 @@ class _BancoInterCompacto extends StatelessWidget {
       ),
     ),
   ];
+}
+
+class _CabecalhoBancoInter extends StatelessWidget {
+  const _CabecalhoBancoInter({
+    required this.api,
+    required this.administrador,
+    required this.dominio,
+  });
+
+  final Api api;
+  final bool administrador;
+  final String dominio;
+
+  Widget _botao() => BotaoDisparo(
+    key: ValueKey('atualizar-dados-$dominio'),
+    api: api,
+    dominio: dominio,
+    administrador: administrador,
+    rotulo: 'Atualizar dados',
+    destaque: true,
+  );
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, restricoes) {
+      final acaoLateral = administrador && restricoes.maxWidth >= 340;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CabecalhoSecaoRadar(
+            sobrelinha: 'Cashback',
+            titulo: 'Banco Inter',
+            descricao: 'Compare parceiros e acompanhe as lojas selecionadas.',
+            acao: acaoLateral ? _botao() : null,
+          ),
+          if (administrador && !acaoLateral) ...[
+            const SizedBox(height: 12),
+            Align(alignment: Alignment.centerRight, child: _botao()),
+          ],
+        ],
+      );
+    },
+  );
 }
 
 class _AvisoCatalogoInter extends StatelessWidget {
@@ -492,10 +628,15 @@ class _AvisoCatalogoInter extends StatelessWidget {
 }
 
 class _HeroInter extends StatelessWidget {
-  const _HeroInter({required this.resumo, this.melhorOferta});
+  const _HeroInter({
+    required this.resumo,
+    this.melhorOferta,
+    this.totalAcompanhadas,
+  });
 
   final ResumoInicio? resumo;
   final String? melhorOferta;
+  final int? totalAcompanhadas;
 
   @override
   Widget build(BuildContext context) {
@@ -504,155 +645,90 @@ class _HeroInter extends StatelessWidget {
         resumo == null ||
             resumo!.cashbackInter.estado == EstadoResumo.indisponivel
         ? '—'
-        : '${resumo!.cashbackInter.lojasAcompanhadas}';
+        : '${totalAcompanhadas ?? resumo!.cashbackInter.lojasAcompanhadas}';
     final produtos =
         resumo == null || resumo!.produtos.estado == EstadoResumo.indisponivel
         ? '—'
         : '${resumo!.produtos.produtosAtivos}';
     final (estadoIntegracao, corEstado) = _estadoHeroInter(context, resumo);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Tokens.marcaProfunda, Tokens.marcaMedia],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: <BoxShadow>[SombraRadar.para(Theme.of(context).brightness)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -42,
-              top: -54,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      Tokens.ciano.withValues(alpha: 0.34),
-                      Tokens.ciano.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
-                child: const SizedBox.square(dimension: 224),
-              ),
+    return CartaoRadar(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: corEstado.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(99),
             ),
-            Positioned(
-              right: -48,
-              bottom: -62,
-              child: Container(
-                width: 178,
-                height: 178,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.14),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      spreadRadius: 28,
-                    ),
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.03),
-                      spreadRadius: 58,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(21),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(99),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
+                      color: corEstado,
+                      shape: BoxShape.circle,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: corEstado,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: corEstado.withValues(alpha: 0.14),
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: const SizedBox.square(dimension: 7),
-                          ),
-                          const SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              estadoIntegracao,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFFDFF8FF),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: const SizedBox.square(dimension: 7),
                   ),
-                  const SizedBox(height: 17),
-                  const Text(
-                    'Suas lojas do Inter estão em um único lugar.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      height: 1.1,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sites parceiros e produtos diretos continuam com coletas separadas.',
-                    style: TextStyle(
-                      color: Color(0xFFC6D8E7),
-                      fontSize: 12,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      _MetricaInter(valor: cashback, rotulo: 'acompanhadas'),
-                      const SizedBox(width: 7),
-                      _MetricaInter(valor: produtos, rotulo: 'produtos'),
-                      const SizedBox(width: 7),
-                      _MetricaInter(
-                        valor: melhorOferta ?? '—',
-                        rotulo: 'melhor oferta',
-                        cor: cores.ganho,
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      estadoIntegracao,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: corEstado,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 17),
+          Text(
+            melhorOferta == null
+                ? 'Cashback, parceiros e produtos em áreas separadas.'
+                : '$melhorOferta é o melhor cashback acompanhado agora.',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontSize: 23,
+              height: 1.12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sites parceiros e Compre direto continuam com regras e coletas independentes.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: cores.textoSuave,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              _MetricaInter(
+                key: const Key('inter-total-acompanhadas'),
+                valor: cashback,
+                rotulo: 'acompanhadas',
+              ),
+              const SizedBox(width: 7),
+              _MetricaInter(valor: produtos, rotulo: 'produtos'),
+              const SizedBox(width: 7),
+              _MetricaInter(
+                valor: melhorOferta ?? '—',
+                rotulo: 'melhor oferta',
+                cor: cores.ganho,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -681,7 +757,12 @@ class _HeroInter extends StatelessWidget {
 }
 
 class _MetricaInter extends StatelessWidget {
-  const _MetricaInter({required this.valor, required this.rotulo, this.cor});
+  const _MetricaInter({
+    super.key,
+    required this.valor,
+    required this.rotulo,
+    this.cor,
+  });
 
   final String valor;
   final String rotulo;
@@ -691,9 +772,8 @@ class _MetricaInter extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
     child: DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: CoresRadar.de(context).superficieAlternativa,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(9, 11, 9, 11),
@@ -703,7 +783,7 @@ class _MetricaInter extends StatelessWidget {
             Text(
               valor,
               style: TextStyle(
-                color: cor ?? Colors.white,
+                color: cor,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
@@ -713,7 +793,10 @@ class _MetricaInter extends StatelessWidget {
               rotulo,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Color(0xFFB9CEDF), fontSize: 9),
+              style: TextStyle(
+                color: CoresRadar.de(context).textoSuave,
+                fontSize: 9,
+              ),
             ),
           ],
         ),
@@ -723,15 +806,10 @@ class _MetricaInter extends StatelessWidget {
 }
 
 class _AbasInter extends StatelessWidget {
-  const _AbasInter({
-    required this.selecionada,
-    required this.aoSelecionar,
-    this.compacta = false,
-  });
+  const _AbasInter({required this.selecionada, required this.aoSelecionar});
 
   final int selecionada;
   final ValueChanged<int> aoSelecionar;
-  final bool compacta;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -743,28 +821,15 @@ class _AbasInter extends StatelessWidget {
     child: Row(
       children: [
         _AbaInter(
-          rotulo: compacta ? 'Cashback' : 'Escolher lojas',
+          rotulo: 'Sites parceiros',
           ativa: selecionada == 0,
           aoTocar: () => aoSelecionar(0),
         ),
-        if (compacta)
-          _AbaInter(
-            rotulo: 'Sites parceiros',
-            ativa: selecionada == 1,
-            aoTocar: () => aoSelecionar(1),
-          )
-        else ...[
-          _AbaInter(
-            rotulo: 'Cashback',
-            ativa: selecionada == 1,
-            aoTocar: () => aoSelecionar(1),
-          ),
-          _AbaInter(
-            rotulo: 'Atualizações',
-            ativa: selecionada == 2,
-            aoTocar: () => aoSelecionar(2),
-          ),
-        ],
+        _AbaInter(
+          rotulo: 'Compre direto',
+          ativa: selecionada == 1,
+          aoTocar: () => aoSelecionar(1),
+        ),
       ],
     ),
   );

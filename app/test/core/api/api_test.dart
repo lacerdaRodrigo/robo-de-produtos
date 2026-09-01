@@ -372,7 +372,7 @@ void main() {
     );
 
     final resposta = await api.painelCashbackInter(
-      q: 'loja',
+      q: 'c&a',
       ordenar: 'nome',
       pagina: 2,
       apenasAcompanhadas: true,
@@ -381,7 +381,7 @@ void main() {
 
     expect(consulta!.path, '/api/inter/cashback');
     expect(consulta!.queryParameters, {
-      'q': 'loja',
+      'q': 'c&a',
       'ordenar': 'nome',
       'pagina': '2',
       'por_pagina': '1',
@@ -536,6 +536,11 @@ void main() {
                       'ultima_execucao': '2026-08-30T15:00:00Z',
                       'ultimo_estado': 'sucesso',
                       'paginas': 12,
+                      'ultima_tentativa_em': '2026-08-30T14:50:00Z',
+                      'ultima_tentativa_estado': 'falha',
+                      'ultima_coleta_sucesso_em': '2026-08-29T15:00:00Z',
+                      'produtos_encontrados': 18,
+                      'cashback_resumo_texto': 'Até 6% de cashback',
                     },
                   ],
                   'pagina': 1,
@@ -560,7 +565,10 @@ void main() {
 
       final parceiras = await api.lojasInter(q: 'loja', pagina: 2);
       await api.alterarFavoritaInter(id: 'parceira-1', favorita: true);
-      final diretas = await api.lojasDiretas();
+      final diretas = await api.lojasDiretas(
+        ordenar: 'cashback',
+        filtro: 'acompanhadas',
+      );
       await api.alterarSelecaoLojaDireta(id: 'direta-1', selecionada: true);
 
       expect(parceiras.itens.single.cashbackPrincipalValor, '5.00');
@@ -568,10 +576,15 @@ void main() {
       expect(diretas.itens.single.ultimaExecucao, '2026-08-30T15:00:00Z');
       expect(diretas.itens.single.ultimoEstado, 'sucesso');
       expect(diretas.itens.single.paginas, 12);
+      expect(diretas.itens.single.ultimaTentativaEstado, 'falha');
+      expect(diretas.itens.single.produtosEncontrados, 18);
+      expect(diretas.itens.single.cashbackResumoTexto, 'Até 6% de cashback');
       expect(requisicoes[0].url.queryParameters['q'], 'loja');
       expect(requisicoes[0].url.queryParameters['pagina'], '2');
       expect(requisicoes[1].method, 'PATCH');
       expect(requisicoes[1].body, '{"id":"parceira-1","favorita":true}');
+      expect(requisicoes[2].url.queryParameters['ordenar'], 'cashback');
+      expect(requisicoes[2].url.queryParameters['filtro'], 'acompanhadas');
       expect(requisicoes[3].method, 'PATCH');
       expect(requisicoes[3].body, '{"id":"direta-1","selecionada":true}');
     },

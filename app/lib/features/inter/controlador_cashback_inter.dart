@@ -98,6 +98,25 @@ class ControladorCashbackInter extends ChangeNotifier {
 
   Future<void> tentarNovamente() => _reiniciar();
 
+  /// Sincroniza nos resultados já carregados uma mutação confirmada pela API.
+  /// Na aba Acompanhadas, a remoção é local e não reinicia busca, página ou
+  /// posição; as próximas consultas continuam sendo globais no servidor.
+  void sincronizarAcompanhamento(CashbackInter loja, bool acompanhada) {
+    final indice = _itens.indexWhere((item) => item.id == loja.id);
+    if (_filtro == FiltroCashbackInter.acompanhadas && !acompanhada) {
+      if (indice >= 0) {
+        final removida = _itens.removeAt(indice);
+        _ids.remove(removida.id.isNotEmpty ? removida.id : removida.slug);
+        if (_totalItens > 0) _totalItens--;
+        notifyListeners();
+      }
+      return;
+    }
+    if (indice < 0) return;
+    _itens[indice] = _itens[indice].copiarCom(favorita: acompanhada);
+    notifyListeners();
+  }
+
   Future<void> carregarMais() async {
     if (_carregando || _carregandoMais || !_temProxima) return;
     final versao = _versao;
