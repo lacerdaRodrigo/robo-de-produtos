@@ -14,6 +14,8 @@ enum OrdenacaoCashbackInter {
   final String rotulo;
 }
 
+enum FiltroCashbackInter { todas, acompanhadas }
+
 typedef BuscarCashbackInter =
     Future<Pagina<CashbackInter>> Function({
       required String q,
@@ -24,10 +26,12 @@ typedef BuscarCashbackInter =
 class ControladorCashbackInter extends ChangeNotifier {
   ControladorCashbackInter({
     required this.buscar,
+    BuscarCashbackInter? buscarAcompanhadas,
     this.debounce = const Duration(milliseconds: 350),
-  });
+  }) : buscarAcompanhadas = buscarAcompanhadas ?? buscar;
 
   final BuscarCashbackInter buscar;
+  final BuscarCashbackInter buscarAcompanhadas;
   final Duration debounce;
   Timer? _temporizador;
   var _versao = 0;
@@ -36,6 +40,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   final _ids = <String>{};
   String _busca = '';
   OrdenacaoCashbackInter _ordenacao = OrdenacaoCashbackInter.cashback;
+  FiltroCashbackInter _filtro = FiltroCashbackInter.todas;
   String? _atualizadoEm;
   String? _ultimaTentativaEm;
   String? _ultimaTentativaEstado;
@@ -50,6 +55,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   List<CashbackInter> get itens => List.unmodifiable(_itens);
   String get busca => _busca;
   OrdenacaoCashbackInter get ordenacao => _ordenacao;
+  FiltroCashbackInter get filtro => _filtro;
   String? get atualizadoEm => _atualizadoEm;
   String? get ultimaTentativaEm => _ultimaTentativaEm;
   String? get ultimaTentativaEstado => _ultimaTentativaEstado;
@@ -71,12 +77,45 @@ class ControladorCashbackInter extends ChangeNotifier {
   }
 
   Future<void> mudarOrdenacao(OrdenacaoCashbackInter valor) async {
-    if (valor == _ordenacao) return;
-    _ordenacao = valor;
+    await mudarConsulta(ordenacao: valor);
+  }
+
+  Future<void> mudarFiltro(FiltroCashbackInter valor) async {
+    await mudarConsulta(filtro: valor);
+  }
+
+  Future<void> mudarConsulta({
+    OrdenacaoCashbackInter? ordenacao,
+    FiltroCashbackInter? filtro,
+  }) async {
+    final proximaOrdenacao = ordenacao ?? _ordenacao;
+    final proximoFiltro = filtro ?? _filtro;
+    if (proximaOrdenacao == _ordenacao && proximoFiltro == _filtro) return;
+    _ordenacao = proximaOrdenacao;
+    _filtro = proximoFiltro;
     await _reiniciar();
   }
 
   Future<void> tentarNovamente() => _reiniciar();
+
+  /// Sincroniza nos resultados já carregados uma mutação confirmada pela API.
+  /// Na aba Acompanhadas, a remoção é local e não reinicia busca, página ou
+  /// posição; as próximas consultas continuam sendo globais no servidor.
+  void sincronizarAcompanhamento(CashbackInter loja, bool acompanhada) {
+    final indice = _itens.indexWhere((item) => item.id == loja.id);
+    if (_filtro == FiltroCashbackInter.acompanhadas && !acompanhada) {
+      if (indice >= 0) {
+        final removida = _itens.removeAt(indice);
+        _ids.remove(removida.id.isNotEmpty ? removida.id : removida.slug);
+        if (_totalItens > 0) _totalItens--;
+        notifyListeners();
+      }
+      return;
+    }
+    if (indice < 0) return;
+    _itens[indice] = _itens[indice].copiarCom(favorita: acompanhada);
+    notifyListeners();
+  }
 
   Future<void> carregarMais() async {
     if (_carregando || _carregandoMais || !_temProxima) return;
@@ -85,7 +124,7 @@ class ControladorCashbackInter extends ChangeNotifier {
     _erroMais = null;
     notifyListeners();
     try {
-      final resposta = await buscar(
+      final resposta = await _buscaAtiva(
         q: _busca,
         ordenar: _ordenacao.codigo,
         pagina: _pagina + 1,
@@ -128,7 +167,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   Future<void> _primeiraPagina() async {
     final versao = _versao;
     try {
-      final resposta = await buscar(
+      final resposta = await _buscaAtiva(
         q: _busca,
         ordenar: _ordenacao.codigo,
         pagina: 1,
@@ -159,6 +198,9 @@ class ControladorCashbackInter extends ChangeNotifier {
   }
 
   bool _ativa(int versao) => !_descartado && versao == _versao;
+
+  BuscarCashbackInter get _buscaAtiva =>
+      _filtro == FiltroCashbackInter.acompanhadas ? buscarAcompanhadas : buscar;
 
   @override
   void dispose() {

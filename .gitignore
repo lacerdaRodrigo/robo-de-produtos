@@ -3,6 +3,18 @@
 .env.*
 !.env.example
 
+# Exportações privadas comuns — a configuração pública do Firebase cliente
+# (`google-services.json`/`firebase_options.dart`) permanece versionável.
+service-account*.json
+service_account*.json
+serviceAccountKey*.json
+firebase-adminsdk*.json
+google-application-credentials*.json
+*.p8
+*.p12
+*.jks
+*.keystore
+
 # Python
 __pycache__/
 *.py[cod]

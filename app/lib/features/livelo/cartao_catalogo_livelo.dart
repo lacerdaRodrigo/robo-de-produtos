@@ -11,6 +11,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     super.key,
     required this.parceiro,
     required this.pendente,
+    this.alertaPendente = false,
     required this.podeAdministrar,
     required this.aoAlternar,
     required this.aoAlternarAlerta,
@@ -19,6 +20,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
 
   final ParceiroCatalogoLivelo parceiro;
   final bool pendente;
+  final bool alertaPendente;
   final bool podeAdministrar;
   final VoidCallback aoAlternar;
   final VoidCallback aoAlternarAlerta;
@@ -26,79 +28,20 @@ class CartaoCatalogoLivelo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
     final clube = rotuloClube(parceiro.campanha);
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
+        corDestaque: CoresRadar.de(context).acao,
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Iniciais(nome: parceiro.nome),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              parceiro.nome,
-                              style: tema.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            key: Key('alerta-${parceiro.idExterno}'),
-                            tooltip: parceiro.alertaAtivo
-                                ? 'Desativar alerta'
-                                : 'Ativar alerta',
-                            onPressed:
-                                parceiro.acompanhada &&
-                                    podeAdministrar &&
-                                    !pendente
-                                ? aoAlternarAlerta
-                                : null,
-                            icon: Icon(
-                              parceiro.alertaAtivo
-                                  ? Icons.notifications_active
-                                  : Icons.notifications_none_outlined,
-                              color: parceiro.alertaAtivo
-                                  ? cores.acao
-                                  : cores.textoSuave,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        parceiro.categorias.join(' · '),
-                        style: tema.textTheme.bodySmall?.copyWith(
-                          color: cores.textoSuave,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                pontosLivelo(parceiro.pontosAtuais, moeda: parceiro.moeda),
-                textAlign: TextAlign.end,
-                style: tema.textTheme.titleSmall?.copyWith(
-                  color: cores.acao,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+            _TopoCartao(
+              parceiro: parceiro,
+              alertaPendente: alertaPendente,
+              podeAdministrar: podeAdministrar,
+              aoAlternarAlerta: aoAlternarAlerta,
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -198,6 +141,120 @@ class _DescricaoCampanha extends StatefulWidget {
   State<_DescricaoCampanha> createState() => _DescricaoCampanhaState();
 }
 
+class _TopoCartao extends StatelessWidget {
+  const _TopoCartao({
+    required this.parceiro,
+    required this.alertaPendente,
+    required this.podeAdministrar,
+    required this.aoAlternarAlerta,
+  });
+
+  final ParceiroCatalogoLivelo parceiro;
+  final bool alertaPendente;
+  final bool podeAdministrar;
+  final VoidCallback aoAlternarAlerta;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final beneficio = Text(
+      pontosLivelo(parceiro.pontosAtuais, moeda: parceiro.moeda),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.end,
+      style: tema.textTheme.labelMedium?.copyWith(
+        color: cores.ganho,
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+    final alerta = IconButton(
+      key: Key('alerta-${parceiro.idExterno}'),
+      tooltip: parceiro.alertaAtivo ? 'Desativar alerta' : 'Ativar alerta',
+      onPressed: parceiro.acompanhada && podeAdministrar && !alertaPendente
+          ? aoAlternarAlerta
+          : null,
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(34),
+        maximumSize: const Size.square(34),
+        padding: EdgeInsets.zero,
+        side: BorderSide(color: cores.borda),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      ),
+      icon: alertaPendente
+          ? const SizedBox.square(
+              dimension: 15,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(
+              parceiro.alertaAtivo
+                  ? Icons.notifications_active
+                  : Icons.notifications_none_outlined,
+              size: 18,
+              color: parceiro.alertaAtivo ? cores.acao : cores.textoSuave,
+            ),
+    );
+    final nome = Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            parceiro.nome,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: tema.textTheme.titleSmall?.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            parceiro.categorias.join(' · '),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: tema.textTheme.labelSmall?.copyWith(
+              color: cores.textoSuave,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final estreito =
+            limites.maxWidth < 270 ||
+            MediaQuery.textScalerOf(context).scale(12) > 15;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _Iniciais(nome: parceiro.nome),
+                const SizedBox(width: 9),
+                nome,
+                if (!estreito) ...[
+                  const SizedBox(width: 7),
+                  SizedBox(width: 76, child: beneficio),
+                ],
+                const SizedBox(width: 7),
+                alerta,
+              ],
+            ),
+            if (estreito) ...[
+              const SizedBox(height: 8),
+              Align(alignment: Alignment.centerRight, child: beneficio),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _DescricaoCampanhaState extends State<_DescricaoCampanha> {
   bool _aberta = false;
 
@@ -285,12 +342,23 @@ class _Iniciais extends StatelessWidget {
         .join()
         .toUpperCase();
     return Container(
-      width: 44,
-      height: 44,
+      width: 46,
+      height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: CoresRadar.de(context).superficieAlternativa,
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            Theme.of(context).brightness == Brightness.dark
+                ? Tokens.acaoFundoEscuro
+                : Tokens.acaoFundo,
+            Theme.of(context).brightness == Brightness.dark
+                ? Tokens.cianoFundoEscuro
+                : Tokens.cianoFundo,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: Text(
         iniciais.isEmpty ? '•' : iniciais,
@@ -323,7 +391,7 @@ class _Selo extends StatelessWidget {
         color: cor.withValues(alpha: 0.11),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(texto, style: TextStyle(color: cor, fontSize: 12)),
+      child: Text(texto, style: TextStyle(color: cor, fontSize: 9)),
     );
   }
 }

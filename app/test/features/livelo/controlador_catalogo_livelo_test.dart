@@ -31,21 +31,28 @@ ParceiroCatalogoLivelo parceiro(
   alerta: alerta,
 );
 
-ResumoCatalogoLivelo resumo({int acompanhadas = 0, int alertas = 0}) =>
-    ResumoCatalogoLivelo(
-      ultimaColeta: '2026-08-28T12:00:00Z',
-      parceirosLidos: 252,
-      totalCatalogo: 252,
-      acompanhadas: acompanhadas,
-      alertas: alertas,
-      melhorOferta: const MelhorOfertaLivelo(
-        idExterno: 'MELHOR',
-        nome: 'Melhor Loja',
-        pontosAtuais: '12',
-        moeda: 'R\$',
-        prefixoAte: false,
-      ),
-    );
+ResumoCatalogoLivelo resumo({
+  int acompanhadas = 0,
+  int alertas = 0,
+  String ultimaColeta = '2026-08-28T12:00:00Z',
+  String? ultimaTentativaEm,
+  String? qualidade = 'completa',
+}) => ResumoCatalogoLivelo(
+  ultimaColeta: ultimaColeta,
+  ultimaTentativaEm: ultimaTentativaEm ?? ultimaColeta,
+  qualidade: qualidade,
+  parceirosLidos: 252,
+  totalCatalogo: 252,
+  acompanhadas: acompanhadas,
+  alertas: alertas,
+  melhorOferta: const MelhorOfertaLivelo(
+    idExterno: 'MELHOR',
+    nome: 'Melhor Loja',
+    pontosAtuais: '12',
+    moeda: 'R\$',
+    prefixoAte: false,
+  ),
+);
 
 PaginaCatalogoLivelo montarPagina(
   List<ParceiroCatalogoLivelo> itens, {
@@ -65,6 +72,64 @@ PaginaCatalogoLivelo montarPagina(
 );
 
 void main() {
+  test('atualização silenciosa distingue retrato, sucesso e falha', () async {
+    var momento = '2026-08-28T12:00:00Z';
+    var tentativa = momento;
+    var qualidade = 'completa';
+    var falhar = false;
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+          }) async {
+            if (falhar) throw StateError('sem rede');
+            return montarPagina(
+              [parceiro('A')],
+              resumoDaPagina: resumo(
+                ultimaColeta: momento,
+                ultimaTentativaEm: tentativa,
+                qualidade: qualidade,
+              ),
+            );
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+
+    await controlador.carregarInicial();
+    expect(
+      await controlador.atualizarSilenciosamente(),
+      ResultadoAtualizacaoSilenciosa.inalterada,
+    );
+
+    momento = '2026-08-28T12:05:00Z';
+    expect(
+      await controlador.atualizarSilenciosamente(),
+      ResultadoAtualizacaoSilenciosa.alterada,
+    );
+    expect(controlador.resumo?.ultimaColeta, momento);
+
+    tentativa = '2026-08-28T12:10:00Z';
+    qualidade = 'degradada';
+    expect(
+      await controlador.atualizarSilenciosamente(),
+      ResultadoAtualizacaoSilenciosa.degradada,
+    );
+    expect(controlador.resumo?.ultimaColeta, momento);
+    expect(controlador.resumo?.qualidade, 'degradada');
+
+    falhar = true;
+    expect(
+      await controlador.atualizarSilenciosamente(),
+      ResultadoAtualizacaoSilenciosa.falha,
+    );
+  });
+
   test('pagina, filtros e deduplicação usam o ID externo', () async {
     final consultas = <String>[];
     final controlador = ControladorCatalogoLivelo(

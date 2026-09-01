@@ -23,6 +23,16 @@ class InicializacaoFirebase {
 }
 
 abstract final class ConfiguracaoFirebase {
+  @visibleForTesting
+  static AndroidAppCheckProvider provedorAndroid({required bool debug}) => debug
+      ? const AndroidDebugProvider()
+      : const AndroidPlayIntegrityProvider();
+
+  @visibleForTesting
+  static AppleAppCheckProvider provedorApple({required bool debug}) => debug
+      ? const AppleDebugProvider()
+      : const AppleAppAttestWithDeviceCheckFallbackProvider();
+
   static FirebaseOptions? opcoesAtuais() {
     try {
       return DefaultFirebaseOptions.currentPlatform;
@@ -56,12 +66,8 @@ abstract final class ConfiguracaoFirebase {
                     ? WebDebugProvider()
                     : ReCaptchaV3Provider(Ambiente.firebaseRecaptchaSiteKey)
               : null,
-          providerAndroid: kDebugMode
-              ? const AndroidDebugProvider()
-              : const AndroidPlayIntegrityProvider(),
-          providerApple: kDebugMode
-              ? const AppleDebugProvider()
-              : const AppleAppAttestWithDeviceCheckFallbackProvider(),
+          providerAndroid: provedorAndroid(debug: kDebugMode),
+          providerApple: provedorApple(debug: kDebugMode),
         );
       }
       return InicializacaoFirebase.pronta(

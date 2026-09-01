@@ -79,12 +79,39 @@ class CabecalhoSecaoRadar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (sobrelinha != null) ...[
-          Text(
-            sobrelinha!.toUpperCase(),
-            style: tema.textTheme.labelSmall?.copyWith(
-              color: cores.acao,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.acaoFundoEscuro
+                  : Tokens.acaoFundo,
+              borderRadius: BorderRadius.circular(RaioRadar.pilula),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: cores.acao,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const SizedBox.square(dimension: 6),
+                  ),
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      sobrelinha!.toUpperCase(),
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: cores.acao,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 7),
@@ -96,8 +123,13 @@ class CabecalhoSecaoRadar extends StatelessWidget {
               child: Text(
                 titulo,
                 style: tema.textTheme.headlineMedium?.copyWith(
+                  fontSize: (MediaQuery.sizeOf(context).width * 0.08).clamp(
+                    28.0,
+                    36.0,
+                  ),
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -1.1,
+                  height: 1.08,
+                  letterSpacing: -1.35,
                 ),
               ),
             ),
@@ -109,6 +141,7 @@ class CabecalhoSecaoRadar extends StatelessWidget {
           descricao,
           style: tema.textTheme.bodyMedium?.copyWith(
             color: cores.textoSuave,
+            fontSize: 13,
             height: 1.4,
           ),
         ),
@@ -124,11 +157,13 @@ class CartaoRadar extends StatelessWidget {
     required this.child,
     this.aoTocar,
     this.padding = const EdgeInsets.all(16),
+    this.corDestaque,
   });
 
   final Widget child;
   final VoidCallback? aoTocar;
   final EdgeInsetsGeometry padding;
+  final Color? corDestaque;
 
   @override
   Widget build(BuildContext context) {
@@ -138,14 +173,40 @@ class CartaoRadar extends StatelessWidget {
       borderRadius: BorderRadius.circular(21),
       side: BorderSide(color: cores.borda),
     );
-    final conteudo = Padding(padding: padding, child: child);
-    return Material(
-      color: tema.cardColor,
-      shape: forma,
-      clipBehavior: Clip.antiAlias,
-      child: aoTocar == null
-          ? conteudo
-          : InkWell(onTap: aoTocar, child: conteudo),
+    final conteudo = corDestaque == null
+        ? Padding(padding: padding, child: child)
+        : Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 18,
+                bottom: 18,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: corDestaque,
+                    borderRadius: const BorderRadius.horizontal(
+                      right: Radius.circular(RaioRadar.pilula),
+                    ),
+                  ),
+                  child: const SizedBox(width: 4),
+                ),
+              ),
+              Padding(padding: padding, child: child),
+            ],
+          );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(21),
+        boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+      ),
+      child: Material(
+        color: tema.cardColor,
+        shape: forma,
+        clipBehavior: Clip.antiAlias,
+        child: aoTocar == null
+            ? conteudo
+            : InkWell(onTap: aoTocar, child: conteudo),
+      ),
     );
   }
 }
@@ -229,10 +290,22 @@ class CampoBuscaRadar extends StatelessWidget {
               ),
         filled: true,
         fillColor: Theme.of(context).cardColor,
-        contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        constraints: const BoxConstraints(minHeight: 56),
+        contentPadding: const EdgeInsets.symmetric(vertical: 17),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: CoresRadar.de(context).borda),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: CoresRadar.de(context).borda),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color: CoresRadar.de(context).acao,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -299,7 +372,7 @@ class _AbaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     return Material(
-      color: selecionada ? Theme.of(context).cardColor : Colors.transparent,
+      color: selecionada ? cores.acao : Colors.transparent,
       borderRadius: BorderRadius.circular(11),
       child: InkWell(
         borderRadius: BorderRadius.circular(11),
@@ -309,7 +382,9 @@ class _AbaRadar extends StatelessWidget {
           child: Text(
             rotulo,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: selecionada ? cores.acao : cores.textoSuave,
+              color: selecionada
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : cores.textoSuave,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -338,7 +413,7 @@ class FolhaRadar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        padding: const EdgeInsets.fromLTRB(17, 8, 17, 21),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,28 +421,62 @@ class FolhaRadar extends StatelessWidget {
             Align(
               child: Container(
                 width: 42,
-                height: 4,
+                height: 5,
                 decoration: BoxDecoration(
                   color: CoresRadar.de(context).borda,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
-            Text(
-              titulo,
-              style: tema.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(height: 17),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: tema.textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        descricao,
+                        style: tema.textTheme.bodySmall?.copyWith(
+                          color: CoresRadar.de(context).textoSuave,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 11),
+                IconButton(
+                  key: const Key('fechar-folha-radar'),
+                  tooltip: 'Fechar painel',
+                  onPressed: () => Navigator.maybePop(context),
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size.square(42),
+                    maximumSize: const Size.square(42),
+                    padding: EdgeInsets.zero,
+                    backgroundColor: CoresRadar.de(
+                      context,
+                    ).superficieAlternativa,
+                    side: BorderSide(color: CoresRadar.de(context).borda),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
-            const SizedBox(height: 5),
-            Text(
-              descricao,
-              style: tema.textTheme.bodySmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
-              ),
-            ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             child,
           ],
         ),
@@ -416,22 +525,25 @@ class ControleAparenciaRadar extends StatelessWidget {
       );
     }
 
-    return Semantics(
-      key: const Key('alternar-tema-gaveta'),
-      button: true,
-      toggled: escuro,
-      label: rotulo,
-      child: ListTile(
-        textColor: cor,
-        iconColor: cor,
-        leading: Icon(icone),
-        title: const Text('Aparência'),
-        subtitle: Text(escuro ? 'Tema escuro' : 'Tema claro'),
-        trailing: Switch(
-          value: escuro,
-          onChanged: controlador == null ? null : (_) => _alternar(context),
+    return Material(
+      type: MaterialType.transparency,
+      child: Semantics(
+        key: const Key('alternar-tema-gaveta'),
+        button: true,
+        toggled: escuro,
+        label: rotulo,
+        child: ListTile(
+          textColor: cor,
+          iconColor: cor,
+          leading: Icon(icone),
+          title: const Text('Aparência'),
+          subtitle: Text(escuro ? 'Tema escuro' : 'Tema claro'),
+          trailing: Switch(
+            value: escuro,
+            onChanged: controlador == null ? null : (_) => _alternar(context),
+          ),
+          onTap: controlador == null ? null : () => _alternar(context),
         ),
-        onTap: controlador == null ? null : () => _alternar(context),
       ),
     );
   }

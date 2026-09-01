@@ -143,7 +143,14 @@ def verificar_promocoes(
 
     _guardar_retrato(
         repositorio or RepositorioNulo(),
-        retrato.montar_retrato(parceiros, favoritas, regua, agora=agora, versao=__version__),
+        retrato.montar_retrato(
+            parceiros,
+            favoritas,
+            regua,
+            agora=agora,
+            versao=__version__,
+            qualidade="degradada" if suspeita else "completa",
+        ),
     )
     _log.info("Coleta concluida. Alertas: %d em %d categorias.", total, len(agrupamento))
     return total

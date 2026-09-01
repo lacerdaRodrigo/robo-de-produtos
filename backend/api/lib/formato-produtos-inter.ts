@@ -12,19 +12,3 @@ export function normalizarBuscaProdutosInter(texto: string): string {
     .map((palavra) => (palavra === "celular" ? "smartphone" : palavra))
     .join(" ") ?? "";
 }
-
-export function correspondeBuscaProdutos(nomeBusca: string, termo: string): boolean {
-  const tokens = normalizarBuscaProdutosInter(termo).split(" ").filter(Boolean);
-  return tokens.length > 0 && tokens.every((token) => nomeBusca.includes(token));
-}
-
-export function moeda(texto: string | null): string | null {
-  if (texto === null) return null;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(texto));
-}
-
-export function percentual(texto: string | null): string | null {
-  if (texto === null) return null;
-  const localizado = texto.replace(".", ",");
-  return localizado.includes("%") ? localizado : `${localizado}%`;
-}

@@ -41,6 +41,8 @@ typedef AlterarAcompanhamentoLivelo =
 typedef AlterarAlertaLivelo =
     Future<void> Function({required String idExterno, required bool ativo});
 
+enum ResultadoAtualizacaoSilenciosa { alterada, degradada, inalterada, falha }
+
 Future<void> _ignorarAlerta({
   required String idExterno,
   required bool ativo,
@@ -125,12 +127,17 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
 
   /// Relê o primeiro retrato sem trocar aba, busca, filtros, itens já
   /// carregados nem posição de rolagem. Só aplica quando a coleta mudou.
-  Future<bool> atualizarSilenciosamente() async {
-    if (_carregandoInicial || _carregandoMais) return false;
+  Future<ResultadoAtualizacaoSilenciosa> atualizarSilenciosamente() async {
+    if (_carregandoInicial || _carregandoMais) {
+      return ResultadoAtualizacaoSilenciosa.inalterada;
+    }
     try {
       final pagina = await _buscar(1);
-      if (_descartado || pagina.resumo.ultimaColeta == _resumo?.ultimaColeta) {
-        return false;
+      if (_descartado ||
+          (pagina.resumo.ultimaColeta == _resumo?.ultimaColeta &&
+              pagina.resumo.ultimaTentativaEm == _resumo?.ultimaTentativaEm &&
+              pagina.resumo.qualidade == _resumo?.qualidade)) {
+        return ResultadoAtualizacaoSilenciosa.inalterada;
       }
       final porId = {for (final item in pagina.itens) item.idExterno: item};
       for (var indice = 0; indice < _itens.length; indice++) {
@@ -140,9 +147,11 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
       _resumo = pagina.resumo;
       _categorias = List.unmodifiable(pagina.categorias);
       notifyListeners();
-      return true;
+      return pagina.resumo.qualidade == 'degradada'
+          ? ResultadoAtualizacaoSilenciosa.degradada
+          : ResultadoAtualizacaoSilenciosa.alterada;
     } catch (_) {
-      return false;
+      return ResultadoAtualizacaoSilenciosa.falha;
     }
   }
 

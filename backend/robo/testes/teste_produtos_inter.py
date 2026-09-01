@@ -6,12 +6,13 @@ import json
 import sys
 import types
 from dataclasses import fields
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
 
 from robo_livelo.adaptadores_produtos_inter import (
+    EXPIRACAO_EXECUCAO_PRODUTOS,
     FonteProdutosInterHttp,
     RepositorioProdutosInterPostgres,
 )
@@ -27,11 +28,63 @@ from robo_livelo.modelos_produtos_inter import (
     ResumoColetaProdutosInter,
 )
 from robo_livelo.portas_produtos_inter import FalhaProdutosInter, PaginacaoProdutosInterInvalida
-from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja
+from robo_livelo.principal_produtos_inter import coletar_produtos_de_loja, preparar_rodada
 from testes.conftest import FUSO_BRASILIA
 
 AGORA = datetime(2026, 8, 16, 20, 0, tzinfo=FUSO_BRASILIA)
 LOJA = LojaDiretaInter("loja-1", "casas-bahia", "Casas Bahia", selecionada=True)
+
+
+class FonteFakeLojasDiretas:
+    def __init__(self, total: int):
+        self.total = total
+
+    def obter_json(self):
+        return json.dumps(
+            {
+                "sellers": [
+                    {
+                        "id": f"vendedor-{indice}",
+                        "slug": f"loja-{indice}",
+                        "name": f"Loja {indice}",
+                    }
+                    for indice in range(self.total)
+                ]
+            }
+        )
+
+
+class RepositorioFakeLojasDiretas:
+    def __init__(self):
+        self.sincronizadas = ()
+        self.rodadas = []
+
+    def sincronizar_lojas(self, lojas):
+        self.sincronizadas = lojas
+
+    def listar_selecionadas(self):
+        return []
+
+    def iniciar_rodada(self, momento, versao, lojas_planejadas):
+        self.rodadas.append((momento, versao, lojas_planejadas))
+        return 91
+
+
+@pytest.mark.parametrize("total", [110, 130])
+def teste_total_de_lojas_do_compre_direto_e_dinamico(total):
+    repositorio = RepositorioFakeLojasDiretas()
+
+    rodada_id, selecionadas = preparar_rodada(
+        FonteFakeLojasDiretas(total),
+        repositorio,
+        agora=AGORA,
+        versao="9.9.9",
+    )
+
+    assert rodada_id == 91
+    assert selecionadas == []
+    assert len(repositorio.sincronizadas) == total
+    assert repositorio.rodadas == [(AGORA, "9.9.9", 0)]
 
 
 def pagina(offset: int, ultima: bool, *produtos: dict, total: int = 3, limite: int = 36) -> str:
@@ -508,3 +561,58 @@ def teste_ct247_publicacao_respeita_completude(
     assert repositorio.INSERE_MEDICOES in comandos
     assert repositorio.CONCLUI_LOJA in comandos
     assert (repositorio.INATIVA_AUSENTES in comandos) is deve_inativar
+
+
+def teste_execucao_abandonada_e_reconciliada_antes_da_nova_rodada(monkeypatch):
+    class CursorFake:
+        def __init__(self):
+            self.comandos = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def execute(self, comando, parametros=None):
+            self.comandos.append((comando, parametros))
+
+        def fetchone(self):
+            return (88,)
+
+    class ConexaoFake:
+        def __init__(self, cursor):
+            self._cursor = cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def cursor(self):
+            return self._cursor
+
+    cursor = CursorFake()
+    psycopg_fake = types.SimpleNamespace(
+        connect=lambda url: ConexaoFake(cursor),
+        Error=RuntimeError,
+    )
+    monkeypatch.setitem(sys.modules, "psycopg", psycopg_fake)
+    repositorio = RepositorioProdutosInterPostgres("postgresql://teste")
+
+    rodada_id = repositorio.iniciar_rodada(AGORA, "teste", 2)
+
+    limite = AGORA - EXPIRACAO_EXECUCAO_PRODUTOS
+    assert timedelta(hours=4) == EXPIRACAO_EXECUCAO_PRODUTOS
+    assert rodada_id == 88
+    assert cursor.comandos == [
+        (repositorio.RECONCILIA_LOJAS_ABANDONADAS, (AGORA, limite)),
+        (repositorio.RECONCILIA_RODADAS_ABANDONADAS, (AGORA, limite)),
+        (repositorio.INICIA_RODADA, (AGORA, 2, "teste")),
+    ]
+    reconciliacao = "\n".join(comando for comando, _ in cursor.comandos[:2])
+    assert "rodada.estado = 'iniciada'" in reconciliacao
+    assert "loja.estado = 'iniciada'" in reconciliacao
+    assert "UPDATE produto_direto_inter" not in reconciliacao
+    assert "DELETE FROM" not in reconciliacao

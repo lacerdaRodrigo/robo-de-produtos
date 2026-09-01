@@ -1,32 +1,37 @@
-# `design-app/` — Protótipos visuais (Web e Mobile)
+# `design-app/` — redesign mobile
 
-Protótipos HTML usados para **validar a experiência visual** das novas telas do
-Flutter **antes** de escrever código. Seguem a regra de produto: toda
-funcionalidade visível, tela ou jornada passa primeiro pelo protótipo da
-plataforma afetada e só depois é implementada. Mudanças compartilhadas devem ser
-validadas nos dois protótipos.
+Nesta branch, o trabalho visual está focado **somente no aplicativo mobile Flutter**.
 
-## Arquivos
+A referência obrigatória é:
 
-| Arquivo | Para quê |
-|---|---|
-| [`prototipo-web.html`](prototipo-web.html) | Visual do app na largura de Web (tela larga / lateral) |
-| [`prototipo-mobile.html`](prototipo-mobile.html) | Nova direção mobile: gaveta com quatro áreas principais e temas claro/escuro |
-| [`PLANO-MIGRACAO-MOBILE.md`](PLANO-MIGRACAO-MOBILE.md) | Roteiro incremental para levar o novo protótipo ao Flutter sem redesenhar o Web |
-| [`PLANO-DE-ACAO.md`](PLANO-DE-ACAO.md) | Registro e direção do ciclo anterior de redesign |
-| `assets/` | Fontes vetoriais da marca (logo-radar.svg etc.) |
+- [`prototipo-mobile.html`](prototipo-mobile.html) — fonte visual de verdade;
+- [`UI_SPEC.md`](UI_SPEC.md) — contrato visual e gates;
+- [`PLANO-EXECUCAO-REDESIGN.md`](PLANO-EXECUCAO-REDESIGN.md) — ordem de implementação;
+- `assets/` — identidade visual usada pelo protótipo.
 
-## Como usar
+## Web fora do ciclo
 
-1. Abra o protótipo correspondente à plataforma;
-2. valide o fluxo e a experiência com o responsável;
-3. após a aprovação visual, atualize os contratos/PRDs afetados;
-4. só então implemente no Flutter (`../app/`), mantendo os protótipos
-   sincronizados se a implementação mudar.
+`prototipo-web.html` e o restante da experiência Web continuam no repositório por histórico e manutenção do produto, mas **não fazem parte do redesign desta branch**.
 
-Os protótipos **não** são código real nem substituem requisitos. Eles ilustram
-com dados claramente fictícios para decisão visual.
+Durante `re-design`:
 
-O protótipo mobile de 28 de agosto de 2026 é a referência do novo ciclo apenas
-para celular. Ele não autoriza mudança visual no Web nem implementação no
-Flutter por si só.
+- não redesenhar Web;
+- não comparar com protótipo Web;
+- não executar ou atualizar golden Web como rotina;
+- não abrir arquivos Web para contexto sem necessidade concreta de compilação compartilhada;
+- não sincronizar mudanças visuais mobile com desktop.
+
+Isso é intencional para concentrar tempo e tokens no celular.
+
+## Fluxo mobile
+
+1. ler `prototipo-mobile.html` e `UI_SPEC.md`;
+2. abrir somente o código/testes da fase atual;
+3. implementar sem inventar UI;
+4. formatar e analisar;
+5. rodar somente unitários/widgets diretamente afetados;
+6. renderizar no viewport de referência quando necessário;
+7. comparar com o HTML e corrigir diferenças;
+8. repetir até estabilizar.
+
+Dados do protótipo são ilustrativos. Regras e dados reais continuam vindo dos contratos existentes.

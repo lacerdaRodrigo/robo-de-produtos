@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
@@ -6,6 +9,7 @@ import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
+import '../produtos/link_shopping_inter.dart';
 import 'cartao_cashback_inter.dart';
 import 'controlador_cashback_inter.dart';
 import 'formato_cashback_inter.dart';
@@ -21,6 +25,10 @@ class PaginaCashbackInter extends StatefulWidget {
     this.mostrarAtualizacao = true,
     this.sliversAntesDoCashback = const [],
     this.chaveRolagemCompacta,
+    this.aoAlterarAcompanhamento,
+    this.aoVariarAcompanhadas,
+    this.aoAtualizar,
+    this.abrirUrlExterna,
   });
 
   final Api api;
@@ -32,64 +40,164 @@ class PaginaCashbackInter extends StatefulWidget {
   /// Conteúdo que deve rolar antes da busca na experiência mobile integrada.
   final List<Widget> sliversAntesDoCashback;
   final Key? chaveRolagemCompacta;
+  final VoidCallback? aoAlterarAcompanhamento;
+  final ValueChanged<int>? aoVariarAcompanhadas;
+  final Future<void> Function()? aoAtualizar;
+  final Future<bool> Function(Uri uri)? abrirUrlExterna;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
 }
 
-class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
+class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
+    with WidgetsBindingObserver {
   late final ControladorCashbackInter _controlador =
       widget.controlador ??
       ControladorCashbackInter(
         buscar: ({required q, required ordenar, required pagina}) => widget.api
             .painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+        buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
+            widget.api.painelCashbackInter(
+              q: q,
+              ordenar: ordenar,
+              pagina: pagina,
+              apenasAcompanhadas: true,
+            ),
       );
   late final bool _externo = widget.controlador != null;
-  final _campoBusca = TextEditingController();
+  late final _campoBusca = TextEditingController(text: _controlador.busca);
   final _acompanhamentoAlterado = <String, bool>{};
+  final _alterandoAcompanhamento = <String>{};
+  final _salvamentosAcompanhamento = <String, Future<void>>{};
   var _filtroCompacto = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controlador.carregarInicial();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _campoBusca.dispose();
     if (!_externo) _controlador.dispose();
     super.dispose();
   }
 
-  Future<void> _alternarAcompanhamento(CashbackInter loja) async {
-    if (!widget.administrador) return;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_atualizarDados());
+    }
+  }
+
+  Future<void> _atualizarDados() async {
+    final tarefas = <Future<void>>[_controlador.tentarNovamente()];
+    final atualizarResumo = widget.aoAtualizar;
+    if (atualizarResumo != null) tarefas.add(atualizarResumo());
+    await Future.wait(tarefas);
+  }
+
+  void _alternarAcompanhamento(CashbackInter loja) {
+    if (!widget.administrador || _alterandoAcompanhamento.contains(loja.id)) {
+      return;
+    }
+    final tinhaAlteracao = _acompanhamentoAlterado.containsKey(loja.id);
+    final valorAnterior = _acompanhamentoAlterado[loja.id];
     final acompanhada = !_estaAcompanhada(loja);
+    setState(() {
+      _alterandoAcompanhamento.add(loja.id);
+      _acompanhamentoAlterado[loja.id] = acompanhada;
+    });
+    widget.aoVariarAcompanhadas?.call(acompanhada ? 1 : -1);
+    _salvamentosAcompanhamento[loja.id] = _salvarAcompanhamento(
+      loja: loja,
+      acompanhada: acompanhada,
+      tinhaAlteracao: tinhaAlteracao,
+      valorAnterior: valorAnterior,
+    );
+  }
+
+  Future<void> _salvarAcompanhamento({
+    required CashbackInter loja,
+    required bool acompanhada,
+    required bool tinhaAlteracao,
+    required bool? valorAnterior,
+  }) async {
     try {
       await widget.api.alterarFavoritaInter(id: loja.id, favorita: acompanhada);
       if (!mounted) return;
-      setState(() {
-        _acompanhamentoAlterado[loja.id] = acompanhada;
-      });
+      _controlador.sincronizarAcompanhamento(loja, acompanhada);
       mostrarMensagemRadar(
         context,
         acompanhada
             ? 'Loja adicionada ao acompanhamento.'
             : 'Loja removida do acompanhamento.',
       );
+      widget.aoAlterarAcompanhamento?.call();
     } catch (_) {
       if (mounted) {
+        setState(() {
+          if (tinhaAlteracao) {
+            _acompanhamentoAlterado[loja.id] = valorAnterior!;
+          } else {
+            _acompanhamentoAlterado.remove(loja.id);
+          }
+        });
+        widget.aoVariarAcompanhadas?.call(acompanhada ? -1 : 1);
         mostrarMensagemRadar(
           context,
           'Não foi possível salvar o acompanhamento.',
           sucesso: false,
         );
       }
+    } finally {
+      _salvamentosAcompanhamento.remove(loja.id);
+      if (mounted) {
+        setState(() => _alterandoAcompanhamento.remove(loja.id));
+      }
     }
   }
 
   bool _estaAcompanhada(CashbackInter loja) =>
       _acompanhamentoAlterado[loja.id] ?? loja.favorita;
+
+  Future<void> _selecionarFiltroCompacto(int indice) async {
+    setState(() => _filtroCompacto = indice);
+    final salvamentosPendentes = _salvamentosAcompanhamento.values.toList();
+    if (salvamentosPendentes.isNotEmpty) {
+      await Future.wait(salvamentosPendentes);
+    }
+    if (!mounted || _filtroCompacto != indice) return;
+    await _controlador.mudarConsulta(
+      filtro: indice == 2
+          ? FiltroCashbackInter.acompanhadas
+          : FiltroCashbackInter.todas,
+      ordenacao: OrdenacaoCashbackInter.cashback,
+    );
+  }
+
+  Future<void> _abrirParceiro(CashbackInter loja) async {
+    final link = linkAbsolutoSeguroShoppingInter(loja.link);
+    if (link == null) return;
+    final abriu =
+        await (widget.abrirUrlExterna?.call(link) ??
+            launchUrl(link, mode: LaunchMode.externalApplication));
+    if (!abriu && mounted) {
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível abrir o Banco Inter.',
+        sucesso: false,
+      );
+    }
+  }
+
+  VoidCallback? _acaoAbrirParceiro(CashbackInter loja) =>
+      linkAbsolutoSeguroShoppingInter(loja.link) == null
+      ? null
+      : () => _abrirParceiro(loja);
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
@@ -99,7 +207,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
 
   Widget _conteudo(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final margem = widget.incorporada ? 20.0 : 24.0;
+    final margem = widget.incorporada ? 18.0 : 24.0;
     final atrasada = coletaInterAtrasada(
       _controlador.atualizadoEm,
       DateTime.now(),
@@ -115,7 +223,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Text(
-            'Cashback — Sites parceiros',
+            'Sites parceiros',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
@@ -193,62 +301,55 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
   Widget _conteudoCompacto(
     BuildContext context,
     double margem,
-  ) => CustomScrollView(
-    key: widget.chaveRolagemCompacta ?? const Key('cashback-inter-compacto'),
-    slivers: [
-      ...widget.sliversAntesDoCashback,
-      if (widget.mostrarAtualizacao)
+  ) => RefreshIndicator(
+    key: const Key('puxar-atualizar-cashback-inter'),
+    onRefresh: _atualizarDados,
+    child: CustomScrollView(
+      key: widget.chaveRolagemCompacta ?? const Key('cashback-inter-compacto'),
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        ...widget.sliversAntesDoCashback,
+        if (widget.mostrarAtualizacao)
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(margem, 16, margem, 8),
+            sliver: SliverToBoxAdapter(
+              child: BotaoDisparo(
+                api: widget.api,
+                dominio: 'inter',
+                administrador: widget.administrador,
+                rotulo: 'Atualizar Cashback',
+              ),
+            ),
+          ),
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(margem, 16, margem, 8),
+          padding: EdgeInsets.fromLTRB(margem, 0, margem, 0),
           sliver: SliverToBoxAdapter(
-            child: BotaoDisparo(
-              api: widget.api,
-              dominio: 'inter',
-              administrador: widget.administrador,
-              rotulo: 'Atualizar Cashback',
-            ),
-          ),
-        ),
-      SliverPadding(
-        padding: EdgeInsets.fromLTRB(margem, 8, margem, 0),
-        sliver: SliverToBoxAdapter(
-          child: TextField(
-            controller: _campoBusca,
-            key: const Key('busca-cashback-inter'),
-            onChanged: _controlador.mudarBusca,
-            decoration: InputDecoration(
-              hintText: 'Buscar entre as lojas do Inter',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: CoresRadar.de(context).borda),
+            child: CampoBuscaRadar(
+              controlador: _campoBusca,
+              chaveCampo: const Key('busca-cashback-inter'),
+              dica: 'Buscar entre as lojas do Inter',
+              aoMudar: _controlador.mudarBusca,
+              acao: IconButton(
+                tooltip: 'Ordenar por maior cashback',
+                onPressed: () {
+                  setState(() => _filtroCompacto = 1);
+                  _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
+                },
+                icon: const Icon(Icons.tune_rounded, size: 18),
               ),
             ),
           ),
         ),
-      ),
-      SliverPadding(
-        padding: EdgeInsets.fromLTRB(margem, 12, margem, 8),
-        sliver: SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: _FiltrosCompactosInter(
             selecionado: _filtroCompacto,
-            aoSelecionar: (indice) {
-              setState(() => _filtroCompacto = indice);
-              if (indice == 1) {
-                _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
-              }
-            },
+            aoSelecionar: _selecionarFiltroCompacto,
           ),
         ),
-      ),
-      ..._corpoCompacto(),
-    ],
+        ..._estadoCompacto(margem),
+        ..._corpoCompacto(),
+      ],
+    ),
   );
 
   List<Widget> _corpoCompacto() {
@@ -305,7 +406,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 38),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             for (final loja in lojas)
@@ -313,10 +414,13 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                 loja: loja,
                 compacto: true,
                 acompanhada: _estaAcompanhada(loja),
+                alterando: _alterandoAcompanhamento.contains(loja.id),
+                atualizadoEm: _controlador.atualizadoEm,
                 podeAdministrar: widget.administrador,
                 aoAcompanhar: () => _alternarAcompanhamento(loja),
+                aoAbrirParceiro: _acaoAbrirParceiro(loja),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             _paginacao(),
           ]),
         ),
@@ -327,6 +431,41 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
   List<CashbackInter> _lojasCompactas() => _filtroCompacto == 2
       ? _controlador.itens.where(_estaAcompanhada).toList(growable: false)
       : _controlador.itens;
+
+  List<Widget> _estadoCompacto(double margem) {
+    if (_controlador.atualizadoEm == null || _controlador.carregando) {
+      return const [];
+    }
+    final cores = CoresRadar.de(context);
+    final atrasada = coletaInterAtrasada(
+      _controlador.atualizadoEm,
+      DateTime.now(),
+    );
+    final falhou = _controlador.ultimaTentativaFalhou;
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(margem, 12, margem, 0),
+        sliver: SliverToBoxAdapter(
+          child: Semantics(
+            liveRegion: falhou,
+            child: Text(
+              falhou
+                  ? 'A última sincronização falhou; exibindo a última coleta válida.'
+                  : 'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)}${atrasada ? ' · dados atrasados' : ''}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: falhou
+                    ? cores.perigo
+                    : atrasada
+                    ? cores.atencao
+                    : cores.textoSuave,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
 
   Widget _corpo() {
     if (_controlador.carregando) {
@@ -369,8 +508,10 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                   loja: loja,
                   compacto: widget.incorporada,
                   acompanhada: _estaAcompanhada(loja),
+                  alterando: _alterandoAcompanhamento.contains(loja.id),
                   podeAdministrar: widget.administrador,
                   aoAcompanhar: () => _alternarAcompanhamento(loja),
+                  aoAbrirParceiro: _acaoAbrirParceiro(loja),
                 )
             else
               Wrap(
@@ -384,8 +525,10 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter> {
                         loja: loja,
                         compacto: widget.incorporada,
                         acompanhada: _estaAcompanhada(loja),
+                        alterando: _alterandoAcompanhamento.contains(loja.id),
                         podeAdministrar: widget.administrador,
                         aoAcompanhar: () => _alternarAcompanhamento(loja),
+                        aoAbrirParceiro: _acaoAbrirParceiro(loja),
                       ),
                     ),
                 ],
@@ -440,6 +583,7 @@ class _FiltrosCompactosInter extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 11, 18, 0),
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
@@ -449,14 +593,14 @@ class _FiltrosCompactosInter extends StatelessWidget {
             corAtiva: cores.acao,
             aoTocar: () => aoSelecionar(0),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 7),
           _FiltroCompactoInter(
             rotulo: 'Maior cashback',
             ativo: selecionado == 1,
             corAtiva: cores.acao,
             aoTocar: () => aoSelecionar(1),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 7),
           _FiltroCompactoInter(
             rotulo: 'Acompanhadas',
             ativo: selecionado == 2,
@@ -486,9 +630,13 @@ class _FiltroCompactoInter extends StatelessWidget {
   Widget build(BuildContext context) => TextButton(
     onPressed: aoTocar,
     style: TextButton.styleFrom(
-      minimumSize: const Size(0, 38),
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      backgroundColor: ativo ? const Color(0xFFE1F1FF) : Colors.white,
+      minimumSize: const Size(0, 37),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      backgroundColor: ativo
+          ? (Theme.of(context).brightness == Brightness.dark
+                ? Tokens.acaoFundoEscuro
+                : Tokens.acaoFundo)
+          : Theme.of(context).colorScheme.surface,
       foregroundColor: ativo ? corAtiva : CoresRadar.de(context).textoSuave,
       shape: StadiumBorder(
         side: BorderSide(
@@ -498,7 +646,7 @@ class _FiltroCompactoInter extends StatelessWidget {
     ),
     child: Text(
       rotulo,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
     ),
   );
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { dispararRobo } from "@/lib/github";
+import { dispararRobo, dispararRoboInter } from "@/lib/github";
 
 describe("dispararRobo", () => {
   afterEach(() => {
@@ -17,6 +17,18 @@ describe("dispararRobo", () => {
 
     const [url, opcoes] = requisicao.mock.calls[0];
     expect(url).toContain("/actions/workflows/robo.yml/dispatches");
+    expect(JSON.parse(opcoes.body)).toEqual({ ref: "main" });
+  });
+
+  it("dispara a coleta unificada do Banco Inter", async () => {
+    process.env.GITHUB_TOKEN_DISPARO = "token-de-teste";
+    const requisicao = vi.fn().mockResolvedValue({ status: 204 });
+    vi.stubGlobal("fetch", requisicao);
+
+    await expect(dispararRoboInter()).resolves.toEqual({ ok: true });
+
+    const [url, opcoes] = requisicao.mock.calls[0];
+    expect(url).toContain("/actions/workflows/inter.yml/dispatches");
     expect(JSON.parse(opcoes.body)).toEqual({ ref: "main" });
   });
 });

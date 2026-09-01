@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
+import 'formato_cashback_inter.dart';
 
 const _descricaoAusente =
     'O Inter não informou condições adicionais nesta consulta';
@@ -13,15 +14,21 @@ class CartaoCashbackInter extends StatelessWidget {
     required this.loja,
     this.compacto = false,
     this.acompanhada = false,
+    this.alterando = false,
+    this.atualizadoEm,
     this.podeAdministrar = false,
     this.aoAcompanhar,
+    this.aoAbrirParceiro,
   });
 
   final CashbackInter loja;
   final bool compacto;
   final bool acompanhada;
+  final bool alterando;
+  final String? atualizadoEm;
   final bool podeAdministrar;
   final VoidCallback? aoAcompanhar;
+  final VoidCallback? aoAbrirParceiro;
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +40,18 @@ class CartaoCashbackInter extends StatelessWidget {
             cores: cores,
             loja: loja,
             acompanhada: acompanhada,
+            alterando: alterando,
+            atualizadoEm: atualizadoEm,
             podeAdministrar: podeAdministrar,
             aoAcompanhar: aoAcompanhar,
+            aoAbrirParceiro: aoAbrirParceiro,
           )
-        : _CartaoDetalhado(tema: tema, cores: cores, loja: loja);
+        : _CartaoDetalhado(
+            tema: tema,
+            cores: cores,
+            loja: loja,
+            aoAbrirParceiro: aoAbrirParceiro,
+          );
     return Semantics(label: 'Loja ${loja.nome}', child: conteudo);
   }
 }
@@ -47,21 +62,29 @@ class _CartaoCompacto extends StatelessWidget {
     required this.cores,
     required this.loja,
     required this.acompanhada,
+    required this.alterando,
+    required this.atualizadoEm,
     required this.podeAdministrar,
     required this.aoAcompanhar,
+    required this.aoAbrirParceiro,
   });
 
   final ThemeData tema;
   final CoresRadar cores;
   final CashbackInter loja;
   final bool acompanhada;
+  final bool alterando;
+  final String? atualizadoEm;
   final bool podeAdministrar;
   final VoidCallback? aoAcompanhar;
+  final VoidCallback? aoAbrirParceiro;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: CartaoRadar(
+      corDestaque: cores.acao,
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,18 +96,30 @@ class _CartaoCompacto extends StatelessWidget {
                 height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDF3FD),
-                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Tokens.acaoFundoEscuro
+                          : Tokens.acaoFundo,
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Tokens.cianoFundoEscuro
+                          : Tokens.cianoFundo,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
                   _iniciais(loja.nome),
                   style: TextStyle(
-                    color: Tokens.marca,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFDFF8FF)
+                        : Tokens.marca,
+                    fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,66 +127,242 @@ class _CartaoCompacto extends StatelessWidget {
                     Text(
                       loja.nome,
                       style: tema.textTheme.titleMedium?.copyWith(
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Site parceiro · cashback publicado',
+                      'Site parceiro',
                       style: tema.textTheme.bodySmall?.copyWith(
                         color: cores.textoSuave,
+                        fontSize: 9,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                loja.encontrada
-                    ? (loja.cashbackPrincipalTexto ?? 'Oferta disponível')
-                    : 'Indisponível',
-                style: tema.textTheme.titleSmall?.copyWith(
-                  color: loja.encontrada ? cores.ganho : cores.textoSuave,
-                  fontWeight: FontWeight.w900,
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      loja.encontrada ? 'Melhor cashback' : 'Status',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: cores.textoSuave,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      loja.encontrada
+                          ? (loja.cashbackPrincipalTexto ?? 'Oferta disponível')
+                          : 'Indisponível',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: tema.textTheme.labelMedium?.copyWith(
+                        color: loja.encontrada ? cores.ganho : cores.textoSuave,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Cashback salvo na última coleta',
-                  style: tema.textTheme.bodySmall?.copyWith(
-                    color: cores.textoSuave,
+          if (loja.etiqueta != null || loja.descricaoPrincipal != null) ...[
+            const SizedBox(height: 11),
+            if (loja.etiqueta != null)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Tokens.ganhoFundoEscuro
+                      : Tokens.ganhoFundo,
+                  borderRadius: BorderRadius.circular(RaioRadar.pilula),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  child: Text(
+                    loja.etiqueta!,
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: cores.ganho,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
-              FilledButton.tonalIcon(
-                onPressed: podeAdministrar ? aoAcompanhar : null,
+            if (loja.descricaoPrincipal != null) ...[
+              const SizedBox(height: 7),
+              Text(
+                loja.descricaoPrincipal!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.textoSuave,
+                  fontSize: 10,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ],
+          if (loja.cashbackPrincipalTexto != null ||
+              loja.cashbackSecundarioTexto != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                color: tema.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  if (loja.cashbackPrincipalTexto != null)
+                    _LinhaCashbackInter(
+                      rotulo: 'Para correntista',
+                      valor: loja.cashbackPrincipalTexto!,
+                      tema: tema,
+                      cores: cores,
+                    ),
+                  if (loja.cashbackPrincipalTexto != null &&
+                      loja.cashbackSecundarioTexto != null) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 7),
+                      child: Divider(height: 1),
+                    ),
+                  ],
+                  if (loja.cashbackSecundarioTexto != null)
+                    _LinhaCashbackInter(
+                      rotulo: 'Para não-correntista',
+                      valor: loja.cashbackSecundarioTexto!,
+                      tema: tema,
+                      cores: cores,
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 13),
+          const Divider(height: 1),
+          const SizedBox(height: 11),
+          Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: loja.encontrada ? cores.ganho : cores.atencao,
+                  shape: BoxShape.circle,
+                ),
+                child: const SizedBox.square(dimension: 6),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  loja.encontrada
+                      ? tempoColetaInter(atualizadoEm, DateTime.now())
+                      : 'Não retornada na última coleta',
+                  style: tema.textTheme.bodySmall?.copyWith(
+                    color: cores.textoSuave,
+                    fontSize: 9,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!podeAdministrar && acompanhada) ...[
+            const SizedBox(height: 8),
+            Text(
+              '✓ Acompanhada',
+              style: tema.textTheme.labelSmall?.copyWith(
+                color: cores.ganho,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            alignment: WrapAlignment.end,
+            children: [
+              if (podeAdministrar)
+                OutlinedButton.icon(
+                  key: ValueKey('acompanhar-${loja.id}'),
+                  onPressed: !alterando ? aoAcompanhar : null,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 8,
+                    ),
+                    foregroundColor: acompanhada ? cores.ganho : cores.acao,
+                    backgroundColor: acompanhada
+                        ? (Theme.of(context).brightness == Brightness.dark
+                              ? Tokens.ganhoFundoEscuro
+                              : Tokens.ganhoFundo)
+                        : Colors.transparent,
+                    side: BorderSide(
+                      color: acompanhada ? Colors.transparent : cores.acao,
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                  icon: alterando
+                      ? const SizedBox.square(
+                          dimension: 13,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          acompanhada
+                              ? Icons.notifications_off_outlined
+                              : Icons.notifications_none_rounded,
+                          size: 15,
+                        ),
+                  label: Text(
+                    alterando
+                        ? 'Salvando…'
+                        : acompanhada
+                        ? 'Deixar de acompanhar'
+                        : 'Acompanhar',
+                  ),
+                ),
+              FilledButton.icon(
+                key: ValueKey('ir-inter-${loja.id}'),
+                onPressed: aoAbrirParceiro,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD7F8E5),
-                  foregroundColor: Tokens.ganho,
+                  minimumSize: const Size(0, 40),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 10,
+                    vertical: 8,
                   ),
+                  backgroundColor: cores.acao,
+                  foregroundColor: Colors.white,
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                    fontSize: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
                   ),
                 ),
-                icon: Icon(
-                  acompanhada
-                      ? Icons.check_circle_outline
-                      : Icons.add_circle_outline,
-                  size: 16,
-                ),
-                label: Text(acompanhada ? 'Acompanhada' : 'Acompanhar'),
+                icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                label: const Text('Ir para o Inter'),
               ),
             ],
           ),
@@ -162,9 +373,54 @@ class _CartaoCompacto extends StatelessWidget {
 
   static String _iniciais(String nome) {
     final partes = nome.trim().split(RegExp(r'\s+'));
+    if (partes.isEmpty || partes.first.isEmpty) return '?';
     if (partes.length == 1) return partes.first.substring(0, 1).toUpperCase();
     return '${partes.first[0]}${partes.last[0]}'.toUpperCase();
   }
+}
+
+class _LinhaCashbackInter extends StatelessWidget {
+  const _LinhaCashbackInter({
+    required this.rotulo,
+    required this.valor,
+    required this.tema,
+    required this.cores,
+  });
+
+  final String rotulo;
+  final String valor;
+  final ThemeData tema;
+  final CoresRadar cores;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: Text(
+          rotulo,
+          style: tema.textTheme.labelSmall?.copyWith(
+            color: cores.textoSuave,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      Flexible(
+        child: Text(
+          valor,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+          style: tema.textTheme.labelSmall?.copyWith(
+            color: cores.ganho,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class _CartaoDetalhado extends StatelessWidget {
@@ -172,11 +428,13 @@ class _CartaoDetalhado extends StatelessWidget {
     required this.tema,
     required this.cores,
     required this.loja,
+    required this.aoAbrirParceiro,
   });
 
   final ThemeData tema;
   final CoresRadar cores;
   final CashbackInter loja;
+  final VoidCallback? aoAbrirParceiro;
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +457,7 @@ class _CartaoDetalhado extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            const Text('Cliente Inter Shopping'),
+            const Text('Para correntista'),
             if (!loja.encontrada)
               const Padding(
                 padding: EdgeInsets.only(top: 4),
@@ -219,11 +477,20 @@ class _CartaoDetalhado extends StatelessWidget {
                 style: tema.textTheme.bodyMedium,
               ),
             ),
+            if (aoAbrirParceiro != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: aoAbrirParceiro,
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Ir para o Inter'),
+                ),
+              ),
             if (loja.cashbackSecundarioTexto != null ||
                 loja.descricaoSecundaria != null)
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
-                title: const Text('Não-correntista'),
+                title: const Text('Para não-correntista'),
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,

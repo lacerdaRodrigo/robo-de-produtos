@@ -46,6 +46,22 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
 
   Future<void> carregarPrimeira() => _carregarPrimeira(_versao);
 
+  /// Reinicia a consulta quando um filtro externo muda, invalidando respostas
+  /// antigas para que busca e paginação continuem representando o servidor.
+  Future<void> reiniciarConsulta() {
+    _timer?.cancel();
+    _versao++;
+    _itens.clear();
+    _pagina = 0;
+    _total = 0;
+    _temProxima = false;
+    _erroInicial = null;
+    _erroMais = null;
+    _carregandoInicial = true;
+    notifyListeners();
+    return _carregarPrimeira(_versao);
+  }
+
   /// Espera a pessoa terminar de digitar antes de reiniciar a lista.
   void mudarBusca(String valor) {
     if (valor == _busca) return;

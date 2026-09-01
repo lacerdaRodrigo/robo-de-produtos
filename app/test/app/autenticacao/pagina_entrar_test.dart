@@ -98,7 +98,7 @@ void main() {
     );
     expect(find.text('Histórico de preços'), findsOneWidget);
     expect(find.text('Que bom ter você aqui'), findsOneWidget);
-  });
+  }, tags: 'web');
 
   testWidgets('celular estreito aceita texto ampliado sem perder ações', (
     at,
@@ -249,7 +249,7 @@ void main() {
       find.byType(PaginaEntrar),
       matchesGoldenFile('../../goldens/login_compacto.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('login amplo confere com o golden aprovado', (at) async {
     await _abrir(at, _AutenticadorFalso(), tamanho: const Size(1440, 900));
@@ -258,5 +258,5 @@ void main() {
       find.byType(PaginaEntrar),
       matchesGoldenFile('../../goldens/login_amplo.png'),
     );
-  });
+  }, tags: 'golden');
 }

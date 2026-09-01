@@ -1,22 +1,17 @@
 # Radar de Benefícios — Livelo e Shopping Inter
 
-Monitora benefícios em fontes públicas: avisa por e-mail quando uma loja favorita
-está com pontuação turbinada na Livelo e mostra o cashback e as condições das lojas
-escolhidas no Shopping Inter (incluindo produtos do Compre direto, com busca e
-histórico de 30 dias).
+Monitora benefícios em fontes públicas: publica catálogo, histórico e alertas da
+Livelo e mostra cashback, condições e produtos do Shopping Inter, com busca e
+histórico de 30 dias. O antigo canal SMTP/e-mail não está ativo no código atual.
 
 Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Neon)
 guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) mostra
 cada fonte sem misturar suas regras.
 
-> **Status:** Livelo V2.0–V2.3 e a V3 do Shopping Inter estão publicadas. O
-> catálogo Livelo completo está no Neon e na API autenticada: a primeira coleta
-> publicou 252 parceiros em 2026-08-28. O smoke físico Android fica pendente
-> pelo responsável. A V4 de
-> produtos passou pelo primeiro aceite real com a Casas Bahia em 2026-08-17:
-> 3.310 produtos ativos e busca local confirmada no Neon. O Flutter (app/) está em
-> redesign por telas; a interface Web legada (Next.js) foi desativada em 2026-08-24
-> e a API (sem prefixo de versão) foi arquivada em `backend/api/`.
+> **Ciclo atual:** o Flutter está em redesign **mobile-only**, governado por
+> [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
+> mas não é alvo nem gate deste ciclo. Central de Alertas, fechamento externo do
+> App Check e confirmação operacional das migrations 016/017 continuam pendentes.
 
 ## Estrutura do repositório
 
@@ -25,12 +20,13 @@ robo/
 ├── app/            # Flutter (Web, Android e iOS) — única interface
 ├── backend/
 │   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
-│   └── api/        # API autenticada (arquivada, não roda)
+│   └── api/        # API autenticada consumida pelo Flutter
 ├── docs/           # PRDs e documentação
-├── migracoes/      # schema do Postgres (Neon) — 001 a 015
-├── design-app/     # protótipos visuais Web/Mobile
+├── migracoes/      # schema versionado do Postgres; aplicação é operação externa
+├── design-app/     # protótipo mobile atual e referências preservadas
 ├── .github/        # workflows do GitHub Actions
-└── CLAUDE.md       # contexto para agentes de IA
+├── AGENTS.md       # contrato operacional da branch re-design
+└── CLAUDE.md       # contexto histórico complementar
 ```
 
 ## Como funciona
@@ -57,7 +53,7 @@ todas leem apenas fontes públicas.
 | [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
 | [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
 | [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
-| [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Design e lições do e-mail |
+| [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Histórico do antigo canal de e-mail |
 | [`docs/guias/ARQUITETURA.md`](docs/guias/ARQUITETURA.md) | Histórico, substituído pelo PRD |
 | [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA |
@@ -81,9 +77,9 @@ trocar a API ou o App Check, passe `API_URL=...` e `APP_CHECK=true` no comando.
 Após `make apk`, o arquivo fica em
 `app/build/app/outputs/flutter-apk/app-release.apk`.
 
-O app consome a API (`/api/*` por domínio, ex.: `/api/livelo`, `/api/inter`), que
-hoje está arquivada — para desenvolvimento local aponte
-`--dart-define=API_URL=...` para uma API em execução. Veja
+O app consome a API autenticada (`/api/*` por domínio, ex.: `/api/livelo`,
+`/api/inter`). Para desenvolvimento local, aponte
+`--dart-define=API_URL=...` para a instância desejada. Veja
 [`app/README.md`](app/README.md).
 
 ## Como rodar os robôs (backend)
@@ -100,9 +96,9 @@ python -m robo_livelo.principal_produtos_inter
 ```
 
 Com `DATABASE_URL`, as lojas acompanhadas ficam no Postgres; o TOML é reserva
-somente para indisponibilidade e não repõe um banco que respondeu vazio. O
-coletor do Inter exige `DATABASE_URL`; o e-mail da Livelo exige uma
-**Senha de Aplicativo** do Gmail. Veja [`backend/robo/README.md`](backend/robo/README.md).
+somente para indisponibilidade e não repõe um banco que respondeu vazio. Os
+robôs publicam seus retratos no banco e não possuem notificador SMTP ativo. Veja
+[`backend/robo/README.md`](backend/robo/README.md).
 
 ## GitHub Actions
 
@@ -114,12 +110,22 @@ Veja a lista completa em [`.github/README.md`](.github/README.md).
 > de coleta em pé exige rodar a partir de `backend/robo/` e ajustar o caminho de
 > `config/lojas_favoritas.toml`.
 
-## Testes
+## Validação no ciclo mobile
 
 ```bash
-cd backend/robo && ruff check . && python -m pytest --cov --cov-fail-under=90
-cd app && flutter analyze && flutter test
+cd app
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+find test -type f -name '*_test.dart' \
+  ! -name 'app_smoke_test.dart' \
+  ! -name 'controlador_painel_livelo_test.dart' \
+  ! -name 'pagina_painel_livelo_test.dart' \
+  -print0 | xargs -0 flutter test --exclude-tags 'golden || web'
 ```
+
+Rode TypeScript/ESLint ou Ruff apenas quando o componente correspondente for
+alterado. Goldens, integration, E2E, smoke, performance e Web não são gates do
+ciclo atual; os testes existentes permanecem preservados.
 
 ## Versionamento e rastreabilidade
 

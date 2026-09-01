@@ -52,6 +52,11 @@ export type DependenciasDeAcesso = {
   appCheckObrigatorio: boolean;
 };
 
+/** Somente o literal `true` ativa o rollout; ausente ou `false` mantem OFF. */
+export function lerAppCheckObrigatorio(valor: string | undefined): boolean {
+  return valor === "true";
+}
+
 const dependenciasPadrao: DependenciasDeAcesso = {
   verificarIdToken,
   verificarAppCheck: verificarTokenAppCheck,
@@ -59,7 +64,7 @@ const dependenciasPadrao: DependenciasDeAcesso = {
   consumirLimite,
   registrarAuditoria,
   hash: hashTecnico,
-  appCheckObrigatorio: process.env.EXIGIR_APP_CHECK === "true",
+  appCheckObrigatorio: lerAppCheckObrigatorio(process.env.EXIGIR_APP_CHECK),
 };
 
 const JANELA_LEITURA_SEGUNDOS = 60;

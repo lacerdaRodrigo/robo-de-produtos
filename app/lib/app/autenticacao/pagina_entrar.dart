@@ -3,7 +3,15 @@ import 'package:flutter/material.dart';
 import '../../core/autenticacao/autenticador.dart';
 import '../identidade/logo_radar.dart';
 import '../tema/tema.dart';
-import '../tema/tokens.dart';
+
+abstract final class _TokensLogin {
+  static const marcaProfunda = Color(0xFF081A2D);
+  static const marca = Color(0xFF102A43);
+  static const marcaClara = Color(0xFF1769AA);
+  static const ganho = Color(0xFF16803C);
+  static const perigo = Color(0xFFC53030);
+  static const fundo = Color(0xFFF3F7FB);
+}
 
 class PaginaEntrar extends StatefulWidget {
   const PaginaEntrar({super.key, required this.autenticador});
@@ -120,6 +128,9 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
         },
       ),
     );
+    if (MediaQuery.sizeOf(context).width < _larguraLayoutAmplo) {
+      return Theme(data: TemaRadar.loginLegado(), child: pagina);
+    }
     if (Theme.of(context).brightness == Brightness.light) return pagina;
     return Theme(data: TemaRadar.legadoClaro(), child: pagina);
   }
@@ -139,7 +150,7 @@ class _PainelDaMarca extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF123D62), Tokens.marcaProfunda],
+            colors: [Color(0xFF123D62), _TokensLogin.marcaProfunda],
             stops: [0, 0.58],
           ),
         ),
@@ -236,7 +247,7 @@ class _AssinaturaMarca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = compacta ? Tokens.marca : Colors.white;
+    final cor = compacta ? _TokensLogin.marca : Colors.white;
     return Row(
       key: compacta ? const Key('login-marca-compacta') : null,
       mainAxisSize: compacta ? MainAxisSize.max : MainAxisSize.min,
@@ -442,7 +453,7 @@ class _AreaFormulario extends StatelessWidget {
                               'Que bom ter você aqui',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
-                                    color: Tokens.marca,
+                                    color: _TokensLogin.marca,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -1,
                                   ),
@@ -492,7 +503,7 @@ class _AreaFormulario extends StatelessWidget {
                                   ocultarSenha
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: Tokens.marcaClara,
+                                  color: _TokensLogin.marcaClara,
                                 ),
                               ),
                               validador: (valor) => (valor?.isEmpty ?? true)
@@ -595,7 +606,7 @@ class _CampoRotulado extends StatelessWidget {
         Text(
           rotulo,
           style: const TextStyle(
-            color: Tokens.marca,
+            color: _TokensLogin.marca,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
@@ -625,7 +636,10 @@ class _CampoRotulado extends StatelessWidget {
             enabledBorder: borda,
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Tokens.marcaClara, width: 2),
+              borderSide: const BorderSide(
+                color: _TokensLogin.marcaClara,
+                width: 2,
+              ),
             ),
           ),
         ),
@@ -647,7 +661,7 @@ class _MensagemLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = erro ? Tokens.perigo : Tokens.ganho;
+    final cor = erro ? _TokensLogin.perigo : _TokensLogin.ganho;
     return Semantics(
       key: chave,
       liveRegion: true,
@@ -686,13 +700,13 @@ class _AvisoSeguranca extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Tokens.fundo,
+        color: _TokensLogin.fundo,
         borderRadius: BorderRadius.circular(14),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lock_outline, color: Tokens.marcaClara, size: 20),
+          Icon(Icons.lock_outline, color: _TokensLogin.marcaClara, size: 20),
           SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -23,6 +23,8 @@ Map<String, Object?> resumo({
       : 'atencao',
   'livelo': {
     'estado': livelo,
+    'ultima_tentativa_em': '2026-08-23T10:30:00.000Z',
+    'qualidade': livelo == 'degradado' ? 'degradada' : 'completa',
     'ultimo_sucesso_em': '2026-08-23T08:00:00.000Z',
     'lojas_acompanhadas': 126,
     'alertas_ultima_coleta': 2,
@@ -62,6 +64,7 @@ Future<void> abrir(
   WidgetTester at,
   Api api, {
   VoidCallback? aoAbrirLojas,
+  VoidCallback? aoAbrirProgramas,
   VoidCallback? aoAbrirLivelo,
   VoidCallback? aoAbrirProdutos,
   VoidCallback? aoAbrirCashback,
@@ -82,6 +85,7 @@ Future<void> abrir(
         body: PaginaInicio(
           api: api,
           aoAbrirLojas: aoAbrirLojas,
+          aoAbrirProgramas: aoAbrirProgramas,
           aoAbrirLivelo: aoAbrirLivelo,
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
@@ -147,6 +151,23 @@ void main() {
     await at.scrollUntilVisible(find.text('Estado por domínio'), 400);
     expect(find.text('Parcial'), findsOneWidget);
     expect(find.textContaining('1 sem coleta'), findsOneWidget);
+  });
+
+  testWidgets('RN29 comunica qualidade reduzida e snapshot preservado', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo(livelo: 'degradado')), 200),
+    );
+    await abrir(at, api);
+    await at.pumpAndSettle();
+
+    expect(find.text('Livelo: degradado'), findsOneWidget);
+    expect(
+      find.textContaining('O último retrato válido foi preservado.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('RN29'), findsNothing);
   });
 
   testWidgets('domínio indisponível usa traço em vez de zero inventado', (
@@ -216,6 +237,45 @@ void main() {
     expect(chamadas, 2);
   });
 
+  testWidgets('Início compacto reproduz a hierarquia com dados reais', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+
+    expect(find.text('Seu radar hoje'), findsOneWidget);
+    expect(
+      find.text('As melhores oportunidades continuam ativas.'),
+      findsOneWidget,
+    );
+    expect(find.text('Explorar'), findsOneWidget);
+    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
+    expect(find.text('130'), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
+  });
+
+  testWidgets('Início compacto não estoura em 320 px com texto ampliado', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(
+      at,
+      api,
+      compacto: true,
+      tamanho: const Size(320, 640),
+      escalaTexto: 1.5,
+    );
+    await at.pumpAndSettle();
+    expect(at.takeException(), isNull);
+    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('quatro atalhos chamam jornadas reais', (at) async {
     final abertos = <String>[];
     final api = apiQueResponde(
@@ -242,7 +302,7 @@ void main() {
       await at.tap(atalho);
     }
     expect(abertos, ['lojas', 'livelo', 'produtos', 'cashback']);
-  });
+  }, tags: 'web');
 
   testWidgets('layout amplo e texto ampliado não estouram', (at) async {
     final api = apiQueResponde(
@@ -253,7 +313,7 @@ void main() {
 
     expect(at.takeException(), isNull);
     expect(find.text('Produtos ativos'), findsOneWidget);
-  });
+  }, tags: 'web');
 
   testWidgets('celular estreito com texto ampliado alcança todos os estados', (
     at,
@@ -281,7 +341,7 @@ void main() {
       find.byType(PaginaInicio),
       matchesGoldenFile('../../goldens/inicio_mobile.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('Início Web amplo confere com o golden aprovado', (at) async {
     final api = apiQueResponde(
@@ -294,5 +354,5 @@ void main() {
       find.byType(PaginaInicio),
       matchesGoldenFile('../../goldens/inicio_web.png'),
     );
-  });
+  }, tags: 'golden');
 }

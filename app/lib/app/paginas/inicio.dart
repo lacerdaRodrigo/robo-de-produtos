@@ -16,6 +16,7 @@ class PaginaInicio extends StatefulWidget {
     super.key,
     required this.api,
     this.aoAbrirLojas,
+    this.aoAbrirProgramas,
     this.aoAbrirLivelo,
     this.aoAbrirProdutos,
     this.aoAbrirCashback,
@@ -26,6 +27,7 @@ class PaginaInicio extends StatefulWidget {
 
   final Api api;
   final VoidCallback? aoAbrirLojas;
+  final VoidCallback? aoAbrirProgramas;
   final VoidCallback? aoAbrirLivelo;
   final VoidCallback? aoAbrirProdutos;
   final VoidCallback? aoAbrirCashback;
@@ -132,15 +134,14 @@ class _PaginaInicioState extends State<PaginaInicio>
         slivers: [
           SliverSafeArea(
             sliver: SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 44),
+              padding: widget.experienciaCompacta
+                  ? const EdgeInsets.fromLTRB(18, 22, 18, 38)
+                  : const EdgeInsets.fromLTRB(20, 24, 20, 44),
               sliver: SliverList.list(
                 children: [
                   if (widget.experienciaCompacta)
                     _CabecalhoResumoCompacto(
-                      resumo: resumo,
-                      carregando: _carregando,
                       agora: (widget.agora ?? DateTime.now)(),
-                      aoAtualizar: _carregando ? null : _consultar,
                     )
                   else
                     _CabecalhoResumo(
@@ -161,28 +162,18 @@ class _PaginaInicioState extends State<PaginaInicio>
                         )
                       : _DestaqueEstado(resumo: resumo),
                   if (widget.experienciaCompacta) ...[
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     const _TituloSecao(
-                      titulo: 'Seus espaços',
-                      complemento: 'Um lugar para cada jornada',
+                      titulo: 'Explorar',
+                      complemento: 'Acesse os dados conectados',
+                      compactoMobile: true,
                     ),
                     const SizedBox(height: 12),
                     _EspacosCompactos(
-                      aoAbrirLivelo: widget.aoAbrirLivelo,
-                      aoAbrirInter: widget.aoAbrirCashback,
+                      aoAbrirProgramas: widget.aoAbrirProgramas,
                       aoAbrirProdutos: widget.aoAbrirProdutos,
                     ),
-                    const SizedBox(height: 30),
-                    const _TituloSecao(
-                      titulo: 'Resumo agora',
-                      complemento: 'Últimos retratos válidos',
-                    ),
-                    const SizedBox(height: 12),
-                    _GradeMetricasCompactas(
-                      resumo: resumo,
-                      agora: (widget.agora ?? DateTime.now)(),
-                    ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     _AtividadeRecenteCompacta(
                       resumo: resumo,
                       agora: (widget.agora ?? DateTime.now)(),
@@ -287,17 +278,9 @@ class _CabecalhoResumo extends StatelessWidget {
 }
 
 class _CabecalhoResumoCompacto extends StatelessWidget {
-  const _CabecalhoResumoCompacto({
-    required this.resumo,
-    required this.carregando,
-    required this.agora,
-    required this.aoAtualizar,
-  });
+  const _CabecalhoResumoCompacto({required this.agora});
 
-  final ResumoInicio resumo;
-  final bool carregando;
   final DateTime agora;
-  final VoidCallback? aoAtualizar;
 
   @override
   Widget build(BuildContext context) {
@@ -306,27 +289,8 @@ class _CabecalhoResumoCompacto extends StatelessWidget {
       children: [
         CabecalhoSecaoRadar(
           sobrelinha: _dataExtensa(agora),
-          titulo: _saudacao(agora),
-          descricao:
-              'Seus benefícios importantes, sem misturar as regras de cada fonte.',
-          acao: IconButton.filledTonal(
-            key: const Key('atualizar-resumo'),
-            tooltip: 'Atualizar resumo',
-            onPressed: aoAtualizar,
-            icon: carregando
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.refresh),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Resumo gerado ${_dataHora(resumo.geradoEm)}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-          ),
+          titulo: 'Seu radar hoje',
+          descricao: 'Acompanhe pontos, cashback e produtos em um só lugar.',
         ),
       ],
     );
@@ -376,50 +340,44 @@ class _DestaqueInicioCompacto extends StatelessWidget {
   Widget build(BuildContext context) {
     final prioridade = _prioridade(resumo);
     final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
+    return CartaoRadar(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            color: Tokens.marcaProfunda,
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SeloHeroCompacto(texto: _textoAtualizacao(resumo, agora)),
-                const SizedBox(height: 14),
-                Text(
-                  atualizado ? 'Seu radar está atualizado.' : prioridade.titulo,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  atualizado
-                      ? 'Livelo, cashback e produtos continuam em leituras independentes.'
-                      : prioridade.descricao,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFFD7E3ED),
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _MetricasHeroCompactas(resumo: resumo),
-              ],
+          _SeloHeroCompacto(
+            texto: atualizado
+                ? 'Tudo atualizado'
+                : _textoAtualizacao(resumo, agora),
+            atualizado: atualizado,
+          ),
+          const SizedBox(height: 18),
+          Text(
+            atualizado
+                ? 'As melhores oportunidades continuam ativas.'
+                : prioridade.titulo,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              height: 1.12,
+              letterSpacing: -0.8,
             ),
           ),
-          const Positioned(
-            right: -46,
-            bottom: -74,
-            child: _ArcoHeroInicio(tamanho: 190),
+          const SizedBox(height: 7),
+          Text(
+            atualizado
+                ? 'Últimos dados recebidos normalmente.'
+                : prioridade.descricao,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              height: 1.4,
+            ),
           ),
+          const SizedBox(height: 18),
+          _MetricasHeroCompactas(resumo: resumo),
         ],
       ),
     );
@@ -427,16 +385,20 @@ class _DestaqueInicioCompacto extends StatelessWidget {
 }
 
 class _SeloHeroCompacto extends StatelessWidget {
-  const _SeloHeroCompacto({required this.texto});
+  const _SeloHeroCompacto({required this.texto, required this.atualizado});
 
   final String texto;
+  final bool atualizado;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+        color:
+            (atualizado
+                    ? CoresRadar.de(context).ganho
+                    : CoresRadar.de(context).atencao)
+                .withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -444,7 +406,13 @@ class _SeloHeroCompacto extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.circle, size: 8, color: Color(0xFF55D6A3)),
+            Icon(
+              Icons.circle,
+              size: 8,
+              color: atualizado
+                  ? CoresRadar.de(context).ganho
+                  : CoresRadar.de(context).atencao,
+            ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -452,7 +420,9 @@ class _SeloHeroCompacto extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
+                  color: atualizado
+                      ? CoresRadar.de(context).ganho
+                      : CoresRadar.de(context).atencao,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -474,14 +444,12 @@ class _MetricasHeroCompactas extends StatelessWidget {
     return Row(
       children: [
         _MetricaHero(valor: _valorLivelo(resumo), titulo: 'alertas Livelo'),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _MetricaHero(
-          valor: resumo.cashbackInter.estado == EstadoResumo.indisponivel
-              ? '—'
-              : _inteiro(resumo.cashbackInter.lojasAcompanhadas),
-          titulo: 'lojas com cashback',
+          valor: _totalLojasAcompanhadas(resumo),
+          titulo: 'lojas acompanhadas',
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         _MetricaHero(
           valor: resumo.produtos.estado == EstadoResumo.indisponivel
               ? '—'
@@ -503,11 +471,10 @@ class _MetricaHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+        padding: const EdgeInsets.fromLTRB(9, 11, 9, 11),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-          borderRadius: BorderRadius.circular(14),
+          color: CoresRadar.de(context).superficieAlternativa,
+          borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,10 +483,9 @@ class _MetricaHero extends StatelessWidget {
               valor,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 2),
             Text(
@@ -527,7 +493,7 @@ class _MetricaHero extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: const Color(0xFFD7E3ED),
+                color: CoresRadar.de(context).textoSuave,
                 height: 1.1,
               ),
             ),
@@ -536,140 +502,6 @@ class _MetricaHero extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ArcoHeroInicio extends StatelessWidget {
-  const _ArcoHeroInicio({required this.tamanho});
-
-  final double tamanho;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: SizedBox.square(
-        dimension: tamanho,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF8EC5F4).withValues(alpha: 0.10),
-              width: 18,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFF8EC5F4).withValues(alpha: 0.12),
-                  width: 1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GradeMetricasCompactas extends StatelessWidget {
-  const _GradeMetricasCompactas({required this.resumo, required this.agora});
-
-  final ResumoInicio resumo;
-  final DateTime agora;
-
-  @override
-  Widget build(BuildContext context) {
-    return _GradeResponsiva(
-      maximoColunas: 2,
-      larguraMinima: 150,
-      itens: [
-        _MetricaResumoCompacta(
-          icone: Icons.storefront_outlined,
-          cor: CoresRadar.de(context).acao,
-          valor: _valorDisponivel(resumo.livelo.estado)
-              ? _inteiro(resumo.livelo.lojasAcompanhadas)
-              : '—',
-          titulo: 'lojas acompanhadas',
-        ),
-        _MetricaResumoCompacta(
-          icone: Icons.inventory_2_outlined,
-          cor: CoresRadar.de(context).integracaoInter,
-          valor: _valorDisponivel(resumo.produtos.estado)
-              ? _inteiro(resumo.produtos.produtosAtivos)
-              : '—',
-          titulo: 'produtos ativos',
-        ),
-        _MetricaResumoCompacta(
-          icone: Icons.notifications_none,
-          cor: CoresRadar.de(context).atencao,
-          valor: _valorLivelo(resumo),
-          titulo: 'alertas relevantes',
-        ),
-        _MetricaResumoCompacta(
-          icone: Icons.schedule_outlined,
-          cor: CoresRadar.de(context).ganho,
-          valor: _tempoDesde(resumo.geradoEm, agora),
-          titulo: 'última atualização',
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricaResumoCompacta extends StatelessWidget {
-  const _MetricaResumoCompacta({
-    required this.icone,
-    required this.cor,
-    required this.valor,
-    required this.titulo,
-  });
-  final IconData icone;
-  final Color cor;
-  final String valor;
-  final String titulo;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
-    elevation: 0,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: cor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: SizedBox.square(
-              dimension: 36,
-              child: Icon(icone, color: cor, size: 20),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            valor,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            titulo,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 class _AtividadeRecenteCompacta extends StatelessWidget {
@@ -684,11 +516,11 @@ class _AtividadeRecenteCompacta extends StatelessWidget {
       const _TituloSecao(
         titulo: 'Atividade recente',
         complemento: 'Pedido não é conclusão',
+        compactoMobile: true,
       ),
       const SizedBox(height: 12),
-      Card(
-        margin: EdgeInsets.zero,
-        elevation: 0,
+      CartaoRadar(
+        padding: EdgeInsets.zero,
         child: Column(
           children: [
             for (
@@ -983,13 +815,11 @@ class _Metrica extends StatelessWidget {
 
 class _EspacosCompactos extends StatelessWidget {
   const _EspacosCompactos({
-    required this.aoAbrirLivelo,
-    required this.aoAbrirInter,
+    required this.aoAbrirProgramas,
     required this.aoAbrirProdutos,
   });
 
-  final VoidCallback? aoAbrirLivelo;
-  final VoidCallback? aoAbrirInter;
+  final VoidCallback? aoAbrirProgramas;
   final VoidCallback? aoAbrirProdutos;
 
   @override
@@ -998,27 +828,18 @@ class _EspacosCompactos extends StatelessWidget {
     return Column(
       children: [
         _EspacoCompacto(
-          chave: const Key('atalho-livelo'),
-          icone: Icons.card_giftcard_outlined,
+          chave: const Key('atalho-programas'),
+          icone: Icons.space_dashboard_outlined,
           cor: cores.acao,
-          titulo: 'Livelo',
-          descricao: 'Pontos, lojas, campanhas e alertas',
-          aoTocar: aoAbrirLivelo,
-        ),
-        const SizedBox(height: 10),
-        _EspacoCompacto(
-          chave: const Key('atalho-inter'),
-          icone: Icons.account_balance_outlined,
-          cor: cores.integracaoInter,
-          titulo: 'Banco Inter',
-          descricao: 'Cashback e produtos em processos separados',
-          aoTocar: aoAbrirInter,
+          titulo: 'Programas e parceiros',
+          descricao: 'Todos os catálogos conectados',
+          aoTocar: aoAbrirProgramas,
         ),
         const SizedBox(height: 10),
         _EspacoCompacto(
           chave: const Key('atalho-produtos'),
           icone: Icons.search,
-          cor: cores.ganho,
+          cor: cores.acao,
           titulo: 'Buscar produtos',
           descricao: 'Catálogo local das lojas selecionadas',
           aoTocar: aoAbrirProdutos,
@@ -1052,7 +873,7 @@ class _EspacoCompacto extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Ink(
         key: chave,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(13),
         child: Row(
           children: [
             DecoratedBox(
@@ -1061,11 +882,11 @@ class _EspacoCompacto extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: SizedBox.square(
-                dimension: 48,
+                dimension: 47,
                 child: Icon(icone, color: cor),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1354,13 +1175,42 @@ class _GradeResponsiva extends StatelessWidget {
 }
 
 class _TituloSecao extends StatelessWidget {
-  const _TituloSecao({required this.titulo, required this.complemento});
+  const _TituloSecao({
+    required this.titulo,
+    required this.complemento,
+    this.compactoMobile = false,
+  });
 
   final String titulo;
   final String complemento;
+  final bool compactoMobile;
 
   @override
   Widget build(BuildContext context) {
+    if (compactoMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+              letterSpacing: -0.7,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            complemento,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      );
+    }
     final tituloWidget = Text(
       titulo,
       style: Theme.of(
@@ -1448,7 +1298,9 @@ class _Pill extends StatelessWidget {
       if (dominio.$2 == estado) {
         return (
           titulo: '${dominio.$1}: ${_rotuloEstado(estado).toLowerCase()}',
-          descricao: _descricaoEstado(estado),
+          descricao: dominio.$1 == 'Livelo' && estado == EstadoResumo.degradado
+              ? 'A última base recebida teve qualidade reduzida. O último retrato válido foi preservado.'
+              : _descricaoEstado(estado),
         );
       }
     }
@@ -1519,6 +1371,16 @@ String _valorLivelo(ResumoInicio resumo) {
   return _inteiro(resumo.livelo.alertasUltimaColeta);
 }
 
+String _totalLojasAcompanhadas(ResumoInicio resumo) {
+  if (!_valorDisponivel(resumo.livelo.estado) ||
+      !_valorDisponivel(resumo.cashbackInter.estado)) {
+    return '—';
+  }
+  return _inteiro(
+    resumo.livelo.lojasAcompanhadas + resumo.cashbackInter.lojasAcompanhadas,
+  );
+}
+
 String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {
   final data = DateTime.tryParse(resumo.geradoEm)?.toLocal();
   if (data == null) return 'Radar atualizado';
@@ -1547,12 +1409,6 @@ String _dataHora(String? iso) {
   String dois(int valor) => valor.toString().padLeft(2, '0');
   return '${dois(data.day)}/${dois(data.month)} às '
       '${dois(data.hour)}:${dois(data.minute)}';
-}
-
-String _saudacao(DateTime momento) {
-  if (momento.hour < 12) return 'Bom dia.';
-  if (momento.hour < 18) return 'Boa tarde.';
-  return 'Boa noite.';
 }
 
 String _dataExtensa(DateTime data) {

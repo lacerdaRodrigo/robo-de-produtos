@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   autenticarRequisicao,
+  lerAppCheckObrigatorio,
   tokenBearer,
   type DependenciasDeAcesso,
 } from "../lib/autenticacao-api";
@@ -60,6 +61,16 @@ describe("token Bearer", () => {
   });
 });
 
+describe("flag de enforcement do App Check", () => {
+  it("fica desligada quando ausente ou false e liga somente com true", () => {
+    expect(lerAppCheckObrigatorio(undefined)).toBe(false);
+    expect(lerAppCheckObrigatorio("")).toBe(false);
+    expect(lerAppCheckObrigatorio("false")).toBe(false);
+    expect(lerAppCheckObrigatorio("TRUE")).toBe(false);
+    expect(lerAppCheckObrigatorio("true")).toBe(true);
+  });
+});
+
 describe("gate de autenticacao da API v1", () => {
   it("concede acesso somente apos os dois limites, token e convite", async () => {
     const deps = dependencias();
@@ -73,6 +84,7 @@ describe("gate de autenticacao da API v1", () => {
     if (!resultado.ok) return;
     expect(resultado.usuario).toEqual(usuarioAtivo);
     expect(resultado.requisicaoId).toBe("req-teste-1");
+    expect(deps.verificarAppCheck).not.toHaveBeenCalled();
     expect(deps.consumirLimite).toHaveBeenCalledTimes(2);
     expect(deps.registrarAuditoria).toHaveBeenLastCalledWith(
       expect.objectContaining({ resultado: "sucesso", codigo: "permitido" }),
@@ -162,7 +174,12 @@ describe("gate de autenticacao da API v1", () => {
       { operacao: "perfil.ler" },
       ausente,
     );
-    expect((await corpoDaRecusa(resultadoAusente)).erro.codigo).toBe("app-check");
+    const corpoAusente = await corpoDaRecusa(resultadoAusente);
+    expect(corpoAusente.erro.codigo).toBe("app-check");
+    expect(corpoAusente).not.toHaveProperty("stack");
+    if (!resultadoAusente.ok) {
+      expect(resultadoAusente.resposta.status).toBe(401);
+    }
     expect(ausente.verificarIdToken).not.toHaveBeenCalled();
 
     const invalido = dependencias({
@@ -176,7 +193,38 @@ describe("gate de autenticacao da API v1", () => {
       { operacao: "perfil.ler" },
       invalido,
     );
-    expect((await corpoDaRecusa(resultadoInvalido)).erro.codigo).toBe("app-check");
+    const erroInvalido = (await corpoDaRecusa(resultadoInvalido)).erro;
+    expect(erroInvalido).toEqual({
+      codigo: "app-check",
+      mensagem: "aplicativo nao verificado",
+    });
+    if (!resultadoInvalido.ok) expect(resultadoInvalido.resposta.status).toBe(401);
+
+    const valido = dependencias({ appCheckObrigatorio: true });
+    const resultadoValido = await autenticarRequisicao(
+      requisicao({ "x-firebase-appcheck": "app-check-valido" }),
+      { operacao: "perfil.ler" },
+      valido,
+    );
+    expect(resultadoValido.ok).toBe(true);
+    expect(valido.verificarAppCheck).toHaveBeenCalledWith("app-check-valido");
+    expect(valido.verificarIdToken).toHaveBeenCalledWith("token-valido");
+  });
+
+  it("App Check obrigatorio nao substitui a autenticacao Firebase", async () => {
+    const deps = dependencias({ appCheckObrigatorio: true });
+    const resultado = await autenticarRequisicao(
+      requisicao({
+        authorization: "",
+        "x-firebase-appcheck": "app-check-valido",
+      }),
+      { operacao: "perfil.ler" },
+      deps,
+    );
+
+    expect((await corpoDaRecusa(resultado)).erro.codigo).toBe("autenticacao");
+    expect(deps.verificarAppCheck).toHaveBeenCalledWith("app-check-valido");
+    expect(deps.verificarIdToken).not.toHaveBeenCalled();
   });
 
   it("devolve 429 e Retry-After para limite por IP", async () => {

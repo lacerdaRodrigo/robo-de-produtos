@@ -14,6 +14,7 @@ from robo_livelo.modelos import (
     Parceiro,
     PontuacaoDeLoja,
     Preferencias,
+    QualidadeRetrato,
     RetratoDaExecucao,
 )
 
@@ -25,6 +26,7 @@ def montar_retrato(
     *,
     agora: datetime,
     versao: str,
+    qualidade: QualidadeRetrato = "completa",
 ) -> RetratoDaExecucao:
     """Junta cada favorita com o que a pagina disse dela nesta rodada.
 
@@ -62,6 +64,7 @@ def montar_retrato(
         momento=agora,
         parceiros_lidos=len(parceiros),
         versao=versao,
+        qualidade=qualidade,
         catalogo=tuple(parceiros),
         pontuacoes=tuple(pontuacoes),
     )

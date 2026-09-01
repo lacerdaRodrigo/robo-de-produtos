@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
-import { normalizarBuscaInter } from "./formato-inter";
+import { LINK_SHOPPING_INTER, normalizarBuscaInter } from "./formato-inter";
 
 function conectar() {
   const url = process.env.DATABASE_URL;
@@ -36,6 +36,7 @@ export type CashbackInter = {
   descricao_secundaria: string | null;
   encontrada: boolean;
   favorita: boolean;
+  link: string;
 };
 
 export type LojaCatalogoInter = {
@@ -116,13 +117,51 @@ export async function ultimaExecucaoInterValida(): Promise<TentativaInter | null
   return linhas[0] ?? null;
 }
 
-/**
- * Catálogo completo da última coleta. A seleção é devolvida por item para a
- * tela aplicar o filtro "Acompanhadas", mas nunca limita a lista inicial.
- */
-export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[]> {
+export type PaginaCashbacksInter = {
+  itens: CashbackInter[];
+  total: number;
+  pagina: number;
+};
+
+/** Cashback filtrado, ordenado e paginado no Postgres com NUMERIC intacto. */
+export async function buscarCashbacksInter(
+  execucaoId: string,
+  opcoes: {
+    q: string;
+    ordenar: "cashback" | "nome";
+    apenasAcompanhadas: boolean;
+    pagina: number;
+    porPagina: number;
+  },
+): Promise<PaginaCashbacksInter> {
   const sql = conectar();
-  return (await sql`
+  const busca = normalizarBuscaInter(opcoes.q);
+  const limite = Math.min(50, Math.max(1, Math.floor(opcoes.porPagina)));
+  const paginaSolicitada = Math.max(1, Math.floor(opcoes.pagina));
+  const totais = (await sql`
+    SELECT count(*)::int AS total
+      FROM loja_inter l
+      LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
+     WHERE l.ativa = TRUE
+       AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
+       AND (
+         ${busca === ""}
+         OR strpos(
+              regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+         OR strpos(
+              regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+       )
+  `) as Array<{ total: number }>;
+  const total = totais[0]?.total ?? 0;
+  const totalPaginas = Math.max(1, Math.ceil(total / limite));
+  const paginaFinal = Math.min(paginaSolicitada, totalPaginas);
+  const deslocamento = (paginaFinal - 1) * limite;
+
+  const itensPersistidos = (await sql`
     SELECT l.id, l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
            COALESCE(c.cashback_principal_texto, l.cashback_principal_texto) AS cashback_principal_texto,
            COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) AS cashback_principal_valor,
@@ -138,7 +177,39 @@ export async function cashbacksInter(execucaoId: string): Promise<CashbackInter[
       LEFT JOIN cashback_inter c
         ON c.loja_inter_id = l.id AND c.execucao_inter_id = ${execucaoId}
      WHERE l.ativa = TRUE
-  `) as CashbackInter[];
+       AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
+       AND (
+         ${busca === ""}
+         OR strpos(
+              regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+         OR strpos(
+              regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g'),
+              ${busca}
+            ) > 0
+       )
+     ORDER BY
+       CASE WHEN ${opcoes.ordenar === "cashback"}
+            THEN COALESCE(c.encontrada, TRUE) END DESC,
+       CASE WHEN ${opcoes.ordenar === "cashback"}
+            THEN COALESCE(
+              COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) > 0,
+              FALSE
+            ) END DESC,
+       CASE WHEN ${opcoes.ordenar === "cashback"}
+                 AND COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) > 0
+            THEN COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) END DESC,
+       COALESCE(c.nome, l.nome),
+       l.id
+     LIMIT ${limite}
+    OFFSET ${deslocamento}
+  `) as Array<Omit<CashbackInter, "link">>;
+  const itens = itensPersistidos.map((item) => ({
+    ...item,
+    link: LINK_SHOPPING_INTER,
+  }));
+  return { itens, total, pagina: paginaFinal };
 }
 
 export async function buscarLojasInter(
@@ -157,7 +228,10 @@ export async function buscarLojasInter(
            (f.loja_inter_id IS NOT NULL) AS favorita
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
-     WHERE l.nome_busca LIKE ${busca} OR l.slug_busca LIKE ${busca}
+     WHERE regexp_replace(replace(l.nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
+        OR regexp_replace(replace(l.slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
      ORDER BY l.nome
      LIMIT ${limite}
     OFFSET ${deslocamento}
@@ -170,7 +244,10 @@ export async function totalLojasInter(termo = ""): Promise<number> {
   const linhas = (await sql`
     SELECT count(*)::int AS total
       FROM loja_inter
-     WHERE nome_busca LIKE ${busca} OR slug_busca LIKE ${busca}
+     WHERE regexp_replace(replace(nome_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
+        OR regexp_replace(replace(slug_busca, '&', 'e'), '[^a-z0-9]+', '', 'g')
+             LIKE ${busca}
   `) as { total: number }[];
   return linhas[0]?.total ?? 0;
 }
@@ -199,28 +276,4 @@ export async function deixarDeAcompanharLojaInter(id: string): Promise<boolean> 
   if (lojas.length === 0) return false;
   await sql`DELETE FROM favorita_inter WHERE loja_inter_id = ${id}`;
   return true;
-}
-
-const INTERVALO_MINIMO_INTER_MINUTOS = 5;
-export const INTERVALO_INTER_MINUTOS = INTERVALO_MINIMO_INTER_MINUTOS;
-
-export async function esperaAteProximoDisparoInter(): Promise<number> {
-  const sql = conectar();
-  const linhas = (await sql`
-    SELECT GREATEST(
-             0,
-             CEIL(EXTRACT(EPOCH FROM (
-               momento + (${INTERVALO_MINIMO_INTER_MINUTOS} || ' minutes')::interval - now()
-             )))
-           )::int AS falta
-      FROM disparo_manual_inter
-     ORDER BY momento DESC
-     LIMIT 1
-  `) as { falta: number }[];
-  return linhas[0]?.falta ?? 0;
-}
-
-export async function registrarDisparoInter(): Promise<void> {
-  const sql = conectar();
-  await sql`INSERT INTO disparo_manual_inter DEFAULT VALUES`;
 }

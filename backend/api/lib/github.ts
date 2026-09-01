@@ -34,10 +34,6 @@ export async function dispararRoboInter(): Promise<ResultadoDoDisparo> {
   return dispararWorkflow("inter.yml");
 }
 
-export async function dispararProdutosInter(): Promise<ResultadoDoDisparo> {
-  return dispararWorkflow("produtos-inter.yml");
-}
-
 async function dispararWorkflow(workflow: string): Promise<ResultadoDoDisparo> {
   const token = process.env.GITHUB_TOKEN_DISPARO;
   if (!token) {

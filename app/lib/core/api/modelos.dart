@@ -25,6 +25,7 @@ class ProdutoDireto {
     required this.lojaSlug,
     required this.lojaNome,
     required this.atualizadaEm,
+    this.ativo,
   });
 
   factory ProdutoDireto.parse(Map<String, dynamic> objeto) {
@@ -51,6 +52,7 @@ class ProdutoDireto {
       lojaSlug: _texto(objeto['loja_slug']),
       lojaNome: _texto(objeto['loja_nome']),
       atualizadaEm: _texto(objeto['atualizada_em']),
+      ativo: objeto['ativo'] == null ? null : _booleano(objeto['ativo']),
     );
   }
 
@@ -79,6 +81,9 @@ class ProdutoDireto {
   final String lojaSlug;
   final String lojaNome;
   final String atualizadaEm;
+
+  /// Presença no snapshot atual. Ausente nas buscas, explícito no histórico.
+  final bool? ativo;
 }
 
 /// Uma medição de preço do histórico de 30 dias de um produto direto.
@@ -159,6 +164,14 @@ class LojaDireto {
     required this.nome,
     required this.selecionada,
     required this.ativa,
+    this.ultimaExecucao,
+    this.ultimoEstado,
+    this.paginas,
+    this.ultimaTentativaEm,
+    this.ultimaTentativaEstado,
+    this.ultimaColetaSucessoEm,
+    this.produtosEncontrados,
+    this.cashbackResumoTexto,
   });
 
   factory LojaDireto.parse(Map<String, dynamic> objeto) {
@@ -169,6 +182,16 @@ class LojaDireto {
       nome: _texto(objeto['nome']),
       selecionada: _booleano(objeto['selecionada']),
       ativa: _booleano(objeto['ativa']),
+      ultimaExecucao: _textoOpcional(objeto['ultima_execucao']),
+      ultimoEstado: _textoOpcional(objeto['ultimo_estado']),
+      paginas: (objeto['paginas'] as num?)?.toInt(),
+      ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+      ultimaTentativaEstado: _textoOpcional(
+        objeto['ultima_tentativa_estado'] ?? objeto['ultimo_estado'],
+      ),
+      ultimaColetaSucessoEm: _textoOpcional(objeto['ultima_coleta_sucesso_em']),
+      produtosEncontrados: (objeto['produtos_encontrados'] as num?)?.toInt(),
+      cashbackResumoTexto: _textoOpcional(objeto['cashback_resumo_texto']),
     );
   }
 
@@ -178,6 +201,14 @@ class LojaDireto {
   final String nome;
   final bool selecionada;
   final bool ativa;
+  final String? ultimaExecucao;
+  final String? ultimoEstado;
+  final int? paginas;
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
+  final String? ultimaColetaSucessoEm;
+  final int? produtosEncontrados;
+  final String? cashbackResumoTexto;
 
   LojaDireto copiarCom({bool? selecionada}) => LojaDireto(
     id: id,
@@ -186,6 +217,14 @@ class LojaDireto {
     nome: nome,
     selecionada: selecionada ?? this.selecionada,
     ativa: ativa,
+    ultimaExecucao: ultimaExecucao,
+    ultimoEstado: ultimoEstado,
+    paginas: paginas,
+    ultimaTentativaEm: ultimaTentativaEm,
+    ultimaTentativaEstado: ultimaTentativaEstado,
+    ultimaColetaSucessoEm: ultimaColetaSucessoEm,
+    produtosEncontrados: produtosEncontrados,
+    cashbackResumoTexto: cashbackResumoTexto,
   );
 }
 
@@ -357,6 +396,7 @@ class CashbackInter {
     required this.descricaoSecundaria,
     required this.encontrada,
     required this.favorita,
+    this.link,
   });
 
   factory CashbackInter.parse(Map<String, dynamic> objeto) => CashbackInter(
@@ -376,6 +416,7 @@ class CashbackInter {
     descricaoSecundaria: _textoOpcional(objeto['descricao_secundaria']),
     encontrada: _booleano(objeto['encontrada']),
     favorita: _booleano(objeto['favorita']),
+    link: _textoOpcional(objeto['link']),
   );
 
   final String id;
@@ -390,6 +431,23 @@ class CashbackInter {
   final String? descricaoSecundaria;
   final bool encontrada;
   final bool favorita;
+  final String? link;
+
+  CashbackInter copiarCom({bool? favorita}) => CashbackInter(
+    id: id,
+    slug: slug,
+    nome: nome,
+    cashbackPrincipalTexto: cashbackPrincipalTexto,
+    cashbackPrincipalValor: cashbackPrincipalValor,
+    cashbackSecundarioTexto: cashbackSecundarioTexto,
+    cashbackSecundarioValor: cashbackSecundarioValor,
+    etiqueta: etiqueta,
+    descricaoPrincipal: descricaoPrincipal,
+    descricaoSecundaria: descricaoSecundaria,
+    encontrada: encontrada,
+    favorita: favorita ?? this.favorita,
+    link: link,
+  );
 }
 
 class StatusApi {
@@ -437,10 +495,14 @@ class ResumoLivelo {
     required this.lojasAcompanhadas,
     required this.alertasUltimaColeta,
     required this.agendamento,
+    this.ultimaTentativaEm,
+    this.qualidade,
   });
 
   factory ResumoLivelo.parse(Map<String, dynamic> objeto) => ResumoLivelo(
     estado: EstadoResumo.parse(objeto['estado']),
+    ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+    qualidade: _textoOpcional(objeto['qualidade']),
     ultimoSucessoEm: _textoOpcional(objeto['ultimo_sucesso_em']),
     lojasAcompanhadas: _inteiroNaoNegativo(objeto['lojas_acompanhadas']),
     alertasUltimaColeta: _inteiroNaoNegativo(objeto['alertas_ultima_coleta']),
@@ -448,6 +510,8 @@ class ResumoLivelo {
   );
 
   final EstadoResumo estado;
+  final String? ultimaTentativaEm;
+  final String? qualidade;
   final String? ultimoSucessoEm;
   final int lojasAcompanhadas;
   final int alertasUltimaColeta;
@@ -865,12 +929,16 @@ class ResumoCatalogoLivelo {
     required this.alertas,
     this.alertasAtivos = 0,
     required this.melhorOferta,
+    this.ultimaTentativaEm,
+    this.qualidade,
   });
 
   factory ResumoCatalogoLivelo.parse(Map<String, dynamic> objeto) {
     final melhor = objeto['melhor_oferta'];
     return ResumoCatalogoLivelo(
       ultimaColeta: _textoOpcional(objeto['ultima_coleta']),
+      ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+      qualidade: _textoOpcional(objeto['qualidade']),
       parceirosLidos: _inteiroNaoNegativo(objeto['parceiros_lidos']),
       totalCatalogo: _inteiroNaoNegativo(objeto['total_catalogo']),
       acompanhadas: _inteiroNaoNegativo(objeto['acompanhadas']),
@@ -883,6 +951,8 @@ class ResumoCatalogoLivelo {
   }
 
   final String? ultimaColeta;
+  final String? ultimaTentativaEm;
+  final String? qualidade;
   final int parceirosLidos;
   final int totalCatalogo;
   final int acompanhadas;
@@ -900,6 +970,8 @@ class ResumoCatalogoLivelo {
     final novosAlertasAtivos = alertasAtivos ?? this.alertasAtivos;
     return ResumoCatalogoLivelo(
       ultimaColeta: ultimaColeta,
+      ultimaTentativaEm: ultimaTentativaEm,
+      qualidade: qualidade,
       parceirosLidos: parceirosLidos,
       totalCatalogo: totalCatalogo,
       acompanhadas: novasAcompanhadas < 0 ? 0 : novasAcompanhadas,

@@ -57,7 +57,7 @@ class _EstadoPaginaHistoricoLiveloAndroid
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Tokens.fundo,
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     appBar: _CabecalhoHistorico(aoAbrirAlertas: widget.aoAbrirAlertas),
     body: _corpo(),
   );
@@ -83,7 +83,7 @@ class _EstadoPaginaHistoricoLiveloAndroid
     );
     return ListView(
       key: const Key('historico-livelo-android'),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 38),
       children: [
         const IndicadorEstadoRadar(
           texto: 'Pontuação salva',
@@ -154,8 +154,8 @@ class _CabecalhoHistorico extends StatelessWidget
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     return AppBar(
-      backgroundColor: Colors.white,
-      foregroundColor: Tokens.marca,
+      backgroundColor: tema.colorScheme.surface,
+      foregroundColor: tema.colorScheme.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
@@ -175,7 +175,7 @@ class _CabecalhoHistorico extends StatelessWidget
               Text(
                 'Radar',
                 style: tema.textTheme.titleSmall?.copyWith(
-                  color: Tokens.marca,
+                  color: tema.colorScheme.onSurface,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -211,46 +211,56 @@ class _LinhaMedicao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    return Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: cores.acao.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(13),
-            child: Icon(Icons.check, color: cores.acao, size: 19),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                pontosLivelo(medicao.pontos, moeda: medicao.moeda),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
+    final horario = Text(
+      dataHoraLivelo(medicao.momento).replaceFirst(', ', ' · '),
+      style: Theme.of(
+        context,
+      ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
+    );
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final estreito =
+            limites.maxWidth < 290 ||
+            MediaQuery.textScalerOf(context).scale(12) > 15;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: cores.acao.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(11),
               ),
-              const SizedBox(height: 3),
-              Text(
-                'Coleta concluída',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
+              child: SizedBox.square(
+                dimension: 34,
+                child: Icon(Icons.check, color: cores.acao, size: 18),
               ),
-            ],
-          ),
-        ),
-        Text(
-          dataHoraLivelo(medicao.momento).replaceFirst(', ', ' · '),
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
-        ),
-      ],
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pontosLivelo(medicao.pontos, moeda: medicao.moeda),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Coleta concluída',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
+                  ),
+                  if (estreito) ...[const SizedBox(height: 4), horario],
+                ],
+              ),
+            ),
+            if (!estreito) ...[const SizedBox(width: 8), horario],
+          ],
+        );
+      },
     );
   }
 }

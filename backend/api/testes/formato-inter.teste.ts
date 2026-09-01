@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DESCRICAO_INTER_AUSENTE,
+  compararDecimaisInter,
   descricaoInter,
   estadoInter,
   filtrarCashbacksInter,
@@ -19,10 +20,19 @@ describe("CT-190 busca normalizada do Inter", () => {
     { nome: "Riachuelo", slug: "riachuelo" },
   ];
 
-  it("busca por nome ou slug sem diferenciar acento, caixa e espaços", () => {
-    expect(normalizarBuscaInter("  SÃO   PAULO ")).toBe("sao paulo");
+  it("busca por nome ou slug sem diferenciar símbolos, acento, caixa e espaços", () => {
+    expect(normalizarBuscaInter("  SÃO   PAULO ")).toBe("saopaulo");
+    expect(normalizarBuscaInter("C&A")).toBe("cea");
+    expect(normalizarBuscaInter(" C E A ")).toBe("cea");
+    expect(filtrarCashbacksInter(lojas, "cea")).toEqual([lojas[0]]);
     expect(filtrarCashbacksInter(lojas, "c&a")).toEqual([lojas[0]]);
     expect(filtrarCashbacksInter(lojas, "CA")).toEqual([lojas[0]]);
+    expect(
+      filtrarCashbacksInter([{ nome: "São Paulo", slug: "sao-paulo" }], "sao"),
+    ).toHaveLength(1);
+    expect(
+      filtrarCashbacksInter([{ nome: "Magalu", slug: "magalu" }], "  MAGALU  "),
+    ).toHaveLength(1);
   });
 });
 
@@ -43,6 +53,12 @@ describe("CT-191 ranking do cashback", () => {
       item("Ausente", null, false),
     ]).map((loja) => loja.nome);
     expect(nomes).toEqual(["Magalu", "Riachuelo", "Amazon", "Sem número", "Ausente"]);
+  });
+
+  it("compara precisão decimal sem Number", () => {
+    expect(compararDecimaisInter("9007199254740992.0000002", "9007199254740992.0000001")).toBe(1);
+    expect(compararDecimaisInter("12,010", "12.01")).toBe(0);
+    expect(compararDecimaisInter(null, "0")).toBe(-1);
   });
 });
 
@@ -104,5 +120,7 @@ describe("CT-282 retrato válido, falha e favorita ausente", () => {
     expect(rota).toContain("ultimaTentativaInter()");
     expect(rota).toContain("ultima_tentativa_estado");
     expect(rota).toContain("atualizado_em: execucao?.concluida_em ?? null");
+    expect(rota).toContain("buscarCashbacksInter(execucao.id");
+    expect(rota).not.toContain(".filter((loja)");
   });
 });

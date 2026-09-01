@@ -1,4 +1,4 @@
-# `backend/robo/` — Robôs Python (coleta e alerta)
+# `backend/robo/` — Robôs Python (coleta e publicação)
 
 Núcleo do backend: robôs que coletam das **fontes públicas** (Livelo e Shopping
 Inter) e gravam no Postgres (Neon). É processado separadamente pelo GitHub
@@ -43,7 +43,7 @@ python -m robo_livelo.principal_produtos_inter
 ```
 
 - O coletor do Inter exige `DATABASE_URL`.
-- O e-mail da Livelo exige uma **Senha de Aplicativo** do Gmail (não é a senha).
+- Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.
 - Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
   válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.
 - A publicação da Livelo grava o catálogo atual em `parceiro_livelo` e uma
@@ -57,7 +57,7 @@ ruff check .
 python -m pytest --cov --cov-fail-under=90
 ```
 
-- O núcleo puro (modelos, extratores, alertas, ranking, montador de e-mail) **não
+- O núcleo puro (modelos, extratores, alertas, ranking e retratos) **não
   faz I/O**; o mundo entra por portas/adaptadores.
 - Dinheiro, cashback e pontuação usam `Decimal`/`NUMERIC` — nunca `float`/`double`.
 

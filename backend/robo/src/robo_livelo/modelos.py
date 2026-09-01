@@ -8,8 +8,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 DOMINIO_LIVELO = "livelo.com.br"
+QualidadeRetrato = Literal["completa", "degradada"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +95,7 @@ class RetratoDaExecucao:
     momento: datetime
     parceiros_lidos: int
     versao: str
+    qualidade: QualidadeRetrato = "completa"
     catalogo: tuple[Parceiro, ...] = field(default_factory=tuple)
     pontuacoes: tuple[PontuacaoDeLoja, ...] = field(default_factory=tuple)
 

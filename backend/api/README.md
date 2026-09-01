@@ -4,10 +4,9 @@ A **API autenticada** que o Flutter consome. Foi movida da interface Next.js
 legada (`site/`, desativada em 2026-08-24) para este diretório, preservando o
 contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
 
-> **Estado:** a partir de 2026-08-23 o shell publicável foi reconstruído aqui:
-> rotas do App Router em `app/api/**`, `next.config.ts` com headers de
+> **Estado no repositório:** rotas do App Router em `app/api/**`, headers de
 > segurança, middleware de allowlist de origem (CORS) e `GET /status` mínimo.
-> Para republicar, siga [`ARQUIVO-PROJETO`](../../ARQUIVO-PROJETO.md).
+> Deploy e configuração operacional não fazem parte das validações locais.
 
 ## Estrutura
 
@@ -55,7 +54,8 @@ A raiz `/` devolve 404 vazio. Constraints e execução completa em
 
 Variáveis de ambiente (modelo em `examples/.env.example`): `DATABASE_URL`,
 `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `SEGREDO_LIMITE_API`,
-`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS`, e as de e-mail/github do fluxo do robô.
+`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS` e `GITHUB_TOKEN_DISPARO`. Não há variável
+SMTP/e-mail usada por esta API.
 
 ## Como rodar / testar
 

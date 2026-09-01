@@ -1,7 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
 import {
-  dispararProdutosInter,
   dispararRobo,
   dispararRoboInter,
   type ResultadoDoDisparo,
@@ -137,9 +136,8 @@ async function dispararDominio(dominio: DominioDeDisparo): Promise<ResultadoDoDi
     case "livelo":
       return dispararRobo();
     case "inter":
-      return dispararRoboInter();
     case "produtos_inter":
-      return dispararProdutosInter();
+      return dispararRoboInter();
   }
 }
 

@@ -66,4 +66,79 @@ void main() {
     expect(post.headers['idempotency-key'], matches(RegExp(r'^[a-f0-9]{48}$')));
     expect(find.textContaining('Aguarde 5 min'), findsOneWidget);
   });
+
+  testWidgets('cooldown recusado informa e usa a espera do servidor', (
+    at,
+  ) async {
+    var posts = 0;
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          if (requisicao.method == 'POST') {
+            posts += 1;
+            if (posts > 1) {
+              return http.Response(
+                jsonEncode({
+                  'dominio': 'inter',
+                  'estado': 'aceito',
+                  'cooldown_segundos': 300,
+                }),
+                202,
+              );
+            }
+            return http.Response(
+              jsonEncode({
+                'erro': {
+                  'codigo': 'cooldown',
+                  'mensagem': 'aguarde antes de solicitar outra coleta',
+                  'retry_after_seconds': 121,
+                },
+              }),
+              429,
+              headers: {'retry-after': '121'},
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'dominio': 'inter',
+              'cooldown_segundos': 0,
+              'ultima_solicitacao_em': null,
+              'ultimo_estado': null,
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    await at.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BotaoDisparo(api: api, dominio: 'inter', administrador: true),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.text('Atualizar agora'));
+    await at.pump();
+    await at.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('Aguarde 2 min 1s antes de solicitar uma nova atualização.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Aguarde 2 min'), findsNWidgets(2));
+
+    await at.tap(find.byType(FilledButton));
+    await at.pump();
+    expect(posts, 1);
+
+    await at.pump(const Duration(seconds: 121));
+    await at.tap(find.text('Atualizar agora'));
+    await at.pump();
+    expect(posts, 2);
+  });
 }

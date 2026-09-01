@@ -4,6 +4,7 @@ import '../../app/componentes/estados.dart';
 import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
+import '../produtos/formato_produtos.dart';
 import 'controlador_catalogo_administracao.dart';
 import 'zona_perigo.dart';
 
@@ -550,11 +551,7 @@ class _CatalogoDiretas extends StatelessWidget {
         controlador: controlador,
         item: (loja) => SwitchListTile(
           title: Text(loja.nome),
-          subtitle: Text(
-            loja.ativa
-                ? 'Selecionada: ${loja.selecionada ? 'sim' : 'não'}'
-                : 'Loja indisponível para seleção',
-          ),
+          subtitle: Text(_descricaoLojaDireta(loja)),
           value: loja.selecionada,
           onChanged: !loja.ativa || alterando.contains(loja.id)
               ? null
@@ -570,6 +567,26 @@ class _CatalogoDiretas extends StatelessWidget {
       ),
     );
   }
+}
+
+String _descricaoLojaDireta(LojaDireto loja) {
+  if (!loja.ativa) return 'Loja indisponível para seleção';
+  final selecao = 'Selecionada: ${loja.selecionada ? 'sim' : 'não'}';
+  final paginas = loja.paginas;
+  final detalhePaginas = paginas == null || paginas <= 0
+      ? ''
+      : ' · $paginas página${paginas == 1 ? '' : 's'}';
+  return switch (loja.ultimoEstado) {
+    'iniciada' => '$selecao · Coleta em andamento',
+    'falha' =>
+      '$selecao · Última coleta falhou'
+          '${loja.ultimaExecucao == null ? '' : ' em ${dataHoraProduto(loja.ultimaExecucao)}'}',
+    'sucesso' =>
+      loja.ultimaExecucao == null
+          ? '$selecao · Coleta concluída$detalhePaginas'
+          : '$selecao · Atualizada em ${dataHoraProduto(loja.ultimaExecucao)}$detalhePaginas',
+    _ => selecao,
+  };
 }
 
 class _EstruturaCatalogo<T> extends StatelessWidget {

@@ -1,5 +1,7 @@
 # Contexto para agentes de IA
 
+> **Ciclo `re-design`:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. Esta branch trabalha somente no Flutter mobile, usa apenas `design-app/prototipo-mobile.html` como fonte visual e não exige Web, golden, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
+
 Leia o [`PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md) antes de propor qualquer mudança. Ele é a fonte da verdade: requisitos (RF), requisitos não-funcionais (RNF), restrições (C) e regras de negócio (RN) são todos numerados e referenciados entre si e sempre atualizar as docs , se mudar alguma regra , teste e etc.
 
 ## Regra zero — execução automática
@@ -26,26 +28,26 @@ própria.
 
 Protótipo mobile no workspace atual: [`prototipo-mobile.html`](/home/rodrigo/Estudos/robo/design-app/prototipo-mobile.html).
 
-Toda nova funcionalidade visível, tela, jornada ou mudança relevante de
-navegação deve passar primeiro pelos dois protótipos de `design-app/`:
-[`prototipo-web.html`](design-app/prototipo-web.html) e
-[`prototipo-mobile.html`](design-app/prototipo-mobile.html).
+No ciclo atual, toda nova funcionalidade mobile visível, tela, jornada ou
+mudança relevante de navegação passa somente pelo
+[`prototipo-mobile.html`](design-app/prototipo-mobile.html). O protótipo Web
+fica preservado, mas fora do escopo desta branch.
 
 Ordem obrigatória:
 
 1. confirmar o requisito e os limites conhecidos, sem inventar backend;
-2. atualizar Web e Mobile com dados claramente ilustrativos;
+2. atualizar somente o protótipo mobile com dados claramente ilustrativos;
 3. apresentar o fluxo ao responsável e obter a aprovação visual;
 4. atualizar PRD e contratos afetados, quando houver mudança de regra ou dado;
 5. somente então implementar no Flutter/API, com testes e documentação;
-6. manter os protótipos sincronizados se a implementação aprovada mudar.
+6. manter o protótipo mobile sincronizado se a implementação aprovada mudar.
 
 Correção puramente interna, sem efeito percebido na interface, não exige tela
 nova. Correção que altere comportamento visível deve atualizar o protótipo.
 
 ## O que é este projeto
 
-Radar pessoal de benefícios com três integrações. A Livelo filtra lojas favoritas e envia e-mail quando a pontuação cruza a régua. O Shopping Inter mantém o catálogo de Sites parceiros. A V4 coleta produtos da área Compre direto somente para lojas escolhidas, com busca local e histórico de 30 dias. Os domínios permanecem separados e usam o mesmo Postgres (Neon) somente como infraestrutura.
+Radar pessoal de benefícios com três integrações. A Livelo publica catálogo, histórico e alertas persistidos; o antigo envio por e-mail não está ativo. O Shopping Inter mantém o catálogo de Sites parceiros. A V4 coleta produtos da área Compre direto somente para lojas escolhidas, com busca local e histórico de 30 dias. Os domínios permanecem separados e usam o mesmo Postgres (Neon) somente como infraestrutura.
 
 ## Regras de ouro
 

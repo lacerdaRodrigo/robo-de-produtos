@@ -36,6 +36,14 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
 
 class _EstadoPaginaCatalogoLiveloAndroid
     extends State<PaginaCatalogoLiveloAndroid> {
+  static const _intervaloAcompanhamento = Duration(seconds: 30);
+  static const _maximoTentativasAcompanhamento = 21;
+  static const _maximoFalhasConsecutivas = 3;
+  static const _abasVisiveis = [
+    AbaCatalogoLivelo.lojas,
+    AbaCatalogoLivelo.acompanhadas,
+  ];
+
   late final ControladorCatalogoLivelo _controlador =
       widget.controlador ??
       ControladorCatalogoLivelo(
@@ -64,41 +72,23 @@ class _EstadoPaginaCatalogoLiveloAndroid
   late final bool _controladorExterno = widget.controlador != null;
   final _busca = TextEditingController();
   final _rolagem = ScrollController();
-  ResumoInicio? _resumoInicio;
-  Timer? _timerMonitoramento;
   Timer? _atualizacaoSilenciosa;
-  bool _resumoConsultando = false;
   bool _retratoAtualizando = false;
+  int _versaoAcompanhamento = 0;
+  int _tentativasAcompanhamento = 0;
+  int _falhasConsecutivas = 0;
 
   @override
   void initState() {
     super.initState();
     _controlador.carregarInicial();
-    _carregarResumoInicio();
-    _timerMonitoramento = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  Future<void> _carregarResumoInicio() async {
-    if (_resumoConsultando) return;
-    _resumoConsultando = true;
-    try {
-      final resumo = await widget.api.resumo();
-      if (mounted) setState(() => _resumoInicio = resumo);
-    } catch (_) {
-      // O catálogo continua útil com o último retrato mesmo se o resumo falhar.
-    } finally {
-      _resumoConsultando = false;
-    }
   }
 
   @override
   void dispose() {
     _busca.dispose();
     _rolagem.dispose();
-    _timerMonitoramento?.cancel();
-    _atualizacaoSilenciosa?.cancel();
+    _encerrarAcompanhamento();
     if (!_controladorExterno) _controlador.dispose();
     super.dispose();
   }
@@ -157,19 +147,19 @@ class _EstadoPaginaCatalogoLiveloAndroid
       controller: _rolagem,
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+          padding: const EdgeInsets.fromLTRB(18, 22, 18, 20),
           sliver: SliverToBoxAdapter(
             child: CabecalhoSecaoRadar(
               sobrelinha: 'Programa de pontos',
               titulo: 'Livelo',
               descricao:
-                  'Tudo da Livelo fica aqui: catálogo, acompanhadas, campanhas e alertas.',
+                  'Tudo da Livelo fica aqui: catálogo, acompanhadas e campanhas.',
             ),
           ),
         ),
         if (_controlador.resumo != null)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
             sliver: SliverToBoxAdapter(
               child: _HeroCatalogo(
                 resumo: _controlador.resumo!,
@@ -178,15 +168,13 @@ class _EstadoPaginaCatalogoLiveloAndroid
             ),
           ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
           sliver: SliverToBoxAdapter(
             child: AbasRadar(
-              rotulos: AbaCatalogoLivelo.values
-                  .map((aba) => aba.rotulo)
-                  .toList(),
-              selecionada: _controlador.aba.index,
+              rotulos: _abasVisiveis.map((aba) => aba.rotulo).toList(),
+              selecionada: _abasVisiveis.indexOf(_controlador.aba).clamp(0, 1),
               aoSelecionar: (indice) =>
-                  _controlador.mudarAba(AbaCatalogoLivelo.values[indice]),
+                  _controlador.mudarAba(_abasVisiveis[indice]),
               acao: BotaoDisparo(
                 api: widget.api,
                 dominio: 'livelo',
@@ -198,18 +186,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
             ),
           ),
         ),
-        if (_resumoInicio != null)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-            sliver: SliverToBoxAdapter(
-              child: _MonitoramentoLivelo(
-                agendamento: _resumoInicio!.livelo.agendamento,
-                agora: (widget.agora ?? DateTime.now)(),
-              ),
-            ),
-          ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
           sliver: SliverToBoxAdapter(
             child: CampoBuscaRadar(
               controlador: _busca,
@@ -223,8 +201,6 @@ class _EstadoPaginaCatalogoLiveloAndroid
             ),
           ),
         ),
-        if (_controlador.categorias.isNotEmpty)
-          SliverToBoxAdapter(child: _categorias()),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
           sliver: SliverToBoxAdapter(
@@ -241,23 +217,72 @@ class _EstadoPaginaCatalogoLiveloAndroid
   );
 
   void _acompanharNovaColeta() {
-    _atualizacaoSilenciosa?.cancel();
-    unawaited(_atualizarRetratoSilencioso());
-    _atualizacaoSilenciosa = Timer.periodic(const Duration(seconds: 30), (_) {
-      unawaited(_atualizarRetratoSilencioso());
+    _encerrarAcompanhamento();
+    final versao = _versaoAcompanhamento;
+    _tentativasAcompanhamento = 0;
+    _falhasConsecutivas = 0;
+    unawaited(_atualizarRetratoSilencioso(versao));
+    _atualizacaoSilenciosa = Timer.periodic(_intervaloAcompanhamento, (_) {
+      unawaited(_atualizarRetratoSilencioso(versao));
     });
   }
 
-  Future<void> _atualizarRetratoSilencioso() async {
-    if (_retratoAtualizando) return;
+  Future<void> _atualizarRetratoSilencioso(int versao) async {
+    if (_retratoAtualizando || versao != _versaoAcompanhamento) return;
     _retratoAtualizando = true;
+    _tentativasAcompanhamento += 1;
     try {
-      await _carregarResumoInicio();
-      final mudou = await _controlador.atualizarSilenciosamente();
-      if (mudou) _atualizacaoSilenciosa?.cancel();
+      final resultado = await _controlador.atualizarSilenciosamente();
+      if (!mounted || versao != _versaoAcompanhamento) return;
+      switch (resultado) {
+        case ResultadoAtualizacaoSilenciosa.alterada:
+          _encerrarAcompanhamento();
+          mostrarMensagemRadar(context, 'Atualização concluída.');
+          break;
+        case ResultadoAtualizacaoSilenciosa.degradada:
+          _encerrarAcompanhamento();
+          mostrarMensagemRadar(
+            context,
+            'Atualização com qualidade reduzida. '
+            'Mantivemos a última coleta válida.',
+            sucesso: false,
+          );
+          break;
+        case ResultadoAtualizacaoSilenciosa.falha:
+          _falhasConsecutivas += 1;
+          if (_falhasConsecutivas >= _maximoFalhasConsecutivas) {
+            _encerrarAcompanhamento();
+            mostrarMensagemRadar(
+              context,
+              'Não foi possível acompanhar a atualização. '
+              'Ela pode continuar em segundo plano.',
+              sucesso: false,
+            );
+          }
+          break;
+        case ResultadoAtualizacaoSilenciosa.inalterada:
+          _falhasConsecutivas = 0;
+          break;
+      }
+      if (versao == _versaoAcompanhamento &&
+          _tentativasAcompanhamento >= _maximoTentativasAcompanhamento) {
+        _encerrarAcompanhamento();
+        mostrarMensagemRadar(
+          context,
+          'A conclusão ainda não foi confirmada. '
+          'A atualização pode continuar em segundo plano.',
+          sucesso: false,
+        );
+      }
     } finally {
       _retratoAtualizando = false;
     }
+  }
+
+  void _encerrarAcompanhamento() {
+    _atualizacaoSilenciosa?.cancel();
+    _atualizacaoSilenciosa = null;
+    _versaoAcompanhamento += 1;
   }
 
   Future<void> _abrirFiltros() => showModalBottomSheet<void>(
@@ -313,29 +338,6 @@ class _EstadoPaginaCatalogoLiveloAndroid
     ),
   );
 
-  Widget _categorias() => SizedBox(
-    height: 42,
-    child: ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      scrollDirection: Axis.horizontal,
-      children: [
-        ChoiceChip(
-          label: const Text('Todas'),
-          selected: _controlador.categoria.isEmpty,
-          onSelected: (_) => _controlador.mudarCategoria(''),
-        ),
-        for (final categoria in _controlador.categorias) ...[
-          const SizedBox(width: 7),
-          ChoiceChip(
-            label: Text(categoria),
-            selected: _controlador.categoria == categoria,
-            onSelected: (_) => _controlador.mudarCategoria(categoria),
-          ),
-        ],
-      ],
-    ),
-  );
-
   List<Widget> _corpo() {
     if (_controlador.carregandoInicial) {
       return const [
@@ -384,7 +386,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
 
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         sliver: SliverList.separated(
           itemCount: _controlador.itens.length,
           separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -394,6 +396,9 @@ class _EstadoPaginaCatalogoLiveloAndroid
               parceiro: parceiro,
               pendente: _controlador.mutacoesPendentes.contains(
                 parceiro.idExterno,
+              ),
+              alertaPendente: _controlador.mutacoesPendentes.contains(
+                'alerta:${parceiro.idExterno}',
               ),
               podeAdministrar: widget.administrador,
               aoAlternar: () => _alternar(parceiro),
@@ -440,158 +445,104 @@ class _HeroCatalogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final melhor = resumo.melhorOferta;
     final atrasada = coletaAtrasada(resumo.ultimaColeta, agora);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
+    final degradada = resumo.qualidade == 'degradada';
+    return CartaoRadar(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: Tokens.marcaProfunda),
+          _SeloHeroLivelo(
+            texto: degradada
+                ? 'Dados com qualidade reduzida'
+                : atrasada
+                ? 'Dados atrasados'
+                : 'Última coleta concluída',
+            atencao: degradada || atrasada,
+          ),
+          const SizedBox(height: 14),
+          if (degradada) ...[
+            Text(
+              'A última atualização foi incompleta. Exibindo a última coleta válida.',
+              style: TextStyle(color: CoresRadar.de(context).atencao),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            melhor == null
+                ? 'Nenhuma loja acompanhada agora.'
+                : '${pontosLivelo(melhor.pontosAtuais, moeda: melhor.moeda)} é a melhor acompanhada agora.',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              height: 1.18,
+              letterSpacing: -0.8,
             ),
           ),
-          Positioned(
-            right: -52,
-            bottom: -100,
-            child: _ArcosDoHero(cor: Colors.white.withValues(alpha: 0.07)),
+          const SizedBox(height: 7),
+          Text(
+            melhor?.nome ??
+                'Escolha uma loja na aba Lojas para acompanhar a pontuação atual.',
+            style: TextStyle(color: CoresRadar.de(context).textoSuave),
           ),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IndicadorEstadoRadar(
-                  texto: atrasada
-                      ? 'Dados atrasados'
-                      : 'Última coleta concluída',
-                  tom: atrasada ? TomRadar.atencao : TomRadar.ganho,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  melhor == null
-                      ? 'Nenhuma loja acompanhada agora.'
-                      : '${pontosLivelo(melhor.pontosAtuais, moeda: melhor.moeda)} é a melhor acompanhada agora.',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
-                  ),
-                ),
-                if (melhor != null) ...[
-                  const SizedBox(height: 7),
-                  Text(
-                    melhor.nome,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 7),
-                  const Text(
-                    'Escolha uma loja na aba Lojas para acompanhar a pontuação atual.',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Text(
-                  'Coleta: ${dataHoraLivelo(resumo.ultimaColeta)}',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 18),
-                _MetricasCatalogo(resumo: resumo),
-              ],
+          const SizedBox(height: 10),
+          Text(
+            'Coleta: ${dataHoraLivelo(resumo.ultimaColeta)}',
+            style: TextStyle(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 11,
             ),
           ),
+          const SizedBox(height: 18),
+          _MetricasCatalogo(resumo: resumo),
         ],
       ),
     );
   }
 }
 
-class _MonitoramentoLivelo extends StatelessWidget {
-  const _MonitoramentoLivelo({required this.agendamento, required this.agora});
-  final AgendamentoLivelo agendamento;
-  final DateTime agora;
+class _SeloHeroLivelo extends StatelessWidget {
+  const _SeloHeroLivelo({required this.texto, required this.atencao});
+
+  final String texto;
+  final bool atencao;
 
   @override
-  Widget build(BuildContext context) {
-    final referencia = DateTime.tryParse(agendamento.referenciaEm)?.toLocal();
-    final diferenca = referencia?.difference(agora.toLocal());
-    final horario = referencia == null
-        ? null
-        : '${referencia.hour.toString().padLeft(2, '0')}:${referencia.minute.toString().padLeft(2, '0')}';
-    final texto = agendamento.aguardando
-        ? 'Aguardando o robô · atraso de ${_duracao(diferenca == null ? null : -diferenca)}'
-        : (diferenca == null ||
-              diferenca.isNegative ||
-              diferenca == Duration.zero)
-        ? 'Aguardando o robô · atraso de ${_duracao(diferenca == null ? null : -diferenca)}'
-        : 'Próxima coleta Livelo: ${horario ?? '—'} (em ${_duracao(diferenca)})';
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Monitoramento da coleta',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 6),
-            Text(texto),
-            const SizedBox(height: 3),
-            Text(
-              agendamento.aguardando ||
-                      diferenca == null ||
-                      diferenca.isNegative ||
-                      diferenca == Duration.zero
-                  ? 'Janela ${horario ?? '—'} · a primeira execução concluída encerra o atraso.'
-                  : 'Prevista pelo cron às ${horario ?? '—'} · horário de Brasília.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color:
+          (atencao
+                  ? CoresRadar.de(context).atencao
+                  : CoresRadar.de(context).ganho)
+              .withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(RaioRadar.pilula),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.circle,
+            size: 7,
+            color: atencao
+                ? CoresRadar.de(context).atencao
+                : CoresRadar.de(context).ganho,
+          ),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              texto,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: atencao
+                    ? CoresRadar.de(context).atencao
+                    : CoresRadar.de(context).ganho,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _duracao(Duration? duracao) {
-  if (duracao == null) return '—';
-  final segundos = duracao.inSeconds.clamp(0, 1 << 31).toInt();
-  if (segundos < 60) return 'menos de 1 min';
-  final minutos = segundos ~/ 60;
-  final horas = minutos ~/ 60;
-  final resto = minutos % 60;
-  if (horas == 0) return '$minutos min';
-  return resto == 0 ? '$horas h' : '$horas h $resto min';
-}
-
-class _ArcosDoHero extends StatelessWidget {
-  const _ArcosDoHero({required this.cor});
-
-  final Color cor;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 235,
-    height: 235,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: cor, width: 28),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(29),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: cor, width: 28),
           ),
-        ),
+        ],
       ),
     ),
   );
@@ -605,9 +556,9 @@ class _MetricasCatalogo extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, limites) {
       final metricas = [
-        _Metrica(valor: '${resumo.totalCatalogo}', rotulo: 'no catálogo'),
         _Metrica(valor: '${resumo.acompanhadas}', rotulo: 'acompanhadas'),
         _Metrica(valor: '${resumo.alertasAtivos}', rotulo: 'alertas ativos'),
+        _Metrica(valor: '${resumo.totalCatalogo}', rotulo: 'no catálogo'),
       ];
       if (limites.maxWidth < 240) {
         return Column(
@@ -640,25 +591,24 @@ class _Metrica extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.10),
+      color: CoresRadar.de(context).superficieAlternativa,
       borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
     ),
     child: Column(
       children: [
         Text(
           valor,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ),
         Text(
           rotulo,
           textAlign: TextAlign.center,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: Colors.white70, fontSize: 10),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 10,
+          ),
         ),
       ],
     ),

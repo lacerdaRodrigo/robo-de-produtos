@@ -15,6 +15,41 @@ const ROTULOS_CATEGORIA: Readonly<Record<string, string>> = {
   viagem: "Viagem",
 };
 
+export type FiltrosSqlCatalogoLivelo = {
+  busca: string;
+  codigosBusca: string[];
+  buscaIncluiOutros: boolean;
+  categoriaAtiva: boolean;
+  codigosCategoria: string[];
+  categoriaIncluiOutros: boolean;
+  codigosConhecidos: string[];
+};
+
+/** Traduz os rótulos apresentados pelo Flutter para os códigos persistidos. */
+export function filtrosSqlCatalogoLivelo(
+  q: string,
+  categoria: string,
+): FiltrosSqlCatalogoLivelo {
+  const busca = normalizar(q);
+  const categoriaNormalizada = normalizar(categoria);
+  const entradas = Object.entries(ROTULOS_CATEGORIA);
+  return {
+    busca,
+    codigosBusca: busca
+      ? entradas
+          .filter(([, rotulo]) => normalizar(rotulo).includes(busca))
+          .map(([codigo]) => codigo)
+      : [],
+    buscaIncluiOutros: busca !== "" && normalizar("Outros").includes(busca),
+    categoriaAtiva: categoriaNormalizada !== "",
+    codigosCategoria: entradas
+      .filter(([, rotulo]) => normalizar(rotulo) === categoriaNormalizada)
+      .map(([codigo]) => codigo),
+    categoriaIncluiOutros: categoriaNormalizada === normalizar("Outros"),
+    codigosConhecidos: entradas.map(([codigo]) => codigo),
+  };
+}
+
 export type AbaCatalogoLivelo = "todas" | "acompanhadas" | "alertas";
 export type OrdenacaoCatalogoLivelo = "pontos" | "nome";
 

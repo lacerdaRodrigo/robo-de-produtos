@@ -51,6 +51,8 @@ Pagina<ProdutoDireto> _pagina(
   temProxima: proxima,
   atualizadoEm: '2026-08-22T12:00:00Z',
   qualidade: 'degradada',
+  ultimaTentativaEm: '2026-08-22T13:00:00Z',
+  ultimaTentativaEstado: 'parcial',
 );
 
 Api _api() => Api(
@@ -61,7 +63,11 @@ Api _api() => Api(
   ),
 );
 
-Api _apiHistorico({bool primeiraFalha = false, bool falhaPaginaDois = false}) {
+Api _apiHistorico({
+  bool primeiraFalha = false,
+  bool falhaPaginaDois = false,
+  bool? ativo,
+}) {
   var chamadas = 0;
   var falhaPaginaDoisPendente = falhaPaginaDois;
   return Api(
@@ -102,6 +108,7 @@ Api _apiHistorico({bool primeiraFalha = false, bool falhaPaginaDois = false}) {
               'loja_slug': 'casas-bahia',
               'loja_nome': 'Casas Bahia',
               'atualizada_em': '2026-08-22T12:00:00Z',
+              'ativo': ativo,
             },
             'minimo': '3500.00',
             'maximo': '4000.00',
@@ -175,7 +182,13 @@ void main() {
     expect(find.text('Motorola Edge 60 Pro'), findsAtLeastNWidgets(1));
     expect(find.text('Após cashback'), findsAtLeastNWidgets(1));
     expect(find.text('R\$ 3.356,89'), findsAtLeastNWidgets(1));
-    expect(find.textContaining('última coleta foi degradada'), findsOneWidget);
+    expect(find.textContaining('lojas teve coleta degradada'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'atualização das lojas destes resultados foi parcial',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('filtros são aplicados e erro inicial oferece retry', (at) async {
@@ -225,6 +238,108 @@ void main() {
     expect(find.text('Filtros'), findsOneWidget);
   });
 
+  testWidgets('busca compacta segue o protótipo e usa o catálogo local', (
+    at,
+  ) async {
+    var escolheuLojas = false;
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+            administrador: true,
+            aoEscolherLojas: () => escolheuLojas = true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('O que você procura?'), findsOneWidget);
+    expect(find.text('Todas selecionadas'), findsOneWidget);
+    expect(find.text('Atualizar Produtos'), findsNothing);
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    expect(find.text('Após cashback'), findsOneWidget);
+    expect(find.text('R\$ 3.356,89'), findsOneWidget);
+    expect(find.text('Ver no Inter'), findsOneWidget);
+
+    await at.tap(find.text('+ escolher lojas'));
+    expect(escolheuLojas, isTrue);
+  });
+
+  testWidgets('busca compacta não estoura em 320 px com texto ampliado', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.escuro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(1.5)),
+          child: child!,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    expect(at.takeException(), isNull);
+    await at.drag(
+      find.byKey(const Key('produtos-compacto')),
+      const Offset(0, -400),
+    );
+    await at.pump();
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('tela larga mantém cartões de produtos em duas colunas', (
     at,
   ) async {
@@ -253,7 +368,7 @@ void main() {
 
     expect(find.byType(Card), findsNWidgets(2));
     expect(find.byType(Wrap), findsAtLeastNWidgets(2));
-  });
+  }, tags: 'web');
 
   testWidgets('histórico mostra mínimo, máximo e pagina as medições', (
     at,
@@ -271,6 +386,29 @@ void main() {
     await at.tap(find.text('Carregar mais medições'));
     await at.pumpAndSettle();
     expect(find.text('R\$ 3.600,00'), findsOneWidget);
+  });
+
+  testWidgets('histórico mantém medições de produto que ficou inativo', (
+    at,
+  ) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaHistoricoProduto(
+          api: _apiHistorico(ativo: false),
+          produto: _produto(),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('Oferta não está mais ativa'), findsOneWidget);
+    expect(
+      find.text('O histórico de preços continua disponível.'),
+      findsOneWidget,
+    );
+    expect(find.text('R\$ 3.500,00'), findsOneWidget);
+    expect(find.text('Medições'), findsOneWidget);
   });
 
   testWidgets('histórico com falha inicial permite nova tentativa', (at) async {

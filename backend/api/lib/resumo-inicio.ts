@@ -9,7 +9,12 @@ import {
 import { resumoLiveloPersistido, type ResumoLiveloPersistido } from "./banco";
 
 export type EstadoGeralResumo = "atualizado" | "atencao" | "sem_dados" | "indisponivel";
-export type EstadoLiveloResumo = "atualizado" | "atrasado" | "sem_dados" | "indisponivel";
+export type EstadoLiveloResumo =
+  | "atualizado"
+  | "atrasado"
+  | "degradado"
+  | "sem_dados"
+  | "indisponivel";
 export type EstadoCashbackResumo =
   | "atualizado"
   | "atrasado"
@@ -82,6 +87,7 @@ function tentativaPosterior(
 }
 
 function estadoLivelo(dados: ResumoLiveloPersistido, agora: Date): EstadoLiveloResumo {
+  if (dados.qualidade === "degradada") return "degradado";
   if (!dados.ultimo_sucesso_em) return "sem_dados";
   return atrasado(dados.ultimo_sucesso_em, agora, LIMITE_LIVELO_MS)
     ? "atrasado"
@@ -115,7 +121,11 @@ function atividadeRecente(
   produtos: ResumoInicio["produtos"],
 ): AtividadeRecente[] {
   const atividade: AtividadeRecente[] = [
-    { dominio: "livelo", estado: livelo.estado, momento: livelo.ultimo_sucesso_em },
+    {
+      dominio: "livelo",
+      estado: livelo.estado,
+      momento: livelo.ultima_tentativa_em ?? livelo.ultimo_sucesso_em,
+    },
     { dominio: "cashback_inter", estado: cashback.estado, momento: cashback.ultima_tentativa_em ?? cashback.ultimo_sucesso_em },
     { dominio: "produtos_inter", estado: produtos.estado, momento: produtos.ultima_tentativa_em ?? produtos.dados_mais_recentes_em },
   ];
@@ -161,6 +171,8 @@ function estadoProdutos(dados: ResumoProdutosPersistido, agora: Date): EstadoPro
 
 const liveloIndisponivel: ResumoInicio["livelo"] = {
   estado: "indisponivel",
+  ultima_tentativa_em: null,
+  qualidade: null,
   ultimo_sucesso_em: null,
   lojas_acompanhadas: 0,
   alertas_ultima_coleta: 0,

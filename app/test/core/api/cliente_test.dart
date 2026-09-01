@@ -72,6 +72,54 @@ void main() {
     expect(chamada.headers['x-firebase-appcheck'], 'app-check-token');
   });
 
+  test('trata rejeição estruturada de App Check como ErroDeApi', () async {
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient(
+        (_) async => http.Response(
+          '{"erro":{"codigo":"app-check","mensagem":"aplicativo nao verificado"}}',
+          401,
+        ),
+      ),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => 'app-check-token',
+    );
+
+    await expectLater(
+      api.obter('/api/perfil'),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 401)
+            .having((erro) => erro.codigo, 'codigo', 'app-check'),
+      ),
+    );
+  });
+
+  test('normaliza falha do provider sem expor o erro nativo', () async {
+    var chamouRede = false;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient((_) async {
+        chamouRede = true;
+        return http.Response('{}', 200);
+      }),
+      provedorToken: () async => 'id-token',
+      provedorAppCheck: () async => throw StateError('detalhe sensível'),
+    );
+
+    await expectLater(
+      api.obter('/api/perfil'),
+      throwsA(
+        isA<ErroDeRede>().having(
+          (erro) => erro.motivo,
+          'motivo',
+          'Não foi possível validar este aplicativo.',
+        ),
+      ),
+    );
+    expect(chamouRede, isFalse);
+  });
+
   test('PATCH administrativo leva tokens e corpo JSON', () async {
     late http.Request chamada;
     final api = ClienteApi(
@@ -168,6 +216,53 @@ void main() {
     }
 
     expect(acao, throwsA(isA<ErroDeRede>()));
+  });
+
+  test('erro interno não JSON continua sendo erro HTTP seguro', () async {
+    Future<void> acao() async {
+      await cliente(
+        http.Response(
+          '<html>DATABASE_URL=segredo SELECT * FROM usuarios</html>',
+          500,
+        ),
+      ).obter('/x');
+    }
+
+    await expectLater(
+      acao(),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 500)
+            .having((erro) => erro.codigo, 'codigo', 'inesperado')
+            .having(
+              (erro) => erro.mensagem,
+              'mensagem',
+              'Erro interno do servidor.',
+            ),
+      ),
+    );
+  });
+
+  test('interpreta cooldown estruturado e o tempo restante', () async {
+    Future<void> acao() async {
+      await cliente(
+        http.Response(
+          '{"erro":{"codigo":"cooldown","mensagem":"aguarde","retry_after_seconds":91}}',
+          429,
+          headers: {'retry-after': '90'},
+        ),
+      ).criar('/x', corpo: const {});
+    }
+
+    await expectLater(
+      acao(),
+      throwsA(
+        isA<ErroDeApi>()
+            .having((erro) => erro.status, 'status', 429)
+            .having((erro) => erro.codigo, 'codigo', 'cooldown')
+            .having((erro) => erro.retryAfterSeconds, 'espera', 91),
+      ),
+    );
   });
 
   test('corpo fora do formato vira ErroDeRede', () async {

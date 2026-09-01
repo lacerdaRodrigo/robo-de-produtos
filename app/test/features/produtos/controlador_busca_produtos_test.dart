@@ -35,6 +35,10 @@ Pagina<ProdutoDireto> _pagina(
   int numero = 1,
   int? total,
   bool proxima = false,
+  String atualizadoEm = '2026-08-22T12:00:00Z',
+  String qualidade = 'completa',
+  String? ultimaTentativaEm,
+  String? ultimaTentativaEstado,
 }) => Pagina(
   itens: itens,
   pagina: numero,
@@ -42,8 +46,10 @@ Pagina<ProdutoDireto> _pagina(
   totalItens: total ?? itens.length,
   totalPaginas: proxima ? numero + 1 : numero,
   temProxima: proxima,
-  atualizadoEm: '2026-08-22T12:00:00Z',
-  qualidade: 'completa',
+  atualizadoEm: atualizadoEm,
+  qualidade: qualidade,
+  ultimaTentativaEm: ultimaTentativaEm,
+  ultimaTentativaEstado: ultimaTentativaEstado,
 );
 
 void main() {
@@ -181,4 +187,51 @@ void main() {
     expect(controlador.itens, hasLength(2));
     expect(controlador.erroMais, isNull);
   });
+
+  test(
+    'consolida frescor e qualidade das lojas das páginas carregadas',
+    () async {
+      final controlador = ControladorBuscaProdutos(
+        buscar:
+            ({
+              required termo,
+              required pagina,
+              marca,
+              categoria,
+              loja,
+              precoMin,
+              precoMax,
+            }) async => pagina == 1
+            ? _pagina(
+                [_produto('1')],
+                total: 2,
+                proxima: true,
+                atualizadoEm: '2026-08-30T10:00:00Z',
+                ultimaTentativaEm: '2026-08-30T11:00:00Z',
+                ultimaTentativaEstado: 'sucesso',
+              )
+            : _pagina(
+                [_produto('2', loja: 'ponto')],
+                numero: 2,
+                total: 2,
+                atualizadoEm: '2026-08-29T08:00:00Z',
+                qualidade: 'degradada',
+                ultimaTentativaEm: '2026-08-30T12:00:00Z',
+                ultimaTentativaEstado: 'falha',
+              ),
+        debounce: Duration.zero,
+      );
+      addTearDown(controlador.dispose);
+
+      controlador.mudarTermo('edge');
+      await Future<void>.delayed(Duration.zero);
+      await controlador.carregarMais();
+
+      expect(controlador.pagina, 2);
+      expect(controlador.atualizadoEm, '2026-08-29T08:00:00Z');
+      expect(controlador.qualidade, 'degradada');
+      expect(controlador.ultimaTentativaEm, '2026-08-30T12:00:00Z');
+      expect(controlador.ultimaTentativaEstado, 'parcial');
+    },
+  );
 }

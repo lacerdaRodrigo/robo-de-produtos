@@ -2,43 +2,99 @@ import 'package:flutter/material.dart';
 
 /// Tokens de cor do Radar de Benefícios.
 ///
-/// Direção aprovada no protótipo mobile: azul-marinho como marca, verde só para
-/// ganho e vermelho reservado a erro/zona de perigo.
+/// Fonte visual do redesign mobile: `design-app/prototipo-mobile-v12.html`.
+/// Não altere estes valores para "aproximar" uma tela isolada: ajuste primeiro
+/// o protótipo/UI_SPEC quando a direção visual mudar de propósito.
 abstract final class Tokens {
   // Marca e superfícies institucionais.
-  static const Color marcaProfunda = Color(0xFF081A2D); // abertura e ícones
-  static const Color marca = Color(0xFF102A43);
-  static const Color marcaClara = Color(0xFF1769AA); // ação, links, foco
+  static const Color marcaProfunda = Color(0xFF18212A);
+  static const Color marca = Color(0xFF1788B8);
+  static const Color marcaMedia = Color(0xFF126F97);
+  static const Color marcaClara = Color(0xFF1788B8); // --brand
+
+  // Ação e integração.
+  static const Color acaoFundo = Color(0xFFE1F3FA); // --brand-soft
+  static const Color ciano = Color(0xFF1788B8);
+  static const Color cianoFundo = Color(0xFFE1F3FA);
 
   // Ganho/sucesso — cashback, economia, meta atingida. Nunca para ação neutra.
-  static const Color ganho = Color(0xFF16803C);
+  static const Color ganho = Color(0xFF16835F);
+  static const Color ganhoFundo = Color(0xFFE0F4EB);
 
   // Atenção — dado envelhecendo.
-  static const Color atencao = Color(0xFFB7791F);
+  static const Color atencao = Color(0xFF8B5A12);
+  static const Color atencaoFundo = Color(0xFFFFF2D7);
 
   // Erro e zona de perigo.
-  static const Color perigo = Color(0xFFC53030);
+  static const Color perigo = Color(0xFFD44747);
 
-  // Texto e superfícies claras da nova direção mobile.
-  static const Color texto = Color(0xFF102A43);
-  static const Color textoSuave = Color(0xFF607487);
-  static const Color fundo = Color(0xFFF5F7FA);
+  // Texto e superfícies claras da direção mobile.
+  static const Color texto = Color(0xFF18212A);
+  static const Color textoSuave = Color(0xFF5E6B77);
+  static const Color textoSutil = Color(0xFF83919E);
+  static const Color pagina = Color(0xFFDBE5EE);
+  static const Color fundo = Color(0xFFEAF0F5); // --app
   static const Color superficie = Color(0xFFFFFFFF);
-  static const Color superficieAlternativa = Color(0xFFEDF3F8);
-  static const Color borda = Color(0xFFDCE6EE);
+  static const Color superficieAlternativa = Color(0xFFE1EAF2);
+  static const Color superficieForte = Color(0xFFD2DEE8);
+  static const Color borda = Color(0xFFC4D2DE);
 
-  // Contrapartes escuras. A marca profunda continua sendo institucional; estes
-  // tokens existem para superfícies e conteúdo, não para redefinir domínios.
-  static const Color textoEscuro = Color(0xFFEDF7FF);
-  static const Color textoSuaveEscuro = Color(0xFF9FB3C5);
-  static const Color fundoEscuro = Color(0xFF06111E);
-  static const Color superficieEscura = Color(0xFF0D2032);
-  static const Color superficieAlternativaEscura = Color(0xFF132B40);
-  static const Color bordaEscura = Color(0xFF30485D);
-  static const Color acaoEscura = Color(0xFF65DFF5);
-  static const Color ganhoEscuro = Color(0xFF65D98B);
-  static const Color atencaoEscura = Color(0xFFFFD17A);
-  static const Color perigoEscuro = Color(0xFFFF8A8A);
+  // Contrapartes escuras extraídas do protótipo.
+  static const Color textoEscuro = Color(0xFFF4F7FA);
+  static const Color textoSuaveEscuro = Color(0xFFC0C7CF);
+  static const Color textoSutilEscuro = Color(0xFF959FA9);
+  static const Color paginaEscura = Color(0xFF2C3035);
+  static const Color fundoEscuro = Color(0xFF33383E);
+  static const Color superficieEscura = Color(0xFF3E444B);
+  static const Color superficieAlternativaEscura = Color(0xFF474E56);
+  static const Color superficieForteEscura = Color(0xFF545C65);
+  static const Color bordaEscura = Color(0xFF5C6670);
+  static const Color acaoFundoEscuro = Color(0xFF415B68);
+  static const Color cianoFundoEscuro = Color(0xFF415B68);
+  static const Color ganhoFundoEscuro = Color(0xFF3D5648);
+  static const Color ganhoEscuro = Color(0xFF81E4AD);
+  static const Color atencaoFundoEscuro = Color(0xFF402F14);
+  static const Color atencaoEscuro = Color(0xFFFFD17A);
+
+  // O HTML não redefine estes tokens no escuro.
+  static const Color acaoEscura = Color(0xFF70CEF3);
+  static const Color perigoEscuro = Color(0xFFFF8585);
+}
+
+/// Escala estrutural para evitar números mágicos espalhados pelo redesign.
+abstract final class EspacamentoRadar {
+  static const double xxs = 4;
+  static const double xs = 8;
+  static const double sm = 12;
+  static const double md = 16;
+  static const double lg = 20;
+  static const double xl = 24;
+  static const double xxl = 32;
+}
+
+abstract final class RaioRadar {
+  static const double pequeno = 10;
+  static const double medio = 14;
+  static const double grande = 18;
+  static const double destaque = 24;
+  static const double pilula = 999;
+}
+
+abstract final class SombraRadar {
+  static const BoxShadow clara = BoxShadow(
+    color: Color(0x212A4458),
+    blurRadius: 26,
+    offset: Offset(0, 10),
+  );
+
+  static const BoxShadow escura = BoxShadow(
+    color: Color(0x2E181C20),
+    blurRadius: 28,
+    offset: Offset(0, 10),
+  );
+
+  static BoxShadow para(Brightness brilho) =>
+      brilho == Brightness.dark ? escura : clara;
 }
 
 /// Cores semânticas que mudam junto do tema sem alterar o significado.
@@ -57,7 +113,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   const CoresRadar.claras()
     : acao = Tokens.marcaClara,
-      integracaoInter = const Color(0xFF0B7F99),
+      integracaoInter = Tokens.ciano,
       ganho = Tokens.ganho,
       atencao = Tokens.atencao,
       perigo = Tokens.perigo,
@@ -67,9 +123,9 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   const CoresRadar.escuras()
     : acao = Tokens.acaoEscura,
-      integracaoInter = Tokens.acaoEscura,
+      integracaoInter = Tokens.ciano,
       ganho = Tokens.ganhoEscuro,
-      atencao = Tokens.atencaoEscura,
+      atencao = Tokens.atencaoEscuro,
       perigo = Tokens.perigoEscuro,
       textoSuave = Tokens.textoSuaveEscuro,
       superficieAlternativa = Tokens.superficieAlternativaEscura,
@@ -84,7 +140,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       perigo = Tokens.perigo,
       textoSuave = const Color(0xFF60758A),
       superficieAlternativa = const Color(0xFFF0F4F7),
-      borda = const Color(0xFFDCE6EE);
+      borda = Tokens.borda;
 
   final Color acao;
   final Color integracaoInter;

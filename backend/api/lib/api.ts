@@ -58,11 +58,28 @@ export function paginacaoEnvelope(
 
 /** Corpo de erro padrão da API v1. */
 export type ErroApi = {
-  erro: { codigo: string; mensagem: string };
+  erro: {
+    codigo: string;
+    mensagem: string;
+    retry_after_seconds?: number;
+  };
 };
 
-export function corpoErro(codigo: string, mensagem: string): ErroApi {
-  return { erro: { codigo, mensagem } };
+export function corpoErro(
+  codigo: string,
+  mensagem: string,
+  metadados?: { retryAfterSeconds?: number },
+): ErroApi {
+  const retryAfterSeconds = metadados?.retryAfterSeconds;
+  return {
+    erro: {
+      codigo,
+      mensagem,
+      ...(retryAfterSeconds !== undefined && retryAfterSeconds > 0
+        ? { retry_after_seconds: Math.ceil(retryAfterSeconds) }
+        : {}),
+    },
+  };
 }
 
 export const STATUS: Record<string, number> = {

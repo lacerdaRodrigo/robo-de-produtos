@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Radar — versão 11 integrada</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --page: #dbe5ee;
+        --app: #eaf0f5;
+        --surface: #ffffff;
+        --surface-soft: #e1eaf2;
+        --surface-strong: #d2dee8;
+        --text: #18212a;
+        --muted: #5e6b77;
+        --subtle: #83919e;
+        --line: #c4d2de;
+        --shadow: 0 24px 70px rgba(33, 58, 80, 0.14);
+        --card-shadow: 0 10px 26px rgba(42, 68, 88, 0.13), 0 2px 6px rgba(42, 68, 88, 0.06);
+        --success: #16835f;
+        --success-soft: #e0f4eb;
+        --brand: #1788b8;
+        --brand-soft: #e1f3fa;
+        --on-brand: #ffffff;
+        --accent: var(--brand);
+        --accent-soft: var(--brand-soft);
+        --danger: #d44747;
+        --radius-sm: 12px;
+        --radius-md: 18px;
+        --radius-lg: 24px;
+      }
+
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --page: #2c3035;
+        --app: #33383e;
+        --surface: #3e444b;
+        --surface-soft: #474e56;
+        --surface-strong: #545c65;
+        --text: #f4f7fa;
+        --muted: #c0c7cf;
+        --subtle: #959fa9;
+        --line: #5c6670;
+        --shadow: 0 28px 80px rgba(28, 32, 36, 0.34);
+        --card-shadow: 0 10px 28px rgba(24, 28, 32, 0.18);
+        --success: #81e4ad;
+        --success-soft: #3d5648;
+        --brand: #70cef3;
+        --brand-soft: #415b68;
+        --on-brand: #16303b;
+        --danger: #ff8585;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 34%),
+          var(--page);
+        color: var(--text);
+        font-family: var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button, input { font: inherit; }
+      button { color: inherit; }
+      svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+      .showcase {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(280px, 430px) minmax(360px, 440px);
+        justify-content: center;
+        align-items: center;
+        gap: 64px;
+        padding: 48px;
+      }
+
+      .guide { max-width: 410px; }
+      .guide-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .guide-kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 14%, transparent); }
+      .guide h1 { margin: 18px 0 14px; font-size: clamp(36px, 5vw, 58px); line-height: 0.98; letter-spacing: -0.05em; }
+      .guide > p { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.65; }
+      .principles { display: grid; gap: 10px; margin: 28px 0; padding: 0; list-style: none; }
+      .principles li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); line-height: 1.5; }
+      .principles strong { color: var(--text); }
+      .check { flex: 0 0 auto; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: var(--success); background: var(--success-soft); font-size: 13px; font-weight: 900; }
+      .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .swatch { min-height: 76px; display: flex; align-items: flex-end; padding: 10px; border-radius: 15px; color: white; font-size: 11px; font-weight: 800; }
+      .swatch.deep { background: #edf3f8; color: #18212a; }
+      .swatch.base { background: #ffffff; color: #18212a; }
+      .swatch.bright { background: #e3eaf1; color: #18212a; }
+      .swatch.soft { background: #1788b8; color: #ffffff; }
+      .guide-note { margin-top: 20px; padding: 15px 17px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+      .device {
+        position: relative;
+        height: min(880px, calc(100vh - 48px));
+        min-height: 690px;
+        border: 8px solid color-mix(in srgb, var(--surface-strong) 70%, var(--page));
+        border-radius: 42px;
+        overflow: hidden;
+        background: var(--app);
+        box-shadow: var(--shadow);
+      }
+
+      .app {
+        --accent: var(--brand);
+        --accent-soft: var(--brand-soft);
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        background: var(--app);
+      }
+
+      .appbar {
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        align-items: center;
+        gap: 12px;
+        min-height: 76px;
+        padding: 16px 20px 10px;
+        border-bottom: 0;
+        background: color-mix(in srgb, var(--app) 88%, transparent);
+        backdrop-filter: blur(16px);
+      }
+
+      .icon-button {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: 15px;
+        background: var(--surface-soft);
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+      }
+      .icon-button:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); color: var(--accent); }
+      .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .brand-mark { position: relative; width: 36px; height: 36px; border: 3px solid var(--accent); border-right-color: transparent; border-radius: 50%; transition: border-color .2s ease; }
+      .brand-mark::after { content: ""; position: absolute; right: -4px; top: 1px; width: 9px; height: 9px; border-radius: 3px 8px 3px 8px; background: var(--accent); transform: rotate(22deg); }
+      .brand strong, .brand small { display: block; }
+      .brand strong { font-size: 17px; line-height: 1.1; }
+      .brand small { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .content { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+      .screen { display: none; min-height: 100%; padding: 18px 20px 32px; animation: enter .22s ease; }
+      .screen.active { display: block; }
+      @keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+      .eyebrow { display: inline-flex; align-items: center; gap: 7px; width: fit-content; margin-bottom: 12px; padding: 6px 9px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+      .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+      .screen h1 { margin: 0; font-size: 34px; line-height: 1.05; letter-spacing: -.045em; }
+      .lead { margin: 10px 0 24px; color: var(--muted); line-height: 1.55; }
+      .section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 26px 0 12px; }
+      .section-title h2 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+      .text-button { padding: 0; border: 0; background: transparent; color: var(--accent); font-weight: 750; cursor: pointer; }
+      .back-link { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 18px; padding: 0; border: 0; background: transparent; color: var(--accent); font-size: 12px; font-weight: 800; cursor: pointer; }
+      .page-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 14px; margin-bottom: 24px; }
+      .page-heading .lead { margin-bottom: 0; }
+      .refresh-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 10px 14px; border: 0; border-radius: 14px; background: var(--brand); box-shadow: 0 8px 20px color-mix(in srgb, var(--brand) 20%, transparent); color: var(--on-brand); font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+      .refresh-action:hover { transform: translateY(-1px); }
+      .refresh-action:disabled { opacity: .68; cursor: wait; }
+      .refresh-action svg { width: 17px; height: 17px; }
+
+      .card { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--card-shadow); }
+      .summary { position: relative; overflow: hidden; padding: 20px; }
+      .summary::after { content: ""; position: absolute; right: -52px; bottom: -66px; width: 150px; height: 150px; border-radius: 50%; background: color-mix(in srgb, var(--brand) 9%, transparent); pointer-events: none; }
+      .status-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .status-chip { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 7px 10px; border-radius: 999px; background: var(--success-soft); color: var(--success); font-size: 12px; font-weight: 800; }
+      .status-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+      .time { color: var(--muted); font-size: 12px; }
+      .summary h2 { margin: 18px 0 6px; font-size: 24px; line-height: 1.18; letter-spacing: -.035em; }
+      .summary > p { margin: 0; color: var(--muted); }
+      .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
+      .metric { position: relative; z-index: 1; padding: 13px 8px; border-radius: 16px; background: var(--surface-soft); text-align: center; }
+      .metric strong, .metric span { display: block; }
+      .metric strong { font-size: 20px; }
+      .metric span { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.2; }
+
+      .area-grid { display: grid; gap: 10px; }
+      .area-card { --area: var(--brand); --area-soft: var(--brand-soft); width: 100%; display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 13px; padding: 16px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--card-shadow); text-align: left; cursor: pointer; }
+      .area-card:hover { background: color-mix(in srgb, var(--surface) 86%, var(--brand-soft)); }
+      .area-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 16px; background: var(--area-soft); color: var(--area); }
+      .area-card strong, .area-card small { display: block; }
+      .area-card small { margin-top: 4px; color: var(--muted); font-size: 12px; }
+      .area-card .arrow { color: var(--subtle); }
+
+      .activity { overflow: hidden; }
+      .activity-item { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 11px; padding: 14px; }
+      .activity-item + .activity-item { border-top: 1px solid var(--line); }
+      .activity-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--success); background: var(--success-soft); }
+      .activity-item strong, .activity-item small { display: block; }
+      .activity-item strong { font-size: 13px; }
+      .activity-item small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+      .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px; margin: 22px 0 14px; padding: 5px; overflow-x: auto; border: 0; border-radius: 17px; background: var(--surface-soft); }
+      .tab { min-width: max-content; padding: 10px 12px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 750; cursor: pointer; }
+      .tab.active { background: var(--brand); color: var(--on-brand); }
+
+      .search-field { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 56px; padding: 0 15px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--card-shadow); color: var(--muted); }
+      .search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+      .search-field input { min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); }
+      .search-field input::placeholder { color: var(--subtle); }
+      .search-field button { display: grid; place-items: center; padding: 6px; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
+
+      .list { display: grid; gap: 10px; margin-top: 14px; }
+      .store-card { position: relative; overflow: hidden; padding: 16px 16px 16px 20px; background: linear-gradient(110deg, var(--surface) 0 78%, color-mix(in srgb, var(--brand-soft) 55%, var(--surface))); }
+      .store-card::before { content: ""; position: absolute; inset: 18px auto 18px 0; width: 4px; border-radius: 0 999px 999px 0; background: var(--brand); }
+      .store-head { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 11px; }
+      .store-logo { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 900; }
+      .store-name strong, .store-name small { display: block; }
+      .store-name strong { font-size: 14px; }
+      .store-name small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+      .benefit { color: var(--accent); font-size: 15px; font-weight: 900; white-space: nowrap; }
+      .store-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+      .tag { padding: 6px 8px; border-radius: 999px; background: var(--surface-soft); color: var(--muted); font-size: 10px; font-weight: 700; }
+      .follow { padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+      .follow.active { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--accent-soft); color: var(--accent); }
+
+      .catalog-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 16px 0 10px; }
+      .catalog-count strong, .catalog-count span { display: block; }
+      .catalog-count strong { font-size: 14px; }
+      .catalog-count span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+      .sort-button { display: flex; align-items: center; gap: 6px; padding: 9px 11px; border: 0; border-radius: 12px; background: var(--surface-soft); color: var(--muted); font-size: 10px; font-weight: 750; cursor: pointer; }
+      .sort-button svg { width: 15px; height: 15px; }
+      .catalog-footer { display: grid; justify-items: center; gap: 10px; margin-top: 16px; color: var(--muted); font-size: 10px; }
+      .pager { display: flex; align-items: center; gap: 5px; }
+      .page-button { min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+      .page-button.active { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+      .page-button:disabled { opacity: .4; cursor: default; }
+
+      .inter-switch { grid-auto-columns: minmax(96px, 1fr); }
+      .collect-status { display: flex; gap: 10px; align-items: center; margin-top: 14px; padding: 13px; border-radius: 14px; background: var(--surface-soft); color: var(--muted); font-size: 12px; }
+      .collect-status svg { color: var(--success); }
+
+      .chips { display: flex; gap: 7px; margin: 12px 0 4px; overflow-x: auto; scrollbar-width: none; }
+      .chip { flex: 0 0 auto; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 750; cursor: pointer; }
+      .chip.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+      .result-count { margin: 16px 0 10px; color: var(--muted); font-size: 12px; }
+      .product { display: grid; grid-template-columns: 82px 1fr; gap: 13px; padding: 13px; }
+      .product-image { display: grid; place-items: center; min-height: 100px; border-radius: 14px; background: var(--surface-soft); color: var(--accent); font-size: 32px; font-weight: 900; }
+      .product h3 { margin: 2px 0 5px; font-size: 14px; line-height: 1.35; }
+      .product-shop { color: var(--muted); font-size: 11px; }
+      .price { margin-top: 10px; font-size: 17px; font-weight: 900; }
+      .cashback { margin-top: 4px; color: var(--accent); font-size: 11px; font-weight: 750; }
+      .after { margin-top: 2px; color: var(--muted); font-size: 10px; }
+
+      .bottom-nav {
+        z-index: 12;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        min-height: 70px;
+        margin: 0 12px 12px;
+        padding: 7px 8px max(7px, env(safe-area-inset-bottom));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: color-mix(in srgb, var(--surface) 94%, transparent);
+        box-shadow: 0 14px 34px rgba(34, 58, 76, .2);
+        backdrop-filter: blur(18px);
+      }
+      .nav-button { position: relative; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 5px 2px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); cursor: pointer; }
+      .nav-button svg { width: 22px; height: 22px; transition: .2s ease; }
+      .nav-button span { font-size: 9px; font-weight: 750; }
+      .nav-button.active { color: var(--brand); }
+      .nav-button.active::before { display: none; }
+      .nav-button.active svg { width: 36px; height: 34px; padding: 7px; border-radius: 12px; background: var(--brand); color: var(--on-brand); }
+
+      .drawer-backdrop { position: absolute; inset: 0; z-index: 30; visibility: hidden; background: rgba(0,0,0,.48); opacity: 0; transition: .2s ease; }
+      .drawer { position: absolute; inset: 0 auto 0 0; width: min(84%, 330px); z-index: 31; display: grid; grid-template-rows: auto 1fr auto; padding: 20px; background: var(--app); box-shadow: 18px 0 50px rgba(0,0,0,.25); transform: translateX(-102%); transition: transform .24s ease; }
+      .app.drawer-open .drawer-backdrop { visibility: visible; opacity: 1; }
+      .app.drawer-open .drawer { transform: translateX(0); }
+      .drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+      .profile { display: flex; align-items: center; gap: 11px; }
+      .avatar { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: var(--brand-soft); color: var(--brand); font-weight: 900; }
+      .profile strong, .profile small { display: block; }
+      .profile small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .drawer-menu { display: grid; align-content: start; gap: 7px; padding: 20px 0; }
+      .drawer-item { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 10px; padding: 11px; border: 0; border-radius: 13px; background: transparent; text-align: left; cursor: pointer; }
+      .drawer-item:hover { background: var(--surface); }
+      .drawer-item svg { color: var(--muted); }
+      .drawer-footer { padding-top: 14px; border-top: 1px solid var(--line); }
+      .drawer-item.logout { color: var(--danger); }
+
+      .toast { position: absolute; z-index: 50; left: 50%; bottom: 88px; max-width: calc(100% - 36px); padding: 11px 14px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); box-shadow: 0 12px 35px rgba(0,0,0,.25); color: var(--text); font-size: 12px; opacity: 0; transform: translate(-50%, 10px); pointer-events: none; transition: .2s ease; }
+      .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+
+      .prototype-note{margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--brand-soft);color:var(--muted);font-size:11px;line-height:1.45}
+      .prototype-note strong{color:var(--brand)}
+      .subview{display:none}.subview.active{display:block;animation:enter .18s ease}
+      .hidden{display:none!important}
+      .empty-state{display:none;margin-top:14px;padding:22px 16px;border:1px dashed var(--line);border-radius:18px;background:var(--surface);color:var(--muted);text-align:center}
+      .empty-state.visible{display:block}
+      .product .after{margin-top:8px;padding:8px 10px;border-radius:11px;background:var(--success-soft);color:var(--success);font-size:11px;font-weight:850}
+      .direct-card{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;padding:15px}
+      .direct-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+      .mini-action{padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);color:var(--muted);font-size:10px;font-weight:800;cursor:pointer}
+      .mini-action.primary{background:var(--brand-soft);color:var(--brand)}
+
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+      @media (max-width: 880px) {
+        .showcase { grid-template-columns: 1fr; padding: 0; }
+        .guide { display: none; }
+        .device { width: 100%; height: 100dvh; min-height: 620px; border: 0; border-radius: 0; box-shadow: none; }
+      }
+
+      @media (max-width: 390px) {
+        .page-heading { grid-template-columns: 1fr; align-items: start; }
+        .refresh-action { width: 100%; }
+      }
+
+      @media (max-height: 760px) and (min-width: 881px) {
+        .device { min-height: 650px; }
+        .screen { padding-top: 20px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="showcase">
+      <aside class="guide" aria-label="Direção visual proposta">
+        <span class="guide-kicker">Versão 11 · integrada</span>
+        <h1>Claro.<br />Separado.<br />Organizado.</h1>
+        <p>O fundo ganhou um cinza-azulado mais presente. Os cards continuam brancos, mas agora têm contorno, sombra e uma marca lateral que deixa cada item claramente separado.</p>
+        <ul class="principles">
+          <li><span class="check">✓</span><span><strong>Três níveis:</strong> fundo, superfícies internas e cards não se confundem mais.</span></li>
+          <li><span class="check">✓</span><span><strong>Uma identidade:</strong> o azul-celeste acompanha Início, Livelo, Inter e Produtos.</span></li>
+          <li><span class="check">✓</span><span><strong>Cards individuais:</strong> borda, sombra e detalhe lateral reforçam cada resultado.</span></li>
+          <li><span class="check">✓</span><span><strong>Navegação escalável:</strong> Livelo, Inter e futuras integrações ficam dentro de Programas, não na barra principal.</span></li>
+        </ul>
+        <div class="palette" aria-label="Paleta clara do aplicativo">
+          <div class="swatch deep">Fundo gelo</div>
+          <div class="swatch base">Card branco</div>
+          <div class="swatch bright">Cinza suave</div>
+          <div class="swatch soft">Azul-celeste</div>
+        </div>
+        <div class="guide-note">Mesma paleta da versão 10, agora organizada para reaproveitar os fluxos atuais do Flutter: Livelo, Inter Sites parceiros, Inter Compre direto e busca de produtos.</div>
+      </aside>
+
+      <main class="device" aria-label="Protótipo interativo do aplicativo Radar">
+        <div class="app" id="app" data-area="inicio">
+          <header class="appbar">
+            <button class="icon-button" id="open-drawer" type="button" aria-label="Abrir menu">
+              <svg aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            </button>
+            <div class="brand">
+              <span class="brand-mark" aria-hidden="true"></span>
+              <span><strong>Radar</strong><small id="area-title">Início</small></span>
+            </div>
+          </header>
+
+          <div class="content" id="content">
+            <section class="screen active" data-screen="inicio">
+              <div class="eyebrow">Versão 11 · integrada</div>
+              <h1>Seu radar hoje</h1>
+              <p class="lead">Acompanhe pontos, cashback e produtos em um só lugar.</p><div class="prototype-note"><strong>Protótipo visual:</strong> estes dados são demonstrativos. No Flutter real, lojas, produtos, histórico, status, paginação e ações continuam vindo das APIs existentes.</div>
+
+              <article class="card summary">
+                <div class="status-row"><span class="status-chip">Tudo atualizado</span><span class="time">15:17</span></div>
+                <h2>As melhores oportunidades continuam ativas.</h2>
+                <p>Últimos dados recebidos normalmente.</p>
+                <div class="metrics">
+                  <div class="metric"><strong>2</strong><span>programas conectados</span></div>
+                  <div class="metric"><strong>270</strong><span>lojas e parceiros</span></div>
+                  <div class="metric"><strong>10%</strong><span>melhor retorno</span></div>
+                </div>
+              </article>
+
+              <div class="section-title"><h2>Explorar</h2></div>
+              <div class="area-grid">
+                <button class="area-card" type="button" data-target="programas">
+                  <span class="area-icon"><svg><path d="M3 21h18M5 21V10M19 21V10M4 10h16M12 3l9 5H3l9-5ZM9 14v3M15 14v3" /></svg></span>
+                  <span><strong>Programas e parceiros</strong><small>Todos os catálogos conectados</small></span><svg class="arrow"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+                <button class="area-card" type="button" data-target="produtos">
+                  <span class="area-icon"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg></span>
+                  <span><strong>Buscar produtos</strong><small>Preço, cashback e histórico</small></span><svg class="arrow"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+              </div>
+
+              <div class="section-title"><h2>Atividade recente</h2><button class="text-button" type="button" data-toast="Histórico completo no aplicativo.">Ver tudo</button></div>
+              <div class="card activity">
+                <div class="activity-item"><span class="activity-icon"><svg><path d="m5 12 4 4L19 6" /></svg></span><span><strong>Livelo atualizada</strong><small>252 parceiros analisados</small></span><span class="time">15:17</span></div>
+                <div class="activity-item"><span class="activity-icon"><svg><path d="m5 12 4 4L19 6" /></svg></span><span><strong>Sites parceiros atualizados</strong><small>Cashback disponível</small></span><span class="time">14:42</span></div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="programas">
+              <div class="eyebrow">Catálogos conectados</div>
+              <h1>Programas</h1>
+              <p class="lead">Acesse pontos, cashback e futuros parceiros sem aumentar a barra principal.</p>
+
+              <label class="search-field"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span class="sr-only">Buscar programa</span><input type="search" placeholder="Buscar programa ou parceiro" /><button type="button" aria-label="Filtrar"><svg><path d="M4 6h16M7 12h10M10 18h4" /></svg></button></label>
+              <div class="catalog-toolbar">
+                <span class="catalog-count"><strong>Programas disponíveis</strong><span>A estrutura cresce sem mudar a navegação</span></span>
+                <button class="sort-button" type="button" data-toast="Programas ordenados por nome."><svg><path d="M3 6h18M6 12h12M9 18h6" /></svg>A–Z</button>
+              </div>
+
+              <div class="area-grid">
+                <button class="area-card" type="button" data-target="livelo">
+                  <span class="area-icon"><svg><path d="M20 12v8H4v-8M2 7h20v5H2zM12 7v13M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7ZM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7Z" /></svg></span>
+                  <span><strong>Livelo</strong><small>252 lojas · pontos e histórico</small></span><svg class="arrow"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+                <button class="area-card" type="button" data-target="inter">
+                  <span class="area-icon"><svg><path d="M3 21h18M5 21V10M19 21V10M4 10h16M12 3l9 5H3l9-5ZM9 14v3M15 14v3" /></svg></span>
+                  <span><strong>Banco Inter</strong><small>18 parceiros · cashback e produtos</small></span><svg class="arrow"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+              </div>
+              <div class="collect-status"><svg><path d="M12 5v14M5 12h14" /></svg><span>Quando uma nova integração for criada, ela aparecerá nesta lista — não na barra inferior.</span></div>
+            </section>
+
+            <section class="screen" data-screen="livelo">
+              <button class="back-link" type="button" data-target="programas">← Todos os programas</button>
+              <div class="page-heading">
+                <div>
+                  <div class="eyebrow">Programa de pontos</div>
+                  <h1>Livelo</h1>
+                  <p class="lead">Encontre as melhores pontuações e acompanhe suas lojas.</p>
+                </div>
+                <button class="refresh-action" type="button" data-refresh="Livelo"><svg><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg><span>Atualizar dados</span></button>
+              </div>
+
+              <article class="card summary">
+                <div class="status-row"><span class="status-chip">Coleta concluída</span><span class="time">31/08 · 15:17</span></div>
+                <h2>4 pontos por R$ 1 é a melhor acompanhada.</h2>
+                <p>Localiza</p>
+                <div class="metrics">
+                  <div class="metric"><strong>2</strong><span>acompanhadas</span></div>
+                  <div class="metric"><strong>0</strong><span>alertas ativos</span></div>
+                  <div class="metric"><strong>252</strong><span>no catálogo</span></div>
+                </div>
+              </article>
+
+              <div class="tabs" role="tablist" aria-label="Áreas da Livelo">
+                <button class="tab active" type="button" data-livelo-view="lojas">Lojas</button><button class="tab" type="button" data-livelo-view="acompanhadas">Acompanhadas</button><button class="tab" type="button" data-livelo-view="historico">Histórico</button>
+              </div>
+              <label class="search-field"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span class="sr-only">Buscar loja</span><input type="search" placeholder="Buscar loja ou categoria" /><button type="button" aria-label="Filtrar"><svg><path d="M4 6h16M7 12h10M10 18h4" /></svg></button></label>
+
+              <div class="catalog-toolbar">
+                <span class="catalog-count"><strong>252 lojas</strong><span>20 resultados por página</span></span>
+                <button class="sort-button" type="button" data-toast="Opções de ordenação abertas."><svg><path d="M3 6h18M6 12h12M9 18h6" /></svg>Melhor pontuação</button>
+              </div>
+
+              <div class="list">
+                <article class="card store-card" data-store="Localiza viagens turismo" data-followed="true">
+                  <div class="store-head"><span class="store-logo">LO</span><span class="store-name"><strong>Localiza</strong><small>Viagens e turismo</small></span><span class="benefit">4 pts/R$</span></div>
+                  <div class="store-meta"><div class="tags"><span class="tag">Atualizada</span><span class="tag">Histórico disponível</span></div><button class="follow active" type="button">Acompanhando</button></div>
+                </article>
+                <article class="card store-card" data-store="Netshoes moda esporte" data-followed="false">
+                  <div class="store-head"><span class="store-logo">NT</span><span class="store-name"><strong>Netshoes</strong><small>Moda e esporte</small></span><span class="benefit">3 pts/R$</span></div>
+                  <div class="store-meta"><div class="tags"><span class="tag">Campanha ativa</span></div><button class="follow" type="button">Acompanhar</button></div>
+                </article>
+                <article class="card store-card" data-store="Magalu casa tecnologia" data-followed="false">
+                  <div class="store-head"><span class="store-logo">MA</span><span class="store-name"><strong>Magalu</strong><small>Casa e tecnologia</small></span><span class="benefit">2 pts/R$</span></div>
+                  <div class="store-meta"><div class="tags"><span class="tag">Atualizada</span></div><button class="follow" type="button">Acompanhar</button></div>
+                </article>
+              </div>
+              <div class="catalog-footer"><span>Exibindo 1–20 de 252 lojas</span><div class="pager" aria-label="Paginação de lojas"><button class="page-button" type="button" disabled aria-label="Página anterior">‹</button><button class="page-button active" type="button">1</button><button class="page-button" type="button">2</button><button class="page-button" type="button">3</button><span>…</span><button class="page-button" type="button">13</button><button class="page-button" type="button" aria-label="Próxima página">›</button></div></div>
+            </section>
+
+            <section class="screen" data-screen="inter">
+              <button class="back-link" type="button" data-target="programas">← Todos os programas</button>
+              <div class="page-heading">
+                <div>
+                  <div class="eyebrow">Cashback</div>
+                  <h1>Banco Inter</h1>
+                  <p class="lead">Compare parceiros e acompanhe as lojas selecionadas.</p>
+                </div>
+                <button class="refresh-action" type="button" data-refresh="Banco Inter"><svg><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg><span>Atualizar dados</span></button>
+              </div>
+
+              <article class="card summary">
+                <div class="status-row"><span class="status-chip">Dados disponíveis</span><span class="time">14:42</span></div>
+                <h2>Até 10% de cashback entre os parceiros.</h2>
+                <p>Polishop está com o melhor retorno agora.</p>
+                <div class="metrics">
+                  <div class="metric"><strong>18</strong><span>sites parceiros</span></div>
+                  <div class="metric"><strong>3</strong><span>selecionadas</span></div>
+                  <div class="metric"><strong>10%</strong><span>melhor oferta</span></div>
+                </div>
+              </article>
+
+              <div class="tabs inter-switch" role="tablist" aria-label="Áreas do Banco Inter"><button class="tab active" type="button" data-inter-view="cashback">Cashback</button><button class="tab" type="button" data-inter-view="sites">Sites parceiros</button><button class="tab" type="button" data-inter-view="direto">Compre direto</button></div>
+               <div class="subview active" data-inter-panel="cashback">
+                 <label class="search-field"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span class="sr-only">Buscar parceiro</span><input id="inter-search" type="search" placeholder="Buscar parceiro" /><button type="button" aria-label="Filtrar"><svg><path d="M4 6h16M7 12h10M10 18h4" /></svg></button></label>
+                 <div class="chips" id="inter-chips"><button class="chip active" type="button" data-filter="best">Melhor cashback</button><button class="chip" type="button" data-filter="followed">Acompanhadas</button><button class="chip" type="button" data-filter="all">Todos</button></div>
+                 <div class="catalog-toolbar"><span class="catalog-count"><strong id="inter-count">3 parceiros nesta demonstração</strong><span>No app real: busca, filtros e paginação continuam server-side</span></span><button class="sort-button" type="button" data-toast="Ordenação por maior cashback aplicada."><svg><path d="M3 6h18M6 12h12M9 18h6" /></svg>Maior cashback</button></div>
+                 <div class="list" id="inter-list">
+                   <article class="card store-card" data-store="Polishop casa tecnologia" data-followed="true"><div class="store-head"><span class="store-logo">PO</span><span class="store-name"><strong>Polishop</strong><small>Casa e tecnologia</small></span><span class="benefit">10%</span></div><div class="store-meta"><div class="tags"><span class="tag">Melhor cashback</span></div><button class="follow active" type="button">Acompanhando</button></div></article>
+                   <article class="card store-card" data-store="Amazon marketplace" data-followed="false"><div class="store-head"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Marketplace</small></span><span class="benefit">6%</span></div><div class="store-meta"><div class="tags"><span class="tag">Atualizada</span></div><button class="follow" type="button">Acompanhar</button></div></article>
+                   <article class="card store-card" data-store="Samsung eletronicos" data-followed="false"><div class="store-head"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Eletrônicos</small></span><span class="benefit">5%</span></div><div class="store-meta"><div class="tags"><span class="tag">Cashback ativo</span></div><button class="follow" type="button">Acompanhar</button></div></article>
+                 </div>
+                 <div class="empty-state" id="inter-empty">Nenhum parceiro encontrado.</div>
+               </div>
+
+               <div class="subview" data-inter-panel="sites">
+                 <div class="prototype-note"><strong>Sites parceiros:</strong> busca por loja, acompanhar/desacompanhar, cashback e paginação continuam usando a API atual no Flutter.</div>
+                 <label class="search-field"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span class="sr-only">Buscar site parceiro</span><input id="site-search" type="search" placeholder="Buscar loja em sites parceiros" /><button type="button" aria-label="Buscar"><svg><path d="m5 12 4 4L19 6" /></svg></button></label>
+                 <div class="list" id="site-list">
+                   <article class="card store-card" data-store="Amazon marketplace"><div class="store-head"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Site parceiro</small></span><span class="benefit">6%</span></div><div class="store-meta"><div class="tags"><span class="tag">Link disponível</span></div><button class="follow" type="button">Acompanhar</button></div></article>
+                   <article class="card store-card" data-store="Samsung eletronicos"><div class="store-head"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Site parceiro</small></span><span class="benefit">5%</span></div><div class="store-meta"><div class="tags"><span class="tag">Cashback ativo</span></div><button class="follow active" type="button">Acompanhando</button></div></article>
+                 </div>
+                 <div class="empty-state" id="site-empty">Nenhum site parceiro encontrado.</div>
+               </div>
+
+               <div class="subview" data-inter-panel="direto">
+                 <div class="prototype-note"><strong>Compre direto:</strong> seleção de lojas e última execução reaproveitam os endpoints/metadados atuais.</div>
+                 <div class="list">
+                   <article class="card direct-card"><span class="store-logo">AM</span><span class="store-name"><strong>Amazon</strong><small>Última coleta concluída · 12 páginas</small><span class="direct-actions"><button class="mini-action primary" type="button" data-toast="Loja selecionada.">Selecionada</button><button class="mini-action" type="button" data-toast="Detalhes da execução abertos.">Ver execução</button></span></span><span class="status-chip">Ativa</span></article>
+                   <article class="card direct-card"><span class="store-logo">SA</span><span class="store-name"><strong>Samsung</strong><small>Última coleta disponível</small><span class="direct-actions"><button class="mini-action" type="button" data-toast="Loja selecionada.">Selecionar</button><button class="mini-action" type="button" data-toast="Detalhes da execução abertos.">Ver execução</button></span></span><span class="status-chip">Ativa</span></article>
+                 </div>
+                 <div class="collect-status"><svg><path d="m5 12 4 4L19 6" /></svg><span>Metadados da última coleta aparecem quando disponíveis.</span></div>
+               </div>
+
+            </section>
+
+            <section class="screen" data-screen="produtos">
+              <div class="eyebrow">Pesquisa integrada</div>
+              <h1>Buscar produtos</h1>
+              <p class="lead">Compare preços e cashback nas lojas selecionadas.</p>
+
+              <label class="search-field"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span class="sr-only">Buscar produtos</span><input id="product-search" type="search" value="Tênis masculino" /><button type="button" aria-label="Filtrar"><svg><path d="M4 6h16M7 12h10M10 18h4" /></svg></button></label>
+              <div class="chips" id="product-chips"><button class="chip active" type="button" data-pfilter="all">Todos</button><button class="chip" type="button" data-pfilter="cashback">Maior cashback</button><button class="chip" type="button" data-pfilter="price">Menor preço</button><button class="chip" type="button" data-pfilter="history">Com histórico</button></div>
+              <p class="result-count">24 produtos encontrados · página 1 de 3</p>
+
+              <div class="list">
+                <article class="card product" data-product="Tênis Nike Revolution masculino Netshoes" data-history="true"><div class="product-image">N</div><div><h3>Tênis Nike Revolution masculino</h3><div class="product-shop">Netshoes</div><div class="price">R$ 299,90</div><div class="cashback">10% de cashback</div><div class="after">Após cashback: R$ 269,91</div></div></article>
+                <article class="card product" data-product="Tênis Adidas Runfalcon Amazon" data-history="false"><div class="product-image">A</div><div><h3>Tênis Adidas Runfalcon</h3><div class="product-shop">Amazon</div><div class="price">R$ 329,00</div><div class="cashback">6% de cashback</div><div class="after">Após cashback: R$ 309,26</div></div></article>
+              </div>
+              <div class="tabs" aria-label="Paginação"><button class="tab" type="button">← Anterior</button><button class="tab active" type="button">1</button><button class="tab" type="button">2</button><button class="tab" type="button">3</button><button class="tab" type="button">Próxima →</button></div>
+            </section>
+          </div>
+
+          <nav class="bottom-nav" aria-label="Navegação principal">
+            <button class="nav-button active" type="button" data-target="inicio"><svg><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /></svg><span>Início</span></button>
+            <button class="nav-button" type="button" data-target="programas"><svg><path d="M4 5h16v14H4zM8 9h8M8 13h5" /></svg><span>Programas</span></button>
+            <button class="nav-button" type="button" data-target="produtos"><svg><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><span>Produtos</span></button>
+          </nav>
+
+          <div class="drawer-backdrop" id="drawer-backdrop"></div>
+          <aside class="drawer" aria-label="Menu da conta">
+            <div class="drawer-head"><div class="profile"><span class="avatar">RP</span><span><strong>Minha conta</strong><small>Usuário autenticado</small></span></div><button class="icon-button" id="close-drawer" type="button" aria-label="Fechar menu"><svg><path d="M18 6 6 18M6 6l12 12" /></svg></button></div>
+            <div class="drawer-menu">
+              <button class="drawer-item" type="button" data-toast="Área da conta."><svg><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg><span>Conta</span></button>
+              <button class="drawer-item" type="button" id="drawer-theme"><svg><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2" /></svg><span>Aparência</span></button>
+              <button class="drawer-item" type="button" data-toast="Área administrativa para usuários autorizados."><svg><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z" /><path d="m9 12 2 2 4-4" /></svg><span>Administração</span></button>
+            </div>
+            <div class="drawer-footer"><button class="drawer-item logout" type="button" data-toast="O logout será confirmado antes de sair."><svg><path d="M10 17l5-5-5-5M15 12H3M15 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5" /></svg><span>Sair</span></button></div>
+          </aside>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (() => {
+        const root=document.documentElement, app=document.getElementById('app'), content=document.getElementById('content'),
+              areaTitle=document.getElementById('area-title'), toast=document.getElementById('toast');
+        const names={inicio:'Início',programas:'Programas',livelo:'Livelo',inter:'Banco Inter',produtos:'Buscar produtos'};
+        let timer;
+        const norm=v=>(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const msg=t=>{clearTimeout(timer);toast.textContent=t;toast.classList.add('visible');timer=setTimeout(()=>toast.classList.remove('visible'),2200)};
+        const close=()=>app.classList.remove('drawer-open');
+        function screen(name){
+          document.querySelectorAll('[data-screen]').forEach(x=>x.classList.toggle('active',x.dataset.screen===name));
+          const main=['livelo','inter'].includes(name)?'programas':name;
+          document.querySelectorAll('.nav-button[data-target]').forEach(b=>b.classList.toggle('active',b.dataset.target===main));
+          areaTitle.textContent=names[name]; content.scrollTo({top:0,behavior:'smooth'}); close();
+        }
+        const saved=localStorage.getItem('radar-v11-theme'); if(saved) root.dataset.theme=saved;
+        document.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>screen(b.dataset.target));
+        document.querySelectorAll('[data-inter-view]').forEach(b=>b.onclick=()=>{
+          document.querySelectorAll('[data-inter-view]').forEach(x=>x.classList.toggle('active',x===b));
+          document.querySelectorAll('[data-inter-panel]').forEach(x=>x.classList.toggle('active',x.dataset.interPanel===b.dataset.interView));
+        });
+        document.querySelectorAll('[data-livelo-view]').forEach(b=>b.onclick=()=>{
+          document.querySelectorAll('[data-livelo-view]').forEach(x=>x.classList.toggle('active',x===b));
+          const mode=b.dataset.liveloView;
+          document.querySelectorAll('[data-screen="livelo"] .store-card').forEach(c=>{
+            const followed=c.querySelector('.follow')?.classList.contains('active');
+            c.classList.toggle('hidden',mode==='acompanhadas'&&!followed);
+          });
+          if(mode==='historico') msg('No app real, o histórico abre com os dados preservados da API.');
+        });
+        document.querySelectorAll('.follow').forEach(b=>b.onclick=()=>{
+          b.classList.toggle('active'); b.textContent=b.classList.contains('active')?'Acompanhando':'Acompanhar';
+          msg(b.classList.contains('active')?'Loja acompanhada.':'Loja removida das acompanhadas; histórico preservado.');
+        });
+        document.querySelectorAll('[data-refresh]').forEach(b=>b.onclick=()=>{
+          const s=b.querySelector('span'), old=s.textContent; b.disabled=true;s.textContent='Atualizando…';
+          setTimeout(()=>{b.disabled=false;s.textContent='Atualizado agora';msg(`${b.dataset.refresh}: solicitação aceita.`);setTimeout(()=>s.textContent=old,1400)},800);
+        });
+        function liveFilter(input, selector, empty){
+          const run=()=>{let n=0,q=norm(input.value);document.querySelectorAll(selector).forEach(c=>{let ok=norm(c.dataset.store||c.dataset.product).includes(q);c.classList.toggle('hidden',!ok);if(ok)n++});document.getElementById(empty)?.classList.toggle('visible',n===0)};
+          input?.addEventListener('input',run);
+        }
+        liveFilter(document.querySelector('[data-screen="livelo"] input[type="search"]'),'[data-screen="livelo"] .store-card','livelo-empty');
+        liveFilter(document.getElementById('inter-search'),'#inter-list .store-card','inter-empty');
+        liveFilter(document.getElementById('site-search'),'#site-list .store-card','site-empty');
+        const ps=document.getElementById('product-search'); ps?.addEventListener('input',()=>{const q=norm(ps.value);document.querySelectorAll('[data-screen="produtos"] .product').forEach(c=>c.classList.toggle('hidden',!norm(c.dataset.product).includes(q)))});
+        document.querySelectorAll('#inter-chips .chip,#product-chips .chip').forEach(b=>b.onclick=()=>{
+          b.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');msg(`${b.textContent.trim()} aplicado.`);
+        });
+        document.querySelectorAll('.page-button:not(:disabled)').forEach(b=>b.onclick=()=>msg(`Página ${b.textContent.trim()} carregada sem perder o contexto.`));
+        document.querySelectorAll('[data-toast]').forEach(b=>b.onclick=()=>{close();msg(b.dataset.toast)});
+        document.getElementById('drawer-theme').onclick=()=>{close();root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('radar-v11-theme',root.dataset.theme);msg(`Tema ${root.dataset.theme==='dark'?'escuro':'claro'} ativado.`)};
+        document.getElementById('open-drawer').onclick=()=>app.classList.add('drawer-open');
+        document.getElementById('close-drawer').onclick=close;
+        document.getElementById('drawer-backdrop').onclick=close;
+        document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+      })();
+    </script>
+  </body>
+</html>

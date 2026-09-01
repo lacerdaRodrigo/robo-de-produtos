@@ -180,6 +180,7 @@ class CatalogoPostgres:
                     l.multiplicador, l.piso_pontos, l.alerta_ativo
           FROM loja l
           LEFT JOIN apelido a ON a.loja_id = l.id
+         WHERE l.acompanhada = TRUE
          GROUP BY l.id, l.nome, l.categoria, l.multiplicador, l.piso_pontos, l.alerta_ativo
          ORDER BY l.categoria, l.nome
     """
@@ -190,7 +191,8 @@ class CatalogoPostgres:
         ON CONFLICT (nome) DO UPDATE SET
             categoria = EXCLUDED.categoria,
             multiplicador = EXCLUDED.multiplicador,
-            piso_pontos = EXCLUDED.piso_pontos
+            piso_pontos = EXCLUDED.piso_pontos,
+            acompanhada = TRUE
         RETURNING id
     """
 
@@ -256,8 +258,8 @@ class RepositorioPostgres:
     """
 
     INSERE_EXECUCAO = """
-        INSERT INTO execucao (momento, parceiros_lidos, alertas, versao)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO execucao (momento, parceiros_lidos, alertas, versao, qualidade)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id
     """
 
@@ -276,6 +278,7 @@ class RepositorioPostgres:
                     SELECT id FROM parceiro_livelo
                      WHERE id_externo = %(id_externo)s
                 )
+                   AND acompanhada = TRUE
             ),
             (SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s),
             %(nome)s, %(pontos_atuais)s, %(pontos_base)s, %(pontos_clube)s,
@@ -329,17 +332,19 @@ class RepositorioPostgres:
          WHERE ativo = TRUE AND atualizado_execucao_id = %s
     """
 
-    LIMPA_VINCULOS = "UPDATE loja SET parceiro_livelo_id = NULL"
+    LIMPA_VINCULOS = "UPDATE loja SET parceiro_livelo_id = NULL WHERE acompanhada = TRUE"
 
     VINCULA_LOJA = """
         UPDATE loja
            SET parceiro_livelo_id = (
                SELECT id FROM parceiro_livelo WHERE id_externo = %(id_externo)s
            )
-         WHERE nome = %(nome_loja)s
+         WHERE nome = %(nome_loja)s AND acompanhada = TRUE
     """
 
-    CONTA_VINCULOS = "SELECT count(*) FROM loja WHERE parceiro_livelo_id IS NOT NULL"
+    CONTA_VINCULOS = """
+        SELECT count(*) FROM loja WHERE acompanhada = TRUE AND parceiro_livelo_id IS NOT NULL
+    """
     CONTA_PONTUACOES = "SELECT count(*) FROM pontuacao WHERE execucao_id = %s"
 
     def __init__(self, url: str) -> None:
@@ -354,9 +359,19 @@ class RepositorioPostgres:
             with psycopg.connect(self._url) as conexao, conexao.cursor() as cursor:
                 cursor.execute(
                     self.INSERE_EXECUCAO,
-                    (retrato.momento, retrato.parceiros_lidos, retrato.alertas, retrato.versao),
+                    (
+                        retrato.momento,
+                        retrato.parceiros_lidos,
+                        retrato.alertas,
+                        retrato.versao,
+                        retrato.qualidade,
+                    ),
                 )
                 (execucao_id,) = cursor.fetchone()
+                # RN29 registra a tentativa, mas não publica números suspeitos
+                # nem substitui o último catálogo completo.
+                if retrato.qualidade == "degradada":
+                    return
                 cursor.execute(self.DESATIVA_CATALOGO)
                 linhas_catalogo = [
                     _linha_de_parceiro(parceiro, execucao_id) for parceiro in retrato.catalogo

@@ -71,4 +71,17 @@ describe("corpoErro", () => {
       erro: { codigo: "validacao", mensagem: "termo invalido" },
     });
   });
+
+  it("inclui espera positiva e arredondada sem alterar os demais erros", () => {
+    expect(corpoErro("cooldown", "aguarde", { retryAfterSeconds: 90.2 })).toEqual({
+      erro: {
+        codigo: "cooldown",
+        mensagem: "aguarde",
+        retry_after_seconds: 91,
+      },
+    });
+    expect(corpoErro("cooldown", "aguarde", { retryAfterSeconds: 0 })).toEqual({
+      erro: { codigo: "cooldown", mensagem: "aguarde" },
+    });
+  });
 });

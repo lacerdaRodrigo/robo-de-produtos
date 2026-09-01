@@ -88,6 +88,8 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   bool _carregandoMais = false;
   String? _atualizadoEm;
   String? _qualidade;
+  String? _ultimaTentativaEm;
+  String? _ultimaTentativaEstado;
   Object? _erro;
   Object? _erroMais;
 
@@ -102,6 +104,8 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   bool get carregandoMais => _carregandoMais;
   String? get atualizadoEm => _atualizadoEm;
   String? get qualidade => _qualidade;
+  String? get ultimaTentativaEm => _ultimaTentativaEm;
+  String? get ultimaTentativaEstado => _ultimaTentativaEstado;
   Object? get erro => _erro;
   Object? get erroMais => _erroMais;
   bool get termoValido => _termo.trim().length >= 2;
@@ -151,6 +155,8 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     _temProxima = false;
     _atualizadoEm = null;
     _qualidade = null;
+    _ultimaTentativaEm = null;
+    _ultimaTentativaEstado = null;
     _erro = null;
     _erroMais = null;
     _carregandoMais = false;
@@ -191,6 +197,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   );
 
   void _aplicar(Pagina<ProdutoDireto> resposta) {
+    final primeiraPagina = _pagina == 0;
     for (final item in resposta.itens) {
       final chave = '${item.lojaSlug}\u0000${item.idExterno}';
       if (_ids.add(chave)) _itens.add(item);
@@ -199,9 +206,65 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     _porPagina = resposta.porPagina;
     _totalItens = resposta.totalItens;
     _temProxima = resposta.temProxima;
-    _atualizadoEm = resposta.atualizadoEm;
-    _qualidade = resposta.qualidade;
+    _atualizadoEm = primeiraPagina
+        ? resposta.atualizadoEm
+        : _instanteMaisAntigo(_atualizadoEm, resposta.atualizadoEm);
+    _qualidade = primeiraPagina
+        ? resposta.qualidade
+        : _combinarQualidade(_qualidade, resposta.qualidade);
+    _ultimaTentativaEm = primeiraPagina
+        ? resposta.ultimaTentativaEm
+        : _instanteMaisRecente(_ultimaTentativaEm, resposta.ultimaTentativaEm);
+    _ultimaTentativaEstado = primeiraPagina
+        ? resposta.ultimaTentativaEstado
+        : _combinarEstadoTentativa(
+            _ultimaTentativaEstado,
+            resposta.ultimaTentativaEstado,
+          );
     _erroMais = null;
+  }
+
+  String? _instanteMaisAntigo(String? atual, String? candidato) =>
+      _combinarInstantes(
+        atual,
+        candidato,
+        escolherCandidato: (a, b) => b.isBefore(a),
+      );
+
+  String? _instanteMaisRecente(String? atual, String? candidato) =>
+      _combinarInstantes(
+        atual,
+        candidato,
+        escolherCandidato: (a, b) => b.isAfter(a),
+      );
+
+  String? _combinarInstantes(
+    String? atual,
+    String? candidato, {
+    required bool Function(DateTime atual, DateTime candidato)
+    escolherCandidato,
+  }) {
+    if (atual == null) return candidato;
+    if (candidato == null) return atual;
+    final instanteAtual = DateTime.tryParse(atual);
+    final instanteCandidato = DateTime.tryParse(candidato);
+    if (instanteAtual == null) return candidato;
+    if (instanteCandidato == null) return atual;
+    return escolherCandidato(instanteAtual, instanteCandidato)
+        ? candidato
+        : atual;
+  }
+
+  String? _combinarQualidade(String? atual, String? candidata) {
+    if (atual == 'degradada' || candidata == 'degradada') return 'degradada';
+    if (atual == null || candidata == null) return null;
+    return 'completa';
+  }
+
+  String? _combinarEstadoTentativa(String? atual, String? candidato) {
+    if (atual == candidato) return atual;
+    if (atual == 'iniciada' || candidato == 'iniciada') return 'iniciada';
+    return 'parcial';
   }
 
   bool _ativa(int versao) => !_descartado && versao == _versao;

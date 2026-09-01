@@ -10,7 +10,7 @@ import {
 } from "@/lib/banco-produtos-inter";
 
 /**
- * GET /api/v1/inter/produtos/lojas?q=&pagina=&por_pagina=
+ * GET /api/v1/inter/produtos/lojas?q=&ordenar=&filtro=&pagina=&por_pagina=
  *
  * Catálogo de vendedores diretos (V4), autenticado para leitura; a seleção é
  * mutação administrativa e entra quando a autenticação (Firebase) estiver
@@ -25,12 +25,14 @@ export async function GET(requisicao: Request) {
 
   const url = new URL(requisicao.url);
   const q = url.searchParams.get("q") ?? "";
+  const ordenar = url.searchParams.get("ordenar") === "cashback" ? "cashback" : "nome";
+  const filtro = url.searchParams.get("filtro") === "acompanhadas" ? "acompanhadas" : "todas";
   const pagina = paginaValida(url.searchParams.get("pagina"));
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
 
   const [itens, total] = await Promise.all([
-    buscarLojasDiretas(q, pagina, porPagina),
-    totalLojasDiretas(q),
+    buscarLojasDiretas(q, pagina, porPagina, ordenar, filtro),
+    totalLojasDiretas(q, filtro),
   ]);
 
   return NextResponse.json({

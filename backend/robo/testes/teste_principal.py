@@ -248,11 +248,17 @@ def teste_ct138_suspeita_de_rn29_vai_para_o_log(favoritas, caplog):
         monta_item_parceiro(nome=nome, parity="3", parity_bau="3", promotion=True)
         for nome in ("Natura", "O Boticario", "Magalu")
     ]
+    repositorio = RepositorioFake()
     with caplog.at_level(logging.WARNING, logger="robo_livelo"):
-        total, _ = executa(monta_html_payload(*itens), favoritas)
+        total, _ = executa(
+            monta_html_payload(*itens),
+            favoritas,
+            repositorio=repositorio,
+        )
 
     assert total == 0
     assert any("RN29" in registro.getMessage() for registro in caplog.records)
+    assert repositorio.retratos[0].qualidade == "degradada"
 
 
 def teste_ct147_sem_database_url_nao_ha_onde_guardar():
@@ -276,6 +282,7 @@ def teste_ct149_retrato_registra_todas_as_favoritas(favoritas):
     assert len(snapshot.pontuacoes) == len(favoritas)
     assert snapshot.alertas == 1
     assert snapshot.parceiros_lidos == 2
+    assert snapshot.qualidade == "completa"
 
 
 def teste_ct150_falha_ao_guardar_derruba_a_execucao(favoritas):

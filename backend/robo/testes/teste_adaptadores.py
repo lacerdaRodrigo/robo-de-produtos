@@ -277,6 +277,7 @@ def teste_ct112_catalogo_do_banco_mapeia_as_colunas(monkeypatch):
     assert natura.alerta_ativo is True and magalu.alerta_ativo is False
     assert magalu.multiplicador is None and magalu.piso_pontos is None
     assert "multiplicador" in executadas[0] and "piso_pontos" in executadas[0]
+    assert "l.acompanhada = TRUE" in executadas[0]
 
 
 def teste_ct113_senha_da_url_nao_vaza_na_mensagem_de_erro(monkeypatch):
@@ -408,7 +409,7 @@ class CursorGravador:
             return (42,)
         if "FROM parceiro_livelo" in consulta:
             return (self.catalogo_publicado,)
-        if "FROM loja WHERE parceiro_livelo_id" in consulta:
+        if "FROM loja WHERE" in consulta and "parceiro_livelo_id IS NOT NULL" in consulta:
             return (self.vinculos_publicados,)
         if "FROM pontuacao WHERE execucao_id" in consulta:
             return (self.pontuacoes_publicadas,)
@@ -479,7 +480,7 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     repositorio_fake(monkeypatch, cursor).registrar(snapshot)
 
     _, parametros = cursor.executados[0]
-    assert parametros == (momento, 254, 1, "1.4.0")
+    assert parametros == (momento, 254, 1, "1.4.0", "completa")
 
     _, catalogo = cursor.lotes[0]
     assert catalogo[0]["id_externo"] == parceiro.id_externo
@@ -487,8 +488,10 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
 
     _, vinculos = cursor.lotes[1]
     assert vinculos == [{"nome_loja": "Natura", "id_externo": parceiro.id_externo}]
+    assert "acompanhada = TRUE" in cursor.lotes[1][0]
 
     _, linhas = cursor.lotes[2]
+    assert "acompanhada = TRUE" in cursor.lotes[2][0]
     assert len(linhas) == 3
     assert linhas[0]["nome"] == "Natura"  # RN01: nome canonico do catalogo
     assert linhas[0]["pontos_atuais"] == Decimal("8")
@@ -504,6 +507,36 @@ def teste_ct144_grava_execucao_e_pontuacoes(monkeypatch):
     assert linhas[2]["pontos_atuais"] is None
     assert linhas[2]["alertou"] is False
     assert linhas[2]["descricao_campanha"] is None
+
+    consultas_simples = [consulta for consulta, _ in cursor.executados]
+    assert any(
+        "SET parceiro_livelo_id = NULL WHERE acompanhada = TRUE" in consulta
+        for consulta in consultas_simples
+    )
+    assert any(
+        "FROM loja WHERE acompanhada = TRUE AND parceiro_livelo_id IS NOT NULL" in consulta
+        for consulta in consultas_simples
+    )
+
+
+def teste_rn29_registra_qualidade_sem_substituir_snapshot(monkeypatch):
+    snapshot = RetratoDaExecucao(
+        momento=datetime(2026, 8, 11, 10, 0, tzinfo=FUSO_BRASILIA),
+        parceiros_lidos=254,
+        versao="1.4.0",
+        qualidade="degradada",
+        catalogo=(faz_parceiro("Natura", "3", base="3"),),
+    )
+    cursor = CursorGravador()
+
+    repositorio_fake(monkeypatch, cursor).registrar(snapshot)
+
+    assert len(cursor.executados) == 1
+    consulta, parametros = cursor.executados[0]
+    assert "qualidade" in consulta
+    assert parametros == (snapshot.momento, 254, 0, "1.4.0", "degradada")
+    assert cursor.lotes == []
+    assert all("UPDATE parceiro_livelo" not in sql for sql, _ in cursor.executados)
 
 
 def teste_ct145_link_fora_do_dominio_nao_e_gravado(monkeypatch):

@@ -27,6 +27,7 @@ void main() {
         'loja_slug': 'casas-bahia',
         'loja_nome': 'Casas Bahia',
         'atualizada_em': '2026-08-22T12:00:00Z',
+        'ativo': false,
       },
       'minimo': '3500.00',
       'maximo': '4000.00',
@@ -47,6 +48,7 @@ void main() {
     expect(historico.minimo, '3500.00');
     expect(historico.medicoes.single.cashbackValor, '332.00');
     expect(historico.temProxima, isTrue);
+    expect(historico.produto.ativo, isFalse);
   });
 
   test('coleta de produtos atrasa somente após 12 horas e mostra Brasília', () {
@@ -64,11 +66,61 @@ void main() {
       'nome': 'Casas Bahia',
       'selecionada': '1',
       'ativa': 'on',
+      'ultima_execucao': '2026-08-30T15:00:00Z',
+      'ultimo_estado': 'sucesso',
+      'paginas': 12,
+      'ultima_tentativa_em': '2026-08-30T14:55:00Z',
+      'ultima_tentativa_estado': 'falha',
+      'ultima_coleta_sucesso_em': '2026-08-29T15:00:00Z',
+      'produtos_encontrados': 0,
+      'cashback_resumo_texto': 'Até 6% de cashback',
     });
 
     expect(loja.id, '12');
     expect(loja.idExterno, 'parceiro-12');
     expect(loja.selecionada, isTrue);
     expect(loja.ativa, isTrue);
+    expect(loja.ultimaExecucao, '2026-08-30T15:00:00Z');
+    expect(loja.ultimoEstado, 'sucesso');
+    expect(loja.paginas, 12);
+    expect(loja.ultimaTentativaEstado, 'falha');
+    expect(loja.ultimaColetaSucessoEm, '2026-08-29T15:00:00Z');
+    expect(loja.produtosEncontrados, 0);
+    expect(loja.cashbackResumoTexto, 'Até 6% de cashback');
+    expect(loja.copiarCom(selecionada: false).ultimoEstado, 'sucesso');
+    expect(
+      loja.copiarCom(selecionada: false).cashbackResumoTexto,
+      'Até 6% de cashback',
+    );
+  });
+
+  test('metadados opcionais ausentes não inventam estado', () {
+    final produto = ProdutoDireto.parse({
+      'id_externo': '1',
+      'nome': 'Produto',
+      'caminho': '/produto/1',
+      'preco_atual_texto': 'R\$ 10,00',
+      'preco_atual_valor': '10.00',
+      'loja_slug': 'loja',
+      'loja_nome': 'Loja',
+      'atualizada_em': '2026-08-30T15:00:00Z',
+    });
+    final loja = LojaDireto.parse({
+      'id': '1',
+      'id_externo': 'externa',
+      'slug': 'loja',
+      'nome': 'Loja',
+      'selecionada': false,
+      'ativa': true,
+    });
+
+    expect(produto.ativo, isNull);
+    expect(loja.ultimaExecucao, isNull);
+    expect(loja.ultimoEstado, isNull);
+    expect(loja.paginas, isNull);
+    expect(loja.ultimaTentativaEstado, isNull);
+    expect(loja.ultimaColetaSucessoEm, isNull);
+    expect(loja.produtosEncontrados, isNull);
+    expect(loja.cashbackResumoTexto, isNull);
   });
 }

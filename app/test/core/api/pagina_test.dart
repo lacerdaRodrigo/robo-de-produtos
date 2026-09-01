@@ -19,6 +19,8 @@ void main() {
       'tem_proxima': true,
       'atualizado_em': '2026-08-19T00:00:00Z',
       'qualidade': 'degradada',
+      'ultima_tentativa_em': '2026-08-19T01:00:00Z',
+      'ultima_tentativa_estado': 'parcial',
     }, leitor);
 
     expect(pagina.itens.map((p) => p.nome), ['A', 'B']);
@@ -26,6 +28,8 @@ void main() {
     expect(pagina.temProxima, isTrue);
     expect(pagina.atualizadoEm, '2026-08-19T00:00:00Z');
     expect(pagina.qualidade, 'degradada');
+    expect(pagina.ultimaTentativaEm, '2026-08-19T01:00:00Z');
+    expect(pagina.ultimaTentativaEstado, 'parcial');
   });
 
   test('campos ausentes ou nulos têm padrões seguros', () {

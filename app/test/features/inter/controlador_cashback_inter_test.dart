@@ -5,21 +5,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/inter/controlador_cashback_inter.dart';
+import 'package:app_robo/features/inter/formato_cashback_inter.dart';
 
-CashbackInter loja(String id, String nome) => CashbackInter(
-  id: id,
-  slug: nome.toLowerCase(),
-  nome: nome,
-  cashbackPrincipalTexto: 'Até 10% de cashback',
-  cashbackPrincipalValor: '10',
-  cashbackSecundarioTexto: null,
-  cashbackSecundarioValor: null,
-  etiqueta: null,
-  descricaoPrincipal: null,
-  descricaoSecundaria: null,
-  encontrada: true,
-  favorita: false,
-);
+CashbackInter loja(String id, String nome, {bool favorita = false}) =>
+    CashbackInter(
+      id: id,
+      slug: nome.toLowerCase(),
+      nome: nome,
+      cashbackPrincipalTexto: 'Até 10% de cashback',
+      cashbackPrincipalValor: '10',
+      cashbackSecundarioTexto: null,
+      cashbackSecundarioValor: null,
+      etiqueta: null,
+      descricaoPrincipal: null,
+      descricaoSecundaria: null,
+      encontrada: true,
+      favorita: favorita,
+    );
 
 Pagina<CashbackInter> respostaPagina(
   List<CashbackInter> itens, {
@@ -40,6 +42,13 @@ Pagina<CashbackInter> respostaPagina(
 );
 
 void main() {
+  test('ordena cashback decimal exatamente sem double', () {
+    final valores = <String?>['9.90', '12', '100.005', '12,01', null];
+    valores.sort((a, b) => compararDecimaisInter(b, a));
+
+    expect(valores, ['100.005', '12,01', '12', '9.90', null]);
+  });
+
   test('carrega, pagina e deduplica pelo ID estável da loja', () async {
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async {
@@ -142,4 +151,62 @@ void main() {
     expect(controlador.ultimaTentativaFalhou, isTrue);
     controlador.dispose();
   });
+
+  test('filtro acompanhadas consulta o catálogo global no servidor', () async {
+    final consultas = <String>[];
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async {
+        consultas.add('todas/$pagina');
+        return respostaPagina([loja('1', 'Primeira página')], proxima: true);
+      },
+      buscarAcompanhadas:
+          ({required q, required ordenar, required pagina}) async {
+            consultas.add('acompanhadas/$pagina');
+            return respostaPagina([
+              loja('2', 'Acompanhada fora da página carregada'),
+            ]);
+          },
+    );
+
+    await controlador.carregarInicial();
+    await controlador.mudarFiltro(FiltroCashbackInter.acompanhadas);
+
+    expect(consultas, ['todas/1', 'acompanhadas/1']);
+    expect(controlador.itens.single.id, '2');
+    expect(controlador.totalItens, 1);
+    controlador.dispose();
+  });
+
+  test(
+    'mutação confirmada mantém card, total e filtro acompanhadas coerentes',
+    () async {
+      var acompanhada = false;
+      final controlador = ControladorCashbackInter(
+        buscar: ({required q, required ordenar, required pagina}) async =>
+            respostaPagina([loja('1', 'C&A', favorita: acompanhada)]),
+        buscarAcompanhadas:
+            ({required q, required ordenar, required pagina}) async =>
+                respostaPagina(
+                  acompanhada
+                      ? [loja('1', 'C&A', favorita: true)]
+                      : <CashbackInter>[],
+                ),
+      );
+
+      await controlador.carregarInicial();
+      acompanhada = true;
+      controlador.sincronizarAcompanhamento(controlador.itens.single, true);
+      expect(controlador.itens.single.favorita, isTrue);
+
+      await controlador.mudarFiltro(FiltroCashbackInter.acompanhadas);
+      expect(controlador.itens.single.nome, 'C&A');
+      expect(controlador.totalItens, 1);
+
+      acompanhada = false;
+      controlador.sincronizarAcompanhamento(controlador.itens.single, false);
+      expect(controlador.itens, isEmpty);
+      expect(controlador.totalItens, 0);
+      controlador.dispose();
+    },
+  );
 }

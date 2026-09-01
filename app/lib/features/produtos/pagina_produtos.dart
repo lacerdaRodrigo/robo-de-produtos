@@ -23,6 +23,7 @@ class PaginaProdutos extends StatefulWidget {
     this.incorporada = false,
     this.mostrarTituloInterno = true,
     this.experienciaCompacta = false,
+    this.aoEscolherLojas,
   });
 
   final Api api;
@@ -31,6 +32,7 @@ class PaginaProdutos extends StatefulWidget {
   final bool incorporada;
   final bool mostrarTituloInterno;
   final bool experienciaCompacta;
+  final VoidCallback? aoEscolherLojas;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -83,6 +85,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _conteudo(BuildContext context) {
+    if (widget.experienciaCompacta) return _conteudoCompacto(context);
     final cores = CoresRadar.de(context);
     final atrasado = coletaProdutosAtrasada(
       _controlador.atualizadoEm,
@@ -193,7 +196,8 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                       0,
                     ),
                     child: Text(
-                      'Catálogo mais recente: ${dataHoraProduto(_controlador.atualizadoEm)}'
+                      'Atualização mais antiga destes resultados: '
+                      '${dataHoraProduto(_controlador.atualizadoEm)}'
                       '${atrasado ? ' · dados atrasados' : ''}',
                       style: TextStyle(color: atrasado ? cores.atencao : null),
                     ),
@@ -202,8 +206,13 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                   const Padding(
                     padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
                     child: Text(
-                      'A última coleta foi degradada; produtos ausentes não foram removidos.',
+                      'Uma das lojas teve coleta degradada; produtos ausentes não foram removidos.',
                     ),
+                  ),
+                if (_avisoDaTentativa() case final aviso?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                    child: Text(aviso),
                   ),
                 if (_controlador.termoValido &&
                     !_controlador.carregando &&
@@ -220,13 +229,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                             '${_controlador.pagina} · ${_controlador.porPagina} por página',
                           ),
                         ),
-                        Chip(
-                          label: Text(
-                            _controlador.qualidade == 'degradada'
-                                ? 'Catálogo degradado'
-                                : 'Catálogo completo',
-                          ),
-                        ),
+                        Chip(label: Text(_rotuloQualidade())),
                       ],
                     ),
                   ),
@@ -237,6 +240,213 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         Expanded(flex: 3, child: _corpo()),
       ],
     );
+  }
+
+  Widget _conteudoCompacto(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final atrasado = coletaProdutosAtrasada(
+      _controlador.atualizadoEm,
+      DateTime.now(),
+    );
+    return CustomScrollView(
+      key: const Key('produtos-compacto'),
+      slivers: [
+        if (widget.mostrarTituloInterno)
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
+            sliver: SliverToBoxAdapter(
+              child: CabecalhoSecaoRadar(
+                sobrelinha: 'Catálogo local',
+                titulo: 'Buscar produtos',
+                descricao:
+                    'Os resultados vêm apenas das lojas que você selecionou no Banco Inter.',
+              ),
+            ),
+          ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            18,
+            widget.mostrarTituloInterno ? 0 : 18,
+            18,
+            16,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: _BuscaProdutosCompacta(
+              controlador: _campoBusca,
+              aoMudar: _controlador.mudarTermo,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(child: _filtrosCompactos()),
+        if (_controlador.atualizadoEm != null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Atualização mais antiga destes resultados: '
+                '${dataHoraProduto(_controlador.atualizadoEm)}'
+                '${atrasado ? ' · dados atrasados' : ''}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: atrasado ? cores.atencao : cores.textoSuave,
+                ),
+              ),
+            ),
+          ),
+        if (_controlador.qualidade == 'degradada')
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(18, 8, 18, 0),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Uma das lojas teve coleta degradada; produtos ausentes não foram removidos.',
+              ),
+            ),
+          ),
+        if (_avisoDaTentativa() case final aviso?)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+            sliver: SliverToBoxAdapter(child: Text(aviso)),
+          ),
+        if (_controlador.termoValido &&
+            !_controlador.carregando &&
+            _controlador.erro == null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 11),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${_controlador.totalItens} resultados encontrados',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Página ${_controlador.pagina}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                      fontSize: 9,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ..._corpoCompacto(),
+        const SliverToBoxAdapter(child: SizedBox(height: 38)),
+      ],
+    );
+  }
+
+  String? _avisoDaTentativa() => switch (_controlador.ultimaTentativaEstado) {
+    'iniciada' => 'As lojas destes resultados estão sendo atualizadas.',
+    'parcial' => 'A atualização das lojas destes resultados foi parcial.',
+    'falha' =>
+      'A atualização destas lojas falhou; exibindo o último catálogo válido.',
+    _ => null,
+  };
+
+  String _rotuloQualidade() => switch (_controlador.qualidade) {
+    'completa' => 'Catálogo completo',
+    'degradada' => 'Catálogo degradado',
+    _ => 'Qualidade indisponível',
+  };
+
+  Widget _filtrosCompactos() => SingleChildScrollView(
+    padding: const EdgeInsets.symmetric(horizontal: 18),
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        _ChipProduto(
+          texto: 'Todas selecionadas',
+          ativo: _controlador.filtros.lojaOpcional == null,
+          aoTocar: () => _controlador.mudarFiltros(
+            _controlador.filtros.copiarCom(loja: ''),
+          ),
+        ),
+        if (_controlador.filtros.lojaOpcional != null) ...[
+          const SizedBox(width: 7),
+          _ChipProduto(
+            texto: _controlador.filtros.lojaOpcional!,
+            ativo: true,
+            aoTocar: () {},
+          ),
+        ],
+        const SizedBox(width: 7),
+        _ChipProduto(
+          texto: _controlador.filtros.estaVazio ? 'Filtros' : 'Filtros ativos',
+          icone: Icons.tune_rounded,
+          aoTocar: _abrirFiltros,
+        ),
+        if (widget.aoEscolherLojas != null) ...[
+          const SizedBox(width: 7),
+          _ChipProduto(
+            texto: '+ escolher lojas',
+            aoTocar: widget.aoEscolherLojas!,
+          ),
+        ],
+      ],
+    ),
+  );
+
+  List<Widget> _corpoCompacto() {
+    if (!_controlador.termoValido) {
+      return const [
+        SliverToBoxAdapter(
+          child: EstadoVazio(
+            mensagem:
+                'Digite pelo menos 2 caracteres para pesquisar no catálogo.',
+          ),
+        ),
+      ];
+    }
+    if (_controlador.carregando) {
+      return const [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Carregando(mensagem: 'Buscando produtos no catálogo…'),
+          ),
+        ),
+      ];
+    }
+    if (_controlador.erro != null) {
+      return [
+        SliverToBoxAdapter(
+          child: EstadoFalha(
+            mensagem: 'Não foi possível buscar produtos agora.',
+            voltar: _controlador.tentarNovamente,
+          ),
+        ),
+      ];
+    }
+    if (_controlador.totalItens == 0) {
+      return const [
+        SliverToBoxAdapter(
+          child: EstadoVazio(
+            mensagem: 'Nenhum produto encontrado com esses filtros.',
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        sliver: SliverList.separated(
+          itemCount: _controlador.itens.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 11),
+          itemBuilder: (context, indice) =>
+              _cartao(_controlador.itens[indice], compacto: true),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.all(18),
+        sliver: SliverToBoxAdapter(child: _paginacao()),
+      ),
+    ];
   }
 
   Widget _corpo() {
@@ -308,10 +518,11 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     );
   }
 
-  Widget _cartao(ProdutoDireto produto) {
+  Widget _cartao(ProdutoDireto produto, {bool compacto = false}) {
     final link = linkSeguroShoppingInter(produto.caminho);
     return CartaoProduto(
       produto: produto,
+      compacto: compacto,
       aoAbrirHistorico: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -436,5 +647,93 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     // que o Future retorna. Eles são descartados junto do modal; destruí-los
     // aqui faria o Flutter tentar reconstruir um TextField já sem controller.
     if (mounted && novos != null) _controlador.mudarFiltros(novos);
+  }
+}
+
+class _BuscaProdutosCompacta extends StatelessWidget {
+  const _BuscaProdutosCompacta({
+    required this.controlador,
+    required this.aoMudar,
+  });
+
+  final TextEditingController controlador;
+  final ValueChanged<String> aoMudar;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Tokens.acaoFundoEscuro
+          : Tokens.acaoFundo,
+      borderRadius: BorderRadius.circular(23),
+      border: Border.all(color: CoresRadar.de(context).borda),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(17),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'O que você procura?',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Digitar aqui pesquisa o último catálogo salvo; não consulta o Inter ao vivo.',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 14),
+          CampoBuscaRadar(
+            controlador: controlador,
+            dica: 'Ex.: Motorola Edge 60 Pro',
+            aoMudar: aoMudar,
+            chaveCampo: const Key('busca-produtos'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ChipProduto extends StatelessWidget {
+  const _ChipProduto({
+    required this.texto,
+    required this.aoTocar,
+    this.ativo = false,
+    this.icone,
+  });
+
+  final String texto;
+  final VoidCallback aoTocar;
+  final bool ativo;
+  final IconData? icone;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return TextButton.icon(
+      onPressed: aoTocar,
+      icon: icone == null ? const SizedBox.shrink() : Icon(icone, size: 16),
+      label: Text(texto),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(0, 37),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        backgroundColor: ativo
+            ? (Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.acaoFundoEscuro
+                  : Tokens.acaoFundo)
+            : Theme.of(context).colorScheme.surface,
+        foregroundColor: ativo ? cores.acao : cores.textoSuave,
+        side: BorderSide(color: ativo ? cores.acao : cores.borda),
+        shape: const StadiumBorder(),
+        textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+      ),
+    );
   }
 }

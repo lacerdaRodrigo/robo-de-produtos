@@ -13,6 +13,7 @@ import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
 import '../paginas/lugar.dart';
+import '../paginas/programas.dart';
 import '../tema/tokens.dart';
 import 'destinos.dart';
 
@@ -106,32 +107,50 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       agora: widget.agora,
       experienciaCompacta: true,
       ativa: _selecionadoCompacto == DestinoCompacto.inicio,
+      aoAbrirProgramas: () => _selecionarCompacto(DestinoCompacto.programas),
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
       aoAbrirProdutos: () => _selecionarCompacto(DestinoCompacto.produtos),
     ),
+    _visitadosCompactos.contains(DestinoCompacto.programas)
+        ? PaginaProgramas(
+            key: const PageStorageKey('programas-compacto'),
+            api: widget.api,
+            ativa: _selecionadoCompacto == DestinoCompacto.programas,
+            aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
+            aoAbrirInter: () => _selecionarCompacto(DestinoCompacto.inter),
+          )
+        : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.livelo)
-        ? (!kIsWeb && defaultTargetPlatform == TargetPlatform.android
-              ? PaginaCatalogoLiveloAndroid(
-                  key: const PageStorageKey('livelo-catalogo-android'),
-                  api: widget.api,
-                  administrador: widget.administrador,
-                  aoAbrirAlertas: _abrirAlertas,
-                )
-              : PaginaPainelLivelo(
-                  key: const PageStorageKey('livelo-compacto'),
-                  api: widget.api,
-                  administrador: widget.administrador,
-                  experienciaCompacta: true,
-                ))
+        ? _PaginaProgramaInterna(
+            chaveVoltar: const Key('voltar-programas-livelo'),
+            aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
+            child: !kIsWeb
+                ? PaginaCatalogoLiveloAndroid(
+                    key: const PageStorageKey('livelo-catalogo-nativo'),
+                    api: widget.api,
+                    administrador: widget.administrador,
+                    aoAbrirAlertas: _abrirAlertas,
+                  )
+                : PaginaPainelLivelo(
+                    key: const PageStorageKey('livelo-compacto'),
+                    api: widget.api,
+                    administrador: widget.administrador,
+                    experienciaCompacta: true,
+                  ),
+          )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.inter)
-        ? PaginaHubShoppingInter(
-            key: const PageStorageKey('inter-compacto'),
-            api: widget.api,
-            administrador: widget.administrador,
-            experienciaCompacta: true,
-            ativa: _selecionadoCompacto == DestinoCompacto.inter,
+        ? _PaginaProgramaInterna(
+            chaveVoltar: const Key('voltar-programas-inter'),
+            aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
+            child: PaginaHubShoppingInter(
+              key: const PageStorageKey('inter-compacto'),
+              api: widget.api,
+              administrador: widget.administrador,
+              experienciaCompacta: true,
+              ativa: _selecionadoCompacto == DestinoCompacto.inter,
+            ),
           )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.produtos)
@@ -141,6 +160,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             administrador: widget.administrador,
             incorporada: true,
             experienciaCompacta: true,
+            aoEscolherLojas: () => _selecionarCompacto(DestinoCompacto.inter),
           )
         : const SizedBox.shrink(),
   ];
@@ -227,7 +247,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           appBar: _CabecalhoCompacto(
             titulo: _selecionadoCompacto.titulo,
             aoAbrirMenu: () => _scaffold.currentState?.openDrawer(),
-            aoAbrirAlertas: _abrirAlertas,
           ),
           drawer: GavetaRadar(
             selecionado: _selecionadoCompacto,
@@ -238,6 +257,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             identificacaoConta: widget.identificacaoConta,
           ),
           body: conteudo,
+          bottomNavigationBar: _BarraInferiorRadar(
+            selecionado: _selecionadoCompacto.destinoDaBarra,
+            aoSelecionar: _selecionarCompacto,
+          ),
         );
       },
     );
@@ -246,56 +269,192 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
 class _CabecalhoCompacto extends StatelessWidget
     implements PreferredSizeWidget {
-  const _CabecalhoCompacto({
-    required this.titulo,
-    required this.aoAbrirMenu,
-    required this.aoAbrirAlertas,
-  });
+  const _CabecalhoCompacto({required this.titulo, required this.aoAbrirMenu});
 
   final String titulo;
   final VoidCallback aoAbrirMenu;
-  final VoidCallback aoAbrirAlertas;
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(70);
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final escuro = tema.brightness == Brightness.dark;
-    final superficie = escuro ? tema.colorScheme.surface : Colors.white;
+    final cores = CoresRadar.de(context);
     return AppBar(
-      backgroundColor: superficie,
+      toolbarHeight: 70,
+      backgroundColor: tema.colorScheme.surface,
       foregroundColor: tema.colorScheme.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      scrolledUnderElevation: 1,
-      leadingWidth: 64,
+      scrolledUnderElevation: 0,
+      shape: const Border(),
+      leadingWidth: 59,
       leading: Padding(
-        padding: const EdgeInsets.all(8),
-        child: IconButton.filledTonal(
+        padding: const EdgeInsets.only(left: 15),
+        child: IconButton(
           key: const Key('abrir-menu-principal'),
           tooltip: 'Abrir menu principal',
           onPressed: aoAbrirMenu,
+          style: IconButton.styleFrom(
+            minimumSize: const Size.square(42),
+            maximumSize: const Size.square(42),
+            padding: EdgeInsets.zero,
+            backgroundColor: cores.superficieAlternativa,
+            side: BorderSide(color: cores.borda),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
           icon: const Icon(Icons.menu),
         ),
       ),
       title: _AssinaturaCompacta(titulo: titulo),
-      centerTitle: true,
-      actions: [
-        if (!kIsWeb) const ControleAparenciaRadar.icone(),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: IconButton(
-            key: const Key('abrir-alertas-cabecalho'),
-            tooltip: 'Abrir alertas',
-            onPressed: aoAbrirAlertas,
-            icon: const Icon(Icons.notifications_outlined),
-          ),
-        ),
-      ],
+      titleSpacing: 0,
+      centerTitle: false,
+      actions: const [SizedBox(width: 15)],
     );
   }
+}
+
+class _BarraInferiorRadar extends StatelessWidget {
+  const _BarraInferiorRadar({
+    required this.selecionado,
+    required this.aoSelecionar,
+  });
+
+  final DestinoCompacto selecionado;
+  final ValueChanged<DestinoCompacto> aoSelecionar;
+
+  static const _destinos = <DestinoCompacto>[
+    DestinoCompacto.inicio,
+    DestinoCompacto.programas,
+    DestinoCompacto.produtos,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final tema = Theme.of(context);
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tema.cardColor,
+          border: Border.all(color: cores.borda),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+        ),
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              for (final destino in _destinos)
+                Expanded(
+                  child: _DestinoBarraInferior(
+                    destino: destino,
+                    selecionado: selecionado == destino,
+                    aoTocar: () => aoSelecionar(destino),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DestinoBarraInferior extends StatelessWidget {
+  const _DestinoBarraInferior({
+    required this.destino,
+    required this.selecionado,
+    required this.aoTocar,
+  });
+
+  final DestinoCompacto destino;
+  final bool selecionado;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final onBrand = Theme.of(context).colorScheme.onPrimary;
+    return Semantics(
+      selected: selecionado,
+      button: true,
+      label: destino.titulo,
+      child: InkWell(
+        key: Key('barra-${destino.name}'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: aoTocar,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: selecionado ? 36 : 28,
+                height: selecionado ? 34 : 28,
+                decoration: BoxDecoration(
+                  color: selecionado ? cores.acao : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  destino.icone,
+                  size: 21,
+                  color: selecionado ? onBrand : cores.textoSuave,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                destino.titulo,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: selecionado ? cores.acao : cores.textoSuave,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaginaProgramaInterna extends StatelessWidget {
+  const _PaginaProgramaInterna({
+    required this.chaveVoltar,
+    required this.aoVoltar,
+    required this.child,
+  });
+
+  final Key chaveVoltar;
+  final VoidCallback aoVoltar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+          child: TextButton.icon(
+            key: chaveVoltar,
+            onPressed: aoVoltar,
+            icon: const Icon(Icons.arrow_back, size: 17),
+            label: const Text('Todos os programas'),
+          ),
+        ),
+      ),
+      Expanded(child: child),
+    ],
+  );
 }
 
 class _AssinaturaCompacta extends StatelessWidget {
@@ -313,7 +472,7 @@ class _AssinaturaCompacta extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          LogoRadar(tamanho: 32, sobreFundoEscuro: escuro),
+          LogoRadar(tamanho: 34, sobreFundoEscuro: escuro),
           const SizedBox(width: 9),
           Flexible(
             child: Column(
@@ -371,168 +530,199 @@ class GavetaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       key: const Key('gaveta-principal'),
-      width: (MediaQuery.sizeOf(context).width - 2).clamp(280.0, 380.0),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(26),
-          bottomRight: Radius.circular(26),
-        ),
+      width: (MediaQuery.sizeOf(context).width * 0.88)
+          .clamp(0.0, 360.0)
+          .toDouble(),
+      shape: const RoundedRectangleBorder(),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      child: CustomScrollView(
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: _TopoGaveta(
+              administrador: administrador,
+              identificacaoConta: identificacaoConta,
+              aoAbrirConta: aoAbrirConta,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(13, 17, 13, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 9),
+                    child: Text(
+                      'NAVEGAÇÃO PRINCIPAL',
+                      style: TextStyle(
+                        color: CoresRadar.de(context).textoSuave,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  for (final destino in DestinoCompacto.values.where(
+                    (destino) => destino.principal,
+                  ))
+                    _ItemNavegacaoCompacto(
+                      key: Key('destino-${destino.name}'),
+                      destino: destino,
+                      selecionado: destino == selecionado,
+                      aoTocar: () {
+                        Navigator.of(context).pop();
+                        aoSelecionar(destino);
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (MediaQuery.sizeOf(context).height < 700 ||
+              MediaQuery.textScalerOf(context).scale(16) > 19.2)
+            SliverToBoxAdapter(
+              child: _RodapeGaveta(
+                administrador: administrador,
+                aoAbrirAlertas: aoAbrirAlertas,
+                aoAbrirConta: aoAbrirConta,
+              ),
+            )
+          else
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: _RodapeGaveta(
+                  administrador: administrador,
+                  aoAbrirAlertas: aoAbrirAlertas,
+                  aoAbrirConta: aoAbrirConta,
+                ),
+              ),
+            ),
+        ],
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+    );
+  }
+}
+
+class _TopoGaveta extends StatelessWidget {
+  const _TopoGaveta({
+    required this.administrador,
+    required this.identificacaoConta,
+    required this.aoAbrirConta,
+  });
+
+  final bool administrador;
+  final String? identificacaoConta;
+  final VoidCallback aoAbrirConta;
+
+  @override
+  Widget build(BuildContext context) {
+    final identificacao = identificacaoConta ?? 'Conta do Radar';
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final escuro = tema.brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tema.scaffoldBackgroundColor,
+        border: Border(bottom: BorderSide(color: cores.borda)),
+      ),
       child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(19, 14, 19, 21),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                color: Tokens.marcaProfunda,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 10, 12),
-                  child: Row(
-                    children: [
-                      const LogoRadar(tamanho: 44, sobreFundoEscuro: true),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Radar de Benefícios',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Pontos, cashback e preços',
-                              style: TextStyle(
-                                color: Color(0xFF93AABD),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+              Row(
+                children: [
+                  LogoRadar(tamanho: 42, sobreFundoEscuro: escuro),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Radar de Benefícios',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        key: const Key('fechar-menu-principal'),
-                        tooltip: 'Fechar menu principal',
-                        onPressed: () => Navigator.of(context).pop(),
-                        color: Colors.white,
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
+                        Text(
+                          'Pontos, cashback e preços',
+                          style: TextStyle(
+                            color: cores.textoSuave,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  IconButton(
+                    key: const Key('fechar-menu-principal'),
+                    tooltip: 'Fechar menu principal',
+                    onPressed: () => Navigator.of(context).pop(),
+                    color: cores.textoSuave,
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size.square(42),
+                      maximumSize: const Size.square(42),
+                      backgroundColor: cores.superficieAlternativa,
+                      side: BorderSide(color: cores.borda),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
               ),
-              Container(
-                color: Tokens.marcaProfunda,
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                child: Material(
-                  color: Colors.white.withValues(alpha: 0.08),
+              const SizedBox(height: 20),
+              Material(
+                color: tema.cardColor,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: cores.borda),
                   borderRadius: BorderRadius.circular(16),
-                  child: ListTile(
-                    key: const Key('abrir-conta-gaveta'),
-                    textColor: Colors.white,
-                    iconColor: const Color(0xFFC6D5E2),
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0xFF173B57),
-                      foregroundColor: Colors.white,
-                      child: Icon(Icons.person_outline),
-                    ),
-                    title: Text(identificacaoConta ?? 'Conta do Radar'),
-                    subtitle: Text(
-                      administrador ? 'Acesso administrador' : 'Acesso padrão',
-                      style: const TextStyle(color: Color(0xFF93AABD)),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      aoAbrirConta();
-                    },
-                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(10, 0, 10, 10),
-                      child: Text(
-                        '4 ESPAÇOS PRINCIPAIS',
-                        style: TextStyle(
-                          color: Color(0xFF93AABD),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  key: const Key('abrir-conta-gaveta'),
+                  contentPadding: const EdgeInsets.all(11),
+                  textColor: tema.colorScheme.onSurface,
+                  iconColor: cores.textoSuave,
+                  leading: CircleAvatar(
+                    radius: 20.5,
+                    backgroundColor: escuro
+                        ? Tokens.acaoFundoEscuro
+                        : Tokens.acaoFundo,
+                    foregroundColor: cores.acao,
+                    child: Text(
+                      _iniciaisConta(identificacao),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
                       ),
-                    ),
-                    for (final destino in DestinoCompacto.values)
-                      _ItemNavegacaoCompacto(
-                        key: Key('destino-${destino.name}'),
-                        destino: destino,
-                        selecionado: destino == selecionado,
-                        aoTocar: () {
-                          Navigator.of(context).pop();
-                          aoSelecionar(destino);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-              SizedBox(height: MediaQuery.sizeOf(context).height * 0.08),
-              if (!kIsWeb)
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFD3E0EA))),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(12, 6, 12, 8),
-                    child: ControleAparenciaRadar.linha(
-                      cor: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFD7E3ED)
-                          : const Color(0xFF173B57),
                     ),
                   ),
-                ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _BotaoUtilidadeGaveta(
-                        chave: const Key('abrir-alertas-gaveta'),
-                        icone: Icons.notifications_outlined,
-                        rotulo: 'Alertas',
-                        aoTocar: () {
-                          Navigator.of(context).pop();
-                          aoAbrirAlertas();
-                        },
-                      ),
+                  title: Text(
+                    identificacao,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _BotaoUtilidadeGaveta(
-                        chave: const Key('abrir-sistema-gaveta'),
-                        icone: Icons.settings_outlined,
-                        rotulo: administrador ? 'Administração' : 'Conta',
-                        aoTocar: () {
-                          Navigator.of(context).pop();
-                          aoAbrirConta();
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
+                  subtitle: Text(
+                    administrador ? 'Acesso administrador' : 'Acesso padrão',
+                    style: TextStyle(color: cores.textoSuave, fontSize: 9),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, size: 18),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    aoAbrirConta();
+                  },
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 10, 22, 14),
-                child: _RodapeVersao(administrador: administrador),
               ),
             ],
           ),
@@ -540,6 +730,82 @@ class GavetaRadar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RodapeGaveta extends StatelessWidget {
+  const _RodapeGaveta({
+    required this.administrador,
+    required this.aoAbrirAlertas,
+    required this.aoAbrirConta,
+  });
+
+  final bool administrador;
+  final VoidCallback aoAbrirAlertas;
+  final VoidCallback aoAbrirConta;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(top: BorderSide(color: cores.borda)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(17, 8, 17, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!kIsWeb) const ControleAparenciaRadar.linha(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BotaoUtilidadeGaveta(
+                      chave: const Key('abrir-alertas-gaveta'),
+                      icone: Icons.notifications_outlined,
+                      rotulo: 'Alertas',
+                      aoTocar: () {
+                        Navigator.of(context).pop();
+                        aoAbrirAlertas();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: _BotaoUtilidadeGaveta(
+                      chave: const Key('abrir-sistema-gaveta'),
+                      icone: Icons.settings_outlined,
+                      rotulo: administrador ? 'Administração' : 'Conta',
+                      aoTocar: () {
+                        Navigator.of(context).pop();
+                        aoAbrirConta();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _RodapeVersao(administrador: administrador),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _iniciaisConta(String identificacao) {
+  final partes = identificacao
+      .trim()
+      .split(RegExp(r'[^\p{L}\p{N}]+', unicode: true))
+      .where((parte) => parte.isNotEmpty)
+      .take(2)
+      .toList(growable: false);
+  if (partes.isEmpty) return 'R';
+  return partes.map((parte) => parte.characters.first).join().toUpperCase();
 }
 
 class _BotaoUtilidadeGaveta extends StatelessWidget {
@@ -557,19 +823,14 @@ class _BotaoUtilidadeGaveta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final cores = CoresRadar.de(context);
     return OutlinedButton.icon(
       key: chave,
       style: OutlinedButton.styleFrom(
-        foregroundColor: escuro
-            ? const Color(0xFFC6D5E2)
-            : const Color(0xFF526E83),
-        side: BorderSide(
-          color: escuro
-              ? Colors.white.withValues(alpha: 0.14)
-              : const Color(0xFFD3E0EA),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        foregroundColor: cores.textoSuave,
+        side: BorderSide(color: cores.borda),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
       ),
       onPressed: aoTocar,
       icon: Icon(icone, size: 18),
@@ -739,51 +1000,50 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final escuro = Theme.of(context).brightness == Brightness.dark;
-    final texto = escuro ? const Color(0xFFD7E3ED) : Tokens.marca;
+    final cores = CoresRadar.de(context);
+    final texto = Theme.of(context).colorScheme.onSurface;
     return Semantics(
       selected: selecionado,
       button: true,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: ListTile(
+          minTileHeight: 66,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
           selected: selecionado,
-          selectedColor: escuro ? Colors.white : Tokens.marca,
+          selectedColor: cores.acao,
           textColor: texto,
           iconColor: texto,
-          selectedTileColor: escuro
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFDDEEFF),
+          selectedTileColor: escuro ? Tokens.acaoFundoEscuro : Tokens.acaoFundo,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            side: selecionado
+                ? BorderSide(color: cores.acao.withValues(alpha: 0.22))
+                : BorderSide.none,
+            borderRadius: BorderRadius.circular(16),
           ),
           leading: DecoratedBox(
             decoration: BoxDecoration(
-              color: escuro
-                  ? Colors.white.withValues(alpha: selecionado ? 0.12 : 0.06)
-                  : (selecionado
-                        ? const Color(0xFFDDEEFF)
-                        : const Color(0xFFEDF4F8)),
-              borderRadius: BorderRadius.circular(12),
+              color: selecionado
+                  ? Theme.of(context).colorScheme.surface
+                  : cores.superficieAlternativa,
+              borderRadius: BorderRadius.circular(13),
             ),
             child: SizedBox.square(
-              dimension: 42,
-              child: Icon(destino.icone, size: 21),
+              dimension: 43,
+              child: Icon(destino.icone, size: 22),
             ),
           ),
           title: Text(
             destino.titulo,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
           ),
           subtitle: Text(
             destino.descricao,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: escuro ? const Color(0xFF93AABD) : const Color(0xFF61788B),
-              fontSize: 11,
-            ),
+            style: TextStyle(color: cores.textoSuave, fontSize: 8),
           ),
           trailing: const Icon(Icons.chevron_right, size: 20),
           onTap: aoTocar,
@@ -823,8 +1083,7 @@ class _EstadoFolhaAlertas extends State<_FolhaAlertas> {
   Widget build(BuildContext context) {
     return FolhaRadar(
       titulo: 'Alertas',
-      descricao:
-          'Estados importantes do retrato atual, sem simular uma caixa de entrada.',
+      descricao: 'Eventos importantes, fora do menu principal.',
       child: FutureBuilder<ResumoInicio>(
         future: _resumo,
         builder: (context, estado) {
@@ -857,6 +1116,7 @@ class _EstadoFolhaAlertas extends State<_FolhaAlertas> {
               children: [
                 CartaoRadar(
                   aoTocar: widget.aoAbrirLivelo,
+                  padding: const EdgeInsets.all(12),
                   child: _LinhaFolha(
                     icone: Icons.card_giftcard_outlined,
                     titulo: resumo.livelo.alertasUltimaColeta == 0
@@ -864,16 +1124,19 @@ class _EstadoFolhaAlertas extends State<_FolhaAlertas> {
                         : '${resumo.livelo.alertasUltimaColeta} alertas na última coleta Livelo',
                     descricao:
                         '${resumo.livelo.lojasAcompanhadas} lojas acompanhadas · ${_rotuloEstadoResumo(resumo.livelo.estado)}',
+                    mostrarSeta: false,
                   ),
                 ),
                 const SizedBox(height: 10),
                 CartaoRadar(
                   aoTocar: widget.aoAbrirInter,
+                  padding: const EdgeInsets.all(12),
                   child: _LinhaFolha(
                     icone: Icons.account_balance_outlined,
                     titulo: 'Banco Inter',
                     descricao:
                         'Cashback: ${_rotuloEstadoResumo(resumo.cashbackInter.estado)} · produtos: ${_rotuloEstadoResumo(resumo.produtos.estado)}',
+                    mostrarSeta: false,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -929,6 +1192,7 @@ class _FolhaConta extends StatelessWidget {
             if (aoAdministrar != null) ...[
               CartaoRadar(
                 aoTocar: aoAdministrar,
+                padding: const EdgeInsets.all(12),
                 child: const _LinhaFolha(
                   icone: Icons.settings_outlined,
                   titulo: 'Administração',
@@ -939,6 +1203,7 @@ class _FolhaConta extends StatelessWidget {
             ],
             const SizedBox(height: 10),
             const CartaoRadar(
+              padding: EdgeInsets.all(12),
               child: _LinhaFolha(
                 icone: Icons.shield_outlined,
                 titulo: 'Segurança e acesso',
@@ -947,6 +1212,7 @@ class _FolhaConta extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const CartaoRadar(
+              padding: EdgeInsets.all(12),
               child: _LinhaFolha(
                 icone: Icons.add,
                 titulo: 'Integrações',
@@ -993,7 +1259,7 @@ class _LinhaFolha extends StatelessWidget {
             borderRadius: BorderRadius.circular(13),
           ),
           child: SizedBox.square(
-            dimension: 44,
+            dimension: 40,
             child: Icon(icone, color: cores.acao),
           ),
         ),

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+app-check-debug-token*
 
 # Miscellaneous
 *.class

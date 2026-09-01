@@ -10,6 +10,8 @@ const agora = new Date("2026-08-23T11:00:00.000Z");
 function dependencias(): DependenciasResumoInicio {
   return {
     livelo: async () => ({
+      ultima_tentativa_em: "2026-08-23T08:00:00.000Z",
+      qualidade: "completa",
       ultimo_sucesso_em: "2026-08-23T08:00:00.000Z",
       lojas_acompanhadas: 126,
       alertas_ultima_coleta: 2,
@@ -66,6 +68,24 @@ describe("resumo real do Início", () => {
     expect(resumo.estado_geral).toBe("atencao");
   });
 
+  it("RN29 deixa a Livelo degradada e preserva o último sucesso", async () => {
+    const deps = dependencias();
+    deps.livelo = async () => ({
+      ultima_tentativa_em: "2026-08-23T10:30:00.000Z",
+      qualidade: "degradada",
+      ultimo_sucesso_em: "2026-08-23T08:00:00.000Z",
+      lojas_acompanhadas: 126,
+      alertas_ultima_coleta: 2,
+    });
+
+    const resumo = await carregarResumoInicio(deps, agora);
+
+    expect(resumo.livelo.estado).toBe("degradado");
+    expect(resumo.livelo.qualidade).toBe("degradada");
+    expect(resumo.livelo.ultimo_sucesso_em).toBe("2026-08-23T08:00:00.000Z");
+    expect(resumo.estado_geral).toBe("atencao");
+  });
+
   it("distingue coleta de produtos parcial, degradada e atrasada", async () => {
     const deps = dependencias();
     const base = await deps.produtos();
@@ -81,6 +101,23 @@ describe("resumo real do Início", () => {
       dados_mais_antigos_em: "2026-08-22T20:00:00.000Z",
     });
     expect((await carregarResumoInicio(deps, agora)).produtos.estado).toBe("atrasado");
+  });
+
+  it("não mantém produtos atualizando após uma execução abandonada reconciliada", async () => {
+    const deps = dependencias();
+    const base = await deps.produtos();
+    deps.produtos = async () => ({
+      ...base,
+      ultima_tentativa_em: "2026-08-23T10:00:00.000Z",
+      ultima_tentativa_estado: "falha",
+      qualidade: "degradada",
+    });
+
+    const resumo = await carregarResumoInicio(deps, agora);
+
+    expect(resumo.produtos.estado).toBe("falha_recente");
+    expect(resumo.produtos.produtos_ativos).toBe(3310);
+    expect(resumo.produtos.qualidade).toBe("degradada");
   });
 
   it("isola falha de leitura sem fabricar zero para o domínio", async () => {
@@ -119,6 +156,8 @@ describe("resumo real do Início", () => {
   it("distingue ausência total de indisponibilidade total", async () => {
     const vazias: DependenciasResumoInicio = {
       livelo: async () => ({
+        ultima_tentativa_em: null,
+        qualidade: null,
         ultimo_sucesso_em: null,
         lojas_acompanhadas: 0,
         alertas_ultima_coleta: 0,
