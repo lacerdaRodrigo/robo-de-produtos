@@ -112,9 +112,7 @@ void main() {
     expect(controlador.modo, ThemeMode.dark);
   });
 
-  testWidgets('controle do cabeçalho alterna o mobile claro e escuro', (
-    at,
-  ) async {
+  testWidgets('controle da gaveta alterna o mobile claro e escuro', (at) async {
     at.view.devicePixelRatio = 1;
     at.view.physicalSize = const Size(390, 844);
     addTearDown(at.view.resetDevicePixelRatio);
@@ -138,7 +136,12 @@ void main() {
       Theme.of(at.element(find.byKey(const Key('resumo-inicio')))).brightness,
       Brightness.light,
     );
-    await at.tap(find.byKey(const Key('alternar-tema-cabecalho')));
+    expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
+    await at.tap(find.byKey(const Key('abrir-menu-principal')));
+    await at.pumpAndSettle();
+    final linhaAparencia = find.byKey(const Key('alternar-tema-gaveta'));
+    expect(linhaAparencia, findsOneWidget);
+    await at.tap(linhaAparencia);
     await at.pumpAndSettle();
 
     expect(
@@ -147,9 +150,6 @@ void main() {
     );
     expect(preferencias.salvo, ThemeMode.dark);
 
-    await at.tap(find.byKey(const Key('abrir-menu-principal')));
-    await at.pumpAndSettle();
-    final linhaAparencia = find.byKey(const Key('alternar-tema-gaveta'));
     final chaveAparencia = find.descendant(
       of: linhaAparencia,
       matching: find.byType(Switch),

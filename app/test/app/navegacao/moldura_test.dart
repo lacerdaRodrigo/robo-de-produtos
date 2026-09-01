@@ -37,7 +37,12 @@ const _lojasDiretasInter =
     '{"itens":[{"id":"amazon","id_externo":"1","slug":"amazon",'
     '"nome":"Amazon","selecionada":true,"ativa":true,'
     '"ultima_execucao":"2026-08-23T11:00:00Z",'
-    '"ultimo_estado":"sucesso","paginas":12}],'
+    '"ultimo_estado":"sucesso","paginas":12,'
+    '"ultima_tentativa_em":"2026-08-23T11:00:00Z",'
+    '"ultima_tentativa_estado":"sucesso",'
+    '"ultima_coleta_sucesso_em":"2026-08-23T11:00:00Z",'
+    '"produtos_encontrados":18,'
+    '"cashback_resumo_texto":"Até 6% de cashback"}],'
     '"pagina":1,"por_pagina":20,"total_itens":1,"total_paginas":1,'
     '"tem_proxima":false,"atualizado_em":null}';
 
@@ -413,7 +418,7 @@ void main() {
     expect(find.text('Cashback'), findsNothing);
     expect(find.text('Sites parceiros'), findsOneWidget);
     expect(find.text('Compre direto'), findsOneWidget);
-    expect(find.text('SHOPPING E CASHBACK'), findsOneWidget);
+    expect(find.text('CASHBACK'), findsOneWidget);
     expect(
       find.text('20% é o melhor cashback acompanhado agora.'),
       findsOneWidget,
@@ -443,7 +448,7 @@ void main() {
     );
     expect(find.text('1 site parceiro disponível'), findsOneWidget);
     expect(find.text('Site parceiro'), findsOneWidget);
-    await at.tap(find.text('Acompanhada'));
+    await at.tap(find.byKey(const ValueKey('acompanhar-magalu')));
     await at.pumpAndSettle();
     expect(find.text('Acompanhar'), findsOneWidget);
     expect(
@@ -508,7 +513,8 @@ void main() {
     await at.pumpAndSettle();
     expect(find.byKey(const Key('busca-compre-direto')), findsOneWidget);
     expect(find.text('Amazon'), findsOneWidget);
-    expect(find.textContaining('12 páginas processadas'), findsOneWidget);
+    expect(find.textContaining('12 páginas processadas'), findsNothing);
+    expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Selecionada'), findsOneWidget);
     expect(find.text('Coletar'), findsOneWidget);
     await at.ensureVisible(find.text('Selecionada'));
@@ -521,6 +527,14 @@ void main() {
     await at.tap(find.text('Selecionar'));
     await at.pumpAndSettle();
     expect(find.text('Selecionada'), findsOneWidget);
+    await at.ensureVisible(find.text('Acompanhadas'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Acompanhadas'));
+    await at.pumpAndSettle();
+    expect(find.text('Último snapshot válido'), findsOneWidget);
+    expect(find.text('Produtos encontrados'), findsOneWidget);
+    expect(find.text('18 produtos'), findsOneWidget);
+    expect(find.text('Cashback: até 6%'), findsOneWidget);
     expect(
       requisicoes.any(
         (requisicao) =>
