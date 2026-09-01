@@ -145,14 +145,9 @@
     .focus-panel > * { position: relative; z-index: 1; }
     .focus-panel .eyebrow { color: #ffd7cd; }
     .focus-panel h2 { max-width: 290px; margin: 0 0 18px; font-size: 23px; line-height: 1.12; letter-spacing: -.04em; }
-    .signal-list { display: grid; gap: 1px; overflow: hidden; border-radius: 17px; background: rgba(255,255,255,.12); }
-    .signal { display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,.08); color: inherit; border: 0; text-align: left; }
-    .signal-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: rgba(255,255,255,.13); }
-    .signal strong, .signal small { display: block; }
-    .signal strong { font-size: 12px; }
-    .signal small { margin-top: 3px; color: #dfd0e1; font-size: 10px; }
-    .signal-value { font-size: 12px; font-weight: 800; white-space: nowrap; }
-
+    .focus-panel > p:not(.eyebrow) { max-width: 300px; margin: -7px 0 18px; color: #dfd0e1; font-size: 12px; line-height: 1.5; }
+    .focus-cta { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 52px; padding: 0 15px; border: 0; border-radius: 16px; background: #fff; color: var(--radar-plum); font-weight: 800; text-align: left; }
+    .focus-cta span { font-size: 12px; }
     .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 24px 0 11px; }
     .section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.035em; }
     .section-heading span { color: var(--radar-muted); font-size: 10px; }
@@ -168,6 +163,17 @@
     .source-state { text-align: right; }
     .source-state b { display: block; color: var(--radar-positive); font-size: 10px; }
     .source-state span { color: var(--radar-muted); font-size: 9px; }
+    .service-list { display: grid; gap: 12px; }
+    .service-card { position: relative; overflow: hidden; width: 100%; padding: 18px; border: 1px solid var(--radar-line); border-radius: 24px 24px 24px 9px; background: var(--radar-paper); color: var(--radar-ink); box-shadow: var(--radar-shadow-soft); text-align: left; }
+    .service-card[hidden] { display: none; }
+    .service-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .service-head .store-monogram { width: 48px; height: 48px; font-size: 12px; }
+    .service-kind { padding: 6px 9px; border-radius: 999px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 9px; font-weight: 800; }
+    .service-card h2 { margin: 15px 0 5px; font-size: 21px; letter-spacing: -.04em; }
+    .service-card > p { margin: 0; color: var(--radar-muted); font-size: 12px; line-height: 1.5; }
+    .service-capabilities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
+    .service-capabilities span { padding: 6px 8px; border-radius: 9px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 9px; font-weight: 700; }
+    .service-enter { display: flex; align-items: center; justify-content: space-between; margin-top: 17px; padding-top: 13px; border-top: 1px solid var(--radar-line); color: var(--radar-action-strong); font-size: 11px; font-weight: 800; }
 
     .toolbar { display: grid; gap: 10px; margin-bottom: 16px; }
     .search-box { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px; min-height: 52px; padding: 0 8px 0 15px; border: 1px solid var(--radar-line); border-radius: 17px; background: var(--radar-paper); box-shadow: var(--radar-shadow-soft); color: var(--radar-muted); }
@@ -221,7 +227,7 @@
 
     .dock {
       position: fixed; z-index: 25; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%);
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; width: min(calc(100% - 24px), 406px); padding: 7px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; width: min(calc(100% - 24px), 406px); padding: 7px;
       border: 1px solid color-mix(in srgb, var(--radar-line) 85%, transparent); border-radius: 24px;
       background: color-mix(in srgb, var(--radar-paper) 93%, transparent); box-shadow: 0 16px 38px rgba(48, 28, 40, .2); backdrop-filter: blur(20px);
     }
@@ -301,22 +307,42 @@
           <div class="page-heading"><p class="eyebrow">Resumo da API</p><h1 class="page-title">Seu radar, sem distrações.</h1><p class="page-lead">Prioridade primeiro; detalhes somente quando você pede.</p></div>
           <p class="sample-note"><strong>Amostra verificável:</strong> nomes e valores abaixo vêm de fixtures e testes do repositório. No app real, tudo vem dos endpoints autenticados.</p>
           <article class="focus-panel">
-            <p class="eyebrow">Retratos disponíveis</p><h2>Três caminhos para encontrar valor agora.</h2>
-            <div class="signal-list">
-              <button class="signal" type="button" data-go="livelo"><span class="signal-icon"><svg><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span><strong>Livelo</strong><small>Casas Bahia · retrato de teste</small></span><span class="signal-value">4 pts/R$</span></button>
-              <button class="signal" type="button" data-go="inter"><span class="signal-icon"><svg><path d="M3 6h18M5 6l1 14h12l1-14M9 10v6M15 10v6"/></svg></span><span><strong>Cashback</strong><small>Magazine Luiza · fixture Inter</small></span><span class="signal-value">até 20%</span></button>
-              <button class="signal" type="button" data-go="products"><span class="signal-icon"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></span><span><strong>Produtos</strong><small>Motorola Edge 60 Pro · teste</small></span><span class="signal-value">R$ 3.688,89</span></button>
-            </div>
+            <p class="eyebrow">Serviços</p><h2>Escolha o serviço. Depois encontre a loja.</h2>
+            <p>Livelo e Banco Inter são os primeiros serviços do radar. A estrutura está pronta para receber novos sem aumentar a navegação principal.</p>
+            <button class="focus-cta" type="button" data-go="services"><span>Explorar serviços</span><svg><path d="m8 5 7 7-7 7"/></svg></button>
           </article>
           <div class="section-heading"><h2>Fontes do radar</h2><span>último retrato válido</span></div>
           <div class="source-list">
-            <button class="source-row" type="button" data-go="livelo"><span class="source-icon"><svg><path d="M5 3h14v18H5z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span><span><strong>Livelo</strong><small>Catálogo, filtros e histórico de pontuação</small></span><span class="source-state"><b>Disponível</b><span>09h · 14h · 20h</span></span></button>
-            <button class="source-row" type="button" data-go="inter"><span class="source-icon"><svg><path d="M4 7h16v13H4z"/><path d="M8 7V4h8v3M8 11h8"/></svg></span><span><strong>Shopping Inter</strong><small>Catálogo paginado de cashback</small></span><span class="source-state"><b>Disponível</b><span>09h · 14h · 20h</span></span></button>
-            <button class="source-row" type="button" data-go="products"><span class="source-icon"><svg><path d="m7 7 5-4 5 4v10l-5 4-5-4z"/><path d="m7 7 5 4 5-4M12 11v10"/></svg></span><span><strong>Compre direto</strong><small>Busca no banco e histórico de 30 dias</small></span><span class="source-state"><b>Disponível</b><span>09h30 · 14h30 · 20h30</span></span></button>
+            <div class="source-row"><span class="source-icon"><svg><path d="M5 3h14v18H5z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg></span><span><strong>Livelo</strong><small>Catálogo, filtros e histórico de pontuação</small></span><span class="source-state"><b>Disponível</b><span>09h · 14h · 20h</span></span></div>
+            <div class="source-row"><span class="source-icon"><svg><path d="M4 7h16v13H4z"/><path d="M8 7V4h8v3M8 11h8"/></svg></span><span><strong>Banco Inter</strong><small>Cashback e produtos do Compre direto</small></span><span class="source-state"><b>Disponível</b><span>09h · 14h · 20h</span></span></div>
           </div>
         </section>
 
+        <section class="page" data-page="services">
+          <div class="page-heading"><p class="eyebrow">Catálogo do aplicativo</p><h1 class="page-title">Serviços</h1><p class="page-lead">Pesquise um serviço e entre para encontrar as lojas disponíveis nele.</p></div>
+          <div class="toolbar">
+            <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Pesquisar serviços</span><input id="service-search" type="search" placeholder="Pesquisar serviço"><button type="button" aria-label="Pesquisar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
+          </div>
+          <div class="result-meta"><span id="service-count">2 serviços disponíveis</span><span>estrutura expansível</span></div>
+          <div class="service-list" id="service-results">
+            <button class="service-card" type="button" data-service="livelo pontos lojas campanhas historico" data-go="livelo">
+              <span class="service-head"><span class="store-monogram">LI</span><span class="service-kind">Pontos</span></span>
+              <h2>Livelo</h2><p>Pesquise lojas, consulte pontuação, campanha, validade e histórico salvo.</p>
+              <span class="service-capabilities"><span>Catálogo</span><span>Pontuação</span><span>Histórico</span></span>
+              <span class="service-enter"><span>Abrir serviço</span><svg><path d="m8 5 7 7-7 7"/></svg></span>
+            </button>
+            <button class="service-card" type="button" data-service="banco inter shopping cashback produtos compre direto lojas" data-go="inter">
+              <span class="service-head"><span class="store-monogram">BI</span><span class="service-kind">Cashback + produtos</span></span>
+              <h2>Banco Inter</h2><p>Encontre lojas de cashback ou pesquise produtos do catálogo Compre direto.</p>
+              <span class="service-capabilities"><span>Sites parceiros</span><span>Cashback</span><span>Compre direto</span></span>
+              <span class="service-enter"><span>Abrir serviço</span><svg><path d="m8 5 7 7-7 7"/></svg></span>
+            </button>
+          </div>
+          <p class="empty" id="service-empty">Nenhum serviço encontrado.</p>
+        </section>
+
         <section class="page" data-page="livelo">
+          <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Todos os serviços</button>
           <div class="page-heading"><p class="eyebrow">Pontos</p><div class="heading-row"><h1 class="page-title">Livelo</h1><button class="text-action" type="button" data-toast="Atualização Livelo solicitada pelo fluxo administrativo idempotente.">Atualizar</button></div><p class="page-lead">Catálogo paginado, campanha, validade e histórico salvo.</p></div>
           <div class="toolbar">
             <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar no catálogo Livelo</span><input id="livelo-search" type="search" placeholder="Loja ou categoria"><button type="button" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
@@ -345,7 +371,9 @@
         </section>
 
         <section class="page" data-page="inter">
-          <div class="page-heading"><p class="eyebrow">Cashback</p><h1 class="page-title">Shopping Inter</h1><p class="page-lead">Valores e condições do último catálogo válido, sem misturar com produtos.</p></div>
+          <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Todos os serviços</button>
+          <div class="page-heading"><p class="eyebrow">Serviço</p><h1 class="page-title">Banco Inter</h1><p class="page-lead">Escolha entre lojas com cashback e produtos do Compre direto.</p></div>
+          <div class="chips" style="margin-bottom:16px"><button class="chip active" type="button">Sites parceiros</button><button class="chip" type="button" data-go="products">Compre direto</button></div>
           <div class="toolbar">
             <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar loja do Shopping Inter</span><input id="inter-search" type="search" placeholder="Buscar loja"><button type="button" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
             <div class="chips" data-filter-group="inter"><button class="chip active" type="button" data-filter="all">Todas</button><button class="chip" type="button" data-filter="positive">Com percentual</button><button class="chip" type="button" data-open-sheet="inter-sort">Ordenar</button></div>
@@ -388,8 +416,7 @@
 
       <nav class="dock" aria-label="Navegação principal">
         <button class="dock-button active" type="button" data-go="home"><svg><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Resumo</span></button>
-        <button class="dock-button" type="button" data-go="livelo"><svg><path d="M5 3h14v18H5z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span>Livelo</span></button>
-        <button class="dock-button" type="button" data-go="inter"><svg><path d="M3 6h18M5 6l1 14h12l1-14M9 10v6M15 10v6"/></svg><span>Inter</span></button>
+        <button class="dock-button" type="button" data-go="services"><svg><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v5H4zM14 15h6v5h-6z"/></svg><span>Serviços</span></button>
         <button class="dock-button" type="button" data-go="products"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Produtos</span></button>
       </nav>
     </section>
@@ -453,7 +480,8 @@
       function closeSheet() { scrim.classList.remove('open'); sheet.classList.remove('open'); document.body.style.overflow = ''; }
       function go(page) {
         document.querySelectorAll('[data-page]').forEach(node => node.classList.toggle('active', node.dataset.page === page));
-        document.querySelectorAll('.dock-button').forEach(node => node.classList.toggle('active', node.dataset.go === page));
+        const dockPage = page === 'livelo' || page === 'inter' ? 'services' : page;
+        document.querySelectorAll('.dock-button').forEach(node => node.classList.toggle('active', node.dataset.go === dockPage));
         document.querySelector('.dock').classList.toggle('hidden', page === 'admin');
         window.scrollTo({top: 0, behavior: 'smooth'});
       }
@@ -489,6 +517,18 @@
       document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSheet(); });
       document.getElementById('livelo-search').addEventListener('input', event => { const active = document.querySelector('[data-filter-group="livelo"] .chip.active'); filterList(event.target, 'livelo-results', 'livelo-empty', active?.dataset.filter || 'all'); });
       document.getElementById('inter-search').addEventListener('input', event => { const active = document.querySelector('[data-filter-group="inter"] .chip.active'); filterList(event.target, 'inter-results', 'inter-empty', active?.dataset.filter || 'all'); });
+      const serviceSearch = document.getElementById('service-search');
+      serviceSearch.addEventListener('input', () => {
+        const q = serviceSearch.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        let visible = 0;
+        document.querySelectorAll('[data-service]').forEach(card => {
+          const show = card.dataset.service.includes(q);
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        document.getElementById('service-empty').classList.toggle('show', visible === 0);
+        document.getElementById('service-count').textContent = visible + (visible === 1 ? ' serviço disponível' : ' serviços disponíveis');
+      });
       const productSearch = document.getElementById('product-search');
       function searchProducts() {
         const q = productSearch.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); let visible = 0;
