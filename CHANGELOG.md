@@ -2,6 +2,63 @@
 
 <!-- version list -->
 
+## v1.51.0 (2026-09-01)
+
+### Documentation
+
+- **design**: Documenta escalabilidade da tela inicial v9
+  ([`6ddff8c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6ddff8c1f4f8cca00b090411295c65235c2fb2c3))
+
+- **design**: Fecha sistema mobile v11
+  ([`73560a4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/73560a4809a048d02e8c088d77a71fd698a35986))
+
+### Features
+
+- **design**: Adiciona acompanhadas no cashback Inter na v11
+  ([`4a19199`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4a1919946e85aca960be1411212aa6356898e818))
+
+- **design**: Adiciona seleção de lojas do Compre direto na versão 6
+  ([`a6c7367`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a6c7367d5755ab8d7df3aed1312384b1df5d8495))
+
+- **design**: Cria novo prototipo mobile clicavel
+  ([`6e5f070`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6e5f070d738f8c0d8b1f653f82c16c2b1e7f4ce0))
+
+- **design**: Cria segunda versão do novo redesign mobile
+  ([`707c6ad`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/707c6ad4e0f67f9bd6d8b7f2a378b43096cce753))
+
+- **design**: Cria terceira versão do novo redesign mobile
+  ([`5031a73`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5031a732b515e410d9f229a92917ad9762257065))
+
+- **design**: Cria versão 4 do redesign mobile
+  ([`571efa2`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/571efa26f1f6699eb8edd5f3fbe7d3b59da2e3d6))
+
+- **design**: Destaca campanhas Livelo e cashback Inter na v10
+  ([`529500b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/529500b03b64b0830629b49296911abf8b0ca7f5))
+
+- **design**: Melhora tela de produtos na versão 7
+  ([`b0e1cbd`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b0e1cbd137e3d18aded4b3b7ee799f082099206a))
+
+- **design**: Melhora tela inicial na versão 8
+  ([`b7332e8`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b7332e8efa424ec136dd96eb46f17a1b78845536))
+
+- **design**: Organiza Livelo e Inter como serviços
+  ([`090b06c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/090b06c0808a9b583fd9955a84a9829a8be7621d))
+
+- **design**: Reorganiza resumo inicial na versão 9
+  ([`b724e82`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b724e828226721412c0bd60bc91de77dc95197bf))
+
+- **design**: Simplifica tela do Banco Inter na versão 5
+  ([`b2a2982`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b2a2982ef02e6d5948917a0c389b5e6460b16d03))
+
+- **design**: Simplifica usabilidade da Livelo
+  ([`2bbe909`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/2bbe909434237ad1275e21b1fe7ffab3b1d45109))
+
+### Testing
+
+- Alinhar widgets ao redesign mobile
+  ([`90a7c68`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/90a7c6813eb2d58e4351a46b7fda8b66256470c8))
+
+
 ## v1.50.0 (2026-09-01)
 
 ### Bug Fixes
