@@ -50,7 +50,7 @@ jobs:
 
       - name: Disponibilizar APK
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: robo-produtos-android-debug
           path: app/build/app/outputs/flutter-apk/app-debug.apk
