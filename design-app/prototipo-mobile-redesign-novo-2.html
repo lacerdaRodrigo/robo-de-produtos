@@ -112,7 +112,7 @@
     .quiet { padding: 8px 0; background: transparent; color: var(--radar-action-strong); font-size: 13px; font-weight: 700; text-align: left; }
     .auth-foot { padding-top: 14px; border-top: 1px solid var(--radar-line); color: var(--radar-muted); font-size: 11px; line-height: 1.5; }
 
-    .app-view { min-height: 100vh; padding-bottom: 102px; }
+    .app-view { min-height: 100vh; padding-bottom: 136px; }
     .app-bar {
       position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px;
       min-height: 72px; padding: max(14px, env(safe-area-inset-top)) 18px 12px;
@@ -199,6 +199,10 @@
     .fact span { color: var(--radar-muted); font-size: 9px; }
     .fact strong { margin-top: 3px; font-size: 11px; }
     .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 15px 14px; }
+    .follow-button, .details-button { min-height: 40px; border-radius: 13px; font-size: 11px; font-weight: 800; }
+    .follow-button { flex: 1; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--radar-action) 32%, var(--radar-line)); background: var(--radar-action-soft); color: var(--radar-action-strong); }
+    .follow-button.active { border-color: color-mix(in srgb, var(--radar-positive) 30%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
+    .details-button { padding: 0 13px; border: 1px solid var(--radar-line); background: var(--radar-paper); color: var(--radar-ink); }
     .status-label { display: inline-flex; align-items: center; gap: 6px; color: var(--radar-positive); font-size: 10px; font-weight: 700; }
     .status-label::before { width: 7px; height: 7px; border-radius: 50%; background: currentColor; content: ""; }
     .details-label { color: var(--radar-action-strong); font-size: 11px; font-weight: 750; }
@@ -342,29 +346,29 @@
         </section>
 
         <section class="page" data-page="livelo">
-          <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Todos os serviços</button>
-          <div class="page-heading"><p class="eyebrow">Pontos</p><div class="heading-row"><h1 class="page-title">Livelo</h1><button class="text-action" type="button" data-toast="Atualização Livelo solicitada pelo fluxo administrativo idempotente.">Atualizar</button></div><p class="page-lead">Catálogo paginado, campanha, validade e histórico salvo.</p></div>
+          <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Serviços</button>
+          <div class="page-heading"><p class="eyebrow">Pontos</p><div class="heading-row"><h1 class="page-title">Livelo</h1><button class="text-action" type="button" data-toast="Atualização Livelo solicitada pelo fluxo administrativo idempotente.">Atualizar</button></div><p class="page-lead">Encontre uma loja, acompanhe suas favoritas e consulte a pontuação quando precisar.</p></div>
           <div class="toolbar">
-            <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar no catálogo Livelo</span><input id="livelo-search" type="search" placeholder="Loja ou categoria"><button type="button" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
-            <div class="chips" data-filter-group="livelo"><button class="chip active" type="button" data-filter="all">Todas</button><button class="chip" type="button" data-filter="monitored">Acompanhadas</button><button class="chip" type="button" data-filter="alerts">Alertas ativos</button><button class="chip" type="button" data-open-sheet="livelo-filters">Categorias</button></div>
+            <div class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="livelo-search" type="search" aria-label="Buscar loja Livelo" placeholder="Buscar loja"><button type="button" aria-label="Abrir filtros" data-open-sheet="livelo-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg></button></div>
+            <div class="chips" data-filter-group="livelo"><button class="chip active" type="button" data-filter="all">Todas</button><button class="chip" type="button" data-filter="monitored">Acompanhando</button><button class="chip" type="button" data-open-sheet="livelo-filters">Filtros</button></div>
           </div>
-          <div class="result-meta"><span>Itens do contrato paginado</span><span>Ordenação da API</span></div>
+          <div class="result-meta"><span id="livelo-count">3 lojas encontradas</span><span>Por nome</span></div>
           <div class="result-list" id="livelo-results">
-            <button class="result-card" type="button" data-name="casas bahia marketplace" data-group="monitored alerts" data-open-sheet="livelo-casas">
-              <span class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace · código CSB</small></span></span><span class="benefit-value">4 pts/R$</span></span>
-              <span class="card-facts"><span class="fact"><span>Campanha</span><strong>Promoção</strong></span><span class="fact"><span>Base</span><strong>2 pts/R$</strong></span></span>
-              <span class="card-foot"><span class="status-label">Retrato salvo</span><span class="details-label">Ver detalhes</span></span>
-            </button>
-            <button class="result-card" type="button" data-name="o boticario beleza clube" data-group="monitored" data-open-sheet="livelo-boticario">
-              <span class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza · código BOT</small></span></span><span class="benefit-value">3 pts/R$</span></span>
-              <span class="card-facts"><span class="fact"><span>Clube Livelo</span><strong>10 pts/R$</strong></span><span class="fact"><span>Tipo</span><strong>Exclusiva Clube</strong></span></span>
-              <span class="card-foot"><span class="status-label">Retrato salvo</span><span class="details-label">Ver detalhes</span></span>
-            </button>
-            <button class="result-card" type="button" data-name="mercado livre marketplace" data-group="" data-open-sheet="livelo-mercado">
-              <span class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace · código MCL</small></span></span><span class="benefit-value">1 pt/R$</span></span>
-              <span class="card-facts"><span class="fact"><span>Campanha</span><strong>Base</strong></span><span class="fact"><span>Clube</span><strong>1 pt/R$</strong></span></span>
-              <span class="card-foot"><span class="status-label">Retrato salvo</span><span class="details-label">Ver detalhes</span></span>
-            </button>
+            <article class="result-card" data-name="casas bahia marketplace" data-group="monitored" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace</small></span></span><span class="benefit-value">4 pts/R$</span></div>
+              <div class="card-facts"><span class="fact"><span>Campanha</span><strong>Promoção</strong></span><span class="fact"><span>Pontuação base</span><strong>2 pts/R$</strong></span></div>
+              <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-casas">Detalhes</button></div>
+            </article>
+            <article class="result-card" data-name="o boticario beleza clube" data-group="monitored" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza</small></span></span><span class="benefit-value">3 pts/R$</span></div>
+              <div class="card-facts"><span class="fact"><span>Clube Livelo</span><strong>10 pts/R$</strong></span><span class="fact"><span>Campanha</span><strong>Exclusiva Clube</strong></span></div>
+              <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-boticario">Detalhes</button></div>
+            </article>
+            <article class="result-card" data-name="mercado livre marketplace" data-group="" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace</small></span></span><span class="benefit-value">1 pt/R$</span></div>
+              <div class="card-facts"><span class="fact"><span>Pontuação atual</span><strong>1 pt/R$</strong></span><span class="fact"><span>Clube Livelo</span><strong>1 pt/R$</strong></span></div>
+              <div class="card-foot"><button class="follow-button" type="button" data-follow-store>Acompanhar</button><button class="details-button" type="button" data-open-sheet="livelo-mercado">Detalhes</button></div>
+            </article>
           </div>
           <p class="empty" id="livelo-empty">Nenhum item nesta amostra para o filtro escolhido.</p>
           <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Próxima página seria solicitada à API.">2</button><button type="button" data-toast="Próxima página seria solicitada à API." aria-label="Próxima página">›</button></div>
@@ -494,6 +498,9 @@
           const show = name.includes(q) && groupOk; card.hidden = !show; if (show) visible++;
         });
         document.getElementById(emptyId).classList.toggle('show', visible === 0);
+        if (containerId === 'livelo-results') {
+          document.getElementById('livelo-count').textContent = visible + (visible === 1 ? ' loja encontrada' : ' lojas encontradas');
+        }
       }
 
       document.getElementById('login-form').addEventListener('submit', event => { event.preventDefault(); auth.classList.add('hidden'); app.classList.remove('hidden'); go('home'); });
@@ -506,6 +513,20 @@
         const sheetGo = event.target.closest('[data-sheet-go]'); if (sheetGo) { closeSheet(); go(sheetGo.dataset.sheetGo); }
         if (event.target.closest('[data-theme-toggle]')) { root.dataset.theme = root.dataset.theme === 'dark' ? '' : 'dark'; openSheet('profile'); }
         if (event.target.closest('[data-logout]')) { closeSheet(); app.classList.add('hidden'); auth.classList.remove('hidden'); root.dataset.theme = ''; }
+        const follow = event.target.closest('[data-follow-store]');
+        if (follow) {
+          if (follow.classList.contains('active')) {
+            showToast('Esta loja já está sendo acompanhada.');
+          } else {
+            follow.classList.add('active');
+            follow.textContent = 'Acompanhando';
+            const card = follow.closest('[data-store-card]');
+            const groups = new Set((card.dataset.group || '').split(' ').filter(Boolean));
+            groups.add('monitored');
+            card.dataset.group = [...groups].join(' ');
+            showToast('Loja adicionada às suas acompanhadas.');
+          }
+        }
         const chip = event.target.closest('[data-filter-group] .chip[data-filter]');
         if (chip) {
           const groupEl = chip.closest('[data-filter-group]'); groupEl.querySelectorAll('.chip').forEach(x => x.classList.remove('active')); chip.classList.add('active');
