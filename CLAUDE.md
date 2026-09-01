@@ -1,6 +1,6 @@
 # Contexto para agentes de IA
 
-> **Ciclo `re-design`:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. Esta branch trabalha somente no Flutter mobile, usa apenas `design-app/prototipo-mobile.html` como fonte visual e não exige Web, golden, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
+> **Design mobile V11:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter mobile, usa `design-app/prototipo-mobile-redesign-novo-11.html` como fonte visual e `design-app/SISTEMA-DESIGN-MOBILE-V11.md` como contrato. Não exige Web, golden, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
 
 Leia o [`PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md) antes de propor qualquer mudança. Ele é a fonte da verdade: requisitos (RF), requisitos não-funcionais (RNF), restrições (C) e regras de negócio (RN) são todos numerados e referenciados entre si e sempre atualizar as docs , se mudar alguma regra , teste e etc.
 
@@ -26,12 +26,14 @@ navegação. Quando o protótipo não definir algo, peça uma decisão em vez de
 usar uma tela genérica do Material ou criar uma solução visual por conta
 própria.
 
-Protótipo mobile no workspace atual: [`prototipo-mobile.html`](/home/rodrigo/Estudos/robo/design-app/prototipo-mobile.html).
+Protótipo mobile oficial: [`prototipo-mobile-redesign-novo-11.html`](design-app/prototipo-mobile-redesign-novo-11.html).
+
+Contrato visual oficial: [`SISTEMA-DESIGN-MOBILE-V11.md`](design-app/SISTEMA-DESIGN-MOBILE-V11.md).
 
 No ciclo atual, toda nova funcionalidade mobile visível, tela, jornada ou
-mudança relevante de navegação passa somente pelo
-[`prototipo-mobile.html`](design-app/prototipo-mobile.html). O protótipo Web
-fica preservado, mas fora do escopo desta branch.
+mudança relevante de navegação passa pelo protótipo V11 e pelo sistema de
+design V11. Experiências não documentadas nesses dois arquivos ficam fora
+do escopo até uma decisão explícita.
 
 Ordem obrigatória:
 

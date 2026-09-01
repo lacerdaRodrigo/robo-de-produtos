@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 /// Tokens de cor do Radar de Benefícios.
 ///
-/// Fonte visual do redesign mobile: `design-app/prototipo-mobile-v12.html`.
+/// Fonte visual: `design-app/prototipo-mobile-redesign-novo-11.html`.
+/// Contrato: `design-app/SISTEMA-DESIGN-MOBILE-V11.md`.
 /// Não altere estes valores para "aproximar" uma tela isolada: ajuste primeiro
-/// o protótipo/UI_SPEC quando a direção visual mudar de propósito.
+/// o protótipo e o sistema de design quando a direção visual mudar de propósito.
 abstract final class Tokens {
   // Marca e superfícies institucionais.
   static const Color marcaProfunda = Color(0xFF18212A);

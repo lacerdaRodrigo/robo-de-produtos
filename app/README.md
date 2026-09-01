@@ -6,16 +6,15 @@ o mesmo código, consumindo somente a API autenticada em `../backend/api/`.
 > **Estado atual:** as Fases 0 a 5 do piloto estão implementadas e a API da Fase 5
 > já foi publicada. Autenticação, painéis de leitura e administração usam a API
 > (sem prefixo de versão, por domínio).
-> O redesign atual é exclusivamente mobile. Sua fonte visual e seus gates estão em
-> [`../design-app/prototipo-mobile.html`](../design-app/prototipo-mobile.html),
-> [`../design-app/UI_SPEC.md`](../design-app/UI_SPEC.md) e
-> [`../design-app/PLANO-EXECUCAO-REDESIGN.md`](../design-app/PLANO-EXECUCAO-REDESIGN.md).
+> O design atual é exclusivamente mobile. A fonte visual clicável e o contrato completo estão em
+> [`../design-app/prototipo-mobile-redesign-novo-11.html`](../design-app/prototipo-mobile-redesign-novo-11.html) e
+> [`../design-app/SISTEMA-DESIGN-MOBILE-V11.md`](../design-app/SISTEMA-DESIGN-MOBILE-V11.md).
 > Web e testes visuais/automatizados fora de unitários e widgets permanecem
 > preservados, mas não são gate desta branch.
 
 O catálogo Livelo completo está implementado somente no Android compacto. Ele
 usa a API paginada, preserva filtros e posição nas mutações e mantém Web, iOS e
-layout amplo na experiência anterior. Migração, deploy e smoke físico não fazem
+layout amplo fora do pacote mobile documentado. Migração, deploy e smoke físico não fazem
 parte da entrega local.
 
 No Android Samsung compacto, o Início relê o resumo salvo a cada 30 segundos

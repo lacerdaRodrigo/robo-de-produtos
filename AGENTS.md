@@ -1,14 +1,14 @@
-# Instruções para o Codex — branch `re-design`
+# Instruções para o Codex — design mobile V11
 
-## Escopo desta branch
+## Escopo do design mobile
 
-Esta branch existe para **redesenhar somente o aplicativo mobile Flutter**. O objetivo é reproduzir o protótipo aprovado com o menor gasto de contexto possível.
+Este ciclo existe para **implementar somente o aplicativo mobile Flutter** conforme o design V11 aprovado, com o menor gasto de contexto possível.
 
 ### Fora do escopo
 
 Durante este ciclo, **não trabalhar no Web**:
 
-- não abrir nem analisar `design-app/prototipo-web.html`;
+- não investigar protótipos ou documentação visual fora da V11;
 - não redesenhar Flutter Web;
 - não executar golden Web por rotina;
 - não investigar CSS/site/Next.js/Vercel;
@@ -17,27 +17,26 @@ Durante este ciclo, **não trabalhar no Web**:
 
 Código compartilhado pode continuar existindo, mas só deve ser inspecionado quando for necessário para compilar ou para não quebrar a jornada mobile tocada. Não faça refatoração preventiva do Web.
 
-Para tarefas desta branch, esta regra de escopo substitui qualquer instrução antiga em `CLAUDE.md` ou planos históricos que mande atualizar/comparar Web e Mobile juntos.
+Para tarefas do design mobile V11, esta regra de escopo substitui instruções históricas que mandem atualizar ou comparar Web e Mobile juntos.
 
 ## Leitura obrigatória mínima
 
 Antes de alterar uma tela mobile, leia apenas:
 
-1. `design-app/prototipo-mobile.html` — fonte visual de verdade;
-2. `design-app/UI_SPEC.md` — contrato visual e gates;
-3. `design-app/PLANO-EXECUCAO-REDESIGN.md` — ordem de execução;
-4. arquivos Flutter e testes unitários/widgets diretamente relacionados à fase atual;
-5. PRD específico do domínio somente quando precisar confirmar regra, dado ou contrato de API.
+1. `design-app/prototipo-mobile-redesign-novo-11.html` — fonte visual de verdade e referência clicável;
+2. `design-app/SISTEMA-DESIGN-MOBILE-V11.md` — contrato de cores, componentes, estados, montagem e gates;
+3. arquivos Flutter e testes unitários/widgets diretamente relacionados à fase atual;
+4. PRD específico do domínio somente quando precisar confirmar regra, dado ou contrato de API.
 
 **Não leia documentação grande sem necessidade.** Não leia `CLAUDE.md`, todos os PRDs, histórico do projeto ou arquivos Web por padrão. Abra somente o necessário para resolver a fase atual.
 
 ## Regra visual inegociável
 
-`design-app/prototipo-mobile.html` é a fonte visual de verdade do redesign.
+`design-app/prototipo-mobile-redesign-novo-11.html` é a fonte visual de verdade do design mobile.
 
 Não invente UI. Não substitua o protótipo por uma interpretação Material genérica. Reproduza estrutura, hierarquia, espaçamento, cores, estados, navegação e destaque visual definidos no HTML.
 
-Se algo não estiver definido no HTML nem no `UI_SPEC.md`, não improvise: registre a lacuna e peça decisão.
+Se algo não estiver definido no HTML nem no `SISTEMA-DESIGN-MOBILE-V11.md`, não improvise: registre a lacuna e peça decisão.
 
 Dados ilustrativos do HTML não viram dados reais. Backend, regras e contratos continuam vindo da API/PRDs existentes.
 
@@ -63,7 +62,7 @@ Não peça screenshots ao responsável para diferenças que possam ser descobert
 - Administração continua protegida por autorização.
 - Não alterar backend, migração, workflow, produção ou publicação sem autorização explícita.
 
-## Testes desta branch
+## Testes deste ciclo
 
 O objetivo é manter **o mínimo de testes necessário** durante o redesign.
 
