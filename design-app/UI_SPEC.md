@@ -1,8 +1,8 @@
 # UI SPEC — redesign mobile
 
-**Branch:** `re-design`  
-**Fonte visual de verdade:** [`prototipo-mobile.html`](prototipo-mobile.html)  
-**Escopo:** somente Flutter mobile compacto. **Web está fora deste ciclo.**  
+**Branch:** `re-design`
+**Fonte visual de verdade:** [`prototipo-mobile.html`](prototipo-mobile.html)
+**Escopo:** somente Flutter mobile compacto. **Web está fora deste ciclo.**
 **Testes neste ciclo:** somente **unitários e widgets**.
 
 ## 1. Regra principal

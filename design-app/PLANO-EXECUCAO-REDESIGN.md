@@ -1,9 +1,9 @@
 # Plano de execução — `re-design` mobile only
 
-**Objetivo:** levar o Flutter mobile ao protótipo aprovado gastando contexto apenas no que afeta o celular.  
-**Fonte visual:** [`prototipo-mobile.html`](prototipo-mobile.html)  
-**Contrato:** [`UI_SPEC.md`](UI_SPEC.md)  
-**Web:** fora do escopo desta branch.  
+**Objetivo:** levar o Flutter mobile ao protótipo aprovado gastando contexto apenas no que afeta o celular.
+**Fonte visual:** [`prototipo-mobile.html`](prototipo-mobile.html)
+**Contrato:** [`UI_SPEC.md`](UI_SPEC.md)
+**Web:** fora do escopo desta branch.
 **Testes neste ciclo:** somente **unitários e widgets**. Golden, integração, E2E, smoke automatizado e outros tipos ficam para outro ciclo.
 
 ## Gate 0 — ambiente
