@@ -1349,7 +1349,7 @@ class _TituloSecao extends StatelessWidget {
                   ),
                 ),
               ),
-              if (acao != null) acao!,
+              ?acao,
             ],
           ),
           const SizedBox(height: 5),
