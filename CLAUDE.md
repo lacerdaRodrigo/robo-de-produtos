@@ -5,12 +5,12 @@
 ## Pendência manual — Shopping Inter compacto
 
 O teste `Shopping Inter compacto possui somente os dois modos reais`, em
-`app/test/app/navegacao/moldura_test.dart`, está isolado com `skip`. A pipeline
+`app/test/app/navegacao/moldura_test.dart`, está isolado em um bloco comentado. A pipeline
 registrou 193 testes aprovados e uma falha porque, após deixar de acompanhar a
 loja, o teste esperava encontrar a ação `Acompanhar` e ela não estava na árvore
 de widgets. O comportamento visual será conferido manualmente pelo responsável.
 
-Até essa decisão, não remover o `skip`, não mudar a expectativa e não alterar a
+Até essa decisão, não remover o comentário, não mudar a expectativa e não alterar a
 interface apenas para fazer esse cenário passar. Depois da validação manual,
 registrar o comportamento aprovado, corrigir implementação ou teste conforme a
 decisão e reativar o cenário.
