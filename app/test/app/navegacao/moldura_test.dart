@@ -452,7 +452,10 @@ void main() {
     );
     expect(find.text('1 site parceiro disponível'), findsOneWidget);
     expect(find.text('Site parceiro'), findsOneWidget);
-    await at.tap(find.byKey(const ValueKey('acompanhar-magalu')));
+    final acompanhar = find.byKey(const ValueKey('acompanhar-magalu'));
+    await at.ensureVisible(acompanhar);
+    await at.pumpAndSettle();
+    await at.tap(acompanhar);
     await at.pumpAndSettle();
     expect(find.text('Acompanhar'), findsOneWidget);
     expect(
@@ -785,7 +788,7 @@ void main() {
       await _irParaCompacto(at, destino);
       expect(at.takeException(), isNull, reason: destino.titulo);
     }
-    expect(find.byKey(const Key('busca-produtos')), findsOneWidget);
+    expect(find.byKey(const Key('produtos-compacto')), findsOneWidget);
   });
 
   testWidgets('gaveta mobile confere com o golden aprovado', (at) async {
