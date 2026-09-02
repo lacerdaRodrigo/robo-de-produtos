@@ -137,7 +137,7 @@ void main() {
     expect(find.text('Preparando seu radar…'), findsOneWidget);
     await at.pump(const Duration(milliseconds: 1));
 
-    expect(find.text('Que bom ter você aqui'), findsOneWidget);
+    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
     expect(find.text('Preparando seu radar…'), findsNothing);
   });
 
@@ -157,7 +157,7 @@ void main() {
     await at.pump();
     await at.pump();
 
-    expect(find.text('Que bom ter você aqui'), findsOneWidget);
+    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
   });
 
   testWidgets('mantém a abertura animada durante a validação do convite', (
@@ -262,7 +262,7 @@ void main() {
     segunda.complete(InicializacaoFirebase.pronta(autenticador));
     await at.pump();
     await at.pump();
-    expect(find.text('Que bom ter você aqui'), findsOneWidget);
+    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
   });
 
   testWidgets('exceção não expõe detalhes técnicos na abertura', (at) async {

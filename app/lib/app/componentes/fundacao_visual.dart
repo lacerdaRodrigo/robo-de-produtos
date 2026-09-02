@@ -79,42 +79,18 @@ class CabecalhoSecaoRadar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (sobrelinha != null) ...[
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.acaoFundoEscuro
-                  : Tokens.acaoFundo,
-              borderRadius: BorderRadius.circular(RaioRadar.pilula),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: cores.acao,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const SizedBox.square(dimension: 6),
-                  ),
-                  const SizedBox(width: 7),
-                  Flexible(
-                    child: Text(
-                      sobrelinha!.toUpperCase(),
-                      style: tema.textTheme.labelSmall?.copyWith(
-                        color: cores.acao,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          Text(
+            sobrelinha!.toUpperCase(),
+            style: tema.textTheme.labelSmall?.copyWith(
+              color: tema.brightness == Brightness.dark
+                  ? Tokens.acaoForteEscura
+                  : Tokens.actionStrong,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 8),
         ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,12 +100,12 @@ class CabecalhoSecaoRadar extends StatelessWidget {
                 titulo,
                 style: tema.textTheme.headlineMedium?.copyWith(
                   fontSize: (MediaQuery.sizeOf(context).width * 0.08).clamp(
-                    28.0,
-                    36.0,
+                    30.0,
+                    32.0,
                   ),
-                  fontWeight: FontWeight.w900,
-                  height: 1.08,
-                  letterSpacing: -1.35,
+                  fontWeight: FontWeight.w800,
+                  height: 1.05,
+                  letterSpacing: -1.1,
                 ),
               ),
             ),
@@ -142,7 +118,7 @@ class CabecalhoSecaoRadar extends StatelessWidget {
           style: tema.textTheme.bodyMedium?.copyWith(
             color: cores.textoSuave,
             fontSize: 13,
-            height: 1.4,
+            height: 1.5,
           ),
         ),
       ],
@@ -170,7 +146,12 @@ class CartaoRadar extends StatelessWidget {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
     final forma = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(21),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(22),
+        topRight: Radius.circular(22),
+        bottomRight: Radius.circular(22),
+        bottomLeft: Radius.circular(8),
+      ),
       side: BorderSide(color: cores.borda),
     );
     final conteudo = corDestaque == null
@@ -196,7 +177,7 @@ class CartaoRadar extends StatelessWidget {
           );
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(21),
+        borderRadius: forma.borderRadius,
         boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
       ),
       child: Material(
@@ -290,18 +271,18 @@ class CampoBuscaRadar extends StatelessWidget {
               ),
         filled: true,
         fillColor: Theme.of(context).cardColor,
-        constraints: const BoxConstraints(minHeight: 56),
-        contentPadding: const EdgeInsets.symmetric(vertical: 17),
+        constraints: const BoxConstraints(minHeight: 52),
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(17),
           borderSide: BorderSide(color: CoresRadar.de(context).borda),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(17),
           borderSide: BorderSide(color: CoresRadar.de(context).borda),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(17),
           borderSide: BorderSide(
             color: CoresRadar.de(context).acao,
             width: 1.5,
@@ -334,10 +315,10 @@ class AbasRadar extends StatelessWidget {
       decoration: BoxDecoration(
         color: cores.superficieAlternativa,
         border: Border.all(color: cores.borda),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(5),
+        padding: const EdgeInsets.all(4),
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
@@ -372,20 +353,24 @@ class _AbaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     return Material(
-      color: selecionada ? cores.acao : Colors.transparent,
-      borderRadius: BorderRadius.circular(11),
+      color: selecionada ? cores.marca : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(14),
         onTap: aoTocar,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Text(
-            rotulo,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: selecionada
-                  ? Theme.of(context).colorScheme.onPrimary
-                  : cores.textoSuave,
-              fontWeight: FontWeight.w800,
+        child: Semantics(
+          selected: selecionada,
+          button: true,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Text(
+              rotulo,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: selecionada
+                    ? Theme.of(context).colorScheme.onSecondary
+                    : cores.textoSuave,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),

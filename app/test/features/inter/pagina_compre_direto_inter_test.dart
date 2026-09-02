@@ -88,9 +88,9 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.text('Todas as lojas'), findsOneWidget);
+    expect(find.text('Todas'), findsOneWidget);
     expect(find.text('Maior cashback'), findsOneWidget);
-    expect(find.text('Acompanhadas'), findsOneWidget);
+    expect(find.text('Selecionadas'), findsOneWidget);
     expect(find.text('Cashback: até 6%'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Melhor cashback'), findsNothing);
@@ -100,9 +100,9 @@ void main() {
     await at.pumpAndSettle();
     expect(find.text('Cashback: até 6%'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsNothing);
-    await at.ensureVisible(find.text('Acompanhadas'));
+    await at.ensureVisible(find.text('Selecionadas'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Acompanhadas'));
+    await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
     expect(
       find.text(
@@ -152,7 +152,7 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    await at.tap(find.text('Acompanhadas'));
+    await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
 
     expect(find.text('Indisponível'), findsOneWidget);
@@ -215,7 +215,7 @@ void main() {
     await at.pumpAndSettle();
     await at.tap(find.text('Maior cashback'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Acompanhadas'));
+    await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
 
     final consultasLojas = consultas

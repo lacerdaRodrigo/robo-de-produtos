@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
-import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
@@ -328,7 +327,7 @@ class _FiltrosCompreDireto extends StatelessWidget {
     child: Row(
       children: [
         _FiltroCompreDiretoBotao(
-          rotulo: 'Todas as lojas',
+          rotulo: 'Todas',
           ativo: selecionado == _FiltroCompreDireto.todas,
           aoTocar: () => aoSelecionar(_FiltroCompreDireto.todas),
         ),
@@ -340,7 +339,7 @@ class _FiltrosCompreDireto extends StatelessWidget {
         ),
         const SizedBox(width: 7),
         _FiltroCompreDiretoBotao(
-          rotulo: 'Acompanhadas',
+          rotulo: 'Selecionadas',
           ativo: selecionado == _FiltroCompreDireto.acompanhadas,
           aoTocar: () => aoSelecionar(_FiltroCompreDireto.acompanhadas),
         ),
@@ -368,14 +367,12 @@ class _FiltroCompreDiretoBotao extends StatelessWidget {
       style: TextButton.styleFrom(
         minimumSize: const Size(0, 37),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        backgroundColor: ativo
-            ? (Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.acaoFundoEscuro
-                  : Tokens.acaoFundo)
-            : Theme.of(context).colorScheme.surface,
-        foregroundColor: ativo ? cores.acao : cores.textoSuave,
+        backgroundColor: ativo ? cores.marca : Theme.of(context).cardColor,
+        foregroundColor: ativo
+            ? Theme.of(context).colorScheme.onSecondary
+            : cores.textoSuave,
         shape: StadiumBorder(
-          side: BorderSide(color: ativo ? cores.acao : cores.borda),
+          side: BorderSide(color: ativo ? cores.marca : cores.borda),
         ),
       ),
       child: Text(

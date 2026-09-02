@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../../core/api/modelos.dart';
 
 enum AbaCatalogoLivelo {
-  lojas('todas', 'Lojas'),
-  acompanhadas('acompanhadas', 'Acompanhadas'),
+  lojas('todas', 'Todas'),
+  acompanhadas('acompanhadas', 'Acompanhando'),
   alertas('alertas', 'Alertas');
 
   const AbaCatalogoLivelo(this.codigo, this.rotulo);

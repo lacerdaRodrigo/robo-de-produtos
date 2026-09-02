@@ -237,7 +237,7 @@ void main() {
     expect(chamadas, 2);
   });
 
-  testWidgets('Início compacto reproduz a hierarquia com dados reais', (
+  testWidgets('Resumo compacto reproduz a hierarquia V11 com dados reais', (
     at,
   ) async {
     final api = apiQueResponde(
@@ -246,14 +246,19 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Seu radar hoje'), findsOneWidget);
+    expect(find.text('Visão geral'), findsOneWidget);
     expect(
-      find.text('As melhores oportunidades continuam ativas.'),
+      find.text(
+        'Todos os serviços responderam dentro do intervalo esperado.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('Explorar'), findsOneWidget);
+    expect(find.text('Seus serviços'), findsOneWidget);
+    expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
+    expect(find.byKey(const Key('resumo-servico-inter')), findsOneWidget);
     await at.scrollUntilVisible(find.text('Atividade recente'), 300);
-    expect(find.text('130'), findsOneWidget);
+    expect(find.text('126'), findsOneWidget);
+    expect(find.text('4 acompanhadas'), findsOneWidget);
     expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
   });
 

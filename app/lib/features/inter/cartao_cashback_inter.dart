@@ -83,7 +83,7 @@ class _CartaoCompacto extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: CartaoRadar(
-      corDestaque: cores.acao,
+      corDestaque: cores.ganho,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,39 +143,71 @@ class _CartaoCompacto extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      loja.encontrada ? 'Melhor cashback' : 'Status',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: tema.textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                      ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: loja.encontrada
+                      ? (Theme.of(context).brightness == Brightness.dark
+                            ? Tokens.ganhoFundoEscuro
+                            : Tokens.positiveSoft)
+                      : cores.superficieAlternativa,
+                  borderRadius: BorderRadius.circular(RaioRadar.pilula),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    loja.encontrada ? 'Melhor cashback' : 'Indisponível',
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: loja.encontrada ? cores.ganho : cores.textoSuave,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      loja.encontrada
-                          ? (loja.cashbackPrincipalTexto ?? 'Oferta disponível')
-                          : 'Indisponível',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: tema.textTheme.labelMedium?.copyWith(
-                        color: loja.encontrada ? cores.ganho : cores.textoSuave,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 11),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: loja.cashbackPrincipalTexto == null
+                  ? cores.superficieAlternativa
+                  : (Theme.of(context).brightness == Brightness.dark
+                        ? Tokens.ganhoFundoEscuro
+                        : Tokens.positiveSoft),
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Para correntista',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: loja.cashbackPrincipalTexto == null
+                        ? cores.textoSuave
+                        : cores.ganho,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loja.cashbackPrincipalTexto ?? 'Percentual não informado',
+                  style: tema.textTheme.titleLarge?.copyWith(
+                    color: loja.cashbackPrincipalTexto == null
+                        ? cores.textoSuave
+                        : cores.ganho,
+                    fontSize: 21,
+                    height: 1.12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.7,
+                  ),
+                ),
+              ],
+            ),
           ),
           if (loja.etiqueta != null || loja.descricaoPrincipal != null) ...[
             const SizedBox(height: 11),

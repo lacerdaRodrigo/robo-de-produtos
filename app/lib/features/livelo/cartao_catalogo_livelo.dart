@@ -32,7 +32,6 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
-        corDestaque: CoresRadar.de(context).acao,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,6 +96,18 @@ class CartaoCatalogoLivelo extends StatelessWidget {
                           onPressed: podeAdministrar && !pendente
                               ? aoAlternar
                               : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: CoresRadar.de(context).ganho,
+                            backgroundColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Tokens.ganhoFundoEscuro
+                                : Tokens.positiveSoft,
+                            side: BorderSide(
+                              color: CoresRadar.de(
+                                context,
+                              ).ganho.withValues(alpha: 0.3),
+                            ),
+                          ),
                           icon: pendente
                               ? const SizedBox.square(
                                   dimension: 16,
@@ -112,6 +123,13 @@ class CartaoCatalogoLivelo extends StatelessWidget {
                           onPressed: podeAdministrar && !pendente
                               ? aoAlternar
                               : null,
+                          style: FilledButton.styleFrom(
+                            foregroundColor: CoresRadar.de(context).acao,
+                            backgroundColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Tokens.acaoFundoEscuro
+                                : Tokens.actionSoft,
+                          ),
                           icon: pendente
                               ? const SizedBox.square(
                                   dimension: 16,
@@ -164,7 +182,9 @@ class _TopoCartao extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.end,
       style: tema.textTheme.labelMedium?.copyWith(
-        color: cores.ganho,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Tokens.acaoForteEscura
+            : Tokens.actionStrong,
         fontSize: 12,
         fontWeight: FontWeight.w900,
       ),

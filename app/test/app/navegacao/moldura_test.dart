@@ -220,7 +220,7 @@ Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho, barra inferior e gaveta V12', (at) async {
+  testWidgets('celular usa cabeçalho, barra inferior e gaveta V11', (at) async {
     await _abrir(at);
 
     expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
@@ -238,7 +238,7 @@ void main() {
     expect(find.byKey(const Key('abrir-alertas-gaveta')), findsOneWidget);
     expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
     expect(find.text('Acesso padrão'), findsWidgets);
-    expect(find.text('Pontos, cashback e integrações'), findsOneWidget);
+    expect(find.text('Livelo, Banco Inter e integrações'), findsOneWidget);
     expect(find.text('Resultados das lojas escolhidas'), findsOneWidget);
     expect(
       at.getSize(find.byKey(const Key('gaveta-principal'))).width,
@@ -298,16 +298,16 @@ void main() {
     }
   }, tags: 'web');
 
-  testWidgets('Início aparece por padrão e consome o resumo da API', (
+  testWidgets('Resumo aparece por padrão e consome o resumo da API', (
     at,
   ) async {
     await _abrir(at);
 
-    expect(find.text('Seu radar hoje'), findsOneWidget);
-    expect(find.text('alertas Livelo'), findsOneWidget);
+    expect(find.text('Visão geral'), findsOneWidget);
+    expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
   });
 
-  testWidgets('Programas agrega Livelo e Inter com busca local', (at) async {
+  testWidgets('Serviços agrega Livelo e Inter com busca local', (at) async {
     await _abrir(at, tamanho: const Size(390, 1200));
     await _irParaCompacto(at, DestinoCompacto.programas);
 
@@ -415,8 +415,8 @@ void main() {
     await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(find.byKey(const Key('hub-shopping-inter')), findsOneWidget);
-    expect(find.text('Cashback'), findsNothing);
-    expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.text('Cashback'), findsOneWidget);
+    expect(find.textContaining('Sites parceiros'), findsWidgets);
     expect(find.text('Compre direto'), findsOneWidget);
     expect(find.text('CASHBACK'), findsOneWidget);
     expect(
@@ -463,7 +463,7 @@ void main() {
 
     await at.tap(find.text('Compre direto'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Sites parceiros'));
+    await at.tap(find.text('Cashback'));
     await at.pumpAndSettle();
     expect(
       at
@@ -527,9 +527,9 @@ void main() {
     await at.tap(find.text('Selecionar'));
     await at.pumpAndSettle();
     expect(find.text('Selecionada'), findsOneWidget);
-    await at.ensureVisible(find.text('Acompanhadas'));
+    await at.ensureVisible(find.text('Selecionadas'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Acompanhadas'));
+    await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
     expect(find.text('Último snapshot válido'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsOneWidget);
@@ -565,7 +565,7 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    await at.tap(find.text('Sites parceiros'));
+    await at.tap(find.text('Cashback'));
     await at.pumpAndSettle();
 
     expect(
@@ -683,9 +683,9 @@ void main() {
     await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(at.takeException(), isNull);
-    await at.ensureVisible(find.text('Sites parceiros'));
+    await at.ensureVisible(find.text('Cashback'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Sites parceiros'));
+    await at.tap(find.text('Cashback'));
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
 
@@ -740,8 +740,7 @@ void main() {
 
   testWidgets('conta oferece administração fora das três áreas', (at) async {
     await _abrir(at, administrador: true);
-    await _abrirGaveta(at);
-    await at.tap(find.byKey(const Key('abrir-sistema-gaveta')));
+    await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
     await at.pumpAndSettle();
 
     expect(find.text('Administração'), findsOneWidget);

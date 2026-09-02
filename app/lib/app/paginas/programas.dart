@@ -6,7 +6,7 @@ import '../componentes/estados.dart';
 import '../componentes/fundacao_visual.dart';
 import '../tema/tokens.dart';
 
-/// Agregador compacto das integrações reais do Radar.
+/// Catálogo compacto das integrações reais do Radar.
 ///
 /// A busca é local porque esta lista contém apenas os poucos programas
 /// conectados; os catálogos abertos a partir daqui continuam server-side.
@@ -79,8 +79,9 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         chave: const Key('programa-livelo'),
         titulo: 'Livelo',
         descricao: 'Pontos, lojas acompanhadas e histórico',
+        tipo: 'Pontos',
+        capacidades: const ['Catálogo', 'Pontuação', 'Histórico'],
         termos: 'livelo pontos lojas historico campanhas',
-        icone: Icons.card_giftcard_outlined,
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.livelo.estado),
         detalhe: _resumo == null
             ? null
@@ -91,8 +92,9 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         chave: const Key('programa-inter'),
         titulo: 'Banco Inter',
         descricao: 'Cashback, Sites parceiros e Compre direto',
+        tipo: 'Cashback + produtos',
+        capacidades: const ['Sites parceiros', 'Cashback', 'Compre direto'],
         termos: 'banco inter cashback sites parceiros compre direto produtos',
-        icone: Icons.account_balance_outlined,
         estado: _resumo == null
             ? null
             : _rotuloEstado(_resumo!.cashbackInter.estado),
@@ -114,16 +116,16 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
           const CabecalhoSecaoRadar(
-            sobrelinha: 'Catálogos conectados',
-            titulo: 'Programas',
+            sobrelinha: 'Catálogo do aplicativo',
+            titulo: 'Serviços',
             descricao:
-                'Acesse pontos, cashback e parceiros sem aumentar a navegação principal.',
+                'Pesquise um serviço e entre para encontrar as lojas disponíveis nele.',
           ),
           const SizedBox(height: 22),
           CampoBuscaRadar(
             chaveCampo: const Key('busca-programas'),
             controlador: _busca,
-            dica: 'Buscar programa ou parceiro',
+            dica: 'Pesquisar serviço',
             aoMudar: (_) => setState(() {}),
           ),
           if (_carregando) ...[
@@ -143,7 +145,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
             children: [
               Expanded(
                 child: Text(
-                  'Programas disponíveis',
+                  'Serviços disponíveis',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -160,7 +162,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
           ),
           const SizedBox(height: 12),
           if (visiveis.isEmpty)
-            const EstadoVazio(mensagem: 'Nenhum programa encontrado.')
+            const EstadoVazio(mensagem: 'Nenhum serviço encontrado.')
           else
             for (var indice = 0; indice < visiveis.length; indice++) ...[
               _CartaoPrograma(programa: visiveis[indice]),
@@ -177,8 +179,9 @@ class _ProgramaRadar {
     required this.chave,
     required this.titulo,
     required this.descricao,
+    required this.tipo,
+    required this.capacidades,
     required this.termos,
-    required this.icone,
     required this.estado,
     required this.detalhe,
     required this.aoTocar,
@@ -187,8 +190,9 @@ class _ProgramaRadar {
   final Key chave;
   final String titulo;
   final String descricao;
+  final String tipo;
+  final List<String> capacidades;
   final String termos;
-  final IconData icone;
   final String? estado;
   final String? detalhe;
   final VoidCallback aoTocar;
@@ -207,52 +211,135 @@ class _CartaoPrograma extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: Padding(
         key: programa.chave,
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Tokens.acaoFundoEscuro
-                    : Tokens.acaoFundo,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(programa.icone, color: cores.acao),
-            ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    programa.titulo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Tokens.superficieForteEscura
+                        : Tokens.plumSoft,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                      bottomRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(5),
+                    ),
+                  ),
+                  child: Text(
+                    programa.titulo == 'Livelo' ? 'LI' : 'BI',
+                    style: TextStyle(
+                      color: cores.marca,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    programa.descricao,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Tokens.acaoFundoEscuro
+                        : Tokens.actionSoft,
+                    borderRadius: BorderRadius.circular(RaioRadar.pilula),
                   ),
-                  if (programa.estado != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      '${programa.detalhe} · ${programa.estado}',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
+                    child: Text(
+                      programa.tipo,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontWeight: FontWeight.w700,
+                        color: cores.acao,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ],
-                ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Text(
+              programa.titulo,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.8,
               ),
             ),
-            Icon(Icons.chevron_right, color: cores.textoSuave),
+            const SizedBox(height: 5),
+            Text(
+              programa.descricao,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: cores.textoSuave,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final capacidade in programa.capacidades)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: cores.superficieAlternativa,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        capacidade,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (programa.estado != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                '${programa.detalhe} · ${programa.estado}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: cores.textoSuave,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Divider(height: 1, color: cores.borda),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Abrir serviço',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Tokens.acaoForteEscura
+                          : Tokens.actionStrong,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: cores.acao),
+              ],
+            ),
           ],
         ),
       ),
