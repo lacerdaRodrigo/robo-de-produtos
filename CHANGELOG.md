@@ -2,6 +2,61 @@
 
 <!-- version list -->
 
+## v1.52.0 (2026-09-02)
+
+### Bug Fixes
+
+- **app**: Adaptar layouts compactos e testes de widget
+  ([`6255d3a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6255d3ae85afdf3d61f7550abe897ee0912f1b85))
+
+- **app**: Concluir responsividade de Produtos
+  ([`d5337a7`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/d5337a7a58a8fe87f6ecc6f742d972b9c482949f))
+
+- **app**: Corrigir diagnosticos do analyzer
+  ([`60e1023`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/60e1023239317add73ec0f542f4d2115392b5648))
+
+- **app**: Liberar acoes acima do dock inferior
+  ([`64f1dbb`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/64f1dbb9c02fde0207525cdee35fca28f4a014de))
+
+### Chores
+
+- **design**: Manter somente o design mobile V11
+  ([`15b2b0b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/15b2b0b44af7e4da34437ebd44b754b0020f23f6))
+
+- **design**: Remover ativo visual legado restante
+  ([`db1faf8`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/db1faf8b8b8ac11a9cabc85ca3027a0c02de0fc1))
+
+### Code Style
+
+- **app**: Aplicar formatacao do Flutter
+  ([`9646045`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9646045193108f4b04010f2cfac142c918af1315))
+
+- **app**: Normalizar codigo com Dart 3.12
+  ([`43738ad`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/43738ad6598e35aae7327ed2503cae0423b01ab2))
+
+### Features
+
+- **app**: Implementar design mobile V11
+  ([`fd4876e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/fd4876e18896ca814e8f44218b9bb0b9c2156bf4))
+
+### Testing
+
+- **app**: Comentar cenário pendente do Inter
+  ([`3c267e0`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3c267e02cc5ec63e30b2b8181d9569f4a3c45545))
+
+- **app**: Estabilizar acompanhamento no Inter
+  ([`5c33c49`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5c33c49620fb96a62b80b6686db109a4b91f8750))
+
+- **app**: Estabilizar navegacao compacta rolavel
+  ([`c235093`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c235093104fce33e0ad3c54b8d545c963cc6e40b))
+
+- **app**: Isolar validação manual do Inter
+  ([`9b91eca`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9b91ecabe1fc21ce20457d8fa22f80128cbf63c8))
+
+- **app**: Manter acao Inter acima do dock
+  ([`8751d1f`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8751d1f6f81d8efb15d06d81a58e49aac455ae17))
+
+
 ## v1.51.0 (2026-09-01)
 
 ### Documentation
