@@ -87,6 +87,18 @@ Não apague testes existentes dessas categorias. Eles ficam preservados para um 
 
 Durante o desenvolvimento, rode somente os arquivos unitários/widgets relacionados ao que mudou. Não execute `flutter test` sem filtro por rotina se isso puxar testes fora do escopo.
 
+### Pendência isolada — Shopping Inter compacto
+
+O teste de widget `Shopping Inter compacto possui somente os dois modos reais`,
+em `app/test/app/navegacao/moldura_test.dart`, está marcado como `skip` e deve
+permanecer pendente até a validação manual do responsável pelo projeto.
+
+A dúvida a resolver é o comportamento após deixar de acompanhar uma loja: a
+ação `Acompanhar` deve continuar visível na mesma lista ou o cartão pode sair da
+árvore durante o reposicionamento da tela. Não remova o `skip`, não adapte a
+expectativa e não altere a interface para satisfazer esse teste antes da decisão
+manual. Os demais testes e gates continuam obrigatórios.
+
 ## Definição de pronto
 
 Uma fase está concluída quando:

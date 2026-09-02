@@ -2,6 +2,19 @@
 
 > **Design mobile V11:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter mobile, usa `design-app/prototipo-mobile-redesign-novo-11.html` como fonte visual e `design-app/SISTEMA-DESIGN-MOBILE-V11.md` como contrato. Não exige Web, golden, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
 
+## Pendência manual — Shopping Inter compacto
+
+O teste `Shopping Inter compacto possui somente os dois modos reais`, em
+`app/test/app/navegacao/moldura_test.dart`, está isolado com `skip`. A pipeline
+registrou 193 testes aprovados e uma falha porque, após deixar de acompanhar a
+loja, o teste esperava encontrar a ação `Acompanhar` e ela não estava na árvore
+de widgets. O comportamento visual será conferido manualmente pelo responsável.
+
+Até essa decisão, não remover o `skip`, não mudar a expectativa e não alterar a
+interface apenas para fazer esse cenário passar. Depois da validação manual,
+registrar o comportamento aprovado, corrigir implementação ou teste conforme a
+decisão e reativar o cenário.
+
 Leia o [`PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md) antes de propor qualquer mudança. Ele é a fonte da verdade: requisitos (RF), requisitos não-funcionais (RNF), restrições (C) e regras de negócio (RN) são todos numerados e referenciados entre si e sempre atualizar as docs , se mudar alguma regra , teste e etc.
 
 ## Regra zero — execução automática
