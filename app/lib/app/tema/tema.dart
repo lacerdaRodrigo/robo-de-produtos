@@ -274,30 +274,34 @@ abstract final class TemaRadar {
   static FilledButtonThemeData _botaoPreenchido(
     Color fundo,
     Color primeiroPlano,
-  ) => FilledButtonThemeData(
-    style: FilledButton.styleFrom(
-      backgroundColor: fundo,
-      foregroundColor: primeiroPlano,
-      minimumSize: const Size(46, 46),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(RaioRadar.medio),
+  ) {
+    return FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: fundo,
+        foregroundColor: primeiroPlano,
+        minimumSize: const Size(46, 46),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RaioRadar.medio),
+        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
       ),
-      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-    ),
-  );
+    );
+  }
 
   static OutlinedButtonThemeData _botaoContornado(
     Color primeiroPlano,
     Color linha,
-  ) => OutlinedButtonThemeData(
-    style: OutlinedButton.styleFrom(
-      foregroundColor: primeiroPlano,
-      minimumSize: const Size(46, 46),
-      side: BorderSide(color: linha),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(RaioRadar.medio),
+  ) {
+    return OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primeiroPlano,
+        minimumSize: const Size(46, 46),
+        side: BorderSide(color: linha),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RaioRadar.medio),
+        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
       ),
-      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-    ),
-  );
+    );
+  }
 }

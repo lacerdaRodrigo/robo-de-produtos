@@ -248,9 +248,7 @@ void main() {
 
     expect(find.text('Visão geral'), findsOneWidget);
     expect(
-      find.text(
-        'Todos os serviços responderam dentro do intervalo esperado.',
-      ),
+      find.text('Todos os serviços responderam dentro do intervalo esperado.'),
       findsOneWidget,
     );
     expect(find.text('Seus serviços'), findsOneWidget);

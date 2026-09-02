@@ -156,7 +156,10 @@ class CartaoProduto extends StatelessWidget {
     final detalhes = [
       produto.cashbackPercentualTexto,
       produto.parcelamento,
-    ].whereType<String>().where((texto) => texto.trim().isNotEmpty).join(' · ');
+    ]
+        .whereType<String>()
+        .where((texto) => texto.trim().isNotEmpty)
+        .join(' · ');
     final precos = <Widget>[
       _PrecoCompacto(rotulo: 'Preço atual', valor: produto.precoAtualTexto),
       if (produto.precoLiquidoTexto != null)
@@ -175,42 +178,42 @@ class CartaoProduto extends StatelessWidget {
           children: [
             if (mostrarLoja)
               DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                border: Border(bottom: BorderSide(color: cores.borda)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 13,
-                  vertical: 10,
+                decoration: BoxDecoration(
+                  color: cores.superficieAlternativa,
+                  border: Border(bottom: BorderSide(color: cores.borda)),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.circle, size: 7, color: cores.ganho),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        produto.lojaNome,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: tema.textTheme.labelSmall?.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.circle, size: 7, color: cores.ganho),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          produto.lojaNome,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 9),
-                    Text(
-                      dataHoraProduto(produto.atualizadaEm),
-                      style: tema.textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontSize: 8,
+                      const SizedBox(width: 9),
+                      Text(
+                        dataHoraProduto(produto.atualizadaEm),
+                        style: tema.textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
+                          fontSize: 8,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(

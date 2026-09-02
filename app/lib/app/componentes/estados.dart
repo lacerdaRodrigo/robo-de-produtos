@@ -53,11 +53,7 @@ class EstadoVazio extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.inbox_outlined,
-                size: 40,
-                color: cores.textoSuave,
-              ),
+              Icon(Icons.inbox_outlined, size: 40, color: cores.textoSuave),
               const SizedBox(height: 12),
               Text(
                 mensagem,

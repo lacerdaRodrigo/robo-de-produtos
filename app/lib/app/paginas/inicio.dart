@@ -406,7 +406,10 @@ class _DestaqueInicioCompacto extends StatelessWidget {
                   borderRadius: BorderRadius.circular(RaioRadar.pilula),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   child: Text(
                     atualizado ? 'Em dia' : 'Com avisos',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
