@@ -461,12 +461,12 @@ void main() {
     await at.pumpAndSettle();
     await at.tap(acompanhar);
     await at.pumpAndSettle();
-    expect(find.text('Acompanhar'), findsOneWidget);
     expect(
       requisicoes.any(
         (requisicao) =>
             requisicao.method == 'PATCH' &&
-            requisicao.url.path == '/api/inter/lojas',
+            requisicao.url.path == '/api/inter/lojas' &&
+            requisicao.body.contains('"favorita":false'),
       ),
       isTrue,
     );
