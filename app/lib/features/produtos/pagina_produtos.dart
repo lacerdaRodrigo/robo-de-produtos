@@ -781,48 +781,66 @@ class _OrigemProdutos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border.all(color: cores.borda),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: <BoxShadow>[SombraRadar.para(Theme.of(context).brightness)],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resultados das lojas selecionadas',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Altere a seleção dentro do Banco Inter',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cores.textoSuave,
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
+    final texto = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Resultados das lojas selecionadas',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'Altere a seleção dentro do Banco Inter',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: cores.textoSuave,
+            fontSize: 9,
           ),
-          const SizedBox(width: 10),
-          OutlinedButton(
-            onPressed: aoEscolherLojas,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 38),
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-            ),
-            child: const Text('Escolher lojas'),
-          ),
-        ],
+        ),
+      ],
+    );
+    final botao = OutlinedButton(
+      onPressed: aoEscolherLojas,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 38),
+        padding: const EdgeInsets.symmetric(horizontal: 11),
       ),
+      child: const Text('Escolher lojas'),
+    );
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final empilhar =
+            limites.maxWidth < 290 ||
+            MediaQuery.textScalerOf(context).scale(14) > 18;
+        return Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            border: Border.all(color: cores.borda),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: <BoxShadow>[
+              SombraRadar.para(Theme.of(context).brightness),
+            ],
+          ),
+          child: empilhar
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    texto,
+                    const SizedBox(height: 9),
+                    Align(alignment: Alignment.centerRight, child: botao),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: texto),
+                    const SizedBox(width: 10),
+                    botao,
+                  ],
+                ),
+        );
+      },
     );
   }
 }

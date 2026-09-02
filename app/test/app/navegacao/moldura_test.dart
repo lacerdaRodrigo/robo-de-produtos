@@ -422,7 +422,7 @@ void main() {
     expect(find.text('Cashback'), findsOneWidget);
     expect(find.textContaining('Sites parceiros'), findsWidgets);
     expect(find.text('Compre direto'), findsOneWidget);
-    expect(find.text('CASHBACK'), findsOneWidget);
+    expect(find.byKey(const Key('inter-total-acompanhadas')), findsOneWidget);
     expect(
       find.text('20% é o melhor cashback acompanhado agora.'),
       findsOneWidget,
