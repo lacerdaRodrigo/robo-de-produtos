@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.52.1 (2026-09-02)
+
+### Bug Fixes
+
+- Alinhar resumo mobile ao prototipo V11
+  ([`468e5b0`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/468e5b0725892d885149e50bcc3c6c2522e7c476))
+
+
 ## v1.52.0 (2026-09-02)
 
 ### Bug Fixes
