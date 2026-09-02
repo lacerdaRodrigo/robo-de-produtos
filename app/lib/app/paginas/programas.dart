@@ -242,24 +242,30 @@ class _CartaoPrograma extends StatelessWidget {
                     ),
                   ),
                 ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Tokens.acaoFundoEscuro
-                        : Tokens.actionSoft,
-                    borderRadius: BorderRadius.circular(RaioRadar.pilula),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 6,
+                const SizedBox(width: 12),
+                Flexible(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Tokens.acaoFundoEscuro
+                          : Tokens.actionSoft,
+                      borderRadius: BorderRadius.circular(RaioRadar.pilula),
                     ),
-                    child: Text(
-                      programa.tipo,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cores.acao,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        programa.tipo,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.acao,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),

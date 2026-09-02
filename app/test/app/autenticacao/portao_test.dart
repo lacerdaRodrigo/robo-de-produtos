@@ -104,7 +104,10 @@ void main() {
     );
 
     await at.enterText(find.byType(EditableText).first, 'piloto@example.com');
-    await at.tap(find.text('Esqueci minha senha'));
+    final recuperar = find.text('Esqueci minha senha');
+    await at.ensureVisible(recuperar);
+    await at.pumpAndSettle();
+    await at.tap(recuperar);
     await at.pump();
 
     expect(autenticador.recuperacaoRecebida, 'piloto@example.com');

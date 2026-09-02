@@ -912,10 +912,12 @@ class _CartaoDominioResumo extends StatelessWidget {
                     ],
                   ),
                 ),
-                _Pill(
-                  texto: _rotuloEstado(estado),
-                  compacto: true,
-                  cor: corEstado,
+                Flexible(
+                  child: _Pill(
+                    texto: _rotuloEstado(estado),
+                    compacto: true,
+                    cor: corEstado,
+                  ),
                 ),
               ],
             ),

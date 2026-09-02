@@ -525,7 +525,6 @@ class _AssinaturaCompacta extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     DecoratedBox(
                       decoration: BoxDecoration(
@@ -535,13 +534,17 @@ class _AssinaturaCompacta extends StatelessWidget {
                       child: const SizedBox.square(dimension: 7),
                     ),
                     const SizedBox(width: 5),
-                    Text(
-                      'API protegida',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cores.ganho,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
+                    Flexible(
+                      child: Text(
+                        'API protegida',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.ganho,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
                       ),
                     ),
                   ],

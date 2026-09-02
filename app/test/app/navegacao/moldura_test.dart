@@ -202,14 +202,18 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
     await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
     await at.ensureVisible(programa);
     await at.pumpAndSettle();
-    await at.tap(programa);
+    await at.tap(
+      find.ancestor(of: programa, matching: find.byType(InkWell)).first,
+    );
     await at.pumpAndSettle();
   } else if (destino == DestinoCompacto.inter) {
     final programa = find.byKey(const Key('programa-inter'));
     await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
     await at.ensureVisible(programa);
     await at.pumpAndSettle();
-    await at.tap(programa);
+    await at.tap(
+      find.ancestor(of: programa, matching: find.byType(InkWell)).first,
+    );
     await at.pumpAndSettle();
   }
 }

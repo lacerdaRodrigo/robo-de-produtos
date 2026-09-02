@@ -143,26 +143,31 @@ class _CartaoCompacto extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: loja.encontrada
-                      ? (Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.ganhoFundoEscuro
-                            : Tokens.positiveSoft)
-                      : cores.superficieAlternativa,
-                  borderRadius: BorderRadius.circular(RaioRadar.pilula),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
+              Flexible(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: loja.encontrada
+                        ? (Theme.of(context).brightness == Brightness.dark
+                              ? Tokens.ganhoFundoEscuro
+                              : Tokens.positiveSoft)
+                        : cores.superficieAlternativa,
+                    borderRadius: BorderRadius.circular(RaioRadar.pilula),
                   ),
-                  child: Text(
-                    loja.encontrada ? 'Melhor cashback' : 'Indisponível',
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: loja.encontrada ? cores.ganho : cores.textoSuave,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    child: Text(
+                      loja.encontrada ? 'Melhor cashback' : 'Indisponível',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: loja.encontrada ? cores.ganho : cores.textoSuave,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),

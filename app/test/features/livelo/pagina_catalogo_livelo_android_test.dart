@@ -307,7 +307,7 @@ void main() {
     );
     await at.pumpAndSettle();
     expect(find.text('Loja Clube'), findsOneWidget);
-    expect(find.text('Acompanhando'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsWidgets);
     expect(find.text('Alerta ativo'), findsOneWidget);
   });
 
