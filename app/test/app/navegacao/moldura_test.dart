@@ -454,6 +454,10 @@ void main() {
     expect(find.text('Site parceiro'), findsOneWidget);
     final acompanhar = find.byKey(const ValueKey('acompanhar-magalu'));
     await at.ensureVisible(acompanhar);
+    await at.drag(
+      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      const Offset(0, -120),
+    );
     await at.pumpAndSettle();
     await at.tap(acompanhar);
     await at.pumpAndSettle();
