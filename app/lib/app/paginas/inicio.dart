@@ -1002,9 +1002,9 @@ class _LinhaMetricaDominio extends StatelessWidget {
           child: Text(
             valor,
             textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
       ],
@@ -1038,7 +1038,8 @@ class _AcoesRapidasResumo extends StatelessWidget {
     );
     return LayoutBuilder(
       builder: (context, limites) {
-        final empilhar = limites.maxWidth < 320 ||
+        final empilhar =
+            limites.maxWidth < 320 ||
             MediaQuery.textScalerOf(context).scale(12) > 16;
         if (empilhar) {
           return Column(

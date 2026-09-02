@@ -49,24 +49,25 @@ abstract final class TemaRadar {
       fontFamily: 'Aptos',
       fontFamilyFallback: const ['Segoe UI Variable', 'Segoe UI', 'sans-serif'],
     );
-    final esquema = ColorScheme.fromSeed(
-      seedColor: Tokens.plum,
-      brightness: Brightness.light,
-      primary: Tokens.action,
-      onPrimary: Colors.white,
-      secondary: Tokens.plum,
-      onSecondary: Colors.white,
-      surface: Tokens.paper,
-      onSurface: Tokens.ink,
-      outline: Tokens.line,
-      error: Tokens.danger,
-    ).copyWith(
-      surfaceContainerLowest: Tokens.paper,
-      surfaceContainerLow: Tokens.paper,
-      surfaceContainer: Tokens.paperSoft,
-      surfaceContainerHigh: Tokens.plumSoft,
-      surfaceContainerHighest: Tokens.plumSoft,
-    );
+    final esquema =
+        ColorScheme.fromSeed(
+          seedColor: Tokens.plum,
+          brightness: Brightness.light,
+          primary: Tokens.action,
+          onPrimary: Colors.white,
+          secondary: Tokens.plum,
+          onSecondary: Colors.white,
+          surface: Tokens.paper,
+          onSurface: Tokens.ink,
+          outline: Tokens.line,
+          error: Tokens.danger,
+        ).copyWith(
+          surfaceContainerLowest: Tokens.paper,
+          surfaceContainerLow: Tokens.paper,
+          surfaceContainer: Tokens.paperSoft,
+          surfaceContainerHigh: Tokens.plumSoft,
+          surfaceContainerHighest: Tokens.plumSoft,
+        );
     return base.copyWith(
       colorScheme: esquema,
       scaffoldBackgroundColor: Tokens.canvas,
@@ -146,24 +147,25 @@ abstract final class TemaRadar {
       fontFamily: 'Aptos',
       fontFamilyFallback: const ['Segoe UI Variable', 'Segoe UI', 'sans-serif'],
     );
-    final esquema = ColorScheme.fromSeed(
-      seedColor: Tokens.marcaEscura,
-      brightness: Brightness.dark,
-      primary: Tokens.acaoEscura,
-      onPrimary: const Color(0xFF291A2F),
-      secondary: Tokens.marcaEscura,
-      onSecondary: const Color(0xFF291A2F),
-      surface: Tokens.superficieEscura,
-      error: Tokens.perigoEscuro,
-      onSurface: Tokens.textoEscuro,
-      outline: Tokens.bordaEscura,
-    ).copyWith(
-      surfaceContainerLowest: Tokens.superficieEscura,
-      surfaceContainerLow: Tokens.superficieEscura,
-      surfaceContainer: Tokens.superficieAlternativaEscura,
-      surfaceContainerHigh: Tokens.superficieForteEscura,
-      surfaceContainerHighest: Tokens.superficieForteEscura,
-    );
+    final esquema =
+        ColorScheme.fromSeed(
+          seedColor: Tokens.marcaEscura,
+          brightness: Brightness.dark,
+          primary: Tokens.acaoEscura,
+          onPrimary: const Color(0xFF291A2F),
+          secondary: Tokens.marcaEscura,
+          onSecondary: const Color(0xFF291A2F),
+          surface: Tokens.superficieEscura,
+          error: Tokens.perigoEscuro,
+          onSurface: Tokens.textoEscuro,
+          outline: Tokens.bordaEscura,
+        ).copyWith(
+          surfaceContainerLowest: Tokens.superficieEscura,
+          surfaceContainerLow: Tokens.superficieEscura,
+          surfaceContainer: Tokens.superficieAlternativaEscura,
+          surfaceContainerHigh: Tokens.superficieForteEscura,
+          surfaceContainerHighest: Tokens.superficieForteEscura,
+        );
     return base.copyWith(
       colorScheme: esquema,
       scaffoldBackgroundColor: Tokens.fundoEscuro,

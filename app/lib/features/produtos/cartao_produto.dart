@@ -156,10 +156,7 @@ class CartaoProduto extends StatelessWidget {
     final detalhes = [
       produto.cashbackPercentualTexto,
       produto.parcelamento,
-    ]
-        .whereType<String>()
-        .where((texto) => texto.trim().isNotEmpty)
-        .join(' · ');
+    ].whereType<String>().where((texto) => texto.trim().isNotEmpty).join(' · ');
     final precos = <Widget>[
       _PrecoCompacto(rotulo: 'Preço atual', valor: produto.precoAtualTexto),
       if (produto.precoLiquidoTexto != null)
