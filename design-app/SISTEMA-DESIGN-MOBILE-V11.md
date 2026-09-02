@@ -276,18 +276,6 @@ Possui três destinos: Resumo, Serviços e Produtos. O item ativo recebe fundo `
 
 ## 10. Tela Resumo
 
-### `HomeStatusCard`
-
-Classes: `.home-status-card`, `.home-status-top`, `.home-status-icon`, `.home-status-badge`.
-
-Mostra:
-
-- estado geral;
-- horário da última verificação;
-- explicação curta quando houver avisos.
-
-Não deve listar métricas sem origem identificada.
-
 ### `HomeDomainCard`
 
 Classes: `.home-domain-card`, `.domain-card-top`, `.domain-identity`, `.domain-status`, `.domain-stats`, `.domain-alert`, `.domain-enter`.
@@ -299,6 +287,16 @@ Anatomia:
 3. métricas com rótulo e valor;
 4. aviso contextual opcional;
 5. ação para abrir a área correspondente.
+
+A Home não exibe um card de estado geral. Estado, horário e aviso permanecem
+no card do serviço de origem. As métricas formam uma lista com divisores
+visíveis, incluindo a separação entre **Lojas acompanhadas** e **Último
+sucesso** na Livelo.
+
+O estado `atualizando` pode permanecer no selo quando vier da API, mas não deve
+gerar sozinho a afirmação de que há uma coleta em andamento. Avisos textuais
+ficam reservados a falha, parcial, degradação, atraso, ausência de dados ou
+indisponibilidade confirmados.
 
 Quando existirem muitos robôs, a Home exibe no máximo três ou quatro cards. Robôs com atenção vêm primeiro. A ação **Ver todos os robôs** encaminha para Serviços. A Home nunca lista lojas internas nem produtos individualmente.
 
@@ -596,7 +594,6 @@ Uma falha de um robô não deve transformar todos os serviços em erro. Cada car
 | `AppBar` | `SliverAppBar` ou cabeçalho persistente |
 | `BottomDock` | `NavigationBar` customizada |
 | `PageHeading` | `Column` com estilos do tema |
-| `HomeStatusCard` | `Card` semântico de estado |
 | `HomeDomainCard` | `InkWell` + `Card` + linhas de métrica |
 | `SearchBox` | `TextField` com prefix/suffix icon |
 | `CatalogTabs` | `SegmentedButton` ou controle segmentado customizado |
@@ -640,4 +637,3 @@ Ao adicionar um novo robô:
 5. mostrar no máximo três ou quatro robôs na Home;
 6. não adicionar campos que o contrato não entrega;
 7. documentar novos estados e interações neste arquivo.
-

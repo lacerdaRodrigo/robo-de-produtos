@@ -152,13 +152,6 @@ class _PaginaInicioState extends State<PaginaInicio>
                     const SizedBox(height: 16),
                     _AvisoFalhaAtualizacao(aoTentarNovamente: _consultar),
                   ],
-                  const SizedBox(height: 20),
-                  widget.experienciaCompacta
-                      ? _DestaqueInicioCompacto(
-                          resumo: resumo,
-                          agora: (widget.agora ?? DateTime.now)(),
-                        )
-                      : _DestaqueEstado(resumo: resumo),
                   if (widget.experienciaCompacta) ...[
                     const SizedBox(height: 25),
                     _TituloSecao(
@@ -189,6 +182,8 @@ class _PaginaInicioState extends State<PaginaInicio>
                       agora: (widget.agora ?? DateTime.now)(),
                     ),
                   ] else ...[
+                    const SizedBox(height: 20),
+                    _DestaqueEstado(resumo: resumo),
                     const SizedBox(height: 20),
                     _GradeMetricas(resumo: resumo),
                     const SizedBox(height: 30),
@@ -333,106 +328,6 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _DestaqueInicioCompacto extends StatelessWidget {
-  const _DestaqueInicioCompacto({required this.resumo, required this.agora});
-
-  final ResumoInicio resumo;
-  final DateTime agora;
-
-  @override
-  Widget build(BuildContext context) {
-    final prioridade = _prioridade(resumo);
-    final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
-    final cores = CoresRadar.de(context);
-    final tom = atualizado ? cores.ganho : cores.atencao;
-    final fundo = atualizado
-        ? (Theme.of(context).brightness == Brightness.dark
-              ? Tokens.ganhoFundoEscuro
-              : Tokens.positiveSoft)
-        : (Theme.of(context).brightness == Brightness.dark
-              ? Tokens.atencaoFundoEscuro
-              : Tokens.warningSoft);
-    return CartaoRadar(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: fundo,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: SizedBox.square(
-                  dimension: 38,
-                  child: Icon(
-                    Icons.monitor_heart_outlined,
-                    color: tom,
-                    size: 19,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      atualizado ? 'Tudo atualizado' : 'Atualizado com avisos',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _textoAtualizacao(resumo, agora),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: fundo,
-                  borderRadius: BorderRadius.circular(RaioRadar.pilula),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  child: Text(
-                    atualizado ? 'Em dia' : 'Com avisos',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: tom,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            atualizado
-                ? 'Todos os serviços responderam dentro do intervalo esperado.'
-                : prioridade.descricao,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: cores.textoSuave,
-              height: 1.5,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -818,7 +713,9 @@ class _ServicosResumoCompacto extends StatelessWidget {
               ),
             ),
           ],
-          aviso: estadoInter == EstadoResumo.atualizado
+          aviso:
+              estadoInter == EstadoResumo.atualizado ||
+                  estadoInter == EstadoResumo.atualizando
               ? null
               : _descricaoEstado(estadoInter),
           acao: 'Abrir Banco Inter',
@@ -923,8 +820,10 @@ class _CartaoDominioResumo extends StatelessWidget {
             ),
             const SizedBox(height: 13),
             Divider(height: 1, color: cores.borda),
-            for (final metrica in metricas)
+            for (final metrica in metricas) ...[
               _LinhaMetricaDominio(rotulo: metrica.$1, valor: metrica.$2),
+              Divider(height: 1, color: cores.borda),
+            ],
             if (aviso != null) ...[
               const SizedBox(height: 6),
               Container(
@@ -1535,17 +1434,6 @@ EstadoResumo _estadoInter(ResumoInicio resumo) {
   ];
   final estados = {resumo.cashbackInter.estado, resumo.produtos.estado};
   return prioridade.firstWhere(estados.contains);
-}
-
-String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {
-  final data = DateTime.tryParse(resumo.geradoEm)?.toLocal();
-  if (data == null) return 'Radar atualizado';
-  final minutos = agora.toLocal().difference(data).inMinutes;
-  if (minutos <= 1) return 'Radar atualizado há pouco';
-  if (minutos < 60) return 'Radar atualizado há $minutos min';
-  final horas = minutos ~/ 60;
-  if (horas < 24) return 'Radar atualizado há $horas h';
-  return 'Radar atualizado há ${horas ~/ 24} d';
 }
 
 String _tempoDesde(String iso, DateTime agora) {

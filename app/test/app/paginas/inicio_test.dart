@@ -247,17 +247,36 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Visão geral'), findsOneWidget);
-    expect(
-      find.text('Todos os serviços responderam dentro do intervalo esperado.'),
-      findsOneWidget,
-    );
+    expect(find.text('Tudo atualizado'), findsNothing);
+    expect(find.text('Atualizado com avisos'), findsNothing);
     expect(find.text('Seus serviços'), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-inter')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('resumo-servico-livelo')),
+        matching: find.byType(Divider),
+      ),
+      findsNWidgets(3),
+    );
     await at.scrollUntilVisible(find.text('Atividade recente'), 300);
     expect(find.text('126'), findsOneWidget);
     expect(find.text('4 acompanhadas'), findsOneWidget);
     expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
+  });
+
+  testWidgets('Resumo não inventa coleta em andamento no Banco Inter', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async =>
+          http.Response(jsonEncode(resumo(produtos: 'atualizando')), 200),
+    );
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+
+    expect(find.text('Atualizando'), findsOneWidget);
+    expect(find.textContaining('Há uma coleta em andamento'), findsNothing);
   });
 
   testWidgets('Início compacto não estoura em 320 px com texto ampliado', (
