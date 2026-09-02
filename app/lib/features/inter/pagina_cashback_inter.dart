@@ -406,7 +406,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 38),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 112),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             for (final loja in lojas)
