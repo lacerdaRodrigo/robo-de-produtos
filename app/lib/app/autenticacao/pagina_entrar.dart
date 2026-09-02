@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../core/autenticacao/autenticador.dart';
 import '../identidade/logo_radar.dart';
 import '../tema/tema.dart';
+import '../tema/tokens.dart';
 
 abstract final class _TokensLogin {
-  static const marcaProfunda = Color(0xFF081A2D);
-  static const marca = Color(0xFF102A43);
-  static const marcaClara = Color(0xFF1769AA);
-  static const ganho = Color(0xFF16803C);
-  static const perigo = Color(0xFFC53030);
-  static const fundo = Color(0xFFF3F7FB);
+  static const marcaProfunda = Tokens.ink;
+  static const marca = Tokens.plum;
+  static const marcaClara = Tokens.action;
+  static const ganho = Tokens.positive;
+  static const perigo = Tokens.danger;
 }
 
 class PaginaEntrar extends StatefulWidget {
@@ -99,7 +99,7 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
   @override
   Widget build(BuildContext context) {
     final pagina = Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, limites) {
           final amplo = limites.maxWidth >= _larguraLayoutAmplo;
@@ -252,25 +252,40 @@ class _AssinaturaMarca extends StatelessWidget {
       key: compacta ? const Key('login-marca-compacta') : null,
       mainAxisSize: compacta ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: compacta
-                ? const [
-                    BoxShadow(
-                      color: Color(0x16081A2D),
-                      blurRadius: 18,
-                      offset: Offset(0, 7),
-                    ),
-                  ]
-                : null,
+        if (compacta)
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Tokens.plum,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+                bottomLeft: Radius.circular(5),
+              ),
+            ),
+            child: const Text(
+              'R',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          )
+        else
+          Container(
+            width: 48,
+            height: 48,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const LogoRadar(tamanho: 42),
           ),
-          child: const LogoRadar(tamanho: 42),
-        ),
         const SizedBox(width: 12),
         Flexible(
           child: Text(
@@ -415,7 +430,7 @@ class _AreaFormulario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, limites) {
@@ -450,20 +465,30 @@ class _AreaFormulario extends StatelessWidget {
                               const SizedBox(height: 32),
                             ],
                             Text(
-                              'Que bom ter você aqui',
+                              compacto
+                                  ? 'Benefícios claros. Sem ruído.'
+                                  : 'Que bom ter você aqui',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
-                                    color: _TokensLogin.marca,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    fontSize: compacto ? 42 : null,
+                                    height: compacto ? 0.98 : null,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: -1,
+                                    letterSpacing: compacto ? -2.2 : -1,
                                   ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Entre com seu acesso para ver as oportunidades acompanhadas.',
+                              compacto
+                                  ? 'Entre para consultar os retratos salvos pela API autenticada.'
+                                  : 'Entre com seu acesso para ver as oportunidades acompanhadas.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color: const Color(0xFF5D7285),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                     height: 1.45,
                                   ),
                             ),
@@ -596,17 +621,18 @@ class _CampoRotulado extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final borda = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFD9E3EC)),
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide(color: cores.borda),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           rotulo,
-          style: const TextStyle(
-            color: _TokensLogin.marca,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
@@ -624,10 +650,12 @@ class _CampoRotulado extends StatelessWidget {
           validator: validador,
           decoration: InputDecoration(
             hintText: dica,
-            hintStyle: const TextStyle(color: Color(0xFF8295A6)),
+            hintStyle: TextStyle(color: cores.textoSuave),
             suffixIcon: sufixo,
             filled: true,
-            fillColor: habilitado ? Colors.white : const Color(0xFFF4F7FB),
+            fillColor: habilitado
+                ? Theme.of(context).cardColor
+                : cores.superficieAlternativa,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 17,
@@ -635,11 +663,8 @@ class _CampoRotulado extends StatelessWidget {
             border: borda,
             enabledBorder: borda,
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: _TokensLogin.marcaClara,
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Tokens.action, width: 2),
             ),
           ),
         ),
@@ -697,22 +722,27 @@ class _AvisoSeguranca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _TokensLogin.fundo,
-        borderRadius: BorderRadius.circular(14),
+        color: cores.superficieAlternativa,
+        borderRadius: BorderRadius.circular(15),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lock_outline, color: _TokensLogin.marcaClara, size: 20),
-          SizedBox(width: 10),
+          const Icon(
+            Icons.lock_outline,
+            color: _TokensLogin.marcaClara,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Seu acesso continua protegido pelo Firebase e validado pela API.',
               style: TextStyle(
-                color: Color(0xFF5D7285),
+                color: cores.textoSuave,
                 fontSize: 13,
                 height: 1.4,
               ),

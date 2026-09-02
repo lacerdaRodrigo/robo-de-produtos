@@ -245,8 +245,8 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         return Scaffold(
           key: _scaffold,
           appBar: _CabecalhoCompacto(
-            titulo: _selecionadoCompacto.titulo,
             aoAbrirMenu: () => _scaffold.currentState?.openDrawer(),
+            aoAbrirConta: _abrirConta,
           ),
           drawer: GavetaRadar(
             selecionado: _selecionadoCompacto,
@@ -269,10 +269,13 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
 class _CabecalhoCompacto extends StatelessWidget
     implements PreferredSizeWidget {
-  const _CabecalhoCompacto({required this.titulo, required this.aoAbrirMenu});
+  const _CabecalhoCompacto({
+    required this.aoAbrirMenu,
+    required this.aoAbrirConta,
+  });
 
-  final String titulo;
   final VoidCallback aoAbrirMenu;
+  final VoidCallback aoAbrirConta;
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
@@ -283,16 +286,18 @@ class _CabecalhoCompacto extends StatelessWidget
     final cores = CoresRadar.de(context);
     return AppBar(
       toolbarHeight: 70,
-      backgroundColor: tema.colorScheme.surface,
+      backgroundColor: tema.scaffoldBackgroundColor,
       foregroundColor: tema.colorScheme.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       shape: const Border(),
-      leadingWidth: 59,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 15),
-        child: IconButton(
+      automaticallyImplyLeading: false,
+      title: const _AssinaturaCompacta(),
+      titleSpacing: 18,
+      centerTitle: false,
+      actions: [
+        IconButton(
           key: const Key('abrir-menu-principal'),
           tooltip: 'Abrir menu principal',
           onPressed: aoAbrirMenu,
@@ -300,7 +305,7 @@ class _CabecalhoCompacto extends StatelessWidget
             minimumSize: const Size.square(42),
             maximumSize: const Size.square(42),
             padding: EdgeInsets.zero,
-            backgroundColor: cores.superficieAlternativa,
+            backgroundColor: tema.cardColor,
             side: BorderSide(color: cores.borda),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -308,11 +313,25 @@ class _CabecalhoCompacto extends StatelessWidget
           ),
           icon: const Icon(Icons.menu),
         ),
-      ),
-      title: _AssinaturaCompacta(titulo: titulo),
-      titleSpacing: 0,
-      centerTitle: false,
-      actions: const [SizedBox(width: 15)],
+        const SizedBox(width: 7),
+        IconButton(
+          key: const Key('abrir-conta-cabecalho'),
+          tooltip: 'Abrir perfil',
+          onPressed: aoAbrirConta,
+          style: IconButton.styleFrom(
+            minimumSize: const Size.square(42),
+            maximumSize: const Size.square(42),
+            padding: EdgeInsets.zero,
+            backgroundColor: tema.cardColor,
+            side: BorderSide(color: cores.borda),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          icon: const Icon(Icons.person_outline),
+        ),
+        const SizedBox(width: 15),
+      ],
     );
   }
 }
@@ -380,7 +399,7 @@ class _DestinoBarraInferior extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final onBrand = Theme.of(context).colorScheme.onPrimary;
+    final onBrand = Theme.of(context).colorScheme.onSecondary;
     return Semantics(
       selected: selecionado,
       button: true,
@@ -389,31 +408,28 @@ class _DestinoBarraInferior extends StatelessWidget {
         key: Key('barra-${destino.name}'),
         borderRadius: BorderRadius.circular(14),
         onTap: aoTocar,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: const EdgeInsets.all(4),
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            color: selecionado ? cores.marca : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: selecionado ? 36 : 28,
-                height: selecionado ? 34 : 28,
-                decoration: BoxDecoration(
-                  color: selecionado ? cores.acao : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  destino.icone,
-                  size: 21,
-                  color: selecionado ? onBrand : cores.textoSuave,
-                ),
+              Icon(
+                destino.icone,
+                size: 21,
+                color: selecionado ? onBrand : cores.textoSuave,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 destino.titulo,
                 maxLines: 1,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selecionado ? cores.acao : cores.textoSuave,
+                  color: selecionado ? onBrand : cores.textoSuave,
                   fontSize: 9,
                   fontWeight: FontWeight.w800,
                 ),
@@ -448,7 +464,7 @@ class _PaginaProgramaInterna extends StatelessWidget {
             key: chaveVoltar,
             onPressed: aoVoltar,
             icon: const Icon(Icons.arrow_back, size: 17),
-            label: const Text('Todos os programas'),
+            label: const Text('Serviços'),
           ),
         ),
       ),
@@ -458,21 +474,39 @@ class _PaginaProgramaInterna extends StatelessWidget {
 }
 
 class _AssinaturaCompacta extends StatelessWidget {
-  const _AssinaturaCompacta({required this.titulo});
-
-  final String titulo;
+  const _AssinaturaCompacta();
 
   @override
   Widget build(BuildContext context) {
-    final escuro = Theme.of(context).brightness == Brightness.dark;
+    final cores = CoresRadar.de(context);
     return Semantics(
       label: 'Radar de Benefícios',
       header: true,
       excludeSemantics: true,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          LogoRadar(tamanho: 34, sobreFundoEscuro: escuro),
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: cores.marca,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+                bottomRight: Radius.circular(11),
+                bottomLeft: Radius.circular(4),
+              ),
+            ),
+            child: Text(
+              'R',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
           const SizedBox(width: 9),
           Flexible(
             child: Column(
@@ -484,20 +518,36 @@ class _AssinaturaCompacta extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: escuro ? Tokens.textoEscuro : Tokens.marca,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
                     height: 1,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  titulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: CoresRadar.de(context).textoSuave,
-                    height: 1,
-                  ),
+                Row(
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: cores.ganho,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const SizedBox.square(dimension: 7),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        'API protegida',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.ganho,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

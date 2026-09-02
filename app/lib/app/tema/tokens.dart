@@ -7,89 +7,106 @@ import 'package:flutter/material.dart';
 /// Não altere estes valores para "aproximar" uma tela isolada: ajuste primeiro
 /// o protótipo e o sistema de design quando a direção visual mudar de propósito.
 abstract final class Tokens {
-  // Marca e superfícies institucionais.
-  static const Color marcaProfunda = Color(0xFF18212A);
-  static const Color marca = Color(0xFF1788B8);
-  static const Color marcaMedia = Color(0xFF126F97);
-  static const Color marcaClara = Color(0xFF1788B8); // --brand
+  // Contrato V11 — tema claro.
+  static const Color canvas = Color(0xFFF4EEE5);
+  static const Color paper = Color(0xFFFFFDF8);
+  static const Color paperSoft = Color(0xFFFAF5ED);
+  static const Color ink = Color(0xFF291A2F);
+  static const Color muted = Color(0xFF756B76);
+  static const Color line = Color(0xFFE4D8CA);
+  static const Color action = Color(0xFFE76043);
+  static const Color actionStrong = Color(0xFFBA3B26);
+  static const Color actionSoft = Color(0xFFFEE4DC);
+  static const Color plum = Color(0xFF4C2E59);
+  static const Color plumSoft = Color(0xFFEEE3F2);
+  static const Color positive = Color(0xFF28745A);
+  static const Color positiveSoft = Color(0xFFDCEEE4);
+  static const Color warning = Color(0xFF8A5D12);
+  static const Color warningSoft = Color(0xFFFBEBBF);
+  static const Color danger = Color(0xFFAF3544);
 
-  // Ação e integração.
-  static const Color acaoFundo = Color(0xFFE1F3FA); // --brand-soft
-  static const Color ciano = Color(0xFF1788B8);
-  static const Color cianoFundo = Color(0xFFE1F3FA);
+  // Aliases mantidos para os widgets existentes durante a migração visual.
+  static const Color marcaProfunda = ink;
+  static const Color marca = plum;
+  static const Color marcaMedia = actionStrong;
+  static const Color marcaClara = action;
+  static const Color acaoFundo = actionSoft;
+  static const Color ciano = plum;
+  static const Color cianoFundo = plumSoft;
 
   // Ganho/sucesso — cashback, economia, meta atingida. Nunca para ação neutra.
-  static const Color ganho = Color(0xFF16835F);
-  static const Color ganhoFundo = Color(0xFFE0F4EB);
+  static const Color ganho = positive;
+  static const Color ganhoFundo = positiveSoft;
 
   // Atenção — dado envelhecendo.
-  static const Color atencao = Color(0xFF8B5A12);
-  static const Color atencaoFundo = Color(0xFFFFF2D7);
+  static const Color atencao = warning;
+  static const Color atencaoFundo = warningSoft;
 
   // Erro e zona de perigo.
-  static const Color perigo = Color(0xFFD44747);
+  static const Color perigo = danger;
 
   // Texto e superfícies claras da direção mobile.
-  static const Color texto = Color(0xFF18212A);
-  static const Color textoSuave = Color(0xFF5E6B77);
-  static const Color textoSutil = Color(0xFF83919E);
-  static const Color pagina = Color(0xFFDBE5EE);
-  static const Color fundo = Color(0xFFEAF0F5); // --app
-  static const Color superficie = Color(0xFFFFFFFF);
-  static const Color superficieAlternativa = Color(0xFFE1EAF2);
-  static const Color superficieForte = Color(0xFFD2DEE8);
-  static const Color borda = Color(0xFFC4D2DE);
+  static const Color texto = ink;
+  static const Color textoSuave = muted;
+  static const Color textoSutil = muted;
+  static const Color pagina = canvas;
+  static const Color fundo = canvas;
+  static const Color superficie = paper;
+  static const Color superficieAlternativa = paperSoft;
+  static const Color superficieForte = plumSoft;
+  static const Color borda = line;
 
   // Contrapartes escuras extraídas do protótipo.
-  static const Color textoEscuro = Color(0xFFF4F7FA);
-  static const Color textoSuaveEscuro = Color(0xFFC0C7CF);
-  static const Color textoSutilEscuro = Color(0xFF959FA9);
-  static const Color paginaEscura = Color(0xFF2C3035);
-  static const Color fundoEscuro = Color(0xFF33383E);
-  static const Color superficieEscura = Color(0xFF3E444B);
-  static const Color superficieAlternativaEscura = Color(0xFF474E56);
-  static const Color superficieForteEscura = Color(0xFF545C65);
-  static const Color bordaEscura = Color(0xFF5C6670);
-  static const Color acaoFundoEscuro = Color(0xFF415B68);
-  static const Color cianoFundoEscuro = Color(0xFF415B68);
-  static const Color ganhoFundoEscuro = Color(0xFF3D5648);
-  static const Color ganhoEscuro = Color(0xFF81E4AD);
-  static const Color atencaoFundoEscuro = Color(0xFF402F14);
-  static const Color atencaoEscuro = Color(0xFFFFD17A);
-
-  // O HTML não redefine estes tokens no escuro.
-  static const Color acaoEscura = Color(0xFF70CEF3);
-  static const Color perigoEscuro = Color(0xFFFF8585);
+  // Contrato V11 — tema escuro.
+  static const Color textoEscuro = Color(0xFFFAF6EF);
+  static const Color textoSuaveEscuro = Color(0xFFC2B6C0);
+  static const Color textoSutilEscuro = Color(0xFFC2B6C0);
+  static const Color paginaEscura = Color(0xFF1D191E);
+  static const Color fundoEscuro = Color(0xFF1D191E);
+  static const Color superficieEscura = Color(0xFF292329);
+  static const Color superficieAlternativaEscura = Color(0xFF332B32);
+  static const Color superficieForteEscura = Color(0xFF46364B);
+  static const Color bordaEscura = Color(0xFF493C47);
+  static const Color acaoFundoEscuro = Color(0xFF4B2C2A);
+  static const Color cianoFundoEscuro = Color(0xFF46364B);
+  static const Color ganhoFundoEscuro = Color(0xFF263F35);
+  static const Color ganhoEscuro = Color(0xFF84D0AA);
+  static const Color atencaoFundoEscuro = Color(0xFF44391F);
+  static const Color atencaoEscuro = Color(0xFFF3CB72);
+  static const Color acaoEscura = Color(0xFFFF896B);
+  static const Color acaoForteEscura = Color(0xFFFFB099);
+  static const Color marcaEscura = Color(0xFFD8B9DF);
+  static const Color perigoEscuro = Color(0xFFFF9AA7);
 }
 
 /// Escala estrutural para evitar números mágicos espalhados pelo redesign.
 abstract final class EspacamentoRadar {
   static const double xxs = 4;
-  static const double xs = 8;
-  static const double sm = 12;
-  static const double md = 16;
-  static const double lg = 20;
+  static const double xs = 6;
+  static const double sm = 10;
+  static const double md = 14;
+  static const double lg = 18;
   static const double xl = 24;
-  static const double xxl = 32;
+  static const double xxl = 28;
 }
 
 abstract final class RaioRadar {
-  static const double pequeno = 10;
-  static const double medio = 14;
-  static const double grande = 18;
-  static const double destaque = 24;
+  static const double pequeno = 12;
+  static const double medio = 15;
+  static const double grande = 21;
+  static const double destaque = 26;
   static const double pilula = 999;
 }
 
 abstract final class SombraRadar {
   static const BoxShadow clara = BoxShadow(
-    color: Color(0x212A4458),
-    blurRadius: 26,
-    offset: Offset(0, 10),
+    color: Color(0x143F2531),
+    blurRadius: 24,
+    offset: Offset(0, 8),
   );
 
   static const BoxShadow escura = BoxShadow(
-    color: Color(0x2E181C20),
+    color: Color(0x33000000),
     blurRadius: 28,
     offset: Offset(0, 10),
   );
@@ -102,6 +119,7 @@ abstract final class SombraRadar {
 @immutable
 class CoresRadar extends ThemeExtension<CoresRadar> {
   const CoresRadar({
+    required this.marca,
     required this.acao,
     required this.integracaoInter,
     required this.ganho,
@@ -113,7 +131,8 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   });
 
   const CoresRadar.claras()
-    : acao = Tokens.marcaClara,
+    : marca = Tokens.plum,
+      acao = Tokens.action,
       integracaoInter = Tokens.ciano,
       ganho = Tokens.ganho,
       atencao = Tokens.atencao,
@@ -123,8 +142,9 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       borda = Tokens.borda;
 
   const CoresRadar.escuras()
-    : acao = Tokens.acaoEscura,
-      integracaoInter = Tokens.ciano,
+    : marca = Tokens.marcaEscura,
+      acao = Tokens.acaoEscura,
+      integracaoInter = Tokens.marcaEscura,
       ganho = Tokens.ganhoEscuro,
       atencao = Tokens.atencaoEscuro,
       perigo = Tokens.perigoEscuro,
@@ -134,16 +154,18 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   /// Paleta anterior preservada no Web e em layouts amplos durante a migração.
   const CoresRadar.legadas()
-    : acao = Tokens.marcaClara,
+    : marca = const Color(0xFF1788B8),
+      acao = const Color(0xFF1788B8),
       integracaoInter = const Color(0xFF087E8B),
-      ganho = Tokens.ganho,
-      atencao = Tokens.atencao,
-      perigo = Tokens.perigo,
+      ganho = const Color(0xFF16835F),
+      atencao = const Color(0xFF8B5A12),
+      perigo = const Color(0xFFD44747),
       textoSuave = const Color(0xFF60758A),
       superficieAlternativa = const Color(0xFFF0F4F7),
-      borda = Tokens.borda;
+      borda = const Color(0xFFC4D2DE);
 
   final Color acao;
+  final Color marca;
   final Color integracaoInter;
   final Color ganho;
   final Color atencao;
@@ -160,6 +182,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
 
   @override
   CoresRadar copyWith({
+    Color? marca,
     Color? acao,
     Color? integracaoInter,
     Color? ganho,
@@ -169,6 +192,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     Color? superficieAlternativa,
     Color? borda,
   }) => CoresRadar(
+    marca: marca ?? this.marca,
     acao: acao ?? this.acao,
     integracaoInter: integracaoInter ?? this.integracaoInter,
     ganho: ganho ?? this.ganho,
@@ -183,6 +207,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   CoresRadar lerp(covariant CoresRadar? other, double t) {
     if (other == null) return this;
     return CoresRadar(
+      marca: Color.lerp(marca, other.marca, t)!,
       acao: Color.lerp(acao, other.acao, t)!,
       integracaoInter: Color.lerp(integracaoInter, other.integracaoInter, t)!,
       ganho: Color.lerp(ganho, other.ganho, t)!,

@@ -20,11 +20,11 @@ enum Destino {
 /// Inter são subáreas de Programas, mas continuam como destinos próprios para
 /// preservar busca, filtros, página e rolagem ao alternar de área.
 enum DestinoCompacto {
-  inicio(Icons.home_outlined, 'Início', 'Visão geral do seu radar'),
+  inicio(Icons.home_outlined, 'Resumo', 'Visão geral do seu radar'),
   programas(
     Icons.space_dashboard_outlined,
-    'Programas',
-    'Pontos, cashback e integrações',
+    'Serviços',
+    'Livelo, Banco Inter e integrações',
   ),
   livelo(Icons.card_giftcard_outlined, 'Livelo', 'Lojas, pontos e alertas'),
   inter(
@@ -32,7 +32,7 @@ enum DestinoCompacto {
     'Banco Inter',
     'Escolha lojas e veja cashback',
   ),
-  produtos(Icons.search, 'Buscar produtos', 'Resultados das lojas escolhidas');
+  produtos(Icons.search, 'Produtos', 'Resultados das lojas escolhidas');
 
   const DestinoCompacto(this.icone, this.titulo, this.descricao);
 

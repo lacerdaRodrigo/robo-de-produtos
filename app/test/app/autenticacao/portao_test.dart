@@ -82,7 +82,7 @@ void main() {
       RadarApp.comAutenticacao(api: api, autenticador: autenticador),
     );
 
-    expect(find.text('Que bom ter você aqui'), findsOneWidget);
+    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
     await at.enterText(find.byType(EditableText).at(0), 'piloto@example.com');
     await at.enterText(find.byType(EditableText).at(1), 'senha-segura');
     await at.tap(find.text('Entrar'));
@@ -104,7 +104,10 @@ void main() {
     );
 
     await at.enterText(find.byType(EditableText).first, 'piloto@example.com');
-    await at.tap(find.text('Esqueci minha senha'));
+    final recuperar = find.text('Esqueci minha senha');
+    await at.ensureVisible(recuperar);
+    await at.pumpAndSettle();
+    await at.tap(recuperar);
     await at.pump();
 
     expect(autenticador.recuperacaoRecebida, 'piloto@example.com');

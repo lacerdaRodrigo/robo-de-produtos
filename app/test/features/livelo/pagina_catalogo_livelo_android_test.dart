@@ -291,8 +291,8 @@ void main() {
 
     expect(find.textContaining('12 pontos por R\$ 1'), findsOneWidget);
     expect(find.text('Melhor Loja'), findsOneWidget);
-    expect(find.text('Lojas'), findsOneWidget);
-    expect(find.text('Acompanhadas'), findsOneWidget);
+    expect(find.text('Todas'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsWidgets);
     expect(find.text('Alertas'), findsNothing);
     expect(find.text('Monitoramento da coleta'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
@@ -307,7 +307,7 @@ void main() {
     );
     await at.pumpAndSettle();
     expect(find.text('Loja Clube'), findsOneWidget);
-    expect(find.text('Acompanhando'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsWidgets);
     expect(find.text('Alerta ativo'), findsOneWidget);
   });
 

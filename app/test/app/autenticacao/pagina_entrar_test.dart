@@ -81,7 +81,7 @@ void main() {
 
     expect(find.byKey(const Key('login-marca-compacta')), findsOneWidget);
     expect(find.byKey(const Key('login-painel-marca')), findsNothing);
-    expect(find.text('Que bom ter você aqui'), findsOneWidget);
+    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
     expect(find.text('E-mail'), findsOneWidget);
     expect(find.text('Senha'), findsOneWidget);
     expect(find.text('Entrar'), findsOneWidget);

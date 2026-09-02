@@ -406,7 +406,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 38),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 112),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             for (final loja in lojas)
@@ -588,23 +588,23 @@ class _FiltrosCompactosInter extends StatelessWidget {
       child: Row(
         children: [
           _FiltroCompactoInter(
-            rotulo: 'Todas as lojas',
+            rotulo: 'Todas',
             ativo: selecionado == 0,
-            corAtiva: cores.acao,
+            corAtiva: cores.marca,
             aoTocar: () => aoSelecionar(0),
           ),
           const SizedBox(width: 7),
           _FiltroCompactoInter(
             rotulo: 'Maior cashback',
             ativo: selecionado == 1,
-            corAtiva: cores.acao,
+            corAtiva: cores.marca,
             aoTocar: () => aoSelecionar(1),
           ),
           const SizedBox(width: 7),
           _FiltroCompactoInter(
             rotulo: 'Acompanhadas',
             ativo: selecionado == 2,
-            corAtiva: cores.acao,
+            corAtiva: cores.marca,
             aoTocar: () => aoSelecionar(2),
           ),
         ],
@@ -632,12 +632,10 @@ class _FiltroCompactoInter extends StatelessWidget {
     style: TextButton.styleFrom(
       minimumSize: const Size(0, 37),
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      backgroundColor: ativo
-          ? (Theme.of(context).brightness == Brightness.dark
-                ? Tokens.acaoFundoEscuro
-                : Tokens.acaoFundo)
-          : Theme.of(context).colorScheme.surface,
-      foregroundColor: ativo ? corAtiva : CoresRadar.de(context).textoSuave,
+      backgroundColor: ativo ? corAtiva : Theme.of(context).cardColor,
+      foregroundColor: ativo
+          ? Theme.of(context).colorScheme.onSecondary
+          : CoresRadar.de(context).textoSuave,
       shape: StadiumBorder(
         side: BorderSide(
           color: ativo ? corAtiva : CoresRadar.de(context).borda,

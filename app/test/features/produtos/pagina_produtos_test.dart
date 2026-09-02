@@ -279,7 +279,18 @@ void main() {
     expect(find.text('Atualizar Produtos'), findsNothing);
     await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
     await at.pumpAndSettle();
-    expect(find.text('Após cashback'), findsOneWidget);
+    final precoLiquido = find.text('Após cashback');
+    await at.scrollUntilVisible(
+      precoLiquido,
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('produtos-compacto')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(precoLiquido, findsOneWidget);
     expect(find.text('R\$ 3.356,89'), findsOneWidget);
     expect(find.text('Ver no Inter'), findsOneWidget);
 

@@ -12,12 +12,14 @@ class CartaoProduto extends StatelessWidget {
     required this.aoAbrirHistorico,
     this.aoAbrirNoShopping,
     this.compacto = false,
+    this.mostrarLoja = true,
   });
 
   final ProdutoDireto produto;
   final VoidCallback aoAbrirHistorico;
   final VoidCallback? aoAbrirNoShopping;
   final bool compacto;
+  final bool mostrarLoja;
 
   @override
   Widget build(BuildContext context) {
@@ -171,48 +173,80 @@ class CartaoProduto extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                border: Border(bottom: BorderSide(color: cores.borda)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 13,
-                  vertical: 10,
+            if (mostrarLoja)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: cores.superficieAlternativa,
+                  border: Border(bottom: BorderSide(color: cores.borda)),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.circle, size: 7, color: cores.ganho),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        produto.lojaNome,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: tema.textTheme.labelSmall?.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 13,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.circle, size: 7, color: cores.ganho),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Text(
+                          produto.lojaNome,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 9),
-                    Text(
-                      dataHoraProduto(produto.atualizadaEm),
-                      style: tema.textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontSize: 8,
+                      const SizedBox(width: 9),
+                      Text(
+                        dataHoraProduto(produto.atualizadaEm),
+                        style: tema.textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
+                          fontSize: 8,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (produto.marca != null || produto.categoria != null) ...[
+                    Wrap(
+                      spacing: 5,
+                      runSpacing: 5,
+                      children: [
+                        for (final tag in [produto.marca, produto.categoria])
+                          if (tag != null && tag.trim().isNotEmpty)
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: cores.superficieAlternativa,
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 4,
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: tema.textTheme.labelSmall?.copyWith(
+                                    color: cores.textoSuave,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                   if (produto.etiquetas.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -243,6 +277,35 @@ class CartaoProduto extends StatelessWidget {
                       height: 1.25,
                     ),
                   ),
+                  if (produto.cashbackPercentualTexto != null ||
+                      produto.cashbackTexto != null) ...[
+                    const SizedBox(height: 8),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Tokens.ganhoFundoEscuro
+                            : Tokens.positiveSoft,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          [
+                            produto.cashbackPercentualTexto,
+                            produto.cashbackTexto,
+                          ].whereType<String>().join(' · '),
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: cores.ganho,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 11),
                   LayoutBuilder(
                     builder: (context, limites) {

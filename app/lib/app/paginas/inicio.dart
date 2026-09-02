@@ -140,9 +140,7 @@ class _PaginaInicioState extends State<PaginaInicio>
               sliver: SliverList.list(
                 children: [
                   if (widget.experienciaCompacta)
-                    _CabecalhoResumoCompacto(
-                      agora: (widget.agora ?? DateTime.now)(),
-                    )
+                    const _CabecalhoResumoCompacto()
                   else
                     _CabecalhoResumo(
                       resumo: resumo,
@@ -163,15 +161,27 @@ class _PaginaInicioState extends State<PaginaInicio>
                       : _DestaqueEstado(resumo: resumo),
                   if (widget.experienciaCompacta) ...[
                     const SizedBox(height: 25),
-                    const _TituloSecao(
-                      titulo: 'Explorar',
-                      complemento: 'Acesse os dados conectados',
+                    _TituloSecao(
+                      titulo: 'Seus serviços',
+                      complemento: 'Estados independentes',
                       compactoMobile: true,
+                      acao: widget.aoAbrirProgramas == null
+                          ? null
+                          : TextButton(
+                              onPressed: widget.aoAbrirProgramas,
+                              child: const Text('Ver todos'),
+                            ),
                     ),
                     const SizedBox(height: 12),
-                    _EspacosCompactos(
-                      aoAbrirProgramas: widget.aoAbrirProgramas,
+                    _ServicosResumoCompacto(
+                      resumo: resumo,
+                      aoAbrirLivelo: widget.aoAbrirLivelo,
+                      aoAbrirInter: widget.aoAbrirCashback,
+                    ),
+                    const SizedBox(height: 12),
+                    _AcoesRapidasResumo(
                       aoAbrirProdutos: widget.aoAbrirProdutos,
+                      aoAbrirServicos: widget.aoAbrirProgramas,
                     ),
                     const SizedBox(height: 25),
                     _AtividadeRecenteCompacta(
@@ -278,19 +288,17 @@ class _CabecalhoResumo extends StatelessWidget {
 }
 
 class _CabecalhoResumoCompacto extends StatelessWidget {
-  const _CabecalhoResumoCompacto({required this.agora});
-
-  final DateTime agora;
+  const _CabecalhoResumoCompacto();
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CabecalhoSecaoRadar(
-          sobrelinha: _dataExtensa(agora),
-          titulo: 'Seu radar hoje',
-          descricao: 'Acompanhe pontos, cashback e produtos em um só lugar.',
+        const CabecalhoSecaoRadar(
+          sobrelinha: 'Hoje',
+          titulo: 'Visão geral',
+          descricao: 'Cada serviço mostra seus próprios números e avisos.',
         ),
       ],
     );
@@ -340,165 +348,91 @@ class _DestaqueInicioCompacto extends StatelessWidget {
   Widget build(BuildContext context) {
     final prioridade = _prioridade(resumo);
     final atualizado = resumo.estadoGeral == EstadoResumo.atualizado;
+    final cores = CoresRadar.de(context);
+    final tom = atualizado ? cores.ganho : cores.atencao;
+    final fundo = atualizado
+        ? (Theme.of(context).brightness == Brightness.dark
+              ? Tokens.ganhoFundoEscuro
+              : Tokens.positiveSoft)
+        : (Theme.of(context).brightness == Brightness.dark
+              ? Tokens.atencaoFundoEscuro
+              : Tokens.warningSoft);
     return CartaoRadar(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SeloHeroCompacto(
-            texto: atualizado
-                ? 'Tudo atualizado'
-                : _textoAtualizacao(resumo, agora),
-            atualizado: atualizado,
-          ),
-          const SizedBox(height: 18),
-          Text(
-            atualizado
-                ? 'As melhores oportunidades continuam ativas.'
-                : prioridade.titulo,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              height: 1.12,
-              letterSpacing: -0.8,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            atualizado
-                ? 'Últimos dados recebidos normalmente.'
-                : prioridade.descricao,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
-          _MetricasHeroCompactas(resumo: resumo),
-        ],
-      ),
-    );
-  }
-}
-
-class _SeloHeroCompacto extends StatelessWidget {
-  const _SeloHeroCompacto({required this.texto, required this.atualizado});
-
-  final String texto;
-  final bool atualizado;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color:
-            (atualizado
-                    ? CoresRadar.de(context).ganho
-                    : CoresRadar.de(context).atencao)
-                .withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.circle,
-              size: 8,
-              color: atualizado
-                  ? CoresRadar.de(context).ganho
-                  : CoresRadar.de(context).atencao,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                texto,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: atualizado
-                      ? CoresRadar.de(context).ganho
-                      : CoresRadar.de(context).atencao,
-                  fontWeight: FontWeight.w800,
+          Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: fundo,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: SizedBox.square(
+                  dimension: 38,
+                  child: Icon(
+                    Icons.monitor_heart_outlined,
+                    color: tom,
+                    size: 19,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricasHeroCompactas extends StatelessWidget {
-  const _MetricasHeroCompactas({required this.resumo});
-
-  final ResumoInicio resumo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _MetricaHero(valor: _valorLivelo(resumo), titulo: 'alertas Livelo'),
-        const SizedBox(width: 7),
-        _MetricaHero(
-          valor: _totalLojasAcompanhadas(resumo),
-          titulo: 'lojas acompanhadas',
-        ),
-        const SizedBox(width: 7),
-        _MetricaHero(
-          valor: resumo.produtos.estado == EstadoResumo.indisponivel
-              ? '—'
-              : _inteiro(resumo.produtos.produtosAtivos),
-          titulo: 'produtos ativos',
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricaHero extends StatelessWidget {
-  const _MetricaHero({required this.valor, required this.titulo});
-
-  final String valor;
-  final String titulo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(9, 11, 9, 11),
-        decoration: BoxDecoration(
-          color: CoresRadar.de(context).superficieAlternativa,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              valor,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              titulo,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
-                height: 1.1,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      atualizado ? 'Tudo atualizado' : 'Atualizado com avisos',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _textoAtualizacao(resumo, agora),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: cores.textoSuave,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: fundo,
+                  borderRadius: BorderRadius.circular(RaioRadar.pilula),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    atualizado ? 'Em dia' : 'Com avisos',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: tom,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            atualizado
+                ? 'Todos os serviços responderam dentro do intervalo esperado.'
+                : prioridade.descricao,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: cores.textoSuave,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -813,105 +747,316 @@ class _Metrica extends StatelessWidget {
   }
 }
 
-class _EspacosCompactos extends StatelessWidget {
-  const _EspacosCompactos({
-    required this.aoAbrirProgramas,
-    required this.aoAbrirProdutos,
+class _ServicosResumoCompacto extends StatelessWidget {
+  const _ServicosResumoCompacto({
+    required this.resumo,
+    required this.aoAbrirLivelo,
+    required this.aoAbrirInter,
   });
 
-  final VoidCallback? aoAbrirProgramas;
-  final VoidCallback? aoAbrirProdutos;
+  final ResumoInicio resumo;
+  final VoidCallback? aoAbrirLivelo;
+  final VoidCallback? aoAbrirInter;
 
   @override
   Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
+    final estadoInter = _estadoInter(resumo);
     return Column(
       children: [
-        _EspacoCompacto(
-          chave: const Key('atalho-programas'),
-          icone: Icons.space_dashboard_outlined,
-          cor: cores.acao,
-          titulo: 'Programas e parceiros',
-          descricao: 'Todos os catálogos conectados',
-          aoTocar: aoAbrirProgramas,
+        _CartaoDominioResumo(
+          chave: const Key('resumo-servico-livelo'),
+          iniciais: 'LI',
+          titulo: 'Livelo',
+          descricao: 'Pontos e lojas acompanhadas',
+          estado: resumo.livelo.estado,
+          metricas: [
+            (
+              'Lojas acompanhadas',
+              _valorResumo(
+                resumo.livelo.estado,
+                resumo.livelo.lojasAcompanhadas,
+              ),
+            ),
+            ('Último sucesso', _dataHora(resumo.livelo.ultimoSucessoEm)),
+          ],
+          aviso: resumo.livelo.estado == EstadoResumo.atualizado
+              ? null
+              : _descricaoEstado(resumo.livelo.estado),
+          acao: 'Ver lojas da Livelo',
+          aoTocar: aoAbrirLivelo,
         ),
-        const SizedBox(height: 10),
-        _EspacoCompacto(
-          chave: const Key('atalho-produtos'),
-          icone: Icons.search,
-          cor: cores.acao,
-          titulo: 'Buscar produtos',
-          descricao: 'Catálogo local das lojas selecionadas',
-          aoTocar: aoAbrirProdutos,
+        const SizedBox(height: 11),
+        _CartaoDominioResumo(
+          chave: const Key('resumo-servico-inter'),
+          iniciais: 'BI',
+          titulo: 'Banco Inter',
+          descricao: 'Cashback e Compre direto',
+          estado: estadoInter,
+          metricas: [
+            (
+              'Cashback',
+              _valorResumo(
+                resumo.cashbackInter.estado,
+                resumo.cashbackInter.lojasAcompanhadas,
+                sufixo: ' acompanhadas',
+              ),
+            ),
+            (
+              'Compre direto',
+              _valorResumo(
+                resumo.produtos.estado,
+                resumo.produtos.lojasSelecionadas,
+                sufixo: ' selecionadas',
+              ),
+            ),
+            (
+              'Produtos coletados',
+              _valorResumo(
+                resumo.produtos.estado,
+                resumo.produtos.produtosAtivos,
+                sufixo: ' ativos',
+              ),
+            ),
+          ],
+          aviso: estadoInter == EstadoResumo.atualizado
+              ? null
+              : _descricaoEstado(estadoInter),
+          acao: 'Abrir Banco Inter',
+          aoTocar: aoAbrirInter,
         ),
       ],
     );
   }
 }
 
-class _EspacoCompacto extends StatelessWidget {
-  const _EspacoCompacto({
+class _CartaoDominioResumo extends StatelessWidget {
+  const _CartaoDominioResumo({
     required this.chave,
-    required this.icone,
-    required this.cor,
+    required this.iniciais,
     required this.titulo,
     required this.descricao,
+    required this.estado,
+    required this.metricas,
+    required this.aviso,
+    required this.acao,
     required this.aoTocar,
   });
 
   final Key chave;
-  final IconData icone;
-  final Color cor;
+  final String iniciais;
   final String titulo;
   final String descricao;
+  final EstadoResumo estado;
+  final List<(String, String)> metricas;
+  final String? aviso;
+  final String acao;
   final VoidCallback? aoTocar;
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final corEstado = _corEstado(context, estado);
     return CartaoRadar(
       aoTocar: aoTocar,
       padding: EdgeInsets.zero,
-      child: Ink(
+      child: Padding(
         key: chave,
-        padding: const EdgeInsets.all(13),
-        child: Row(
+        padding: const EdgeInsets.all(15),
+        child: Column(
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: SizedBox.square(
-                dimension: 47,
-                child: Icon(icone, color: cor),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titulo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Tokens.superficieForteEscura
+                        : Tokens.plumSoft,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                      bottomRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(5),
+                    ),
+                  ),
+                  child: Text(
+                    iniciais,
+                    style: TextStyle(
+                      color: cores.marca,
+                      fontSize: 10,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    descricao,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: CoresRadar.de(context).textoSuave,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        descricao,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: _Pill(
+                    texto: _rotuloEstado(estado),
+                    compacto: true,
+                    cor: corEstado,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 13),
+            Divider(height: 1, color: cores.borda),
+            for (final metrica in metricas)
+              _LinhaMetricaDominio(rotulo: metrica.$1, valor: metrica.$2),
+            if (aviso != null) ...[
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Tokens.atencaoFundoEscuro
+                      : Tokens.warningSoft,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: cores.atencao, size: 15),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        aviso!,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: cores.atencao,
+                          fontSize: 9,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 11),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    acao,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Tokens.acaoForteEscura
+                          : Tokens.actionStrong,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                ],
-              ),
+                ),
+                Icon(Icons.chevron_right, color: cores.acao, size: 18),
+              ],
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LinhaMetricaDominio extends StatelessWidget {
+  const _LinhaMetricaDominio({required this.rotulo, required this.valor});
+
+  final String rotulo;
+  final String valor;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            rotulo,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 9,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Flexible(
+          child: Text(
+            valor,
+            textAlign: TextAlign.end,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _AcoesRapidasResumo extends StatelessWidget {
+  const _AcoesRapidasResumo({
+    required this.aoAbrirProdutos,
+    required this.aoAbrirServicos,
+  });
+
+  final VoidCallback? aoAbrirProdutos;
+  final VoidCallback? aoAbrirServicos;
+
+  @override
+  Widget build(BuildContext context) {
+    final produtos = FilledButton(
+      key: const Key('atalho-produtos'),
+      onPressed: aoAbrirProdutos,
+      style: FilledButton.styleFrom(
+        backgroundColor: CoresRadar.de(context).marca,
+      ),
+      child: const Text('Buscar produtos'),
+    );
+    final servicos = OutlinedButton(
+      key: const Key('atalho-programas'),
+      onPressed: aoAbrirServicos,
+      child: const Text('Todos os serviços'),
+    );
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final empilhar =
+            limites.maxWidth < 320 ||
+            MediaQuery.textScalerOf(context).scale(12) > 16;
+        if (empilhar) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [produtos, const SizedBox(height: 8), servicos],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: produtos),
+            const SizedBox(width: 9),
+            Expanded(child: servicos),
+          ],
+        );
+      },
     );
   }
 }
@@ -1179,11 +1324,13 @@ class _TituloSecao extends StatelessWidget {
     required this.titulo,
     required this.complemento,
     this.compactoMobile = false,
+    this.acao,
   });
 
   final String titulo;
   final String complemento;
   final bool compactoMobile;
+  final Widget? acao;
 
   @override
   Widget build(BuildContext context) {
@@ -1191,14 +1338,21 @@ class _TituloSecao extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            titulo,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              height: 1.2,
-              letterSpacing: -0.7,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  titulo,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+              ),
+              ?acao,
+            ],
           ),
           const SizedBox(height: 5),
           Text(
@@ -1360,25 +1514,27 @@ String _inteiro(int valor) {
   return resultado.toString();
 }
 
-bool _valorDisponivel(EstadoResumo estado) =>
-    estado != EstadoResumo.indisponivel;
-
-String _valorLivelo(ResumoInicio resumo) {
-  if (!_valorDisponivel(resumo.livelo.estado) ||
-      resumo.livelo.ultimoSucessoEm == null) {
+String _valorResumo(EstadoResumo estado, int valor, {String sufixo = ''}) {
+  if (estado == EstadoResumo.indisponivel || estado == EstadoResumo.semDados) {
     return '—';
   }
-  return _inteiro(resumo.livelo.alertasUltimaColeta);
+  return '${_inteiro(valor)}$sufixo';
 }
 
-String _totalLojasAcompanhadas(ResumoInicio resumo) {
-  if (!_valorDisponivel(resumo.livelo.estado) ||
-      !_valorDisponivel(resumo.cashbackInter.estado)) {
-    return '—';
-  }
-  return _inteiro(
-    resumo.livelo.lojasAcompanhadas + resumo.cashbackInter.lojasAcompanhadas,
-  );
+EstadoResumo _estadoInter(ResumoInicio resumo) {
+  const prioridade = <EstadoResumo>[
+    EstadoResumo.indisponivel,
+    EstadoResumo.falhaRecente,
+    EstadoResumo.parcial,
+    EstadoResumo.degradado,
+    EstadoResumo.atualizando,
+    EstadoResumo.atrasado,
+    EstadoResumo.atencao,
+    EstadoResumo.semDados,
+    EstadoResumo.atualizado,
+  ];
+  final estados = {resumo.cashbackInter.estado, resumo.produtos.estado};
+  return prioridade.firstWhere(estados.contains);
 }
 
 String _textoAtualizacao(ResumoInicio resumo, DateTime agora) {

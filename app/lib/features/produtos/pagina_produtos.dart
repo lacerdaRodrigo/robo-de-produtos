@@ -256,11 +256,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
             sliver: SliverToBoxAdapter(
               child: CabecalhoSecaoRadar(
-                sobrelinha: 'Catálogo local',
-                titulo: 'Buscar produtos',
+                sobrelinha: 'Compre direto',
+                titulo: 'Produtos',
                 descricao:
-                    'Os resultados vêm apenas das lojas que você selecionou no Banco Inter.',
+                    'Compare os catálogos salvos das lojas que você selecionou.',
               ),
+            ),
+          ),
+        if (widget.aoEscolherLojas != null)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+            sliver: SliverToBoxAdapter(
+              child: _OrigemProdutos(aoEscolherLojas: widget.aoEscolherLojas!),
             ),
           ),
         SliverPadding(
@@ -432,14 +439,25 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         ),
       ];
     }
+    final grupos = <String, List<ProdutoDireto>>{};
+    for (final produto in _controlador.itens) {
+      grupos.putIfAbsent(produto.lojaNome, () => []).add(produto);
+    }
     return [
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         sliver: SliverList.separated(
-          itemCount: _controlador.itens.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 11),
-          itemBuilder: (context, indice) =>
-              _cartao(_controlador.itens[indice], compacto: true),
+          itemCount: grupos.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 17),
+          itemBuilder: (context, indice) {
+            final entrada = grupos.entries.elementAt(indice);
+            return _GrupoProdutosCompacto(
+              loja: entrada.key,
+              produtos: entrada.value,
+              construirCartao: (produto) =>
+                  _cartao(produto, compacto: true, mostrarLoja: false),
+            );
+          },
         ),
       ),
       SliverPadding(
@@ -518,11 +536,16 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     );
   }
 
-  Widget _cartao(ProdutoDireto produto, {bool compacto = false}) {
+  Widget _cartao(
+    ProdutoDireto produto, {
+    bool compacto = false,
+    bool mostrarLoja = true,
+  }) {
     final link = linkSeguroShoppingInter(produto.caminho);
     return CartaoProduto(
       produto: produto,
       compacto: compacto,
+      mostrarLoja: mostrarLoja,
       aoAbrirHistorico: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -647,6 +670,178 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     // que o Future retorna. Eles são descartados junto do modal; destruí-los
     // aqui faria o Flutter tentar reconstruir um TextField já sem controller.
     if (mounted && novos != null) _controlador.mudarFiltros(novos);
+  }
+}
+
+class _GrupoProdutosCompacto extends StatelessWidget {
+  const _GrupoProdutosCompacto({
+    required this.loja,
+    required this.produtos,
+    required this.construirCartao,
+  });
+
+  final String loja;
+  final List<ProdutoDireto> produtos;
+  final Widget Function(ProdutoDireto produto) construirCartao;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final iniciais = loja
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((parte) => parte.isNotEmpty)
+        .take(2)
+        .map((parte) => parte[0].toUpperCase())
+        .join();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Tokens.superficieForteEscura
+                    : Tokens.plumSoft,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(11),
+                  topRight: Radius.circular(11),
+                  bottomRight: Radius.circular(11),
+                  bottomLeft: Radius.circular(4),
+                ),
+              ),
+              child: Text(
+                iniciais.isEmpty ? '?' : iniciais,
+                style: TextStyle(
+                  color: cores.marca,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    loja,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    'Atualizado em ${dataHoraProduto(produtos.first.atualizadaEm)}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                      fontSize: 8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: cores.superficieAlternativa,
+                borderRadius: BorderRadius.circular(RaioRadar.pilula),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: Text(
+                  '${produtos.length} ${produtos.length == 1 ? 'oferta' : 'ofertas'}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: cores.textoSuave,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (var indice = 0; indice < produtos.length; indice++) ...[
+          construirCartao(produtos[indice]),
+          if (indice != produtos.length - 1) const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _OrigemProdutos extends StatelessWidget {
+  const _OrigemProdutos({required this.aoEscolherLojas});
+
+  final VoidCallback aoEscolherLojas;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final texto = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Resultados das lojas selecionadas',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'Altere a seleção dentro do Banco Inter',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: cores.textoSuave,
+            fontSize: 9,
+          ),
+        ),
+      ],
+    );
+    final botao = OutlinedButton(
+      onPressed: aoEscolherLojas,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 38),
+        padding: const EdgeInsets.symmetric(horizontal: 11),
+      ),
+      child: const Text('Escolher lojas'),
+    );
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final empilhar =
+            limites.maxWidth < 290 ||
+            MediaQuery.textScalerOf(context).scale(14) > 18;
+        return Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            border: Border.all(color: cores.borda),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: <BoxShadow>[
+              SombraRadar.para(Theme.of(context).brightness),
+            ],
+          ),
+          child: empilhar
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    texto,
+                    const SizedBox(height: 9),
+                    Align(alignment: Alignment.centerRight, child: botao),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: texto),
+                    const SizedBox(width: 10),
+                    botao,
+                  ],
+                ),
+        );
+      },
+    );
   }
 }
 
