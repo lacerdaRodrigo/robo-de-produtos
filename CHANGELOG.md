@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.52.2 (2026-09-02)
+
+### Bug Fixes
+
+- Alinhar catalogo Livelo ao prototipo V11
+  ([`22c79a3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/22c79a3fcaec34c4dd57d27f3b306e52d83ef14f))
+
+
 ## v1.52.1 (2026-09-02)
 
 ### Bug Fixes
