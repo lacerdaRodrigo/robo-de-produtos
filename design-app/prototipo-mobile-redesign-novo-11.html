@@ -491,9 +491,10 @@
           <p class="empty" id="service-empty">Nenhum serviço encontrado.</p>
         </section>
 
-        <section class="page" data-page="livelo">
+        <section class="page" data-page="livelo" data-layout="catalogo-direto">
           <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Serviços</button>
           <div class="page-heading"><p class="eyebrow">Pontos</p><div class="heading-row"><h1 class="page-title">Livelo</h1><button class="text-action" type="button" data-toast="Atualização Livelo solicitada pelo fluxo administrativo idempotente.">Atualizar</button></div><p class="page-lead">Encontre uma loja, acompanhe suas favoritas e consulte a pontuação quando precisar.</p></div>
+          <!-- O catálogo começa pelas ferramentas de busca; não há card de resumo de coleta. -->
           <div class="toolbar">
             <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar loja Livelo</span><input id="livelo-search" type="search" placeholder="Buscar loja"></label>
             <div class="catalog-tabs" data-filter-group="livelo" role="tablist" aria-label="Visualização das lojas"><button class="catalog-tab active" type="button" role="tab" aria-selected="true" data-filter="all"><span>Todas</span><small id="livelo-all-count">3</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-filter="monitored"><span>Acompanhando</span><small id="livelo-followed-count">2</small></button></div>

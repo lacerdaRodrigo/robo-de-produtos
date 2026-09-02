@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
-import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import 'cartao_catalogo_livelo.dart';
 import 'controlador_catalogo_livelo.dart';
-import 'formato_livelo.dart';
 import 'pagina_historico_livelo_android.dart';
 
 class PaginaCatalogoLiveloAndroid extends StatefulWidget {
@@ -20,14 +18,12 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
     required this.administrador,
     this.aoAbrirAlertas,
     this.controlador,
-    this.agora,
   });
 
   final Api api;
   final bool administrador;
   final VoidCallback? aoAbrirAlertas;
   final ControladorCatalogoLivelo? controlador;
-  final DateTime Function()? agora;
 
   @override
   State<PaginaCatalogoLiveloAndroid> createState() =>
@@ -154,27 +150,6 @@ class _EstadoPaginaCatalogoLiveloAndroid
               titulo: 'Livelo',
               descricao:
                   'Tudo da Livelo fica aqui: catálogo, acompanhadas e campanhas.',
-            ),
-          ),
-        ),
-        if (_controlador.resumo != null)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-            sliver: SliverToBoxAdapter(
-              child: _HeroCatalogo(
-                resumo: _controlador.resumo!,
-                agora: (widget.agora ?? DateTime.now)(),
-              ),
-            ),
-          ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
-          sliver: SliverToBoxAdapter(
-            child: AbasRadar(
-              rotulos: _abasVisiveis.map((aba) => aba.rotulo).toList(),
-              selecionada: _abasVisiveis.indexOf(_controlador.aba).clamp(0, 1),
-              aoSelecionar: (indice) =>
-                  _controlador.mudarAba(_abasVisiveis[indice]),
               acao: BotaoDisparo(
                 api: widget.api,
                 dominio: 'livelo',
@@ -198,6 +173,17 @@ class _EstadoPaginaCatalogoLiveloAndroid
                 onPressed: _abrirFiltros,
                 icon: const Icon(Icons.tune_rounded),
               ),
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+          sliver: SliverToBoxAdapter(
+            child: AbasRadar(
+              rotulos: _abasVisiveis.map((aba) => aba.rotulo).toList(),
+              selecionada: _abasVisiveis.indexOf(_controlador.aba).clamp(0, 1),
+              aoSelecionar: (indice) =>
+                  _controlador.mudarAba(_abasVisiveis[indice]),
             ),
           ),
         ),
@@ -434,185 +420,6 @@ class _EstadoPaginaCatalogoLiveloAndroid
     }
     return const Center(child: Text('Todos os resultados foram carregados.'));
   }
-}
-
-class _HeroCatalogo extends StatelessWidget {
-  const _HeroCatalogo({required this.resumo, required this.agora});
-  final ResumoCatalogoLivelo resumo;
-  final DateTime agora;
-
-  @override
-  Widget build(BuildContext context) {
-    final melhor = resumo.melhorOferta;
-    final atrasada = coletaAtrasada(resumo.ultimaColeta, agora);
-    final degradada = resumo.qualidade == 'degradada';
-    return CartaoRadar(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SeloHeroLivelo(
-            texto: degradada
-                ? 'Dados com qualidade reduzida'
-                : atrasada
-                ? 'Dados atrasados'
-                : 'Última coleta concluída',
-            atencao: degradada || atrasada,
-          ),
-          const SizedBox(height: 14),
-          if (degradada) ...[
-            Text(
-              'A última atualização foi incompleta. Exibindo a última coleta válida.',
-              style: TextStyle(color: CoresRadar.de(context).atencao),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Text(
-            melhor == null
-                ? 'Nenhuma loja acompanhada agora.'
-                : '${pontosLivelo(melhor.pontosAtuais, moeda: melhor.moeda)} é a melhor acompanhada agora.',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              height: 1.18,
-              letterSpacing: -0.8,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            melhor?.nome ??
-                'Escolha uma loja na aba Lojas para acompanhar a pontuação atual.',
-            style: TextStyle(color: CoresRadar.de(context).textoSuave),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Coleta: ${dataHoraLivelo(resumo.ultimaColeta)}',
-            style: TextStyle(
-              color: CoresRadar.de(context).textoSuave,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 18),
-          _MetricasCatalogo(resumo: resumo),
-        ],
-      ),
-    );
-  }
-}
-
-class _SeloHeroLivelo extends StatelessWidget {
-  const _SeloHeroLivelo({required this.texto, required this.atencao});
-
-  final String texto;
-  final bool atencao;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color:
-          (atencao
-                  ? CoresRadar.de(context).atencao
-                  : CoresRadar.de(context).ganho)
-              .withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(RaioRadar.pilula),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.circle,
-            size: 7,
-            color: atencao
-                ? CoresRadar.de(context).atencao
-                : CoresRadar.de(context).ganho,
-          ),
-          const SizedBox(width: 7),
-          Flexible(
-            child: Text(
-              texto,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: atencao
-                    ? CoresRadar.de(context).atencao
-                    : CoresRadar.de(context).ganho,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _MetricasCatalogo extends StatelessWidget {
-  const _MetricasCatalogo({required this.resumo});
-  final ResumoCatalogoLivelo resumo;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, limites) {
-      final metricas = [
-        _Metrica(valor: '${resumo.acompanhadas}', rotulo: 'acompanhadas'),
-        _Metrica(valor: '${resumo.alertasAtivos}', rotulo: 'alertas ativos'),
-        _Metrica(valor: '${resumo.totalCatalogo}', rotulo: 'no catálogo'),
-      ];
-      if (limites.maxWidth < 240) {
-        return Column(
-          children: [
-            for (var indice = 0; indice < metricas.length; indice++) ...[
-              metricas[indice],
-              if (indice != metricas.length - 1) const SizedBox(height: 8),
-            ],
-          ],
-        );
-      }
-      return Row(
-        children: [
-          for (var indice = 0; indice < metricas.length; indice++) ...[
-            Expanded(child: metricas[indice]),
-            if (indice != metricas.length - 1) const SizedBox(width: 8),
-          ],
-        ],
-      );
-    },
-  );
-}
-
-class _Metrica extends StatelessWidget {
-  const _Metrica({required this.valor, required this.rotulo});
-  final String valor;
-  final String rotulo;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 11),
-    decoration: BoxDecoration(
-      color: CoresRadar.de(context).superficieAlternativa,
-      borderRadius: BorderRadius.circular(15),
-    ),
-    child: Column(
-      children: [
-        Text(
-          valor,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-        ),
-        Text(
-          rotulo,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-            fontSize: 10,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _ResumoResultados extends StatelessWidget {

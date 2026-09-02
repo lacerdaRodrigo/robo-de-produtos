@@ -324,6 +324,18 @@ A pesquisa utiliza `data-service` com termos associados. Um serviço só aparece
 
 ## 12. Livelo
 
+A página da Livelo começa diretamente pelas ferramentas do catálogo. Não usa
+card de destaque, hero ou resumo com **Última coleta concluída**, melhor loja ou
+métricas agregadas. Horários e estados continuam disponíveis nos locais
+contextuais definidos pelo produto, sem ocupar o topo do catálogo.
+
+Os cards das lojas permanecem ricos em informação e não devem ser simplificados
+ao remover o resumo da página.
+
+A ação **Atualizar** fica no cabeçalho. Abaixo dele, a ordem é busca, abas
+**Todas/Acompanhando**, barra de resultados e cards das lojas. Atualizar não é
+uma aba do catálogo.
+
 ### `LiveloCatalogToolbar`
 
 Combina `SearchBox`, abas Todas/Acompanhando, contador, contexto e filtro. Categoria e ordenação são apresentados em uma folha inferior.

@@ -103,7 +103,6 @@ Future<void> _abrir(
             api: api ?? _api(),
             administrador: true,
             controlador: controlador,
-            agora: () => DateTime.utc(2026, 8, 28, 15),
           ),
         ),
       ),
@@ -282,17 +281,19 @@ void main() {
     expect(consultas, 4);
   });
 
-  testWidgets('hero, abas essenciais, busca e cartões usam dados reais', (
+  testWidgets('catálogo abre sem resumo e preserva cartões ricos', (
     at,
   ) async {
     final controlador = _controlador();
     addTearDown(controlador.dispose);
     await _abrir(at, controlador);
 
-    expect(find.textContaining('12 pontos por R\$ 1'), findsOneWidget);
-    expect(find.text('Melhor Loja'), findsOneWidget);
+    expect(find.text('Última coleta concluída'), findsNothing);
+    expect(find.textContaining('melhor acompanhada agora'), findsNothing);
+    expect(find.textContaining('Coleta:'), findsNothing);
     expect(find.text('Todas'), findsOneWidget);
     expect(find.text('Acompanhando'), findsWidgets);
+    expect(find.text('Atualizar'), findsOneWidget);
     expect(find.text('Alertas'), findsNothing);
     expect(find.text('Monitoramento da coleta'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
@@ -301,6 +302,11 @@ void main() {
       find.widgetWithText(TextField, 'Buscar loja ou categoria'),
       findsOneWidget,
     );
+    final busca = at.getTopLeft(
+      find.widgetWithText(TextField, 'Buscar loja ou categoria'),
+    );
+    final abas = at.getTopLeft(find.text('Todas'));
+    expect(busca.dy, lessThan(abas.dy));
     await at.drag(
       find.byKey(const Key('catalogo-livelo-android')),
       const Offset(0, -700),
@@ -311,7 +317,7 @@ void main() {
     expect(find.text('Alerta ativo'), findsOneWidget);
   });
 
-  testWidgets('RN29 mostra qualidade reduzida sem expor código técnico', (
+  testWidgets('qualidade reduzida não recria o card de resumo', (
     at,
   ) async {
     final controlador = ControladorCatalogoLivelo(
@@ -336,9 +342,13 @@ void main() {
     addTearDown(controlador.dispose);
     await _abrir(at, controlador);
 
-    expect(find.text('Dados com qualidade reduzida'), findsOneWidget);
+    expect(find.text('Dados com qualidade reduzida'), findsNothing);
     expect(
       find.textContaining('Exibindo a última coleta válida.'),
+      findsNothing,
+    );
+    expect(
+      find.widgetWithText(TextField, 'Buscar loja ou categoria'),
       findsOneWidget,
     );
     expect(find.textContaining('RN29'), findsNothing);
