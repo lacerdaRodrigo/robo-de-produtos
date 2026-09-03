@@ -492,11 +492,6 @@ class _BancoInterCompacto extends StatelessWidget {
               aoSelecionar: aoSelecionarAba,
             ),
           ),
-          if (aba == 1)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(18, 0, 18, 13),
-              child: _NotaSelecaoDireta(),
-            ),
         ],
       ),
     ),
@@ -636,56 +631,6 @@ class _CabecalhoBancoInter extends StatelessWidget {
     descricao:
         'Consulte cashback ou escolha quais lojas terão produtos coletados.',
   );
-}
-
-class _NotaSelecaoDireta extends StatelessWidget {
-  const _NotaSelecaoDireta();
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Tokens.superficieForteEscura
-            : Tokens.plumSoft,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: cores.marca.withValues(alpha: 0.2)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(13),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.verified_user_outlined, color: cores.marca, size: 19),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Escolha as lojas da próxima coleta',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Selecionar apenas salva a escolha. A coleta começa pelo fluxo de atualização existente.',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 9,
-                      height: 1.45,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _HeroInter extends StatelessWidget {

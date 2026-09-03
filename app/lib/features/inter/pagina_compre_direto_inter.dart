@@ -10,7 +10,6 @@ import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import '../administracao/controlador_catalogo_administracao.dart';
-import '../produtos/formato_produtos.dart';
 
 /// Catálogo mobile do Compre direto com busca e paginação fornecidas pela API.
 class PaginaCompreDiretoInter extends StatefulWidget {
@@ -270,7 +269,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
             final loja = lojas[indice];
             return _CartaoLojaDireta(
               loja: loja,
-              detalhado: _filtro == _FiltroCompreDireto.acompanhadas,
               alterando: _alterando.contains(loja.id),
               aoAlternar: () => _alternar(loja),
             );
@@ -414,125 +412,182 @@ class _BarraResultadosCompreDireto extends StatelessWidget {
 class _CartaoLojaDireta extends StatelessWidget {
   const _CartaoLojaDireta({
     required this.loja,
-    required this.detalhado,
     required this.alterando,
     required this.aoAlternar,
   });
 
   final LojaDireto loja;
-  final bool detalhado;
   final bool alterando;
   final VoidCallback aoAlternar;
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
-    final estado = _descricao(loja);
+    final escuro = tema.brightness == Brightness.dark;
+    final corAcao = escuro ? Tokens.acaoForteEscura : Tokens.actionStrong;
+    final fundoAcao = escuro ? Tokens.acaoFundoEscuro : Tokens.actionSoft;
+    final fundoGanho = escuro ? Tokens.ganhoFundoEscuro : Tokens.positiveSoft;
+    final selecionada = loja.selecionada;
+    final aviso = _avisoColeta(loja);
     return Opacity(
       opacity: loja.ativa ? 1 : 0.7,
       child: CartaoRadar(
-        padding: const EdgeInsets.all(15),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: cores.superficieAlternativa,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    _iniciais(loja.nome),
-                    style: TextStyle(
-                      color: cores.acao,
-                      fontWeight: FontWeight.w900,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 15, 15, 11),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: escuro
+                          ? Tokens.superficieForteEscura
+                          : Tokens.plumSoft,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14),
+                        bottomRight: Radius.circular(14),
+                        bottomLeft: Radius.circular(5),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        loja.nome,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Compre direto',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.textoSuave,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (loja.cashbackResumoTexto != null && !detalhado) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
                     child: Text(
-                      _cashbackComPrefixo(loja.cashbackResumoTexto!),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: cores.ganho,
+                      _iniciais(loja.nome),
+                      style: TextStyle(
+                        color: cores.marca,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
-                ] else ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          loja.nome,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Compre direto',
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: cores.textoSuave,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  IndicadorEstadoRadar(
-                    texto: loja.ativa ? 'Ativa' : 'Inativa',
-                    tom: loja.ativa ? TomRadar.ganho : TomRadar.neutro,
+                  Flexible(
+                    child: Text(
+                      _beneficioDireto(loja),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: tema.textTheme.titleSmall?.copyWith(
+                        color: corAcao,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
-            const SizedBox(height: 7),
-            Text(
-              estado,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+              decoration: BoxDecoration(
+                color: cores.superficieAlternativa,
+                border: Border(top: BorderSide(color: cores.borda)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _DadoResumoDireto(
+                      rotulo: loja.produtosEncontrados == null
+                          ? 'Produtos'
+                          : 'Último catálogo',
+                      valor: loja.produtosEncontrados == null
+                          ? 'Após a primeira coleta'
+                          : _quantidadeProdutos(loja.produtosEncontrados),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _DadoResumoDireto(
+                      rotulo: 'Seleção',
+                      valor: selecionada ? 'Selecionada' : 'Não selecionada',
+                      alinharFim: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            if (detalhado) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 11),
-              _ResumoDadosDireto(loja: loja),
+            if (aviso != null) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(15, 10, 15, 0),
+                child: Text(
+                  aviso,
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: loja.ultimaTentativaEstado == 'falha'
+                        ? cores.perigo
+                        : cores.atencao,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                onPressed: loja.ativa && !alterando ? aoAlternar : null,
-                icon: alterando
-                    ? const SizedBox.square(
-                        dimension: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        loja.selecionada ? Icons.check : Icons.add,
-                        size: 16,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 11, 15, 14),
+              child: SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  key: ValueKey('selecionar-loja-direta-${loja.id}'),
+                  onPressed: loja.ativa && !alterando ? aoAlternar : null,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    backgroundColor: selecionada ? fundoGanho : fundoAcao,
+                    foregroundColor: selecionada ? cores.ganho : corAcao,
+                    disabledBackgroundColor: cores.superficieAlternativa,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                      side: BorderSide(
+                        color: (selecionada ? cores.ganho : corAcao).withValues(
+                          alpha: 0.3,
+                        ),
                       ),
-                label: Text(
-                  loja.ativa
-                      ? loja.selecionada
-                            ? 'Selecionada'
-                            : 'Selecionar'
-                      : 'Indisponível',
+                    ),
+                  ),
+                  child: alterando
+                      ? const SizedBox.square(
+                          dimension: 15,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          loja.ativa
+                              ? selecionada
+                                    ? 'Selecionada para coleta'
+                                    : 'Selecionar loja'
+                              : 'Indisponível',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -543,106 +598,53 @@ class _CartaoLojaDireta extends StatelessWidget {
   }
 }
 
-class _ResumoDadosDireto extends StatelessWidget {
-  const _ResumoDadosDireto({required this.loja});
-
-  final LojaDireto loja;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Último snapshot válido',
-          style: tema.textTheme.labelSmall?.copyWith(
-            color: cores.textoSuave,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 7),
-        _LinhaDadoDireto(
-          rotulo: 'Produtos encontrados',
-          valor: _quantidadeProdutos(loja.produtosEncontrados),
-        ),
-        const SizedBox(height: 6),
-        _LinhaDadoDireto(
-          rotulo: 'Última coleta concluída',
-          valor: loja.ultimaColetaSucessoEm == null
-              ? 'Indisponível'
-              : dataHoraProduto(loja.ultimaColetaSucessoEm),
-        ),
-        const SizedBox(height: 11),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: cores.superficieAlternativa,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            loja.cashbackResumoTexto == null
-                ? 'Cashback indisponível'
-                : _cashbackComPrefixo(loja.cashbackResumoTexto!),
-            style: tema.textTheme.labelMedium?.copyWith(
-              color: loja.cashbackResumoTexto == null
-                  ? cores.textoSuave
-                  : cores.ganho,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LinhaDadoDireto extends StatelessWidget {
-  const _LinhaDadoDireto({required this.rotulo, required this.valor});
+class _DadoResumoDireto extends StatelessWidget {
+  const _DadoResumoDireto({
+    required this.rotulo,
+    required this.valor,
+    this.alinharFim = false,
+  });
 
   final String rotulo;
   final String valor;
+  final bool alinharFim;
 
   @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Text(
-            rotulo,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: cores.textoSuave,
-              fontSize: 10,
-            ),
-          ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: alinharFim
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start,
+    children: [
+      Text(
+        rotulo,
+        textAlign: alinharFim ? TextAlign.end : TextAlign.start,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: CoresRadar.de(context).textoSuave,
+          fontSize: 9,
         ),
-        const SizedBox(width: 10),
-        Flexible(
-          child: Text(
-            valor,
-            textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+      ),
+      const SizedBox(height: 3),
+      Text(
+        valor,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: alinharFim ? TextAlign.end : TextAlign.start,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
-String _descricao(LojaDireto loja) {
-  if (!loja.ativa) return 'Loja inativa · sem seleção disponível';
+String? _avisoColeta(LojaDireto loja) {
+  if (!loja.ativa) return 'Loja inativa; seleção indisponível.';
   return switch (loja.ultimaTentativaEstado) {
-    'iniciada' => 'Coleta em andamento',
-    'falha' => 'Última tentativa falhou',
-    'sucesso' => 'Última tentativa concluída',
-    _ => 'Sem tentativa recente',
+    'iniciada' => 'Coleta em andamento.',
+    'falha' => 'A última tentativa falhou; exibindo o último catálogo válido.',
+    'parcial' => 'A última coleta foi parcial; exibindo os dados preservados.',
+    _ => null,
   };
 }
 
@@ -651,14 +653,16 @@ String _quantidadeProdutos(int? quantidade) {
   return '$quantidade produto${quantidade == 1 ? '' : 's'}';
 }
 
-String _cashbackComPrefixo(String resumo) {
-  var valor = resumo.trim();
-  if (valor.isEmpty) return 'Cashback indisponível';
+String _beneficioDireto(LojaDireto loja) {
+  if (!loja.ativa) return 'Indisponível';
+  var valor = loja.cashbackResumoTexto?.trim() ?? '';
+  if (valor.isEmpty) return 'Disponível';
   const sufixo = ' de cashback';
   if (valor.toLowerCase().endsWith(sufixo)) {
     valor = valor.substring(0, valor.length - sufixo.length);
   }
-  return 'Cashback: ${valor[0].toLowerCase()}${valor.substring(1)}';
+  if (valor.isEmpty) return 'Disponível';
+  return '${valor[0].toLowerCase()}${valor.substring(1)}';
 }
 
 String _iniciais(String nome) {

@@ -54,7 +54,7 @@ Pagina<LojaDireto> _pagina() => Pagina(
 );
 
 void main() {
-  testWidgets('duas abas usam cards compactos e detalham só selecionadas', (
+  testWidgets('duas abas mostram o último catálogo e a seleção nos cards', (
     at,
   ) async {
     at.view.devicePixelRatio = 1;
@@ -92,20 +92,23 @@ void main() {
     expect(find.text('Maior cashback'), findsNothing);
     expect(find.text('Selecionadas'), findsOneWidget);
     expect(find.text('Disponíveis para seleção'), findsOneWidget);
-    expect(find.text('Cashback: até 6%'), findsOneWidget);
+    expect(find.text('até 6%'), findsOneWidget);
+    expect(find.text('Último catálogo'), findsOneWidget);
+    expect(find.text('18 produtos'), findsOneWidget);
+    expect(find.text('Seleção'), findsOneWidget);
+    expect(find.text('Selecionada'), findsOneWidget);
+    expect(find.text('Selecionada para coleta'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsNothing);
-    expect(find.text('Melhor cashback'), findsNothing);
+    expect(find.text('Último snapshot válido'), findsNothing);
     await at.ensureVisible(find.text('Selecionadas'));
     await at.pumpAndSettle();
     await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
     expect(find.text('Selecionadas para a próxima coleta'), findsOneWidget);
-    expect(find.text('Último snapshot válido'), findsOneWidget);
-    expect(find.text('Produtos encontrados'), findsOneWidget);
+    expect(find.text('Último catálogo'), findsOneWidget);
     expect(find.text('18 produtos'), findsOneWidget);
-    expect(find.text('Última coleta concluída'), findsOneWidget);
-    expect(find.text('Cashback: até 6%'), findsOneWidget);
-    expect(find.text('Melhor cashback'), findsNothing);
+    expect(find.text('Selecionada para coleta'), findsOneWidget);
+    expect(find.text('até 6%'), findsOneWidget);
     expect(at.takeException(), isNull);
   });
 
@@ -142,13 +145,10 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    await at.tap(find.text('Selecionadas'));
-    await at.pumpAndSettle();
-
-    expect(find.text('Indisponível'), findsOneWidget);
+    expect(find.text('Após a primeira coleta'), findsOneWidget);
     expect(find.text('0 produtos'), findsOneWidget);
-    expect(find.text('Cashback indisponível'), findsNWidgets(2));
-    expect(find.text('Melhor cashback'), findsNothing);
+    expect(find.text('Disponível'), findsNWidgets(2));
+    expect(find.text('Cashback indisponível'), findsNothing);
   });
 
   testWidgets('filtro real é enviado à API antes da paginação', (at) async {

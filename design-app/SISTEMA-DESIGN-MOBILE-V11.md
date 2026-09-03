@@ -435,12 +435,6 @@ Ao remover uma loja enquanto Acompanhadas está ativo, o card sai da lista e o c
 
 ## 14. Banco Inter — Compre direto
 
-### `SelectionNote`
-
-Classe: `.selection-note`.
-
-Explica que selecionar uma loja define as fontes da próxima coleta e que os produtos só aparecem após execução válida.
-
 ### `DirectStoreCard`
 
 Classes: `.direct-summary`, `.select-direct`, `.active`.
@@ -454,6 +448,8 @@ Anatomia:
 5. botão Selecionar loja/Selecionada para coleta.
 
 Selecionar não abre Produtos e não inicia coleta imediatamente. A seleção é persistida para a próxima atualização administrativa.
+
+A tela não exibe um aviso introdutório antes da busca. A própria anatomia dos cartões e a ação `Atualizar produtos` comunicam seleção e coleta sem ocupar espaço permanente no topo.
 
 ### `UpdateProductsButton`
 

@@ -507,6 +507,7 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('compre-direto-inter')), findsOneWidget);
+    expect(find.text('Escolha as lojas da próxima coleta'), findsNothing);
     expect(find.text('Atualizar produtos'), findsOneWidget);
     await at.drag(
       find.byKey(const PageStorageKey('compre-direto-inter')),
@@ -516,26 +517,33 @@ void main() {
     expect(find.byKey(const Key('busca-compre-direto')), findsOneWidget);
     expect(find.text('Amazon'), findsOneWidget);
     expect(find.textContaining('12 páginas processadas'), findsNothing);
+    expect(find.text('Último catálogo'), findsOneWidget);
+    expect(find.text('18 produtos'), findsOneWidget);
+    expect(find.text('Seleção'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Selecionada'), findsOneWidget);
-    await at.ensureVisible(find.text('Selecionada'));
+    final selecionar = find.byKey(
+      const ValueKey('selecionar-loja-direta-amazon'),
+    );
+    await at.ensureVisible(selecionar);
     await at.pumpAndSettle();
-    await at.tap(find.text('Selecionada'));
+    await at.tap(selecionar);
     await at.pumpAndSettle();
-    expect(find.text('Selecionar'), findsOneWidget);
-    await at.ensureVisible(find.text('Selecionar'));
+    expect(find.text('Não selecionada'), findsOneWidget);
+    expect(find.text('Selecionar loja'), findsOneWidget);
+    await at.ensureVisible(selecionar);
     await at.pumpAndSettle();
-    await at.tap(find.text('Selecionar'));
+    await at.tap(selecionar);
     await at.pumpAndSettle();
     expect(find.text('Selecionada'), findsOneWidget);
+    expect(find.text('Selecionada para coleta'), findsOneWidget);
     await at.ensureVisible(find.text('Selecionadas'));
     await at.pumpAndSettle();
     await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
-    expect(find.text('Último snapshot válido'), findsOneWidget);
-    expect(find.text('Produtos encontrados'), findsOneWidget);
+    expect(find.text('Último catálogo'), findsOneWidget);
     expect(find.text('18 produtos'), findsOneWidget);
-    expect(find.text('Cashback: até 6%'), findsOneWidget);
+    expect(find.text('até 6%'), findsOneWidget);
     expect(
       requisicoes.any(
         (requisicao) =>

@@ -271,11 +271,6 @@
     .filter-trigger { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border: 1px solid var(--radar-line); border-radius: 13px; background: var(--radar-paper); color: var(--radar-ink); font-size: 10px; font-weight: 800; box-shadow: var(--radar-shadow-soft); }
     .filter-trigger svg { width: 17px; height: 17px; color: var(--radar-action-strong); }
     .filter-trigger.has-filter { border-color: color-mix(in srgb, var(--radar-action) 48%, var(--radar-line)); background: var(--radar-action-soft); color: var(--radar-action-strong); }
-    .selection-note { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 13px; padding: 13px; border: 1px solid color-mix(in srgb, var(--radar-plum) 20%, var(--radar-line)); border-radius: 17px; background: var(--radar-plum-soft); }
-    .selection-note svg { flex: 0 0 auto; width: 19px; height: 19px; color: var(--radar-plum); }
-    .selection-note strong, .selection-note span { display: block; }
-    .selection-note strong { font-size: 11px; }
-    .selection-note span { margin-top: 4px; color: var(--radar-muted); font-size: 9px; line-height: 1.45; }
     .direct-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 15px; border-top: 1px solid var(--radar-line); background: var(--radar-paper-soft); }
     .direct-summary span, .direct-summary strong { display: block; }
     .direct-summary span { color: var(--radar-muted); font-size: 9px; }
@@ -555,7 +550,6 @@
           </div>
 
           <div class="hidden" id="inter-direct-view">
-            <div class="selection-note"><svg><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg><span><strong>Escolha as lojas da próxima coleta</strong><span>Selecionar uma loja apenas salva a escolha. Quando terminar, use “Atualizar produtos” para iniciar o processo.</span></span></div>
             <div class="toolbar">
               <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar loja do Compre direto</span><input id="direct-search" type="search" placeholder="Buscar loja no Compre direto"></label>
               <div class="catalog-tabs" data-filter-group="direct" role="tablist" aria-label="Seleção de lojas do Compre direto"><button class="catalog-tab active" type="button" role="tab" aria-selected="true" data-filter="all"><span>Todas</span><small>3</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-filter="selected"><span>Selecionadas</span><small id="direct-selected-tab-count">1</small></button></div>
