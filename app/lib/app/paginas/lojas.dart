@@ -7,9 +7,9 @@ import '../../core/api/modelos.dart';
 import '../../features/administracao/botao_disparo.dart';
 import '../../features/administracao/controlador_catalogo_administracao.dart';
 import '../../features/inter/controlador_cashback_inter.dart';
+import '../../features/inter/formato_cashback_inter.dart';
 import '../../features/inter/pagina_compre_direto_inter.dart';
 import '../../features/inter/pagina_cashback_inter.dart';
-import '../../features/inter/formato_cashback_inter.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../componentes/estados.dart';
@@ -200,33 +200,14 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
         ),
         identificar: (loja) => loja.id,
       );
-  String? _melhorOferta;
   var _aba = 0;
   var _variacaoAcompanhadas = 0;
+  var _variacaoSelecionadas = 0;
 
   @override
   void initState() {
     super.initState();
     _resumo = widget.api.resumo();
-    _carregarMelhorOferta();
-  }
-
-  Future<void> _carregarMelhorOferta() async {
-    try {
-      final pagina = await widget.api.painelCashbackInter(
-        apenasAcompanhadas: true,
-        porPagina: 1,
-      );
-      String? oferta;
-      for (final loja in pagina.itens) {
-        if (!loja.favorita || !loja.encontrada) continue;
-        oferta = percentualCompactoInter(loja.cashbackPrincipalValor);
-        if (oferta != null) break;
-      }
-      if (mounted) setState(() => _melhorOferta = oferta);
-    } on Object {
-      if (mounted) setState(() => _melhorOferta = null);
-    }
   }
 
   @override
@@ -238,9 +219,9 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
 
   Future<void> _atualizarResumo() async {
     final resumo = widget.api.resumo();
-    final melhorOferta = _carregarMelhorOferta();
     setState(() {
       _variacaoAcompanhadas = 0;
+      _variacaoSelecionadas = 0;
       _resumo = resumo;
     });
     try {
@@ -248,7 +229,6 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
     } on Object {
       // O FutureBuilder apresenta a falha e mantém a ação de tentar novamente.
     }
-    await melhorOferta;
   }
 
   void _mudarConsultaDiretas({
@@ -265,9 +245,20 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
     setState(() => _variacaoAcompanhadas += variacao);
   }
 
+  void _variarSelecionadas(int variacao) {
+    setState(() => _variacaoSelecionadas += variacao);
+  }
+
   int? _totalAcompanhadas(ResumoInicio? resumo) => resumo == null
       ? null
       : (resumo.cashbackInter.lojasAcompanhadas + _variacaoAcompanhadas).clamp(
+          0,
+          1 << 31,
+        );
+
+  int? _totalSelecionadas(ResumoInicio? resumo) => resumo == null
+      ? null
+      : (resumo.produtos.lojasSelecionadas + _variacaoSelecionadas).clamp(
           0,
           1 << 31,
         );
@@ -286,18 +277,18 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             controladorDiretas: _diretas,
             aba: _aba,
             resumo: estado.data,
-            melhorOferta: _melhorOferta,
             carregandoResumo: estado.connectionState != ConnectionState.done,
             erroResumo: estado.hasError,
             totalAcompanhadas: _totalAcompanhadas(estado.data),
+            totalSelecionadas: _totalSelecionadas(estado.data),
             aoTentarResumo: _tentarNovamente,
             aoAtualizarResumo: _atualizarResumo,
             ordenacaoDiretas: _ordenacaoDiretas,
             filtroDiretas: _filtroDiretas,
             aoMudarConsultaDiretas: _mudarConsultaDiretas,
             aoSelecionarAba: (aba) => setState(() => _aba = aba),
-            aoAlterarAcompanhamento: _carregarMelhorOferta,
             aoVariarAcompanhadas: _variarAcompanhadas,
+            aoVariarSelecionadas: _variarSelecionadas,
           );
         }
         return SafeArea(
@@ -405,18 +396,18 @@ class _BancoInterCompacto extends StatelessWidget {
     required this.controladorDiretas,
     required this.aba,
     required this.resumo,
-    required this.melhorOferta,
     required this.carregandoResumo,
     required this.erroResumo,
     required this.totalAcompanhadas,
+    required this.totalSelecionadas,
     required this.aoTentarResumo,
     required this.aoAtualizarResumo,
     required this.ordenacaoDiretas,
     required this.filtroDiretas,
     required this.aoMudarConsultaDiretas,
     required this.aoSelecionarAba,
-    required this.aoAlterarAcompanhamento,
     required this.aoVariarAcompanhadas,
+    required this.aoVariarSelecionadas,
   });
 
   final Api api;
@@ -425,10 +416,10 @@ class _BancoInterCompacto extends StatelessWidget {
   final ControladorCatalogoAdministracao<LojaDireto> controladorDiretas;
   final int aba;
   final ResumoInicio? resumo;
-  final String? melhorOferta;
   final bool carregandoResumo;
   final bool erroResumo;
   final int? totalAcompanhadas;
+  final int? totalSelecionadas;
   final VoidCallback aoTentarResumo;
   final Future<void> Function() aoAtualizarResumo;
   final String ordenacaoDiretas;
@@ -436,8 +427,8 @@ class _BancoInterCompacto extends StatelessWidget {
   final void Function({required String ordenar, required String filtro})
   aoMudarConsultaDiretas;
   final ValueChanged<int> aoSelecionarAba;
-  final VoidCallback aoAlterarAcompanhamento;
   final ValueChanged<int> aoVariarAcompanhadas;
+  final ValueChanged<int> aoVariarSelecionadas;
 
   @override
   Widget build(BuildContext context) {
@@ -454,6 +445,8 @@ class _BancoInterCompacto extends StatelessWidget {
               ordenacaoInicial: ordenacaoDiretas,
               filtroInicial: filtroDiretas,
               aoMudarConsulta: aoMudarConsultaDiretas,
+              totalSelecionadas: totalSelecionadas,
+              aoVariarSelecionadas: aoVariarSelecionadas,
             )
           : PaginaCashbackInter(
               key: const Key('hub-shopping-inter'),
@@ -467,8 +460,9 @@ class _BancoInterCompacto extends StatelessWidget {
               ),
               sliversAntesDoCashback: cabecalho,
               aoAtualizar: aoAtualizarResumo,
-              aoAlterarAcompanhamento: aoAlterarAcompanhamento,
               aoVariarAcompanhadas: aoVariarAcompanhadas,
+              totalCatalogo: resumo?.cashbackInter.lojasEncontradasUltimaColeta,
+              totalAcompanhadas: totalAcompanhadas,
             ),
     );
   }
@@ -478,12 +472,8 @@ class _BancoInterCompacto extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
-            child: _CabecalhoBancoInter(
-              api: api,
-              administrador: administrador,
-              dominio: aba == 1 ? 'produtos_inter' : 'inter',
-            ),
+            padding: const EdgeInsets.fromLTRB(18, 22, 18, 20),
+            child: const _CabecalhoBancoInter(),
           ),
           if (carregandoResumo) const LinearProgressIndicator(),
           if (erroResumo)
@@ -492,18 +482,13 @@ class _BancoInterCompacto extends StatelessWidget {
               child: _FalhaResumo(aoTentarNovamente: aoTentarResumo),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: _HeroInter(
-              resumo: resumo,
-              melhorOferta: melhorOferta,
-              totalAcompanhadas: totalAcompanhadas,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 24, 18, 15),
-            child: AbasRadar(
-              rotulos: const ['Cashback', 'Compre direto'],
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+            child: _AbasModoInter(
               selecionada: aba,
+              totalCashback: controladorCashback.carregando
+                  ? resumo?.cashbackInter.lojasEncontradasUltimaColeta
+                  : controladorCashback.totalItens,
+              totalSelecionadas: totalSelecionadas,
               aoSelecionar: aoSelecionarAba,
             ),
           ),
@@ -512,124 +497,144 @@ class _BancoInterCompacto extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(18, 0, 18, 13),
               child: _NotaSelecaoDireta(),
             ),
-          if (aba == 0)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 13),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _AvisoCatalogoInter(),
-                  const SizedBox(height: 12),
-                  AnimatedBuilder(
-                    animation: controladorCashback,
-                    builder: (context, _) {
-                      if (controladorCashback.carregando ||
-                          controladorCashback.erro != null) {
-                        return const SizedBox.shrink();
-                      }
-                      final total = controladorCashback.totalItens;
-                      return Text(
-                        total == 1
-                            ? '1 site parceiro disponível'
-                            : '$total sites parceiros disponíveis',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: CoresRadar.de(context).textoSuave,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 10,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     ),
   ];
 }
 
-class _CabecalhoBancoInter extends StatelessWidget {
-  const _CabecalhoBancoInter({
-    required this.api,
-    required this.administrador,
-    required this.dominio,
+class _AbasModoInter extends StatelessWidget {
+  const _AbasModoInter({
+    required this.selecionada,
+    required this.totalCashback,
+    required this.totalSelecionadas,
+    required this.aoSelecionar,
   });
 
-  final Api api;
-  final bool administrador;
-  final String dominio;
-
-  Widget _botao() => BotaoDisparo(
-    key: ValueKey('atualizar-dados-$dominio'),
-    api: api,
-    dominio: dominio,
-    administrador: administrador,
-    rotulo: 'Atualizar dados',
-    destaque: true,
-  );
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, restricoes) {
-      final acaoLateral = administrador && restricoes.maxWidth >= 340;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CabecalhoSecaoRadar(
-            sobrelinha: 'Serviço',
-            titulo: 'Banco Inter',
-            descricao:
-                'Consulte cashback ou escolha quais lojas terão produtos coletados.',
-            acao: acaoLateral ? _botao() : null,
-          ),
-          if (administrador && !acaoLateral) ...[
-            const SizedBox(height: 12),
-            Align(alignment: Alignment.centerRight, child: _botao()),
-          ],
-        ],
-      );
-    },
-  );
-}
-
-class _AvisoCatalogoInter extends StatelessWidget {
-  const _AvisoCatalogoInter();
+  final int selecionada;
+  final int? totalCashback;
+  final int? totalSelecionadas;
+  final ValueChanged<int> aoSelecionar;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Tokens.ganhoFundoEscuro
-          : Tokens.ganhoFundo,
-      borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: Tokens.ganho.withValues(alpha: 0.35)),
+      border: Border(bottom: BorderSide(color: CoresRadar.de(context).borda)),
     ),
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.storefront_outlined,
-            color: CoresRadar.de(context).ganho,
-            size: 22,
+    child: Row(
+      children: [
+        Expanded(
+          child: _AbaModoInter(
+            key: const Key('modo-inter-cashback'),
+            rotulo: 'Cashback',
+            contador: totalCashback,
+            selecionada: selecionada == 0,
+            aoTocar: () => aoSelecionar(0),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Este catálogo de Sites parceiros usa o último retrato válido. '
-              'Navegar e filtrar não inicia uma nova coleta.',
-              style: TextStyle(
-                color: CoresRadar.de(context).ganho,
-                fontSize: 10,
-                height: 1.45,
+        ),
+        const SizedBox(width: 18),
+        Expanded(
+          child: _AbaModoInter(
+            key: const Key('modo-inter-compre-direto'),
+            rotulo: 'Compre direto',
+            contador: totalSelecionadas,
+            selecionada: selecionada == 1,
+            aoTocar: () => aoSelecionar(1),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _AbaModoInter extends StatelessWidget {
+  const _AbaModoInter({
+    super.key,
+    required this.rotulo,
+    required this.contador,
+    required this.selecionada,
+    required this.aoTocar,
+  });
+
+  final String rotulo;
+  final int? contador;
+  final bool selecionada;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Semantics(
+      selected: selecionada,
+      button: true,
+      child: InkWell(
+        onTap: aoTocar,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 46),
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 11),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                width: 3,
+                color: selecionada ? cores.marca : Colors.transparent,
               ),
             ),
           ),
-        ],
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  rotulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: selecionada
+                        ? Theme.of(context).colorScheme.onSurface
+                        : cores.textoSuave,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (contador != null) ...[
+                const SizedBox(width: 7),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  height: 20,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                    color: selecionada
+                        ? cores.superficieAlternativa
+                        : Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '$contador',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: selecionada ? cores.marca : cores.textoSuave,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
-    ),
+    );
+  }
+}
+
+class _CabecalhoBancoInter extends StatelessWidget {
+  const _CabecalhoBancoInter();
+
+  @override
+  Widget build(BuildContext context) => const CabecalhoSecaoRadar(
+    sobrelinha: 'Serviço',
+    titulo: 'Banco Inter',
+    descricao:
+        'Consulte cashback ou escolha quais lojas terão produtos coletados.',
   );
 }
 
@@ -684,14 +689,9 @@ class _NotaSelecaoDireta extends StatelessWidget {
 }
 
 class _HeroInter extends StatelessWidget {
-  const _HeroInter({
-    required this.resumo,
-    this.melhorOferta,
-    this.totalAcompanhadas,
-  });
+  const _HeroInter({required this.resumo, this.totalAcompanhadas});
 
   final ResumoInicio? resumo;
-  final String? melhorOferta;
   final int? totalAcompanhadas;
 
   @override
@@ -748,9 +748,7 @@ class _HeroInter extends StatelessWidget {
           ),
           const SizedBox(height: 17),
           Text(
-            melhorOferta == null
-                ? 'Cashback, parceiros e produtos em áreas separadas.'
-                : '$melhorOferta é o melhor cashback acompanhado agora.',
+            'Cashback, parceiros e produtos em áreas separadas.',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontSize: 23,
               height: 1.12,
@@ -778,7 +776,7 @@ class _HeroInter extends StatelessWidget {
               _MetricaInter(valor: produtos, rotulo: 'produtos'),
               const SizedBox(width: 7),
               _MetricaInter(
-                valor: melhorOferta ?? '—',
+                valor: '—',
                 rotulo: 'melhor oferta',
                 cor: cores.ganho,
               ),

@@ -54,7 +54,7 @@ Pagina<LojaDireto> _pagina() => Pagina(
 );
 
 void main() {
-  testWidgets('três abas usam cards compactos e detalham só acompanhadas', (
+  testWidgets('duas abas usam cards compactos e detalham só selecionadas', (
     at,
   ) async {
     at.view.devicePixelRatio = 1;
@@ -89,27 +89,17 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Todas'), findsOneWidget);
-    expect(find.text('Maior cashback'), findsOneWidget);
+    expect(find.text('Maior cashback'), findsNothing);
     expect(find.text('Selecionadas'), findsOneWidget);
+    expect(find.text('Disponíveis para seleção'), findsOneWidget);
     expect(find.text('Cashback: até 6%'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Melhor cashback'), findsNothing);
-    await at.ensureVisible(find.text('Maior cashback'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Maior cashback'));
-    await at.pumpAndSettle();
-    expect(find.text('Cashback: até 6%'), findsOneWidget);
-    expect(find.text('Produtos encontrados'), findsNothing);
     await at.ensureVisible(find.text('Selecionadas'));
     await at.pumpAndSettle();
     await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
-    expect(
-      find.text(
-        'No Compre direto, esta aba mostra as lojas selecionadas para a coleta.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Selecionadas para a próxima coleta'), findsOneWidget);
     expect(find.text('Último snapshot válido'), findsOneWidget);
     expect(find.text('Produtos encontrados'), findsOneWidget);
     expect(find.text('18 produtos'), findsOneWidget);
@@ -161,9 +151,7 @@ void main() {
     expect(find.text('Melhor cashback'), findsNothing);
   });
 
-  testWidgets('filtro e ordenação são enviados à API antes da paginação', (
-    at,
-  ) async {
+  testWidgets('filtro real é enviado à API antes da paginação', (at) async {
     final consultas = <Uri>[];
     final api = Api(
       paginaPadrao: 20,
@@ -213,8 +201,6 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    await at.tap(find.text('Maior cashback'));
-    await at.pumpAndSettle();
     await at.tap(find.text('Selecionadas'));
     await at.pumpAndSettle();
 
@@ -223,10 +209,8 @@ void main() {
         .toList();
     expect(consultasLojas[0].queryParameters['ordenar'], 'nome');
     expect(consultasLojas[0].queryParameters['filtro'], 'todas');
-    expect(consultasLojas[1].queryParameters['ordenar'], 'cashback');
-    expect(consultasLojas[1].queryParameters['filtro'], 'todas');
-    expect(consultasLojas[2].queryParameters['ordenar'], 'nome');
-    expect(consultasLojas[2].queryParameters['filtro'], 'acompanhadas');
+    expect(consultasLojas[1].queryParameters['ordenar'], 'nome');
+    expect(consultasLojas[1].queryParameters['filtro'], 'acompanhadas');
   });
 
   testWidgets('puxar e voltar ao app atualizam as lojas do Compre direto', (

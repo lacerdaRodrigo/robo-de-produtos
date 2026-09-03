@@ -66,6 +66,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   bool get carregandoMais => _carregandoMais;
   Object? get erro => _erro;
   Object? get erroMais => _erroMais;
+  int get pagina => _pagina == 0 ? 1 : _pagina;
 
   Future<void> carregarInicial() => _reiniciar();
 

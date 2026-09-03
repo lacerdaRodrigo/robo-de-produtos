@@ -140,6 +140,10 @@ void main() {
   testWidgets(
     'Cashback compacto mostra o catálogo inteiro e filtra acompanhadas',
     (at) async {
+      at.view.devicePixelRatio = 1;
+      at.view.physicalSize = const Size(390, 844);
+      addTearDown(at.view.resetDevicePixelRatio);
+      addTearDown(at.view.resetPhysicalSize);
       final controlador = ControladorCashbackInter(
         buscar: ({required q, required ordenar, required pagina}) async =>
             _pagina([
@@ -154,6 +158,16 @@ void main() {
 
       expect(find.text('Animale'), findsOneWidget);
       expect(find.text('Aramis'), findsOneWidget);
+      expect(find.text('2 lojas encontradas'), findsOneWidget);
+      expect(find.text('Catálogo completo de cashback'), findsOneWidget);
+      expect(find.text('Página 1'), findsOneWidget);
+      expect(find.text('Maior cashback'), findsNothing);
+      expect(find.byKey(const Key('aba-radar-0')), findsOneWidget);
+      expect(find.byKey(const Key('aba-radar-1')), findsOneWidget);
+      expect(
+        at.getTopLeft(find.text('2 lojas encontradas')).dy,
+        greaterThan(at.getBottomLeft(find.byKey(const Key('aba-radar-0'))).dy),
+      );
 
       await at.tap(find.text('Acompanhadas'));
       await at.pumpAndSettle();
@@ -161,6 +175,8 @@ void main() {
       expect(find.text('Animale'), findsNothing);
       expect(find.text('Aramis'), findsOneWidget);
       expect(find.text('✓ Acompanhada'), findsOneWidget);
+      expect(find.text('Suas lojas acompanhadas'), findsOneWidget);
+      expect(find.text('Página 1'), findsOneWidget);
     },
   );
 
@@ -316,7 +332,7 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    final metrica = find.byKey(const Key('inter-total-acompanhadas'));
+    final metrica = find.byKey(const Key('aba-radar-1'));
     expect(
       find.descendant(of: metrica, matching: find.text('0')),
       findsOneWidget,

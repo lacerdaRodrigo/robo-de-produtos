@@ -50,6 +50,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   final Set<DestinoCompacto> _visitadosCompactos = {DestinoCompacto.inicio};
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
+  var _atualizandoResumoCabecalho = false;
 
   void _selecionar(Destino destino) {
     if (_selecionado == destino) return;
@@ -210,6 +211,25 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
+  Future<void> _atualizarResumoCabecalho() async {
+    if (_atualizandoResumoCabecalho) return;
+    setState(() => _atualizandoResumoCabecalho = true);
+    try {
+      await widget.api.resumo();
+      if (!mounted) return;
+      mostrarMensagemRadar(context, 'Resumo atualizado.');
+    } on Object {
+      if (!mounted) return;
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível atualizar o resumo.',
+        sucesso: false,
+      );
+    } finally {
+      if (mounted) setState(() => _atualizandoResumoCabecalho = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -247,6 +267,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           appBar: _CabecalhoCompacto(
             aoAbrirMenu: () => _scaffold.currentState?.openDrawer(),
             aoAbrirConta: _abrirConta,
+            aoAtualizarResumo: _selecionadoCompacto == DestinoCompacto.inter
+                ? _atualizarResumoCabecalho
+                : null,
+            atualizandoResumo: _atualizandoResumoCabecalho,
           ),
           drawer: GavetaRadar(
             selecionado: _selecionadoCompacto,
@@ -272,10 +296,14 @@ class _CabecalhoCompacto extends StatelessWidget
   const _CabecalhoCompacto({
     required this.aoAbrirMenu,
     required this.aoAbrirConta,
+    required this.aoAtualizarResumo,
+    required this.atualizandoResumo,
   });
 
   final VoidCallback aoAbrirMenu;
   final VoidCallback aoAbrirConta;
+  final VoidCallback? aoAtualizarResumo;
+  final bool atualizandoResumo;
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
@@ -298,9 +326,17 @@ class _CabecalhoCompacto extends StatelessWidget
       centerTitle: false,
       actions: [
         IconButton(
-          key: const Key('abrir-menu-principal'),
-          tooltip: 'Abrir menu principal',
-          onPressed: aoAbrirMenu,
+          key: Key(
+            aoAtualizarResumo == null
+                ? 'abrir-menu-principal'
+                : 'atualizar-resumo-cabecalho',
+          ),
+          tooltip: aoAtualizarResumo == null
+              ? 'Abrir menu principal'
+              : 'Atualizar resumo',
+          onPressed: atualizandoResumo
+              ? null
+              : aoAtualizarResumo ?? aoAbrirMenu,
           style: IconButton.styleFrom(
             minimumSize: const Size.square(42),
             maximumSize: const Size.square(42),
@@ -311,7 +347,12 @@ class _CabecalhoCompacto extends StatelessWidget
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          icon: const Icon(Icons.menu),
+          icon: atualizandoResumo
+              ? const SizedBox.square(
+                  dimension: 19,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(aoAtualizarResumo == null ? Icons.menu : Icons.refresh),
         ),
         const SizedBox(width: 7),
         IconButton(

@@ -24,6 +24,8 @@ class PaginaCompreDiretoInter extends StatefulWidget {
     this.ordenacaoInicial = 'nome',
     this.filtroInicial = 'todas',
     this.aoMudarConsulta,
+    this.totalSelecionadas,
+    this.aoVariarSelecionadas,
   });
 
   final Api api;
@@ -35,6 +37,8 @@ class PaginaCompreDiretoInter extends StatefulWidget {
   final String filtroInicial;
   final void Function({required String ordenar, required String filtro})?
   aoMudarConsulta;
+  final int? totalSelecionadas;
+  final ValueChanged<int>? aoVariarSelecionadas;
 
   @override
   State<PaginaCompreDiretoInter> createState() =>
@@ -49,9 +53,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
         buscar: ({required q, required pagina}) => widget.api.lojasDiretas(
           q: q,
           pagina: pagina,
-          ordenar: _filtro == _FiltroCompreDireto.maiorCashback
-              ? 'cashback'
-              : 'nome',
+          ordenar: 'nome',
           filtro: _filtro == _FiltroCompreDireto.acompanhadas
               ? 'acompanhadas'
               : 'todas',
@@ -63,9 +65,8 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   final _alterando = <String>{};
   late var _filtro = widget.filtroInicial == 'acompanhadas'
       ? _FiltroCompreDireto.acompanhadas
-      : widget.ordenacaoInicial == 'cashback'
-      ? _FiltroCompreDireto.maiorCashback
       : _FiltroCompreDireto.todas;
+  var _totalTodasConhecido = 0;
 
   @override
   void initState() {
@@ -120,6 +121,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
           loja.copiarCom(selecionada: selecionada),
         );
       }
+      widget.aoVariarSelecionadas?.call(selecionada ? 1 : -1);
       if (!mounted) return;
       mostrarMensagemRadar(
         context,
@@ -143,11 +145,12 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
 
   Future<void> _selecionarFiltro(_FiltroCompreDireto filtro) async {
     if (_filtro == filtro) return;
+    if (_filtro == _FiltroCompreDireto.todas) {
+      _totalTodasConhecido = _controlador.total;
+    }
     setState(() => _filtro = filtro);
     widget.aoMudarConsulta?.call(
-      ordenar: filtro == _FiltroCompreDireto.maiorCashback
-          ? 'cashback'
-          : 'nome',
+      ordenar: 'nome',
       filtro: filtro == _FiltroCompreDireto.acompanhadas
           ? 'acompanhadas'
           : 'todas',
@@ -178,55 +181,34 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
             )
           else ...[
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
               sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: CampoBuscaRadar(
-                        chaveCampo: const Key('busca-compre-direto'),
-                        controlador: _busca,
-                        dica: 'Buscar loja no Compre direto',
-                        aoMudar: _controlador.mudarBusca,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    BotaoDisparo(
-                      api: widget.api,
-                      dominio: 'produtos_inter',
-                      administrador: widget.administrador,
-                      rotulo: 'Coletar',
-                      compacto: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 2, 20, 12),
-              sliver: SliverToBoxAdapter(
-                child: Text(
-                  '${_controlador.total} ${_filtro == _FiltroCompreDireto.acompanhadas ? 'lojas acompanhadas' : 'lojas disponíveis'}',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: CoresRadar.de(context).textoSuave,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: CampoBuscaRadar(
+                  chaveCampo: const Key('busca-compre-direto'),
+                  controlador: _busca,
+                  dica: 'Buscar loja no Compre direto',
+                  aoMudar: _controlador.mudarBusca,
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: _FiltrosCompreDireto(
                 selecionado: _filtro,
+                totalTodas: _totalTodas,
+                totalSelecionadas: _totalSelecionadas,
                 aoSelecionar: _selecionarFiltro,
               ),
             ),
-            if (_filtro == _FiltroCompreDireto.acompanhadas)
+            if (!_controlador.carregandoInicial &&
+                _controlador.erroInicial == null)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 11),
                 sliver: SliverToBoxAdapter(
-                  child: _AvisoFiltroCompreDireto(
-                    mensagem:
-                        'No Compre direto, esta aba mostra as lojas selecionadas para a coleta.',
+                  child: _BarraResultadosCompreDireto(
+                    total: _controlador.total,
+                    selecionadas: _filtro == _FiltroCompreDireto.acompanhadas,
+                    api: widget.api,
+                    administrador: widget.administrador,
                   ),
                 ),
               ),
@@ -237,6 +219,16 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       ),
     ),
   );
+
+  int get _totalTodas => _filtro == _FiltroCompreDireto.todas
+      ? _controlador.total
+      : _totalTodasConhecido;
+
+  int get _totalSelecionadas =>
+      widget.totalSelecionadas ??
+      (_filtro == _FiltroCompreDireto.acompanhadas
+          ? _controlador.total
+          : _controlador.itens.where((loja) => loja.selecionada).length);
 
   List<Widget> _corpo() {
     if (_controlador.carregandoInicial && _controlador.itens.isEmpty) {
@@ -310,112 +302,110 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   }
 }
 
-enum _FiltroCompreDireto { todas, maiorCashback, acompanhadas }
+enum _FiltroCompreDireto { todas, acompanhadas }
 
 class _FiltrosCompreDireto extends StatelessWidget {
   const _FiltrosCompreDireto({
     required this.selecionado,
+    required this.totalTodas,
+    required this.totalSelecionadas,
     required this.aoSelecionar,
   });
 
   final _FiltroCompreDireto selecionado;
+  final int totalTodas;
+  final int totalSelecionadas;
   final ValueChanged<_FiltroCompreDireto> aoSelecionar;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: [
-        _FiltroCompreDiretoBotao(
-          rotulo: 'Todas',
-          ativo: selecionado == _FiltroCompreDireto.todas,
-          aoTocar: () => aoSelecionar(_FiltroCompreDireto.todas),
-        ),
-        const SizedBox(width: 7),
-        _FiltroCompreDiretoBotao(
-          rotulo: 'Maior cashback',
-          ativo: selecionado == _FiltroCompreDireto.maiorCashback,
-          aoTocar: () => aoSelecionar(_FiltroCompreDireto.maiorCashback),
-        ),
-        const SizedBox(width: 7),
-        _FiltroCompreDiretoBotao(
-          rotulo: 'Selecionadas',
-          ativo: selecionado == _FiltroCompreDireto.acompanhadas,
-          aoTocar: () => aoSelecionar(_FiltroCompreDireto.acompanhadas),
-        ),
-      ],
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+    child: AbasRadar(
+      rotulos: const ['Todas', 'Selecionadas'],
+      contadores: [totalTodas, totalSelecionadas],
+      expandir: true,
+      selecionada: selecionado.index,
+      aoSelecionar: (indice) =>
+          aoSelecionar(_FiltroCompreDireto.values[indice]),
     ),
   );
 }
 
-class _FiltroCompreDiretoBotao extends StatelessWidget {
-  const _FiltroCompreDiretoBotao({
-    required this.rotulo,
-    required this.ativo,
-    required this.aoTocar,
+class _BarraResultadosCompreDireto extends StatelessWidget {
+  const _BarraResultadosCompreDireto({
+    required this.total,
+    required this.selecionadas,
+    required this.api,
+    required this.administrador,
   });
 
-  final String rotulo;
-  final bool ativo;
-  final VoidCallback aoTocar;
+  final int total;
+  final bool selecionadas;
+  final Api api;
+  final bool administrador;
 
   @override
   Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return TextButton(
-      onPressed: aoTocar,
-      style: TextButton.styleFrom(
-        minimumSize: const Size(0, 37),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        backgroundColor: ativo ? cores.marca : Theme.of(context).cardColor,
-        foregroundColor: ativo
-            ? Theme.of(context).colorScheme.onSecondary
-            : cores.textoSuave,
-        shape: StadiumBorder(
-          side: BorderSide(color: ativo ? cores.marca : cores.borda),
+    final resumo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
-      ),
-      child: Text(
-        rotulo,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-      ),
+        const SizedBox(height: 3),
+        Text(
+          selecionadas
+              ? 'Selecionadas para a próxima coleta'
+              : 'Disponíveis para seleção',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 9,
+          ),
+        ),
+      ],
     );
-  }
-}
-
-class _AvisoFiltroCompreDireto extends StatelessWidget {
-  const _AvisoFiltroCompreDireto({required this.mensagem});
-
-  final String mensagem;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return DecoratedBox(
+    final atualizar = BotaoDisparo(
+      api: api,
+      dominio: 'produtos_inter',
+      administrador: administrador,
+      rotulo: 'Atualizar produtos',
+      compacto: true,
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
       decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cores.borda),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(11),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.info_outline_rounded, size: 17, color: cores.textoSuave),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                mensagem,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: cores.textoSuave,
-                  fontSize: 10,
-                ),
-              ),
-            ),
-          ],
+        border: Border(
+          bottom: BorderSide(
+            color: CoresRadar.de(context).borda.withValues(alpha: 0.76),
+          ),
         ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          final estreito =
+              limites.maxWidth < 340 ||
+              MediaQuery.textScalerOf(context).scale(10) > 12;
+          if (estreito) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                resumo,
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerRight, child: atualizar),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: resumo),
+              const SizedBox(width: 12),
+              atualizar,
+            ],
+          );
+        },
       ),
     );
   }

@@ -503,23 +503,11 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    await at.drag(
-      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
-      const Offset(0, -700),
-    );
-    await at.pumpAndSettle();
-    final compreDireto = find.text('Compre direto');
-    final abas = find.ancestor(
-      of: compreDireto,
-      matching: find.byType(SingleChildScrollView),
-    );
-    await at.drag(abas, const Offset(-220, 0));
-    await at.drag(abas, const Offset(-220, 0));
-    await at.pumpAndSettle();
-    await at.tap(compreDireto);
+    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('compre-direto-inter')), findsOneWidget);
+    expect(find.text('Atualizar produtos'), findsOneWidget);
     await at.drag(
       find.byKey(const PageStorageKey('compre-direto-inter')),
       const Offset(0, -700),
@@ -530,7 +518,6 @@ void main() {
     expect(find.textContaining('12 páginas processadas'), findsNothing);
     expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Selecionada'), findsOneWidget);
-    expect(find.text('Coletar'), findsOneWidget);
     await at.ensureVisible(find.text('Selecionada'));
     await at.pumpAndSettle();
     await at.tap(find.text('Selecionada'));
@@ -609,14 +596,7 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    final compreDireto = find.text('Compre direto');
-    final abas = find.ancestor(
-      of: compreDireto,
-      matching: find.byType(SingleChildScrollView),
-    );
-    await at.drag(abas, const Offset(-220, 0));
-    await at.pumpAndSettle();
-    await at.tap(compreDireto);
+    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
     await at.pumpAndSettle();
 
     expect(
@@ -631,7 +611,7 @@ void main() {
     );
   });
 
-  testWidgets('Banco Inter compacto oferece atualização do domínio visível', (
+  testWidgets('Banco Inter compacto segue as ações de atualização da V11', (
     at,
   ) async {
     final requisicoes = <http.Request>[];
@@ -643,10 +623,22 @@ void main() {
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
 
-    expect(find.text('Atualizar dados'), findsOneWidget);
-    expect(find.byKey(const ValueKey('atualizar-dados-inter')), findsOneWidget);
-    await at.tap(find.text('Atualizar dados'));
+    expect(find.text('Atualizar dados'), findsNothing);
+    expect(find.byKey(const ValueKey('atualizar-dados-inter')), findsNothing);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
+    final resumosAntes = requisicoes
+        .where((requisicao) => requisicao.url.path == '/api/resumo')
+        .length;
+    await at.tap(find.byKey(const Key('atualizar-resumo-cabecalho')));
     await at.pumpAndSettle();
+    expect(
+      requisicoes.where(
+        (requisicao) =>
+            requisicao.url.path == '/api/resumo' && requisicao.method == 'GET',
+      ),
+      hasLength(resumosAntes + 1),
+    );
+    expect(find.text('Resumo atualizado.'), findsOneWidget);
     expect(
       requisicoes.where(
         (requisicao) =>
@@ -654,31 +646,19 @@ void main() {
             requisicao.method == 'POST' &&
             requisicao.body == '{"dominio":"inter"}',
       ),
-      hasLength(1),
-    );
-    expect(
-      find.text(
-        'Pedido de coleta aceito. Os dados atualizam quando o robô terminar.',
-      ),
-      findsOneWidget,
+      isEmpty,
     );
 
-    await at.tap(find.text('Compre direto'));
+    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
     await at.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('atualizar-dados-produtos_inter')),
-      findsOneWidget,
-    );
+    expect(find.text('Atualizar produtos'), findsOneWidget);
     final dominiosConsultados = requisicoes
         .where(
           (requisicao) => requisicao.url.path == '/api/administracao/disparos',
         )
         .map((requisicao) => requisicao.url.queryParameters['dominio'])
         .toSet();
-    expect(
-      dominiosConsultados,
-      containsAll(<String>{'inter', 'produtos_inter'}),
-    );
+    expect(dominiosConsultados, contains('produtos_inter'));
   });
 
   testWidgets('Banco Inter completo não estoura em 320 px no tema escuro', (
@@ -697,9 +677,9 @@ void main() {
     await _irParaCompacto(at, DestinoCompacto.inter);
 
     expect(at.takeException(), isNull);
-    await at.ensureVisible(find.text('Cashback'));
+    await at.ensureVisible(find.byKey(const Key('modo-inter-cashback')));
     await at.pumpAndSettle();
-    await at.tap(find.text('Cashback'));
+    await at.tap(find.byKey(const Key('modo-inter-cashback')));
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
 

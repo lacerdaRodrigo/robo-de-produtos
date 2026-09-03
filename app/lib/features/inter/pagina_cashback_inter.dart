@@ -29,6 +29,8 @@ class PaginaCashbackInter extends StatefulWidget {
     this.aoVariarAcompanhadas,
     this.aoAtualizar,
     this.abrirUrlExterna,
+    this.totalCatalogo,
+    this.totalAcompanhadas,
   });
 
   final Api api;
@@ -44,6 +46,8 @@ class PaginaCashbackInter extends StatefulWidget {
   final ValueChanged<int>? aoVariarAcompanhadas;
   final Future<void> Function()? aoAtualizar;
   final Future<bool> Function(Uri uri)? abrirUrlExterna;
+  final int? totalCatalogo;
+  final int? totalAcompanhadas;
 
   @override
   State<PaginaCashbackInter> createState() => _EstadoPaginaCashbackInter();
@@ -69,7 +73,8 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
   final _acompanhamentoAlterado = <String, bool>{};
   final _alterandoAcompanhamento = <String>{};
   final _salvamentosAcompanhamento = <String, Future<void>>{};
-  var _filtroCompacto = 0;
+  late var _filtroCompacto =
+      _controlador.filtro == FiltroCashbackInter.acompanhadas ? 1 : 0;
 
   @override
   void initState() {
@@ -172,7 +177,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     }
     if (!mounted || _filtroCompacto != indice) return;
     await _controlador.mudarConsulta(
-      filtro: indice == 2
+      filtro: indice == 1
           ? FiltroCashbackInter.acompanhadas
           : FiltroCashbackInter.todas,
       ordenacao: OrdenacaoCashbackInter.cashback,
@@ -327,23 +332,9 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
             child: CampoBuscaRadar(
               controlador: _campoBusca,
               chaveCampo: const Key('busca-cashback-inter'),
-              dica: 'Buscar entre as lojas do Inter',
+              dica: 'Buscar loja',
               aoMudar: _controlador.mudarBusca,
-              acao: IconButton(
-                tooltip: 'Ordenar por maior cashback',
-                onPressed: () {
-                  setState(() => _filtroCompacto = 1);
-                  _controlador.mudarOrdenacao(OrdenacaoCashbackInter.cashback);
-                },
-                icon: const Icon(Icons.tune_rounded, size: 18),
-              ),
             ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _FiltrosCompactosInter(
-            selecionado: _filtroCompacto,
-            aoSelecionar: _selecionarFiltroCompacto,
           ),
         ),
         ..._estadoCompacto(margem),
@@ -395,7 +386,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
         SliverFillRemaining(
           hasScrollBody: false,
           child: EstadoVazio(
-            mensagem: _filtroCompacto == 2
+            mensagem: _filtroCompacto == 1
                 ? 'Nenhuma loja está acompanhada ainda.'
                 : _controlador.busca.trim().isEmpty
                 ? 'Nenhuma loja do Inter foi encontrada.'
@@ -428,9 +419,19 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     ];
   }
 
-  List<CashbackInter> _lojasCompactas() => _filtroCompacto == 2
+  List<CashbackInter> _lojasCompactas() => _filtroCompacto == 1
       ? _controlador.itens.where(_estaAcompanhada).toList(growable: false)
       : _controlador.itens;
+
+  int get _totalCatalogoCompacto =>
+      widget.totalCatalogo ??
+      (_controlador.filtro == FiltroCashbackInter.todas
+          ? _controlador.totalItens
+          : _controlador.itens.length);
+
+  int get _totalAcompanhadasCompacto =>
+      widget.totalAcompanhadas ??
+      _controlador.itens.where(_estaAcompanhada).length;
 
   List<Widget> _estadoCompacto(double margem) {
     if (_controlador.atualizadoEm == null || _controlador.carregando) {
@@ -444,23 +445,43 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     final falhou = _controlador.ultimaTentativaFalhou;
     return [
       SliverPadding(
-        padding: EdgeInsets.fromLTRB(margem, 12, margem, 0),
+        padding: EdgeInsets.fromLTRB(margem, 10, margem, 0),
         sliver: SliverToBoxAdapter(
-          child: Semantics(
-            liveRegion: falhou,
-            child: Text(
-              falhou
-                  ? 'A última sincronização falhou; exibindo a última coleta válida.'
-                  : 'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)}${atrasada ? ' · dados atrasados' : ''}',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: falhou
-                    ? cores.perigo
-                    : atrasada
-                    ? cores.atencao
-                    : cores.textoSuave,
-                fontWeight: FontWeight.w700,
+          child: _FiltrosCompactosInter(
+            selecionado: _filtroCompacto,
+            totalCatalogo: _totalCatalogoCompacto,
+            totalAcompanhadas: _totalAcompanhadasCompacto,
+            aoSelecionar: _selecionarFiltroCompacto,
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(margem, 4, margem, 0),
+        sliver: SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _BarraResultadosCashbackInter(
+                total: _controlador.totalItens,
+                acompanhadas: _filtroCompacto == 1,
+                pagina: _controlador.pagina,
               ),
-            ),
+              if (falhou || atrasada) ...[
+                const SizedBox(height: 10),
+                Semantics(
+                  liveRegion: falhou,
+                  child: Text(
+                    falhou
+                        ? 'A última sincronização falhou; exibindo a última coleta válida.'
+                        : 'Última coleta: ${dataHoraInter(_controlador.atualizadoEm)} · dados atrasados',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: falhou ? cores.perigo : cores.atencao,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -573,78 +594,94 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
 class _FiltrosCompactosInter extends StatelessWidget {
   const _FiltrosCompactosInter({
     required this.selecionado,
+    required this.totalCatalogo,
+    required this.totalAcompanhadas,
     required this.aoSelecionar,
   });
 
   final int selecionado;
+  final int totalCatalogo;
+  final int totalAcompanhadas;
   final ValueChanged<int> aoSelecionar;
+
+  @override
+  Widget build(BuildContext context) => AbasRadar(
+    key: const Key('filtros-cashback-inter'),
+    rotulos: const ['Todas', 'Acompanhadas'],
+    contadores: [totalCatalogo, totalAcompanhadas],
+    expandir: true,
+    selecionada: selecionado,
+    aoSelecionar: aoSelecionar,
+  );
+}
+
+class _BarraResultadosCashbackInter extends StatelessWidget {
+  const _BarraResultadosCashbackInter({
+    required this.total,
+    required this.acompanhadas,
+    required this.pagina,
+  });
+
+  final int total;
+  final bool acompanhadas;
+  final int pagina;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 11, 18, 0),
-      scrollDirection: Axis.horizontal,
+    final resumo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          acompanhadas
+              ? 'Suas lojas acompanhadas'
+              : 'Catálogo completo de cashback',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: cores.textoSuave,
+            fontSize: 9,
+          ),
+        ),
+      ],
+    );
+    return Container(
+      key: const Key('barra-resultados-cashback-inter'),
+      padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: cores.borda.withValues(alpha: 0.76)),
+        ),
+      ),
       child: Row(
         children: [
-          _FiltroCompactoInter(
-            rotulo: 'Todas',
-            ativo: selecionado == 0,
-            corAtiva: cores.marca,
-            aoTocar: () => aoSelecionar(0),
+          Expanded(child: resumo),
+          const SizedBox(width: 10),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: cores.ganho,
+              shape: BoxShape.circle,
+            ),
+            child: const SizedBox.square(dimension: 6),
           ),
-          const SizedBox(width: 7),
-          _FiltroCompactoInter(
-            rotulo: 'Maior cashback',
-            ativo: selecionado == 1,
-            corAtiva: cores.marca,
-            aoTocar: () => aoSelecionar(1),
-          ),
-          const SizedBox(width: 7),
-          _FiltroCompactoInter(
-            rotulo: 'Acompanhadas',
-            ativo: selecionado == 2,
-            corAtiva: cores.marca,
-            aoTocar: () => aoSelecionar(2),
+          const SizedBox(width: 6),
+          Text(
+            'Página $pagina',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: cores.ganho,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
     );
   }
-}
-
-class _FiltroCompactoInter extends StatelessWidget {
-  const _FiltroCompactoInter({
-    required this.rotulo,
-    required this.ativo,
-    required this.corAtiva,
-    required this.aoTocar,
-  });
-
-  final String rotulo;
-  final bool ativo;
-  final Color corAtiva;
-  final VoidCallback aoTocar;
-
-  @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: aoTocar,
-    style: TextButton.styleFrom(
-      minimumSize: const Size(0, 37),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      backgroundColor: ativo ? corAtiva : Theme.of(context).cardColor,
-      foregroundColor: ativo
-          ? Theme.of(context).colorScheme.onSecondary
-          : CoresRadar.de(context).textoSuave,
-      shape: StadiumBorder(
-        side: BorderSide(
-          color: ativo ? corAtiva : CoresRadar.de(context).borda,
-        ),
-      ),
-    ),
-    child: Text(
-      rotulo,
-      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-    ),
-  );
 }
