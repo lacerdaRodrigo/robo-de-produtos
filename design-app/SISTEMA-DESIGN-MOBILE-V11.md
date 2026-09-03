@@ -73,6 +73,7 @@ As cores são tokens semânticos. Um componente deve consumir o token correspond
 | `radar-action-strong` | `#BA3B26` | Links, ações textuais e texto de ação sobre fundo claro |
 | `radar-action-soft` | `#FEE4DC` | Fundo de ação suave e estado selecionável |
 | `radar-plum` | `#4C2E59` | Marca, navegação ativa e superfícies institucionais |
+| `radar-on-plum` | `#FFFFFF` | Texto e ícones sobre `radar-plum` |
 | `radar-plum-soft` | `#EEE3F2` | Monogramas, campanha e superfícies de apoio da marca |
 | `radar-positive` | `#28745A` | Cashback, ganho, sucesso e dado preservado válido |
 | `radar-positive-soft` | `#DCEEE4` | Fundo de cashback, sucesso e acompanhamento ativo |
@@ -94,6 +95,7 @@ As cores são tokens semânticos. Um componente deve consumir o token correspond
 | `radar-action-strong` | `#FFB099` | Links e ações textuais |
 | `radar-action-soft` | `#4B2C2A` | Superfície de ação suave |
 | `radar-plum` | `#D8B9DF` | Marca e navegação ativa |
+| `radar-on-plum` | `#291A2F` | Texto e ícones sobre `radar-plum` |
 | `radar-plum-soft` | `#46364B` | Superfície institucional suave |
 | `radar-positive` | `#84D0AA` | Ganho e sucesso |
 | `radar-positive-soft` | `#263F35` | Superfície de ganho e sucesso |
@@ -212,7 +214,7 @@ A busca filtra o retrato já salvo e não solicita nova coleta.
 
 Classes: `.catalog-tabs`, `.catalog-tab`, `.active`.
 
-Cada aba possui rótulo e contador. O estado ativo usa `radar-plum`, texto branco e `aria-selected=true`. É usado para:
+Cada aba possui rótulo e contador e sempre mantém `aria-selected=true` no estado ativo. O controle segmentado padrão usa `radar-plum` com conteúdo em `radar-on-plum`. Na página do Banco Inter, somente a troca de área usa a variante plana com indicador inferior; os filtros Todas/Acompanhadas continuam usando o mesmo controle segmentado compartilhado com a Livelo. É usado para:
 
 - Todas/Acompanhando na Livelo;
 - Cashback/Compre direto no Banco Inter;
@@ -385,11 +387,11 @@ O histórico é somente leitura, limitado às medições fornecidas pelo endpoin
 
 ### `InterModeTabs`
 
-Alterna entre Cashback e Compre direto, mantendo os estados internos de cada área.
+Alterna entre Cashback e Compre direto, mantendo os estados internos de cada área. Nesta tela, a navegação de primeiro nível usa abas planas com indicador inferior, sem repetir a aparência de controle segmentado usada pelos filtros de catálogo.
 
 ### `CashbackViewTabs`
 
-Usa Todas/Acompanhadas. A aba Acompanhadas aplica o filtro já disponível no backend e atualiza:
+Usa Todas/Acompanhadas no controle segmentado compartilhado, logo abaixo da busca. A opção Acompanhadas aplica o filtro já disponível no backend e atualiza:
 
 - contador;
 - texto de contexto;
