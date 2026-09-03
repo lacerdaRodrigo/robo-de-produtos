@@ -15,7 +15,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     required this.podeAdministrar,
     required this.aoAlternar,
     required this.aoAlternarAlerta,
-    required this.aoHistorico,
+    required this.aoDetalhes,
   });
 
   final ParceiroCatalogoLivelo parceiro;
@@ -24,11 +24,54 @@ class CartaoCatalogoLivelo extends StatelessWidget {
   final bool podeAdministrar;
   final VoidCallback aoAlternar;
   final VoidCallback aoAlternarAlerta;
-  final VoidCallback aoHistorico;
+  final VoidCallback aoDetalhes;
 
   @override
   Widget build(BuildContext context) {
     final clube = rotuloClube(parceiro.campanha);
+    final botaoDetalhes = OutlinedButton(
+      key: Key('detalhes-${parceiro.idExterno}'),
+      onPressed: aoDetalhes,
+      child: const Text('Detalhes'),
+    );
+    final botaoAcompanhar = parceiro.acompanhada
+        ? OutlinedButton.icon(
+            key: Key('acompanhar-${parceiro.idExterno}'),
+            onPressed: podeAdministrar && !pendente ? aoAlternar : null,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: CoresRadar.de(context).ganho,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.ganhoFundoEscuro
+                  : Tokens.positiveSoft,
+              side: BorderSide(
+                color: CoresRadar.de(context).ganho.withValues(alpha: 0.3),
+              ),
+            ),
+            icon: pendente
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_circle_outline),
+            label: Text(pendente ? 'Salvando…' : 'Acompanhando'),
+          )
+        : FilledButton.tonalIcon(
+            key: Key('acompanhar-${parceiro.idExterno}'),
+            onPressed: podeAdministrar && !pendente ? aoAlternar : null,
+            style: FilledButton.styleFrom(
+              foregroundColor: CoresRadar.de(context).acao,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.acaoFundoEscuro
+                  : Tokens.actionSoft,
+            ),
+            icon: pendente
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.add),
+            label: Text(pendente ? 'Salvando…' : 'Acompanhar'),
+          );
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
@@ -81,67 +124,28 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            Row(
-              children: [
-                OutlinedButton(
-                  key: Key('historico-${parceiro.idExterno}'),
-                  onPressed: aoHistorico,
-                  child: const Text('Histórico'),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: parceiro.acompanhada
-                      ? OutlinedButton.icon(
-                          key: Key('acompanhar-${parceiro.idExterno}'),
-                          onPressed: podeAdministrar && !pendente
-                              ? aoAlternar
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: CoresRadar.de(context).ganho,
-                            backgroundColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Tokens.ganhoFundoEscuro
-                                : Tokens.positiveSoft,
-                            side: BorderSide(
-                              color: CoresRadar.de(
-                                context,
-                              ).ganho.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          icon: pendente
-                              ? const SizedBox.square(
-                                  dimension: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.check_circle_outline),
-                          label: Text(pendente ? 'Salvando…' : 'Acompanhando'),
-                        )
-                      : FilledButton.tonalIcon(
-                          key: Key('acompanhar-${parceiro.idExterno}'),
-                          onPressed: podeAdministrar && !pendente
-                              ? aoAlternar
-                              : null,
-                          style: FilledButton.styleFrom(
-                            foregroundColor: CoresRadar.de(context).acao,
-                            backgroundColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? Tokens.acaoFundoEscuro
-                                : Tokens.actionSoft,
-                          ),
-                          icon: pendente
-                              ? const SizedBox.square(
-                                  dimension: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.add),
-                          label: Text(pendente ? 'Salvando…' : 'Acompanhar'),
-                        ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, _) {
+                final textoAmpliado =
+                    MediaQuery.textScalerOf(context).scale(12) > 15;
+                if (textoAmpliado) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      botaoAcompanhar,
+                      const SizedBox(height: 8),
+                      botaoDetalhes,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: botaoAcompanhar),
+                    const SizedBox(width: 8),
+                    botaoDetalhes,
+                  ],
+                );
+              },
             ),
           ],
         ),

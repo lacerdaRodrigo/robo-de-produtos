@@ -10,6 +10,7 @@ import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import 'cartao_catalogo_livelo.dart';
 import 'controlador_catalogo_livelo.dart';
+import 'formato_livelo.dart';
 import 'pagina_historico_livelo_android.dart';
 
 class PaginaCatalogoLiveloAndroid extends StatefulWidget {
@@ -136,6 +137,32 @@ class _EstadoPaginaCatalogoLiveloAndroid
     );
   }
 
+  Future<void> _abrirDetalhes(ParceiroCatalogoLivelo parceiro) async {
+    final abrirHistorico = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      builder: (contexto) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(contexto).height * 0.9,
+        ),
+        child: FolhaRadar(
+          titulo: parceiro.nome,
+          descricao: 'Dados do contrato Livelo',
+          child: Flexible(
+            child: SingleChildScrollView(
+              child: _DetalhesParceiroLivelo(
+                parceiro: parceiro,
+                aoAbrirHistorico: () => Navigator.of(contexto).pop(true),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (abrirHistorico == true && mounted) await _abrirHistorico(parceiro);
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _controlador,
@@ -167,21 +194,21 @@ class _EstadoPaginaCatalogoLiveloAndroid
           sliver: SliverToBoxAdapter(
             child: CampoBuscaRadar(
               controlador: _busca,
-              dica: 'Buscar loja ou categoria',
+              dica: 'Buscar loja',
               aoMudar: _controlador.mudarBusca,
-              acao: IconButton(
-                tooltip: 'Abrir filtros',
-                onPressed: _abrirFiltros,
-                icon: const Icon(Icons.tune_rounded),
-              ),
             ),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
           sliver: SliverToBoxAdapter(
             child: AbasRadar(
               rotulos: _abasVisiveis.map((aba) => aba.rotulo).toList(),
+              contadores: [
+                _controlador.resumo?.totalCatalogo ?? 0,
+                _controlador.resumo?.acompanhadas ?? 0,
+              ],
+              expandir: true,
               selecionada: _abasVisiveis.indexOf(_controlador.aba).clamp(0, 1),
               aoSelecionar: (indice) =>
                   _controlador.mudarAba(_abasVisiveis[indice]),
@@ -189,11 +216,16 @@ class _EstadoPaginaCatalogoLiveloAndroid
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 11),
           sliver: SliverToBoxAdapter(
             child: _ResumoResultados(
               total: _controlador.totalItens,
-              ordenacao: _controlador.ordenacao,
+              contexto: _contextoResultados,
+              mostrarFiltro: _controlador.aba == AbaCatalogoLivelo.lojas,
+              filtroAtivo:
+                  _controlador.categoria.isNotEmpty ||
+                  _controlador.ordenacao != OrdenacaoCatalogoLivelo.nome,
+              aoFiltrar: _abrirFiltros,
             ),
           ),
         ),
@@ -202,6 +234,15 @@ class _EstadoPaginaCatalogoLiveloAndroid
       ],
     ),
   );
+
+  String get _contextoResultados {
+    if (_controlador.aba == AbaCatalogoLivelo.acompanhadas) {
+      return 'Suas lojas favoritas';
+    }
+    if (_controlador.categoria.isNotEmpty) return _controlador.categoria;
+    if (_controlador.busca.trim().isNotEmpty) return 'Busca no catálogo';
+    return 'Catálogo completo';
+  }
 
   void _acompanharNovaColeta() {
     _encerrarAcompanhamento();
@@ -272,58 +313,90 @@ class _EstadoPaginaCatalogoLiveloAndroid
     _versaoAcompanhamento += 1;
   }
 
-  Future<void> _abrirFiltros() => showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: false,
-    builder: (contexto) => FolhaRadar(
-      titulo: 'Filtrar catálogo',
-      descricao: 'A ordem e a categoria mudam somente os resultados já salvos.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DropdownButtonFormField<OrdenacaoCatalogoLivelo>(
-            initialValue: _controlador.ordenacao,
-            decoration: const InputDecoration(labelText: 'Ordenar por'),
-            onChanged: (valor) {
-              if (valor == null) return;
-              _controlador.mudarOrdenacao(valor);
-              Navigator.of(contexto).pop();
-            },
-            items: [
-              for (final valor in OrdenacaoCatalogoLivelo.values)
-                DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Categoria', style: Theme.of(contexto).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+  Future<void> _abrirFiltros() async {
+    var ordenacao = _controlador.ordenacao;
+    var categoria = _controlador.categoria;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: false,
+      builder: (contexto) => StatefulBuilder(
+        builder: (contexto, atualizar) => FolhaRadar(
+          titulo: 'Filtrar todas as lojas',
+          descricao: 'Refine o catálogo completo da Livelo.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ChoiceChip(
-                label: const Text('Todas'),
-                selected: _controlador.categoria.isEmpty,
-                onSelected: (_) {
-                  _controlador.mudarCategoria('');
-                  Navigator.of(contexto).pop();
+              DropdownButtonFormField<String>(
+                key: const Key('categoria-filtro-livelo'),
+                initialValue: categoria,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Categoria'),
+                onChanged: (valor) {
+                  if (valor != null) atualizar(() => categoria = valor);
                 },
+                items: [
+                  const DropdownMenuItem(
+                    value: '',
+                    child: Text('Todas as categorias'),
+                  ),
+                  for (final valor in _controlador.categorias)
+                    DropdownMenuItem(value: valor, child: Text(valor)),
+                ],
               ),
-              for (final categoria in _controlador.categorias)
-                ChoiceChip(
-                  label: Text(categoria),
-                  selected: _controlador.categoria == categoria,
-                  onSelected: (_) {
-                    _controlador.mudarCategoria(categoria);
-                    Navigator.of(contexto).pop();
-                  },
-                ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<OrdenacaoCatalogoLivelo>(
+                key: const Key('ordenacao-filtro-livelo'),
+                initialValue: ordenacao,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Ordenar por'),
+                onChanged: (valor) {
+                  if (valor != null) atualizar(() => ordenacao = valor);
+                },
+                items: [
+                  for (final valor in OrdenacaoCatalogoLivelo.values)
+                    DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(contexto).pop();
+                        unawaited(
+                          _controlador.aplicarFiltros(
+                            categoria: '',
+                            ordenacao: OrdenacaoCatalogoLivelo.nome,
+                          ),
+                        );
+                      },
+                      child: const Text('Limpar'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(contexto).pop();
+                        unawaited(
+                          _controlador.aplicarFiltros(
+                            categoria: categoria,
+                            ordenacao: ordenacao,
+                          ),
+                        );
+                      },
+                      child: const Text('Ver lojas'),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   List<Widget> _corpo() {
     if (_controlador.carregandoInicial) {
@@ -390,7 +463,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               podeAdministrar: widget.administrador,
               aoAlternar: () => _alternar(parceiro),
               aoAlternarAlerta: () => _alternarAlerta(parceiro),
-              aoHistorico: () => _abrirHistorico(parceiro),
+              aoDetalhes: () => _abrirDetalhes(parceiro),
             );
           },
         ),
@@ -424,24 +497,211 @@ class _EstadoPaginaCatalogoLiveloAndroid
 }
 
 class _ResumoResultados extends StatelessWidget {
-  const _ResumoResultados({required this.total, required this.ordenacao});
+  const _ResumoResultados({
+    required this.total,
+    required this.contexto,
+    required this.mostrarFiltro,
+    required this.filtroAtivo,
+    required this.aoFiltrar,
+  });
 
   final int total;
-  final OrdenacaoCatalogoLivelo ordenacao;
+  final String contexto;
+  final bool mostrarFiltro;
+  final bool filtroAtivo;
+  final VoidCallback aoFiltrar;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Icon(Icons.tune_rounded, size: 17, color: CoresRadar.de(context).acao),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          '$total resultados · ${ordenacao.rotulo}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+  Widget build(BuildContext context) {
+    final resumo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          contexto,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: CoresRadar.de(context).textoSuave,
+            fontSize: 9,
+          ),
+        ),
+      ],
+    );
+    final botao = OutlinedButton.icon(
+      key: const Key('filtrar-ordenar-livelo'),
+      onPressed: aoFiltrar,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: filtroAtivo
+            ? (Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.acaoForteEscura
+                  : Tokens.actionStrong)
+            : null,
+        backgroundColor: filtroAtivo
+            ? (Theme.of(context).brightness == Brightness.dark
+                  ? Tokens.acaoFundoEscuro
+                  : Tokens.actionSoft)
+            : null,
+        side: filtroAtivo
+            ? BorderSide(
+                color: CoresRadar.de(context).acao.withValues(alpha: 0.48),
+              )
+            : null,
+        minimumSize: const Size(0, 38),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      icon: Icon(
+        Icons.filter_list_rounded,
+        size: 17,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Tokens.acaoForteEscura
+            : Tokens.actionStrong,
+      ),
+      label: const Text('Filtrar e ordenar'),
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: CoresRadar.de(context).borda.withValues(alpha: 0.76),
           ),
         ),
       ),
-    ],
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          if (!mostrarFiltro) return resumo;
+          final estreito =
+              limites.maxWidth < 340 ||
+              MediaQuery.textScalerOf(context).scale(10) > 12;
+          if (estreito) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                resumo,
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerRight, child: botao),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: resumo),
+              const SizedBox(width: 12),
+              botao,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DetalhesParceiroLivelo extends StatelessWidget {
+  const _DetalhesParceiroLivelo({
+    required this.parceiro,
+    required this.aoAbrirHistorico,
+  });
+
+  final ParceiroCatalogoLivelo parceiro;
+  final VoidCallback aoAbrirHistorico;
+
+  @override
+  Widget build(BuildContext context) {
+    final campanha = parceiro.campanha?.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _LinhaDetalheLivelo(
+          rotulo: 'Pontuação atual',
+          valor: pontosLivelo(parceiro.pontosAtuais, moeda: parceiro.moeda),
+        ),
+        if (parceiro.pontosBase != null)
+          _LinhaDetalheLivelo(
+            rotulo: 'Pontuação base',
+            valor: pontosLivelo(parceiro.pontosBase, moeda: parceiro.moeda),
+          ),
+        if (parceiro.pontosClube != null)
+          _LinhaDetalheLivelo(
+            rotulo: 'Clube Livelo',
+            valor: pontosLivelo(parceiro.pontosClube, moeda: parceiro.moeda),
+          ),
+        if (campanha != null && campanha.isNotEmpty)
+          _LinhaDetalheLivelo(rotulo: 'Campanha', valor: campanha),
+        _LinhaDetalheLivelo(
+          rotulo: 'Código externo',
+          valor: parceiro.idExterno,
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'Histórico',
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'O endpoint retorna as últimas 30 medições salvas. '
+          'Abrir o histórico nunca inicia uma coleta.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 14),
+        OutlinedButton(
+          key: Key('ver-historico-${parceiro.idExterno}'),
+          onPressed: aoAbrirHistorico,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(46),
+          ),
+          child: const Text('Ver histórico'),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinhaDetalheLivelo extends StatelessWidget {
+  const _LinhaDetalheLivelo({required this.rotulo, required this.valor});
+
+  final String rotulo;
+  final String valor;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    decoration: BoxDecoration(
+      border: Border(bottom: BorderSide(color: CoresRadar.de(context).borda)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            rotulo,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            valor,
+            textAlign: TextAlign.end,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    ),
   );
 }

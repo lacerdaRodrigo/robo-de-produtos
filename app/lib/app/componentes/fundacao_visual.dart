@@ -301,12 +301,16 @@ class AbasRadar extends StatelessWidget {
     required this.selecionada,
     required this.aoSelecionar,
     this.acao,
-  });
+    this.contadores,
+    this.expandir = false,
+  }) : assert(contadores == null || contadores.length == rotulos.length);
 
   final List<String> rotulos;
   final int selecionada;
   final ValueChanged<int> aoSelecionar;
   final Widget? acao;
+  final List<int>? contadores;
+  final bool expandir;
 
   @override
   Widget build(BuildContext context) {
@@ -317,35 +321,60 @@ class AbasRadar extends StatelessWidget {
         border: Border.all(color: cores.borda),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(4),
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (var indice = 0; indice < rotulos.length; indice++) ...[
-              _AbaRadar(
-                rotulo: rotulos[indice],
-                selecionada: indice == selecionada,
-                aoTocar: () => aoSelecionar(indice),
+      child: expandir
+          ? Padding(
+              padding: const EdgeInsets.all(4),
+              child: Row(
+                children: [
+                  for (var indice = 0; indice < rotulos.length; indice++) ...[
+                    if (indice > 0) const SizedBox(width: 4),
+                    Expanded(child: _construirAba(indice)),
+                  ],
+                ],
               ),
-              const SizedBox(width: 4),
-            ],
-            ?acao,
-          ],
-        ),
-      ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(4),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (var indice = 0; indice < rotulos.length; indice++) ...[
+                    if (indice > 0) const SizedBox(width: 4),
+                    _construirAba(indice),
+                  ],
+                  if (acao != null) ...[
+                    if (rotulos.isNotEmpty) const SizedBox(width: 4),
+                    acao!,
+                  ],
+                ],
+              ),
+            ),
     );
   }
+
+  Widget _construirAba(int indice) => _AbaRadar(
+    key: Key('aba-radar-$indice'),
+    rotulo: rotulos[indice],
+    contador: contadores?[indice],
+    larguraFlexivel: expandir,
+    selecionada: indice == selecionada,
+    aoTocar: () => aoSelecionar(indice),
+  );
 }
 
 class _AbaRadar extends StatelessWidget {
   const _AbaRadar({
+    super.key,
     required this.rotulo,
+    this.contador,
+    this.larguraFlexivel = false,
     required this.selecionada,
     required this.aoTocar,
   });
 
   final String rotulo;
+  final int? contador;
+  final bool larguraFlexivel;
   final bool selecionada;
   final VoidCallback aoTocar;
 
@@ -361,15 +390,75 @@ class _AbaRadar extends StatelessWidget {
         child: Semantics(
           selected: selecionada,
           button: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Text(
-              rotulo,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: selecionada
-                    ? Theme.of(context).colorScheme.onSecondary
-                    : cores.textoSuave,
-                fontWeight: FontWeight.w800,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: larguraFlexivel ? 7 : 12,
+              ),
+              child: Row(
+                mainAxisSize: larguraFlexivel
+                    ? MainAxisSize.max
+                    : MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (larguraFlexivel)
+                    Expanded(
+                      child: Text(
+                        rotulo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: selecionada
+                                  ? Theme.of(context).colorScheme.onSecondary
+                                  : cores.textoSuave,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    )
+                  else
+                    Text(
+                      rotulo,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: selecionada
+                            ? Theme.of(context).colorScheme.onSecondary
+                            : cores.textoSuave,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  if (contador != null) ...[
+                    SizedBox(width: larguraFlexivel ? 4 : 7),
+                    Container(
+                      constraints: const BoxConstraints(minWidth: 21),
+                      height: 21,
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: larguraFlexivel ? 4 : 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selecionada
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.onSecondary.withValues(alpha: 0.16)
+                            : Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        '$contador',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: selecionada
+                              ? Theme.of(context).colorScheme.onSecondary
+                              : cores.textoSuave,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),

@@ -70,7 +70,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   String _busca = '';
   String _categoria = '';
   AbaCatalogoLivelo _aba = AbaCatalogoLivelo.lojas;
-  OrdenacaoCatalogoLivelo _ordenacao = OrdenacaoCatalogoLivelo.pontos;
+  OrdenacaoCatalogoLivelo _ordenacao = OrdenacaoCatalogoLivelo.nome;
   ResumoCatalogoLivelo? _resumo;
   List<String> _categorias = const [];
   int _paginaAtual = 0;
@@ -120,6 +120,16 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   Future<void> mudarOrdenacao(OrdenacaoCatalogoLivelo valor) async {
     if (valor == _ordenacao) return;
     _ordenacao = valor;
+    await _reiniciarECarregar();
+  }
+
+  Future<void> aplicarFiltros({
+    required String categoria,
+    required OrdenacaoCatalogoLivelo ordenacao,
+  }) async {
+    if (categoria == _categoria && ordenacao == _ordenacao) return;
+    _categoria = categoria;
+    _ordenacao = ordenacao;
     await _reiniciarECarregar();
   }
 
@@ -303,7 +313,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   Future<PaginaCatalogoLivelo> _buscar(int pagina) => buscar(
     q: _busca,
     aba: _aba.codigo,
-    categoria: _categoria,
+    categoria: _aba == AbaCatalogoLivelo.lojas ? _categoria : '',
     ordenar: _ordenacao.codigo,
     pagina: pagina,
   );

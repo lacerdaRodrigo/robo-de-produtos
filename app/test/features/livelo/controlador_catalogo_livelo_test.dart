@@ -167,7 +167,16 @@ void main() {
 
     await controlador.mudarAba(AbaCatalogoLivelo.acompanhadas);
     await controlador.mudarCategoria('Viagem');
-    expect(consultas.last, '/acompanhadas/Viagem/pontos/1');
+    expect(consultas.last, '/acompanhadas//nome/1');
+
+    await controlador.mudarAba(AbaCatalogoLivelo.lojas);
+    expect(consultas.last, '/todas/Viagem/nome/1');
+
+    await controlador.aplicarFiltros(
+      categoria: 'Marketplace',
+      ordenacao: OrdenacaoCatalogoLivelo.pontos,
+    );
+    expect(consultas.last, '/todas/Marketplace/pontos/1');
   });
 
   test('debounce descarta resposta antiga', () async {

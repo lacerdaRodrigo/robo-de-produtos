@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/tema/tema.dart';
+import 'package:app_robo/app/tema/tokens.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/features/livelo/controlador_catalogo_livelo.dart';
@@ -281,30 +282,30 @@ void main() {
     expect(consultas, 4);
   });
 
-  testWidgets('catálogo abre sem resumo e preserva cartões ricos', (
-    at,
-  ) async {
+  testWidgets('catálogo abre sem resumo e preserva cartões ricos', (at) async {
     final controlador = _controlador();
     addTearDown(controlador.dispose);
-    await _abrir(at, controlador);
+    await _abrir(at, controlador, api: _apiDisparo(<http.Request>[]));
 
     expect(find.text('Última coleta concluída'), findsNothing);
     expect(find.textContaining('melhor acompanhada agora'), findsNothing);
     expect(find.textContaining('Coleta:'), findsNothing);
     expect(find.text('Todas'), findsOneWidget);
     expect(find.text('Acompanhando'), findsWidgets);
+    expect(find.text('252'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(
+      at.getSize(find.byKey(const Key('aba-radar-0'))).width,
+      at.getSize(find.byKey(const Key('aba-radar-1'))).width,
+    );
+    expect(find.text('Filtrar e ordenar'), findsOneWidget);
     expect(find.text('Atualizar'), findsOneWidget);
     expect(find.text('Alertas'), findsNothing);
     expect(find.text('Monitoramento da coleta'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Marketplace'), findsNothing);
-    expect(
-      find.widgetWithText(TextField, 'Buscar loja ou categoria'),
-      findsOneWidget,
-    );
-    final busca = at.getTopLeft(
-      find.widgetWithText(TextField, 'Buscar loja ou categoria'),
-    );
+    expect(find.widgetWithText(TextField, 'Buscar loja'), findsOneWidget);
+    final busca = at.getTopLeft(find.widgetWithText(TextField, 'Buscar loja'));
     final abas = at.getTopLeft(find.text('Todas'));
     expect(busca.dy, lessThan(abas.dy));
     await at.drag(
@@ -315,11 +316,46 @@ void main() {
     expect(find.text('Loja Clube'), findsOneWidget);
     expect(find.text('Acompanhando'), findsWidgets);
     expect(find.text('Alerta ativo'), findsOneWidget);
+    expect(
+      at.getTopLeft(find.byKey(const Key('acompanhar-A'))).dx,
+      lessThan(at.getTopLeft(find.byKey(const Key('detalhes-A'))).dx),
+    );
   });
 
-  testWidgets('qualidade reduzida não recria o card de resumo', (
+  testWidgets('filtros aplicam juntos e ficam ocultos nas acompanhadas', (
     at,
   ) async {
+    final controlador = _controlador();
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador);
+
+    await at.tap(find.byKey(const Key('filtrar-ordenar-livelo')));
+    await at.pumpAndSettle();
+    expect(find.text('Filtrar todas as lojas'), findsOneWidget);
+    expect(find.text('Limpar'), findsOneWidget);
+    expect(find.text('Ver lojas'), findsOneWidget);
+
+    await at.tap(find.byKey(const Key('categoria-filtro-livelo')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Marketplace').last);
+    await at.pumpAndSettle();
+    await at.tap(find.text('Ver lojas'));
+    await at.pumpAndSettle();
+
+    expect(controlador.categoria, 'Marketplace');
+    expect(controlador.ordenacao, OrdenacaoCatalogoLivelo.nome);
+    final botaoFiltro = at.widget<OutlinedButton>(
+      find.byKey(const Key('filtrar-ordenar-livelo')),
+    );
+    expect(botaoFiltro.style?.backgroundColor?.resolve({}), Tokens.actionSoft);
+
+    await at.tap(find.byKey(const Key('aba-radar-1')));
+    await at.pumpAndSettle();
+    expect(find.text('Suas lojas favoritas'), findsOneWidget);
+    expect(find.byKey(const Key('filtrar-ordenar-livelo')), findsNothing);
+  });
+
+  testWidgets('qualidade reduzida não recria o card de resumo', (at) async {
     final controlador = ControladorCatalogoLivelo(
       buscar:
           ({
@@ -347,10 +383,7 @@ void main() {
       find.textContaining('Exibindo a última coleta válida.'),
       findsNothing,
     );
-    expect(
-      find.widgetWithText(TextField, 'Buscar loja ou categoria'),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(TextField, 'Buscar loja'), findsOneWidget);
     expect(find.textContaining('RN29'), findsNothing);
   });
 
@@ -445,7 +478,7 @@ void main() {
   });
 
   testWidgets(
-    'qualquer loja do catálogo abre seu histórico, mesmo sem acompanhamento',
+    'detalhes abrem em modal e o histórico continua disponível para toda loja',
     (at) async {
       final controlador = _controlador();
       addTearDown(controlador.dispose);
@@ -483,10 +516,26 @@ void main() {
       );
       await at.pumpAndSettle();
 
-      await at.tap(find.byKey(const Key('historico-B')));
+      await at.tap(find.byKey(const Key('detalhes-B')));
       await at.pumpAndSettle();
 
-      expect(find.text('Loja Comum'), findsOneWidget);
+      expect(find.text('Loja Comum'), findsWidgets);
+      expect(find.text('Dados do contrato Livelo'), findsOneWidget);
+      expect(find.text('Pontuação atual'), findsOneWidget);
+      expect(find.text('Pontuação base'), findsOneWidget);
+      expect(find.text('Campanha'), findsOneWidget);
+      expect(find.text('Código externo'), findsOneWidget);
+      expect(find.text('Ver histórico'), findsOneWidget);
+      expect(
+        requisicoes.where(
+          (requisicao) => requisicao.url.path.endsWith('/historico'),
+        ),
+        isEmpty,
+      );
+
+      await at.tap(find.byKey(const Key('ver-historico-B')));
+      await at.pumpAndSettle();
+
       expect(find.text('5 pontos por R\$ 1'), findsOneWidget);
       expect(
         requisicoes.map((requisicao) => requisicao.url.path),
