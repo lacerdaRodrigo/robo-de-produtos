@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v1.52.3 (2026-09-03)
+
+### Bug Fixes
+
+- Alinhar Banco Inter mobile ao design V11
+  ([`a30de26`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a30de26cd45d2a5796da0bfd00becfe14124e9d1))
+
+- Alinhar cards do Compre direto ao V11
+  ([`36ce4b1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/36ce4b1847a42c371e164e4e766a7bae57cdbeb7))
+
+- Alinhar catalogo Livelo ao design V11
+  ([`6bb8d09`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6bb8d09ea7f3cc62ba7894744943518099f6ee38))
+
+### Documentation
+
+- Atualizar contrato visual mobile V11
+  ([`bf416a5`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/bf416a5831fabc821386d3b9497347ed58f1df6d))
+
+
 ## v1.52.2 (2026-09-02)
 
 ### Bug Fixes
