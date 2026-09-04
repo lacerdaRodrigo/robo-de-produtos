@@ -4,25 +4,29 @@ import '../../core/api/modelos.dart';
 
 /// Estado persistido de categorias acompanhadas do Compre direto.
 ///
-/// Guarda somente o catálogo real lido da API; nunca uma taxonomia fixa. A
-/// edição acontece no bottom sheet e o salvamento usa o método autorizado.
+/// Guarda somente as categorias externas reais lidas da API. `null` representa
+/// o agrupamento funcional `Sem categoria`, sem inventar uma categoria no dado
+/// bruto do Shopping Inter.
 class ControladorCategoriasAcompanhadas extends ChangeNotifier {
   ControladorCategoriasAcompanhadas({
     required this.carregar,
     required this.salvar,
   });
 
-  final Future<CatalogoCategoriasRadarUsuario> Function() carregar;
-  final Future<CatalogoCategoriasRadarUsuario> Function(List<String> slugs)
+  final Future<CatalogoCategoriasInterUsuario> Function() carregar;
+  final Future<CatalogoCategoriasInterUsuario> Function(
+    List<String> categorias, {
+    required bool semCategoria,
+  })
   salvar;
 
-  CatalogoCategoriasRadarUsuario? _catalogo;
+  CatalogoCategoriasInterUsuario? _catalogo;
   bool _carregando = false;
   bool _salvando = false;
   Object? _erro;
   String? _erroSalvar;
 
-  CatalogoCategoriasRadarUsuario? get catalogo => _catalogo;
+  CatalogoCategoriasInterUsuario? get catalogo => _catalogo;
   bool get carregando => _carregando;
   bool get salvando => _salvando;
   Object? get erro => _erro;
@@ -30,10 +34,10 @@ class ControladorCategoriasAcompanhadas extends ChangeNotifier {
 
   bool get configurado => _catalogo?.configurada ?? false;
 
-  int get totalAcompanhadas => _catalogo?.slugsAcompanhados.length ?? 0;
+  int get totalAcompanhadas => _catalogo?.valoresSelecionados.length ?? 0;
 
-  Set<String> get slugsSelecionadosDiretos =>
-      _catalogo?.slugsSelecionadosDiretos ?? const <String>{};
+  Set<String?> get valoresSelecionados =>
+      _catalogo?.valoresSelecionados ?? const <String?>{};
 
   String get resumo {
     final total = totalAcompanhadas;
@@ -56,13 +60,17 @@ class ControladorCategoriasAcompanhadas extends ChangeNotifier {
     }
   }
 
-  /// Salva a seleção direta; em falha mantém o catálogo anterior confirmado.
-  Future<bool> salvarSelecao(Set<String> slugs) async {
+  /// Salva a seleção externa; em falha mantém o catálogo anterior confirmado.
+  Future<bool> salvarSelecao(Set<String?> valores) async {
     _salvando = true;
     _erroSalvar = null;
     notifyListeners();
     try {
-      _catalogo = await salvar(slugs.toList()..sort());
+      final categorias = valores.whereType<String>().toList()..sort();
+      _catalogo = await salvar(
+        categorias,
+        semCategoria: valores.contains(null),
+      );
       return true;
     } catch (erro) {
       _erroSalvar = erro.toString();

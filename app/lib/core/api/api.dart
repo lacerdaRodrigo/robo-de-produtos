@@ -119,19 +119,19 @@ class Api {
     return Pagina.parse(corpo, CashbackInter.parse);
   }
 
-  /// Busca de produtos paginada (V4). `q` vazio lista o catálogo persistido;
-  /// quando presente, exige 2–100 caracteres. `categoriaRadar` restringe ao
-  /// nó escolhido e seus descendentes resolvidos pelo servidor.
+  /// Busca de produtos paginada (V4). A categoria usa exatamente o valor
+  /// externo recebido do Shopping Inter. `semCategoria` seleciona somente os
+  /// produtos cuja origem não informou categoria.
   Future<Pagina<ProdutoDireto>> buscarProdutos(
     String termo, {
     int pagina = 1,
     int? porPagina,
     String? marca,
     String? categoria,
+    bool semCategoria = false,
     String? loja,
     String? precoMin,
     String? precoMax,
-    String? categoriaRadar,
   }) async {
     final corpo = await cliente.obter(
       '/api/inter/produtos',
@@ -141,30 +141,34 @@ class Api {
         'por_pagina': '${porPagina ?? paginaPadrao}',
         'marca': ?marca,
         'categoria': ?categoria,
+        if (semCategoria) 'sem_categoria': 'true',
         'loja': ?loja,
         'preco_min': ?precoMin,
         'preco_max': ?precoMax,
-        'categoria_radar': ?categoriaRadar,
       },
     );
     return Pagina.parse(corpo, ProdutoDireto.parse);
   }
 
-  /// Taxonomia ativa e interesse persistente de categorias acompanhadas.
-  Future<CatalogoCategoriasRadarUsuario> categoriasRadar() async {
+  /// Categorias externas reais disponíveis no catálogo atual do Inter.
+  Future<CatalogoCategoriasInterUsuario> categoriasInter() async {
     final corpo = await cliente.obter('/api/inter/produtos/categorias');
-    return CatalogoCategoriasRadarUsuario.parse(corpo);
+    return CatalogoCategoriasInterUsuario.parse(corpo);
   }
 
-  /// Substitui os nós escolhidos diretamente; lista vazia = nenhum interesse.
-  Future<CatalogoCategoriasRadarUsuario> salvarCategoriasRadar(
-    List<String> categorias,
-  ) async {
+  /// Substitui as categorias externas acompanhadas; lista vazia = nenhum interesse.
+  Future<CatalogoCategoriasInterUsuario> salvarCategoriasInter(
+    List<String> categorias, {
+    bool semCategoria = false,
+  }) async {
     final corpo = await cliente.alterar(
       '/api/inter/produtos/categorias',
-      corpo: <String, Object?>{'categorias': categorias},
+      corpo: <String, Object?>{
+        'categorias': categorias,
+        'sem_categoria': semCategoria,
+      },
     );
-    return CatalogoCategoriasRadarUsuario.parse(corpo);
+    return CatalogoCategoriasInterUsuario.parse(corpo);
   }
 
   /// Histórico paginado de um produto dentro de uma loja direta específica.

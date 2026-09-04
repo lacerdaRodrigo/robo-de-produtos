@@ -6,15 +6,15 @@
 Uri? linkSeguroShoppingInter(String caminho) {
   final limpo = caminho.trim();
   final caminhoSemConsulta = limpo.split('?').first;
-  final temNavegacao = caminhoSemConsulta.split('/').any((segmento) {
-    final decodificado = Uri.decodeComponent(segmento);
-    return decodificado == '.' || decodificado == '..';
-  });
+  final temNavegacao = _temSegmentoNavegacaoInvalido(
+    caminhoSemConsulta.split('/'),
+  );
+  if (temNavegacao) return null;
+
   final origem = Uri.tryParse(limpo);
   if (origem == null ||
       origem.hasScheme ||
       origem.hasAuthority ||
-      temNavegacao ||
       origem.pathSegments.isEmpty ||
       origem.pathSegments.any(
         (segmento) => segmento.isEmpty || segmento == '.' || segmento == '..',
@@ -34,17 +34,28 @@ Uri? linkSeguroShoppingInter(String caminho) {
 /// Aceita um destino absoluto fornecido pela API somente quando ele permanece
 /// em HTTPS no host comercial já aprovado do Shopping Inter.
 Uri? linkAbsolutoSeguroShoppingInter(String? destino) {
-  final uri = Uri.tryParse(destino?.trim() ?? '');
+  final bruto = destino?.trim() ?? '';
+  final uri = Uri.tryParse(bruto);
   if (uri == null ||
       uri.scheme != 'https' ||
       uri.host != 'shopping.inter.co' ||
       uri.userInfo.isNotEmpty ||
       uri.hasPort ||
-      uri.pathSegments.any((segmento) {
-        final decodificado = Uri.decodeComponent(segmento);
-        return decodificado == '.' || decodificado == '..';
-      })) {
+      _temSegmentoNavegacaoInvalido(uri.pathSegments)) {
     return null;
   }
   return uri;
+}
+
+bool _temSegmentoNavegacaoInvalido(Iterable<String> segmentos) {
+  try {
+    return segmentos.any((segmento) {
+      final decodificado = Uri.decodeComponent(segmento);
+      return decodificado == '.' || decodificado == '..';
+    });
+  } on FormatException {
+    return true;
+  } on ArgumentError {
+    return true;
+  }
 }

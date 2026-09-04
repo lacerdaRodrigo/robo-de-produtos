@@ -62,9 +62,7 @@ export type ProdutoDireto = {
   id_externo: string;
   nome: string;
   marca: string | null;
-  categoria: string | null;
-  categoria_radar_slug: string | null;
-  categoria_radar_nome: string | null;
+  categoria: string;
   caminho: string;
   preco_cheio_texto: string | null;
   preco_cheio_valor: string | null;
@@ -118,7 +116,7 @@ export type HistoricoProduto = {
 export type FiltrosProdutosDiretos = {
   marca?: string | null;
   categoria?: string | null;
-  categoria_radar?: string | null;
+  sem_categoria?: boolean;
   loja?: string | null; // slug da loja direta
   preco_min?: string | null; // string decimal (NUMERIC) >= 0
   preco_max?: string | null;
@@ -205,9 +203,9 @@ export async function resumoProdutosPersistido(): Promise<ResumoProdutosPersisti
 
 /** Colunas de produto + a medição mais recente compartilhadas pelas consultas. */
 const COLUNAS_PRODUTO = `
-  p.id_externo, p.nome, p.marca, p.categoria, p.caminho,
-  categoria_radar.slug AS categoria_radar_slug,
-  categoria_radar.nome AS categoria_radar_nome,
+  p.id_externo, p.nome, p.marca,
+  COALESCE(NULLIF(btrim(p.categoria), ''), 'Sem categoria') AS categoria,
+  p.caminho,
   m.preco_lista_texto AS preco_cheio_texto,
   m.preco_lista AS preco_cheio_valor,
   m.preco_atual_texto, m.preco_atual AS preco_atual_valor,
@@ -217,13 +215,10 @@ const COLUNAS_PRODUTO = `
   m.momento AS atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome`;
 
 /**
- * Busca paginada de produtos: entrega `total` e uma
- * página de `itens` por consulta. É a correção da lacuna do site atual, que
- * devolvia tudo numa chamada (LIMIT 500) e não paginava.
- *
- * Filtros: marca, categoria externa textual, categoria Radar, loja (por slug)
- * e faixa de `preco_atual`.
- * Tudo é aplicado no servidor; o cliente nunca baixa o catálogo (PLANO §4.3).
+ * Busca paginada de produtos. A categoria funcional é o valor externo exato
+ * recebido do Shopping Inter. Ausência na origem é tratada separadamente pelo
+ * filtro `sem_categoria`; nenhuma taxonomia ou hierarquia própria participa da
+ * consulta.
  */
 export async function buscarProdutosDiretosPaginado(
   termo: string,
@@ -236,21 +231,6 @@ export async function buscarProdutosDiretosPaginado(
   const busca = normalizarBuscaProdutosInter(termo);
 
   const params: unknown[] = [usuarioId];
-  const ctes = [
-    `categorias_usuario AS (
-      SELECT categoria.id
-        FROM categoria_radar_acompanhada acompanhada
-        JOIN categoria_radar categoria
-          ON categoria.id = acompanhada.categoria_radar_id
-       WHERE acompanhada.usuario_app_id = $1::bigint
-         AND categoria.ativo = TRUE
-      UNION
-      SELECT filha.id
-        FROM categoria_radar filha
-        JOIN categorias_usuario pai ON filha.categoria_pai_id = pai.id
-       WHERE filha.ativo = TRUE
-    )`,
-  ];
   const condicoes: string[] = [
     `p.ativo = TRUE AND l.selecionada = TRUE AND l.ativa = TRUE`,
     `(
@@ -259,24 +239,20 @@ export async function buscarProdutosDiretosPaginado(
           FROM preferencia_produtos_inter_usuario preferencia
          WHERE preferencia.usuario_app_id = $1::bigint
       )
-      OR p.categoria_radar_id IN (SELECT id FROM categorias_usuario)
+      OR EXISTS (
+        SELECT 1
+          FROM categoria_inter_acompanhada acompanhada
+         WHERE acompanhada.usuario_app_id = $1::bigint
+           AND (
+             (
+               acompanhada.categoria IS NULL
+               AND (p.categoria IS NULL OR btrim(p.categoria) = '')
+             )
+             OR acompanhada.categoria = p.categoria
+           )
+      )
     )`,
   ];
-
-  if (filtros.categoria_radar) {
-    params.push(filtros.categoria_radar);
-    ctes.push(`categorias_filtro AS (
-      SELECT id
-        FROM categoria_radar
-       WHERE slug = $${params.length} AND ativo = TRUE
-      UNION
-      SELECT filha.id
-        FROM categoria_radar filha
-        JOIN categorias_filtro pai ON filha.categoria_pai_id = pai.id
-       WHERE filha.ativo = TRUE
-    )`);
-    condicoes.push(`p.categoria_radar_id IN (SELECT id FROM categorias_filtro)`);
-  }
 
   // Busca por texto: todos os tokens devem constar em nome/marca/categoria.
   if (busca) {
@@ -293,9 +269,11 @@ export async function buscarProdutosDiretosPaginado(
     params.push(`%${filtros.marca}%`);
     condicoes.push(`p.marca ILIKE $${params.length}`);
   }
-  if (filtros.categoria) {
-    params.push(`%${filtros.categoria}%`);
-    condicoes.push(`p.categoria ILIKE $${params.length}`);
+  if (filtros.sem_categoria) {
+    condicoes.push(`(p.categoria IS NULL OR btrim(p.categoria) = '')`);
+  } else if (filtros.categoria) {
+    params.push(filtros.categoria);
+    condicoes.push(`p.categoria = $${params.length}`);
   }
   if (filtros.loja) {
     params.push(filtros.loja);
@@ -310,7 +288,6 @@ export async function buscarProdutosDiretosPaginado(
     condicoes.push(`m.preco_atual <= $${params.length}::numeric`);
   }
 
-  const cte = `WITH RECURSIVE ${ctes.join(", ")}`;
   const onde = condicoes.join(" AND ");
   params.push(porPagina);
   params.push((pagina - 1) * porPagina);
@@ -318,7 +295,6 @@ export async function buscarProdutosDiretosPaginado(
   const [totais, itens] = await Promise.all([
     sql(
       `
-      ${cte}
       SELECT count(*)::int AS total
         FROM produto_direto_inter p
         JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
@@ -337,12 +313,9 @@ export async function buscarProdutosDiretosPaginado(
     ),
     sql(
       `
-      ${cte}
       SELECT ${COLUNAS_PRODUTO}
         FROM produto_direto_inter p
         JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
-        LEFT JOIN categoria_radar
-          ON categoria_radar.id = p.categoria_radar_id
         JOIN LATERAL (
           SELECT med.*
             FROM medicao_produto_direto_inter med
@@ -461,7 +434,10 @@ export async function totalLojasDiretas(
  * Loja inativa não pode voltar a ser selecionada, mas uma seleção antiga pode
  * ser removida para o estado ficar recuperável.
  */
-export async function selecionarLojaDireta(id: string, selecionar: boolean): Promise<boolean> {
+export async function selecionarLojaDireta(
+  id: string,
+  selecionar: boolean,
+): Promise<boolean> {
   const sql = conectar();
   const linhas = (await sql`
     UPDATE loja_direta_inter
@@ -472,7 +448,10 @@ export async function selecionarLojaDireta(id: string, selecionar: boolean): Pro
   return linhas.length > 0;
 }
 
-export async function resumoLojasDiretas(): Promise<{ selecionadas: number; total: number }> {
+export async function resumoLojasDiretas(): Promise<{
+  selecionadas: number;
+  total: number;
+}> {
   const sql = conectar();
   const linhas = (await sql`
     SELECT count(*) FILTER (WHERE selecionada = TRUE AND ativa = TRUE)::int AS selecionadas,
@@ -488,7 +467,9 @@ export async function historicoProdutoDireto(
 ): Promise<HistoricoProduto | null> {
   const sql = conectar();
   const produtos = (await sql`
-    SELECT p.id, p.id_externo, p.nome, p.marca, p.categoria, p.caminho, p.ativo,
+    SELECT p.id, p.id_externo, p.nome, p.marca,
+           COALESCE(NULLIF(btrim(p.categoria), ''), 'Sem categoria') AS categoria,
+           p.caminho, p.ativo,
            m.preco_lista_texto AS preco_cheio_texto,
            m.preco_lista AS preco_cheio_valor,
            m.preco_atual_texto, m.preco_atual AS preco_atual_valor,
@@ -526,7 +507,12 @@ export async function historicoProdutoDireto(
        AND momento >= now() - interval '30 days'
      ORDER BY momento DESC
   `) as HistoricoProduto["medicoes"];
-  return { produto, minimo: resumo?.minimo ?? null, maximo: resumo?.maximo ?? null, medicoes };
+  return {
+    produto,
+    minimo: resumo?.minimo ?? null,
+    maximo: resumo?.maximo ?? null,
+    medicoes,
+  };
 }
 
 export type StatusCatalogoProdutos = {
@@ -574,7 +560,9 @@ function consolidarEstadoTentativas(
 ): EstadoTentativaProdutos | null {
   const estados = linhas
     .map((linha) => linha.ultima_tentativa_estado)
-    .filter((estado): estado is NonNullable<typeof estado> => estado !== null);
+    .filter(
+      (estado): estado is NonNullable<typeof estado> => estado !== null,
+    );
   if (estados.length === 0) return null;
   if (estados.includes("iniciada")) return "iniciada";
   if (estados.length < totalLojas) return "parcial";
@@ -644,10 +632,14 @@ export async function statusCatalogoProdutos(
     }));
   const qualidades = relacionadas
     .map((linha) => linha.qualidade)
-    .filter((qualidade): qualidade is NonNullable<typeof qualidade> => qualidade !== null);
+    .filter(
+      (qualidade): qualidade is NonNullable<typeof qualidade> =>
+        qualidade !== null,
+    );
   const qualidade = qualidades.includes("degradada")
     ? "degradada"
-    : qualidades.length === lojas.length && qualidades.every((valor) => valor === "completa")
+    : qualidades.length === lojas.length &&
+        qualidades.every((valor) => valor === "completa")
       ? "completa"
       : null;
 
@@ -661,6 +653,9 @@ export async function statusCatalogoProdutos(
       relacionadas.map((linha) => linha.ultima_tentativa_em),
       (atual, candidato) => candidato > atual,
     ),
-    ultima_tentativa_estado: consolidarEstadoTentativas(relacionadas, lojas.length),
+    ultima_tentativa_estado: consolidarEstadoTentativas(
+      relacionadas,
+      lojas.length,
+    ),
   };
 }

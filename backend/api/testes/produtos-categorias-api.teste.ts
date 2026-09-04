@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const dependencias = vi.hoisted(() => ({
   autenticar: vi.fn(),
   buscar: vi.fn(),
-  categoriaExiste: vi.fn(),
   status: vi.fn(),
 }));
 
@@ -16,13 +15,9 @@ vi.mock("@/lib/banco-produtos-inter", () => ({
   statusCatalogoProdutos: dependencias.status,
 }));
 
-vi.mock("@/lib/banco-categorias-produtos-inter", () => ({
-  categoriaRadarAtivaExiste: dependencias.categoriaExiste,
-}));
-
 import { GET } from "@/app/api/inter/produtos/route";
 
-describe("catálogo e filtro Radar dos produtos Inter", () => {
+describe("catálogo e categorias externas dos produtos Inter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dependencias.autenticar.mockResolvedValue({
@@ -31,7 +26,6 @@ describe("catálogo e filtro Radar dos produtos Inter", () => {
       requisicaoId: "req-produtos",
     });
     dependencias.buscar.mockResolvedValue({ itens: [], total: 0 });
-    dependencias.categoriaExiste.mockResolvedValue(true);
     dependencias.status.mockResolvedValue({
       atualizado_em: null,
       qualidade: null,
@@ -40,63 +34,60 @@ describe("catálogo e filtro Radar dos produtos Inter", () => {
     });
   });
 
-  it("lista o catálogo sem termo e mantém categoria externa separada", async () => {
+  it("lista o catálogo sem termo e encaminha a categoria externa exata", async () => {
     const resposta = await GET(
       new Request(
-        "http://localhost/api/inter/produtos?categoria=Telefonia&pagina=1",
+        "http://localhost/api/inter/produtos?categoria=Notebooks%20gamer&pagina=1",
       ),
     );
 
     expect(resposta.status).toBe(200);
     expect(dependencias.buscar).toHaveBeenCalledWith("", 1, 20, "42", {
       marca: null,
-      categoria: "Telefonia",
-      categoria_radar: null,
+      categoria: "Notebooks gamer",
+      sem_categoria: false,
       loja: null,
       preco_min: null,
       preco_max: null,
     });
-    expect(dependencias.categoriaExiste).not.toHaveBeenCalled();
   });
 
-  it("valida e encaminha o filtro temporário categoria_radar", async () => {
+  it("encaminha Sem categoria sem inventar valor textual no filtro", async () => {
     const resposta = await GET(
       new Request(
-        "http://localhost/api/inter/produtos?q=tv&categoria_radar=eletronicos",
+        "http://localhost/api/inter/produtos?q=tv&sem_categoria=true",
       ),
     );
 
     expect(resposta.status).toBe(200);
-    expect(dependencias.categoriaExiste).toHaveBeenCalledWith("eletronicos");
     expect(dependencias.buscar).toHaveBeenCalledWith(
       "tv",
       1,
       20,
       "42",
-      expect.objectContaining({ categoria_radar: "eletronicos" }),
+      expect.objectContaining({ categoria: null, sem_categoria: true }),
     );
   });
 
-  it("rejeita termo curto e categoria Radar inexistente", async () => {
+  it("rejeita termo curto, categoria malformada e combinação ambígua", async () => {
     const termoCurto = await GET(
       new Request("http://localhost/api/inter/produtos?q=t"),
     );
     expect(termoCurto.status).toBe(400);
     expect(dependencias.buscar).not.toHaveBeenCalled();
 
-    dependencias.categoriaExiste.mockResolvedValueOnce(false);
-    const categoriaInexistente = await GET(
+    const categoriaComEspacos = await GET(
       new Request(
-        "http://localhost/api/inter/produtos?categoria_radar=nao-existe",
+        "http://localhost/api/inter/produtos?categoria=%20Android%20",
       ),
     );
-    expect(categoriaInexistente.status).toBe(400);
-    expect(await categoriaInexistente.json()).toEqual({
-      erro: {
-        codigo: "validacao",
-        mensagem: "categoria_radar inexistente ou inativa",
-      },
-    });
-    expect(dependencias.buscar).not.toHaveBeenCalled();
+    expect(categoriaComEspacos.status).toBe(400);
+
+    const combinados = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?categoria=Android&sem_categoria=true",
+      ),
+    );
+    expect(combinados.status).toBe(400);
   });
 });

@@ -10,7 +10,7 @@ import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import '../administracao/controlador_catalogo_administracao.dart';
-import '../produtos/arvore_categorias_radar.dart';
+import '../produtos/seletor_categorias_inter.dart';
 import 'controlador_categorias_acompanhadas.dart';
 
 /// Catálogo mobile do Compre direto com busca e paginação fornecidas pela API.
@@ -68,8 +68,9 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   late final ControladorCategoriasAcompanhadas _controladorCategorias =
       widget.controladorCategorias ??
       ControladorCategoriasAcompanhadas(
-        carregar: widget.api.categoriasRadar,
-        salvar: widget.api.salvarCategoriasRadar,
+        carregar: widget.api.categoriasInter,
+        salvar: (categorias, {required semCategoria}) => widget.api
+            .salvarCategoriasInter(categorias, semCategoria: semCategoria),
       );
   late final bool _controladorExterno = widget.controlador != null;
   late final _busca = TextEditingController(text: _controlador.busca);
@@ -124,7 +125,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     final selecionadas = await mostrarSeletorCategoriasAcompanhadas(
       context,
       categorias: catalogo.itens,
-      selecionadasIniciais: _controladorCategorias.slugsSelecionadosDiretos,
+      selecionadasIniciais: _controladorCategorias.valoresSelecionados,
     );
     if (selecionadas == null || !mounted) return;
     final salvo = await _controladorCategorias.salvarSelecao(selecionadas);

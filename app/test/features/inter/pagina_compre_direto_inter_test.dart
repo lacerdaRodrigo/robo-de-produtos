@@ -54,32 +54,23 @@ Pagina<LojaDireto> _pagina() => Pagina(
   temProxima: false,
 );
 
-CatalogoCategoriasRadarUsuario _categorias({
-  bool selecionada = false,
-  bool acompanhada = false,
-}) => CatalogoCategoriasRadarUsuario(
-  configurada: selecionada,
-  itens: [
-    CategoriaRadar(
-      id: 'eletronicos',
-      slug: 'eletronicos',
-      nome: 'Eletrônicos',
-      categoriaPaiSlug: null,
-      ordem: 1,
-      selecionada: selecionada,
-      acompanhada: acompanhada,
-    ),
-    const CategoriaRadar(
-      id: 'cabos',
-      slug: 'cabos',
-      nome: 'Cabos',
-      categoriaPaiSlug: 'eletronicos',
-      ordem: 1,
-      selecionada: false,
-      acompanhada: false,
-    ),
-  ],
-);
+CatalogoCategoriasInterUsuario _categorias({bool selecionada = false}) =>
+    CatalogoCategoriasInterUsuario(
+      configurada: selecionada,
+      itens: [
+        CategoriaInter(
+          valor: 'Eletrônicos',
+          nome: 'Eletrônicos',
+          selecionada: selecionada,
+        ),
+        const CategoriaInter(valor: 'Cabos', nome: 'Cabos', selecionada: false),
+        const CategoriaInter(
+          valor: null,
+          nome: 'Sem categoria',
+          selecionada: false,
+        ),
+      ],
+    );
 
 void main() {
   testWidgets('duas abas mostram o último catálogo e a seleção nos cards', (
@@ -292,12 +283,12 @@ void main() {
   testWidgets('configura categorias sem alterar a seleção de lojas', (
     at,
   ) async {
-    Set<String>? salvas;
+    Set<String?>? salvas;
     final categorias = ControladorCategoriasAcompanhadas(
       carregar: () async => _categorias(),
-      salvar: (slugs) async {
-        salvas = slugs.toSet();
-        return _categorias(selecionada: true, acompanhada: true);
+      salvar: (valores, {required semCategoria}) async {
+        salvas = <String?>{...valores, if (semCategoria) null};
+        return _categorias(selecionada: true);
       },
     );
     final lojas = ControladorCatalogoAdministracao<LojaDireto>(
@@ -330,7 +321,7 @@ void main() {
     await at.tap(find.byKey(const Key('confirmar-acompanhar')));
     await at.pumpAndSettle();
 
-    expect(salvas, {'eletronicos'});
+    expect(salvas, {'Eletrônicos'});
     expect(lojas.itens.single.selecionada, isTrue);
   });
 
@@ -340,7 +331,7 @@ void main() {
     var salvamentos = 0;
     final categorias = ControladorCategoriasAcompanhadas(
       carregar: () async => _categorias(),
-      salvar: (_) async {
+      salvar: (_, {required semCategoria}) async {
         salvamentos++;
         return _categorias();
       },
@@ -374,6 +365,6 @@ void main() {
     await at.pumpAndSettle();
 
     expect(salvamentos, 0);
-    expect(categorias.slugsSelecionadosDiretos, isEmpty);
+    expect(categorias.valoresSelecionados, isEmpty);
   });
 }

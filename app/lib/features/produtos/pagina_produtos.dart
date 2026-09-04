@@ -12,7 +12,7 @@ import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
 import 'link_shopping_inter.dart';
 import 'pagina_historico_produto.dart';
-import 'arvore_categorias_radar.dart';
+import 'seletor_categorias_inter.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
 class PaginaProdutos extends StatefulWidget {
@@ -49,7 +49,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
@@ -58,7 +58,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               pagina: pagina,
               marca: marca,
               categoria: categoria,
-              categoriaRadar: categoriaRadar,
+              semCategoria: semCategoria,
               loja: loja,
               precoMin: precoMin,
               precoMax: precoMax,
@@ -196,6 +196,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                         TextButton(
                           onPressed: () {
                             _controlador.mudarFiltros(const FiltrosProdutos());
+                            setState(() => _rotuloCategoriaAtiva = null);
                           },
                           child: const Text('Limpar filtros'),
                         ),
@@ -670,7 +671,9 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                 ),
                 TextField(
                   controller: categoria,
-                  decoration: const InputDecoration(labelText: 'Categoria'),
+                  decoration: const InputDecoration(
+                    labelText: 'Categoria exata do Inter',
+                  ),
                 ),
                 TextField(
                   controller: loja,
@@ -696,6 +699,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                     FiltrosProdutos(
                       marca: marca.text,
                       categoria: categoria.text,
+                      semCategoria: false,
                       loja: loja.text,
                       precoMin: precoMin.text,
                       precoMax: precoMax.text,
@@ -712,15 +716,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     // Os campos ainda pertencem à animação de saída do bottom sheet depois
     // que o Future retorna. Eles são descartados junto do modal; destruí-los
     // aqui faria o Flutter tentar reconstruir um TextField já sem controller.
-    if (mounted && novos != null) _controlador.mudarFiltros(novos);
+    if (mounted && novos != null) {
+      setState(() => _rotuloCategoriaAtiva = novos.categoriaOpcional);
+      _controlador.mudarFiltros(novos);
+    }
   }
 
   Future<void> _abrirCategoriaNestaTela() async {
     if (_carregandoCategorias) return;
     setState(() => _carregandoCategorias = true);
-    CatalogoCategoriasRadarUsuario catalogo;
+    CatalogoCategoriasInterUsuario catalogo;
     try {
-      catalogo = await widget.api.categoriasRadar();
+      catalogo = await widget.api.categoriasInter();
     } catch (_) {
       if (!mounted) return;
       mostrarMensagemRadar(
@@ -736,23 +743,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     final selecao = await mostrarSelecaoCategoriaTemporaria(
       context,
       categorias: catalogo.itens,
-      selecionadaAtual: _controlador.filtros.categoriaRadarOpcional,
+      categoriaAtual: _controlador.filtros.categoriaOpcional,
+      semCategoriaAtual: _controlador.filtros.semCategoria,
     );
     if (selecao == null || !mounted) return;
-    final slug = selecao.slug;
-    String? rotulo;
-    if (slug != null) {
-      for (final categoria in catalogo.itens) {
-        if (categoria.slug == slug) {
-          rotulo = categoria.nome;
-          break;
-        }
-      }
-      rotulo ??= slug;
-    }
+
+    final rotulo = selecao.semCategoria ? 'Sem categoria' : selecao.categoria;
     setState(() => _rotuloCategoriaAtiva = rotulo);
     _controlador.mudarFiltros(
-      _controlador.filtros.copiarCom(categoriaRadar: slug ?? ''),
+      _controlador.filtros.copiarCom(
+        categoria: selecao.categoria ?? '',
+        semCategoria: selecao.semCategoria,
+      ),
     );
     mostrarMensagemRadar(
       context,

@@ -75,7 +75,7 @@ void main() {
     expect(pagina.qualidade, 'completa');
   });
 
-  test('buscarProdutos envia filtros na consulta', () async {
+  test('buscarProdutos envia categoria externa exata na consulta', () async {
     final consultas = <Uri>[];
     final api = Api(
       paginaPadrao: 20,
@@ -96,16 +96,43 @@ void main() {
       'tv',
       marca: 'Samsung',
       loja: 'casas-bahia',
-      categoriaRadar: 'eletronicos',
+      categoria: 'Smart TV',
     );
 
     expect(consultas.single.queryParameters['marca'], 'Samsung');
     expect(consultas.single.queryParameters['loja'], 'casas-bahia');
-    expect(consultas.single.queryParameters['categoria_radar'], 'eletronicos');
+    expect(consultas.single.queryParameters['categoria'], 'Smart TV');
+    expect(
+      consultas.single.queryParameters.containsKey('categoria_radar'),
+      isFalse,
+    );
     expect(consultas.single.queryParameters['q'], 'tv');
   });
 
-  test('categorias Radar leem e salvam identidades estáveis', () async {
+  test('buscarProdutos envia Sem categoria como filtro separado', () async {
+    final consultas = <Uri>[];
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          consultas.add(requisicao.url);
+          return http.Response(
+            '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    await api.buscarProdutos('tv', semCategoria: true);
+
+    expect(consultas.single.queryParameters['sem_categoria'], 'true');
+    expect(consultas.single.queryParameters.containsKey('categoria'), isFalse);
+  });
+
+  test('categorias do Inter leem e salvam valores externos', () async {
     final requisicoes = <http.Request>[];
     final api = Api(
       paginaPadrao: 20,
@@ -119,14 +146,11 @@ void main() {
               'configurada': true,
               'itens': [
                 {
-                  'id': '1',
-                  'slug': 'eletronicos',
+                  'valor': 'Eletrônicos',
                   'nome': 'Eletrônicos',
-                  'categoria_pai_slug': null,
-                  'ordem': 1,
                   'selecionada': true,
-                  'acompanhada': true,
                 },
+                {'valor': null, 'nome': 'Sem categoria', 'selecionada': true},
               ],
             }),
             200,
@@ -135,16 +159,19 @@ void main() {
       ),
     );
 
-    final lidas = await api.categoriasRadar();
-    final salvas = await api.salvarCategoriasRadar(['eletronicos']);
+    final lidas = await api.categoriasInter();
+    final salvas = await api.salvarCategoriasInter([
+      'Eletrônicos',
+    ], semCategoria: true);
 
-    expect(lidas.slugsSelecionadosDiretos, {'eletronicos'});
-    expect(salvas.slugsAcompanhados, {'eletronicos'});
+    expect(lidas.valoresSelecionados, {'Eletrônicos', null});
+    expect(salvas.valoresSelecionados, {'Eletrônicos', null});
     expect(requisicoes[0].url.path, '/api/inter/produtos/categorias');
     expect(requisicoes[0].method, 'GET');
     expect(requisicoes[1].method, 'PATCH');
     expect(jsonDecode(requisicoes[1].body), {
-      'categorias': ['eletronicos'],
+      'categorias': ['Eletrônicos'],
+      'sem_categoria': true,
     });
   });
 

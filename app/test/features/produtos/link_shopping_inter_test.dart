@@ -10,12 +10,13 @@ void main() {
     );
   });
 
-  test('recusa URL, autoridade e navegação hostis', () {
+  test('recusa URL, autoridade, navegação e encoding hostis', () {
     for (final caminho in [
       'https://outro.exemplo/produto',
       '//outro.exemplo/produto',
       'produto/../senha',
       'produto/%2e%2e/senha',
+      'produto/9% cashback',
       '',
     ]) {
       expect(linkSeguroShoppingInter(caminho), isNull);
@@ -33,6 +34,7 @@ void main() {
       'http://shopping.inter.co/site-parceiro/lojas',
       'https://outro.example/site-parceiro/lojas',
       'https://usuario@shopping.inter.co/site-parceiro/lojas',
+      'https://shopping.inter.co/produto/9% cashback',
       null,
     ]) {
       expect(linkAbsolutoSeguroShoppingInter(destino), isNull);
