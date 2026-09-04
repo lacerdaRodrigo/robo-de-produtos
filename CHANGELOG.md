@@ -2,6 +2,140 @@
 
 <!-- version list -->
 
+## v1.54.0 (2026-09-04)
+
+### Bug Fixes
+
+- **app**: Rejeitar percent encoding invalido em links do Inter
+  ([`9151265`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/91512653fc9b73cdf9f9fa9aa5ac1f3f3b4ca5ac))
+
+### Chores
+
+- Formatar alterações Flutter no CI
+  ([`f9266a5`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f9266a50bd7622b1bf78edde031ad53153ddd2fd))
+
+- Formatar teste de modelos do Inter
+  ([`b6a092e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b6a092e18d22ea680f64eb3cda58d05478acfa54))
+
+- Remover workflow temporario de formatacao
+  ([`8621505`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8621505ca990aab7439fc6d6fa61cdfb338f77b1))
+
+- Remover workflow temporario de formatacao
+  ([`c4facb1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c4facb1cc60cfdfc50bbf0a2a4583ad909365bf7))
+
+### Code Style
+
+- **app**: Formatar categorias do Inter
+  ([`a855b6d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a855b6d1de1ae409ac08a9f4e38f06b1fe616956))
+
+- **app**: Formatar teste de categorias do Inter
+  ([`863449d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/863449d4cf1a46d1fcabcba670f5d8d51778cb53))
+
+### Documentation
+
+- Planeja categorias do Inter como fonte oficial
+  ([`32030d3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/32030d31d132f02f973156eb33aede64ba9ec005))
+
+- Registra validação das categorias do JSON Inter
+  ([`bbea3fe`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/bbea3fe0e9217f462e0499107c8e895dd60f753f))
+
+### Features
+
+- Acompanha categorias externas do Inter
+  ([`a11c687`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a11c6875fc4633f3b93c7d1cb3d1812eb766af20))
+
+- Cria seletor plano de categorias do Inter
+  ([`6a9b462`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6a9b462a321bb9a48de1871f0ba826b5d69ecc09))
+
+- Expõe categorias externas do Inter
+  ([`8c96751`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8c96751193692ebbd649640d0e322082c4c320a7))
+
+- Filtra produtos pela categoria do Inter
+  ([`db8acf4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/db8acf4c92368890d7f1f3665ec75b715404b1b8))
+
+- Filtra produtos pelas categorias do Inter
+  ([`8874f03`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8874f03122f1f4ae92f92c8e8aed061e5de766f1))
+
+- Modela categorias externas do Inter
+  ([`f237fa0`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f237fa06b3a2a8f7f328fabd518ca60357fc2495))
+
+- Prepara categorias externas do Inter
+  ([`b8d7381`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b8d7381516565a49ea9f02a5269ac88818bcf9bd))
+
+- Remove classificacao Radar do robo Inter
+  ([`48b52c5`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/48b52c55e469b179197f79b4e814b7a2cd14aded))
+
+- Remove filtro Radar do controlador de produtos
+  ([`06ae680`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/06ae680a285303f77445afc39b7a15f5dfe76cde))
+
+- Remove taxonomia Radar da busca de produtos
+  ([`68befff`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/68befff7e4397d0122312796cddb954bd60ae83e))
+
+- Usa categorias externas no cliente API
+  ([`50b1ae1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/50b1ae1d630a71857edfb84d9078c29c82ebc2ab))
+
+- Usa categorias externas no Compre direto
+  ([`30d0102`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/30d0102b199eaf2a3a2dc816853135454399efc8))
+
+- Usa categorias reais do Inter na API
+  ([`da7d346`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/da7d3460dc25b47281a932a6b9f2083da8dae26b))
+
+- Valida categorias externas do Inter
+  ([`8eaf1ca`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8eaf1ca6948aa734b690d5196c6ccfcca9137fe3))
+
+### Refactoring
+
+- Remove arvore de categorias Radar
+  ([`88e9c6a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/88e9c6a3b5472f2be4a6e3ec51e77508e2caaa10))
+
+### Testing
+
+- Atualiza API para categorias externas
+  ([`a314e4d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a314e4d990ecc4865268f15940f99a2fcbe0bc4b))
+
+- Cobre categorias externas do Inter
+  ([`07b8805`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/07b88050c67d4a17188711829b3328de598ff9f0))
+
+- Cobre filtro por categoria externa
+  ([`91f5863`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/91f58639fbd29fbe2bcd3d4f79262e0550ac729c))
+
+- Corrige contrato de categorias externas
+  ([`b473960`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b4739601847ab7c2bbfc5616a816e4d5d9091b5d))
+
+- Troca filtro Radar por categoria externa
+  ([`2485175`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/24851756b8206d21bd34232358f8b622470d060a))
+
+- **app**: Adaptar categorias acompanhadas ao Inter
+  ([`e9b5884`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e9b58847ba25c7d758e33830422855727c6a53a8))
+
+- **app**: Adaptar Compre direto às categorias do Inter
+  ([`79e8fa1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/79e8fa190faf0bc9b55d0f4e02585b8722b50ad1))
+
+- **app**: Adaptar contrato de categorias do Inter
+  ([`a324f8e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a324f8ef233f593b83278cb2fde5b975c4527c8c))
+
+- **app**: Adaptar controlador às categorias do Inter
+  ([`545ad0d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/545ad0dbdf42275661738b6e9c6ee41b39d29270))
+
+- **app**: Adaptar modelos às categorias do Inter
+  ([`cbeebf9`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/cbeebf9e0f2413310de9be598c7a564ddd7dad15))
+
+- **app**: Adaptar página de produtos às categorias do Inter
+  ([`675c282`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/675c282cae363a7271757d641aba6aaac3af00d1))
+
+- **app**: Cobrir percent encoding invalido em link do Inter
+  ([`347845a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/347845a0e47d617ad5a978ef3bb3f081c518d96b))
+
+- **app**: Cobrir seletor de categorias do Inter
+  ([`4067c3e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4067c3e74161fa993bac6057c8799c12bba38871))
+
+- **app**: Remover cobertura da árvore Radar obsoleta
+  ([`d10632d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/d10632df3eb652d57c155c974f22fc68bcbf13a6))
+
+- **robo**: Remover expectativas da taxonomia Radar
+  ([`efb73e4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/efb73e426c34a91e7d3312d492d7629090a4baa7))
+
+
 ## v1.53.1 (2026-09-04)
 
 
