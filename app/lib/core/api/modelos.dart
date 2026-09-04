@@ -156,109 +156,76 @@ class HistoricoProdutoDireto {
   final bool temProxima;
 }
 
-/// Categoria do Radar na taxonomia do Compre direto (nó ativo).
+/// Categoria externa real do Shopping Inter.
 ///
-/// A lista chega plana com a referência ao pai; a hierarquia é montada pelo
-/// cliente. `selecionada` é escolha direta da pessoa; `acompanhada` inclui
-/// também os descendentes resolvidos pelo servidor.
-class CategoriaRadar {
-  const CategoriaRadar({
-    required this.id,
-    required this.slug,
+/// `valor == null` identifica somente o agrupamento funcional `Sem categoria`;
+/// os demais valores são preservados exatamente como retornados pela API.
+class CategoriaInter {
+  const CategoriaInter({
+    required this.valor,
     required this.nome,
-    required this.categoriaPaiSlug,
-    required this.ordem,
     required this.selecionada,
-    required this.acompanhada,
   });
 
-  factory CategoriaRadar.parse(Map<String, dynamic> objeto) {
-    final id = _texto(objeto['id']);
-    final slug = _texto(objeto['slug']);
+  factory CategoriaInter.parse(Map<String, dynamic> objeto) {
+    final valorBruto = objeto['valor'];
     final nome = _texto(objeto['nome']);
-    final ordem = objeto['ordem'];
     final selecionada = objeto['selecionada'];
-    final acompanhada = objeto['acompanhada'];
-    if (id.isEmpty || slug.isEmpty || nome.isEmpty || ordem is! num) {
-      throw const FormatException('categoria Radar sem identidade válida');
+    if (valorBruto != null && valorBruto is! String) {
+      throw const FormatException('categoria Inter com valor inválido');
     }
-    if (selecionada is! bool || acompanhada is! bool) {
-      throw const FormatException(
-        'categoria Radar sem estado de seleção válido',
-      );
+    if (valorBruto is String && valorBruto.isEmpty) {
+      throw const FormatException('categoria Inter vazia');
     }
-    return CategoriaRadar(
-      id: id,
-      slug: slug,
+    if (nome.isEmpty || selecionada is! bool) {
+      throw const FormatException('categoria Inter inválida');
+    }
+    return CategoriaInter(
+      valor: valorBruto as String?,
       nome: nome,
-      categoriaPaiSlug: _textoOpcional(objeto['categoria_pai_slug']),
-      ordem: ordem.toInt(),
       selecionada: selecionada,
-      acompanhada: acompanhada,
     );
   }
 
-  final String id;
-  final String slug;
+  final String? valor;
   final String nome;
-  final String? categoriaPaiSlug;
-  final int ordem;
   final bool selecionada;
-  final bool acompanhada;
 
-  bool get eRaiz => categoriaPaiSlug == null;
-
-  CategoriaRadar copiarCom({bool? selecionada}) => CategoriaRadar(
-    id: id,
-    slug: slug,
-    nome: nome,
-    categoriaPaiSlug: categoriaPaiSlug,
-    ordem: ordem,
-    selecionada: selecionada ?? this.selecionada,
-    acompanhada: acompanhada,
-  );
+  bool get semCategoria => valor == null;
 }
 
-/// Taxonomia ativa e o interesse persistente da pessoa autenticada.
-///
-/// `configurada` distingue conta ainda sem preferência (all inclusive na
-/// busca quando este fluxo for aplicado) de uma seleção vazia deliberada.
-class CatalogoCategoriasRadarUsuario {
-  const CatalogoCategoriasRadarUsuario({
+/// Categorias externas disponíveis e a seleção persistente da pessoa.
+class CatalogoCategoriasInterUsuario {
+  const CatalogoCategoriasInterUsuario({
     required this.configurada,
     required this.itens,
   });
 
-  factory CatalogoCategoriasRadarUsuario.parse(Map<String, dynamic> objeto) {
+  factory CatalogoCategoriasInterUsuario.parse(Map<String, dynamic> objeto) {
     final configurada = objeto['configurada'];
     final itens = objeto['itens'];
     if (configurada is! bool || itens is! List<dynamic>) {
-      throw const FormatException('catálogo de categorias Radar inválido');
+      throw const FormatException('catálogo de categorias Inter inválido');
     }
-    return CatalogoCategoriasRadarUsuario(
+    return CatalogoCategoriasInterUsuario(
       configurada: configurada,
       itens: itens
           .map((item) {
             if (item is! Map<String, dynamic>) {
-              throw const FormatException('item de categoria Radar inválido');
+              throw const FormatException('item de categoria Inter inválido');
             }
-            return CategoriaRadar.parse(item);
+            return CategoriaInter.parse(item);
           })
           .toList(growable: false),
     );
   }
 
   final bool configurada;
-  final List<CategoriaRadar> itens;
+  final List<CategoriaInter> itens;
 
-  Set<String> get slugsAcompanhados => itens
-      .where((categoria) => categoria.acompanhada)
-      .map((categoria) => categoria.slug)
-      .toSet();
-
-  Set<String> get slugsSelecionadosDiretos => itens
+  Set<String?> get valoresSelecionados => itens
       .where((categoria) => categoria.selecionada)
-      .map((categoria) => categoria.slug)
+      .map((categoria) => categoria.valor)
       .toSet();
 }
 
