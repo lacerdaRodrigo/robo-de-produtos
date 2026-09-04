@@ -23,68 +23,84 @@ vi.mock("@neondatabase/serverless", () => ({
 }));
 
 import {
-  categoriaRadarAtivaExiste,
-  listarCategoriasRadarUsuario,
-  substituirCategoriasRadarUsuario,
+  listarCategoriasInterUsuario,
+  substituirCategoriasInterUsuario,
 } from "@/lib/banco-categorias-produtos-inter";
 
-describe("persistência das categorias dos produtos Inter", () => {
+describe("persistência das categorias externas dos produtos Inter", () => {
   beforeEach(() => {
     bancoFalso.consultas.length = 0;
     bancoFalso.respostas.length = 0;
     process.env.DATABASE_URL = "postgresql://teste:teste@localhost/teste";
   });
 
-  it("resolve descendentes dinamicamente e preserva seleção direta", async () => {
-    bancoFalso.respostas.push([{ configurada: true }], [
+  it("lista somente categorias reais do catálogo e preserva Sem categoria como null", async () => {
+    bancoFalso.respostas.push(
+      [{ configurada: true }],
+      [
+        { valor: "Android", nome: "Android", selecionada: true },
+        { valor: null, nome: "Sem categoria", selecionada: false },
+      ],
+    );
+
+    const resultado = await listarCategoriasInterUsuario("42");
+
+    expect(resultado).toEqual({
+      configurada: true,
+      itens: [
+        { valor: "Android", nome: "Android", selecionada: true },
+        { valor: null, nome: "Sem categoria", selecionada: false },
+      ],
+    });
+    const consulta = bancoFalso.consultas[1].texto;
+    expect(consulta).toContain("produto_direto_inter");
+    expect(consulta).toContain("categoria_inter_acompanhada");
+    expect(consulta).toContain("Sem categoria");
+    expect(consulta).not.toContain("categoria_radar");
+    expect(consulta).not.toContain("WITH RECURSIVE");
+  });
+
+  it("substitui a seleção por valores externos exatos", async () => {
+    bancoFalso.respostas.push([
       {
-        id: "1",
-        slug: "eletronicos",
-        nome: "Eletrônicos",
-        categoria_pai_slug: null,
-        ordem: 10,
-        selecionada: true,
-        acompanhada: true,
+        ok: true,
+        invalidas: [],
+        sem_categoria_indisponivel: false,
+        total: 3,
       },
     ]);
 
-    const resultado = await listarCategoriasRadarUsuario("42");
+    await expect(
+      substituirCategoriasInterUsuario(
+        "42",
+        ["Android", "Notebooks gamer"],
+        true,
+      ),
+    ).resolves.toEqual({ ok: true, total: 3 });
 
-    expect(resultado.configurada).toBe(true);
-    expect(resultado.itens[0].selecionada).toBe(true);
-    expect(bancoFalso.consultas[1].texto).toContain("WITH RECURSIVE");
-    expect(bancoFalso.consultas[1].texto).toContain(
-      "JOIN efetivas pai ON filha.categoria_pai_id = pai.id",
-    );
+    const consulta = bancoFalso.consultas[0].texto;
+    expect(consulta).toContain("DELETE FROM categoria_inter_acompanhada");
+    expect(consulta).toContain("acompanhada.categoria IS NOT DISTINCT");
+    expect(consulta).toContain("ON CONFLICT (usuario_app_id, categoria)");
+    expect(consulta).not.toContain("categoria_radar");
   });
 
-  it("substitui por diferença e rejeita slugs inativos ou inexistentes", async () => {
+  it("rejeita categoria que não existe no catálogo atual", async () => {
     bancoFalso.respostas.push([
-      { ok: true, invalidas: [], total: 2 },
-      { ok: false, invalidas: ["desconhecida"], total: 0 },
+      {
+        ok: false,
+        invalidas: ["Desconhecida"],
+        sem_categoria_indisponivel: true,
+        total: 0,
+      },
     ]);
 
     await expect(
-      substituirCategoriasRadarUsuario("42", ["celulares", "cabos"]),
-    ).resolves.toEqual({ ok: true, total: 2 });
-    await expect(
-      substituirCategoriasRadarUsuario("42", ["desconhecida"]),
-    ).resolves.toEqual({ ok: false, invalidas: ["desconhecida"] });
-
-    const consulta = bancoFalso.consultas[0].texto;
-    expect(consulta).toContain("DELETE FROM categoria_radar_acompanhada");
-    expect(consulta).toContain("NOT IN (SELECT id FROM validas)");
-    expect(consulta).toContain("ON CONFLICT (usuario_app_id, categoria_radar_id)");
-    expect(consulta).toContain("WHERE (SELECT ok FROM validacao)");
-  });
-
-  it("valida categoria Radar ativa sem inferir classificação", async () => {
-    bancoFalso.respostas.push([{ existe: true }], [{ existe: false }]);
-
-    await expect(categoriaRadarAtivaExiste("celulares")).resolves.toBe(true);
-    await expect(categoriaRadarAtivaExiste("inativa")).resolves.toBe(false);
-
-    expect(bancoFalso.consultas[0].texto).toContain("slug = celulares");
-    expect(bancoFalso.consultas[0].texto).toContain("ativo = TRUE");
+      substituirCategoriasInterUsuario("42", ["Desconhecida"], true),
+    ).resolves.toEqual({
+      ok: false,
+      invalidas: ["Desconhecida"],
+      sem_categoria_indisponivel: true,
+    });
   });
 });
