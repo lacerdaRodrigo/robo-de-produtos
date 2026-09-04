@@ -441,11 +441,11 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Estados a comparar com o HTML experimental
 
-- [ ] `Compre direto` com cartão de categorias acompanhadas.
-- [ ] Bottom sheet persistente no topo e no fim da rolagem.
-- [ ] Produtos sem filtro temporário.
+- [x] `Compre direto` com cartão de categorias acompanhadas.
+- [x] Bottom sheet persistente no topo e no fim da rolagem.
+- [x] Produtos sem filtro temporário.
 - [ ] Produtos com categoria folha.
-- [ ] Produtos com categoria pai.
+- [x] Produtos com categoria pai.
 - [ ] Duas ofertas homônimas em lojas diferentes.
 - [ ] Busca sem resultado.
 - [ ] Erro com lista preservada.
@@ -464,10 +464,10 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 ### Critérios visuais
 
 - [ ] Sem overflow.
-- [ ] Sem dados fictícios promovidos a reais.
+- [x] Sem dados fictícios promovidos a reais.
 - [ ] Sem Material genérico substituindo o V11.
 - [ ] Mesma hierarquia, raios, cores, sombras e densidade do protótipo.
-- [ ] Ações finais alcançáveis por rolagem.
+- [x] Ações finais alcançáveis por rolagem.
 - [ ] Claro e escuro preservam contraste.
 
 Não criar ou atualizar goldens nesta fase.
