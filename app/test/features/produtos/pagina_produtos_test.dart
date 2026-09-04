@@ -79,23 +79,12 @@ Api _apiCategorias() => Api(
             'configurada': true,
             'itens': [
               {
-                'id': 'eletronicos',
-                'slug': 'eletronicos',
+                'valor': 'Eletrônicos',
                 'nome': 'Eletrônicos',
-                'categoria_pai_slug': null,
-                'ordem': 1,
                 'selecionada': false,
-                'acompanhada': true,
               },
-              {
-                'id': 'cabos',
-                'slug': 'cabos',
-                'nome': 'Cabos',
-                'categoria_pai_slug': 'eletronicos',
-                'ordem': 1,
-                'selecionada': false,
-                'acompanhada': true,
-              },
+              {'valor': 'Cabos', 'nome': 'Cabos', 'selecionada': false},
+              {'valor': null, 'nome': 'Sem categoria', 'selecionada': false},
             ],
           }),
           200,
@@ -241,7 +230,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -291,7 +280,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -342,7 +331,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -391,7 +380,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -455,7 +444,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -505,7 +494,7 @@ void main() {
   });
 
   testWidgets(
-    'categoria temporária aceita pai, inclui resposta filha e pode ser limpa',
+    'categoria temporária usa o valor exato do Inter e pode ser limpa',
     (at) async {
       final categoriasRecebidas = <String?>[];
       final controlador = ControladorBuscaProdutos(
@@ -516,18 +505,14 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
             }) async {
-              categoriasRecebidas.add(categoriaRadar);
+              categoriasRecebidas.add(categoria);
               return _pagina([
-                _produto(
-                  id: categoriaRadar == 'eletronicos'
-                      ? 'filha-de-eletronicos'
-                      : categoriaRadar ?? 'todas',
-                ),
+                _produto(id: categoria ?? 'todas', categoria: categoria),
               ]);
             },
       );
@@ -555,7 +540,7 @@ void main() {
       await at.tap(find.byKey(const Key('confirmar-filtrar')));
       await at.pumpAndSettle();
 
-      expect(categoriasRecebidas.last, 'cabos');
+      expect(categoriasRecebidas.last, 'Cabos');
       expect(find.text('Cabos'), findsAtLeastNWidgets(1));
       expect(
         find.text('Filtro temporário aplicado ao catálogo salvo.'),
@@ -568,8 +553,8 @@ void main() {
       await at.tap(find.byKey(const Key('confirmar-filtrar')));
       await at.pumpAndSettle();
 
-      expect(categoriasRecebidas.last, 'eletronicos');
-      expect(controlador.itens.single.idExterno, 'filha-de-eletronicos');
+      expect(categoriasRecebidas.last, 'Eletrônicos');
+      expect(controlador.itens.single.idExterno, 'Eletrônicos');
 
       await at.tap(find.byKey(const Key('categoria-nesta-tela')));
       await at.pumpAndSettle();
@@ -597,7 +582,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -651,7 +636,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
