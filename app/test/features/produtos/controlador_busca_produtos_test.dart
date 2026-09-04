@@ -64,7 +64,7 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
@@ -93,7 +93,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -130,7 +130,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -156,9 +156,9 @@ void main() {
   });
 
   test(
-    'categoria Radar reinicia na página um e preserva os outros filtros',
+    'categoria externa reinicia na página um e preserva os outros filtros',
     () async {
-      final consultas = <(int, String?, String?, String?)>[];
+      final consultas = <(int, String?, String?, String?, bool)>[];
       final controlador = ControladorBuscaProdutos(
         buscar:
             ({
@@ -166,17 +166,17 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
             }) async {
-              consultas.add((pagina, marca, loja, categoriaRadar));
+              consultas.add((pagina, marca, loja, categoria, semCategoria));
               return _pagina(
-                [_produto('$pagina-${categoriaRadar ?? 'todas'}')],
+                [_produto('$pagina-${categoria ?? 'todas'}')],
                 numero: pagina,
                 total: 2,
-                proxima: pagina == 1 && categoriaRadar == null,
+                proxima: pagina == 1 && categoria == null,
               );
             },
         debounce: Duration.zero,
@@ -190,7 +190,7 @@ void main() {
         const FiltrosProdutos(
           marca: 'Motorola',
           loja: 'casas-bahia',
-          categoriaRadar: 'acessorios-celulares',
+          categoria: 'Acessórios de Celular',
         ),
       );
       await Future<void>.delayed(Duration.zero);
@@ -199,15 +199,46 @@ void main() {
         1,
         'Motorola',
         'casas-bahia',
-        'acessorios-celulares',
+        'Acessórios de Celular',
+        false,
       ));
       expect(controlador.pagina, 1);
-      expect(
-        controlador.filtros.categoriaRadarOpcional,
-        'acessorios-celulares',
-      );
+      expect(controlador.filtros.categoriaOpcional, 'Acessórios de Celular');
     },
   );
+
+  test('Sem categoria é enviado separado do valor externo', () async {
+    final consultas = <(String?, bool)>[];
+    final controlador = ControladorBuscaProdutos(
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            consultas.add((categoria, semCategoria));
+            return _pagina([_produto('sem-categoria')]);
+          },
+      debounce: Duration.zero,
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarTermo('edge');
+    await Future<void>.delayed(Duration.zero);
+    controlador.mudarFiltros(
+      const FiltrosProdutos(categoria: 'ignorada', semCategoria: true),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(consultas.last, (null, true));
+    expect(controlador.filtros.categoriaOpcional, isNull);
+    expect(controlador.filtros.semCategoria, isTrue);
+  });
 
   test('erro da página adicional preserva a lista e permite retry', () async {
     var falha = true;
@@ -218,7 +249,7 @@ void main() {
             required pagina,
             marca,
             categoria,
-            categoriaRadar,
+            required semCategoria,
             loja,
             precoMin,
             precoMax,
@@ -257,7 +288,7 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
@@ -299,7 +330,7 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
@@ -334,7 +365,7 @@ void main() {
               required pagina,
               marca,
               categoria,
-              categoriaRadar,
+              required semCategoria,
               loja,
               precoMin,
               precoMax,
