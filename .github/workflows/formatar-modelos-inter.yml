@@ -1,0 +1,36 @@
+name: formatar-modelos-inter
+
+on:
+  push:
+    branches:
+      - feat/categorias-inter-fonte-oficial
+
+permissions:
+  contents: write
+
+jobs:
+  formatar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/categorias-inter-fonte-oficial
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.1'
+          channel: stable
+          cache: true
+      - name: Formatar teste alterado
+        working-directory: app
+        run: dart format test/features/produtos/modelos_produtos_test.dart
+      - name: Commitar formatacao
+        run: |
+          if git diff --quiet -- app/test/features/produtos/modelos_produtos_test.dart; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/test/features/produtos/modelos_produtos_test.dart
+          git commit -m "style(app): formatar teste de categorias do Inter"
+          git push origin HEAD:feat/categorias-inter-fonte-oficial
