@@ -55,6 +55,7 @@ describe("persistência das categorias externas dos produtos Inter", () => {
     const consulta = bancoFalso.consultas[1].texto;
     expect(consulta).toContain("produto_direto_inter");
     expect(consulta).toContain("categoria_inter_acompanhada");
+    expect(consulta).toContain("IS NOT DISTINCT FROM");
     expect(consulta).toContain("Sem categoria");
     expect(consulta).not.toContain("categoria_radar");
     expect(consulta).not.toContain("WITH RECURSIVE");
@@ -80,7 +81,7 @@ describe("persistência das categorias externas dos produtos Inter", () => {
 
     const consulta = bancoFalso.consultas[0].texto;
     expect(consulta).toContain("DELETE FROM categoria_inter_acompanhada");
-    expect(consulta).toContain("acompanhada.categoria IS NOT DISTINCT");
+    expect(consulta).toContain("solicitada.categoria");
     expect(consulta).toContain("ON CONFLICT (usuario_app_id, categoria)");
     expect(consulta).not.toContain("categoria_radar");
   });
