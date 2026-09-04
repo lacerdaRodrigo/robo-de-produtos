@@ -167,7 +167,9 @@ class CartaoProduto extends StatelessWidget {
         ),
     ];
     return Semantics(
-      label: 'Produto ${produto.nome}, da loja ${produto.lojaNome}',
+      label:
+          'Oferta ${produto.nome}, da loja ${produto.lojaNome}, '
+          'no Banco Inter',
       child: CartaoRadar(
         padding: EdgeInsets.zero,
         child: Column(
@@ -276,6 +278,23 @@ class CartaoProduto extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       height: 1.25,
                     ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(Icons.circle, size: 5, color: cores.marca),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          '${produto.lojaNome} · Banco Inter',
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: cores.textoSuave,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (produto.cashbackPercentualTexto != null ||
                       produto.cashbackTexto != null) ...[

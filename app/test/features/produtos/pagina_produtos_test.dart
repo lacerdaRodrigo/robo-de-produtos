@@ -10,33 +10,37 @@ import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
+import 'package:app_robo/features/produtos/cartao_produto.dart';
 import 'package:app_robo/features/produtos/controlador_busca_produtos.dart';
 import 'package:app_robo/features/produtos/pagina_historico_produto.dart';
 import 'package:app_robo/features/produtos/pagina_produtos.dart';
 
-ProdutoDireto _produto({String id = 'edge', String loja = 'Casas Bahia'}) =>
-    ProdutoDireto(
-      idExterno: id,
-      nome: 'Motorola Edge 60 Pro',
-      marca: 'Motorola',
-      categoria: 'Celular',
-      caminho: 'produto/$id',
-      precoCheioTexto: 'R\$ 4.000,00',
-      precoCheioValor: '4000',
-      precoAtualTexto: 'R\$ 3.688,89',
-      precoAtualValor: '3688.89',
-      descontoTexto: 'R\$ 311,11',
-      descontoPercentualTexto: '8%',
-      cashbackTexto: 'R\$ 332,00',
-      cashbackPercentualTexto: '9%',
-      precoLiquidoTexto: 'R\$ 3.356,89',
-      parcelamento: 'Em 10x sem juros',
-      estoque: 4,
-      etiquetas: const ['Oferta'],
-      lojaSlug: loja == 'Casas Bahia' ? 'casas-bahia' : 'ponto',
-      lojaNome: loja,
-      atualizadaEm: '2026-08-22T12:00:00Z',
-    );
+ProdutoDireto _produto({
+  String id = 'edge',
+  String loja = 'Casas Bahia',
+  String? categoria = 'Celular',
+}) => ProdutoDireto(
+  idExterno: id,
+  nome: 'Motorola Edge 60 Pro',
+  marca: 'Motorola',
+  categoria: categoria,
+  caminho: 'produto/$id',
+  precoCheioTexto: 'R\$ 4.000,00',
+  precoCheioValor: '4000',
+  precoAtualTexto: 'R\$ 3.688,89',
+  precoAtualValor: '3688.89',
+  descontoTexto: 'R\$ 311,11',
+  descontoPercentualTexto: '8%',
+  cashbackTexto: 'R\$ 332,00',
+  cashbackPercentualTexto: '9%',
+  precoLiquidoTexto: 'R\$ 3.356,89',
+  parcelamento: 'Em 10x sem juros',
+  estoque: 4,
+  etiquetas: const ['Oferta'],
+  lojaSlug: loja == 'Casas Bahia' ? 'casas-bahia' : 'ponto',
+  lojaNome: loja,
+  atualizadaEm: '2026-08-22T12:00:00Z',
+);
 
 Pagina<ProdutoDireto> _pagina(
   List<ProdutoDireto> itens, {
@@ -60,6 +64,45 @@ Api _api() => Api(
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
     cliente: http_testing.MockClient((_) async => http.Response('{}', 500)),
+  ),
+);
+
+Api _apiCategorias() => Api(
+  paginaPadrao: 20,
+  cliente: ClienteApi(
+    baseUrl: 'http://localhost:3000',
+    provedorToken: () async => 'token-teste',
+    cliente: http_testing.MockClient((requisicao) async {
+      if (requisicao.url.path == '/api/inter/produtos/categorias') {
+        return http.Response(
+          jsonEncode({
+            'configurada': true,
+            'itens': [
+              {
+                'id': 'eletronicos',
+                'slug': 'eletronicos',
+                'nome': 'Eletrônicos',
+                'categoria_pai_slug': null,
+                'ordem': 1,
+                'selecionada': false,
+                'acompanhada': true,
+              },
+              {
+                'id': 'cabos',
+                'slug': 'cabos',
+                'nome': 'Cabos',
+                'categoria_pai_slug': 'eletronicos',
+                'ordem': 1,
+                'selecionada': false,
+                'acompanhada': true,
+              },
+            ],
+          }),
+          200,
+        );
+      }
+      return http.Response('{}', 500);
+    }),
   ),
 );
 
@@ -141,6 +184,102 @@ Widget _tela(ControladorBuscaProdutos controlador) => MaterialApp(
 );
 
 void main() {
+  testWidgets('oferta compacta identifica loja e Banco Inter', (at) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: CartaoProduto(
+              produto: _produto(),
+              compacto: true,
+              mostrarLoja: false,
+              aoAbrirHistorico: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Casas Bahia · Banco Inter'), findsOneWidget);
+    final semantica = at.getSemantics(find.byType(CartaoProduto));
+    expect(
+      semantica.label,
+      contains(
+        'Oferta Motorola Edge 60 Pro, da loja Casas Bahia, no Banco Inter',
+      ),
+    );
+  });
+
+  testWidgets('oferta sem categoria não inventa metadado', (at) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CartaoProduto(
+            produto: _produto(categoria: null),
+            compacto: true,
+            aoAbrirHistorico: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Celular'), findsNothing);
+    expect(find.text('Outros'), findsNothing);
+  });
+
+  testWidgets('histórico recebe a oferta tocada com loja e identificador', (
+    at,
+  ) async {
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            categoriaRadar,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto(id: 'ponto-42', loja: 'Ponto')]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _apiHistorico(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    await at.drag(
+      find.byKey(const Key('produtos-compacto')),
+      const Offset(0, -600),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.byTooltip('Ver histórico'));
+    await at.pumpAndSettle();
+
+    final pagina = at.widget<PaginaHistoricoProduto>(
+      find.byType(PaginaHistoricoProduto),
+    );
+    expect(pagina.produto.idExterno, 'ponto-42');
+    expect(pagina.produto.lojaSlug, 'ponto');
+    expect(pagina.produto.lojaNome, 'Ponto');
+  });
+
   testWidgets('pede termo, agrupa por loja e mostra os dados comerciais', (
     at,
   ) async {
@@ -152,6 +291,7 @@ void main() {
             required pagina,
             marca,
             categoria,
+            categoriaRadar,
             loja,
             precoMin,
             precoMax,
@@ -202,6 +342,7 @@ void main() {
             required pagina,
             marca,
             categoria,
+            categoriaRadar,
             loja,
             precoMin,
             precoMax,
@@ -238,6 +379,70 @@ void main() {
     expect(find.text('Filtros'), findsOneWidget);
   });
 
+  testWidgets('falha compacta preserva oferta anterior e permite retry', (
+    at,
+  ) async {
+    var chamada = 0;
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            categoriaRadar,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            chamada++;
+            if (chamada == 2) throw StateError('sem rede');
+            return _pagina([_produto(id: 'oferta-$chamada')]);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    await at.scrollUntilVisible(
+      find.text('Motorola Edge 60 Pro'),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('produtos-compacto')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+
+    controlador.mudarFiltros(const FiltrosProdutos(marca: 'Motorola'));
+    await at.pumpAndSettle();
+
+    expect(find.text('Não foi possível atualizar esta busca'), findsOneWidget);
+    expect(find.text('1 oferta preservada'), findsOneWidget);
+    expect(find.text('Tentar novamente'), findsOneWidget);
+
+    await at.tap(find.text('Tentar novamente'));
+    await at.pumpAndSettle();
+    expect(find.text('Não foi possível atualizar esta busca'), findsNothing);
+    expect(controlador.itens.single.idExterno, 'oferta-3');
+  });
+
   testWidgets('busca compacta segue o protótipo e usa o catálogo local', (
     at,
   ) async {
@@ -250,6 +455,7 @@ void main() {
             required pagina,
             marca,
             categoria,
+            categoriaRadar,
             loja,
             precoMin,
             precoMax,
@@ -298,6 +504,84 @@ void main() {
     expect(escolheuLojas, isTrue);
   });
 
+  testWidgets(
+    'categoria temporária aceita pai, inclui resposta filha e pode ser limpa',
+    (at) async {
+      final categoriasRecebidas = <String?>[];
+      final controlador = ControladorBuscaProdutos(
+        debounce: Duration.zero,
+        buscar:
+            ({
+              required termo,
+              required pagina,
+              marca,
+              categoria,
+              categoriaRadar,
+              loja,
+              precoMin,
+              precoMax,
+            }) async {
+              categoriasRecebidas.add(categoriaRadar);
+              return _pagina([
+                _produto(
+                  id: categoriaRadar == 'eletronicos'
+                      ? 'filha-de-eletronicos'
+                      : categoriaRadar ?? 'todas',
+                ),
+              ]);
+            },
+      );
+      addTearDown(controlador.dispose);
+
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: PaginaProdutos(
+              api: _apiCategorias(),
+              controlador: controlador,
+              incorporada: true,
+              experienciaCompacta: true,
+            ),
+          ),
+        ),
+      );
+      await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+      await at.pumpAndSettle();
+
+      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
+      await at.pumpAndSettle();
+      await at.tap(find.text('Cabos').last);
+      await at.tap(find.byKey(const Key('confirmar-filtrar')));
+      await at.pumpAndSettle();
+
+      expect(categoriasRecebidas.last, 'cabos');
+      expect(find.text('Cabos'), findsAtLeastNWidgets(1));
+      expect(
+        find.text('Filtro temporário aplicado ao catálogo salvo.'),
+        findsOneWidget,
+      );
+
+      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
+      await at.pumpAndSettle();
+      await at.tap(find.text('Eletrônicos').last);
+      await at.tap(find.byKey(const Key('confirmar-filtrar')));
+      await at.pumpAndSettle();
+
+      expect(categoriasRecebidas.last, 'eletronicos');
+      expect(controlador.itens.single.idExterno, 'filha-de-eletronicos');
+
+      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
+      await at.pumpAndSettle();
+      await at.tap(find.text('Todas as categorias'));
+      await at.tap(find.byKey(const Key('confirmar-filtrar')));
+      await at.pumpAndSettle();
+
+      expect(categoriasRecebidas.last, isNull);
+      expect(find.text('Todas'), findsAtLeastNWidgets(1));
+    },
+  );
+
   testWidgets('busca compacta não estoura em 320 px com texto ampliado', (
     at,
   ) async {
@@ -313,6 +597,7 @@ void main() {
             required pagina,
             marca,
             categoria,
+            categoriaRadar,
             loja,
             precoMin,
             precoMax,
@@ -366,6 +651,7 @@ void main() {
             required pagina,
             marca,
             categoria,
+            categoriaRadar,
             loja,
             precoMin,
             precoMax,

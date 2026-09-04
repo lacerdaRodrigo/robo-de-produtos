@@ -179,19 +179,54 @@ describe("qualidade e frescor dos resultados de produtos", () => {
   it("preserva LIMIT, OFFSET e decimais textuais na busca paginada", async () => {
     bancoFalso.respostas.push([{ total: 25 }], []);
 
-    const pagina = await buscarProdutosDiretosPaginado("celular", 2, 20, {
-      preco_min: "1000.50",
-    });
+    const pagina = await buscarProdutosDiretosPaginado(
+      "celular",
+      2,
+      20,
+      "42",
+      {
+        preco_min: "1000.50",
+      },
+    );
 
     expect(pagina).toEqual({ itens: [], total: 25 });
     expect(bancoFalso.consultas).toHaveLength(2);
-    expect(bancoFalso.consultas[1].texto).toContain("LIMIT $3 OFFSET $4");
+    expect(bancoFalso.consultas[1].texto).toContain("LIMIT $4 OFFSET $5");
     expect(bancoFalso.consultas[1].valores[0]).toEqual([
+      "42",
       "smartphone",
       "1000.50",
       20,
       20,
     ]);
+  });
+
+  it("aplica interesse persistente e filtro Radar com descendentes dinâmicos", async () => {
+    bancoFalso.respostas.push([{ total: 0 }], []);
+
+    await buscarProdutosDiretosPaginado("", 1, 20, "42", {
+      categoria_radar: "eletronicos",
+    });
+
+    const consulta = bancoFalso.consultas[1];
+    expect(consulta.texto).toContain("WITH RECURSIVE categorias_usuario");
+    expect(consulta.texto).toContain(
+      "FROM preferencia_produtos_inter_usuario preferencia",
+    );
+    expect(consulta.texto).toContain(
+      "p.categoria_radar_id IN (SELECT id FROM categorias_usuario)",
+    );
+    expect(consulta.texto).toContain("categorias_filtro AS");
+    expect(consulta.texto).toContain(
+      "JOIN categorias_filtro pai ON filha.categoria_pai_id = pai.id",
+    );
+    expect(consulta.texto).toContain(
+      "p.categoria_radar_id IN (SELECT id FROM categorias_filtro)",
+    );
+    expect(consulta.texto).toContain(
+      "categoria_radar.slug AS categoria_radar_slug",
+    );
+    expect(consulta.valores[0]).toEqual(["42", "eletronicos", 20, 0]);
   });
 
   it("reconcilia somente rodadas iniciadas antigas antes de montar o resumo", async () => {

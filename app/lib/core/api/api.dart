@@ -119,7 +119,9 @@ class Api {
     return Pagina.parse(corpo, CashbackInter.parse);
   }
 
-  /// Busca de produtos paginada (V4). `q` obrigatório, 2–100 caracteres.
+  /// Busca de produtos paginada (V4). `q` vazio lista o catálogo persistido;
+  /// quando presente, exige 2–100 caracteres. `categoriaRadar` restringe ao
+  /// nó escolhido e seus descendentes resolvidos pelo servidor.
   Future<Pagina<ProdutoDireto>> buscarProdutos(
     String termo, {
     int pagina = 1,
@@ -129,6 +131,7 @@ class Api {
     String? loja,
     String? precoMin,
     String? precoMax,
+    String? categoriaRadar,
   }) async {
     final corpo = await cliente.obter(
       '/api/inter/produtos',
@@ -141,9 +144,27 @@ class Api {
         'loja': ?loja,
         'preco_min': ?precoMin,
         'preco_max': ?precoMax,
+        'categoria_radar': ?categoriaRadar,
       },
     );
     return Pagina.parse(corpo, ProdutoDireto.parse);
+  }
+
+  /// Taxonomia ativa e interesse persistente de categorias acompanhadas.
+  Future<CatalogoCategoriasRadarUsuario> categoriasRadar() async {
+    final corpo = await cliente.obter('/api/inter/produtos/categorias');
+    return CatalogoCategoriasRadarUsuario.parse(corpo);
+  }
+
+  /// Substitui os nós escolhidos diretamente; lista vazia = nenhum interesse.
+  Future<CatalogoCategoriasRadarUsuario> salvarCategoriasRadar(
+    List<String> categorias,
+  ) async {
+    final corpo = await cliente.alterar(
+      '/api/inter/produtos/categorias',
+      corpo: <String, Object?>{'categorias': categorias},
+    );
+    return CatalogoCategoriasRadarUsuario.parse(corpo);
   }
 
   /// Histórico paginado de um produto dentro de uma loja direta específica.

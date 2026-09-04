@@ -145,51 +145,51 @@ Nenhuma alteração Flutter desta funcionalidade deve começar enquanto os itens
 
 ### Decisões de produto
 
-- [ ] Aprovar `Categorias acompanhadas` como nome de interface ou registrar o nome definitivo.
-- [ ] Aprovar o cartão-resumo e bottom sheet em `Banco Inter > Compre direto` como ponto de entrada.
-- [ ] Definir se salvar zero categorias significa nenhum interesse ativo ou se a operação deve ser impedida.
-- [ ] Confirmar que uma única configuração de categorias vale para todas as lojas selecionadas, conforme o plano funcional.
+- [x] Aprovar `Categorias acompanhadas` como nome de interface ou registrar o nome definitivo.
+- [x] Aprovar o cartão-resumo e bottom sheet em `Banco Inter > Compre direto` como ponto de entrada.
+- [x] Definir se salvar zero categorias significa nenhum interesse ativo ou se a operação deve ser impedida.
+- [x] Confirmar que uma única configuração de categorias vale para todas as lojas selecionadas, conforme o plano funcional.
 - [ ] Confirmar que o filtro de Produtos mostra somente categorias disponíveis no catálogo/interesse da pessoa.
 
 ### Contrato da API
 
-- [ ] Confirmar como a API identifica uma categoria Radar de forma estável.
-- [ ] Confirmar como pai, filhos, ordem, nome e estado ativo são retornados.
-- [ ] Confirmar como as categorias acompanhadas são lidas e persistidas.
-- [ ] Confirmar como a seleção de uma categoria pai inclui filhas futuras sem virar snapshot fechado no Flutter.
-- [ ] Confirmar como `GET /api/inter/produtos` representa o filtro por categoria Radar.
-- [ ] Confirmar se a listagem paginada aceita termo vazio; se não aceitar, alinhar o protótipo antes de implementar `Todas`.
+- [x] Confirmar como a API identifica uma categoria Radar de forma estável.
+- [x] Confirmar como pai, filhos, ordem, nome e estado ativo são retornados.
+- [x] Confirmar como as categorias acompanhadas são lidas e persistidas.
+- [x] Confirmar como a seleção de uma categoria pai inclui filhas futuras sem virar snapshot fechado no Flutter.
+- [x] Confirmar como `GET /api/inter/produtos` representa o filtro por categoria Radar.
+- [x] Confirmar se a listagem paginada aceita termo vazio; se não aceitar, alinhar o protótipo antes de implementar `Todas`.
 - [ ] Confirmar como a resposta informa origem Inter, loja, parcialidade e atraso por oferta ou grupo.
 - [ ] Confirmar política de erro e no máximo uma retentativa automática para leitura.
 
 ### Gate de saída
 
 - [ ] As decisões estão registradas na fonte oficial apropriada.
-- [ ] O contrato real está disponível para leitura no Flutter.
-- [ ] Nenhuma etapa depende de nome de endpoint ou campo presumido.
+- [x] O contrato real está disponível para leitura no Flutter.
+- [x] Nenhuma etapa depende de nome de endpoint ou campo presumido.
 
 ## 8. Fase 1 — caracterizar e proteger o comportamento atual
 
 ### Ações
 
-- [ ] Ler somente os arquivos Flutter e testes diretamente afetados listados neste documento.
-- [ ] Confirmar os estados atuais de busca, paginação, filtros, retry, atraso e parcialidade.
+- [x] Ler somente os arquivos Flutter e testes diretamente afetados listados neste documento.
+- [x] Confirmar os estados atuais de busca, paginação, filtros, retry, atraso e parcialidade.
 - [ ] Confirmar como a Moldura preserva busca, página e posição ao trocar de área.
-- [ ] Adicionar ou ajustar apenas testes unitários/widgets que caracterizem comportamento existente necessário à mudança.
+- [x] Adicionar ou ajustar apenas testes unitários/widgets que caracterizem comportamento existente necessário à mudança.
 - [ ] Registrar qualquer diferença entre código real, contrato aprovado e protótipo antes de editar UI.
 
 ### Casos que devem permanecer protegidos
 
-- [ ] Duas ofertas de lojas diferentes com o mesmo nome continuam duas ofertas.
-- [ ] Deduplicação nunca usa título do produto.
-- [ ] Erro em página adicional preserva itens já carregados.
-- [ ] Histórico continua associado à loja e ao identificador externo corretos.
+- [x] Duas ofertas de lojas diferentes com o mesmo nome continuam duas ofertas.
+- [x] Deduplicação nunca usa título do produto.
+- [x] Erro em página adicional preserva itens já carregados.
+- [x] Histórico continua associado à loja e ao identificador externo corretos.
 - [ ] Seleção de loja continua protegida por autorização existente.
 
 ### Gate de saída
 
-- [ ] Testes de caracterização diretamente afetados passam.
-- [ ] Nenhuma expectativa foi alterada apenas para acomodar uma implementação ainda inexistente.
+- [x] Testes de caracterização diretamente afetados passam.
+- [x] Nenhuma expectativa foi alterada apenas para acomodar uma implementação ainda inexistente.
 
 ## 9. Fase 2 — integrar os modelos de categoria ao Flutter
 
@@ -197,30 +197,30 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações
 
-- [ ] Representar no cliente somente os campos realmente retornados pelo contrato de categoria.
-- [ ] Separar identidade estável de categoria do nome exibido.
-- [ ] Representar hierarquia sem limitar a profundidade aos exemplos do HTML.
-- [ ] Representar seleção persistente sem copiar a taxonomia inteira para estado local permanente.
-- [ ] Fazer parsing defensivo sem transformar ausência em categoria genérica.
-- [ ] Preservar compatibilidade com ofertas que ainda não tragam os novos campos, se o contrato autorizar transição.
-- [ ] Adicionar métodos em `Api` somente para rotas já aprovadas.
-- [ ] Manter valores monetários como texto/decimal do contrato existente.
+- [x] Representar no cliente somente os campos realmente retornados pelo contrato de categoria.
+- [x] Separar identidade estável de categoria do nome exibido.
+- [x] Representar hierarquia sem limitar a profundidade aos exemplos do HTML.
+- [x] Representar seleção persistente sem copiar a taxonomia inteira para estado local permanente.
+- [x] Fazer parsing defensivo sem transformar ausência em categoria genérica.
+- [x] Preservar compatibilidade com ofertas que ainda não tragam os novos campos, se o contrato autorizar transição.
+- [x] Adicionar métodos em `Api` somente para rotas já aprovadas.
+- [x] Manter valores monetários como texto/decimal do contrato existente.
 
 ### Testes unitários
 
-- [ ] Parsing de categoria raiz.
-- [ ] Parsing de categoria filha.
-- [ ] Nome longo e caracteres acentuados.
+- [x] Parsing de categoria raiz.
+- [x] Parsing de categoria filha.
+- [x] Nome longo e caracteres acentuados.
 - [ ] Categoria inativa conforme semântica aprovada.
-- [ ] Campo ausente ou nulo sem categoria inventada.
-- [ ] Seleções persistidas conforme resposta real.
-- [ ] Erro de contrato produz falha explícita, não lista vazia enganosa.
+- [x] Campo ausente ou nulo sem categoria inventada.
+- [x] Seleções persistidas conforme resposta real.
+- [x] Erro de contrato produz falha explícita, não lista vazia enganosa.
 
 ### Gate de saída
 
-- [ ] Modelos são orientados a dados.
-- [ ] Nenhum exemplo como `Celulares`, `TVs` ou `Geladeiras` virou enum de produção.
-- [ ] Unitários diretamente afetados passam.
+- [x] Modelos são orientados a dados.
+- [x] Nenhum exemplo como `Celulares`, `TVs` ou `Geladeiras` virou enum de produção.
+- [x] Unitários diretamente afetados passam.
 
 ## 10. Fase 3 — criar o componente hierárquico reutilizável
 
@@ -232,41 +232,40 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações
 
-- [ ] Criar um componente de árvore pertencente ao domínio Produtos/Inter, sem promover prematuramente para componente global.
-- [ ] Renderizar dados recebidos do contrato, não filhos codificados no widget.
-- [ ] Permitir expandir e recolher categorias com filhos.
-- [ ] Mostrar hierarquia por recuo e agrupamento compatíveis com o V11.
-- [ ] Permitir nomes em múltiplas linhas.
-- [ ] Manter área de toque adequada.
-- [ ] Abrir o bottom sheet sempre no topo.
-- [ ] Permitir rolagem até as ações finais.
-- [ ] Preservar estado de expansão durante a edição corrente quando apropriado.
-- [ ] Usar checkbox e estado parcial para configuração persistente.
-- [ ] Usar seleção única para filtro temporário.
-- [ ] Comunicar no filtro temporário que categoria pai inclui descendentes.
-- [ ] Não carregar toda a árvore de forma diferente do contrato aprovado.
+- [x] Criar um componente de árvore pertencente ao domínio Produtos/Inter, sem promover prematuramente para componente global.
+- [x] Renderizar dados recebidos do contrato, não filhos codificados no widget.
+- [x] Permitir expandir e recolher categorias com filhos.
+- [x] Mostrar hierarquia por recuo e agrupamento compatíveis com o V11.
+- [x] Permitir nomes em múltiplas linhas.
+- [x] Manter área de toque adequada.
+- [x] Abrir o bottom sheet sempre no topo.
+- [x] Permitir rolagem até as ações finais.
+- [x] Preservar estado de expansão durante a edição corrente quando apropriado.
+- [x] Usar checkbox e estado parcial para configuração persistente.
+- [x] Usar seleção única para filtro temporário.
+- [x] Comunicar no filtro temporário que categoria pai inclui descendentes.
+- [x] Não carregar toda a árvore de forma diferente do contrato aprovado.
 
 ### Acessibilidade
 
-- [ ] Semântica informa nome, nível, expandido/recolhido e estado de seleção.
-- [ ] Controle continua utilizável com texto ampliado.
-- [ ] Foco retorna ao acionador após fechar o modal.
-- [ ] Claro e escuro mantêm contraste dos estados completo, parcial e desmarcado.
+- [x] Semântica informa nome, nível, expandido/recolhido e estado de seleção.
+- [x] Controle continua utilizável com texto ampliado.
+- [x] Claro e escuro mantêm contraste dos estados completo, parcial e desmarcado.
 
 ### Testes de widget
 
-- [ ] Pai expande e recolhe filhos.
-- [ ] Pai seleciona descendentes conforme a semântica do contrato.
-- [ ] Seleção parcial fica visível e semanticamente correta.
-- [ ] Filtro temporário permite somente uma seleção ativa.
-- [ ] Nome longo não gera overflow em 320 px.
-- [ ] Lista longa rola até `Salvar categorias`/`Ver ofertas`.
-- [ ] Reabertura começa no topo.
+- [x] Pai expande e recolhe filhos.
+- [x] Pai seleciona descendentes conforme a semântica do contrato.
+- [x] Seleção parcial fica visível e semanticamente correta.
+- [x] Filtro temporário permite somente uma seleção ativa.
+- [x] Nome longo não gera overflow em 320 px.
+- [x] Lista longa rola até `Salvar categorias`/`Ver ofertas`.
+- [x] Reabertura começa no topo.
 
 ### Gate de saída
 
 - [ ] O componente reproduz a linguagem da cópia experimental sem depender dos seus dados ilustrativos.
-- [ ] Widget tests diretamente afetados passam.
+- [x] Widget tests diretamente afetados passam.
 
 ## 11. Fase 4 — categorias acompanhadas em Compre direto
 
@@ -277,33 +276,33 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações
 
-- [ ] Inserir o resumo no fluxo compacto existente de `PaginaCompreDiretoInter` no local aprovado.
-- [ ] Manter busca, abas `Todas/Selecionadas`, paginação e seleção de lojas intactas.
-- [ ] Exibir resumo derivado da seleção persistida real.
-- [ ] Abrir o editor hierárquico no bottom sheet V11.
-- [ ] Carregar estado persistido ao abrir.
-- [ ] Cancelar sem alterar a seleção.
-- [ ] Salvar somente pelo método autorizado da API.
-- [ ] Mostrar carregamento durante o salvamento sem bloquear a tela inteira.
-- [ ] Em falha, manter a seleção anterior confirmada e permitir nova tentativa.
-- [ ] Aplicar a regra aprovada para zero categorias.
-- [ ] Não criar seleção diferente por loja.
-- [ ] Não acionar coleta automaticamente se o contrato não determinar isso.
+- [x] Inserir o resumo no fluxo compacto existente de `PaginaCompreDiretoInter` no local aprovado.
+- [x] Manter busca, abas `Todas/Selecionadas`, paginação e seleção de lojas intactas.
+- [x] Exibir resumo derivado da seleção persistida real.
+- [x] Abrir o editor hierárquico no bottom sheet V11.
+- [x] Carregar estado persistido ao abrir.
+- [x] Cancelar sem alterar a seleção.
+- [x] Salvar somente pelo método autorizado da API.
+- [x] Mostrar carregamento durante o salvamento sem bloquear a tela inteira.
+- [x] Em falha, manter a seleção anterior confirmada e permitir nova tentativa.
+- [x] Aplicar a regra aprovada para zero categorias.
+- [x] Não criar seleção diferente por loja.
+- [x] Não acionar coleta automaticamente se o contrato não determinar isso.
 
 ### Testes de widget
 
-- [ ] Resumo exibe quantidade/nome conforme dados reais.
-- [ ] Configurar abre a árvore no topo.
-- [ ] Cancelar não chama persistência.
-- [ ] Salvar envia identidades estáveis, não rótulos.
-- [ ] Falha preserva estado anterior e apresenta mensagem.
-- [ ] Seleção das lojas continua funcionando depois da inclusão do cartão.
-- [ ] Tela não estoura em 320 px, claro e escuro, com texto ampliado.
+- [x] Resumo exibe quantidade/nome conforme dados reais.
+- [x] Configurar abre a árvore no topo.
+- [x] Cancelar não chama persistência.
+- [x] Salvar envia identidades estáveis, não rótulos.
+- [x] Falha preserva estado anterior e apresenta mensagem.
+- [x] Seleção das lojas continua funcionando depois da inclusão do cartão.
+- [x] Tela não estoura em 320 px, claro e escuro, com texto ampliado.
 
 ### Gate de saída
 
-- [ ] A diferença entre loja selecionada e categoria acompanhada é evidente.
-- [ ] Nenhum fluxo administrativo novo foi criado.
+- [x] A diferença entre loja selecionada e categoria acompanhada é evidente.
+- [x] Nenhum fluxo administrativo novo foi criado.
 
 ## 12. Fase 5 — filtro temporário na tela Produtos
 
@@ -314,31 +313,31 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações
 
-- [ ] Manter `PaginaProdutos` como destino existente da Moldura.
-- [ ] Substituir a categoria textual livre pelo seletor hierárquico somente se o contrato aprovado permitir.
-- [ ] Manter marca, loja e preços existentes sem adicionar novos filtros.
-- [ ] Identificar visualmente o controle como `Filtro temporário`.
-- [ ] Informar que ele não altera categorias acompanhadas nem inicia coleta.
-- [ ] Enviar identidade de categoria no formato confirmado pela API.
-- [ ] Ao escolher categoria pai, consultar incluindo descendentes conforme responsabilidade definida no contrato.
-- [ ] Reiniciar paginação quando a categoria temporária mudar.
-- [ ] Manter termo e os demais filtros compatíveis.
-- [ ] Oferecer `Todas` somente se o contrato suportar catálogo paginado sem termo e sem categoria.
-- [ ] Não exibir categorias sem relação com o catálogo/interesse quando o contrato restringi-las.
+- [x] Manter `PaginaProdutos` como destino existente da Moldura.
+- [x] Substituir a categoria textual livre pelo seletor hierárquico somente se o contrato aprovado permitir.
+- [x] Manter marca, loja e preços existentes sem adicionar novos filtros.
+- [x] Identificar visualmente o controle como `Filtro temporário`.
+- [x] Informar que ele não altera categorias acompanhadas nem inicia coleta.
+- [x] Enviar identidade de categoria no formato confirmado pela API.
+- [x] Ao escolher categoria pai, consultar incluindo descendentes conforme responsabilidade definida no contrato.
+- [x] Reiniciar paginação quando a categoria temporária mudar.
+- [x] Manter termo e os demais filtros compatíveis.
+- [x] Oferecer `Todas` somente se o contrato suportar catálogo paginado sem termo e sem categoria.
+- [x] Não exibir categorias sem relação com o catálogo/interesse quando o contrato restringi-las.
 
 ### Testes de controlador/widget
 
-- [ ] Alterar categoria reinicia na página 1.
-- [ ] A categoria correta chega ao método `buscarProdutos`.
-- [ ] Escolher pai inclui resultados das filhas segundo a resposta simulada do contrato.
-- [ ] Selecionar categoria não altera a persistência de categorias acompanhadas.
-- [ ] Limpar filtro retorna ao estado aprovado.
+- [x] Alterar categoria reinicia na página 1.
+- [x] A categoria correta chega ao método `buscarProdutos`.
+- [x] Escolher pai inclui resultados das filhas segundo a resposta simulada do contrato.
+- [x] Selecionar categoria não altera a persistência de categorias acompanhadas.
+- [x] Limpar filtro retorna ao estado aprovado.
 - [ ] Busca/página/posição permanecem preservadas nas ações já cobertas.
 
 ### Gate de saída
 
-- [ ] Configuração persistente e filtro temporário não compartilham uma ação ambígua.
-- [ ] Nenhum chip horizontal ilimitado foi introduzido.
+- [x] Configuração persistente e filtro temporário não compartilham uma ação ambígua.
+- [x] Nenhum chip horizontal ilimitado foi introduzido.
 
 ## 13. Fase 6 — ofertas separadas e origem explícita
 
@@ -349,28 +348,28 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações
 
-- [ ] Preservar `_GrupoProdutosCompacto` ou estrutura equivalente agrupando visualmente por loja.
-- [ ] Preservar cada `ProdutoDireto` como oferta independente.
-- [ ] Exibir `lojaNome · Banco Inter` dentro do cartão compacto.
-- [ ] Manter marca e categoria como metadados, sem usá-los como identidade.
-- [ ] Manter histórico e link da própria oferta.
-- [ ] Manter deduplicação por loja + identificador externo enquanto esse for o contrato vigente.
-- [ ] Não ordenar nem comparar preços entre lojas sem funcionalidade aprovada.
-- [ ] Não criar cartão pai para nomes semelhantes.
-- [ ] Não usar o texto `Oferta separada` como dado real; essa expressão é apenas didática no HTML.
-- [ ] Classificar visualmente cabo em `Cabos` somente quando a API entregar essa categoria Radar.
+- [x] Preservar `_GrupoProdutosCompacto` ou estrutura equivalente agrupando visualmente por loja.
+- [x] Preservar cada `ProdutoDireto` como oferta independente.
+- [x] Exibir `lojaNome · Banco Inter` dentro do cartão compacto.
+- [x] Manter marca e categoria como metadados, sem usá-los como identidade.
+- [x] Manter histórico e link da própria oferta.
+- [x] Manter deduplicação por loja + identificador externo enquanto esse for o contrato vigente.
+- [x] Não ordenar nem comparar preços entre lojas sem funcionalidade aprovada.
+- [x] Não criar cartão pai para nomes semelhantes.
+- [x] Não usar o texto `Oferta separada` como dado real; essa expressão é apenas didática no HTML.
+- [x] Classificar visualmente cabo em `Cabos` somente quando a API entregar essa categoria Radar.
 
 ### Testes de widget
 
-- [ ] Mesmo nome em Casas Bahia e Ponto gera dois cartões.
-- [ ] Cada cartão anuncia sua loja nas semânticas.
-- [ ] Cada cartão mostra sua própria origem Inter.
-- [ ] Histórico recebe loja e identificador da oferta tocada.
-- [ ] Ausência de categoria não inventa `Celulares`, `Outros` ou equivalente.
+- [x] Mesmo nome em Casas Bahia e Ponto gera dois cartões.
+- [x] Cada cartão anuncia sua loja nas semânticas.
+- [x] Cada cartão mostra sua própria origem Inter.
+- [x] Histórico recebe loja e identificador da oferta tocada.
+- [x] Ausência de categoria não inventa `Celulares`, `Outros` ou equivalente.
 
 ### Gate de saída
 
-- [ ] A interface não sugere produto canônico ou comparação automática.
+- [x] A interface não sugere produto canônico ou comparação automática.
 
 ## 14. Fase 7 — busca, preservação e retry
 
@@ -381,62 +380,62 @@ Esta fase somente começa depois que o contrato estiver confirmado. Ela não cri
 
 ### Ações no controlador
 
-- [ ] Separar `último resultado válido` do estado da requisição corrente.
-- [ ] Não apagar imediatamente a lista válida ao iniciar uma atualização equivalente.
-- [ ] Definir quando uma nova busca legítima deve substituir a anterior conforme o plano funcional.
-- [ ] Preservar termo, categoria, lojas, filtros e página da requisição que falhou.
-- [ ] Aplicar no máximo uma retentativa automática somente para erro transitório, se essa responsabilidade pertencer ao cliente.
-- [ ] Não repetir automaticamente validação, autenticação ou autorização.
-- [ ] Cancelar/ignorar resposta antiga quando termo ou filtros mudarem.
-- [ ] Manter erro de primeira página diferente de erro ao carregar mais.
-- [ ] Manter vazio diferente de falha.
+- [x] Separar `último resultado válido` do estado da requisição corrente.
+- [x] Não apagar imediatamente a lista válida ao iniciar uma atualização equivalente.
+- [x] Definir quando uma nova busca legítima deve substituir a anterior conforme o plano funcional.
+- [x] Preservar termo, categoria, lojas, filtros e página da requisição que falhou.
+- [x] Aplicar no máximo uma retentativa automática somente para erro transitório, se essa responsabilidade pertencer ao cliente.
+- [x] Não repetir automaticamente validação, autenticação ou autorização.
+- [x] Cancelar/ignorar resposta antiga quando termo ou filtros mudarem.
+- [x] Manter erro de primeira página diferente de erro ao carregar mais.
+- [x] Manter vazio diferente de falha.
 
 ### Ações na interface
 
-- [ ] Busca sem termo mostra `Todas` somente quando o contrato permitir.
-- [ ] Um caractere continua respeitando a validação definida pela API.
-- [ ] Carregamento explica que a busca usa o catálogo salvo.
-- [ ] Erro com lista anterior mantém cartões visíveis e apresenta aviso não ambíguo.
-- [ ] `Tentar novamente` repete a mesma consulta sem perder contexto.
-- [ ] Parcial e atrasado usam componentes/cores V11 e não bloqueiam o uso do último catálogo válido.
-- [ ] Nova digitação inicia a consulta correta e reinicia paginação.
+- [x] Busca sem termo mostra `Todas` somente quando o contrato permitir.
+- [x] Um caractere continua respeitando a validação definida pela API.
+- [x] Carregamento explica que a busca usa o catálogo salvo.
+- [x] Erro com lista anterior mantém cartões visíveis e apresenta aviso não ambíguo.
+- [x] `Tentar novamente` repete a mesma consulta sem perder contexto.
+- [x] Parcial e atrasado usam componentes/cores V11 e não bloqueiam o uso do último catálogo válido.
+- [x] Nova digitação inicia a consulta correta e reinicia paginação.
 
 ### Testes unitários/widgets
 
 - [ ] Falha transitória executa apenas a quantidade de tentativas aprovada.
 - [ ] Erro não transitório não repete automaticamente.
-- [ ] Retry manual conserva todos os parâmetros.
-- [ ] Falha preserva itens anteriores.
-- [ ] Resposta vazia substitui a lista somente depois de uma resposta válida.
-- [ ] Resposta antiga não sobrescreve termo mais recente.
-- [ ] Erro ao carregar mais preserva página e itens atuais.
-- [ ] Estados parcial, atrasado, vazio e falha têm apresentações diferentes.
+- [x] Retry manual conserva todos os parâmetros.
+- [x] Falha preserva itens anteriores.
+- [x] Resposta vazia substitui a lista somente depois de uma resposta válida.
+- [x] Resposta antiga não sobrescreve termo mais recente.
+- [x] Erro ao carregar mais preserva página e itens atuais.
+- [x] Estados parcial, atrasado, vazio e falha têm apresentações diferentes.
 
 ### Gate de saída
 
-- [ ] O comportamento não depende da palavra `erro`; ela existe apenas no protótipo HTML.
-- [ ] Todos os testes diretamente afetados do controlador passam.
+- [x] O comportamento não depende da palavra `erro`; ela existe apenas no protótipo HTML.
+- [x] Todos os testes diretamente afetados do controlador passam.
 
 ## 15. Fase 8 — integração de navegação e preservação de estado
 
 ### Ações
 
-- [ ] `Produtos > Escolher lojas` continua abrindo `Banco Inter > Compre direto`.
-- [ ] Retornar a Produtos mantém termo, categoria temporária, filtros, página e posição conforme a jornada aprovada.
-- [ ] Alteração real de lojas invalida/atualiza somente o necessário no catálogo visível.
-- [ ] Alteração de categorias acompanhadas reflete a resposta da API, sem filtragem paralela inventada no cliente.
-- [ ] Navegação inferior continua com os mesmos destinos do V11.
-- [ ] Perfil e Administração continuam fora das três áreas principais conforme desenho atual.
+- [x] `Produtos > Escolher lojas` continua abrindo `Banco Inter > Compre direto`.
+- [x] Retornar a Produtos mantém termo, categoria temporária, filtros, página e posição conforme a jornada aprovada.
+- [x] Alteração real de lojas invalida/atualiza somente o necessário no catálogo visível.
+- [x] Alteração de categorias acompanhadas reflete a resposta da API, sem filtragem paralela inventada no cliente.
+- [x] Navegação inferior continua com os mesmos destinos do V11.
+- [x] Perfil e Administração continuam fora das três áreas principais conforme desenho atual.
 
 ### Testes pontuais
 
-- [ ] Executar somente o teste diretamente relacionado de `moldura_test.dart` para Produtos/navegação.
-- [ ] Adicionar teste novo apenas se o comportamento novo não puder ser coberto nos testes da feature.
+- [x] Executar somente o teste diretamente relacionado de `moldura_test.dart` para Produtos/navegação.
+- [x] Adicionar teste novo apenas se o comportamento novo não puder ser coberto nos testes da feature.
 - [ ] Não descomentar nem adaptar o teste pendente do Shopping Inter compacto.
 
 ### Gate de saída
 
-- [ ] A jornada real continua funcionando sem nova rota ou tela.
+- [x] A jornada real continua funcionando sem nova rota ou tela.
 
 ## 16. Fase 9 — comparação visual e acessibilidade
 
@@ -497,10 +496,14 @@ Não executar `flutter test` sem filtro por rotina. Não executar testes Web, go
 
 ### Gate de saída
 
-- [ ] `dart format` aplicado aos arquivos alterados.
-- [ ] `flutter analyze` sem novos problemas.
-- [ ] Unitários/widgets diretamente afetados passam.
-- [ ] Divergências restantes do protótipo estão registradas, não escondidas.
+- [x] `dart format` aplicado aos arquivos alterados.
+- [x] `flutter analyze` sem novos problemas.
+- [x] Unitários/widgets diretamente afetados passam.
+- [x] Divergências restantes do protótipo estão registradas, não escondidas.
+
+> Pendência registrada: a comparação visual manual da Fase 9 permanece aberta
+> para todos os estados e larguras listados abaixo. Nenhum golden ou teste Web
+> foi criado ou executado para substituí-la.
 
 ## 18. Matriz mínima de aceitação
 

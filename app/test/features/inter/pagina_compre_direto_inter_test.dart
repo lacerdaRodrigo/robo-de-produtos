@@ -11,6 +11,7 @@ import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/administracao/controlador_catalogo_administracao.dart';
+import 'package:app_robo/features/inter/controlador_categorias_acompanhadas.dart';
 import 'package:app_robo/features/inter/pagina_compre_direto_inter.dart';
 
 Api _api() => Api(
@@ -51,6 +52,33 @@ Pagina<LojaDireto> _pagina() => Pagina(
   totalItens: 1,
   totalPaginas: 1,
   temProxima: false,
+);
+
+CatalogoCategoriasRadarUsuario _categorias({
+  bool selecionada = false,
+  bool acompanhada = false,
+}) => CatalogoCategoriasRadarUsuario(
+  configurada: selecionada,
+  itens: [
+    CategoriaRadar(
+      id: 'eletronicos',
+      slug: 'eletronicos',
+      nome: 'Eletrônicos',
+      categoriaPaiSlug: null,
+      ordem: 1,
+      selecionada: selecionada,
+      acompanhada: acompanhada,
+    ),
+    const CategoriaRadar(
+      id: 'cabos',
+      slug: 'cabos',
+      nome: 'Cabos',
+      categoriaPaiSlug: 'eletronicos',
+      ordem: 1,
+      selecionada: false,
+      acompanhada: false,
+    ),
+  ],
 );
 
 void main() {
@@ -259,5 +287,93 @@ void main() {
     await at.pumpAndSettle();
     expect(consultas, 3);
     expect(atualizacoesResumo, 2);
+  });
+
+  testWidgets('configura categorias sem alterar a seleção de lojas', (
+    at,
+  ) async {
+    Set<String>? salvas;
+    final categorias = ControladorCategoriasAcompanhadas(
+      carregar: () async => _categorias(),
+      salvar: (slugs) async {
+        salvas = slugs.toSet();
+        return _categorias(selecionada: true, acompanhada: true);
+      },
+    );
+    final lojas = ControladorCatalogoAdministracao<LojaDireto>(
+      buscar: ({required q, required pagina}) async => _pagina(),
+      identificar: (loja) => loja.id,
+    );
+    addTearDown(categorias.dispose);
+    addTearDown(lojas.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaCompreDiretoInter(
+            api: _api(),
+            administrador: true,
+            sliversAntes: const [],
+            controlador: lojas,
+            controladorCategorias: categorias,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('Categorias acompanhadas'), findsOneWidget);
+    await at.tap(find.byKey(const Key('configurar-categorias-acompanhadas')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrônicos').last);
+    await at.tap(find.byKey(const Key('confirmar-acompanhar')));
+    await at.pumpAndSettle();
+
+    expect(salvas, {'eletronicos'});
+    expect(lojas.itens.single.selecionada, isTrue);
+  });
+
+  testWidgets('cancelar categorias não persiste seleção transitória', (
+    at,
+  ) async {
+    var salvamentos = 0;
+    final categorias = ControladorCategoriasAcompanhadas(
+      carregar: () async => _categorias(),
+      salvar: (_) async {
+        salvamentos++;
+        return _categorias();
+      },
+    );
+    final lojas = ControladorCatalogoAdministracao<LojaDireto>(
+      buscar: ({required q, required pagina}) async => _pagina(),
+      identificar: (loja) => loja.id,
+    );
+    addTearDown(categorias.dispose);
+    addTearDown(lojas.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaCompreDiretoInter(
+            api: _api(),
+            administrador: true,
+            sliversAntes: const [],
+            controlador: lojas,
+            controladorCategorias: categorias,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('configurar-categorias-acompanhadas')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrônicos').last);
+    await at.tap(find.text('Cancelar'));
+    await at.pumpAndSettle();
+
+    expect(salvamentos, 0);
+    expect(categorias.slugsSelecionadosDiretos, isEmpty);
   });
 }

@@ -12,6 +12,7 @@ import {
   buscarProdutosDiretosPaginado,
   statusCatalogoProdutos,
 } from "@/lib/banco-produtos-inter";
+import { categoriaRadarAtivaExiste } from "@/lib/banco-categorias-produtos-inter";
 
 const MIN_Q = 2;
 const MAX_Q = 100;
@@ -27,11 +28,13 @@ function precoValido(bruto: string): string | null {
 }
 
 /**
- * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&marca=&categoria=&loja=&preco_min=&preco_max=
+ * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&marca=&categoria=
+ *   &categoria_radar=&loja=&preco_min=&preco_max=
  *
  * Busca de produtos (V4), autenticada e **paginada no servidor** — nada de baixar
- * catálogo no cliente. `q` é obrigatório (2–100 carac.). Ordenação estável
- * por menor preço atual, depois nome, depois ID (RN71).
+ * catálogo no cliente. `q` vazio lista o catálogo persistido; quando presente,
+ * deve conter 2–100 caracteres. Ordenação estável por menor preço atual,
+ * depois nome, depois ID (RN71).
  */
 export async function GET(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, { operacao: "inter.produtos.buscar" });
@@ -42,7 +45,7 @@ export async function GET(requisicao: Request) {
   const pagina = paginaValida(url.searchParams.get("pagina"));
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
 
-  if (q.length < MIN_Q || q.length > MAX_Q) {
+  if ((q.length > 0 && q.length < MIN_Q) || q.length > MAX_Q) {
     return NextResponse.json(
       corpoErro("validacao", `termo de busca entre ${MIN_Q} e ${MAX_Q} caracteres`),
       { status: STATUS.INVALIDA },
@@ -51,6 +54,17 @@ export async function GET(requisicao: Request) {
 
   const precoMin = precoValido(url.searchParams.get("preco_min") ?? "");
   const precoMax = precoValido(url.searchParams.get("preco_max") ?? "");
+  const categoriaRadar = url.searchParams.get("categoria_radar")?.trim() || null;
+  if (
+    categoriaRadar &&
+    (categoriaRadar.length > 120 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(categoriaRadar))
+  ) {
+    return NextResponse.json(
+      corpoErro("validacao", "categoria_radar invalida"),
+      { status: STATUS.INVALIDA },
+    );
+  }
   if (
     (url.searchParams.get("preco_min") && precoMin === null) ||
     (url.searchParams.get("preco_max") && precoMax === null)
@@ -62,15 +76,32 @@ export async function GET(requisicao: Request) {
   }
 
   try {
-    const { itens, total } = await buscarProdutosDiretosPaginado(q, pagina, porPagina, {
-      marca: url.searchParams.get("marca") ? String(url.searchParams.get("marca")) : null,
-      categoria: url.searchParams.get("categoria")
-        ? String(url.searchParams.get("categoria"))
-        : null,
-      loja: url.searchParams.get("loja") ? String(url.searchParams.get("loja")) : null,
-      preco_min: precoMin,
-      preco_max: precoMax,
-    });
+    if (categoriaRadar && !(await categoriaRadarAtivaExiste(categoriaRadar))) {
+      return NextResponse.json(
+        corpoErro("validacao", "categoria_radar inexistente ou inativa"),
+        { status: STATUS.INVALIDA },
+      );
+    }
+    const { itens, total } = await buscarProdutosDiretosPaginado(
+      q,
+      pagina,
+      porPagina,
+      acesso.usuario.id,
+      {
+        marca: url.searchParams.get("marca")
+          ? String(url.searchParams.get("marca"))
+          : null,
+        categoria: url.searchParams.get("categoria")
+          ? String(url.searchParams.get("categoria"))
+          : null,
+        categoria_radar: categoriaRadar,
+        loja: url.searchParams.get("loja")
+          ? String(url.searchParams.get("loja"))
+          : null,
+        preco_min: precoMin,
+        preco_max: precoMax,
+      },
+    );
 
     const status = await statusCatalogoProdutos(itens);
 
