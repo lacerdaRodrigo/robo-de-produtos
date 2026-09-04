@@ -11,8 +11,8 @@ vi.mock("@/lib/autenticacao-api", () => ({
 }));
 
 vi.mock("@/lib/banco-categorias-produtos-inter", () => ({
-  listarCategoriasRadarUsuario: dependencias.listar,
-  substituirCategoriasRadarUsuario: dependencias.substituir,
+  listarCategoriasInterUsuario: dependencias.listar,
+  substituirCategoriasInterUsuario: dependencias.substituir,
 }));
 
 import { GET, PATCH } from "@/app/api/inter/produtos/categorias/route";
@@ -21,19 +21,12 @@ import { validarSelecaoCategoriasProdutosInter } from "@/lib/categorias-produtos
 const catalogo = {
   configurada: true,
   itens: [
-    {
-      id: "1",
-      slug: "eletronicos",
-      nome: "Eletrônicos",
-      categoria_pai_slug: null,
-      ordem: 10,
-      selecionada: true,
-      acompanhada: true,
-    },
+    { valor: "Android", nome: "Android", selecionada: true },
+    { valor: null, nome: "Sem categoria", selecionada: false },
   ],
 };
 
-describe("categorias dos produtos Inter", () => {
+describe("categorias externas dos produtos Inter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dependencias.autenticar.mockResolvedValue({
@@ -45,28 +38,32 @@ describe("categorias dos produtos Inter", () => {
     dependencias.substituir.mockResolvedValue({ ok: true, total: 1 });
   });
 
-  it("valida e deduplica slugs sem impedir seleção vazia", () => {
+  it("valida e deduplica valores externos sem impedir seleção vazia", () => {
     expect(validarSelecaoCategoriasProdutosInter({ categorias: [] })).toEqual({
       ok: true,
-      valor: { categorias: [] },
+      valor: { categorias: [], sem_categoria: false },
     });
     expect(
       validarSelecaoCategoriasProdutosInter({
-        categorias: ["celulares", "celulares", "cabos"],
+        categorias: ["Android", "Android", "Notebooks gamer"],
+        sem_categoria: true,
       }),
     ).toEqual({
       ok: true,
-      valor: { categorias: ["celulares", "cabos"] },
+      valor: {
+        categorias: ["Android", "Notebooks gamer"],
+        sem_categoria: true,
+      },
     });
     expect(
-      validarSelecaoCategoriasProdutosInter({ categorias: ["Celulares"] }),
+      validarSelecaoCategoriasProdutosInter({ categorias: [" Android "] }),
     ).toEqual({
       ok: false,
-      mensagem: "categorias contem identificador invalido",
+      mensagem: "categorias contem valor externo invalido",
     });
   });
 
-  it("lista a árvore para a pessoa autenticada", async () => {
+  it("lista as categorias reais para a pessoa autenticada", async () => {
     const resposta = await GET(
       new Request("http://localhost/api/inter/produtos/categorias"),
     );
@@ -77,26 +74,31 @@ describe("categorias dos produtos Inter", () => {
     expect(resposta.headers.get("x-request-id")).toBe("req-categorias");
   });
 
-  it("substitui a seleção e devolve o estado persistido", async () => {
+  it("substitui a seleção externa e devolve o estado persistido", async () => {
     const resposta = await PATCH(
       new Request("http://localhost/api/inter/produtos/categorias", {
         method: "PATCH",
-        body: JSON.stringify({ categorias: ["eletronicos"] }),
+        body: JSON.stringify({
+          categorias: ["Android"],
+          sem_categoria: true,
+        }),
       }),
     );
 
     expect(resposta.status).toBe(200);
-    expect(dependencias.substituir).toHaveBeenCalledWith("42", [
-      "eletronicos",
-    ]);
+    expect(dependencias.substituir).toHaveBeenCalledWith(
+      "42",
+      ["Android"],
+      true,
+    );
     expect(await resposta.json()).toEqual(catalogo);
   });
 
-  it("não persiste corpo inválido nem categoria desconhecida", async () => {
+  it("não persiste corpo inválido nem categoria inexistente no catálogo", async () => {
     const corpoInvalido = await PATCH(
       new Request("http://localhost/api/inter/produtos/categorias", {
         method: "PATCH",
-        body: JSON.stringify({ categorias: ["TVs"] }),
+        body: JSON.stringify({ categorias: [" Android "] }),
       }),
     );
     expect(corpoInvalido.status).toBe(400);
@@ -104,19 +106,24 @@ describe("categorias dos produtos Inter", () => {
 
     dependencias.substituir.mockResolvedValueOnce({
       ok: false,
-      invalidas: ["nao-existe"],
+      invalidas: ["Não existe"],
+      sem_categoria_indisponivel: true,
     });
     const desconhecida = await PATCH(
       new Request("http://localhost/api/inter/produtos/categorias", {
         method: "PATCH",
-        body: JSON.stringify({ categorias: ["nao-existe"] }),
+        body: JSON.stringify({
+          categorias: ["Não existe"],
+          sem_categoria: true,
+        }),
       }),
     );
     expect(desconhecida.status).toBe(400);
     expect(await desconhecida.json()).toEqual({
       erro: {
         codigo: "validacao",
-        mensagem: "categorias inexistentes ou inativas: nao-existe",
+        mensagem:
+          "categorias inexistentes no catálogo atual: Não existe, Sem categoria",
       },
     });
   });
