@@ -143,10 +143,7 @@ void main() {
     expect(catalogo.itens.first.semCategoria, isFalse);
     expect(catalogo.itens.last.valor, isNull);
     expect(catalogo.itens.last.semCategoria, isTrue);
-    expect(catalogo.valoresSelecionados, {
-      'Acessórios para celulares',
-      null,
-    });
+    expect(catalogo.valoresSelecionados, {'Acessórios para celulares', null});
   });
 
   test('contrato incompleto de categorias falha sem inventar seleção', () {
