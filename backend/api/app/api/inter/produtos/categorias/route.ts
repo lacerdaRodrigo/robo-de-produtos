@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 
 import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import {
-  listarCategoriasRadarUsuario,
-  substituirCategoriasRadarUsuario,
+  listarCategoriasInterUsuario,
+  substituirCategoriasInterUsuario,
 } from "@/lib/banco-categorias-produtos-inter";
 import { corpoErro, STATUS } from "@/lib/api";
 import { validarSelecaoCategoriasProdutosInter } from "@/lib/categorias-produtos-inter";
 
-/** Lista a taxonomia ativa e o interesse persistente da pessoa autenticada. */
+/** Lista categorias reais presentes no catálogo ativo do Shopping Inter. */
 export async function GET(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, {
     operacao: "inter.produtos.categorias.ler",
@@ -16,7 +16,7 @@ export async function GET(requisicao: Request) {
   if (!acesso.ok) return acesso.resposta;
   try {
     return NextResponse.json(
-      await listarCategoriasRadarUsuario(acesso.usuario.id),
+      await listarCategoriasInterUsuario(acesso.usuario.id),
       {
         headers: { "x-request-id": acesso.requisicaoId },
       },
@@ -32,7 +32,10 @@ export async function GET(requisicao: Request) {
   }
 }
 
-/** Substitui os nós escolhidos; lista vazia significa nenhum interesse ativo. */
+/**
+ * Substitui categorias externas acompanhadas. `sem_categoria` representa o
+ * agrupamento de produtos cuja origem não informou categoryName.
+ */
 export async function PATCH(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, {
     operacao: "inter.produtos.categorias.salvar",
@@ -54,15 +57,20 @@ export async function PATCH(requisicao: Request) {
   }
 
   try {
-    const resultado = await substituirCategoriasRadarUsuario(
+    const resultado = await substituirCategoriasInterUsuario(
       acesso.usuario.id,
       entrada.valor.categorias,
+      entrada.valor.sem_categoria,
     );
     if (!resultado.ok) {
+      const invalidas = [
+        ...resultado.invalidas,
+        ...(resultado.sem_categoria_indisponivel ? ["Sem categoria"] : []),
+      ];
       return NextResponse.json(
         corpoErro(
           "validacao",
-          `categorias inexistentes ou inativas: ${resultado.invalidas.join(", ")}`,
+          `categorias inexistentes no catálogo atual: ${invalidas.join(", ")}`,
         ),
         {
           status: STATUS.INVALIDA,
@@ -71,7 +79,7 @@ export async function PATCH(requisicao: Request) {
       );
     }
     return NextResponse.json(
-      await listarCategoriasRadarUsuario(acesso.usuario.id),
+      await listarCategoriasInterUsuario(acesso.usuario.id),
       { headers: { "x-request-id": acesso.requisicaoId } },
     );
   } catch {
