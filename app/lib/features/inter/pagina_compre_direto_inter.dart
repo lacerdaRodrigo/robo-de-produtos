@@ -69,12 +69,8 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       widget.controladorCategorias ??
       ControladorCategoriasAcompanhadas(
         carregar: widget.api.categoriasInter,
-        salvar:
-            (categorias, {required semCategoria}) => widget.api
-                .salvarCategoriasInter(
-                  categorias,
-                  semCategoria: semCategoria,
-                ),
+        salvar: (categorias, {required semCategoria}) => widget.api
+            .salvarCategoriasInter(categorias, semCategoria: semCategoria),
       );
   late final bool _controladorExterno = widget.controlador != null;
   late final _busca = TextEditingController(text: _controlador.busca);

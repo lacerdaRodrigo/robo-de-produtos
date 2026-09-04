@@ -187,9 +187,7 @@ class _EstadoSeletorCategoriasSheet<T>
                   nome: 'Todas as categorias',
                   selecionada: _selecionadas.isEmpty,
                   modo: widget.modo,
-                  aoEscolher: () => setState(
-                    () => _selecionadas = <String?>{},
-                  ),
+                  aoEscolher: () => setState(() => _selecionadas = <String?>{}),
                 ),
               for (final categoria in widget.categorias)
                 Padding(
@@ -265,7 +263,8 @@ class _LinhaCategoriaInter extends StatelessWidget {
     return Semantics(
       selected: selecionada,
       button: true,
-      label: 'Categoria $nome, ${selecionada ? 'selecionada' : 'não selecionada'}',
+      label:
+          'Categoria $nome, ${selecionada ? 'selecionada' : 'não selecionada'}',
       child: InkWell(
         onTap: aoEscolher,
         borderRadius: BorderRadius.circular(16),

@@ -19,40 +19,41 @@ final _categorias = <CategoriaInter>[
 ];
 
 void main() {
-  testWidgets('acompanhamento permite múltiplos valores externos e Sem categoria', (
-    at,
-  ) async {
-    Future<Set<String?>?>? resultado;
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => FilledButton(
-              onPressed: () {
-                resultado = mostrarSeletorCategoriasAcompanhadas(
-                  context,
-                  categorias: _categorias,
-                  selecionadasIniciais: const <String?>{},
-                );
-              },
-              child: const Text('Abrir categorias'),
+  testWidgets(
+    'acompanhamento permite múltiplos valores externos e Sem categoria',
+    (at) async {
+      Future<Set<String?>?>? resultado;
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => FilledButton(
+                onPressed: () {
+                  resultado = mostrarSeletorCategoriasAcompanhadas(
+                    context,
+                    categorias: _categorias,
+                    selecionadasIniciais: const <String?>{},
+                  );
+                },
+                child: const Text('Abrir categorias'),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await at.tap(find.text('Abrir categorias'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Celulares'));
-    await at.tap(find.text('Sem categoria'));
-    await at.pump();
-    await at.tap(find.text('Salvar categorias'));
-    await at.pumpAndSettle();
+      await at.tap(find.text('Abrir categorias'));
+      await at.pumpAndSettle();
+      await at.tap(find.text('Celulares'));
+      await at.tap(find.text('Sem categoria'));
+      await at.pump();
+      await at.tap(find.text('Salvar categorias'));
+      await at.pumpAndSettle();
 
-    expect(await resultado, {'Celulares', null});
-  });
+      expect(await resultado, {'Celulares', null});
+    },
+  );
 
   testWidgets('filtro temporário mantém somente uma categoria externa', (
     at,
@@ -152,7 +153,10 @@ void main() {
     await at.tap(find.text('Abrir categorias'));
     await at.pumpAndSettle();
     final lista = find.byKey(const Key('seletor-categorias-lista'));
-    final rolagem = find.descendant(of: lista, matching: find.byType(Scrollable));
+    final rolagem = find.descendant(
+      of: lista,
+      matching: find.byType(Scrollable),
+    );
     await at.scrollUntilVisible(
       find.text('Categoria 23 com nome longo'),
       180,

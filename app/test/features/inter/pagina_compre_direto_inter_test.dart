@@ -54,24 +54,23 @@ Pagina<LojaDireto> _pagina() => Pagina(
   temProxima: false,
 );
 
-CatalogoCategoriasInterUsuario _categorias({
-  bool selecionada = false,
-}) => CatalogoCategoriasInterUsuario(
-  configurada: selecionada,
-  itens: [
-    CategoriaInter(
-      valor: 'Eletrônicos',
-      nome: 'Eletrônicos',
-      selecionada: selecionada,
-    ),
-    const CategoriaInter(valor: 'Cabos', nome: 'Cabos', selecionada: false),
-    const CategoriaInter(
-      valor: null,
-      nome: 'Sem categoria',
-      selecionada: false,
-    ),
-  ],
-);
+CatalogoCategoriasInterUsuario _categorias({bool selecionada = false}) =>
+    CatalogoCategoriasInterUsuario(
+      configurada: selecionada,
+      itens: [
+        CategoriaInter(
+          valor: 'Eletrônicos',
+          nome: 'Eletrônicos',
+          selecionada: selecionada,
+        ),
+        const CategoriaInter(valor: 'Cabos', nome: 'Cabos', selecionada: false),
+        const CategoriaInter(
+          valor: null,
+          nome: 'Sem categoria',
+          selecionada: false,
+        ),
+      ],
+    );
 
 void main() {
   testWidgets('duas abas mostram o último catálogo e a seleção nos cards', (

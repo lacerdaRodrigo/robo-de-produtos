@@ -35,7 +35,10 @@ void main() {
 
     expect(controlador.valoresSelecionados, {'Eletrônicos', null});
     expect(controlador.totalAcompanhadas, 2);
-    expect(controlador.resumo, '2 categorias · aplicadas às lojas selecionadas');
+    expect(
+      controlador.resumo,
+      '2 categorias · aplicadas às lojas selecionadas',
+    );
     expect(controlador.erro, isNull);
   });
 
@@ -71,7 +74,8 @@ void main() {
     );
     final controlador = ControladorCategoriasAcompanhadas(
       carregar: () async => confirmado,
-      salvar: (_, {required semCategoria}) async => throw StateError('sem rede'),
+      salvar: (_, {required semCategoria}) async =>
+          throw StateError('sem rede'),
     );
     addTearDown(controlador.dispose);
     await controlador.carregarAcompanhadas();

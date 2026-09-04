@@ -102,7 +102,10 @@ void main() {
     expect(consultas.single.queryParameters['marca'], 'Samsung');
     expect(consultas.single.queryParameters['loja'], 'casas-bahia');
     expect(consultas.single.queryParameters['categoria'], 'Smart TV');
-    expect(consultas.single.queryParameters.containsKey('categoria_radar'), isFalse);
+    expect(
+      consultas.single.queryParameters.containsKey('categoria_radar'),
+      isFalse,
+    );
     expect(consultas.single.queryParameters['q'], 'tv');
   });
 
@@ -157,10 +160,9 @@ void main() {
     );
 
     final lidas = await api.categoriasInter();
-    final salvas = await api.salvarCategoriasInter(
-      ['Eletrônicos'],
-      semCategoria: true,
-    );
+    final salvas = await api.salvarCategoriasInter([
+      'Eletrônicos',
+    ], semCategoria: true);
 
     expect(lidas.valoresSelecionados, {'Eletrônicos', null});
     expect(salvas.valoresSelecionados, {'Eletrônicos', null});
