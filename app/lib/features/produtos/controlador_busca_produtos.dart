@@ -9,7 +9,7 @@ class FiltrosProdutos {
   const FiltrosProdutos({
     this.marca = '',
     this.categoria = '',
-    this.categoriaRadar = '',
+    this.semCategoria = false,
     this.loja = '',
     this.precoMin = '',
     this.precoMax = '',
@@ -17,7 +17,7 @@ class FiltrosProdutos {
 
   final String marca;
   final String categoria;
-  final String categoriaRadar;
+  final bool semCategoria;
   final String loja;
   final String precoMin;
   final String precoMax;
@@ -25,14 +25,14 @@ class FiltrosProdutos {
   FiltrosProdutos copiarCom({
     String? marca,
     String? categoria,
-    String? categoriaRadar,
+    bool? semCategoria,
     String? loja,
     String? precoMin,
     String? precoMax,
   }) => FiltrosProdutos(
     marca: marca ?? this.marca,
     categoria: categoria ?? this.categoria,
-    categoriaRadar: categoriaRadar ?? this.categoriaRadar,
+    semCategoria: semCategoria ?? this.semCategoria,
     loja: loja ?? this.loja,
     precoMin: precoMin ?? this.precoMin,
     precoMax: precoMax ?? this.precoMax,
@@ -44,8 +44,7 @@ class FiltrosProdutos {
   }
 
   String? get marcaOpcional => _opcional(marca);
-  String? get categoriaOpcional => _opcional(categoria);
-  String? get categoriaRadarOpcional => _opcional(categoriaRadar);
+  String? get categoriaOpcional => semCategoria ? null : _opcional(categoria);
   String? get lojaOpcional => _opcional(loja);
   String? get precoMinOpcional => _opcional(precoMin);
   String? get precoMaxOpcional => _opcional(precoMax);
@@ -53,7 +52,7 @@ class FiltrosProdutos {
   bool get estaVazio =>
       marcaOpcional == null &&
       categoriaOpcional == null &&
-      categoriaRadarOpcional == null &&
+      !semCategoria &&
       lojaOpcional == null &&
       precoMinOpcional == null &&
       precoMaxOpcional == null;
@@ -63,14 +62,14 @@ class FiltrosProdutos {
       other is FiltrosProdutos &&
       other.marca == marca &&
       other.categoria == categoria &&
-      other.categoriaRadar == categoriaRadar &&
+      other.semCategoria == semCategoria &&
       other.loja == loja &&
       other.precoMin == precoMin &&
       other.precoMax == precoMax;
 
   @override
   int get hashCode =>
-      Object.hash(marca, categoria, categoriaRadar, loja, precoMin, precoMax);
+      Object.hash(marca, categoria, semCategoria, loja, precoMin, precoMax);
 }
 
 typedef BuscarProdutos =
@@ -79,7 +78,7 @@ typedef BuscarProdutos =
       required int pagina,
       String? marca,
       String? categoria,
-      String? categoriaRadar,
+      required bool semCategoria,
       String? loja,
       String? precoMin,
       String? precoMax,
@@ -215,7 +214,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     pagina: pagina,
     marca: _filtros.marcaOpcional,
     categoria: _filtros.categoriaOpcional,
-    categoriaRadar: _filtros.categoriaRadarOpcional,
+    semCategoria: _filtros.semCategoria,
     loja: _filtros.lojaOpcional,
     precoMin: _filtros.precoMinOpcional,
     precoMax: _filtros.precoMaxOpcional,
