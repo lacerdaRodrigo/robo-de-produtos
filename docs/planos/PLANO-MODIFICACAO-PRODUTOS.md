@@ -138,10 +138,11 @@ Essa árvore é ilustrativa. A implementação inicial deve conter somente as ca
 ### Regras da hierarquia
 
 - cada categoria possui identificador e `slug` estáveis, independentemente do texto apresentado pela loja;
-- cada produto recebe inicialmente uma categoria principal, preferencialmente a categoria folha mais específica;
-- selecionar uma categoria pai inclui seus descendentes na consulta;
+- cada oferta classificada recebe inicialmente uma categoria Radar principal, preferencialmente a categoria folha mais específica;
+- classificar uma oferta não implica criar ou reconhecer um produto canônico;
+- selecionar uma categoria pai inclui dinamicamente seus descendentes atuais e também os que forem criados no futuro;
 - categorias de ambiente, como `Cozinha` e `Sala`, organizam tipos mais específicos, como `Panelas`, `Móveis` e `Decoração`;
-- um produto não deve ser colocado em várias categorias principais apenas para aumentar sua chance de aparecer;
+- uma oferta não deve ser colocada em várias categorias principais apenas para aumentar sua chance de aparecer;
 - classificações secundárias ou etiquetas somente devem ser adicionadas depois de existir uma necessidade real aprovada.
 
 Exemplos:
@@ -153,11 +154,20 @@ Smart TV          → Eletrônicos > TVs
 Geladeira         → Eletrodomésticos > Geladeiras
 ```
 
+### Categoria inativa não é categoria apagada
+
+Uma categoria Radar que já tenha sido utilizada não deve ser excluída fisicamente apenas porque deixou de aceitar novas ofertas ou seleções.
+
+- `ativo = false` impede novo uso no catálogo ativo;
+- ofertas, históricos e versões antigas de mapeamento continuam referenciando a categoria pelo mesmo identificador;
+- a categoria pode permanecer disponível para auditoria e leitura histórica;
+- eventual exclusão física exige comprovação de que não há relacionamento ou histórico dependente e não faz parte do fluxo normal.
+
 ---
 
 ## 5. Por que a categoria precisa ser do Radar
 
-Cada loja do Banco Inter pode usar nomes diferentes para a mesma família de produtos.
+Cada loja do Banco Inter pode usar nomes diferentes para a mesma família de itens ofertados.
 
 Exemplo:
 
@@ -250,6 +260,8 @@ oferta
 ------
 loja_inter
 identificador_produto_externo
+identificador_oferta_ou_sku_externo // quando fornecido
+variante_externa                    // quando aplicável
 categoria_externa_loja_inter_id
 categoria_radar_id                 // anulável enquanto pendente
 estado_classificacao
@@ -258,21 +270,38 @@ versao_mapeamento
 classificado_em
 ```
 
-Desse modo, mesmo um produto ainda não classificado mantém sua loja, categoria externa, breadcrumb e motivo da pendência. Ele não fica perdido nem é colocado artificialmente em uma categoria incorreta.
+Desse modo, mesmo uma oferta ainda não classificada mantém sua loja, categoria externa, breadcrumb e motivo da pendência. Ela não fica perdida nem é colocada artificialmente em uma categoria incorreta.
 
 Os nomes físicos finais das tabelas devem ser definidos na fase de schema, não antecipados por este plano.
 
 ---
 
-## 7. Classificação: ordem de confiança
+## 7. Classificação: decisão por evidências
 
-A classificação não deve depender apenas de palavras no nome do produto.
+A classificação de uma oferta não deve depender apenas de palavras no título recebido da loja.
 
-Ordem recomendada:
+As evidências não formam uma precedência absoluta em que a primeira sempre vence. A decisão deve seguir este fluxo:
 
-### Nível 1 — Identificador/categoria estruturada da loja
+```text
+Categoria externa específica e confiável
+  → mapeamento direto
 
-Melhor cenário.
+Categoria externa ampla
+  → exige subtipo, breadcrumb ou metadados adicionais
+
+Exceção conhecida daquela loja
+  → aplica regra explícita e testada
+
+Evidências conflitantes
+  → classificacao_ambigua
+
+Evidência insuficiente
+  → permanece não classificado
+```
+
+### Categoria estruturada específica e confiável
+
+É o melhor cenário para mapeamento direto.
 
 A loja fornece categoria, subcategoria, slug, ID ou breadcrumb estável.
 
@@ -289,11 +318,11 @@ Mapeamento:
 Smartphones → Radar: Celulares
 ```
 
-Uma categoria externa ampla não deve ser tratada como prova absoluta. Algumas lojas podem colocar celulares e acessórios no mesmo departamento. Sempre que existir uma subcategoria ou tipo de produto mais específico, ele prevalece sobre o nome amplo do departamento.
+Esse mapeamento direto somente é válido quando a categoria externa realmente representa uma classe específica de itens ofertados.
 
-### Nível 2 — Mapeamento específico da loja
+### Categoria externa ampla e regra específica da loja
 
-Como as lojas do Inter podem possuir taxonomias próprias, o adaptador pode possuir regra explícita por loja.
+Uma categoria externa ampla não deve ser tratada como prova absoluta. Algumas lojas podem colocar celulares e acessórios no mesmo departamento. Nesses casos, a decisão exige subcategoria, tipo do item anunciado, breadcrumb, atributos ou uma regra explícita e testada daquela loja.
 
 Exemplo:
 
@@ -302,9 +331,11 @@ Casas Bahia / Inter → Celulares e Smartphones → Celulares
 Ponto / Inter       → Smartphones → Celulares
 ```
 
-### Nível 3 — Tipo do produto e metadados complementares
+Regras específicas podem resolver exceções conhecidas, mas não devem criar categorias por semelhança aproximada.
 
-Tipo do produto, marca, nome, breadcrumb e atributos podem ajudar quando a categoria estruturada é insuficiente.
+### Tipo do item anunciado e metadados da oferta
+
+Tipo informado pela loja, marca, título da oferta, breadcrumb e atributos podem ajudar quando a categoria estruturada é insuficiente.
 
 Nunca usar uma palavra isolada como prova suficiente.
 
@@ -332,23 +363,49 @@ Exemplo:
 
 ```text
 Categoria externa: Telefonia > Smartphones
-Produto: Cabo USB-C para smartphone
-Tipo do produto: Cabo
+Título da oferta: Cabo USB-C para smartphone
+Tipo informado pela loja: Cabo
 
 Resultado: Eletrônicos > Acessórios para celulares > Cabos
 ```
 
 `Periféricos` deve ser reservado, em princípio, para itens como mouse, teclado, webcam e controle. Cabo de carregamento de celular deve usar `Acessórios para celulares > Cabos`, salvo decisão diferente na taxonomia aprovada.
 
-### Nível 4 — Não classificado
+### Ofertas de combos e kits
 
-Se não houver confiança suficiente:
+Na primeira versão, uma oferta de kit continua recebendo somente uma categoria principal:
+
+- se existir um item claramente principal e os demais forem brindes ou acessórios, usar a categoria do item principal;
+- se todos os itens forem acessórios da mesma família, usar uma categoria específica de kit somente quando ela estiver aprovada na taxonomia;
+- se houver itens principais de famílias diferentes, sem predominância confiável, usar `classificacao_ambigua`;
+- não duplicar o mesmo kit em várias categorias principais para aumentar sua exposição.
+
+Exemplos:
+
+```text
+Smartphone + carregador de brinde → Celulares
+Kit capa + película + cabo        → Kits de acessórios, se aprovado
+Smartphone + smartwatch           → classificacao_ambigua, se não houver item principal
+```
+
+O motivo específico, como `kit_sem_item_principal`, deve ser preservado para revisão e testes.
+
+### Evidência conflitante ou insuficiente
+
+Se as evidências entrarem em conflito:
+
+```text
+estado_classificacao = classificacao_ambigua
+categoria_radar_id = null
+```
+
+Se não houver informação suficiente:
 
 ```text
 categoria_radar = null / não classificado
 ```
 
-É melhor perder temporariamente uma classificação do que poluir o catálogo com produto incorreto.
+É melhor deixar temporariamente uma oferta sem classificação do que poluir o catálogo com classificação incorreta.
 
 ### Estados da classificação
 
@@ -368,7 +425,7 @@ erro_de_classificacao
 - `classificacao_ambigua`: existem sinais conflitantes ou insuficientes;
 - `erro_de_classificacao`: houve uma falha técnica durante o processamento.
 
-Nos quatro últimos estados, `categoria_radar_id` permanece nulo, mas o produto continua armazenado com os dados externos e o motivo. A administração apresenta esses registros em **Pendentes de classificação** ou **Não classificados**.
+Nos quatro últimos estados, `categoria_radar_id` permanece nulo, mas a oferta continua armazenada com os dados externos e o motivo. A administração apresenta esses registros em **Pendentes de classificação** ou **Não classificados**.
 
 ---
 
@@ -429,14 +486,26 @@ Categorias
 O resultado pretendido é:
 
 ```text
-Casas Bahia → somente produtos das categorias escolhidas
-Ponto       → somente produtos das categorias escolhidas
-Samsung     → somente produtos das categorias escolhidas
-Motorola    → somente produtos das categorias escolhidas
+Casas Bahia → somente ofertas das categorias escolhidas
+Ponto       → somente ofertas das categorias escolhidas
+Samsung     → somente ofertas das categorias escolhidas
+Motorola    → somente ofertas das categorias escolhidas
 ...
 ```
 
 A loja acompanhada continua sendo condição necessária: escolher uma categoria não habilita automaticamente uma loja que a pessoa não selecionou.
+
+### Quando uma categoria deixa de ser acompanhada
+
+Desmarcar uma categoria produz efeito imediato no interesse da pessoa e na resposta da API, mas não apaga imediatamente ofertas ou históricos já persistidos.
+
+- a categoria deixa de aparecer no catálogo ativo daquela pessoa;
+- seus registros permanecem armazenados durante uma janela de retenção configurável;
+- reativar a categoria dentro dessa janela pode reutilizar os dados ainda válidos;
+- arquivamento ou expiração somente ocorre depois da política de retenção e sem apagar dados ainda necessários a outro escopo de coleta;
+- ausência após desmarcação não deve ser registrada como preço zero nem como oferta inexistente.
+
+O prazo exato será definido depois de medir volume, custo e necessidade de histórico. A regra desde a primeira versão é **não excluir imediatamente**.
 
 ---
 
@@ -451,7 +520,7 @@ Lojas acompanhadas/selecionadas
   ↓
 Categorias selecionadas
   ↓
-Produtos relevantes dessas lojas
+Ofertas relevantes dessas lojas na tela Produtos
 ```
 
 Nenhuma integração adicional de produtos faz parte desta etapa. Uma eventual expansão futura deverá ter plano e autorização próprios.
@@ -462,9 +531,36 @@ Nenhuma integração adicional de produtos faz parte desta etapa. Uma eventual e
 
 Existem dois cenários possíveis conforme os recursos oferecidos por cada loja dentro da integração do Inter.
 
+### Interesse da pessoa versus necessidade de coleta
+
+O modelo deve separar:
+
+```text
+categorias e lojas acompanhadas por cada pessoa
+
+de
+
+escopo que o robô precisa coletar
+```
+
+Se catálogo, preço e credenciais do Inter forem comuns a todos, o escopo de coleta recomendado é a união dos interesses ativos:
+
+```text
+Pessoa A → Casas Bahia → Celulares e TVs
+Pessoa B → Casas Bahia → Geladeiras
+
+Coleta compartilhada → Casas Bahia → Celulares, TVs e Geladeiras
+
+API → cada pessoa enxerga somente seu subconjunto
+```
+
+Isso evita repetir a mesma coleta para várias pessoas. Entretanto, se credenciais, catálogo, preço, disponibilidade ou autorização variarem por pessoa, o escopo poderá precisar ser individual.
+
+Essa decisão depende do contrato real da integração e deve ser resolvida antes do schema e do agendamento da coleta. O plano não presume compartilhamento nem individualização sem essa confirmação.
+
 ### Descoberta das categorias externas
 
-O robô deve sincronizar a árvore ou a lista de categorias externas das lojas acompanhadas quando esse dado estiver disponível. Descobrir 200 categorias externas não cria 200 categorias do Radar e não exige necessariamente baixar todos os produtos.
+O robô deve sincronizar a árvore ou a lista de categorias externas das lojas acompanhadas quando esse dado estiver disponível. Descobrir 200 categorias externas não cria 200 categorias do Radar e não exige necessariamente baixar todas as ofertas.
 
 Fluxo recomendado:
 
@@ -477,10 +573,10 @@ consultar os mapeamentos aprovados
   ↓
 identificar quais categorias externas atendem às categorias Radar selecionadas
   ↓
-coletar e classificar produtos
+coletar e classificar ofertas
 ```
 
-Quando a loja não oferecer um catálogo separado de categorias, elas serão descobertas progressivamente durante a coleta dos produtos.
+Quando a loja não oferecer um catálogo separado de categorias, elas serão descobertas progressivamente durante a coleta das ofertas.
 
 ### Cenário A — Loja permite filtro confiável antes da coleta
 
@@ -510,17 +606,17 @@ Vantagens:
 Nesse caso:
 
 1. coleta o escopo mínimo necessário disponibilizado pela loja;
-2. preserva a observação e os dados externos necessários para não perder o produto;
+2. preserva a oferta observada e os dados externos necessários para não perder o registro;
 3. classifica localmente;
 4. publica no catálogo selecionado somente o conjunto classificado nas categorias acompanhadas;
-5. encaminha produtos sem classificação para a fila operacional correspondente;
+5. encaminha ofertas sem classificação para a fila operacional correspondente;
 6. registra as limitações reais da loja.
 
 A estratégia deve ser definida pelo comportamento real da loja/adaptador. Não impor a mesma técnica a todas as lojas sem validar o contrato disponível.
 
 ### Lotes, paginação e retomada
 
-Uma execução que encontre, por exemplo, 2.000 produtos em 200 categorias externas não deve realizar gravações isoladas e descontroladas. O processamento deve usar lotes, paginação e operações idempotentes.
+Uma execução que encontre, por exemplo, 2.000 ofertas em 200 categorias externas não deve realizar gravações isoladas e descontroladas. O processamento deve usar lotes, paginação e operações idempotentes.
 
 O checkpoint deve identificar, quando aplicável:
 
@@ -532,7 +628,17 @@ pagina/cursor
 estado
 ```
 
-Se a coleta parar na página 12, ela deve conseguir continuar do ponto seguro correspondente. Reprocessar a mesma página não pode duplicar produto, oferta ou registro de histórico.
+Se a coleta parar na página 12, ela deve conseguir continuar do ponto seguro correspondente. Reprocessar a mesma página não pode duplicar oferta ou registro de histórico.
+
+### Orçamento e distribuição da coleta
+
+Cada loja/adaptador deve possuir limites configuráveis de páginas, requisições e/ou tempo por execução. O orçamento não deve ser um número global arbitrário que sempre favoreça as primeiras categorias.
+
+- alternar ou priorizar categorias de forma que uma categoria grande não impeça as demais de avançar;
+- retomar pelo checkpoint na execução seguinte;
+- diferenciar orçamento esgotado de falha técnica;
+- observar volume, duração e taxa de mudança antes de ajustar os limites;
+- priorizar categorias acompanhadas sem deixar pendências antigas invisíveis indefinidamente.
 
 ### Retentativas da coleta do Inter
 
@@ -576,16 +682,14 @@ Buscar produto...
 
 Celulares
 
-Motorola Edge 60 Pro
-- Casas Bahia / Banco Inter
-- Ponto / Banco Inter
-- Motorola / Banco Inter
+Motorola Edge 60 Pro — Casas Bahia / Banco Inter
+Motorola Edge 60 Pro — Ponto / Banco Inter
+Motorola Edge 60 Pro — Motorola / Banco Inter
 
 TVs
 
-Smart TV 50" ...
-- Ponto / Banco Inter
-- Casas Bahia / Banco Inter
+Smart TV 50" — Ponto / Banco Inter
+Smart TV 50" — Casas Bahia / Banco Inter
 ```
 
 A implementação visual final deve seguir o sistema de design vigente e não este desenho textual.
@@ -596,6 +700,8 @@ A implementação visual final deve seguir o sistema de design vigente e não es
 
 A seleção de categoria da tela Produtos é um **filtro de visualização**, não uma nova coleta.
 
+Ela é diferente de **Categorias acompanhadas**: a configuração de acompanhamento participa do cálculo do escopo de coleta; o filtro temporário da tela apenas restringe a consulta ao catálogo já persistido.
+
 Exemplo:
 
 ```text
@@ -605,7 +711,7 @@ Todos | Celulares | TVs | Geladeiras | Panelas
 Ao escolher `Celulares`:
 
 - consulta o banco/API;
-- retorna somente produtos classificados como `Celulares`;
+- retorna somente ofertas classificadas como `Celulares`;
 - mantém origem da oferta;
 - não acessa o Banco Inter em tempo real.
 
@@ -625,10 +731,9 @@ Busca: Edge 60 Pro
 Resultado:
 
 ```text
-Edge 60 Pro
-- Casas Bahia / Banco Inter
-- Ponto / Banco Inter
-- Motorola / Banco Inter
+Edge 60 Pro — Casas Bahia / Banco Inter
+Edge 60 Pro — Ponto / Banco Inter
+Edge 60 Pro — Motorola / Banco Inter
 ```
 
 O resultado considera somente ofertas persistidas das lojas do Banco Inter acompanhadas pela pessoa.
@@ -677,9 +782,17 @@ Motorola Edge 60 Pro 256 GB
 
 com várias ofertas abaixo dele.
 
-A primeira fase deste plano **não precisa resolver produto canônico entre lojas**.
+A primeira fase deste plano **não resolve produto canônico entre lojas**.
 
-Inicialmente, Produtos pode continuar exibindo ofertas agrupadas por origem/categoria.
+Na primeira versão, cada oferta deve ser exibida separadamente, mesmo que nomes semelhantes sugiram o mesmo produto:
+
+```text
+Motorola Edge 60 Pro — Casas Bahia / Inter
+Motorola Edge 60 Pro — Ponto / Inter
+Motorola Edge 60 Pro — Motorola / Inter
+```
+
+A interface não pode introduzir um agrupamento visual que faça parecer que o backend já conhece um produto canônico.
 
 A unificação automática do mesmo produto entre lojas só deve acontecer depois de existir estratégia confiável para:
 
@@ -690,6 +803,19 @@ A unificação automática do mesmo produto entre lojas só deve acontecer depoi
 - ou outra identidade aprovada.
 
 Não comparar itens apenas porque os nomes parecem semelhantes.
+
+### Identidade lógica e idempotência da oferta
+
+Para permitir reprocessamento sem duplicação, a oferta precisa de uma identidade lógica baseada em identificadores estáveis do contrato do Inter. Conceitualmente:
+
+```text
+origem_inter
++ loja_inter
++ identificador_externo_da_oferta_ou_sku
++ variante, quando aplicável
+```
+
+O título da oferta nunca deve ser sua identidade. A combinação final somente pode ser fechada depois de verificar quais IDs, SKUs e variantes o contrato real fornece e se eles permanecem estáveis entre coletas.
 
 ---
 
@@ -727,8 +853,9 @@ A mudança deve ser aditiva e progressiva.
 
 - criar catálogo mínimo de categorias oficiais;
 - criar hierarquia com categoria pai e folhas específicas;
+- preservar categorias utilizadas por inativação, sem exclusão física normal;
 - criar mecanismo de seleção das categorias acompanhadas;
-- manter produtos Inter funcionando como hoje.
+- manter as ofertas Inter funcionando como hoje na tela Produtos.
 
 ### Fase 2 — Mapeamento Inter
 
@@ -736,8 +863,9 @@ A mudança deve ser aditiva e progressiva.
 - registrar categorias externas com ID, nome, breadcrumb e loja;
 - mapear somente as categorias inicialmente escolhidas;
 - não tentar resolver todas as 112 lojas antecipadamente;
-- preservar produtos sem mapeamento na fila de classificação;
+- preservar ofertas sem mapeamento na fila de classificação;
 - implementar reclassificação idempotente depois da aprovação de um mapeamento;
+- reavaliar também ofertas classificadas quando um mapeamento aplicado for alterado ou desativado;
 - implementar paginação, checkpoint e retentativas limitadas na coleta.
 
 ### Fase 3 — API de Produtos
@@ -748,15 +876,13 @@ Exemplo conceitual:
 
 ```text
 Produtos
-- termo
-- categoria_radar
-- loja
-- marca
-- preço mínimo/máximo
-- paginação
+- termo, se já existir no contrato
+- categoria_radar, como extensão desta evolução
+- loja, somente se já existir ou for indispensável ao contrato aprovado
+- paginação existente
 ```
 
-Os nomes finais dos parâmetros devem respeitar os contratos atuais e ser definidos na implementação.
+Os nomes finais dos parâmetros devem respeitar os contratos atuais e ser definidos na implementação. A lista acima não autoriza criar filtros de marca, preço ou qualquer outra funcionalidade que ainda não exista.
 
 A API deve incluir descendentes quando receber uma categoria pai e distinguir resposta vazia de falha, resultado parcial ou dado atrasado.
 
@@ -784,6 +910,12 @@ A API deve incluir descendentes quando receber uma categoria pai e distinguir re
 Não implementar uma árvore completa agora.
 
 Começar somente com categorias aprovadas para uso real.
+
+As categorias abaixo são **exemplos não exaustivos**, não um limite funcional nem a taxonomia definitiva. Espera-se que a taxonomia real seja muito maior conforme forem descobertas e aprovadas as categorias relevantes das lojas acompanhadas no Inter.
+
+Um recorte inicial pequeno pode ser usado apenas para validar hierarquia, mapeamento, coleta, pendências, reclassificação, API e Flutter. Depois dessa validação, a expansão deve ocorrer progressivamente sem exigir mudança de arquitetura.
+
+Categorias e hierarquias devem ser orientadas por dados e retornadas pelos contratos aprovados. Não hardcode a lista ilustrativa como enum fechado no coletor, na API ou no Flutter.
 
 Uma primeira lista candidata para discussão:
 
@@ -816,7 +948,7 @@ Uma primeira lista candidata para discussão:
 - Móveis;
 - Decoração.
 
-Essa lista não é decisão final de produto. Deve ser aprovada antes da implementação.
+Essa lista não é decisão final de taxonomia. As categorias do primeiro rollout e as expansões posteriores devem ser aprovadas, mas a estrutura precisa suportar um catálogo consideravelmente maior.
 
 ---
 
@@ -828,13 +960,16 @@ Deve existir uma forma autenticada/autorizada de:
 - ativar/desativar categorias acompanhadas;
 - visualizar categorias não classificadas encontradas nas lojas do Inter;
 - filtrar pendências por loja, categoria externa, estado e quantidade de produtos afetados;
+- priorizar revisão por maior quantidade de produtos afetados e, depois, por antiguidade;
 - adicionar/corrigir mapeamentos quando necessário;
 - visualizar o impacto e confirmar a reclassificação em lote;
 - revisar impacto antes de ampliar escopo.
 
 Não é necessário expor edição arbitrária de taxonomia a usuário comum.
 
-A forma exata da administração precisa respeitar os fluxos administrativos já existentes no projeto.
+A forma exata da administração precisa respeitar os fluxos administrativos já existentes no projeto. Na primeira versão, deve-se preferir um mecanismo interno e protegido já suportado, como serviço/API administrativa ou comando interno existente.
+
+Este plano não autoriza, por si só, criar painel Web, tela administrativa Flutter ou fluxo visual novo. Se nenhum mecanismo administrativo adequado existir, a solução exige decisão e autorização separadas.
 
 ---
 
@@ -844,8 +979,8 @@ Quando uma loja do Inter retornar nova categoria externa não mapeada:
 
 1. registrar a categoria externa de forma observável;
 2. não criar categoria Radar automaticamente;
-3. não classificar produtos por suposição;
-4. armazenar os produtos observados com `categoria_radar_id = null` e o estado específico da pendência;
+3. não classificar ofertas por suposição;
+4. armazenar as ofertas observadas com `categoria_radar_id = null` e o estado específico da pendência;
 5. disponibilizar a pendência para revisão administrativa;
 6. adicionar mapeamento somente após decisão.
 
@@ -865,9 +1000,36 @@ Telefonia e Comunicação → Celulares
 
 ou outra categoria correta.
 
-Depois que um mapeamento for aprovado, um processamento em lote deve reclassificar automaticamente os produtos pendentes que possuem a mesma loja e categoria externa. Essa reclassificação não deve consultar novamente o Banco Inter quando os identificadores e metadados necessários já estiverem persistidos.
+Depois que um mapeamento for aprovado, um processamento em lote deve reclassificar automaticamente as ofertas pendentes que possuem a mesma loja e categoria externa. Essa reclassificação não deve consultar novamente o Banco Inter quando os identificadores e metadados necessários já estiverem persistidos.
 
 O processamento deve registrar a versão do mapeamento aplicado, ser idempotente e permitir correção posterior sem duplicar ofertas ou históricos.
+
+### Alteração ou desativação de mapeamento
+
+Uma correção não afeta somente a fila pendente. Alterar ou desativar um mapeamento aprovado deve permitir localizar e reavaliar também as ofertas anteriormente classificadas por aquela versão.
+
+Exemplo:
+
+```text
+Versão anterior:
+Ponto / Telefonia → Celulares
+
+Descoberta posterior:
+Telefonia contém celulares e acessórios
+
+Ação:
+encerrar/desativar a versão anterior
+→ identificar ofertas classificadas por ela
+→ reavaliar em lote com a nova regra
+→ preservar ofertas e históricos
+```
+
+- manter auditoria da versão antiga e da nova decisão;
+- não duplicar oferta nem histórico durante a reavaliação;
+- quando a nova evidência não for suficiente, mover a oferta para `classificacao_ambigua` ou outro estado pendente adequado;
+- apresentar quantidade e impacto antes de confirmar uma reclassificação grande.
+
+Se a API utilizar cache, índice de busca ou materialização de resultados, a reclassificação somente termina depois de invalidar ou atualizar essa camada. A consulta seguinte do Flutter deve enxergar a nova categoria de forma consistente. Nenhuma infraestrutura de cache ou índice deve ser criada apenas por suposição; primeiro deve ser verificado o mecanismo realmente existente.
 
 ---
 
@@ -880,29 +1042,40 @@ Nenhum teste automatizado deve depender do Banco Inter real. Respostas externas 
 ### Unitários de categoria e classificação
 
 - categoria Radar ativa/inativa;
+- desativar categoria utilizada não apaga relacionamentos ou histórico;
 - slug único;
 - hierarquia sem ciclos e com relacionamento pai/filho válido;
-- selecionar categoria pai inclui seus descendentes;
+- selecionar categoria pai, criar uma nova filha e consultar novamente inclui essa nova filha;
 - categoria desconhecida não é criada automaticamente;
 - categoria externa conhecida mapeia corretamente;
 - alias da loja mapeia corretamente;
 - várias categorias externas podem mapear para a mesma categoria Radar;
 - categoria desconhecida permanece sem classificação;
 - os estados `categoria_externa_nao_mapeada`, `sem_categoria_na_origem`, `classificacao_ambigua` e `erro_de_classificacao` não são confundidos;
-- palavra no nome do produto não sobrescreve categoria estruturada confiável;
+- palavra no título da oferta não sobrescreve categoria estruturada confiável;
 - `cabo para smartphone` não vira `Celulares`;
 - cabo com evidência suficiente vai para `Acessórios para celulares > Cabos`;
-- categoria externa ampla não sobrescreve um tipo de produto específico e confiável.
+- categoria externa ampla não sobrescreve um tipo de item específico e confiável;
+- evidências conflitantes resultam em `classificacao_ambigua`;
+- oferta de kit com item principal usa a categoria desse item;
+- oferta de kit sem item principal confiável permanece ambígua e não aparece duplicada em várias categorias.
 
 ### Unitários da coleta e dos mapeamentos
 
 - loja não selecionada continua fora da coleta do Inter;
 - sincronizar categorias externas não cria categorias Radar automaticamente;
-- lote repetido não duplica produto, oferta ou histórico;
+- a identidade lógica da oferta usa identificador externo estável, nunca seu título;
+- ofertas de variantes diferentes não colidem quando o contrato fornecer essa distinção;
+- lote repetido não duplica oferta ou histórico;
 - checkpoint permite retomar da página/cursor correto;
-- produto sem mapeamento é armazenado e encaminhado à fila operacional;
+- orçamento esgotado é diferente de falha técnica e continua do checkpoint;
+- categoria grande não impede indefinidamente o avanço das demais;
+- oferta sem mapeamento é armazenada e encaminhada à fila operacional;
 - aprovar mapeamento reclassifica pendentes da mesma loja/categoria externa;
+- alterar ou desativar mapeamento reavalia ofertas já classificadas pela versão afetada;
+- correção de mapeamento preserva auditoria e não duplica histórico;
 - repetir reclassificação é idempotente;
+- quando existir cache ou índice, reclassificação o atualiza/invalida antes de ser considerada concluída;
 - timeout, falha de conexão, `408`, `429` e `5xx` transitório acionam somente as tentativas previstas;
 - `429` respeita `Retry-After`;
 - erro de validação, autorização ou resposta incompatível não entra em repetição automática;
@@ -915,23 +1088,27 @@ Esses testes devem chamar handlers/serviços da API diretamente, com autenticaç
 - categoria não selecionada não aparece no catálogo de Produtos quando a política da fase exigir filtragem;
 - selecionar múltiplas categorias retorna união correta;
 - remover categoria não remove outras categorias selecionadas;
+- desmarcar categoria retira seus itens do catálogo da pessoa sem apagar imediatamente ofertas e históricos;
+- interesse de outra pessoa preserva dados e coleta compartilhados quando essa arquitetura for confirmada;
 - filtro `Celulares` retorna somente ofertas classificadas;
 - filtro de categoria pai inclui ofertas das categorias filhas;
 - `Celulares` não retorna cabos, carregadores, capas ou películas;
 - origem permanece correta;
 - busca + categoria funcionam juntas;
-- busca + loja + marca + preço funcionam juntas;
+- busca + categoria funcionam com os demais filtros que já existirem no contrato aprovado;
 - paginação permanece estável;
 - categoria ou filtro inválido retorna erro de validação, não resultado vazio;
 - catálogo sem correspondência retorna vazio válido;
 - falha, parcial, atrasado, ausência de dado e zero permanecem diferentes;
 - filtros existentes continuam funcionando;
-- histórico continua associado à oferta correta.
+- histórico continua associado à oferta correta;
+- ofertas parecidas de lojas diferentes continuam sendo resultados separados.
 
 ### Widgets Flutter diretamente afetados
 
 - categorias pai e filhas são apresentadas conforme o estado do design V11;
 - seleção de categorias preserva as lojas acompanhadas;
+- ofertas de lojas diferentes não são agrupadas visualmente como produto canônico;
 - busca preserva termo, categoria, filtros e página ao usar `Tentar novamente`;
 - nova busca reinicia sua própria paginação e substitui a requisição anterior;
 - carregando, vazio, erro, parcial, atrasado e sucesso são apresentados corretamente;
@@ -943,7 +1120,7 @@ Esses testes devem chamar handlers/serviços da API diretamente, com autenticaç
 - Livelo não é afetada;
 - Cashback Inter não é afetado;
 - seleção de lojas do Compre direto continua funcionando;
-- produtos Inter existentes permanecem acessíveis durante a migração aditiva.
+- ofertas Inter existentes permanecem acessíveis na tela Produtos durante a migração aditiva.
 
 ---
 
@@ -953,13 +1130,16 @@ A evolução deve permitir responder:
 
 - quantas lojas do Inter estão selecionadas;
 - quantas categorias Radar estão ativas;
-- quantos produtos foram classificados por categoria;
+- quantas ofertas foram classificadas por categoria;
 - quantos ficaram pendentes em cada estado de classificação;
+- quantas ofertas cada categoria externa não mapeada afeta, para priorizar revisão;
 - há quanto tempo cada pendência aguarda mapeamento;
 - quais categorias externas ainda não possuem mapeamento;
 - quanto cada recorte de coleta custa em páginas/tempo;
 - qual foi o último checkpoint bem-sucedido por loja/categoria;
+- quantas execuções encerraram por orçamento e quantas encerraram por falha;
 - quantas retentativas ocorreram e por qual motivo;
+- quando compartilhamento for aplicável, quanto trabalho duplicado foi evitado pela união dos interesses;
 - quais lojas permitem filtrar antes da coleta e quais exigem filtragem local.
 
 Esses dados são operacionais e não precisam virar métricas visuais para usuário final sem decisão específica.
@@ -968,22 +1148,28 @@ Esses dados são operacionais e não precisam virar métricas visuais para usuá
 
 ## 23. Ordem de implementação recomendada
 
-1. Aprovar conceito e nomes: `Categorias`, `Interesses` ou outro termo final de interface.
-2. Definir taxonomia inicial mínima, com categorias pai e folhas específicas.
-3. Levantar categorias reais das lojas Inter atualmente selecionadas.
-4. Desenhar schema aditivo para categorias Radar, categorias externas, mapeamentos, estados de classificação e checkpoints.
-5. Implementar domínio e persistência das categorias.
-6. Implementar descoberta/sincronização das categorias externas das lojas acompanhadas.
-7. Implementar a fila de classificação, reclassificação idempotente e administração dos mapeamentos.
-8. Mapear as primeiras categorias do Inter.
-9. Implementar paginação, checkpoint e retentativas limitadas da coleta.
-10. Implementar a seleção de categorias aplicada às lojas acompanhadas.
-11. Evoluir API de Produtos para filtrar por categoria Radar e descendentes.
-12. Evoluir Flutter Produtos mantendo o design V11 e os estados de retentativa.
-13. Validar que seleção de lojas continua intacta.
-14. Medir redução de volume, custo de coleta e tamanho da fila de classificação.
-15. Revisar categorias não mapeadas e estabilizar as lojas acompanhadas.
-16. Somente depois discutir produto canônico e comparação automática entre lojas.
+Schema e coleta somente podem ser desenhados depois dos quatro primeiros levantamentos abaixo. Aprovação conceitual isolada não elimina esses gates.
+
+1. Confirmar se catálogo, preços, disponibilidade, autorização e credenciais do Inter são comuns ou variam por pessoa.
+2. Verificar no contrato real qual identificador estável define oferta, SKU e variante.
+3. Inventariar filtros atuais da API, mecanismo administrativo protegido e existência de cache ou índice de busca.
+4. Levantar categorias reais e capacidades de filtro das lojas Inter atualmente selecionadas.
+5. Aprovar conceito e nomes: `Categorias`, `Interesses` ou outro termo final de interface.
+6. Definir taxonomia inicial mínima, com categorias pai e folhas específicas.
+7. Definir janelas configuráveis de retenção e orçamentos iniciais da coleta.
+8. Desenhar schema aditivo para interesses, categorias Radar, categorias externas, mapeamentos, estados de classificação, identidade da oferta e checkpoints.
+9. Implementar domínio e persistência das categorias.
+10. Implementar descoberta/sincronização das categorias externas das lojas acompanhadas.
+11. Implementar a fila de classificação, reclassificação idempotente e administração dos mapeamentos pelo mecanismo aprovado.
+12. Mapear as primeiras categorias do Inter.
+13. Implementar paginação, orçamento, checkpoint e retentativas limitadas da coleta.
+14. Implementar a seleção de categorias aplicada às lojas acompanhadas.
+15. Evoluir API de Produtos apenas com categoria Radar, descendentes e contratos já aprovados.
+16. Evoluir Flutter Produtos mantendo ofertas separadas, o design V11 e os estados de retentativa.
+17. Validar que seleção de lojas continua intacta.
+18. Medir redução de volume, custo de coleta e tamanho da fila de classificação.
+19. Revisar categorias não mapeadas e estabilizar as lojas acompanhadas.
+20. Somente depois discutir produto canônico e comparação automática entre lojas.
 
 ---
 
@@ -993,17 +1179,28 @@ A evolução inicial estará pronta quando:
 
 - seleção de lojas do Inter continuar funcionando como antes;
 - existir catálogo hierárquico e controlado de categorias Radar;
+- categoria Radar utilizada puder ser desativada sem exclusão física de seus relacionamentos e históricos;
+- a taxonomia puder crescer além dos exemplos sem enum fechado ou mudança estrutural;
 - for possível selecionar mais de uma categoria;
 - categorias externas das lojas do Inter puderem ser mapeadas para categorias Radar;
 - múltiplas categorias externas puderem apontar para uma única categoria Radar sem criar categorias automáticas;
-- produto desconhecido permanecer armazenado com estado e motivo de classificação explícitos;
-- produtos pendentes puderem ser reclassificados em lote sem nova consulta ao Inter e sem duplicação;
+- oferta desconhecida permanecer armazenada com estado e motivo de classificação explícitos;
+- ofertas pendentes puderem ser reclassificadas em lote sem nova consulta ao Inter e sem duplicação;
+- alterar ou desativar mapeamento permitir reavaliar ofertas já classificadas pela versão anterior preservando auditoria e histórico;
 - acessórios como cabos não forem classificados como celulares apenas por conterem `smartphone` no nome;
+- ofertas de kits seguirem a regra de item principal e os casos ambíguos permanecerem pendentes;
 - paginação, checkpoint e retentativas limitadas preservarem dados em falhas parciais;
+- orçamento esgotado não for tratado como falha e categorias grandes não bloquearem indefinidamente as demais;
 - tela Produtos puder filtrar pelas categorias escolhidas sem consultar o Banco Inter ao vivo;
-- selecionar categoria pai incluir corretamente seus descendentes;
+- selecionar categoria pai incluir corretamente descendentes atuais e futuros;
+- desmarcar categoria retirar seus itens da visão da pessoa sem exclusão imediata de ofertas e históricos;
 - nova tentativa da busca preservar termo, categoria, filtros, lojas e página;
-- origem de cada produto/oferta permanecer explícita;
+- origem de cada oferta permanecer explícita;
+- ofertas semelhantes de lojas diferentes permanecerem separadas na API e no Flutter;
+- a identidade lógica da oferta estiver baseada em identificador externo estável confirmado no contrato;
+- a decisão entre coleta compartilhada e individual estiver documentada conforme credenciais e variações reais do Inter;
+- reclassificação for refletida na consulta seguinte, inclusive por invalidação/atualização de cache ou índice existente;
+- nenhum filtro, painel Web ou tela administrativa não aprovada for criado implicitamente;
 - busca, filtros, paginação e histórico existentes não sofrerem regressão;
 - Livelo e Cashback Inter continuarem isolados;
 - testes diretamente afetados passarem.
@@ -1015,11 +1212,38 @@ A evolução inicial estará pronta quando:
 - nome de interface: `Categorias`, `Interesses`, `Coleções` ou outro;
 - primeiras categorias realmente necessárias;
 - onde a seleção de categorias ficará no Flutter;
+- se a coleta é compartilhada pela união dos interesses ou individual por pessoa, conforme contrato do Inter;
+- combinação final de identificadores externos que define oferta, SKU e variante;
 - se a filtragem ocorre antes da coleta, depois da coleta ou de forma híbrida em cada loja;
-- política de retenção para produtos que deixam de pertencer ao escopo selecionado;
+- duração e critérios de arquivamento depois da janela sem exclusão imediata;
 - prazo de retenção e arquivamento dos registros da fila de classificação;
+- orçamento inicial de páginas, requisições e tempo por loja/execução;
 - valores configurados para intervalos e limites das retentativas;
 - desenho final do fluxo administrativo de revisão e aprovação dos mapeamentos;
+- confirmação dos filtros já existentes na API e dos mecanismos atuais de cache/indexação;
 - quando iniciar a etapa de produto canônico entre lojas.
 
 Nenhuma dessas decisões deve ser resolvida por suposição durante a implementação. O objetivo deste plano é preservar a lógica atual do Banco Inter e adicionar uma camada de interesse por categoria de forma controlada.
+
+---
+
+## 26. Limite de autorização do ciclo atual
+
+Este documento descreve a evolução completa, mas não concede autorização automática para alterar backend, schema, coletores, workflows, produção, painel Web ou publicação.
+
+Durante o ciclo mobile V11 vigente:
+
+- somente o Flutter mobile está no escopo;
+- a fase Flutter depende de contrato de API previamente definido e autorizado;
+- não criar UI administrativa ausente no protótipo V11;
+- não executar fases de backend, schema ou coleta sem autorização explícita;
+- manter somente unitários/widgets diretamente afetados, conforme as regras de testes do ciclo.
+
+---
+
+## 27. Estado do plano
+
+- **Plano conceitual:** aprovado como base oficial de decisão.
+- **Arquitetura:** pronta para discovery técnico quando essa atividade for explicitamente autorizada.
+- **Backend, schema e coleta:** implementação ainda não autorizada por este documento.
+- **Flutter:** implementação depende de localizar `Categorias acompanhadas` no protótipo V11 ou obter decisão de produto quando o protótipo não definir esse fluxo, além do contrato de API efetivamente aprovado.
