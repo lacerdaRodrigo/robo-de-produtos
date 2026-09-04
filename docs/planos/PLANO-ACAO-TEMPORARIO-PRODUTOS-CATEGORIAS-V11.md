@@ -151,6 +151,13 @@ Nenhuma alteração Flutter desta funcionalidade deve começar enquanto os itens
 - [x] Confirmar que uma única configuração de categorias vale para todas as lojas selecionadas, conforme o plano funcional.
 - [ ] Confirmar que o filtro de Produtos mostra somente categorias disponíveis no catálogo/interesse da pessoa.
 
+> Validação em produção (03/09/2026): `Celulares` e o pai `Eletrônicos`
+> retornaram zero porque a migration 018 criou a taxonomia, mas o catálogo
+> existente ainda não possuía `categoria_radar_id`. A migration 019 e o
+> coletor passam a classificar somente categorias externas com identificador
+> exatamente igual ao slug Radar. Este item permanece aberto até aplicar a
+> migration, executar/coletar o catálogo e revalidar o filtro real.
+
 ### Contrato da API
 
 - [x] Confirmar como a API identifica uma categoria Radar de forma estável.

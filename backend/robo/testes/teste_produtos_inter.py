@@ -558,9 +558,19 @@ def teste_ct247_publicacao_respeita_completude(
 
     comandos = [comando for comando, _ in cursor.comandos]
     assert repositorio.PUBLICA_IDENTIDADES in comandos
+    assert repositorio.SINCRONIZA_CATEGORIAS_EXTERNAS in comandos
+    assert repositorio.MAPEIA_CATEGORIAS_EXTERNAS_EXATAS in comandos
+    assert repositorio.MARCA_CATEGORIAS_EXTERNAS_MAPEADAS in comandos
+    assert repositorio.CLASSIFICA_IDENTIDADES in comandos
+    assert repositorio.LIMPA_CLASSIFICACAO_SEM_CATEGORIA in comandos
     assert repositorio.INSERE_MEDICOES in comandos
     assert repositorio.CONCLUI_LOJA in comandos
     assert (repositorio.INATIVA_AUSENTES in comandos) is deve_inativar
+    assert "radar.slug = externa.identificador_categoria_externa" in (
+        repositorio.MAPEIA_CATEGORIAS_EXTERNAS_EXATAS
+    )
+    assert "produto.nome" not in repositorio.CLASSIFICA_IDENTIDADES
+    assert "produto.marca" not in repositorio.CLASSIFICA_IDENTIDADES
 
 
 def teste_execucao_abandonada_e_reconciliada_antes_da_nova_rodada(monkeypatch):

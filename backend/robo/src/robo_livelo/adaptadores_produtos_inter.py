@@ -300,6 +300,119 @@ class RepositorioProdutosInterPostgres:
             caminho = EXCLUDED.caminho, marca = EXCLUDED.marca,
             categoria = EXCLUDED.categoria, ativo = TRUE, atualizado_em = now()
     """
+    SINCRONIZA_CATEGORIAS_EXTERNAS = """
+        INSERT INTO categoria_externa_loja_inter (
+            loja_direta_inter_id, identificador_categoria_externa,
+            nome_categoria_externa, breadcrumb_externo,
+            primeira_observacao_em, ultima_observacao_em, estado
+        )
+        SELECT %s,
+               lower(regexp_replace(trim(s.categoria), '[[:space:]]+', ' ', 'g')),
+               trim(s.categoria), trim(s.categoria), now(), now(), 'nao_mapeada'
+          FROM estagio_produto_inter s
+         WHERE s.execucao_loja_produtos_inter_id = %s
+           AND s.categoria IS NOT NULL
+           AND trim(s.categoria) <> ''
+         GROUP BY lower(regexp_replace(trim(s.categoria), '[[:space:]]+', ' ', 'g')),
+                  trim(s.categoria)
+        ON CONFLICT (loja_direta_inter_id, identificador_categoria_externa)
+        DO UPDATE SET
+            nome_categoria_externa = EXCLUDED.nome_categoria_externa,
+            breadcrumb_externo = EXCLUDED.breadcrumb_externo,
+            ultima_observacao_em = now()
+    """
+    MAPEIA_CATEGORIAS_EXTERNAS_EXATAS = """
+        INSERT INTO mapeamento_categoria_loja_inter (
+            categoria_externa_loja_inter_id, categoria_radar_id,
+            versao_mapeamento, ativo, motivo
+        )
+        SELECT externa.id, radar.id,
+               COALESCE((
+                   SELECT max(anterior.versao_mapeamento)
+                     FROM mapeamento_categoria_loja_inter anterior
+                    WHERE anterior.categoria_externa_loja_inter_id = externa.id
+               ), 0) + 1,
+               TRUE,
+               'identificador externo coincide exatamente com slug Radar'
+          FROM categoria_externa_loja_inter externa
+          JOIN categoria_radar radar
+            ON radar.slug = externa.identificador_categoria_externa
+           AND radar.ativo = TRUE
+         WHERE externa.loja_direta_inter_id = %s
+           AND externa.estado <> 'ignorada'
+           AND NOT EXISTS (
+               SELECT 1
+                 FROM mapeamento_categoria_loja_inter ativo
+                WHERE ativo.categoria_externa_loja_inter_id = externa.id
+                  AND ativo.ativo = TRUE
+           )
+        ON CONFLICT (categoria_externa_loja_inter_id, versao_mapeamento)
+        DO NOTHING
+    """
+    MARCA_CATEGORIAS_EXTERNAS_MAPEADAS = """
+        UPDATE categoria_externa_loja_inter externa
+           SET estado = 'mapeada'
+         WHERE externa.loja_direta_inter_id = %s
+           AND EXISTS (
+               SELECT 1
+                 FROM mapeamento_categoria_loja_inter mapa
+                WHERE mapa.categoria_externa_loja_inter_id = externa.id
+                  AND mapa.ativo = TRUE
+           )
+    """
+    CLASSIFICA_IDENTIDADES = """
+        UPDATE produto_direto_inter produto
+           SET categoria_externa_loja_inter_id = externa.id,
+               categoria_radar_id = mapa.categoria_radar_id,
+               estado_classificacao = CASE
+                   WHEN mapa.id IS NULL THEN 'categoria_externa_nao_mapeada'
+                   ELSE 'classificado'
+               END,
+               motivo_classificacao = CASE
+                   WHEN mapa.id IS NULL THEN 'categoria_externa_sem_mapeamento_aprovado'
+                   ELSE 'mapeamento exato de categoria externa aprovado'
+               END,
+               mapeamento_categoria_loja_inter_id = mapa.id,
+               versao_mapeamento = mapa.versao_mapeamento,
+               classificado_em = CASE WHEN mapa.id IS NULL THEN NULL ELSE now() END
+          FROM categoria_externa_loja_inter externa
+          LEFT JOIN mapeamento_categoria_loja_inter mapa
+            ON mapa.categoria_externa_loja_inter_id = externa.id
+           AND mapa.ativo = TRUE
+         WHERE produto.loja_direta_inter_id = %s
+           AND produto.loja_direta_inter_id = externa.loja_direta_inter_id
+           AND produto.categoria IS NOT NULL
+           AND trim(produto.categoria) <> ''
+           AND externa.identificador_categoria_externa = lower(
+               regexp_replace(trim(produto.categoria), '[[:space:]]+', ' ', 'g')
+           )
+           AND (
+               produto.categoria_externa_loja_inter_id IS DISTINCT FROM externa.id
+               OR produto.categoria_radar_id IS DISTINCT FROM mapa.categoria_radar_id
+               OR produto.mapeamento_categoria_loja_inter_id IS DISTINCT FROM mapa.id
+               OR produto.estado_classificacao IS DISTINCT FROM CASE
+                   WHEN mapa.id IS NULL THEN 'categoria_externa_nao_mapeada'
+                   ELSE 'classificado'
+               END
+           )
+    """
+    LIMPA_CLASSIFICACAO_SEM_CATEGORIA = """
+        UPDATE produto_direto_inter produto
+           SET categoria_externa_loja_inter_id = NULL,
+               categoria_radar_id = NULL,
+               estado_classificacao = 'sem_categoria_na_origem',
+               motivo_classificacao = 'categoria_ausente_no_contrato_inter',
+               mapeamento_categoria_loja_inter_id = NULL,
+               versao_mapeamento = NULL,
+               classificado_em = NULL
+         WHERE produto.loja_direta_inter_id = %s
+           AND (produto.categoria IS NULL OR trim(produto.categoria) = '')
+           AND (
+               produto.categoria_externa_loja_inter_id IS NOT NULL
+               OR produto.categoria_radar_id IS NOT NULL
+               OR produto.estado_classificacao IS DISTINCT FROM 'sem_categoria_na_origem'
+           )
+    """
     INATIVA_AUSENTES = """
         UPDATE produto_direto_inter p
            SET ativo = FALSE, atualizado_em = now()
@@ -478,6 +591,11 @@ class RepositorioProdutosInterPostgres:
                 if linhas:
                     cursor.executemany(self.INSERE_ESTAGIO, linhas)
                 cursor.execute(self.PUBLICA_IDENTIDADES, (loja_id, execucao_id))
+                cursor.execute(self.SINCRONIZA_CATEGORIAS_EXTERNAS, (loja_id, execucao_id))
+                cursor.execute(self.MAPEIA_CATEGORIAS_EXTERNAS_EXATAS, (loja_id,))
+                cursor.execute(self.MARCA_CATEGORIAS_EXTERNAS_MAPEADAS, (loja_id,))
+                cursor.execute(self.CLASSIFICA_IDENTIDADES, (loja_id,))
+                cursor.execute(self.LIMPA_CLASSIFICACAO_SEM_CATEGORIA, (loja_id,))
                 if catalogo_completo:
                     cursor.execute(self.INATIVA_AUSENTES, (loja_id, execucao_id))
                 cursor.execute(
