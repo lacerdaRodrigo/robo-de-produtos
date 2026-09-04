@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.53.0 (2026-09-04)
+
+### Documentation
+
+- Planejar evolucao global de produtos
+  ([`7fdcee3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/7fdcee3bed52828819c402ca7f8d5796e16458b9))
+
+- Planejar integracao da Pichau
+  ([`c697121`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c697121f8aa1e4c1d64c58c1fff9ca41abb044dc))
+
+### Features
+
+- Adiciona categorias ao catálogo de produtos
+  ([`af00f93`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/af00f932eaef6dd2b95b6387f567527bf73c2890))
+
+
 ## v1.52.3 (2026-09-03)
 
 ### Bug Fixes
