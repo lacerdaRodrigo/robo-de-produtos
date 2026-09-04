@@ -123,4 +123,49 @@ void main() {
     expect(loja.produtosEncontrados, isNull);
     expect(loja.cashbackResumoTexto, isNull);
   });
+
+  test('categorias Radar preservam identidade, hierarquia e cobertura', () {
+    final catalogo = CatalogoCategoriasRadarUsuario.parse({
+      'configurada': true,
+      'itens': [
+        {
+          'id': 42,
+          'slug': 'acessorios-celulares',
+          'nome': 'Acessórios para celulares',
+          'categoria_pai_slug': 'eletronicos',
+          'ordem': 4,
+          'selecionada': false,
+          'acompanhada': true,
+        },
+      ],
+    });
+
+    final categoria = catalogo.itens.single;
+    expect(catalogo.configurada, isTrue);
+    expect(categoria.id, '42');
+    expect(categoria.slug, 'acessorios-celulares');
+    expect(categoria.categoriaPaiSlug, 'eletronicos');
+    expect(categoria.ordem, 4);
+    expect(catalogo.slugsSelecionadosDiretos, isEmpty);
+    expect(catalogo.slugsAcompanhados, {'acessorios-celulares'});
+  });
+
+  test('contrato incompleto de categorias falha sem inventar seleção', () {
+    expect(
+      () => CatalogoCategoriasRadarUsuario.parse({
+        'configurada': true,
+        'itens': [
+          {
+            'id': '1',
+            'slug': 'cabos',
+            'nome': 'Cabos',
+            'categoria_pai_slug': null,
+            'ordem': 1,
+            'selecionada': true,
+          },
+        ],
+      }),
+      throwsFormatException,
+    );
+  });
 }

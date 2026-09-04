@@ -716,6 +716,27 @@ void main() {
     expect(at.widget<TextField>(busca).controller?.text, 'x');
   });
 
+  testWidgets('Produtos abre Compre direto ao escolher lojas', (at) async {
+    await _abrir(at, administrador: true);
+    await _irParaCompacto(at, DestinoCompacto.produtos);
+
+    final escolherLojas = find.text('+ escolher lojas');
+    await at.scrollUntilVisible(
+      escolherLojas,
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const PageStorageKey('produtos-compacto')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await at.tap(escolherLojas);
+    await at.pumpAndSettle();
+
+    expect(find.text('Categorias acompanhadas'), findsOneWidget);
+  });
+
   testWidgets('Alertas existentes continuam acessíveis pela gaveta', (
     at,
   ) async {

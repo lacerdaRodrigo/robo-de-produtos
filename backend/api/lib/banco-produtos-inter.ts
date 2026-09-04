@@ -63,6 +63,8 @@ export type ProdutoDireto = {
   nome: string;
   marca: string | null;
   categoria: string | null;
+  categoria_radar_slug: string | null;
+  categoria_radar_nome: string | null;
   caminho: string;
   preco_cheio_texto: string | null;
   preco_cheio_valor: string | null;
@@ -116,6 +118,7 @@ export type HistoricoProduto = {
 export type FiltrosProdutosDiretos = {
   marca?: string | null;
   categoria?: string | null;
+  categoria_radar?: string | null;
   loja?: string | null; // slug da loja direta
   preco_min?: string | null; // string decimal (NUMERIC) >= 0
   preco_max?: string | null;
@@ -203,6 +206,8 @@ export async function resumoProdutosPersistido(): Promise<ResumoProdutosPersisti
 /** Colunas de produto + a medição mais recente compartilhadas pelas consultas. */
 const COLUNAS_PRODUTO = `
   p.id_externo, p.nome, p.marca, p.categoria, p.caminho,
+  categoria_radar.slug AS categoria_radar_slug,
+  categoria_radar.nome AS categoria_radar_nome,
   m.preco_lista_texto AS preco_cheio_texto,
   m.preco_lista AS preco_cheio_valor,
   m.preco_atual_texto, m.preco_atual AS preco_atual_valor,
@@ -216,22 +221,62 @@ const COLUNAS_PRODUTO = `
  * página de `itens` por consulta. É a correção da lacuna do site atual, que
  * devolvia tudo numa chamada (LIMIT 500) e não paginava.
  *
- * Filtros: marca, categoria, loja (por slug) e faixa de `preco_atual`.
+ * Filtros: marca, categoria externa textual, categoria Radar, loja (por slug)
+ * e faixa de `preco_atual`.
  * Tudo é aplicado no servidor; o cliente nunca baixa o catálogo (PLANO §4.3).
  */
 export async function buscarProdutosDiretosPaginado(
   termo: string,
   pagina: number,
   porPagina: number,
+  usuarioId: string,
   filtros: FiltrosProdutosDiretos = {},
 ): Promise<PaginaProdutosDiretos> {
   const sql = conectar();
   const busca = normalizarBuscaProdutosInter(termo);
 
-  const params: unknown[] = [];
+  const params: unknown[] = [usuarioId];
+  const ctes = [
+    `categorias_usuario AS (
+      SELECT categoria.id
+        FROM categoria_radar_acompanhada acompanhada
+        JOIN categoria_radar categoria
+          ON categoria.id = acompanhada.categoria_radar_id
+       WHERE acompanhada.usuario_app_id = $1::bigint
+         AND categoria.ativo = TRUE
+      UNION
+      SELECT filha.id
+        FROM categoria_radar filha
+        JOIN categorias_usuario pai ON filha.categoria_pai_id = pai.id
+       WHERE filha.ativo = TRUE
+    )`,
+  ];
   const condicoes: string[] = [
     `p.ativo = TRUE AND l.selecionada = TRUE AND l.ativa = TRUE`,
+    `(
+      NOT EXISTS (
+        SELECT 1
+          FROM preferencia_produtos_inter_usuario preferencia
+         WHERE preferencia.usuario_app_id = $1::bigint
+      )
+      OR p.categoria_radar_id IN (SELECT id FROM categorias_usuario)
+    )`,
   ];
+
+  if (filtros.categoria_radar) {
+    params.push(filtros.categoria_radar);
+    ctes.push(`categorias_filtro AS (
+      SELECT id
+        FROM categoria_radar
+       WHERE slug = $${params.length} AND ativo = TRUE
+      UNION
+      SELECT filha.id
+        FROM categoria_radar filha
+        JOIN categorias_filtro pai ON filha.categoria_pai_id = pai.id
+       WHERE filha.ativo = TRUE
+    )`);
+    condicoes.push(`p.categoria_radar_id IN (SELECT id FROM categorias_filtro)`);
+  }
 
   // Busca por texto: todos os tokens devem constar em nome/marca/categoria.
   if (busca) {
@@ -265,6 +310,7 @@ export async function buscarProdutosDiretosPaginado(
     condicoes.push(`m.preco_atual <= $${params.length}::numeric`);
   }
 
+  const cte = `WITH RECURSIVE ${ctes.join(", ")}`;
   const onde = condicoes.join(" AND ");
   params.push(porPagina);
   params.push((pagina - 1) * porPagina);
@@ -272,6 +318,7 @@ export async function buscarProdutosDiretosPaginado(
   const [totais, itens] = await Promise.all([
     sql(
       `
+      ${cte}
       SELECT count(*)::int AS total
         FROM produto_direto_inter p
         JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
@@ -290,9 +337,12 @@ export async function buscarProdutosDiretosPaginado(
     ),
     sql(
       `
+      ${cte}
       SELECT ${COLUNAS_PRODUTO}
         FROM produto_direto_inter p
         JOIN loja_direta_inter l ON l.id = p.loja_direta_inter_id
+        LEFT JOIN categoria_radar
+          ON categoria_radar.id = p.categoria_radar_id
         JOIN LATERAL (
           SELECT med.*
             FROM medicao_produto_direto_inter med

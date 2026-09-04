@@ -12,6 +12,7 @@ import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
 import 'link_shopping_inter.dart';
 import 'pagina_historico_produto.dart';
+import 'arvore_categorias_radar.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
 class PaginaProdutos extends StatefulWidget {
@@ -48,6 +49,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               required pagina,
               marca,
               categoria,
+              categoriaRadar,
               loja,
               precoMin,
               precoMax,
@@ -56,6 +58,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               pagina: pagina,
               marca: marca,
               categoria: categoria,
+              categoriaRadar: categoriaRadar,
               loja: loja,
               precoMin: precoMin,
               precoMax: precoMax,
@@ -63,6 +66,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       );
   late final bool _controladorExterno = widget.controlador != null;
   final _campoBusca = TextEditingController();
+  String? _rotuloCategoriaAtiva;
+  bool _carregandoCategorias = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.experienciaCompacta &&
+        !_controladorExterno &&
+        _controlador.podeBuscar) {
+      _controlador.carregarPadrao();
+    }
+  }
 
   @override
   void dispose() {
@@ -248,6 +263,9 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       _controlador.atualizadoEm,
       DateTime.now(),
     );
+    final avisoTentativa = _controlador.erro == null
+        ? _avisoDaTentativa()
+        : null;
     return CustomScrollView(
       key: const Key('produtos-compacto'),
       slivers: [
@@ -259,7 +277,8 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                 sobrelinha: 'Compre direto',
                 titulo: 'Produtos',
                 descricao:
-                    'Compare os catálogos salvos das lojas que você selecionou.',
+                    'Pesquise ofertas salvas nas lojas que você selecionou. '
+                    'Cada oferta mantém sua própria origem.',
               ),
             ),
           ),
@@ -285,6 +304,16 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           ),
         ),
         SliverToBoxAdapter(child: _filtrosCompactos()),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
+          sliver: SliverToBoxAdapter(
+            child: _ControleCategoriaTemporaria(
+              rotulo: _rotuloCategoriaAtiva,
+              carregando: _carregandoCategorias,
+              aoAbrir: _abrirCategoriaNestaTela,
+            ),
+          ),
+        ),
         if (_controlador.atualizadoEm != null)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
@@ -308,14 +337,23 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               ),
             ),
           ),
-        if (_avisoDaTentativa() case final aviso?)
+        if (avisoTentativa != null)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-            sliver: SliverToBoxAdapter(child: Text(aviso)),
+            sliver: SliverToBoxAdapter(child: Text(avisoTentativa)),
           ),
-        if (_controlador.termoValido &&
+        if (_controlador.preservandoResultados)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+            sliver: SliverToBoxAdapter(
+              child: _AvisoFalhaBuscaProdutos(
+                tentarNovamente: _controlador.tentarNovamente,
+              ),
+            ),
+          ),
+        if (_controlador.podeBuscar &&
             !_controlador.carregando &&
-            _controlador.erro == null)
+            (_controlador.erro == null || _controlador.preservandoResultados))
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(18, 20, 18, 11),
             sliver: SliverToBoxAdapter(
@@ -323,7 +361,10 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${_controlador.totalItens} resultados encontrados',
+                      _controlador.preservandoResultados
+                          ? '${_controlador.itens.length} '
+                                '${_controlador.itens.length == 1 ? 'oferta preservada' : 'ofertas preservadas'}'
+                          : '${_controlador.totalItens} resultados encontrados',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -331,13 +372,14 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    'Página ${_controlador.pagina}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 9,
+                  if (!_controlador.preservandoResultados)
+                    Text(
+                      'Página ${_controlador.pagina}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: cores.textoSuave,
+                        fontSize: 9,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -400,7 +442,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   );
 
   List<Widget> _corpoCompacto() {
-    if (!_controlador.termoValido) {
+    if (!_controlador.podeBuscar) {
       return const [
         SliverToBoxAdapter(
           child: EstadoVazio(
@@ -420,7 +462,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         ),
       ];
     }
-    if (_controlador.erro != null) {
+    if (_controlador.erro != null && _controlador.itens.isEmpty) {
       return [
         SliverToBoxAdapter(
           child: EstadoFalha(
@@ -570,6 +612,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _paginacao() {
+    if (_controlador.erro != null) return const SizedBox.shrink();
     if (_controlador.carregandoMais) {
       return const Center(
         child: Padding(
@@ -670,6 +713,222 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     // que o Future retorna. Eles são descartados junto do modal; destruí-los
     // aqui faria o Flutter tentar reconstruir um TextField já sem controller.
     if (mounted && novos != null) _controlador.mudarFiltros(novos);
+  }
+
+  Future<void> _abrirCategoriaNestaTela() async {
+    if (_carregandoCategorias) return;
+    setState(() => _carregandoCategorias = true);
+    CatalogoCategoriasRadarUsuario catalogo;
+    try {
+      catalogo = await widget.api.categoriasRadar();
+    } catch (_) {
+      if (!mounted) return;
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível carregar as categorias do catálogo.',
+        sucesso: false,
+      );
+      return;
+    } finally {
+      if (mounted) setState(() => _carregandoCategorias = false);
+    }
+    if (!mounted) return;
+    final selecao = await mostrarSelecaoCategoriaTemporaria(
+      context,
+      categorias: catalogo.itens,
+      selecionadaAtual: _controlador.filtros.categoriaRadarOpcional,
+    );
+    if (selecao == null || !mounted) return;
+    final slug = selecao.slug;
+    String? rotulo;
+    if (slug != null) {
+      for (final categoria in catalogo.itens) {
+        if (categoria.slug == slug) {
+          rotulo = categoria.nome;
+          break;
+        }
+      }
+      rotulo ??= slug;
+    }
+    setState(() => _rotuloCategoriaAtiva = rotulo);
+    _controlador.mudarFiltros(
+      _controlador.filtros.copiarCom(categoriaRadar: slug ?? ''),
+    );
+    mostrarMensagemRadar(
+      context,
+      'Filtro temporário aplicado ao catálogo salvo.',
+    );
+  }
+}
+
+class _AvisoFalhaBuscaProdutos extends StatelessWidget {
+  const _AvisoFalhaBuscaProdutos({required this.tentarNovamente});
+
+  final VoidCallback tentarNovamente;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    return Semantics(
+      liveRegion: true,
+      label:
+          'Não foi possível atualizar esta busca. '
+          'A lista anterior foi preservada.',
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: tema.cardColor,
+          border: Border.all(color: cores.perigo.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+        ),
+        child: LayoutBuilder(
+          builder: (context, limites) {
+            final mensagem = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.error_outline, size: 18, color: cores.perigo),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Não foi possível atualizar esta busca',
+                        style: tema.textTheme.labelMedium?.copyWith(
+                          color: cores.perigo,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'A lista anterior foi preservada sem perder o termo '
+                        'ou os filtros.',
+                        style: tema.textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
+                          fontSize: 9,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+            final botao = OutlinedButton(
+              onPressed: tentarNovamente,
+              child: const Text('Tentar novamente'),
+            );
+            final empilhar =
+                limites.maxWidth < 330 ||
+                MediaQuery.textScalerOf(context).scale(10) > 12;
+            if (empilhar) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  mensagem,
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerRight, child: botao),
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: mensagem),
+                const SizedBox(width: 10),
+                botao,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ControleCategoriaTemporaria extends StatelessWidget {
+  const _ControleCategoriaTemporaria({
+    required this.rotulo,
+    required this.carregando,
+    required this.aoAbrir,
+  });
+
+  final String? rotulo;
+  final bool carregando;
+  final VoidCallback aoAbrir;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final filtroAtivo = rotulo != null;
+    final escuro = tema.brightness == Brightness.dark;
+    final corFundo = (escuro ? Tokens.acaoFundoEscuro : Tokens.actionSoft);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: cores.superficieAlternativa,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cores.borda),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Categoria nesta tela',
+                  style: tema.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Filtro temporário · não altera categorias acompanhadas',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: cores.textoSuave,
+                    fontSize: 8,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton.icon(
+            key: const Key('categoria-nesta-tela'),
+            onPressed: carregando ? null : aoAbrir,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: filtroAtivo ? cores.acao : cores.textoSuave,
+              backgroundColor: filtroAtivo ? corFundo : null,
+              side: BorderSide(
+                color: filtroAtivo
+                    ? cores.acao.withValues(alpha: 0.5)
+                    : cores.borda,
+              ),
+              minimumSize: const Size(0, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+            ),
+            icon: carregando
+                ? const SizedBox.square(
+                    dimension: 13,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.chevron_right, size: 17),
+            label: Text(
+              filtroAtivo ? rotulo! : 'Todas',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+            ),
+            iconAlignment: IconAlignment.end,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -785,14 +1044,14 @@ class _OrigemProdutos extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Resultados das lojas selecionadas',
+          'Ofertas das lojas selecionadas',
           style: Theme.of(
             context,
           ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 3),
         Text(
-          'Altere a seleção dentro do Banco Inter',
+          'Catálogo salvo · Banco Inter',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: cores.textoSuave,
             fontSize: 9,

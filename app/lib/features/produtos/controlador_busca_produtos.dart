@@ -9,6 +9,7 @@ class FiltrosProdutos {
   const FiltrosProdutos({
     this.marca = '',
     this.categoria = '',
+    this.categoriaRadar = '',
     this.loja = '',
     this.precoMin = '',
     this.precoMax = '',
@@ -16,6 +17,7 @@ class FiltrosProdutos {
 
   final String marca;
   final String categoria;
+  final String categoriaRadar;
   final String loja;
   final String precoMin;
   final String precoMax;
@@ -23,12 +25,14 @@ class FiltrosProdutos {
   FiltrosProdutos copiarCom({
     String? marca,
     String? categoria,
+    String? categoriaRadar,
     String? loja,
     String? precoMin,
     String? precoMax,
   }) => FiltrosProdutos(
     marca: marca ?? this.marca,
     categoria: categoria ?? this.categoria,
+    categoriaRadar: categoriaRadar ?? this.categoriaRadar,
     loja: loja ?? this.loja,
     precoMin: precoMin ?? this.precoMin,
     precoMax: precoMax ?? this.precoMax,
@@ -41,6 +45,7 @@ class FiltrosProdutos {
 
   String? get marcaOpcional => _opcional(marca);
   String? get categoriaOpcional => _opcional(categoria);
+  String? get categoriaRadarOpcional => _opcional(categoriaRadar);
   String? get lojaOpcional => _opcional(loja);
   String? get precoMinOpcional => _opcional(precoMin);
   String? get precoMaxOpcional => _opcional(precoMax);
@@ -48,9 +53,24 @@ class FiltrosProdutos {
   bool get estaVazio =>
       marcaOpcional == null &&
       categoriaOpcional == null &&
+      categoriaRadarOpcional == null &&
       lojaOpcional == null &&
       precoMinOpcional == null &&
       precoMaxOpcional == null;
+
+  @override
+  bool operator ==(Object other) =>
+      other is FiltrosProdutos &&
+      other.marca == marca &&
+      other.categoria == categoria &&
+      other.categoriaRadar == categoriaRadar &&
+      other.loja == loja &&
+      other.precoMin == precoMin &&
+      other.precoMax == precoMax;
+
+  @override
+  int get hashCode =>
+      Object.hash(marca, categoria, categoriaRadar, loja, precoMin, precoMax);
 }
 
 typedef BuscarProdutos =
@@ -59,6 +79,7 @@ typedef BuscarProdutos =
       required int pagina,
       String? marca,
       String? categoria,
+      String? categoriaRadar,
       String? loja,
       String? precoMin,
       String? precoMax,
@@ -109,6 +130,8 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   Object? get erro => _erro;
   Object? get erroMais => _erroMais;
   bool get termoValido => _termo.trim().length >= 2;
+  bool get podeBuscar => _termo.trim().isEmpty || termoValido;
+  bool get preservandoResultados => _erro != null && _itens.isNotEmpty;
 
   void mudarTermo(String valor) {
     if (valor == _termo) return;
@@ -117,14 +140,25 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   }
 
   void mudarFiltros(FiltrosProdutos valor) {
+    if (valor == _filtros) return;
     _filtros = valor;
     _reiniciar();
   }
 
   Future<void> tentarNovamente() => _reiniciar();
 
+  /// Carrega o catálogo padrão (termo vazio = `Todas`) quando permitido.
+  Future<void> carregarPadrao() async {
+    if (!podeBuscar || _carregando || _itens.isNotEmpty) return;
+    await _reiniciar();
+  }
+
   Future<void> carregarMais() async {
-    if (!termoValido || _carregando || _carregandoMais || !_temProxima) {
+    if (!podeBuscar ||
+        _carregando ||
+        _carregandoMais ||
+        _erro != null ||
+        !_temProxima) {
       return;
     }
     final versao = _versao;
@@ -147,23 +181,13 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   Future<void> _reiniciar({bool adiar = false}) async {
     _temporizador?.cancel();
     _versao++;
-    _itens.clear();
-    _ids.clear();
-    _pagina = 0;
-    _porPagina = 20;
-    _totalItens = 0;
-    _temProxima = false;
-    _atualizadoEm = null;
-    _qualidade = null;
-    _ultimaTentativaEm = null;
-    _ultimaTentativaEstado = null;
     _erro = null;
     _erroMais = null;
     _carregandoMais = false;
-    _carregando = termoValido;
+    _carregando = podeBuscar;
     notifyListeners();
 
-    if (!termoValido) return;
+    if (!podeBuscar) return;
     if (adiar) {
       _temporizador = Timer(debounce, _primeiraPagina);
       return;
@@ -175,7 +199,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     final versao = _versao;
     try {
       final resposta = await _buscar(pagina: 1);
-      if (_ativa(versao)) _aplicar(resposta);
+      if (_ativa(versao)) _aplicar(resposta, substituir: true);
     } catch (erro) {
       if (_ativa(versao)) _erro = erro;
     } finally {
@@ -191,13 +215,17 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     pagina: pagina,
     marca: _filtros.marcaOpcional,
     categoria: _filtros.categoriaOpcional,
+    categoriaRadar: _filtros.categoriaRadarOpcional,
     loja: _filtros.lojaOpcional,
     precoMin: _filtros.precoMinOpcional,
     precoMax: _filtros.precoMaxOpcional,
   );
 
-  void _aplicar(Pagina<ProdutoDireto> resposta) {
-    final primeiraPagina = _pagina == 0;
+  void _aplicar(Pagina<ProdutoDireto> resposta, {bool substituir = false}) {
+    if (substituir) {
+      _itens.clear();
+      _ids.clear();
+    }
     for (final item in resposta.itens) {
       final chave = '${item.lojaSlug}\u0000${item.idExterno}';
       if (_ids.add(chave)) _itens.add(item);
@@ -206,16 +234,16 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     _porPagina = resposta.porPagina;
     _totalItens = resposta.totalItens;
     _temProxima = resposta.temProxima;
-    _atualizadoEm = primeiraPagina
+    _atualizadoEm = substituir
         ? resposta.atualizadoEm
         : _instanteMaisAntigo(_atualizadoEm, resposta.atualizadoEm);
-    _qualidade = primeiraPagina
+    _qualidade = substituir
         ? resposta.qualidade
         : _combinarQualidade(_qualidade, resposta.qualidade);
-    _ultimaTentativaEm = primeiraPagina
+    _ultimaTentativaEm = substituir
         ? resposta.ultimaTentativaEm
         : _instanteMaisRecente(_ultimaTentativaEm, resposta.ultimaTentativaEm);
-    _ultimaTentativaEstado = primeiraPagina
+    _ultimaTentativaEstado = substituir
         ? resposta.ultimaTentativaEstado
         : _combinarEstadoTentativa(
             _ultimaTentativaEstado,

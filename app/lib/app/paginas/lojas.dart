@@ -91,12 +91,14 @@ class PaginaHubShoppingInter extends StatefulWidget {
     required this.administrador,
     this.experienciaCompacta = false,
     this.ativa = true,
+    this.abrirEmCompreDireto = false,
   });
 
   final Api api;
   final bool administrador;
   final bool experienciaCompacta;
   final bool ativa;
+  final bool abrirEmCompreDireto;
 
   @override
   State<PaginaHubShoppingInter> createState() => _EstadoHubShoppingInter();
@@ -149,6 +151,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
             administrador: widget.administrador,
             aoAbrir: _abrir,
             experienciaCompacta: widget.experienciaCompacta,
+            abaInicial: widget.abrirEmCompreDireto ? 1 : 0,
           ),
         ),
       ),
@@ -164,12 +167,14 @@ class _HubShoppingInter extends StatefulWidget {
     required this.administrador,
     required this.aoAbrir,
     required this.experienciaCompacta,
+    required this.abaInicial,
   });
 
   final Api api;
   final bool administrador;
   final ValueChanged<_ModalidadeInter> aoAbrir;
   final bool experienciaCompacta;
+  final int abaInicial;
 
   @override
   State<_HubShoppingInter> createState() => _EstadoHubShoppingInterConteudo();
@@ -200,7 +205,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
         ),
         identificar: (loja) => loja.id,
       );
-  var _aba = 0;
+  late var _aba = widget.abaInicial;
   var _variacaoAcompanhadas = 0;
   var _variacaoSelecionadas = 0;
 
