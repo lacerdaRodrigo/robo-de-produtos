@@ -201,32 +201,39 @@ describe("qualidade e frescor dos resultados de produtos", () => {
     ]);
   });
 
-  it("aplica interesse persistente e filtro Radar com descendentes dinâmicos", async () => {
+  it("aplica interesse persistente e filtro por categoria externa exata", async () => {
     bancoFalso.respostas.push([{ total: 0 }], []);
 
     await buscarProdutosDiretosPaginado("", 1, 20, "42", {
-      categoria_radar: "eletronicos",
+      categoria: "Notebooks gamer",
     });
 
     const consulta = bancoFalso.consultas[1];
-    expect(consulta.texto).toContain("WITH RECURSIVE categorias_usuario");
     expect(consulta.texto).toContain(
       "FROM preferencia_produtos_inter_usuario preferencia",
     );
+    expect(consulta.texto).toContain("FROM categoria_inter_acompanhada acompanhada");
+    expect(consulta.texto).toContain("acompanhada.categoria = p.categoria");
+    expect(consulta.texto).toContain("p.categoria = $2");
+    expect(consulta.texto).toContain("'Sem categoria'");
+    expect(consulta.texto).not.toContain("categoria_radar");
+    expect(consulta.texto).not.toContain("WITH RECURSIVE");
+    expect(consulta.valores[0]).toEqual(["42", "Notebooks gamer", 20, 0]);
+  });
+
+  it("filtra Sem categoria por ausência real na origem", async () => {
+    bancoFalso.respostas.push([{ total: 0 }], []);
+
+    await buscarProdutosDiretosPaginado("", 1, 20, "42", {
+      sem_categoria: true,
+    });
+
+    const consulta = bancoFalso.consultas[1];
     expect(consulta.texto).toContain(
-      "p.categoria_radar_id IN (SELECT id FROM categorias_usuario)",
+      "(p.categoria IS NULL OR btrim(p.categoria) = '')",
     );
-    expect(consulta.texto).toContain("categorias_filtro AS");
-    expect(consulta.texto).toContain(
-      "JOIN categorias_filtro pai ON filha.categoria_pai_id = pai.id",
-    );
-    expect(consulta.texto).toContain(
-      "p.categoria_radar_id IN (SELECT id FROM categorias_filtro)",
-    );
-    expect(consulta.texto).toContain(
-      "categoria_radar.slug AS categoria_radar_slug",
-    );
-    expect(consulta.valores[0]).toEqual(["42", "eletronicos", 20, 0]);
+    expect(consulta.texto).not.toContain("p.categoria = 'Sem categoria'");
+    expect(consulta.valores[0]).toEqual(["42", 20, 0]);
   });
 
   it("reconcilia somente rodadas iniciadas antigas antes de montar o resumo", async () => {
