@@ -51,10 +51,9 @@ todas leem apenas fontes públicas.
 | [`docs/prd/PRD-LIVELO-V2.md`](docs/prd/PRD-LIVELO-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
 | [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
 | [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
+| [`docs/prd/PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md`](docs/prd/PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md) | Delta: categorias externas do Shopping Inter e limpeza da taxonomia Radar |
 | [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
 | [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
-| [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md) | Histórico do antigo canal de e-mail |
-| [`docs/guias/ARQUITETURA.md`](docs/guias/ARQUITETURA.md) | Histórico, substituído pelo PRD |
 | [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA |
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |

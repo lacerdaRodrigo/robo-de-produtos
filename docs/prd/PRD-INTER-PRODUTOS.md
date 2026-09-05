@@ -1,7 +1,7 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.1 em aceite progressivo
-**Status:** schema, coletor, site e workflow matricial implementados. Em 2026-08-17, a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos; a busca local confirmou o Motorola Edge 60 Pro. A migração `009`, que registra e publica com segurança a melhor tentativa diante de total variável, está pronta e ainda precisa ser aplicada. Ponto, bytes totais e projeções para mais lojas continuam como gates antes de ampliar o rollout.
+**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. O estado de aplicação de migrations no Neon exige confirmação operacional; as categorias externas são regidas pelo `PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md`.
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
@@ -23,7 +23,7 @@ O caso que orienta a V4 é:
 1. A pessoa escolhe Casas Bahia e Ponto.
 2. O robô coleta o catálogo completo exposto dessas duas lojas e ignora todas as outras.
 3. A pessoa procura “celular Motorola Edge 60 Pro” no Radar de Benefícios.
-4. O site consulta somente o banco local e mostra os resultados das lojas escolhidas.
+4. O Flutter consulta somente a API e mostra resultados do banco local das lojas escolhidas.
 5. Cada resultado informa preço cheio, desconto, preço atual, cashback e preço líquido estimado.
 
 Depois da coleta, a mesma base também responde por geladeira, televisão ou qualquer outro item já presente no catálogo. Não existe cadastro prévio de termos de busca.
@@ -86,7 +86,7 @@ No aceite de 2026-08-17, a janela vazia da Casas Bahia terminou em 84 páginas e
 | Loja dá pontos por real | Loja dá cashback e redireciona para parceiro | Produto tem preço, desconto e cashback |
 | Uma página lógica por rodada | Uma resposta com todas as lojas | Muitas páginas por loja selecionada |
 | Favoritas por nome/apelido | Favoritas por ID externo | Lojas selecionadas por ID; produtos por loja + ID |
-| E-mail e site | Site, sem e-mail | Busca e histórico no site, sem e-mail |
+| Cliente | Flutter autenticado | Busca e histórico no Flutter autenticado |
 | Sem histórico decisório | Snapshot de favoritas | Catálogo atual + histórico de 30 dias |
 
 Compartilhar infraestrutura genérica é permitido. Reutilizar `LojaInter`, `RetratoInter` ou tabelas da V3 para representar produtos é proibido: a semântica e o volume são diferentes.
@@ -97,7 +97,7 @@ Compartilhar infraestrutura genérica é permitido. Reutilizar `LojaInter`, `Ret
 
 | ID | Objetivo |
 |---|---|
-| **O12** | Permitir pesquisar produtos em um catálogo local, sem consultar o Inter durante a visita ao site |
+| **O12** | Permitir pesquisar produtos em um catálogo local, sem consultar o Inter durante o uso do aplicativo |
 | **O13** | Coletar somente as lojas diretas escolhidas pela pessoa, independentemente de quantas existam na fonte |
 | **O14** | Mostrar preço cheio, desconto, preço atual, cashback e preço líquido da mesma coleta |
 | **O15** | Manter 30 dias de histórico para todos os produtos das lojas selecionadas |
@@ -130,7 +130,6 @@ Compartilhar infraestrutura genérica é permitido. Reutilizar `LojaInter`, `Ret
 - Autenticar no Inter, montar carrinho, comprar ou calcular entrega por CEP.
 - Unificar automaticamente produtos entre lojas por texto, GTIN ou EAN.
 - Garantir que catálogos encerrados pela fonte em 3.000 itens estejam completos fora desse limite.
-- Enviar e-mail ou alerta de queda de preço.
 - Definir neste documento o esquema físico final ou contratar infraestrutura de banco.
 
 ### 3.3 O que este documento altera
@@ -155,7 +154,7 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **MS15** | Seleção respeitada | Zero consulta de produtos para loja não selecionada | Teste de orquestração |
 | **MS16** | Consistência comercial | 100% dos campos de um card vêm da mesma medição | Fixture e teste de persistência |
 | **MS17** | Busca do caso principal | “celular Motorola Edge 60 Pro” encontra Edge 60 Pro e rejeita Moto G | Teste de busca local |
-| **MS18** | Frescor | Cada loja mostra atraso quando o último sucesso passa de 12 horas | Site |
+| **MS18** | Frescor | Cada loja mostra atraso quando o último sucesso passa de 12 horas | Aplicativo |
 | **MS19** | Retenção | Nenhuma medição com mais de 30 dias permanece após limpeza bem-sucedida | Consulta de manutenção |
 | **MS20** | Isolamento | Falha de uma loja ou da V4 não interrompe outras lojas, Livelo ou V3 | Workflows e regressão |
 
@@ -247,11 +246,10 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **RN77** | Cada sucesso acrescenta uma medição para cada produto ativo da loja, mesmo que o valor não tenha mudado |
 | **RN78** | Histórico é identificado por loja + produto externo e retido por 30 dias corridos |
 | **RN79** | Limpeza de histórico só ocorre após operação bem-sucedida e nunca apaga o catálogo atual |
-| **RN80** | O site mostra horário e estado por loja; não combina horários diferentes num carimbo global enganoso |
-| **RN81** | A V4 não envia e-mail nem decide se um preço é “bom” |
+| **RN80** | O aplicativo mostra horário e estado por loja; não combina horários diferentes num carimbo global enganoso |
 | **RN82** | HTTP 401/403 não recebe retry; timeout, 429 e 5xx respeitam no máximo três tentativas e o intervalo definido pelo adaptador |
 | **RN83** | Se a fonte bloquear o acesso ou pedir interrupção, workflow e rotas da V4 são desativados; Livelo e V3 permanecem ativos |
-| **RN84** | Quando a janela vazia truncar uma família necessária ao aceite, o coletor pode unir partições suplementares fixas e versionadas. O site nunca envia termos arbitrários à fonte; cada partição pagina integralmente e a união deduplica por ID |
+| **RN84** | Quando a janela vazia truncar uma família necessária ao aceite, o coletor pode unir partições suplementares fixas e versionadas. O aplicativo nunca envia termos arbitrários à fonte; cada partição pagina integralmente e a união deduplica por ID |
 | **RN85** | Total declarado variável gera até três tentativas completas por partição. Uma tentativa com total estável vence imediatamente; sem estabilidade, vence a candidata com mais produtos únicos válidos, depois mais itens lidos e, por fim, a mais recente |
 | **RN86** | A melhor tentativa instável é publicada com qualidade `degradada`: atualiza produtos encontrados e medições, mas não inativa ausentes. Somente qualidade `completa` confirma desaparecimentos |
 
@@ -445,9 +443,29 @@ Nenhum código de persistência deve começar enquanto esse gate estiver aberto.
 | `/inter/produtos/lojas` | Sessão | Selecionar lojas, ver estado e forçar atualização |
 | `/inter/produtos/historico/[loja]/[produto]` | Público | Resumo e tabela de 30 dias do produto naquela loja |
 
-### 9.2 Busca de produtos
+### 9.2 Busca de produtos e filtros no Flutter
 
-A página inicia com campo de busca e resumo das lojas selecionadas; não despeja milhares de produtos sem consulta. A URL usa `?q=` para funcionar sem JavaScript e permitir compartilhar a busca.
+A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V11, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
+
+O botão `Filtros` abre uma única folha de seleção. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
+
+#### Lojas
+
+- Para conta administrativa, o aplicativo percorre todas as páginas de `GET /api/inter/produtos/lojas?filtro=acompanhadas`, e mostra somente os registros com `selecionada=true`.
+- O rótulo informa a quantidade efetiva disponível para coleta — uma loja produz “1 para coleta”; seis produzem “6 para coleta”. Não existe teto visual imposto pelo aplicativo.
+- A escolha contém “Todas as lojas” e uma opção por nome de loja. Ao escolher uma loja, o aplicativo envia somente seu `slug` já retornado pela API no parâmetro `loja`; nunca pede que a pessoa digite slug, ID, URL ou nome.
+- Lojas não selecionadas para coleta não aparecem como opção e não podem ser incluídas por este filtro. O filtro reduz a visualização do catálogo local; ele não altera seleção, não aciona o robô e não consulta o Inter.
+- A rota que enumera a seleção de coleta é administrativa. Em uma conta sem essa autorização, o aplicativo não tenta contornar a regra por outra fonte e mantém os filtros que seu contrato de leitura permite.
+
+#### Categoria e preços
+
+- Categoria permanece no controle separado “Categoria nesta tela”, fora da folha `Filtros`. Esse controle consulta `GET /api/inter/produtos/categorias` e escolhe um valor externo real, “Todas as categorias” ou “Sem categoria” quando disponível; nunca há categoria digitada, aproximada ou inventada.
+- A folha `Filtros` não carrega nem lista categorias. Ela se mantém em meia tela e contém somente a seleção de Lojas e a faixa de preço.
+- Marca deixa de ser filtro exposto na interface. O dado de marca pode continuar aparecendo no card quando fornecido pela origem, mas não há campo “Marca” para digitação.
+- Preço mínimo e preço máximo são os únicos campos editáveis da folha, porque representam uma faixa numérica escolhida pela pessoa. O texto aceita vírgula decimal brasileira e segue para a validação já existente da API; dinheiro não é recalculado com `double` no Flutter.
+- Aplicar a folha preserva a categoria já escolhida no controle próprio, reinicia somente a paginação da busca local e preserva o termo. Enquanto a nova página está sendo consultada, os cards do último resultado continuam montados e na mesma posição; eles só são substituídos quando a resposta nova chega, evitando o efeito de lista pulando a cada troca de loja. Falha, lista parcial, atualização atrasada, ausência de categoria e valor zero continuam estados distintos dos controles de filtro.
+
+A URL usa `?q=` para funcionar sem JavaScript e permitir compartilhar a busca.
 
 Cada grupo de loja mostra:
 
@@ -649,7 +667,6 @@ A V4 só pode ser marcada implementada quando:
 | Pesquisa | Local no banco, termos completos normalizados, celular = smartphone |
 | Interface | Resultados por loja, menor preço atual, sem imagens |
 | Histórico | Todos os produtos das lojas selecionadas, retenção de 30 dias |
-| Alertas | Nenhum e-mail ou alerta de preço na primeira entrega |
 | Falha | Atomicidade e último sucesso por loja; total variável aceita melhor tentativa completa sem inativar ausentes; rodada geral pode ser parcial |
 
 ### 15.2 Aberto antes de ampliar o rollout

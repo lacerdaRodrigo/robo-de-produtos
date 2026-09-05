@@ -1,7 +1,7 @@
 # PRD — Livelo (Robô de Pontuação Turbinada)
 
-**Versão:** v1.1
-**Status:** V1.0 e V2.0–V2.3 da Livelo estão publicadas. O catálogo Livelo completo, a migração `013` e a API autenticada estão publicados; a primeira coleta gravou 252 parceiros ativos no Neon em 2026-08-28. O smoke físico Android continua pendente pelo responsável. Web, iOS e layout amplo permanecem na experiência anterior neste ciclo. A interface web Next.js (`site/`) foi desativada em 2026-08-24; o Flutter vive em `app/` e a API em `backend/api/`.
+**Versão:** v2.3 — documento vivo
+**Status vigente em 2026-09-04:** robô Python, Postgres, API autenticada e Flutter implementados. A primeira coleta do catálogo completo gravou 252 parceiros ativos em 2026-08-28. O smoke físico Android permanece pendente pelo responsável.
 
 Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
 
@@ -11,7 +11,7 @@ Este documento é a **fonte da verdade** do projeto. README e arquivo de context
 
 ### 1.1 Visão
 
-Robô pessoal que vigia a página pública de parceiros da Livelo e me avisa por e-mail, 3x ao dia, quais das *minhas* lojas estão com pontuação turbinada — sem servidor, sem custo e sem meu computador ligado.
+Robô pessoal que vigia a página pública de parceiros da Livelo, persiste o catálogo e os retratos no Postgres e os disponibiliza pelo aplicativo Flutter, sem autenticar na Livelo.
 
 ### 1.2 Problema
 
@@ -28,8 +28,9 @@ Promoção de pontuação turbinada na Livelo é efêmera, não tem aviso prévi
 
 ### 1.4 Fora do escopo (V1)
 
-- Front-end, dashboard ou aplicativo. O **canal único de saída é e-mail**.
-- Banco de dados e qualquer serviço hospedado além do GitHub.
+- Autenticação na conta Livelo, compra automática ou clique automático.
+- Outros programas de pontos (Esfera, Latam Pass etc.).
+- Multiusuário e qualquer acesso direto do Flutter ao Postgres ou à Livelo.
 - Histórico entre execuções, comparação de execuções e gráfico de tendência.
   *(O robô é stateless: cada execução mostra tudo que está ativo naquele momento, mesmo que repita o e-mail do dia anterior. A arquitetura deixa um contrato de repositório no-op como ponto de extensão — ver Seção 4.)*
   **Continua fora do escopo como entrada de decisão.** A V2.3 passou a gravar o retrato de cada execução para o app (Flutter) e a API terem o que exibir, mas nenhuma regra lê esse histórico de volta — ver RNF04.
@@ -89,10 +90,6 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | **RF04** | Descartar as lojas favoritas que não estão em promoção no momento da execução. |
 | **RF05** | Agrupar as lojas restantes por categoria. |
 | **RF06** | Ordenar as categorias por nome e, dentro de cada categoria, as lojas por pontuação decrescente. |
-| **RF07** | Montar o e-mail em HTML, acompanhado de uma versão em texto simples equivalente. |
-| **RF08** | Refletir no assunto do e-mail a quantidade de promoções encontradas. |
-| **RF09** | Enviar o e-mail por SMTP para um destinatário único. |
-| **RF10** | Enviar o e-mail em **toda** execução, inclusive quando não houver nenhuma promoção. O assunto distingue os dois casos. |
 | **RF11** | Repetir a requisição em caso de falha transitória, respeitando um limite de tentativas. |
 | **RF12** | Disparar o alerta de quebra quando o total de parceiros extraídos ficar abaixo do limiar configurado. |
 | **RF13** | Executar de forma agendada 3x ao dia e também sob disparo manual. |
@@ -108,7 +105,7 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | **RNF05** | Segredo fora do código **e fora do log** | Nenhum valor sensível impresso — o log do Actions é público |
 | **RNF06** | Falha sempre visível | Qualquer erro encerra o processo com código de saída diferente de zero |
 | **RNF07** | Portabilidade | O mesmo código roda localmente e no Actions; só variáveis de ambiente mudam |
-| **RNF08** | Teste sem efeito colateral | Nenhum teste automatizado acessa a rede ou o SMTP real |
+| **RNF08** | Teste sem efeito colateral | Nenhum teste automatizado acessa a rede real |
 | **RNF09** | Manutenibilidade | Trocar uma loja favorita não exige editar lógica |
 | **RNF10** | Quality gate | Lint e testes verdes são obrigatórios a cada push |
 | **RNF11** | Idioma | Código, testes e documentação em português do Brasil |
@@ -122,9 +119,7 @@ Limitações reais do ambiente escolhido. Não são negociáveis — o projeto c
 |---|---|---|
 | **C01** | O GitHub desabilita workflows agendados após 60 dias sem atividade no repositório | O robô para de rodar em silêncio; exige mitigação explícita no roadmap |
 | **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h/14h/20h são aproximados; atraso de minutos é comportamento normal |
-| **C03** | O Gmail exige verificação em 2 etapas e senha de aplicativo | Setup manual obrigatório; a senha pode ser revogada a qualquer momento pelo Google |
 | **C04** | A Livelo pode alterar o HTML ou adotar proteção anti-bot sem aviso | O extrator é frágil por natureza — é exatamente o que RF12 existe para detectar |
-| **C05** | O Gmail corta mensagens acima de ~102 KB, escondendo o resto atrás de um link | Limita o tamanho do corpo do e-mail. Medido: 6 KB no cenário real e 27 KB no pior caso, com todas as favoritas em promoção. Folga de quase 4x |
 
 ### 2.4 Parâmetros de configuração
 

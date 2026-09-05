@@ -24,7 +24,6 @@ class PaginaProdutos extends StatefulWidget {
     this.incorporada = false,
     this.mostrarTituloInterno = true,
     this.experienciaCompacta = false,
-    this.aoEscolherLojas,
   });
 
   final Api api;
@@ -33,7 +32,6 @@ class PaginaProdutos extends StatefulWidget {
   final bool incorporada;
   final bool mostrarTituloInterno;
   final bool experienciaCompacta;
-  final VoidCallback? aoEscolherLojas;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -283,13 +281,6 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               ),
             ),
           ),
-        if (widget.aoEscolherLojas != null)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
-            sliver: SliverToBoxAdapter(
-              child: _OrigemProdutos(aoEscolherLojas: widget.aoEscolherLojas!),
-            ),
-          ),
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
             18,
@@ -431,13 +422,6 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           icone: Icons.tune_rounded,
           aoTocar: _abrirFiltros,
         ),
-        if (widget.aoEscolherLojas != null) ...[
-          const SizedBox(width: 7),
-          _ChipProduto(
-            texto: '+ escolher lojas',
-            aoTocar: widget.aoEscolherLojas!,
-          ),
-        ],
       ],
     ),
   );
@@ -453,7 +437,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         ),
       ];
     }
-    if (_controlador.carregando) {
+    if (_controlador.carregando && _controlador.itens.isEmpty) {
       return const [
         SliverToBoxAdapter(
           child: Padding(
@@ -495,6 +479,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           itemBuilder: (context, indice) {
             final entrada = grupos.entries.elementAt(indice);
             return _GrupoProdutosCompacto(
+              key: ValueKey('grupo-produtos-${entrada.key}'),
               loja: entrada.key,
               produtos: entrada.value,
               construirCartao: (produto) =>
@@ -517,7 +502,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         mensagem: 'Digite pelo menos 2 caracteres para pesquisar no catálogo.',
       );
     }
-    if (_controlador.carregando) {
+    if (_controlador.carregando && _controlador.itens.isEmpty) {
       return const Carregando(mensagem: 'Buscando produtos no catálogo…');
     }
     if (_controlador.erro != null) {
@@ -642,80 +627,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Future<void> _abrirFiltros() async {
-    final filtros = _controlador.filtros;
-    final marca = TextEditingController(text: filtros.marca);
-    final categoria = TextEditingController(text: filtros.categoria);
-    final loja = TextEditingController(text: filtros.loja);
-    final precoMin = TextEditingController(text: filtros.precoMin);
-    final precoMax = TextEditingController(text: filtros.precoMax);
     final novos = await showModalBottomSheet<FiltrosProdutos>(
       context: context,
       isScrollControlled: true,
-      builder: (contexto) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            24 + MediaQuery.viewInsetsOf(contexto).bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Filtros', style: Theme.of(contexto).textTheme.titleLarge),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: marca,
-                  decoration: const InputDecoration(labelText: 'Marca'),
-                ),
-                TextField(
-                  controller: categoria,
-                  decoration: const InputDecoration(
-                    labelText: 'Categoria exata do Inter',
-                  ),
-                ),
-                TextField(
-                  controller: loja,
-                  decoration: const InputDecoration(labelText: 'Loja (slug)'),
-                ),
-                TextField(
-                  controller: precoMin,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Preço mínimo'),
-                ),
-                TextField(
-                  controller: precoMax,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Preço máximo'),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => Navigator.of(contexto).pop(
-                    FiltrosProdutos(
-                      marca: marca.text,
-                      categoria: categoria.text,
-                      semCategoria: false,
-                      loja: loja.text,
-                      precoMin: precoMin.text,
-                      precoMax: precoMax.text,
-                    ),
-                  ),
-                  child: const Text('Aplicar filtros'),
-                ),
-              ],
-            ),
-          ),
-        ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.5,
+      ),
+      builder: (_) => _FiltrosProdutosSheet(
+        api: widget.api,
+        filtros: _controlador.filtros,
+        podeLerLojasSelecionadas: widget.administrador,
       ),
     );
-    // Os campos ainda pertencem à animação de saída do bottom sheet depois
-    // que o Future retorna. Eles são descartados junto do modal; destruí-los
-    // aqui faria o Flutter tentar reconstruir um TextField já sem controller.
     if (mounted && novos != null) {
       setState(() => _rotuloCategoriaAtiva = novos.categoriaOpcional);
       _controlador.mudarFiltros(novos);
@@ -936,6 +859,7 @@ class _ControleCategoriaTemporaria extends StatelessWidget {
 
 class _GrupoProdutosCompacto extends StatelessWidget {
   const _GrupoProdutosCompacto({
+    super.key,
     required this.loja,
     required this.produtos,
     required this.construirCartao,
@@ -1034,76 +958,237 @@ class _GrupoProdutosCompacto extends StatelessWidget {
   }
 }
 
-class _OrigemProdutos extends StatelessWidget {
-  const _OrigemProdutos({required this.aoEscolherLojas});
+class _FiltrosProdutosSheet extends StatefulWidget {
+  const _FiltrosProdutosSheet({
+    required this.api,
+    required this.filtros,
+    required this.podeLerLojasSelecionadas,
+  });
 
-  final VoidCallback aoEscolherLojas;
+  final Api api;
+  final FiltrosProdutos filtros;
+  final bool podeLerLojasSelecionadas;
 
   @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final texto = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Ofertas das lojas selecionadas',
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          'Catálogo salvo · Banco Inter',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: cores.textoSuave,
-            fontSize: 9,
-          ),
-        ),
-      ],
-    );
-    final botao = OutlinedButton(
-      onPressed: aoEscolherLojas,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 38),
-        padding: const EdgeInsets.symmetric(horizontal: 11),
+  State<_FiltrosProdutosSheet> createState() => _EstadoFiltrosProdutosSheet();
+}
+
+class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
+  late final _precoMin = TextEditingController(text: widget.filtros.precoMin);
+  late final _precoMax = TextEditingController(text: widget.filtros.precoMax);
+  var _lojas = const <LojaDireto>[];
+  late String _loja = widget.filtros.loja;
+  var _carregando = true;
+  String? _erro;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarOpcoes();
+  }
+
+  @override
+  void dispose() {
+    _precoMin.dispose();
+    _precoMax.dispose();
+    super.dispose();
+  }
+
+  Future<void> _carregarOpcoes() async {
+    setState(() {
+      _carregando = true;
+      _erro = null;
+    });
+    try {
+      final lojas = widget.podeLerLojasSelecionadas
+          ? await _carregarLojasSelecionadas()
+          : const <LojaDireto>[];
+      if (!mounted) return;
+      setState(() => _lojas = lojas);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _erro = 'Não foi possível carregar as opções de filtro.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  Future<List<LojaDireto>> _carregarLojasSelecionadas() async {
+    final lojas = <LojaDireto>[];
+    var pagina = 1;
+    while (true) {
+      final resposta = await widget.api.lojasDiretas(
+        filtro: 'acompanhadas',
+        pagina: pagina,
+      );
+      lojas.addAll(resposta.itens.where((loja) => loja.selecionada));
+      if (!resposta.temProxima) return lojas;
+      pagina++;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: const Text('Escolher lojas'),
-    );
-    return LayoutBuilder(
-      builder: (context, limites) {
-        final empilhar =
-            limites.maxWidth < 290 ||
-            MediaQuery.textScalerOf(context).scale(14) > 18;
-        return Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            border: Border.all(color: cores.borda),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: <BoxShadow>[
-              SombraRadar.para(Theme.of(context).brightness),
-            ],
-          ),
-          child: empilhar
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Filtros', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            Text(
+              'Escolha a loja. Só a faixa de preço é editável.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: CoresRadar.de(context).textoSuave,
+              ),
+            ),
+            const SizedBox(height: 20),
+            if (_carregando)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_erro != null)
+              _erroOpcoes()
+            else ...[
+              if (widget.podeLerLojasSelecionadas) ...[
+                _tituloSecao('Lojas', '${_lojas.length} para coleta'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    texto,
-                    const SizedBox(height: 9),
-                    Align(alignment: Alignment.centerRight, child: botao),
-                  ],
-                )
-              : Row(
-                  children: [
-                    Expanded(child: texto),
-                    const SizedBox(width: 10),
-                    botao,
+                    _chipLoja(
+                      key: const Key('filtro-loja-todas'),
+                      nome: 'Todas as lojas',
+                      selecionada: _loja.trim().isEmpty,
+                      aoSelecionar: () => setState(() => _loja = ''),
+                    ),
+                    for (final loja in _lojas)
+                      _chipLoja(
+                        key: Key('filtro-loja-${loja.slug}'),
+                        nome: loja.nome,
+                        selecionada: _loja == loja.slug,
+                        aoSelecionar: () => setState(() => _loja = loja.slug),
+                      ),
                   ],
                 ),
-        );
-      },
+                if (_lojas.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text('Nenhuma loja está selecionada para coleta.'),
+                  ),
+                const SizedBox(height: 20),
+              ],
+              _tituloSecao('Faixa de preço', 'opcional'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('filtro-preco-minimo'),
+                      controller: _precoMin,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Mínimo'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('filtro-preco-maximo'),
+                      controller: _precoMax,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Máximo'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _aplicar,
+                child: const Text('Aplicar filtros'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _tituloSecao(String titulo, String descricao) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(titulo, style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: 2),
+      Text(
+        descricao,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: CoresRadar.de(context).textoSuave,
+        ),
+      ),
+    ],
+  );
+
+  Widget _chipLoja({
+    required Key key,
+    required String nome,
+    required bool selecionada,
+    required VoidCallback aoSelecionar,
+  }) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final claro = tema.brightness == Brightness.light;
+    return ChoiceChip(
+      key: key,
+      label: Text(nome),
+      selected: selecionada,
+      onSelected: (_) => aoSelecionar(),
+      selectedColor: claro ? Colors.white : Tokens.superficieEscura,
+      backgroundColor: claro
+          ? Tokens.superficieAlternativa
+          : Tokens.superficieAlternativaEscura,
+      checkmarkColor: cores.acao,
+      side: BorderSide(color: selecionada ? cores.acao : cores.borda),
+      labelStyle: TextStyle(
+        color: selecionada ? cores.acao : cores.textoSuave,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
+
+  Widget _erroOpcoes() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(_erro!, textAlign: TextAlign.center),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        onPressed: _carregarOpcoes,
+        icon: const Icon(Icons.refresh),
+        label: const Text('Tentar novamente'),
+      ),
+    ],
+  );
+
+  void _aplicar() => Navigator.of(context).pop(
+    FiltrosProdutos(
+      categoria: widget.filtros.categoria,
+      semCategoria: widget.filtros.semCategoria,
+      loja: _loja,
+      precoMin: _precoMin.text,
+      precoMax: _precoMax.text,
+    ),
+  );
 }
 
 class _BuscaProdutosCompacta extends StatelessWidget {

@@ -91,9 +91,33 @@ Radar pessoal de benefícios com três integrações. A Livelo publica catálogo
 - Testes de orquestração usam **fakes das portas**, não `mock.patch` sobre bibliotecas.
 - Estrutura de pastas plana. Ver §4.4 do PRD antes de criar diretório novo.
 
-## Ao mudar uma regra
+## Documentação é parte da mudança
 
-Regras de negócio são numeradas e citadas em várias seções. Mudar uma exige varredura de consistência: PRD, `docs/TESTES.md` e `README.md`. Uma decisão que contradiz outra seção é bug de documentação, não detalhe.
+Toda inclusão, alteração ou remoção de funcionalidade deve atualizar a
+documentação no mesmo ciclo. Isso inclui regra de negócio, dado, rota/API,
+schema/migration, workflow, configuração, teste e jornada Flutter.
+
+1. Use [`docs/README.md`](docs/README.md) para localizar a documentação do
+   domínio antes de editar.
+2. Atualize o PRD em `docs/prd/` quando comportamento, contrato, autorização,
+   arquitetura, estado ou aceite mudar. Regras numeradas exigem varredura de
+   todas as referências no PRD.
+3. Atualize [`docs/testes/TESTES.md`](docs/testes/TESTES.md) quando os casos
+   técnicos cobertos mudarem; o PRD registra estratégia e critérios de aceite.
+4. Atualize [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md): retire item concluído;
+   mantenha aberto o que depende de ambiente externo, confirmação manual ou
+   decisão futura. Git não prova estado de produção, migrations aplicadas ou
+   secrets externos.
+5. Plano implementado deixa de ser plano e deve ser incorporado ou movido para
+   o PRD. Feature, arquivo, rota ou fluxo removido do código também sai da
+   documentação; não preservar instrução histórica que possa orientar trabalho
+   futuro incorretamente.
+6. Ao criar, mover ou excluir documento/pasta, atualize `docs/README.md` e os
+   links de entrada no `README.md` da raiz.
+
+Uma decisão que contradiz código ou outra seção é bug de documentação, não
+detalhe. Não encerre a tarefa somente porque o código compila ou os testes
+passam: a documentação afetada também precisa estar consistente.
 
 ## Cadência de testes
 

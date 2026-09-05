@@ -50,6 +50,32 @@ Uma tela não está pronta só porque compila.
 
 Não peça screenshots ao responsável para diferenças que possam ser descobertas pelo HTML ou pela renderização local.
 
+## Documentação obrigatória em toda alteração
+
+Documentação é parte da entrega. Toda inclusão, alteração ou remoção de
+funcionalidade — inclusive regra de negócio, rota/API, schema/migration,
+workflow, configuração, jornada Flutter ou teste — deve atualizar a
+documentação no mesmo ciclo antes de declarar a tarefa pronta.
+
+1. Comece pelo [`docs/README.md`](docs/README.md) para localizar o documento
+   responsável pelo domínio.
+2. Atualize o PRD aplicável em `docs/prd/` quando mudar comportamento, dado,
+   contrato, autorização, estado, arquitetura ou critério de aceite.
+3. Atualize `docs/testes/TESTES.md` quando o catálogo de casos cobertos mudar.
+   O PRD mantém estratégia e aceite; o catálogo mantém os casos técnicos.
+4. Atualize `docs/PENDENCIAS.md`: remova o que foi concluído, mantenha aberto o
+   que depende de ambiente externo, validação manual ou decisão futura, e não
+   declare como feito algo que o repositório não pode provar.
+5. Plano implementado deixa de ser plano: mova-o ou incorpore-o no PRD do
+   domínio. Requisito removido do código também sai da documentação; não manter
+   instrução histórica que possa voltar a orientar implementação.
+6. Atualize `docs/README.md` quando criar, mover ou excluir documento/pasta e
+   corrija links de entrada, como o `README.md` da raiz.
+
+Não encerrar mudança de código apenas porque compila ou os testes passam. A
+entrega também exige documentação consistente, sem referências a feature,
+arquivo, rota ou fluxo que não existe mais.
+
 ## Regras técnicas que não podem regredir
 
 - Flutter continua cliente da API; não acessa Neon, Livelo ou Inter diretamente.
@@ -110,3 +136,5 @@ Uma fase está concluída quando:
 5. unitários/widgets relevantes passam;
 6. nenhum dado fictício foi promovido a real;
 7. o Codex informa arquivos alterados, comandos executados e divergências restantes.
+8. PRDs, pendências, catálogo de testes e índices documentais afetados foram
+   atualizados conforme a seção “Documentação obrigatória em toda alteração”.

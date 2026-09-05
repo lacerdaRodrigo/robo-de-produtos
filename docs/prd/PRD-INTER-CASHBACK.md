@@ -1,7 +1,7 @@
 # PRD — Inter Cashback (Sites parceiros)
 
 **Versão:** V3.0–V3.3
-**Status:** implementado e validado no workspace em 2026-08-14. A migração `006` foi aplicada no Neon e a primeira sincronização real cadastrou 381 lojas; a publicação do código no GitHub/Vercel depende do envio destas mudanças ao repositório remoto.
+**Status vigente em 2026-09-04:** implementado no robô, Postgres, API autenticada e Flutter. A migration `006` foi registrada como aplicada no Neon; a primeira sincronização real cadastrou 381 lojas.
 **Levantamento da fonte:** 14 de agosto de 2026
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
@@ -18,7 +18,7 @@ Hoje essa consulta exige abrir o Shopping Inter, localizar a área de lojas parc
 
 1. O robô lê todas as lojas disponíveis.
 2. A pessoa procura e seleciona as lojas que quer acompanhar.
-3. O site mostra as lojas selecionadas, ranqueadas pelo cashback atual.
+3. O aplicativo consulta o catálogo persistido, com busca, ordenação e filtro de lojas acompanhadas.
 4. Cada card explica as condições da promoção e leva ao endereço genérico do Shopping Inter.
 
 ### 1.1 Evidência levantada na fonte real
@@ -83,13 +83,13 @@ O4 (portfólio) também ganha valor: o projeto passa a demonstrar duas integraç
 - Uma consulta lógica por execução ao endpoint que alimenta a página pública de lojas do Shopping Inter, com até três tentativas HTTP em falha transitória.
 - Leitura e validação das 381 lojas observadas, sem depender do HTML visual.
 - Catálogo local atualizado com todas as lojas válidas retornadas pela fonte.
-- Busca por nome no site e seleção de lojas reais do catálogo.
+- Busca por nome no aplicativo e seleção administrativa de lojas reais do catálogo.
 - Lista de lojas favoritas do Inter, independente das favoritas da Livelo.
 - Ranking das favoritas pelo cashback numérico destinado a Cliente Inter Shopping.
 - Exibição da descrição completa disponível para a oferta.
 - Exibição honesta de lojas sem descrição ou sem percentual numérico.
 - Link genérico `https://shopping.inter.co/site-parceiro/lojas` em todos os cards.
-- Área própria no site, banco separado por tabelas e workflow separado.
+- Área própria no aplicativo, banco separado por tabelas e workflow separado.
 - Execução agendada e disparo manual protegido pela mesma sessão administrativa já existente.
 
 ### 3.2 Fora
@@ -98,7 +98,6 @@ O4 (portfólio) também ganha valor: o projeto passa a demonstrar duas integraç
 - Abrir conta, comprar, ativar oferta, calcular o cashback recebido ou acompanhar crédito na conta.
 - Redirecionar automaticamente para a página individual da loja.
 - Clicar em link de afiliado, aceitar cookies ou simular navegação humana.
-- Enviar e-mail sobre cashback na primeira entrega da V3.
 - Comparar automaticamente “pontos Livelo versus cashback Inter” em dinheiro.
 - Criar conta por usuário, múltiplos perfis ou listas compartilhadas.
 - Baixar ou republicar logotipos do Inter ou das lojas.
@@ -113,7 +112,6 @@ O4 (portfólio) também ganha valor: o projeto passa a demonstrar duas integraç
 | Um único workflow de coleta | Mantido para Livelo e acrescentado um workflow exclusivo do Inter |
 | Um único catálogo de favoritas | Mantido para Livelo e acrescentado um catálogo independente do Inter |
 | RN04: correspondência exata por nome/apelido | Continua na Livelo. No Inter, a seleção usa o identificador estável retornado pelo catálogo (RN34) |
-| RF16: e-mail condicional | Não se aplica ao Inter nesta versão |
 | RN25: nenhum recurso externo na página | Continua valendo também para a área do Inter |
 
 Nenhuma regra, coluna ou rota da Livelo é removida por este documento.
@@ -125,7 +123,7 @@ Nenhuma regra, coluna ou rota da Livelo é removida por este documento.
 | ID | Métrica | Alvo | Fonte |
 |---|---|---|---|
 | **MS9** | Cobertura da coleta | Pelo menos 100 lojas válidas por execução; referência medida: 381 | Log do workflow |
-| **MS10** | Fidelidade da oferta | 100% dos cards exibem o texto e o número exatamente como vieram da mesma execução | Teste com fixture e inspeção do site |
+| **MS10** | Fidelidade da oferta | 100% dos cards exibem o texto e o número exatamente como vieram da mesma execução | Teste com fixture e inspeção do aplicativo |
 | **MS11** | Cadastro determinístico | C&A e Riachuelo são localizadas e selecionadas sem cadastro manual de grafia | Roteiro de aceite |
 | **MS12** | Separação | Falha do Inter não impede o workflow, o banco nem as páginas da Livelo | Testes de regressão e workflows |
 | **MS13** | Frescor | O carimbo do Inter não passa de 24 horas sem indicar atraso | Página do Inter |
@@ -180,7 +178,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **C13** | `redirectWarning` pode estar vazio, conter instrução genérica ou várias faixas de cashback | A descrição não pode ser resumida automaticamente para uma única frase |
 | **C14** | A semântica dos campos `full*` e `partial*` vem dos textos da própria resposta, não de documentação contratual encontrada | A interface usa os rótulos observados e evita promessas sobre elegibilidade |
 | **C15** | O link solicitado é genérico e exige nova busca no Shopping Inter | Decisão consciente da V3; link individual fica fora até ser solicitado e validado |
-| **C16** | O cron do GitHub Actions pode atrasar | O site mostra o momento real da coleta, não apenas o horário previsto |
+| **C16** | O cron do GitHub Actions pode atrasar | O aplicativo mostra o momento real da coleta, não apenas o horário previsto |
 
 ---
 
@@ -205,7 +203,6 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RN46** | O horário exibido é o da execução concluída, convertido para Brasília, e pertence somente ao Inter |
 | **RN47** | Leitura é pública; seleção e remoção de favoritas e disparo manual exigem a sessão administrativa já usada pela Livelo |
 | **RN48** | Falha do Inter encerra seu processo com código diferente de zero e mantém o último retrato; não chama o processo da Livelo |
-| **RN49** | O Inter não envia e-mail nesta entrega, mesmo quando o cashback é alto |
 | **RN50** | Textos e percentuais de execuções diferentes nunca são combinados no mesmo card |
 | **RN51** | Toda tentativa é registrada com estado `iniciada`, `sucesso` ou `falha`. Somente `sucesso` pode ser origem dos cards; falha guarda código controlado, nunca payload ou exceção bruta |
 | **RN52** | A V3 não apaga automaticamente execuções nem snapshots. Retenção só será criada se as tabelas do Inter ultrapassarem 100 MB, mediante nova decisão documentada |
@@ -278,14 +275,6 @@ São estados diferentes:
 | Resposta com menos de 100 válidas | “Última atualização falhou; mostrando dados de…” | Falha e preserva o retrato anterior |
 | Nunca houve execução válida | “O Inter ainda não foi sincronizado” | Não exibe percentuais vazios como zero |
 
-### 6.6 Por que não há e-mail nesta entrega
-
-Na Livelo existe uma régua definida: pontuação atual contra base, multiplicador e piso. No Inter, a fonte medida traz a oferta atual, mas não uma base histórica nem validade. Mandar e-mail por “cashback alto” exigiria escolher um número arbitrário ou comparar histórico — duas regras que o usuário ainda não pediu.
-
-A V3 entrega consulta e ranking. Um alerta futuro só entra com uma regra própria documentada e calibrada.
-
----
-
 ## 7. Arquitetura
 
 ### 7.1 Princípio
@@ -301,9 +290,10 @@ O princípio da V1 continua: **núcleo puro, mundo por contrato**. A separação
 | `portas_inter.py` | Contratos novos | Fonte, catálogo de favoritas e repositório do Inter |
 | `adaptadores_inter.py` | Adaptadores novos | HTTP fixo e Postgres das tabelas do Inter |
 | `principal_inter.py` | Orquestração nova | Composition root e código de saída exclusivo |
-| `backend/api/lib/banco-inter.ts` (antes `site/lib/banco-inter.ts`) | Servidor da API | Consultas e mutações das tabelas do Inter |
-| `/inter` | Página pública | Favoritas, ranking, descrições e carimbo |
-| `/inter/lojas` | Página protegida | Busca no catálogo e seleção/remoção |
+| `backend/api/lib/banco-inter.ts` | Servidor da API | Consultas e mutações das tabelas do Inter |
+| `backend/api/app/api/inter/cashback` | API autenticada | Cashback, ordenação, busca e estado da coleta |
+| `backend/api/app/api/inter/lojas` | API administrativa | Busca no catálogo e seleção/remoção |
+| `app/lib/features/inter/` | Flutter | Consulta de cashback e acompanhamento |
 | `.github/workflows/inter.yml` | Automação nova | Cron e disparo manual do Inter |
 
 A estrutura continua plana, conforme PRD §4.4. Um pacote novo inteiro não é necessário para cinco módulos pequenos.
@@ -320,7 +310,8 @@ flowchart LR
     FAV["favorita_inter"] --> RET
     RET --> REP["RepositorioInterPostgres"]
     REP --> DB[("tabelas *_inter")]
-    DB --> SITE["/inter e /inter/lojas"]
+    DB --> API["API autenticada"]
+    API --> APP["Flutter"]
 ```
 
 Uma execução faz uma chamada externa, valida toda a resposta em memória e só então abre a transação de escrita. A página nunca chama o Inter diretamente; lê o banco. Isso evita duplicar extração em TypeScript e mantém a fonte externa fora do caminho de cada visita.
@@ -334,7 +325,7 @@ Uma execução faz uma chamada externa, valida toda a resposta em memória e só
 | Sessão e limite de login do site | Tabelas `loja`, `apelido`, `execucao`, `pontuacao` |
 | Cliente do GitHub para dispatch, parametrizado por workflow | Workflow `robo.yml` |
 | Formatação segura e componentes visuais genéricos | Régua de multiplicador/piso e regras do Clube Livelo |
-| Padrão de repositório e transação | Notificador por e-mail |
+| Padrão de repositório e transação | Regras de pontuação e preferências da Livelo |
 
 Reutilizar não significa mover tudo antes da hora. Uma extração para módulo genérico só ocorre se os dois lados realmente precisarem do mesmo contrato e os testes provarem que a Livelo não mudou.
 
@@ -349,7 +340,7 @@ Reutilizar não significa mover tudo antes da hora. Uma extração para módulo 
 7. Em uma transação, atualizar catálogo, gravar cashback das favoritas e concluir a tentativa como `sucesso`.
 8. Confirmar a transação e registrar somente totais no log.
 
-Qualquer falha antes do passo 8 preserva a última execução válida e tenta marcar a tentativa como `falha` em uma operação curta e separada. Se o próprio banco estiver indisponível, o workflow continua sendo a fonte da falha; o site não inventa um registro que não conseguiu persistir. Diferentemente da Livelo, não existe e-mail prioritário para enviar antes do banco; no Inter, alimentar o site é o produto da execução.
+Qualquer falha antes do passo 8 preserva a última execução válida e tenta marcar a tentativa como `falha` em uma operação curta e separada. Se o próprio banco estiver indisponível, o workflow continua sendo a fonte da falha; a API não inventa um registro que não conseguiu persistir. No Inter, alimentar o catálogo persistido é o produto da execução.
 
 ### 7.5 Workflow e disparo manual
 
@@ -512,7 +503,7 @@ Nome, etiqueta e descrições são dados hostis para fins de renderização:
 
 ### 10.3 Autenticação e segredos
 
-Leitura de favoritas é pública, como na Livelo. Alteração e disparo manual usam a sessão existente. `DATABASE_URL` e token do GitHub continuam somente no servidor. O robô do Inter não recebe credenciais de e-mail porque não envia e-mail.
+Leitura de catálogo exige autenticação. Alteração e disparo manual usam a sessão existente. `DATABASE_URL` e token do GitHub continuam somente no servidor.
 
 O token de dispatch deve ter apenas o acesso necessário ao workflow do repositório. Nenhum segredo aparece no navegador ou log.
 
@@ -524,7 +515,7 @@ O texto de condições é necessário para não apresentar o percentual fora de 
 
 ### 10.5 Privacidade
 
-Não são coletados conta bancária, CPF, histórico de compra, valor gasto nem cashback recebido. A lista de favoritas revela preferência de compra e é publicada na área de leitura, risco já aceito para a Livelo. E-mail e identificadores de sessão não aparecem nos cards.
+Não são coletados conta bancária, CPF, histórico de compra, valor gasto nem cashback recebido. A lista de acompanhadas revela preferência de compra; identificadores de sessão não aparecem nos cards.
 
 ---
 
@@ -590,7 +581,6 @@ Cada fase entrega uma parte verificável e mantém a Livelo utilizável.
 
 Ordem obrigatória: o catálogo real entra antes do cadastro no site. A tela não deve aceitar nomes livres enquanto ainda não consegue oferecer uma loja identificada pela fonte.
 
-E-mail não faz parte dessas fases. Se for desejado depois, começa por medição e nova regra de negócio, não por reutilização automática do alerta da Livelo.
 
 ---
 
@@ -642,7 +632,6 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 | Área do Inter | `/inter` é o painel público e `/inter/lojas` é o cadastro protegido |
 | Navegação | O menu mostra “Livelo”, “Shopping Inter”, “Lojas Livelo” e, para usuário autenticado, “Lojas Inter” |
 | Comparação entre fontes | Não haverá conversão de pontos para reais nem ranking misto nesta versão |
-| E-mail | O Inter não envia e-mail na V3.0–V3.3 |
 | Primeiras favoritas | O banco começa sem favoritas do Inter; C&A e Riachuelo são selecionadas manualmente no roteiro de aceite |
 
 ### 15.2 Fonte e coleta
@@ -709,7 +698,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 |---|---|
 | Módulos | `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
 | Entrada | `python -m robo_livelo.principal_inter` (a partir de `backend/robo/`) |
-| API | `backend/api/lib/banco-inter.ts` (arquivada); antes em `site/lib/banco-inter.ts`, com rotas `/inter` e `/inter/lojas` |
+| API | `backend/api/lib/banco-inter.ts` ativo, usado pelas rotas em `backend/api/app/api/inter/**` |
 | Dependências | Nenhuma dependência Python ou npm nova; usar `requests`, `psycopg`, React e Neon já instalados |
 | Compartilhamento | Sessão, tema, componentes realmente genéricos e dispatch parametrizado podem ser reutilizados; modelos e regras da Livelo não |
 | Workflow | `inter.yml` tem `permissions: contents: read`, timeout de 10 minutos e recebe apenas `DATABASE_URL` |
@@ -721,7 +710,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 | Tema | Decisão fechada |
 |---|---|
 | Autenticação no Inter | Proibida; não existe segredo ou cookie do Banco Inter |
-| Escrita administrativa | Selecionar, remover e disparar exige a sessão atual do site |
+| Escrita administrativa | Selecionar, remover e disparar exige sessão administrativa na API |
 | Renderização | Conteúdo externo sempre como texto; `dangerouslySetInnerHTML` é proibido |
 | Página pública | Mostra somente favoritas, aviso de não afiliação e orientação para conferir a condição antes da compra |
 | Marca | Nenhum logo do Inter ou das lojas; o logo local atual pode permanecer sob o nome Radar de Benefícios |
@@ -740,9 +729,7 @@ Não restou decisão funcional ou técnica bloqueante. O gate foi executado nest
 
 ### 15.9 Registro de validação
 
-Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, Riachuelo e Magalu. A migração `migracoes/006_inter.sql` foi aplicada no Neon e a primeira execução terminou com `estado=sucesso`, 381 lojas no catálogo, zero favoritas e, consequentemente, zero snapshots de favoritas. A suíte fechou com 189 testes Python, 31 testes do site e 91,85% de cobertura Python. O build do Next.js confirmou as rotas dinâmicas `/inter` e `/inter/lojas`.
-
-O estado de publicação é separado do estado de implementação: até o código ser enviado à `main`, o workflow `inter.yml` e as páginas novas não estarão disponíveis no GitHub Actions e na Vercel. Qualquer mudança futura nas decisões fechadas desta seção exige atualizar este PRD antes do código correspondente.
+Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, Riachuelo e Magalu. A migração `migracoes/006_inter.sql` foi registrada como aplicada no Neon e a primeira execução terminou com `estado=sucesso`, 381 lojas no catálogo, zero favoritas e zero snapshots de favoritas. A validade operacional do ambiente deve ser confirmada antes de qualquer alteração de schema ou publicação.
 
 ---
 

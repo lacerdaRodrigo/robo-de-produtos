@@ -25,12 +25,17 @@ cria o `001` e carrega o catálogo.
 | `015_historico_catalogo_livelo.sql` | identidade da medição por parceiro e índice do histórico completo | Livelo |
 | `016_preserva_historico_livelo.sql` | separa acompanhamento da identidade histórica | Livelo |
 | `017_qualidade_livelo.sql` | registra RN29 sem substituir o último snapshot completo | Livelo |
+| `018_categorias_produtos_inter.sql` | taxonomia Radar e classificação auditável de categorias | Inter produtos (histórico) |
+| `019_classificacao_exata_categorias_produtos_inter.sql` | semeia somente mapeamentos por igualdade exata | Inter produtos (histórico) |
+| `020_categorias_inter_fonte_oficial.sql` | substitui a taxonomia Radar por categorias externas exatas do Inter | Inter produtos |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009` e `013`–`017` (coleta Livelo/Inter/produtos e histórico Livelo).
-- API do app: `010`–`017` (autenticação, disparos e catálogos).
+- Robôs: `001`–`009` e `013`–`020` (coleta Livelo/Inter/produtos, histórico e categorias).
+- API do app: `010`–`020` (autenticação, disparos e catálogos).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de
-> rodar uma migração ainda não aplicada (ex.: `009`, `011`, `016`, `017`).
+> rodar uma migração ainda não aplicada. O repositório não comprova o estado do
+> Neon: confira `docs/PENDENCIAS.md` e o ambiente alvo, especialmente antes da
+> `020`, que exige não haver seleção legada de categorias Radar.

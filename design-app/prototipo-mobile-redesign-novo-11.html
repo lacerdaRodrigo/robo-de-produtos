@@ -328,11 +328,6 @@
     .pagination button { min-width: 40px; height: 40px; border: 1px solid var(--radar-line); border-radius: 13px; background: var(--radar-paper); color: var(--radar-muted); font-weight: 700; }
     .pagination button.active { background: var(--radar-plum); color: #fff; }
 
-    .product-source { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; padding: 13px 14px; border: 1px solid var(--radar-line); border-radius: 18px; background: var(--radar-paper); box-shadow: var(--radar-shadow-soft); }
-    .product-source strong, .product-source small { display: block; }
-    .product-source strong { font-size: 11px; }
-    .product-source small { margin-top: 3px; color: var(--radar-muted); font-size: 9px; }
-    .product-source button { flex: 0 0 auto; min-height: 36px; padding: 0 11px; border: 1px solid var(--radar-line); border-radius: 12px; background: var(--radar-paper-soft); color: var(--radar-action-strong); font-size: 9px; font-weight: 800; }
     .catalog-notice { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 13px; padding: 11px 12px; border-radius: 14px; background: var(--radar-warning-soft); color: var(--radar-warning); font-size: 9px; line-height: 1.45; }
     .catalog-notice svg { flex: 0 0 auto; width: 16px; height: 16px; }
     .product-store-group { display: grid; gap: 8px; }
@@ -567,7 +562,6 @@
 
         <section class="page" data-page="products">
           <div class="page-heading"><p class="eyebrow">Compre direto</p><h1 class="page-title">Produtos</h1><p class="page-lead">Compare preços e cashback nos catálogos das lojas que você selecionou.</p></div>
-          <div class="product-source"><span><strong>Resultados das lojas selecionadas</strong><small>Altere a seleção dentro do Banco Inter</small></span><button type="button" data-open-direct-stores>Escolher lojas</button></div>
           <div class="toolbar">
             <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar produtos</span><input id="product-search" type="search" value="Motorola Edge 60 Pro" placeholder="Ex.: Motorola Edge 60 Pro"><button type="button" id="product-submit" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
           </div>
@@ -626,7 +620,7 @@
       const toast = document.getElementById('toast');
       let toastTimer;
       const liveloFilters = { category: 'all', order: 'name' };
-      const productFilters = { brand: '', category: '', store: 'all', minPrice: '', maxPrice: '' };
+      const productFilters = { store: 'all', minPrice: '', maxPrice: '' };
 
       const icons = {
         sun: '<svg><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
@@ -646,7 +640,7 @@
         'inter-amazon': ['Amazon', 'Ausência de percentual preservada', '<div class="detail-block"><p>O contrato informa “Ofertas disponíveis”, sem percentual numérico. A interface mantém ausência diferente de 0%.</p></div>'],
         'product-history': ['Histórico de preço', 'Motorola Edge 60 Pro · Casas Bahia', '<div class="metric-list"><div class="metric-line"><span>22 ago 2026</span><strong>R$ 3.688,89</strong></div><div class="metric-line"><span>21 ago 2026</span><strong>R$ 3.600,00</strong></div><div class="metric-line"><span>Mínimo no contrato</span><strong>R$ 3.500,00</strong></div><div class="metric-line"><span>Máximo no contrato</span><strong>R$ 4.000,00</strong></div></div><div class="detail-block"><p>O histórico é paginado e limitado à janela de 30 dias.</p></div>'],
         'livelo-filters': ['Filtrar todas as lojas', 'Refine o catálogo completo da Livelo', '<label class="field"><span>Categoria</span><select id="livelo-category"><option value="all">Todas as categorias</option><option value="marketplace">Marketplace</option><option value="beleza">Beleza</option><option value="viagem">Viagem</option></select></label><label class="field" style="margin-top:12px"><span>Ordenar por</span><select id="livelo-order"><option value="name">Nome da loja</option><option value="score">Maior pontuação</option></select></label><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-livelo-filters>Limpar</button><button class="primary" type="button" data-apply-livelo-filters>Ver lojas</button></div>'],
-        'product-filters': ['Filtrar resultados', 'Use somente os campos que ajudam nesta busca', '<label class="field"><span>Marca</span><input id="product-brand" placeholder="Ex.: Motorola"></label><label class="field" style="margin-top:12px"><span>Categoria</span><input id="product-category" placeholder="Ex.: Celular"></label><label class="field" style="margin-top:12px"><span>Loja</span><select id="product-store"><option value="all">Todas as lojas selecionadas</option><option value="casas-bahia">Casas Bahia</option><option value="ponto">Ponto</option></select></label><div class="price-filter-grid"><label class="field"><span>Preço mínimo</span><input id="product-min-price" inputmode="decimal" placeholder="R$ 0"></label><label class="field"><span>Preço máximo</span><input id="product-max-price" inputmode="decimal" placeholder="Sem limite"></label></div><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-product-filters>Limpar</button><button class="primary" type="button" data-apply-product-filters>Ver ofertas</button></div>'],
+        'product-filters': ['Filtros', 'Escolha a loja. Só a faixa de preço é editável.', '<label class="field"><span>Lojas selecionadas para coleta</span><select id="product-store"><option value="all">Todas as lojas selecionadas</option><option value="casas-bahia">Casas Bahia</option><option value="ponto">Ponto</option></select></label><div class="price-filter-grid"><label class="field"><span>Preço mínimo</span><input id="product-min-price" inputmode="decimal" placeholder="R$ 0"></label><label class="field"><span>Preço máximo</span><input id="product-max-price" inputmode="decimal" placeholder="Sem limite"></label></div><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-product-filters>Limpar</button><button class="primary" type="button" data-apply-product-filters>Ver ofertas</button></div>'],
         'admin-preferences': ['Preferências Livelo', 'GET/PATCH autorizado', '<label class="field"><span>Multiplicador padrão</span><input value="2"></label><label class="field" style="margin-top:12px"><span>Piso de pontos</span><input value="3"></label><button class="primary" style="width:100%;margin-top:14px" type="button" data-sheet-toast="Preferências salvas pelo PATCH existente.">Salvar preferências</button>'],
         'admin-inter': ['Seleções do Inter', 'Operações admin existentes', '<div class="sheet-actions"><button class="sheet-action" type="button" data-sheet-toast="Seleção de sites parceiros aberta."><span>✓</span><span>Sites parceiros</span><span>›</span></button><button class="sheet-action" type="button" data-sheet-toast="Seleção de lojas diretas aberta."><span>✓</span><span>Lojas do Compre direto</span><span>›</span></button></div>'],
         'admin-refresh': ['Solicitar atualização', 'Disparo administrativo idempotente', '<div class="sheet-actions"><button class="sheet-action" type="button" data-sheet-toast="Atualização Livelo solicitada."><span>↻</span><span>Livelo</span><span>›</span></button><button class="sheet-action" type="button" data-sheet-toast="Atualização de cashback solicitada."><span>↻</span><span>Cashback Inter</span><span>›</span></button><button class="sheet-action" type="button" data-sheet-toast="Atualização de produtos solicitada."><span>↻</span><span>Produtos Inter</span><span>›</span></button></div>']
@@ -664,8 +658,6 @@
           document.getElementById('livelo-order').value = liveloFilters.order;
         }
         if (name === 'product-filters') {
-          document.getElementById('product-brand').value = productFilters.brand;
-          document.getElementById('product-category').value = productFilters.category;
           document.getElementById('product-store').value = productFilters.store;
           document.getElementById('product-min-price').value = productFilters.minPrice;
           document.getElementById('product-max-price').value = productFilters.maxPrice;
@@ -818,8 +810,6 @@
         }
         const applyProductFilters = event.target.closest('[data-apply-product-filters]');
         if (applyProductFilters) {
-          productFilters.brand = document.getElementById('product-brand').value.trim();
-          productFilters.category = document.getElementById('product-category').value.trim();
           productFilters.store = document.getElementById('product-store').value;
           productFilters.minPrice = document.getElementById('product-min-price').value.trim();
           productFilters.maxPrice = document.getElementById('product-max-price').value.trim();
@@ -827,13 +817,13 @@
             showToast('Informe preços válidos, como 3500 ou 3500,50.');
             return;
           }
-          const active = productFilters.brand || productFilters.category || productFilters.store !== 'all' || productFilters.minPrice || productFilters.maxPrice;
+          const active = productFilters.store !== 'all' || productFilters.minPrice || productFilters.maxPrice;
           document.getElementById('product-filter-trigger').classList.toggle('has-filter', Boolean(active));
           searchProducts(); closeSheet(); showToast('Resultados atualizados com seus filtros.');
         }
         const clearProductFilters = event.target.closest('[data-clear-product-filters]');
         if (clearProductFilters) {
-          Object.assign(productFilters, { brand: '', category: '', store: 'all', minPrice: '', maxPrice: '' });
+          Object.assign(productFilters, { store: 'all', minPrice: '', maxPrice: '' });
           document.getElementById('product-filter-trigger').classList.remove('has-filter');
           searchProducts(); closeSheet(); showToast('Filtros removidos.');
         }
@@ -890,16 +880,12 @@
       }
       function searchProducts() {
         const q = normalizeText(productSearch.value);
-        const brand = normalizeText(productFilters.brand);
-        const category = normalizeText(productFilters.category);
         const minPrice = parsePrice(productFilters.minPrice);
         const maxPrice = parsePrice(productFilters.maxPrice);
         let visible = 0;
         document.querySelectorAll('[data-product]').forEach(card => {
           const price = Number(card.dataset.price);
           const show = q.length >= 2 && normalizeText(card.dataset.product).includes(q) &&
-            (!brand || normalizeText(card.dataset.brand).includes(brand)) &&
-            (!category || normalizeText(card.dataset.category).includes(category)) &&
             (productFilters.store === 'all' || card.dataset.store === productFilters.store) &&
             (minPrice === null || price >= minPrice) && (maxPrice === null || price <= maxPrice);
           card.classList.toggle('hidden', !show);

@@ -1,9 +1,12 @@
-# Plano de ação — Categorias do Shopping Inter como fonte oficial
+# PRD — Categorias do Shopping Inter como fonte oficial
 
-> **STATUS: AGUARDANDO REVISÃO DO RESPONSÁVEL**
->
-> Este documento registra a decisão tomada em 04/09/2026 após validação real do robô e do banco.
-> **Não autoriza implementação automática.** A execução deste plano só deve começar após revisão e aprovação explícita.
+**Status vigente em 2026-09-04:** regra implementada no robô, API e Flutter.
+A migration `020_categorias_inter_fonte_oficial.sql` permanece pendente de
+validação em ambiente descartável e de autorização explícita antes de aplicação.
+
+Este PRD detalha o contrato de categorias externas do Shopping Inter. Ele
+prevalece sobre qualquer descrição anterior de taxonomia interna de categorias
+de produtos.
 
 ## 1. Objetivo
 

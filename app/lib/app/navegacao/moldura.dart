@@ -51,7 +51,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
   var _atualizandoResumoCabecalho = false;
-  var _entradaCompreDireto = 0;
 
   void _selecionar(Destino destino) {
     if (_selecionado == destino) return;
@@ -63,14 +62,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     setState(() {
       _visitadosCompactos.add(destino);
       _selecionadoCompacto = destino;
-    });
-  }
-
-  void _escolherLojasParaProdutos() {
-    setState(() {
-      _entradaCompreDireto++;
-      _visitadosCompactos.add(DestinoCompacto.inter);
-      _selecionadoCompacto = DestinoCompacto.inter;
     });
   }
 
@@ -155,12 +146,11 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             chaveVoltar: const Key('voltar-programas-inter'),
             aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
             child: PaginaHubShoppingInter(
-              key: PageStorageKey('inter-compacto-$_entradaCompreDireto'),
+              key: const PageStorageKey('inter-compacto'),
               api: widget.api,
               administrador: widget.administrador,
               experienciaCompacta: true,
               ativa: _selecionadoCompacto == DestinoCompacto.inter,
-              abrirEmCompreDireto: _entradaCompreDireto > 0,
             ),
           )
         : const SizedBox.shrink(),
@@ -171,7 +161,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             administrador: widget.administrador,
             incorporada: true,
             experienciaCompacta: true,
-            aoEscolherLojas: _escolherLojasParaProdutos,
           )
         : const SizedBox.shrink(),
   ];

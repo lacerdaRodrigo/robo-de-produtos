@@ -1,7 +1,7 @@
 # PRD — Administração (Limpeza por domínio)
 
-**Versão:** V5.0 — planejamento  
-**Status:** implementado na API e no app Flutter; aceite destrutivo em banco descartável pendente
+**Versão:** V5.0 — implementado
+**Status vigente em 2026-09-04:** implementado na API e no Flutter; aceite destrutivo em banco descartável pendente.
 
 > A V5 adiciona uma operação administrativa destrutiva ao Radar de Benefícios. Ela não coleta uma nova fonte e não muda as regras dos robôs: permite apagar separadamente os dados da Livelo ou resetar todos os dados do Shopping Inter, sempre dentro da área autenticada.
 
@@ -52,7 +52,7 @@ O objetivo é permitir recomeçar uma integração sem apagar autenticação, pr
 | ID | Requisito |
 |---|---|
 | RF50 | Mostrar em Configurações ações separadas para Livelo e Inter |
-| RF51 | Exigir sessão na confirmação e na Server Action |
+| RF51 | Exigir sessão na confirmação e no endpoint autenticado da API |
 | RF52 | Mostrar contagens do domínio antes da confirmação |
 | RF53 | Exigir APAGAR LIVELO ou RESETAR INTER, conforme o fluxo |
 | RF54 | Executar cada limpeza como transação única, com rollback em falha |
@@ -112,7 +112,7 @@ A página existente passa a ter uma Zona de perigo com:
 
 Cada botão aponta para uma página protegida de confirmação. O formulário usa HTML nativo e funciona sem JavaScript. A confirmação informa domínio, contagens, consequências e ausência de backup, além de campo de frase e Cancelar.
 
-A validação é repetida na Server Action. A frase não vem de campo oculto e o domínio não é aceito livremente do navegador.
+A validação é repetida no endpoint autenticado da API. A frase não vem de campo oculto e o domínio não é aceito livremente pelo cliente.
 
 - Sucesso retorna a Configurações com faixa de confirmação.
 - Falha de banco faz rollback e mostra mensagem genérica.
@@ -123,7 +123,7 @@ A validação é repetida na Server Action. A frase não vem de campo oculto e o
 
 | Regra | Decisão |
 |---|---|
-| Autorização | Sessão administrativa exigida na página e na action |
+| Autorização | Sessão administrativa exigida no cliente e no endpoint da API |
 | Confirmação | Frase específica por domínio, validada no servidor |
 | Escopo SQL | Lista fixa de tabelas; sem cascade genérico |
 | Atomicidade | Uma transação por botão; falha não deixa parcial |

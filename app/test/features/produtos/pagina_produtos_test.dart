@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -86,6 +87,64 @@ Api _apiCategorias() => Api(
               {'valor': 'Cabos', 'nome': 'Cabos', 'selecionada': false},
               {'valor': null, 'nome': 'Sem categoria', 'selecionada': false},
             ],
+          }),
+          200,
+        );
+      }
+      return http.Response('{}', 500);
+    }),
+  ),
+);
+
+Api _apiFiltros() => Api(
+  paginaPadrao: 20,
+  cliente: ClienteApi(
+    baseUrl: 'http://localhost:3000',
+    provedorToken: () async => 'token-teste',
+    cliente: http_testing.MockClient((requisicao) async {
+      if (requisicao.url.path == '/api/inter/produtos/categorias') {
+        return http.Response(
+          jsonEncode({
+            'configurada': true,
+            'itens': [
+              {
+                'valor': 'Eletrônicos',
+                'nome': 'Eletrônicos',
+                'selecionada': false,
+              },
+              {'valor': 'Cabos', 'nome': 'Cabos', 'selecionada': false},
+              {'valor': null, 'nome': 'Sem categoria', 'selecionada': false},
+            ],
+          }),
+          200,
+        );
+      }
+      if (requisicao.url.path == '/api/inter/produtos/lojas') {
+        return http.Response(
+          jsonEncode({
+            'itens': [
+              {
+                'id': 'direta-1',
+                'id_externo': 'casas-bahia',
+                'slug': 'casas-bahia',
+                'nome': 'Casas Bahia',
+                'selecionada': true,
+                'ativa': true,
+              },
+              {
+                'id': 'direta-2',
+                'id_externo': 'ponto',
+                'slug': 'ponto',
+                'nome': 'Ponto',
+                'selecionada': true,
+                'ativa': true,
+              },
+            ],
+            'pagina': 1,
+            'por_pagina': 20,
+            'total_itens': 2,
+            'total_paginas': 1,
+            'tem_proxima': false,
           }),
           200,
         );
@@ -320,9 +379,11 @@ void main() {
     );
   });
 
-  testWidgets('filtros são aplicados e erro inicial oferece retry', (at) async {
+  testWidgets('filtros usam lojas selecionadas e só editam preços', (at) async {
     var chamadas = 0;
     String? marcaRecebida;
+    String? categoriaRecebida;
+    String? lojaRecebida;
     final controlador = ControladorBuscaProdutos(
       debounce: Duration.zero,
       buscar:
@@ -338,13 +399,24 @@ void main() {
           }) async {
             chamadas++;
             marcaRecebida = marca;
+            categoriaRecebida = categoria;
+            lojaRecebida = loja;
             if (chamadas == 1) throw StateError('sem rede');
             return _pagina([_produto()]);
           },
     );
     addTearDown(controlador.dispose);
 
-    await at.pumpWidget(_tela(controlador));
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaProdutos(
+          api: _apiFiltros(),
+          controlador: controlador,
+          administrador: true,
+        ),
+      ),
+    );
     await at.enterText(find.byType(TextField).first, 'edge');
     await at.pumpAndSettle();
     expect(
@@ -356,11 +428,31 @@ void main() {
     await at.pumpAndSettle();
     await at.tap(find.text('Filtros'));
     await at.pumpAndSettle();
-    await at.enterText(find.byType(TextField).at(1), 'Motorola');
+    expect(find.text('Marca'), findsNothing);
+    expect(find.text('Loja (slug)'), findsNothing);
+    expect(find.text('2 para coleta'), findsOneWidget);
+    expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-loja-ponto')), findsOneWidget);
+    expect(
+      at
+          .widget<ChoiceChip>(find.byKey(const Key('filtro-loja-ponto')))
+          .selectedColor,
+      Colors.white,
+    );
+    await at.tap(find.byKey(const Key('filtro-loja-ponto')));
+    await at.enterText(find.byKey(const Key('filtro-preco-minimo')), '100');
+    await at.enterText(find.byKey(const Key('filtro-preco-maximo')), '500');
+    await at.scrollUntilVisible(
+      find.text('Aplicar filtros'),
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
     await at.tap(find.text('Aplicar filtros'));
     await at.pumpAndSettle();
 
-    expect(marcaRecebida, 'Motorola');
+    expect(marcaRecebida, isNull);
+    expect(categoriaRecebida, isNull);
+    expect(lojaRecebida, 'ponto');
     expect(find.text('Filtros ativos'), findsOneWidget);
 
     await at.tap(find.text('Limpar filtros'));
@@ -435,7 +527,6 @@ void main() {
   testWidgets('busca compacta segue o protótipo e usa o catálogo local', (
     at,
   ) async {
-    var escolheuLojas = false;
     final controlador = ControladorBuscaProdutos(
       debounce: Duration.zero,
       buscar:
@@ -462,7 +553,6 @@ void main() {
             incorporada: true,
             experienciaCompacta: true,
             administrador: true,
-            aoEscolherLojas: () => escolheuLojas = true,
           ),
         ),
       ),
@@ -471,6 +561,8 @@ void main() {
 
     expect(find.text('O que você procura?'), findsOneWidget);
     expect(find.text('Todas selecionadas'), findsOneWidget);
+    expect(find.text('Escolher lojas'), findsNothing);
+    expect(find.text('+ escolher lojas'), findsNothing);
     expect(find.text('Atualizar Produtos'), findsNothing);
     await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
     await at.pumpAndSettle();
@@ -488,9 +580,6 @@ void main() {
     expect(precoLiquido, findsOneWidget);
     expect(find.text('R\$ 3.356,89'), findsOneWidget);
     expect(find.text('Ver no Inter'), findsOneWidget);
-
-    await at.tap(find.text('+ escolher lojas'));
-    expect(escolheuLojas, isTrue);
   });
 
   testWidgets(
@@ -619,6 +708,116 @@ void main() {
     );
     await at.pump();
     expect(at.takeException(), isNull);
+  });
+
+  testWidgets('filtros compactos acomodam opções de loja em 320 px', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _apiFiltros(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+            administrador: true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Filtros'));
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-loja-ponto')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-categoria-todas')), findsNothing);
+    expect(at.getSize(find.byType(BottomSheet)).height, lessThanOrEqualTo(320));
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('trocar filtro preserva os cards durante a nova consulta', (
+    at,
+  ) async {
+    final respostaSeguinte = Completer<Pagina<ProdutoDireto>>();
+    var chamadas = 0;
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) {
+            chamadas++;
+            if (chamadas == 1) return Future.value(_pagina([_produto()]));
+            return respostaSeguinte.future;
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    await at.scrollUntilVisible(
+      find.text('Motorola Edge 60 Pro'),
+      120,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('produtos-compacto')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+
+    controlador.mudarFiltros(const FiltrosProdutos(loja: 'ponto'));
+    await at.pump();
+    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+
+    respostaSeguinte.complete(_pagina([_produto(loja: 'Ponto')]));
+    await at.pumpAndSettle();
+    expect(find.text('Ponto'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('tela larga mantém cartões de produtos em duas colunas', (

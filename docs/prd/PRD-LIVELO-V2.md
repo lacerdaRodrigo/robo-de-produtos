@@ -1,9 +1,9 @@
-# PRD — Livelo V2 (delta: validade, e-mail, banco)
+# PRD — Livelo V2 (validade, catálogo e preferências)
 
 **Versão:** v2.x (documento vivo)
-**Status:** V2.0 a V2.3 publicadas. O ciclo de catálogo completo está publicado: a migração `013` está no Neon, a API está no ar e a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável. V2.4 (e-mail condicional/RF16) segue planejada.
+**Status vigente em 2026-09-04:** V2.0 a V2.3 implementadas no robô, Postgres, API autenticada e Flutter. O ciclo de catálogo completo e a migration `013` estão publicados; a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável.
 
-> A V2 deixou de ser um front estático de leitura. Passou a incluir **site próprio com edição, backend, autenticação e banco de dados** — o que derruba a premissa "sem servidor" da V1. A mudança é deliberada e está justificada na Seção 7.3.
+> A V2 define o catálogo persistido, campanhas, preferências e o cliente Flutter autenticado. O aplicativo consome a API; não consulta a Livelo nem o Postgres diretamente.
 
 Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**, que segue valendo como fonte da verdade de tudo que não for redefinido aqui. Onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
 
@@ -11,25 +11,13 @@ Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**, que segu
 
 ## 1. Contexto
 
-A V1.0 entregou o caminho fim a fim: lê 254 parceiros, filtra 132 favoritas, envia e-mail 3x ao dia. Rodou em produção e funciona.
+A coleta Livelo lê parceiros públicos, aplica a régua configurada e persiste o retrato completo para consumo da API e do aplicativo.
 
 Três coisas apareceram depois:
 
 **A validade da promoção estava ao alcance da mão.** A V1 excluiu esse dado acreditando que custaria ~40 requisições extras. Falso: a página embute um payload JSON com `dateStart` e `dateEnd` por parceiro. Na medição de 2026-08-09, **31 das 40 promoções terminavam naquele mesmo dia** — sem essa informação, o e-mail diz "Sam's Club com 84 pontos" e não diz se restam 6 horas ou 3 semanas.
 
-**O e-mail é um formato apertado para o catálogo que cresceu.** Com 132 lojas, o e-mail responde bem "o que está turbinado agora?" mas não responde "quanto a Renner dá mesmo?". Essa segunda pergunta hoje obriga a abrir a página da Livelo, o que fere O1 diretamente.
-
-**Três e-mails por dia produzem fadiga.** RF10 manda em toda execução, inclusive nos dias vazios. A V1 aceitou esse custo porque era o único jeito de manter O3 de pé: sem e-mail nenhum, "não tem promoção" e "o robô morreu" ficariam indistinguíveis, e C01 desabilita o cron em silêncio.
-
-### 1.1 A dependência entre os três
-
-O terceiro item **não pode ser resolvido sozinho**. Ele só se torna seguro por causa do segundo:
-
-> A página carrega um carimbo de última atualização. Com ela publicada, o silêncio do e-mail deixa de ser ambíguo — basta abrir a página para saber se o robô continua vivo. **O front é o que autoriza o e-mail condicional.**
-
-Implementar o e-mail condicional sem a página seria reabrir o buraco que a V1 fechou de propósito.
-
----
+O catálogo persistido permite consultar pontuação, campanha, validade e histórico sem abrir a página da Livelo.
 
 ## 2. Objetivos novos
 
@@ -37,7 +25,6 @@ Implementar o e-mail condicional sem a página seria reabrir o buraco que a V1 f
 |---|---|
 | **O5** | Responder "quanto essa loja dá hoje?" sem abrir o site da Livelo — completa O1, que a V1 só atendeu pela metade |
 | **O6** | Saber quanto tempo resta para aproveitar uma promoção |
-| **O7** | Receber e-mail apenas quando houver algo a fazer |
 
 O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonstrável que um repositório.
 
@@ -50,10 +37,9 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 - Extração a partir do **payload JSON** da página, em vez do texto renderizado dos cards.
 - Data de início e fim da promoção, com destaque para o que termina hoje.
 - Distinção entre promoção de pontuação base e promoção exclusiva do Clube Livelo.
-- **Site próprio, com backend e autenticação**, onde as lojas favoritas e os limiares de alerta são consultados **e editados**.
+- **Aplicativo Flutter, API autenticada e Postgres**, onde as lojas acompanhadas e os limiares de alerta são consultados e editados.
 - **Banco de dados Postgres** como fonte da configuração, substituindo o arquivo TOML.
 - **Novo critério de alerta**: múltiplo da pontuação base com piso absoluto — ver Seção 6.1.
-- E-mail enviado somente quando alguma favorita cruzar o próprio limiar.
 
 ### 3.2 Fora
 
@@ -371,26 +357,65 @@ Configuração nova: `assinante_clube`, padrão `false`, agora na tabela de pref
 
 ## 9. Segurança, privacidade e legal
 
-### 9.0 Autenticação do site
+### 9.0 Autenticação da API e App Check
 
-Decisão tomada: **senha única**, guardada como variável de ambiente na Vercel, sem cadastro nem tabela de usuários.
+Toda rota de dados usa token Firebase no cabeçalho `Authorization: Bearer`.
+App Check é uma segunda prova de integridade do aplicativo: **não substitui**
+identidade, sessão, papel administrativo, rate limit ou auditoria da API.
 
-O trade-off foi apresentado e aceito: senha compartilhada é credencial de vida longa, sem segundo fator e sem revogação individual. Quatro medidas obrigatórias, porque neste desenho quem entra no site altera o que o robô faz:
+#### Providers por plataforma
 
-| Medida | Motivo |
-|---|---|
-| Senha longa e aleatória, nunca no código nem no repositório | O repositório é público |
-| Limite de tentativas de login | Sem isso, senha única cai por força bruta |
-| Cookie de sessão `httpOnly` e `secure`, só sobre HTTPS | Impede leitura por script e trânsito em claro |
-| Credenciais do banco só no servidor, nunca no navegador | O front nunca fala direto com o Postgres |
+| Plataforma | Debug | Profile/release |
+|---|---|---|
+| Android | `AndroidDebugProvider` | `AndroidPlayIntegrityProvider` |
+| iOS | `AppleDebugProvider` | `AppleAppAttestWithDeviceCheckFallbackProvider` |
 
-**Leitura pública, edição protegida.** Quem tem a URL vê as promoções; só quem tem a senha altera.
+Build sem `FirebaseOptions` não tenta inicializar Firebase ou App Check; o
+Flutter apresenta o estado de configuração pendente. No Android e iOS, o
+provider é ativado somente quando `ATIVAR_APP_CHECK=true` foi recebido por
+`--dart-define`.
 
-### 9.1 A página é pública
+#### Controles independentes
 
-Publicada em repositório público, é acessível a quem tiver a URL. O conteúdo é pontuação pública da Livelo, **não há dado pessoal** — nenhum e-mail, nenhum identificador. O que a página revela é a lista de lojas favoritas, ou seja, preferência de compra. Avaliado e aceito.
+| Camada | Controle | Efeito de `false`/ausente | Efeito de `true` |
+|---|---|---|---|
+| Flutter | `ATIVAR_APP_CHECK` | Não pede nem envia token App Check | Ativa o provider e acrescenta `x-firebase-appcheck` às requisições autenticadas |
+| API | `EXIGIR_APP_CHECK` | Mantém App Check em rollout, mas Firebase Auth continua obrigatório | Exige e valida `x-firebase-appcheck` antes do token de identidade |
 
-**RN18 continua valendo:** o endereço de e-mail nunca aparece na página, como nunca apareceu no log.
+O SDK injeta token automaticamente apenas em serviços Firebase compatíveis. A
+API deste projeto é HTTP própria; por isso o `ClienteApi` obtém `getToken()` e
+envia o cabeçalho explicitamente. Token ausente ou inválido sob enforcement
+retorna `401` com código estruturado `app-check` e é auditado como negação.
+
+#### Segredos e fronteiras
+
+`FIREBASE_PROJECT_ID` e `FIREBASE_SERVICE_ACCOUNT_JSON` (ou Application
+Default Credentials) pertencem exclusivamente ao servidor. Nenhum desses
+valores, token de debug ou credencial Firebase entra no Flutter, em arquivo
+versionado ou em log. A API só carrega `firebase-admin/app-check` quando o
+rollout exige a validação.
+
+#### Desenvolvimento e rollout
+
+1. Em Android local, usar `make dev-app-check API_URL=<api-de-teste>` em
+   `app/`; aparelho físico requer uma URL acessível pelo aparelho.
+2. Cadastrar no Firebase Console o token produzido pelo provider de debug,
+   mantendo-o fora do repositório.
+3. Distribuir builds com `ATIVAR_APP_CHECK=true` e manter
+   `EXIGIR_APP_CHECK=false` enquanto são observadas requisições válidas.
+4. Registrar Play Integrity para Android e App Attest, com fallback DeviceCheck,
+   para iOS antes de distribuir esses builds.
+5. Só então habilitar externamente `EXIGIR_APP_CHECK=true` e validar token
+   válido, token inválido e ausência de token no ambiente alvo.
+
+O enforcement de produtos Firebase no Console é independente do gate da API e
+só pode ser ativado após o rollout de clientes válidos.
+
+### 9.1 Privacidade do cliente
+
+O Flutter acessa somente a API autenticada. Preferências de acompanhamento são
+dados de produto protegidos por autorização; credenciais, tokens, URLs de banco
+e detalhes internos de erro não são exibidos pelo aplicativo.
 
 ### 9.2 Logotipos de parceiros
 

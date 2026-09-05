@@ -1,49 +1,53 @@
 # Roteamento de modelos do Codex
 
-Status: regra operacional deste projeto.
+**Status:** regra de apoio do projeto, atualizada em 2026-09-04 a partir da
+[documentação oficial de modelos da OpenAI](https://developers.openai.com/api/docs/models).
+Não é um PRD do Radar de Benefícios e não substitui instruções da sessão,
+permissões, skills ou pedidos explícitos do responsável.
 
-## Regra obrigatória
+## Regra operacional
 
-Antes de alterar código, documento, teste, configuração ou workflow, o assistente classifica a tarefa, escolhe automaticamente o modelo e o esforço adequados e informa essa escolha. A alteração começa sem confirmação manual adicional.
+Antes de uma alteração, classifique o risco e a abrangência para decidir o
+nível de análise. Use somente modelos e níveis de esforço disponíveis na sessão;
+este arquivo não autoriza trocar modelo, publicar, migrar produção, excluir
+dados, enviar mensagens ou executar outra ação externa.
 
-Leitura, busca e diagnóstico sem modificar arquivos podem acontecer antes da classificação. Se a tarefa mudar de escopo, a recomendação deve ser refeita. A execução automática não autoriza publicação, migração de produção, exclusão, envio real ou outra ação externa relevante.
+Leitura e diagnóstico sem escrita podem preceder a classificação. Quando o
+escopo mudar, classifique novamente e informe a escolha quando o ambiente
+permitir essa seleção.
 
-## Modelos
+## Modelos atuais
 
-| Modelo | Papel simples | Quando usar neste projeto |
-| --- | --- | --- |
-| **GPT-5.6 Luna** | Econômico e rápido. | Mudança visual óbvia, texto curto, busca pontual e ajuste isolado. |
-| **GPT-5.6 Terra** | Equilíbrio entre qualidade e custo. | Padrão para documentação importante, bug localizado, testes e feature de tamanho médio. |
-| **GPT-5.6 Sol** | Maior capacidade para trabalho complexo. | Arquitetura, integração externa, banco de dados, segurança e implementação da V3 do Shopping Inter. |
-| **GPT-5.5 / GPT-5.4** | Gerações anteriores. | Use apenas se o ambiente exigir compatibilidade ou para comparar resultado; prefira a família 5.6 em tarefas novas. |
-| **Mini / Nano / “Lua”** | Nomes antigos ou apelidos do seletor. | Se “Lua” aparecer, trate como **Luna** até o seletor indicar outro nome técnico. Para tarefas novas, prefira Luna/Terra/Sol. |
+| Modelo | Uso recomendado |
+|---|---|
+| **GPT-6 Astra** | Trabalho de ponta a ponta especialmente difícil, com raciocínio ou código complexos. Use quando estiver disponível e o custo/latência se justificarem. |
+| **GPT-5.6 Sol** | Trabalho profissional complexo: arquitetura, segurança, integrações e alterações que cruzam subsistemas. |
+| **GPT-5.6 Terra** | Padrão equilibrado para documentação relevante, bug localizado, testes e feature de tamanho médio. |
+| **GPT-5.6 Luna** | Tarefa bem delimitada, alto volume ou sensível a custo: busca pontual, texto curto e ajuste mecânico. |
+| **GPT-5.5 ou anterior** | Apenas compatibilidade ou comparação quando for a única opção exposta pelo ambiente; não é o padrão para trabalho novo. |
 
-## Níveis de esforço
+O catálogo oficial classifica Astra como o modelo mais capaz para raciocínio e
+código complexos; Sol como modelo profissional complexo; Terra como equilíbrio
+entre inteligência e custo; e Luna para volume sensível a custo.
 
-| Esforço | Uso recomendado |
-| --- | --- |
-| **none** | Resposta direta, sem análise ou ferramenta. Raro para mudanças no projeto. |
-| **low** | Alteração óbvia e localizada, como cor, texto ou espaçamento. |
-| **medium** | Ponto de partida equilibrado: documentação relevante, ajuste com leitura prévia ou teste simples. |
-| **high** | Bug com causa incerta, feature média ou mudança que cruza mais de um arquivo. |
-| **xhigh** | Plano técnico, arquitetura, integração externa ou vários subsistemas. |
-| **max** | Caso crítico com qualidade acima de custo e latência; usar apenas quando xhigh não bastar. |
+## Nível de esforço
 
-## Cola rápida de decisão
+| Esforço | Quando usar |
+|---|---|
+| **low** | Alteração óbvia e isolada. |
+| **medium** | Ponto de partida para documentação relevante, ajuste com leitura prévia ou teste simples. |
+| **high** | Bug de causa incerta, feature média ou mais de um arquivo/subsistema. |
+| **xhigh / max** | Arquitetura, banco, segurança, integração externa ou situação excepcionalmente crítica. Use o maior nível só quando a incerteza justificar. |
 
-| Tarefa | Modelo | Esforço |
-| --- | --- | --- |
-| Trocar cor, texto, margem ou um link conhecido | Luna | low |
-| Encontrar o local certo e fazer uma pequena alteração | Luna | medium |
-| Atualizar regra importante da documentação | Terra | medium |
-| Corrigir bug com teste | Terra | medium ou high |
-| Criar feature em um subsistema | Terra | high |
-| Planejar a V3 do Shopping Inter | Sol | xhigh |
-| Implementar a V3 do Shopping Inter | Sol | high ou xhigh |
-| Alterar banco, workflow, segurança ou integração externa sensível | Sol | xhigh; max só se necessário |
+## Atalho de classificação
 
-## Atalho para classificar
+| Tarefa | Perfil sugerido |
+|---|---|
+| Texto, link, espaçamento ou busca conhecida | Luna / low |
+| Pequena alteração após localizar o arquivo | Luna ou Terra / medium |
+| Regra de documentação, bug com teste ou widget | Terra / medium ou high |
+| Feature de domínio, API, banco, workflow ou segurança | Sol / high ou xhigh |
+| Problema de ponta a ponta sem solução clara | Astra, se disponível / xhigh ou max |
 
-Comece pelo caso mais barato e aumente um nível quando houver arquivo incerto, teste quebrado, mais de um subsistema, API externa, banco de dados, workflow ou segurança. Não escolha o maior esforço por padrão: compare o resultado e o custo em tarefas parecidas.
-
-Fontes: [guia oficial de modelos](https://developers.openai.com/api/docs/guides/latest-model) e [catálogo oficial](https://developers.openai.com/api/docs/models). A documentação oficial recomenda Luna para volume sensível a custo, Terra para equilíbrio e Sol para capacidade de fronteira; `medium` é o início equilibrado e `max` fica reservado aos casos mais difíceis.
+Comece no menor perfil que cubra a incerteza real e aumente somente quando a
+investigação revelar mais risco, integrações ou superfícies afetadas.
