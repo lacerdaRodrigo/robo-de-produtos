@@ -525,13 +525,26 @@ void main() {
     final selecionar = find.byKey(
       const ValueKey('selecionar-loja-direta-amazon'),
     );
-    await at.ensureVisible(selecionar);
+    final rolagemCompreDireto = find
+        .ancestor(of: selecionar, matching: find.byType(Scrollable))
+        .first;
+    await at.scrollUntilVisible(
+      selecionar,
+      180,
+      scrollable: rolagemCompreDireto,
+    );
     await at.pumpAndSettle();
     await at.tap(selecionar);
     await at.pumpAndSettle();
     expect(find.text('Não selecionada'), findsOneWidget);
     expect(find.text('Selecionar loja'), findsOneWidget);
-    await at.ensureVisible(selecionar);
+    ScaffoldMessenger.of(at.element(selecionar)).hideCurrentSnackBar();
+    await at.pumpAndSettle();
+    await at.scrollUntilVisible(
+      selecionar,
+      180,
+      scrollable: rolagemCompreDireto,
+    );
     await at.pumpAndSettle();
     await at.tap(selecionar);
     await at.pumpAndSettle();
