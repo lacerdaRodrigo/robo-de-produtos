@@ -43,6 +43,8 @@ class ControladorPainelLivelo extends ChangeNotifier {
   String? _atualizadoEm;
   int _totalItens = 0;
   int _paginaAtual = 0;
+  int _porPagina = 10;
+  int _totalPaginas = 1;
   bool _temProxima = false;
   bool _carregandoInicial = false;
   bool _carregandoMais = false;
@@ -55,6 +57,9 @@ class ControladorPainelLivelo extends ChangeNotifier {
   String? get atualizadoEm => _atualizadoEm;
   int get totalItens => _totalItens;
   bool get temProxima => _temProxima;
+  int get pagina => _paginaAtual == 0 ? 1 : _paginaAtual;
+  int get porPagina => _porPagina;
+  int get totalPaginas => _totalPaginas;
   bool get carregandoInicial => _carregandoInicial;
   bool get carregandoMais => _carregandoMais;
   Object? get erroInicial => _erroInicial;
@@ -111,6 +116,40 @@ class ControladorPainelLivelo extends ChangeNotifier {
     }
   }
 
+  /// Busca a página selecionada e substitui os cards exibidos.
+  Future<void> irParaPagina(int pagina) async {
+    if (_carregandoInicial ||
+        _carregandoMais ||
+        pagina < 1 ||
+        pagina > _totalPaginas ||
+        pagina == _paginaAtual) {
+      return;
+    }
+    final versao = _versaoDaConsulta;
+    _carregandoMais = true;
+    _erroMais = null;
+    notifyListeners();
+    try {
+      final resposta = await buscar(
+        q: _busca,
+        ordenar: _ordenacao.codigo,
+        pagina: pagina,
+      );
+      if (_ativa(versao)) {
+        _itens.clear();
+        _nomesCarregados.clear();
+        _aplicarPagina(resposta);
+      }
+    } catch (erro) {
+      if (_ativa(versao)) _erroMais = erro;
+    } finally {
+      if (_ativa(versao)) {
+        _carregandoMais = false;
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> _reiniciarECarregar() async {
     _temporizador?.cancel();
     _limparParaNovaConsulta();
@@ -125,6 +164,8 @@ class ControladorPainelLivelo extends ChangeNotifier {
     _atualizadoEm = null;
     _totalItens = 0;
     _paginaAtual = 0;
+    _porPagina = 10;
+    _totalPaginas = 1;
     _temProxima = false;
     _carregandoInicial = true;
     _carregandoMais = false;
@@ -166,6 +207,8 @@ class ControladorPainelLivelo extends ChangeNotifier {
     }
     _paginaAtual = pagina.pagina;
     _totalItens = pagina.totalItens;
+    _porPagina = pagina.porPagina;
+    _totalPaginas = pagina.totalPaginas;
     _temProxima = pagina.temProxima;
     _atualizadoEm = pagina.atualizadoEm;
     _erroMais = null;

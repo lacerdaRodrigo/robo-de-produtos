@@ -29,6 +29,8 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
   int _versao = 0;
   int _pagina = 0;
   int _total = 0;
+  int _porPagina = 10;
+  int _totalPaginas = 1;
   bool _temProxima = false;
   bool _carregandoInicial = false;
   bool _carregandoMais = false;
@@ -37,7 +39,10 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
 
   List<T> get itens => List<T>.unmodifiable(_itens);
   String get busca => _busca;
+  int get pagina => _pagina == 0 ? 1 : _pagina;
   int get total => _total;
+  int get porPagina => _porPagina;
+  int get totalPaginas => _totalPaginas;
   bool get temProxima => _temProxima;
   bool get carregandoInicial => _carregandoInicial;
   bool get carregandoMais => _carregandoMais;
@@ -54,6 +59,8 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
     _itens.clear();
     _pagina = 0;
     _total = 0;
+    _porPagina = 10;
+    _totalPaginas = 1;
     _temProxima = false;
     _erroInicial = null;
     _erroMais = null;
@@ -71,6 +78,8 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
     _itens.clear();
     _pagina = 0;
     _total = 0;
+    _porPagina = 10;
+    _totalPaginas = 1;
     _temProxima = false;
     _erroInicial = null;
     _erroMais = null;
@@ -89,6 +98,31 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
     try {
       final resposta = await buscar(q: _busca, pagina: _pagina + 1);
       if (_ativa(versao)) _adicionar(resposta);
+    } catch (erro) {
+      if (_ativa(versao)) _erroMais = erro;
+    } finally {
+      if (_ativa(versao)) {
+        _carregandoMais = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Substitui a página atual, sem acumular cartões de páginas anteriores.
+  Future<void> irParaPagina(int destino) async {
+    if (destino < 1 || destino > _totalPaginas) return;
+    if (_carregandoInicial || _carregandoMais || destino == _pagina) return;
+    _carregandoMais = true;
+    _erroMais = null;
+    notifyListeners();
+    final versao = _versao;
+    try {
+      final resposta = await buscar(q: _busca, pagina: destino);
+      if (!_ativa(versao)) return;
+      _itens
+        ..clear()
+        ..addAll(_semDuplicatas(resposta.itens));
+      _aplicarMetadados(resposta);
     } catch (erro) {
       if (_ativa(versao)) _erroMais = erro;
     } finally {
@@ -127,9 +161,7 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
       _itens
         ..clear()
         ..addAll(_semDuplicatas(resposta.itens));
-      _pagina = resposta.pagina;
-      _total = resposta.totalItens;
-      _temProxima = resposta.temProxima;
+      _aplicarMetadados(resposta);
     } catch (erro) {
       if (_ativa(versao)) _erroInicial = erro;
     } finally {
@@ -145,8 +177,14 @@ class ControladorCatalogoAdministracao<T> extends ChangeNotifier {
     _itens.addAll(
       resposta.itens.where((item) => conhecidos.add(identificar(item))),
     );
+    _aplicarMetadados(resposta);
+  }
+
+  void _aplicarMetadados(Pagina<T> resposta) {
     _pagina = resposta.pagina;
     _total = resposta.totalItens;
+    _porPagina = resposta.porPagina;
+    _totalPaginas = resposta.totalPaginas;
     _temProxima = resposta.temProxima;
   }
 

@@ -1,6 +1,6 @@
 # Contexto para agentes de IA
 
-> **Design mobile V11:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter mobile, usa `design-app/prototipo-mobile-redesign-novo-11.html` como fonte visual e `design-app/SISTEMA-DESIGN-MOBILE-V11.md` como contrato. Não exige Web, golden, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
+> **Design mobile V11:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter mobile, usa `design-app/prototipo-mobile-redesign-novo-11.html` como fonte visual e `design-app/SISTEMA-DESIGN-MOBILE-V11.md` como contrato. Não exige Web, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
 
 ## Pendência manual — Shopping Inter compacto
 

@@ -75,6 +75,8 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   List<String> _categorias = const [];
   int _paginaAtual = 0;
   int _totalItens = 0;
+  int _porPagina = 10;
+  int _totalPaginas = 1;
   bool _temProxima = false;
   bool _carregandoInicial = false;
   bool _carregandoMais = false;
@@ -90,6 +92,9 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   ResumoCatalogoLivelo? get resumo => _resumo;
   List<String> get categorias => _categorias;
   int get totalItens => _totalItens;
+  int get pagina => _paginaAtual == 0 ? 1 : _paginaAtual;
+  int get porPagina => _porPagina;
+  int get totalPaginas => _totalPaginas;
   bool get temProxima => _temProxima;
   bool get carregandoInicial => _carregandoInicial;
   bool get carregandoMais => _carregandoMais;
@@ -142,7 +147,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
       return ResultadoAtualizacaoSilenciosa.inalterada;
     }
     try {
-      final pagina = await _buscar(1);
+      final pagina = await _buscar(_paginaAtual == 0 ? 1 : _paginaAtual);
       if (_descartado ||
           (pagina.resumo.ultimaColeta == _resumo?.ultimaColeta &&
               pagina.resumo.ultimaTentativaEm == _resumo?.ultimaTentativaEm &&
@@ -174,6 +179,36 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     try {
       final pagina = await _buscar(_paginaAtual + 1);
       if (_ativa(versao)) _aplicarPagina(pagina);
+    } catch (erro) {
+      if (_ativa(versao)) _erroMais = erro;
+    } finally {
+      if (_ativa(versao)) {
+        _carregandoMais = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Busca a página selecionada e substitui a lista visível de parceiros.
+  Future<void> irParaPagina(int pagina) async {
+    if (_carregandoInicial ||
+        _carregandoMais ||
+        pagina < 1 ||
+        pagina > _totalPaginas ||
+        pagina == _paginaAtual) {
+      return;
+    }
+    final versao = _versaoConsulta;
+    _carregandoMais = true;
+    _erroMais = null;
+    notifyListeners();
+    try {
+      final resposta = await _buscar(pagina);
+      if (_ativa(versao)) {
+        _itens.clear();
+        _idsCarregados.clear();
+        _aplicarPagina(resposta);
+      }
     } catch (erro) {
       if (_ativa(versao)) _erroMais = erro;
     } finally {
@@ -287,6 +322,8 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     _idsCarregados.clear();
     _paginaAtual = 0;
     _totalItens = 0;
+    _porPagina = 10;
+    _totalPaginas = 1;
     _temProxima = false;
     _carregandoInicial = true;
     _carregandoMais = false;
@@ -326,6 +363,8 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     }
     _paginaAtual = pagina.pagina;
     _totalItens = pagina.totalItens;
+    _porPagina = pagina.porPagina;
+    _totalPaginas = pagina.totalPaginas;
     _temProxima = pagina.temProxima;
     _resumo = pagina.resumo;
     _categorias = List.unmodifiable(pagina.categorias);

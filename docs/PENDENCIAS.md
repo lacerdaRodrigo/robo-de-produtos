@@ -2,12 +2,14 @@
 
 Lista viva somente do que continua aberto. Histórico concluído permanece no Git e nos PRDs; não deve voltar a governar o ciclo atual.
 
-O contrato operacional da branch `re-design` é o [`AGENTS.md`](../AGENTS.md): Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e Web/goldens/integration/E2E fora do gate.
+O contrato operacional da branch `re-design` é o [`AGENTS.md`](../AGENTS.md): Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e Web/integration/E2E fora do gate.
 
 ## Ciclo mobile atual
 
 - [ ] Concluir a Central de Alertas somente após fechar seu contrato de dados e histórico; o estado atual continua parcial/placeholder.
 - [ ] Fazer conferências manuais no Samsung quando uma entrega mobile exigir aceite físico. Isso não vira smoke automatizado neste ciclo.
+- [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
+- [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
 
 ## Ações operacionais externas
 
@@ -26,6 +28,6 @@ O contrato operacional da branch `re-design` é o [`AGENTS.md`](../AGENTS.md): F
 
 ## Testes e plataformas adiados
 
-- Goldens, integration, E2E, smoke automatizado, performance e regressão visual continuam preservados para outro ciclo.
+- Integration, E2E, smoke automatizado, performance e regressão visual não fazem parte do gate deste ciclo.
 - O suporte Web permanece no repositório, mas não é alvo visual nem gate obrigatório da branch mobile.
 - Nenhum item acima autoriza deploy, coleta real, alteração de secrets, aplicação de migration ou mudança em produção.

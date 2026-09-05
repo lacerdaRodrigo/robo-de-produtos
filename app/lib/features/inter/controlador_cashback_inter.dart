@@ -46,6 +46,8 @@ class ControladorCashbackInter extends ChangeNotifier {
   String? _ultimaTentativaEstado;
   int _totalItens = 0;
   int _pagina = 0;
+  int _porPagina = 10;
+  int _totalPaginas = 1;
   bool _temProxima = false;
   bool _carregando = false;
   bool _carregandoMais = false;
@@ -67,6 +69,8 @@ class ControladorCashbackInter extends ChangeNotifier {
   Object? get erro => _erro;
   Object? get erroMais => _erroMais;
   int get pagina => _pagina == 0 ? 1 : _pagina;
+  int get porPagina => _porPagina;
+  int get totalPaginas => _totalPaginas;
 
   Future<void> carregarInicial() => _reiniciar();
 
@@ -141,6 +145,40 @@ class ControladorCashbackInter extends ChangeNotifier {
     }
   }
 
+  /// Busca uma página específica, trocando os cards visíveis.
+  Future<void> irParaPagina(int pagina) async {
+    if (_carregando ||
+        _carregandoMais ||
+        pagina < 1 ||
+        pagina > _totalPaginas ||
+        pagina == _pagina) {
+      return;
+    }
+    final versao = _versao;
+    _carregandoMais = true;
+    _erroMais = null;
+    notifyListeners();
+    try {
+      final resposta = await _buscaAtiva(
+        q: _busca,
+        ordenar: _ordenacao.codigo,
+        pagina: pagina,
+      );
+      if (_ativa(versao)) {
+        _itens.clear();
+        _ids.clear();
+        _aplicar(resposta);
+      }
+    } catch (erro) {
+      if (_ativa(versao)) _erroMais = erro;
+    } finally {
+      if (_ativa(versao)) {
+        _carregandoMais = false;
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> _reiniciar() async {
     _temporizador?.cancel();
     _limpar();
@@ -157,6 +195,8 @@ class ControladorCashbackInter extends ChangeNotifier {
     _ultimaTentativaEstado = null;
     _totalItens = 0;
     _pagina = 0;
+    _porPagina = 10;
+    _totalPaginas = 1;
     _temProxima = false;
     _carregando = true;
     _carregandoMais = false;
@@ -191,6 +231,8 @@ class ControladorCashbackInter extends ChangeNotifier {
     }
     _pagina = resposta.pagina;
     _totalItens = resposta.totalItens;
+    _porPagina = resposta.porPagina;
+    _totalPaginas = resposta.totalPaginas;
     _temProxima = resposta.temProxima;
     _atualizadoEm = resposta.atualizadoEm;
     _ultimaTentativaEm = resposta.ultimaTentativaEm;

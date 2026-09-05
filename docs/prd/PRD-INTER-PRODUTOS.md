@@ -447,7 +447,18 @@ Nenhum código de persistência deve começar enquanto esse gate estiver aberto.
 
 A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V11, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
 
-O botão `Filtros` abre uma única folha de seleção. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
+O campo de produtos segue o `SearchBox` da V11: ícone de busca, superfície clara com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
+
+Toda busca do aplicativo usa o componente visual `CampoBuscaRadar`; não há `TextField` de busca isolado com aparência própria em uma tela V11. O botão de avanço, quando aplicável, e a variante `search-only` preservam o mesmo campo, espaçamento, tipografia e foco.
+
+Os resultados de Produtos e os cartões de lojas do Compre direto pedem **10
+itens por página** à API. A navegação visual compartilhada `PaginacaoRadar`
+substitui a página atual — não existe carregamento incremental ao rolar. Ela
+fica oculta quando o total for 9 ou 10; com 11 resultados, passa a exibir a
+segunda página. Busca, filtro e categoria continuam reiniciando na página 1.
+Após a troca, a lista retorna ao início com uma animação suave.
+
+O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V11. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
 
 #### Lojas
 
@@ -459,7 +470,8 @@ O botão `Filtros` abre uma única folha de seleção. Os filtros de catálogo n
 
 #### Categoria e preços
 
-- Categoria permanece no controle separado “Categoria nesta tela”, fora da folha `Filtros`. Esse controle consulta `GET /api/inter/produtos/categorias` e escolhe um valor externo real, “Todas as categorias” ou “Sem categoria” quando disponível; nunca há categoria digitada, aproximada ou inventada.
+- Categoria não aparece como controle separado na tela de Produtos. A busca por área é a porta visual para recortes contextuais e escolhe identificadores aprovados; a pessoa pode somar vários recortes, vê-los como chips removíveis e pode limpar todos sem perder o restante da busca. Não há categoria digitada, aproximada ou inventada.
+- O app serializa os identificadores ativos, únicos e ordenados no parâmetro `escopo` separado por vírgulas (por exemplo, `tv-smart,freezers`). A API mantém compatibilidade com um único identificador, resolve a união para categorias externas exatas e rejeita recorte desconhecido, repetido ou `Outros / novas categorias` combinado com outro recorte. Esse último é uma exclusão dinâmica e só faz sentido sozinho.
 - A folha `Filtros` não carrega nem lista categorias. Ela se mantém em meia tela e contém somente a seleção de Lojas e a faixa de preço.
 - Marca deixa de ser filtro exposto na interface. O dado de marca pode continuar aparecendo no card quando fornecido pela origem, mas não há campo “Marca” para digitação.
 - Preço mínimo e preço máximo são os únicos campos editáveis da folha, porque representam uma faixa numérica escolhida pela pessoa. O texto aceita vírgula decimal brasileira e segue para a validação já existente da API; dinheiro não é recalculado com `double` no Flutter.

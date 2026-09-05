@@ -68,34 +68,6 @@ Api _api() => Api(
   ),
 );
 
-Api _apiCategorias() => Api(
-  paginaPadrao: 20,
-  cliente: ClienteApi(
-    baseUrl: 'http://localhost:3000',
-    provedorToken: () async => 'token-teste',
-    cliente: http_testing.MockClient((requisicao) async {
-      if (requisicao.url.path == '/api/inter/produtos/categorias') {
-        return http.Response(
-          jsonEncode({
-            'configurada': true,
-            'itens': [
-              {
-                'valor': 'Eletrônicos',
-                'nome': 'Eletrônicos',
-                'selecionada': false,
-              },
-              {'valor': 'Cabos', 'nome': 'Cabos', 'selecionada': false},
-              {'valor': null, 'nome': 'Sem categoria', 'selecionada': false},
-            ],
-          }),
-          200,
-        );
-      }
-      return http.Response('{}', 500);
-    }),
-  ),
-);
-
 Api _apiFiltros() => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
@@ -283,6 +255,79 @@ void main() {
       find.text('Busca contextual · Casa · Eletrodomésticos · Fogões e fornos'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('acrescenta, remove e limpa recortes contextuais', (at) async {
+    final escopos = <String?>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            escopos.add(escopo);
+            return _pagina(const []);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaProdutos(
+          api: _api(),
+          controlador: controlador,
+          experienciaCompacta: true,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Explorar'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrônicos'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('TV e imagem'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Smart TVs'));
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Adicionar área'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Casa e cozinha'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrodomésticos'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Refrigeração e lavanderia'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Freezers'));
+    await at.pumpAndSettle();
+
+    expect(escopos, contains('tv-smart,freezers'));
+    expect(find.byKey(const Key('escopo-produtos-tv-smart')), findsOneWidget);
+    expect(find.byKey(const Key('escopo-produtos-freezers')), findsOneWidget);
+
+    await at.tap(
+      find.descendant(
+        of: find.byKey(const Key('escopo-produtos-freezers')),
+        matching: find.byIcon(Icons.close),
+      ),
+    );
+    await at.pumpAndSettle();
+    expect(escopos.last, 'tv-smart');
+
+    await at.tap(find.byKey(const Key('limpar-escopos-produtos')));
+    await at.pumpAndSettle();
+    expect(escopos.last, isNull);
+    expect(find.text('Comece por uma área'), findsOneWidget);
   });
 
   testWidgets('escopo contextual separa refrigeração em três opções', (
@@ -764,6 +809,7 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('O que você procura?'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
     expect(find.byIcon(Icons.category_outlined), findsOneWidget);
     expect(find.text('Refine a busca por tipo de produto.'), findsOneWidget);
     expect(find.text('Todas selecionadas'), findsOneWidget);
@@ -789,9 +835,8 @@ void main() {
   });
 
   testWidgets(
-    'categoria temporária usa o valor exato do Inter e pode ser limpa',
+    'não exibe categoria nesta tela e preserva o recorte contextual',
     (at) async {
-      final categoriasRecebidas = <String?>[];
       final controlador = ControladorBuscaProdutos(
         debounce: Duration.zero,
         buscar:
@@ -805,12 +850,7 @@ void main() {
               loja,
               precoMin,
               precoMax,
-            }) async {
-              categoriasRecebidas.add(categoria);
-              return _pagina([
-                _produto(id: categoria ?? 'todas', categoria: categoria),
-              ]);
-            },
+            }) async => _pagina([_produto()]),
       );
       addTearDown(controlador.dispose);
 
@@ -819,7 +859,7 @@ void main() {
           theme: TemaRadar.claro(),
           home: Scaffold(
             body: PaginaProdutos(
-              api: _apiCategorias(),
+              api: _api(),
               controlador: controlador,
               incorporada: true,
               experienciaCompacta: true,
@@ -827,39 +867,11 @@ void main() {
           ),
         ),
       );
-      await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-      await at.pumpAndSettle();
 
-      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
-      await at.pumpAndSettle();
-      await at.tap(find.text('Cabos').last);
-      await at.tap(find.byKey(const Key('confirmar-filtrar')));
-      await at.pumpAndSettle();
-
-      expect(categoriasRecebidas.last, 'Cabos');
-      expect(find.text('Cabos'), findsAtLeastNWidgets(1));
-      expect(
-        find.text('Filtro temporário aplicado ao catálogo salvo.'),
-        findsOneWidget,
-      );
-
-      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
-      await at.pumpAndSettle();
-      await at.tap(find.text('Eletrônicos').last);
-      await at.tap(find.byKey(const Key('confirmar-filtrar')));
-      await at.pumpAndSettle();
-
-      expect(categoriasRecebidas.last, 'Eletrônicos');
-      expect(controlador.itens.single.idExterno, 'Eletrônicos');
-
-      await at.tap(find.byKey(const Key('categoria-nesta-tela')));
-      await at.pumpAndSettle();
-      await at.tap(find.text('Todas as categorias'));
-      await at.tap(find.byKey(const Key('confirmar-filtrar')));
-      await at.pumpAndSettle();
-
-      expect(categoriasRecebidas.last, isNull);
-      expect(find.text('Todas'), findsAtLeastNWidgets(1));
+      expect(find.byKey(const Key('categoria-nesta-tela')), findsNothing);
+      expect(find.text('Categoria nesta tela'), findsNothing);
+      expect(find.text('Comece por uma área'), findsOneWidget);
+      expect(find.text('Explorar'), findsOneWidget);
     },
   );
 
@@ -964,7 +976,10 @@ void main() {
     expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
     expect(find.byKey(const Key('filtro-loja-ponto')), findsOneWidget);
     expect(find.byKey(const Key('filtro-categoria-todas')), findsNothing);
-    expect(at.getSize(find.byType(BottomSheet)).height, lessThanOrEqualTo(320));
+    expect(
+      at.getSize(find.byKey(const Key('folha-radar-modal'))).height,
+      lessThanOrEqualTo(320),
+    );
     expect(at.takeException(), isNull);
   });
 

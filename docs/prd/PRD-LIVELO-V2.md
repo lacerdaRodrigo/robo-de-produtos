@@ -92,7 +92,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
 | **RF20** | Persistir todos os parceiros válidos de cada coleta Livelo, com identidade por ID externo, categorias e pontuação, para formar o histórico completo do catálogo |
-| **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação de 20 itens, limitada a 50 por resposta |
+| **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação; o cliente mobile V11 solicita 10 itens e cada resposta é limitada a 50 |
 | **RF22** | Permitir que somente administrador acompanhe ou deixe de acompanhar um parceiro pelo ID externo, em operação idempotente e sem iniciar coleta |
 | **RF23** | Aplicar o novo catálogo somente ao Android em largura compacta; Web, iOS e layout amplo mantêm a experiência anterior neste ciclo |
 | **RF24** | No Android compacto, permitir abrir o histórico de qualquer loja do catálogo e consultar as últimas 30 pontuações persistidas, sem iniciar coleta |
@@ -325,7 +325,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 |---|---|---|
 | `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
 | `piso_pontos` | `Decimal \| None` | Idem |
-| `alerta_ativo` | `bool` | Preferência do sino no card; `false` não remove o acompanhamento |
+| `alerta_ativo` | `bool` | Preferência de alerta da loja; `false` não remove o acompanhamento. O cartão mobile V11 não exibe o controle do sino |
 
 ### 8.1 Esquema do banco
 
@@ -416,6 +416,19 @@ só pode ser ativado após o rollout de clientes válidos.
 O Flutter acessa somente a API autenticada. Preferências de acompanhamento são
 dados de produto protegidos por autorização; credenciais, tokens, URLs de banco
 e detalhes internos de erro não são exibidos pelo aplicativo.
+
+No aplicativo V11, a busca do catálogo usa `CampoBuscaRadar` em todos os
+layouts, inclusive na Livelo. Filtros, seletores de categoria e detalhes abrem
+pela `FolhaRadar`, com puxador, cabeçalho centralizado, voltar/fechar e fundo
+bloqueado e desfocado. Essa padronização é visual; o catálogo continua
+consultando apenas a API autenticada e paginada.
+
+Nos cartões mobile de Livelo, cada consulta solicita **10 itens por página**.
+`PaginacaoRadar` troca a página visível sem anexar resultados ao fim da
+rolagem: com até 10 itens não há controle, e o controle para a página 2 só
+aparece quando o total é 11 ou maior. A API continua sendo a fonte de total e
+das páginas existentes; o Flutter não infere nem baixa o catálogo completo.
+Depois da troca, a lista retorna ao início com uma animação suave.
 
 ### 9.2 Logotipos de parceiros
 

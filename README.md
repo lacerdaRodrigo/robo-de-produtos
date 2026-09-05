@@ -119,12 +119,12 @@ find test -type f -name '*_test.dart' \
   ! -name 'app_smoke_test.dart' \
   ! -name 'controlador_painel_livelo_test.dart' \
   ! -name 'pagina_painel_livelo_test.dart' \
-  -print0 | xargs -0 flutter test --exclude-tags 'golden || web'
+  -print0 | xargs -0 flutter test --exclude-tags web
 ```
 
 Rode TypeScript/ESLint ou Ruff apenas quando o componente correspondente for
-alterado. Goldens, integration, E2E, smoke, performance e Web não são gates do
-ciclo atual; os testes existentes permanecem preservados.
+alterado. Integration, E2E, smoke, performance e Web não são gates do ciclo
+atual.
 
 ## Versionamento e rastreabilidade
 

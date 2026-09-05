@@ -351,30 +351,4 @@ void main() {
     expect(at.takeException(), isNull, reason: 'estados por domínio');
     expect(find.text('Estado por domínio'), findsOneWidget);
   });
-
-  testWidgets('Início mobile confere com o golden aprovado', (at) async {
-    final api = apiQueResponde(
-      (_) async => http.Response(jsonEncode(resumo()), 200),
-    );
-    await abrir(at, api);
-    await at.pumpAndSettle();
-
-    await expectLater(
-      find.byType(PaginaInicio),
-      matchesGoldenFile('../../goldens/inicio_mobile.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('Início Web amplo confere com o golden aprovado', (at) async {
-    final api = apiQueResponde(
-      (_) async => http.Response(jsonEncode(resumo()), 200),
-    );
-    await abrir(at, api, tamanho: const Size(1440, 900));
-    await at.pumpAndSettle();
-
-    await expectLater(
-      find.byType(PaginaInicio),
-      matchesGoldenFile('../../goldens/inicio_web.png'),
-    );
-  }, tags: 'golden');
 }

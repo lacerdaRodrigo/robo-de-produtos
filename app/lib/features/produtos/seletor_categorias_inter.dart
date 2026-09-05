@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
 
@@ -26,21 +27,23 @@ Future<Set<String?>?> mostrarSeletorCategoriasAcompanhadas(
   required List<CategoriaInter> categorias,
   required Set<String?> selecionadasIniciais,
 }) {
-  return showModalBottomSheet<Set<String?>>(
-    context: contexto,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (context) => _SeletorCategoriasSheet(
+  return mostrarFolhaRadar<Set<String?>>(
+    contexto,
+    alturaMaxima: 0.9,
+    builder: (context) => FolhaRadar(
       titulo: 'Categorias acompanhadas',
-      subtitulo: 'Categorias fornecidas pelo Shopping Inter',
-      nota:
-          'A lista acompanha os nomes recebidos do Inter. Categorias novas podem aparecer automaticamente após novas coletas.',
-      categorias: categorias,
-      selecionadasIniciais: selecionadasIniciais,
-      rotuloConfirmar: 'Salvar categorias',
-      modo: ModoSeletorCategoriasInter.acompanhar,
-      converterRetorno: (selecionadas) => selecionadas,
+      descricao: 'Categorias fornecidas pelo Shopping Inter',
+      child: Flexible(
+        child: _SeletorCategoriasSheet(
+          nota:
+              'A lista acompanha os nomes recebidos do Inter. Categorias novas podem aparecer automaticamente após novas coletas.',
+          categorias: categorias,
+          selecionadasIniciais: selecionadasIniciais,
+          rotuloConfirmar: 'Salvar categorias',
+          modo: ModoSeletorCategoriasInter.acompanhar,
+          converterRetorno: (selecionadas) => selecionadas,
+        ),
+      ),
     ),
   );
 }
@@ -57,35 +60,35 @@ Future<SelecaoCategoriaTemporaria?> mostrarSelecaoCategoriaTemporaria(
       : categoriaAtual == null || categoriaAtual.isEmpty
       ? <String?>{}
       : <String?>{categoriaAtual};
-  return showModalBottomSheet<SelecaoCategoriaTemporaria>(
-    context: contexto,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (context) => _SeletorCategoriasSheet(
+  return mostrarFolhaRadar<SelecaoCategoriaTemporaria>(
+    contexto,
+    alturaMaxima: 0.9,
+    builder: (context) => FolhaRadar(
       titulo: 'Filtrar por categoria',
-      subtitulo: 'Filtro temporário do catálogo já salvo',
-      nota:
-          'A categoria é usada exatamente como foi recebida do Shopping Inter. Isto não solicita uma nova coleta.',
-      categorias: categorias,
-      selecionadasIniciais: iniciais,
-      rotuloConfirmar: 'Ver ofertas',
-      modo: ModoSeletorCategoriasInter.filtrar,
-      converterRetorno: (selecionadas) {
-        if (selecionadas.isEmpty) return todas;
-        final valor = selecionadas.first;
-        return valor == null
-            ? const SelecaoCategoriaTemporaria.semCategoria()
-            : SelecaoCategoriaTemporaria.categoria(valor);
-      },
+      descricao: 'Filtro temporário do catálogo já salvo',
+      child: Flexible(
+        child: _SeletorCategoriasSheet(
+          nota:
+              'A categoria é usada exatamente como foi recebida do Shopping Inter. Isto não solicita uma nova coleta.',
+          categorias: categorias,
+          selecionadasIniciais: iniciais,
+          rotuloConfirmar: 'Ver ofertas',
+          modo: ModoSeletorCategoriasInter.filtrar,
+          converterRetorno: (selecionadas) {
+            if (selecionadas.isEmpty) return todas;
+            final valor = selecionadas.first;
+            return valor == null
+                ? const SelecaoCategoriaTemporaria.semCategoria()
+                : SelecaoCategoriaTemporaria.categoria(valor);
+          },
+        ),
+      ),
     ),
   );
 }
 
 class _SeletorCategoriasSheet<T> extends StatefulWidget {
   const _SeletorCategoriasSheet({
-    required this.titulo,
-    required this.subtitulo,
     required this.nota,
     required this.categorias,
     required this.selecionadasIniciais,
@@ -94,8 +97,6 @@ class _SeletorCategoriasSheet<T> extends StatefulWidget {
     required this.converterRetorno,
   });
 
-  final String titulo;
-  final String subtitulo;
   final String nota;
   final List<CategoriaInter> categorias;
   final Set<String?> selecionadasIniciais;
@@ -137,29 +138,7 @@ class _EstadoSeletorCategoriasSheet<T>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.titulo,
-                style: tema.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                widget.subtitulo,
-                style: tema.textTheme.labelSmall?.copyWith(
-                  color: cores.textoSuave,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+          padding: const EdgeInsets.fromLTRB(3, 0, 3, 4),
           child: Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(

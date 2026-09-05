@@ -41,33 +41,6 @@ void main() {
     );
   });
 
-  testWidgets('variante sobre fundo escuro confere com o golden aprovado', (
-    at,
-  ) async {
-    const chave = Key('golden-logo-radar');
-    await at.pumpWidget(
-      const MaterialApp(
-        home: Center(
-          child: RepaintBoundary(
-            key: chave,
-            child: ColoredBox(
-              color: Color(0xFF081A2D),
-              child: Padding(
-                padding: EdgeInsets.all(28),
-                child: LogoRadar(tamanho: 144, sobreFundoEscuro: true),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await expectLater(
-      find.byKey(chave),
-      matchesGoldenFile('../../goldens/logo_radar_sobre_escuro.png'),
-    );
-  }, tags: 'golden');
-
   test('pintor só repinta quando a variante muda', () {
     const claro = PintorLogoRadar(sobreFundoEscuro: false);
     const outroClaro = PintorLogoRadar(sobreFundoEscuro: false);

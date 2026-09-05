@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../tema/aparencia.dart';
@@ -231,6 +233,10 @@ class IndicadorEstadoRadar extends StatelessWidget {
 }
 
 /// Campo de busca do novo mobile, sem acoplar debounce ou consulta ao visual.
+///
+/// Por padrão, reproduz o `SearchBox` da V11 com ação coral de avanço. Use
+/// [somenteBusca] nos catálogos que filtram enquanto a pessoa digita e não
+/// possuem uma ação separada no campo.
 class CampoBuscaRadar extends StatelessWidget {
   const CampoBuscaRadar({
     super.key,
@@ -238,6 +244,8 @@ class CampoBuscaRadar extends StatelessWidget {
     required this.dica,
     required this.aoMudar,
     this.acao,
+    this.aoAcionar,
+    this.somenteBusca = false,
     this.chaveCampo,
   });
 
@@ -245,47 +253,98 @@ class CampoBuscaRadar extends StatelessWidget {
   final String dica;
   final ValueChanged<String> aoMudar;
   final Widget? acao;
+
+  /// Ação opcional do botão de avanço e do envio pelo teclado.
+  final VoidCallback? aoAcionar;
+
+  /// Remove o botão de avanço, mantendo o campo no formato `search-only`.
+  final bool somenteBusca;
   final Key? chaveCampo;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      key: chaveCampo,
-      controller: controlador,
-      onChanged: aoMudar,
-      textInputAction: TextInputAction.search,
-      decoration: InputDecoration(
-        hintText: dica,
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: acao == null
-            ? null
-            : Padding(
-                padding: const EdgeInsets.all(6),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: CoresRadar.de(context).superficieAlternativa,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: acao,
+    final cores = CoresRadar.de(context);
+    final brilho = Theme.of(context).brightness;
+    final sufixo = acao != null
+        ? Padding(
+            padding: const EdgeInsets.all(6),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: cores.superficieAlternativa,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: acao,
+            ),
+          )
+        : somenteBusca
+        ? null
+        : Padding(
+            padding: const EdgeInsets.all(6),
+            child: IconButton(
+              tooltip: 'Pesquisar',
+              onPressed: aoAcionar ?? () => aoMudar(controlador.text),
+              icon: const Icon(Icons.chevron_right_rounded, size: 24),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 38, height: 38),
+              style: IconButton.styleFrom(
+                backgroundColor: cores.acao,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-        filled: true,
-        fillColor: Theme.of(context).cardColor,
-        constraints: const BoxConstraints(minHeight: 52),
-        contentPadding: const EdgeInsets.symmetric(vertical: 15),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: BorderSide(color: CoresRadar.de(context).borda),
+            ),
+          );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(17),
+        boxShadow: [SombraRadar.para(brilho)],
+      ),
+      child: TextField(
+        key: chaveCampo,
+        controller: controlador,
+        onChanged: aoMudar,
+        onSubmitted: acao == null && !somenteBusca
+            ? (_) {
+                if (aoAcionar != null) {
+                  aoAcionar!();
+                } else {
+                  aoMudar(controlador.text);
+                }
+              }
+            : null,
+        textInputAction: TextInputAction.search,
+        style: TextStyle(
+          fontSize: 16,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: BorderSide(color: CoresRadar.de(context).borda),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(17),
-          borderSide: BorderSide(
-            color: CoresRadar.de(context).acao,
-            width: 1.5,
+        decoration: InputDecoration(
+          hintText: dica,
+          prefixIcon: const Icon(Icons.search, size: 22),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 47,
+            minHeight: 52,
+          ),
+          suffixIcon: sufixo,
+          suffixIconConstraints: sufixo == null
+              ? null
+              : const BoxConstraints(minWidth: 50, minHeight: 52),
+          filled: true,
+          fillColor: Theme.of(context).cardColor,
+          constraints: const BoxConstraints(minHeight: 52),
+          contentPadding: const EdgeInsets.only(right: 8),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(color: cores.borda),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(color: cores.borda),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(color: cores.acao, width: 1.5),
           ),
         ),
       ),
@@ -475,11 +534,15 @@ class FolhaRadar extends StatelessWidget {
     required this.titulo,
     required this.descricao,
     required this.child,
+    this.mostrarVoltar = true,
+    this.aoVoltar,
   });
 
   final String titulo;
   final String descricao;
   final Widget child;
+  final bool mostrarVoltar;
+  final VoidCallback? aoVoltar;
 
   @override
   Widget build(BuildContext context) {
@@ -503,52 +566,74 @@ class FolhaRadar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 17),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        titulo,
-                        style: tema.textTheme.titleLarge?.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.7,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        descricao,
-                        style: tema.textTheme.bodySmall?.copyWith(
-                          color: CoresRadar.de(context).textoSuave,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 42),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 42,
+                    child: mostrarVoltar
+                        ? IconButton(
+                            key: const Key('voltar-folha-radar'),
+                            tooltip: 'Voltar',
+                            onPressed:
+                                aoVoltar ?? () => Navigator.maybePop(context),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                          )
+                        : null,
                   ),
-                ),
-                const SizedBox(width: 11),
-                IconButton(
-                  key: const Key('fechar-folha-radar'),
-                  tooltip: 'Fechar painel',
-                  onPressed: () => Navigator.maybePop(context),
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size.square(42),
-                    maximumSize: const Size.square(42),
-                    padding: EdgeInsets.zero,
-                    backgroundColor: CoresRadar.de(
-                      context,
-                    ).superficieAlternativa,
-                    side: BorderSide(color: CoresRadar.de(context).borda),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          titulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: tema.textTheme.titleLarge?.copyWith(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          descricao,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: tema.textTheme.bodySmall?.copyWith(
+                            color: CoresRadar.de(context).textoSuave,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
+                  const SizedBox(width: 11),
+                  IconButton(
+                    key: const Key('fechar-folha-radar'),
+                    tooltip: 'Fechar painel',
+                    onPressed: () => Navigator.maybePop(context),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size.square(42),
+                      maximumSize: const Size.square(42),
+                      padding: EdgeInsets.zero,
+                      backgroundColor: CoresRadar.de(
+                        context,
+                      ).superficieAlternativa,
+                      side: BorderSide(color: CoresRadar.de(context).borda),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 14),
             child,
@@ -557,6 +642,278 @@ class FolhaRadar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Navegação paginada V11 para catálogos de cards.
+///
+/// Os controles só aparecem quando há mais itens do que a página comporta;
+/// portanto, 9 ou 10 resultados não exibem uma paginação vazia.
+class PaginacaoRadar extends StatelessWidget {
+  const PaginacaoRadar({
+    super.key,
+    required this.pagina,
+    required this.totalItens,
+    required this.porPagina,
+    required this.carregando,
+    required this.aoIrParaPagina,
+    this.erro,
+  });
+
+  final int pagina;
+  final int totalItens;
+  final int porPagina;
+  final bool carregando;
+  final Future<void> Function(int pagina) aoIrParaPagina;
+  final Object? erro;
+
+  int get _totalPaginas {
+    final tamanhoPagina = porPagina <= 0 ? 1 : porPagina;
+    return (totalItens + tamanhoPagina - 1) ~/ tamanhoPagina;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (totalItens <= porPagina) return const SizedBox.shrink();
+    final cores = CoresRadar.de(context);
+    final totalPaginas = _totalPaginas;
+    final paginas = _paginasVisiveis(totalPaginas);
+    final proxima = pagina < totalPaginas ? pagina + 1 : pagina;
+
+    return Semantics(
+      label: 'Paginação, página $pagina de $totalPaginas',
+      child: Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (pagina > 1) ...[
+                _botaoIcone(
+                  contexto: context,
+                  tooltip: 'Página anterior',
+                  icone: Icons.chevron_left_rounded,
+                  aoTocar: () => aoIrParaPagina(pagina - 1),
+                ),
+                const SizedBox(width: 8),
+              ],
+              for (var indice = 0; indice < paginas.length; indice++) ...[
+                if (paginas[indice] == null)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2),
+                    child: Text('…'),
+                  )
+                else
+                  _botaoPagina(context, paginas[indice]!, cores),
+                if (indice != paginas.length - 1) const SizedBox(width: 8),
+              ],
+              if (pagina < totalPaginas) ...[
+                const SizedBox(width: 8),
+                _botaoIcone(
+                  contexto: context,
+                  tooltip: erro == null
+                      ? 'Próxima página'
+                      : 'Tentar próxima página',
+                  icone: erro == null
+                      ? Icons.chevron_right_rounded
+                      : Icons.refresh_rounded,
+                  aoTocar: () => aoIrParaPagina(proxima),
+                ),
+              ],
+              if (carregando) ...[
+                const SizedBox(width: 10),
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<int?> _paginasVisiveis(int totalPaginas) {
+    if (totalPaginas <= 7) {
+      return List<int?>.generate(totalPaginas, (indice) => indice + 1);
+    }
+
+    final candidatas = <int>{1, 2, 3, totalPaginas};
+    for (var numero = pagina - 1; numero <= pagina + 1; numero++) {
+      if (numero > 0 && numero <= totalPaginas) candidatas.add(numero);
+    }
+    final ordenadas = candidatas.toList()..sort();
+    final resultado = <int?>[];
+    for (final numero in ordenadas) {
+      int? anterior;
+      for (final item in resultado.reversed) {
+        if (item != null) {
+          anterior = item;
+          break;
+        }
+      }
+      if (anterior != null && numero - anterior > 1) resultado.add(null);
+      resultado.add(numero);
+    }
+    return resultado;
+  }
+
+  Widget _botaoPagina(BuildContext context, int destino, CoresRadar cores) {
+    final ativa = destino == pagina;
+    return Semantics(
+      button: true,
+      selected: ativa,
+      label: 'Página $destino',
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: TextButton(
+          key: Key('paginacao-radar-$destino'),
+          onPressed: ativa || carregando ? null : () => aoIrParaPagina(destino),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            foregroundColor: ativa
+                ? Theme.of(context).colorScheme.onSecondary
+                : cores.textoSuave,
+            disabledForegroundColor: ativa
+                ? Theme.of(context).colorScheme.onSecondary
+                : cores.textoSuave,
+            backgroundColor: ativa ? cores.marca : Theme.of(context).cardColor,
+            side: BorderSide(color: ativa ? cores.marca : cores.borda),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(13),
+            ),
+          ),
+          child: Text(
+            '$destino',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _botaoIcone({
+    required BuildContext contexto,
+    required String tooltip,
+    required IconData icone,
+    required VoidCallback aoTocar,
+  }) => SizedBox(
+    width: 40,
+    height: 40,
+    child: IconButton(
+      tooltip: tooltip,
+      onPressed: carregando ? null : aoTocar,
+      icon: Icon(icone),
+      style: IconButton.styleFrom(
+        backgroundColor: Theme.of(contexto).cardColor,
+        foregroundColor: CoresRadar.de(contexto).textoSuave,
+        side: BorderSide(color: CoresRadar.de(contexto).borda),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+      ),
+    ),
+  );
+}
+
+/// Retorna suavemente ao início depois que uma página de cards foi trocada.
+Future<void> rolarParaInicioPaginaRadar(ScrollController rolagem) async {
+  if (!rolagem.hasClients) return;
+  await rolagem.animateTo(
+    0,
+    duration: const Duration(milliseconds: 500),
+    curve: Curves.easeInOutCubic,
+  );
+}
+
+/// Abre uma folha inferior mobile V11 com fundo bloqueado e desfocado.
+///
+/// O conteúdo deve usar [FolhaRadar] para compartilhar o cabeçalho, o
+/// puxador, a tipografia e as ações. O retorno tem a mesma semântica de um
+/// `showModalBottomSheet`, mantendo filtros e seleções intactos.
+Future<T?> mostrarFolhaRadar<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  double alturaMaxima = 0.82,
+}) {
+  final localizations = MaterialLocalizations.of(context);
+  return showGeneralDialog<T>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: localizations.modalBarrierDismissLabel,
+    barrierColor: Colors.transparent,
+    transitionDuration: const Duration(milliseconds: 240),
+    pageBuilder: (context, _, _) {
+      final cores = CoresRadar.de(context);
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(context).maybePop(),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                child: ColoredBox(
+                  color: const Color(0x7A1B121B),
+                  child: Semantics(
+                    label: localizations.modalBarrierDismissLabel,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              top: false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 430,
+                  maxHeight: MediaQuery.sizeOf(context).height * alturaMaxima,
+                ),
+                child: Material(
+                  key: const Key('folha-radar-modal'),
+                  color: Theme.of(context).cardColor,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 20,
+                  shadowColor: Colors.black.withValues(alpha: 0.22),
+                  clipBehavior: Clip.antiAlias,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(27),
+                    ),
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: cores.borda)),
+                    ),
+                    child: builder(context),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+    transitionBuilder: (context, animation, _, child) {
+      final entrada = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return FadeTransition(
+        opacity: entrada,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.12),
+            end: Offset.zero,
+          ).animate(entrada),
+          child: child,
+        ),
+      );
+    },
+  );
 }
 
 /// Controle único de aparência usado no cabeçalho e na gaveta mobile.

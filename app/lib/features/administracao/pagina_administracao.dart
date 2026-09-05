@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/componentes/fundacao_visual.dart';
 import '../../app/componentes/estados.dart';
 import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
@@ -589,7 +590,7 @@ String _descricaoLojaDireta(LojaDireto loja) {
   };
 }
 
-class _EstruturaCatalogo<T> extends StatelessWidget {
+class _EstruturaCatalogo<T> extends StatefulWidget {
   const _EstruturaCatalogo({
     required this.chaveBusca,
     required this.rotuloBusca,
@@ -605,24 +606,37 @@ class _EstruturaCatalogo<T> extends StatelessWidget {
   final Widget? cabecalho;
 
   @override
+  State<_EstruturaCatalogo<T>> createState() => _EstadoEstruturaCatalogo<T>();
+}
+
+class _EstadoEstruturaCatalogo<T> extends State<_EstruturaCatalogo<T>> {
+  final _campoBusca = TextEditingController();
+
+  @override
+  void dispose() {
+    _campoBusca.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final soCarregando =
-        controlador.carregandoInicial && controlador.itens.isEmpty;
+        widget.controlador.carregandoInicial &&
+        widget.controlador.itens.isEmpty;
     final falhaInicial =
-        controlador.erroInicial != null && controlador.itens.isEmpty;
+        widget.controlador.erroInicial != null &&
+        widget.controlador.itens.isEmpty;
     return Column(
       children: [
-        ?cabecalho,
+        ?widget.cabecalho,
         Padding(
           padding: const EdgeInsets.all(16),
-          child: TextField(
-            key: chaveBusca,
-            onChanged: controlador.mudarBusca,
-            decoration: InputDecoration(
-              labelText: rotuloBusca,
-              prefixIcon: const Icon(Icons.search),
-              border: const OutlineInputBorder(),
-            ),
+          child: CampoBuscaRadar(
+            chaveCampo: widget.chaveBusca,
+            controlador: _campoBusca,
+            dica: widget.rotuloBusca,
+            aoMudar: widget.controlador.mudarBusca,
+            somenteBusca: true,
           ),
         ),
         if (!soCarregando && !falhaInicial)
@@ -630,7 +644,7 @@ class _EstruturaCatalogo<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('${controlador.total} encontrada(s)'),
+              child: Text('${widget.controlador.total} encontrada(s)'),
             ),
           ),
         const SizedBox(height: 8),
@@ -640,14 +654,15 @@ class _EstruturaCatalogo<T> extends StatelessWidget {
               : falhaInicial
               ? EstadoFalha(
                   mensagem: 'Não foi possível carregar o catálogo.',
-                  voltar: controlador.carregarPrimeira,
+                  voltar: widget.controlador.carregarPrimeira,
                 )
-              : controlador.itens.isEmpty
+              : widget.controlador.itens.isEmpty
               ? const Center(child: Text('Nenhuma loja encontrada.'))
               : ListView(
                   children: [
-                    for (final loja in controlador.itens) item(loja),
-                    _RodapePaginacao(controlador: controlador),
+                    for (final loja in widget.controlador.itens)
+                      widget.item(loja),
+                    _RodapePaginacao(controlador: widget.controlador),
                   ],
                 ),
         ),

@@ -37,6 +37,7 @@ class Api {
     String q = '',
     String ordenar = 'pontos',
     int pagina = 1,
+    int? porPagina,
   }) async {
     final corpo = await cliente.obter(
       '/api/livelo/painel',
@@ -44,7 +45,7 @@ class Api {
         'q': q,
         'ordenar': ordenar,
         'pagina': '$pagina',
-        'por_pagina': '$paginaPadrao',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
       },
     );
     return Pagina.parse(corpo, PontuacaoLivelo.parse);
@@ -56,6 +57,7 @@ class Api {
     String categoria = '',
     String ordenar = 'pontos',
     int pagina = 1,
+    int? porPagina,
   }) async {
     final corpo = await cliente.obter(
       '/api/livelo/catalogo',
@@ -65,7 +67,7 @@ class Api {
         'categoria': categoria,
         'ordenar': ordenar,
         'pagina': '$pagina',
-        'por_pagina': '$paginaPadrao',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
       },
     );
     return PaginaCatalogoLivelo.parse(corpo);
@@ -223,6 +225,7 @@ class Api {
   Future<Pagina<LojaDireto>> lojasDiretas({
     String q = '',
     int pagina = 1,
+    int? porPagina,
     String ordenar = 'nome',
     String filtro = 'todas',
   }) async {
@@ -233,7 +236,7 @@ class Api {
         'ordenar': ordenar,
         'filtro': filtro,
         'pagina': '$pagina',
-        'por_pagina': '$paginaPadrao',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
       },
     );
     return Pagina.parse(corpo, LojaDireto.parse);

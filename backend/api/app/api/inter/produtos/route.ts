@@ -41,7 +41,7 @@ function booleanoOpcional(bruto: string | null): boolean | null {
 
 /**
  * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&marca=&categoria=
- *   &sem_categoria=&loja=&preco_min=&preco_max=
+ *   &escopo=tv-smart,freezers&sem_categoria=&loja=&preco_min=&preco_max=
  *
  * Busca de produtos (V4), autenticada e **paginada no servidor** — nada de baixar
  * catálogo no cliente. `q` vazio lista o catálogo persistido; quando presente,
@@ -74,9 +74,12 @@ export async function GET(requisicao: Request) {
   const categoriaBruta = url.searchParams.get("categoria");
   const categoria = categoriaBruta?.trim() || null;
   const escopoBruto = url.searchParams.get("escopo");
-  const escopo = escopoBruto?.trim() || null;
-  const categoriasDoEscopo = categoriasDoEscopoNavegacaoProdutosInter(escopo);
-  const escopoOutros = escopoEhOutrosNovasCategorias(escopo);
+  const escopos = escopoBruto?.split(",").map((escopo) => escopo.trim()) ?? [];
+  const escoposUnicos = [...new Set(escopos)];
+  const escopoOutros = escoposUnicos.includes("outros-novas-categorias");
+  const categoriasDosEscopos = escoposUnicos.flatMap(
+    (escopo) => categoriasDoEscopoNavegacaoProdutosInter(escopo) ?? [],
+  );
   const semCategoria = booleanoOpcional(url.searchParams.get("sem_categoria"));
 
   if (
@@ -94,13 +97,28 @@ export async function GET(requisicao: Request) {
       { status: STATUS.INVALIDA },
     );
   }
-  if (escopoBruto !== null && (!escopo || (!escopoOutros && categoriasDoEscopo === null))) {
+  if (
+    escopoBruto !== null &&
+    (!escopos.length ||
+      escopos.some((escopo) => !escopo) ||
+      escoposUnicos.length !== escopos.length ||
+      escoposUnicos.some(
+        (escopo) =>
+          !escopoEhOutrosNovasCategorias(escopo) &&
+          categoriasDoEscopoNavegacaoProdutosInter(escopo) === null,
+      ) ||
+      (escopoOutros && escoposUnicos.length > 1))
+  ) {
     return NextResponse.json(
       corpoErro("validacao", "escopo de navegacao invalido"),
       { status: STATUS.INVALIDA },
     );
   }
-  if ((categoria && semCategoria) || (categoria && escopo)) {
+  if (
+    (categoria && semCategoria) ||
+    (categoria && escoposUnicos.length > 0) ||
+    (semCategoria && escoposUnicos.length > 0)
+  ) {
     return NextResponse.json(
       corpoErro(
         "validacao",
@@ -130,7 +148,9 @@ export async function GET(requisicao: Request) {
           ? String(url.searchParams.get("marca"))
           : null,
         categoria,
-        ...(categoriasDoEscopo ? { categorias: categoriasDoEscopo } : {}),
+        ...(categoriasDosEscopos.length > 0
+          ? { categorias: [...new Set(categoriasDosEscopos)] }
+          : {}),
         ...(escopoOutros
           ? { categorias_excluidas: categoriasMapeadasNavegacaoProdutosInter() }
           : {}),

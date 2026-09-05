@@ -228,8 +228,10 @@ void main() {
         .toList();
     expect(consultasLojas[0].queryParameters['ordenar'], 'nome');
     expect(consultasLojas[0].queryParameters['filtro'], 'todas');
+    expect(consultasLojas[0].queryParameters['por_pagina'], '10');
     expect(consultasLojas[1].queryParameters['ordenar'], 'nome');
     expect(consultasLojas[1].queryParameters['filtro'], 'acompanhadas');
+    expect(consultasLojas[1].queryParameters['por_pagina'], '10');
   });
 
   testWidgets('puxar e voltar ao app atualizam as lojas do Compre direto', (

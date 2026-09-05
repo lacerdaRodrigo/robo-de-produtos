@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/tema/tema.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
@@ -37,12 +38,13 @@ PontuacaoLivelo _loja({
 Pagina<PontuacaoLivelo> _pagina(
   List<PontuacaoLivelo> itens, {
   int total = 1,
+  int porPagina = 20,
   bool proxima = false,
   String? atualizadaEm = '2026-08-22T12:00:00Z',
 }) => Pagina<PontuacaoLivelo>(
   itens: itens,
   pagina: 1,
-  porPagina: 20,
+  porPagina: porPagina,
   totalItens: total,
   totalPaginas: proxima ? 2 : 1,
   temProxima: proxima,
@@ -79,6 +81,7 @@ void main() {
     resposta.complete(_pagina([_loja(alerta: true)]));
     await at.pumpAndSettle();
 
+    expect(find.byType(CampoBuscaRadar), findsOneWidget);
     expect(find.text('Casas Bahia'), findsOneWidget);
     expect(find.text('2,9 pontos por R\$ 1'), findsOneWidget);
     expect(find.text('Alerta ativo'), findsOneWidget);
@@ -137,7 +140,8 @@ void main() {
         if (pagina == 1) {
           return _pagina(
             [_loja(nome: 'Ausente', pontos: null)],
-            total: 2,
+            total: 11,
+            porPagina: 10,
             proxima: true,
             atualizadaEm: '2020-01-01T00:00:00Z',
           );
@@ -145,8 +149,8 @@ void main() {
         return Pagina<PontuacaoLivelo>(
           itens: [_loja(nome: 'Renner')],
           pagina: 2,
-          porPagina: 20,
-          totalItens: 2,
+          porPagina: 10,
+          totalItens: 11,
           totalPaginas: 2,
           temProxima: false,
           atualizadoEm: '2020-01-01T00:00:00Z',
@@ -160,13 +164,13 @@ void main() {
 
     expect(find.textContaining('dados atrasados'), findsOneWidget);
     expect(find.text('Não encontrada na última coleta'), findsOneWidget);
-    expect(find.text('Carregar mais'), findsOneWidget);
+    expect(find.byKey(const Key('paginacao-radar-2')), findsOneWidget);
     expect(find.text('Maior pontuação'), findsOneWidget);
     expect(find.text('Em alerta'), findsOneWidget);
     expect(find.text('Nome A–Z'), findsOneWidget);
 
-    await at.ensureVisible(find.text('Carregar mais'));
-    await at.tap(find.text('Carregar mais'));
+    await at.ensureVisible(find.byKey(const Key('paginacao-radar-2')));
+    await at.tap(find.byKey(const Key('paginacao-radar-2')));
     await at.pumpAndSettle();
     expect(find.text('Renner'), findsOneWidget);
     expect(controlador.temProxima, isFalse);

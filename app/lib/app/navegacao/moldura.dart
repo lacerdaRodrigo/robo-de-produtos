@@ -165,10 +165,9 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         : const SizedBox.shrink(),
   ];
 
-  Future<void> _abrirAlertas() => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: false,
+  Future<void> _abrirAlertas() => mostrarFolhaRadar<void>(
+    context,
+    alturaMaxima: 0.9,
     builder: (contexto) => _FolhaAlertas(
       api: widget.api,
       aoAbrirLivelo: () {
@@ -182,10 +181,9 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirConta() => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: false,
+  Future<void> _abrirConta() => mostrarFolhaRadar<void>(
+    context,
+    alturaMaxima: 0.9,
     builder: (contexto) => _FolhaConta(
       administrador: widget.administrador,
       identificacaoConta: widget.identificacaoConta,
@@ -1174,72 +1172,74 @@ class _EstadoFolhaAlertas extends State<_FolhaAlertas> {
     return FolhaRadar(
       titulo: 'Alertas',
       descricao: 'Eventos importantes, fora do menu principal.',
-      child: FutureBuilder<ResumoInicio>(
-        future: _resumo,
-        builder: (context, estado) {
-          if (estado.connectionState != ConnectionState.done) {
-            return const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
+      child: Flexible(
+        child: FutureBuilder<ResumoInicio>(
+          future: _resumo,
+          builder: (context, estado) {
+            if (estado.connectionState != ConnectionState.done) {
+              return const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (!estado.hasData) {
+              return Column(
+                children: [
+                  const Text('Não foi possível consultar os estados agora.'),
+                  const SizedBox(height: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: _tentarNovamente,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Tentar novamente'),
+                  ),
+                ],
+              );
+            }
+            final resumo = estado.data!;
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.62,
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  CartaoRadar(
+                    aoTocar: widget.aoAbrirLivelo,
+                    padding: const EdgeInsets.all(12),
+                    child: _LinhaFolha(
+                      icone: Icons.card_giftcard_outlined,
+                      titulo: resumo.livelo.alertasUltimaColeta == 0
+                          ? 'Nenhum alerta na última coleta Livelo'
+                          : '${resumo.livelo.alertasUltimaColeta} alertas na última coleta Livelo',
+                      descricao:
+                          '${resumo.livelo.lojasAcompanhadas} lojas acompanhadas · ${_rotuloEstadoResumo(resumo.livelo.estado)}',
+                      mostrarSeta: false,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  CartaoRadar(
+                    aoTocar: widget.aoAbrirInter,
+                    padding: const EdgeInsets.all(12),
+                    child: _LinhaFolha(
+                      icone: Icons.account_balance_outlined,
+                      titulo: 'Banco Inter',
+                      descricao:
+                          'Cashback: ${_rotuloEstadoResumo(resumo.cashbackInter.estado)} · produtos: ${_rotuloEstadoResumo(resumo.produtos.estado)}',
+                      mostrarSeta: false,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Histórico, lidos e não lidos dependem de um endpoint próprio e ainda não são exibidos.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CoresRadar.de(context).textoSuave,
+                    ),
+                  ),
+                ],
+              ),
             );
-          }
-          if (!estado.hasData) {
-            return Column(
-              children: [
-                const Text('Não foi possível consultar os estados agora.'),
-                const SizedBox(height: 12),
-                FilledButton.tonalIcon(
-                  onPressed: _tentarNovamente,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tentar novamente'),
-                ),
-              ],
-            );
-          }
-          final resumo = estado.data!;
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * 0.62,
-            ),
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                CartaoRadar(
-                  aoTocar: widget.aoAbrirLivelo,
-                  padding: const EdgeInsets.all(12),
-                  child: _LinhaFolha(
-                    icone: Icons.card_giftcard_outlined,
-                    titulo: resumo.livelo.alertasUltimaColeta == 0
-                        ? 'Nenhum alerta na última coleta Livelo'
-                        : '${resumo.livelo.alertasUltimaColeta} alertas na última coleta Livelo',
-                    descricao:
-                        '${resumo.livelo.lojasAcompanhadas} lojas acompanhadas · ${_rotuloEstadoResumo(resumo.livelo.estado)}',
-                    mostrarSeta: false,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                CartaoRadar(
-                  aoTocar: widget.aoAbrirInter,
-                  padding: const EdgeInsets.all(12),
-                  child: _LinhaFolha(
-                    icone: Icons.account_balance_outlined,
-                    titulo: 'Banco Inter',
-                    descricao:
-                        'Cashback: ${_rotuloEstadoResumo(resumo.cashbackInter.estado)} · produtos: ${_rotuloEstadoResumo(resumo.produtos.estado)}',
-                    mostrarSeta: false,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Histórico, lidos e não lidos dependem de um endpoint próprio e ainda não são exibidos.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: CoresRadar.de(context).textoSuave,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -1265,60 +1265,62 @@ class _FolhaConta extends StatelessWidget {
     return FolhaRadar(
       titulo: 'Conta e sistema',
       descricao: 'Utilidades não ocupam um tema principal.',
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.62,
-        ),
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            Text(
-              administrador ? 'Acesso administrador' : 'Acesso padrão',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (aoAdministrar != null) ...[
-              CartaoRadar(
-                aoTocar: aoAdministrar,
-                padding: const EdgeInsets.all(12),
-                child: const _LinhaFolha(
-                  icone: Icons.settings_outlined,
-                  titulo: 'Administração',
-                  descricao: 'Preferências, disparos e fontes selecionadas',
-                  mostrarSeta: true,
+      child: Flexible(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.62,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Text(
+                administrador ? 'Acesso administrador' : 'Acesso padrão',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: CoresRadar.de(context).textoSuave,
                 ),
               ),
-            ],
-            const SizedBox(height: 10),
-            const CartaoRadar(
-              padding: EdgeInsets.all(12),
-              child: _LinhaFolha(
-                icone: Icons.shield_outlined,
-                titulo: 'Segurança e acesso',
-                descricao: 'Sessão, convite e permissões',
-              ),
-            ),
-            const SizedBox(height: 10),
-            const CartaoRadar(
-              padding: EdgeInsets.all(12),
-              child: _LinhaFolha(
-                icone: Icons.add,
-                titulo: 'Integrações',
-                descricao: 'Pronto para novos bancos e programas',
-              ),
-            ),
-            if (podeSair) ...[
+              const SizedBox(height: 8),
+              if (aoAdministrar != null) ...[
+                CartaoRadar(
+                  aoTocar: aoAdministrar,
+                  padding: const EdgeInsets.all(12),
+                  child: const _LinhaFolha(
+                    icone: Icons.settings_outlined,
+                    titulo: 'Administração',
+                    descricao: 'Preferências, disparos e fontes selecionadas',
+                    mostrarSeta: true,
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
-              OutlinedButton.icon(
-                key: const Key('sair-conta'),
-                onPressed: aoSair,
-                icon: const Icon(Icons.logout),
-                label: const Text('Sair da conta'),
+              const CartaoRadar(
+                padding: EdgeInsets.all(12),
+                child: _LinhaFolha(
+                  icone: Icons.shield_outlined,
+                  titulo: 'Segurança e acesso',
+                  descricao: 'Sessão, convite e permissões',
+                ),
               ),
+              const SizedBox(height: 10),
+              const CartaoRadar(
+                padding: EdgeInsets.all(12),
+                child: _LinhaFolha(
+                  icone: Icons.add,
+                  titulo: 'Integrações',
+                  descricao: 'Pronto para novos bancos e programas',
+                ),
+              ),
+              if (podeSair) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  key: const Key('sair-conta'),
+                  onPressed: aoSair,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sair da conta'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

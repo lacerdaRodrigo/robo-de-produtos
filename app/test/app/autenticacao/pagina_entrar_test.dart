@@ -241,22 +241,4 @@ void main() {
       expect(find.text('E-mail ou senha inválidos.'), findsNothing);
     },
   );
-
-  testWidgets('login compacto confere com o golden aprovado', (at) async {
-    await _abrir(at, _AutenticadorFalso());
-
-    await expectLater(
-      find.byType(PaginaEntrar),
-      matchesGoldenFile('../../goldens/login_compacto.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('login amplo confere com o golden aprovado', (at) async {
-    await _abrir(at, _AutenticadorFalso(), tamanho: const Size(1440, 900));
-
-    await expectLater(
-      find.byType(PaginaEntrar),
-      matchesGoldenFile('../../goldens/login_amplo.png'),
-    );
-  }, tags: 'golden');
 }

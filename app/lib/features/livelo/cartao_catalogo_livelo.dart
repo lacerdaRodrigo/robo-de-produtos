@@ -11,19 +11,15 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     super.key,
     required this.parceiro,
     required this.pendente,
-    this.alertaPendente = false,
     required this.podeAdministrar,
     required this.aoAlternar,
-    required this.aoAlternarAlerta,
     required this.aoDetalhes,
   });
 
   final ParceiroCatalogoLivelo parceiro;
   final bool pendente;
-  final bool alertaPendente;
   final bool podeAdministrar;
   final VoidCallback aoAlternar;
-  final VoidCallback aoAlternarAlerta;
   final VoidCallback aoDetalhes;
 
   @override
@@ -75,16 +71,12 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
+        key: Key('cartao-livelo-${parceiro.idExterno}'),
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TopoCartao(
-              parceiro: parceiro,
-              alertaPendente: alertaPendente,
-              podeAdministrar: podeAdministrar,
-              aoAlternarAlerta: aoAlternarAlerta,
-            ),
+            _TopoCartao(parceiro: parceiro),
             const SizedBox(height: 12),
             Wrap(
               spacing: 7,
@@ -164,17 +156,9 @@ class _DescricaoCampanha extends StatefulWidget {
 }
 
 class _TopoCartao extends StatelessWidget {
-  const _TopoCartao({
-    required this.parceiro,
-    required this.alertaPendente,
-    required this.podeAdministrar,
-    required this.aoAlternarAlerta,
-  });
+  const _TopoCartao({required this.parceiro});
 
   final ParceiroCatalogoLivelo parceiro;
-  final bool alertaPendente;
-  final bool podeAdministrar;
-  final VoidCallback aoAlternarAlerta;
 
   @override
   Widget build(BuildContext context) {
@@ -192,32 +176,6 @@ class _TopoCartao extends StatelessWidget {
         fontSize: 12,
         fontWeight: FontWeight.w900,
       ),
-    );
-    final alerta = IconButton(
-      key: Key('alerta-${parceiro.idExterno}'),
-      tooltip: parceiro.alertaAtivo ? 'Desativar alerta' : 'Ativar alerta',
-      onPressed: parceiro.acompanhada && podeAdministrar && !alertaPendente
-          ? aoAlternarAlerta
-          : null,
-      style: IconButton.styleFrom(
-        minimumSize: const Size.square(34),
-        maximumSize: const Size.square(34),
-        padding: EdgeInsets.zero,
-        side: BorderSide(color: cores.borda),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
-      ),
-      icon: alertaPendente
-          ? const SizedBox.square(
-              dimension: 15,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(
-              parceiro.alertaAtivo
-                  ? Icons.notifications_active
-                  : Icons.notifications_none_outlined,
-              size: 18,
-              color: parceiro.alertaAtivo ? cores.acao : cores.textoSuave,
-            ),
     );
     final nome = Expanded(
       child: Column(
@@ -264,8 +222,6 @@ class _TopoCartao extends StatelessWidget {
                   const SizedBox(width: 7),
                   SizedBox(width: 76, child: beneficio),
                 ],
-                const SizedBox(width: 7),
-                alerta,
               ],
             ),
             if (estreito) ...[

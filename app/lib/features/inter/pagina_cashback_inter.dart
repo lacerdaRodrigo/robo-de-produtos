@@ -55,21 +55,30 @@ class PaginaCashbackInter extends StatefulWidget {
 
 class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     with WidgetsBindingObserver {
+  static const _itensPorPagina = 10;
+
   late final ControladorCashbackInter _controlador =
       widget.controlador ??
       ControladorCashbackInter(
-        buscar: ({required q, required ordenar, required pagina}) => widget.api
-            .painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+        buscar: ({required q, required ordenar, required pagina}) =>
+            widget.api.painelCashbackInter(
+              q: q,
+              ordenar: ordenar,
+              pagina: pagina,
+              porPagina: _itensPorPagina,
+            ),
         buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
             widget.api.painelCashbackInter(
               q: q,
               ordenar: ordenar,
               pagina: pagina,
+              porPagina: _itensPorPagina,
               apenasAcompanhadas: true,
             ),
       );
   late final bool _externo = widget.controlador != null;
   late final _campoBusca = TextEditingController(text: _controlador.busca);
+  final _rolagem = ScrollController();
   final _acompanhamentoAlterado = <String, bool>{};
   final _alterandoAcompanhamento = <String>{};
   final _salvamentosAcompanhamento = <String, Future<void>>{};
@@ -87,6 +96,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _campoBusca.dispose();
+    _rolagem.dispose();
     if (!_externo) _controlador.dispose();
     super.dispose();
   }
@@ -245,15 +255,12 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
         const SizedBox(height: 8),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: margem),
-          child: TextField(
-            controller: _campoBusca,
-            key: const Key('busca-cashback-inter'),
-            onChanged: _controlador.mudarBusca,
-            decoration: const InputDecoration(
-              hintText: 'Buscar por loja',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
+          child: CampoBuscaRadar(
+            controlador: _campoBusca,
+            chaveCampo: const Key('busca-cashback-inter'),
+            dica: 'Buscar por loja',
+            aoMudar: _controlador.mudarBusca,
+            somenteBusca: true,
           ),
         ),
         Padding(
@@ -311,6 +318,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     onRefresh: _atualizarDados,
     child: CustomScrollView(
       key: widget.chaveRolagemCompacta ?? const Key('cashback-inter-compacto'),
+      controller: _rolagem,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         ...widget.sliversAntesDoCashback,
@@ -334,6 +342,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               chaveCampo: const Key('busca-cashback-inter'),
               dica: 'Buscar loja',
               aoMudar: _controlador.mudarBusca,
+              somenteBusca: true,
             ),
           ),
         ),
@@ -521,6 +530,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
         final colunas = limites.maxWidth >= 900 ? 2 : 1;
         final margem = widget.incorporada ? 20.0 : 24.0;
         return ListView(
+          controller: _rolagem,
           padding: EdgeInsets.fromLTRB(margem, 8, margem, 32),
           children: [
             if (colunas == 1)
@@ -563,31 +573,20 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
   }
 
   Widget _paginacao() {
-    if (_controlador.carregandoMais) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    if (_controlador.erroMais != null) {
-      return Center(
-        child: FilledButton.tonal(
-          onPressed: _controlador.carregarMais,
-          child: const Text('Tentar carregar mais'),
-        ),
-      );
-    }
-    if (_controlador.temProxima) {
-      return Center(
-        child: FilledButton(
-          onPressed: _controlador.carregarMais,
-          child: const Text('Carregar mais'),
-        ),
-      );
-    }
-    return const Center(child: Text('Todos os resultados foram carregados.'));
+    return PaginacaoRadar(
+      pagina: _controlador.pagina,
+      totalItens: _controlador.totalItens,
+      porPagina: _controlador.porPagina,
+      carregando: _controlador.carregandoMais,
+      erro: _controlador.erroMais,
+      aoIrParaPagina: _irParaPagina,
+    );
+  }
+
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (!mounted || _controlador.pagina != pagina) return;
+    await rolarParaInicioPaginaRadar(_rolagem);
   }
 }
 

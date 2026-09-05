@@ -29,14 +29,22 @@ class PaginaPainelLivelo extends StatefulWidget {
 }
 
 class _EstadoPaginaPainelLivelo extends State<PaginaPainelLivelo> {
+  static const _itensPorPagina = 10;
+
   late final ControladorPainelLivelo _controlador =
       widget.controlador ??
       ControladorPainelLivelo(
         buscar: ({required q, required ordenar, required pagina}) =>
-            widget.api.painelLivelo(q: q, ordenar: ordenar, pagina: pagina),
+            widget.api.painelLivelo(
+              q: q,
+              ordenar: ordenar,
+              pagina: pagina,
+              porPagina: _itensPorPagina,
+            ),
       );
   late final bool _controladorVeioDeFora = widget.controlador != null;
   final TextEditingController _campoBusca = TextEditingController();
+  final _rolagem = ScrollController();
 
   @override
   void initState() {
@@ -47,10 +55,17 @@ class _EstadoPaginaPainelLivelo extends State<PaginaPainelLivelo> {
   @override
   void dispose() {
     _campoBusca.dispose();
+    _rolagem.dispose();
     if (!_controladorVeioDeFora) {
       _controlador.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (!mounted || _controlador.pagina != pagina) return;
+    await rolarParaInicioPaginaRadar(_rolagem);
   }
 
   @override
@@ -63,6 +78,8 @@ class _EstadoPaginaPainelLivelo extends State<PaginaPainelLivelo> {
         api: widget.api,
         administrador: widget.administrador,
         experienciaCompacta: widget.experienciaCompacta,
+        rolagem: _rolagem,
+        aoIrParaPagina: _irParaPagina,
       ),
     );
   }
@@ -75,6 +92,8 @@ class _PainelLiveloConteudo extends StatelessWidget {
     required this.api,
     required this.administrador,
     required this.experienciaCompacta,
+    required this.rolagem,
+    required this.aoIrParaPagina,
   });
 
   final ControladorPainelLivelo controlador;
@@ -82,6 +101,8 @@ class _PainelLiveloConteudo extends StatelessWidget {
   final Api api;
   final bool administrador;
   final bool experienciaCompacta;
+  final ScrollController rolagem;
+  final Future<void> Function(int pagina) aoIrParaPagina;
 
   @override
   Widget build(BuildContext context) {
@@ -136,22 +157,13 @@ class _PainelLiveloConteudo extends StatelessWidget {
                     padding: EdgeInsets.symmetric(
                       horizontal: experienciaCompacta ? 20 : 24,
                     ),
-                    child: experienciaCompacta
-                        ? CampoBuscaRadar(
-                            controlador: campoBusca,
-                            dica: 'Buscar loja ou categoria',
-                            aoMudar: controlador.mudarBusca,
-                          )
-                        : TextField(
-                            controller: campoBusca,
-                            onChanged: controlador.mudarBusca,
-                            textInputAction: TextInputAction.search,
-                            decoration: const InputDecoration(
-                              labelText: 'Buscar por loja ou categoria',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                    child: CampoBuscaRadar(
+                      controlador: campoBusca,
+                      dica: experienciaCompacta
+                          ? 'Buscar loja ou categoria'
+                          : 'Buscar por loja ou categoria',
+                      aoMudar: controlador.mudarBusca,
+                    ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -259,6 +271,7 @@ class _PainelLiveloConteudo extends StatelessWidget {
       builder: (context, limites) {
         final colunas = limites.maxWidth >= 900 ? 2 : 1;
         return ListView(
+          controller: rolagem,
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
           children: [
             if (colunas == 1)
@@ -284,29 +297,13 @@ class _PainelLiveloConteudo extends StatelessWidget {
   }
 
   Widget _paginacao(BuildContext context) {
-    if (controlador.carregandoMais) {
-      return const Padding(
-        padding: EdgeInsets.all(12),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (controlador.erroMais != null) {
-      return Center(
-        child: FilledButton.tonalIcon(
-          onPressed: controlador.carregarMais,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Tentar carregar mais'),
-        ),
-      );
-    }
-    if (controlador.temProxima) {
-      return Center(
-        child: FilledButton(
-          onPressed: controlador.carregarMais,
-          child: const Text('Carregar mais'),
-        ),
-      );
-    }
-    return const Center(child: Text('Todos os resultados foram carregados.'));
+    return PaginacaoRadar(
+      pagina: controlador.pagina,
+      totalItens: controlador.totalItens,
+      porPagina: controlador.porPagina,
+      carregando: controlador.carregandoMais,
+      erro: controlador.erroMais,
+      aoIrParaPagina: aoIrParaPagina,
+    );
   }
 }

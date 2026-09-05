@@ -760,6 +760,12 @@ Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, R
   Produtos continua limitado a **Compre direto** até que exista decisão e
   contrato específicos para a nova fonte.
 
+No aplicativo mobile V11, as abas de Sites parceiros consultam 10 cartões por
+página. `PaginacaoRadar` troca a página exibida sem carregar e acumular cards
+pela rolagem; não é mostrada com até 10 resultados e a página 2 só aparece a
+partir de 11. A aba Acompanhadas segue a mesma regra, preservando filtro e
+ordenação ao trocar a página e retornando suavemente ao início da lista.
+
 Em conflito com os trechos históricos de V3 que limitam `/inter` às favoritas,
 esta seção prevalece para o próximo contrato e para os protótipos. Esses trechos
 permanecem como registro fiel da implementação V3.0–V3.3.

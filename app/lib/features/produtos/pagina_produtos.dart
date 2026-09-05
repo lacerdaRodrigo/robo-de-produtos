@@ -12,7 +12,6 @@ import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
 import 'link_shopping_inter.dart';
 import 'pagina_historico_produto.dart';
-import 'seletor_categorias_inter.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
 class PaginaProdutos extends StatefulWidget {
@@ -38,6 +37,8 @@ class PaginaProdutos extends StatefulWidget {
 }
 
 class _EstadoPaginaProdutos extends State<PaginaProdutos> {
+  static const _itensPorPagina = 10;
+
   late final ControladorBuscaProdutos _controlador =
       widget.controlador ??
       ControladorBuscaProdutos(
@@ -55,6 +56,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             }) => widget.api.buscarProdutos(
               termo,
               pagina: pagina,
+              porPagina: _itensPorPagina,
               marca: marca,
               categoria: categoria,
               escopo: escopo,
@@ -66,8 +68,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       );
   late final bool _controladorExterno = widget.controlador != null;
   final _campoBusca = TextEditingController();
-  String? _rotuloCategoriaAtiva;
-  bool _carregandoCategorias = false;
+  final _rolagem = ScrollController();
 
   @override
   void initState() {
@@ -82,6 +83,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   @override
   void dispose() {
     _campoBusca.dispose();
+    _rolagem.dispose();
     if (!_controladorExterno) _controlador.dispose();
     super.dispose();
   }
@@ -157,23 +159,14 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                     widget.experienciaCompacta ? 20 : 24,
                     8,
                   ),
-                  child: widget.experienciaCompacta
-                      ? CampoBuscaRadar(
-                          controlador: _campoBusca,
-                          dica: 'Buscar produtos',
-                          aoMudar: _controlador.mudarTermo,
-                        )
-                      : TextField(
-                          controller: _campoBusca,
-                          onChanged: _controlador.mudarTermo,
-                          textInputAction: TextInputAction.search,
-                          decoration: const InputDecoration(
-                            labelText: 'Buscar produtos',
-                            hintText: 'Ex.: celular Motorola Edge 60 Pro',
-                            prefixIcon: Icon(Icons.search),
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
+                  child: CampoBuscaRadar(
+                    controlador: _campoBusca,
+                    chaveCampo: const Key('busca-produtos-principal'),
+                    dica: widget.experienciaCompacta
+                        ? 'Buscar produtos'
+                        : 'Ex.: celular Motorola Edge 60 Pro',
+                    aoMudar: _controlador.mudarTermo,
+                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(
@@ -196,7 +189,6 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                         TextButton(
                           onPressed: () {
                             _controlador.mudarFiltros(const FiltrosProdutos());
-                            setState(() => _rotuloCategoriaAtiva = null);
                           },
                           child: const Text('Limpar filtros'),
                         ),
@@ -269,6 +261,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         : null;
     return CustomScrollView(
       key: const Key('produtos-compacto'),
+      controller: _rolagem,
       slivers: [
         if (widget.mostrarTituloInterno)
           const SliverPadding(
@@ -301,26 +294,28 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
           sliver: SliverToBoxAdapter(
             child: _EntradaEscopoProdutos(
-              escopo: _controlador.filtros.escopoOpcional,
-              rotulo: _rotuloDoEscopo(_controlador.filtros.escopoOpcional),
+              escopos: _controlador.filtros.escoposAtivos,
+              rotulos: _controlador.filtros.escoposAtivos
+                  .map(_rotuloDoEscopo)
+                  .map((rotulo) => rotulo ?? '')
+                  .toList(growable: false),
               aoAbrir: _abrirEscopoContextual,
+              aoRemover: (escopo) {
+                _controlador.mudarFiltros(
+                  _controlador.filtros.copiarCom(
+                    escopos: _controlador.filtros.escoposAtivos
+                        .where((ativo) => ativo != escopo)
+                        .toList(growable: false),
+                  ),
+                );
+              },
               aoLimpar: () => _controlador.mudarFiltros(
-                _controlador.filtros.copiarCom(escopo: ''),
+                _controlador.filtros.copiarCom(escopos: const []),
               ),
             ),
           ),
         ),
         SliverToBoxAdapter(child: _filtrosCompactos()),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
-          sliver: SliverToBoxAdapter(
-            child: _ControleCategoriaTemporaria(
-              rotulo: _rotuloCategoriaAtiva,
-              carregando: _carregandoCategorias,
-              aoAbrir: _abrirCategoriaNestaTela,
-            ),
-          ),
-        ),
         if (_controlador.atualizadoEm != null)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
@@ -539,6 +534,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       builder: (context, limites) {
         final duasColunas = limites.maxWidth >= 900;
         return ListView(
+          controller: _rolagem,
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
             for (final entrada in grupos.entries) ...[
@@ -614,90 +610,42 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
 
   Widget _paginacao() {
     if (_controlador.erro != null) return const SizedBox.shrink();
-    if (_controlador.carregandoMais) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    if (_controlador.erroMais != null) {
-      return Center(
-        child: FilledButton.tonal(
-          onPressed: _controlador.carregarMais,
-          child: const Text('Tentar carregar mais'),
-        ),
-      );
-    }
-    if (_controlador.temProxima) {
-      return Center(
-        child: FilledButton(
-          onPressed: _controlador.carregarMais,
-          child: const Text('Carregar mais'),
-        ),
-      );
-    }
-    return const Center(child: Text('Todos os resultados foram carregados.'));
+    return PaginacaoRadar(
+      pagina: _controlador.pagina,
+      totalItens: _controlador.totalItens,
+      porPagina: _controlador.porPagina,
+      carregando: _controlador.carregandoMais,
+      erro: _controlador.erroMais,
+      aoIrParaPagina: _irParaPagina,
+    );
+  }
+
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (!mounted || _controlador.pagina != pagina) return;
+    await rolarParaInicioPaginaRadar(_rolagem);
   }
 
   Future<void> _abrirFiltros() async {
-    final novos = await showModalBottomSheet<FiltrosProdutos>(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.5,
-      ),
-      builder: (_) => _FiltrosProdutosSheet(
-        api: widget.api,
-        filtros: _controlador.filtros,
-        podeLerLojasSelecionadas: widget.administrador,
+    final novos = await mostrarFolhaRadar<FiltrosProdutos>(
+      context,
+      alturaMaxima: 0.5,
+      builder: (_) => FolhaRadar(
+        titulo: 'Filtrar produtos',
+        descricao: 'Refine o catálogo salvo do Compre direto.',
+        child: Flexible(
+          child: _FiltrosProdutosSheet(
+            api: widget.api,
+            filtros: _controlador.filtros,
+            podeLerLojasSelecionadas: widget.administrador,
+            mostrarCabecalho: false,
+          ),
+        ),
       ),
     );
     if (mounted && novos != null) {
-      setState(() => _rotuloCategoriaAtiva = novos.categoriaOpcional);
       _controlador.mudarFiltros(novos);
     }
-  }
-
-  Future<void> _abrirCategoriaNestaTela() async {
-    if (_carregandoCategorias) return;
-    setState(() => _carregandoCategorias = true);
-    CatalogoCategoriasInterUsuario catalogo;
-    try {
-      catalogo = await widget.api.categoriasInter();
-    } catch (_) {
-      if (!mounted) return;
-      mostrarMensagemRadar(
-        context,
-        'Não foi possível carregar as categorias do catálogo.',
-        sucesso: false,
-      );
-      return;
-    } finally {
-      if (mounted) setState(() => _carregandoCategorias = false);
-    }
-    if (!mounted) return;
-    final selecao = await mostrarSelecaoCategoriaTemporaria(
-      context,
-      categorias: catalogo.itens,
-      categoriaAtual: _controlador.filtros.categoriaOpcional,
-      semCategoriaAtual: _controlador.filtros.semCategoria,
-    );
-    if (selecao == null || !mounted) return;
-
-    final rotulo = selecao.semCategoria ? 'Sem categoria' : selecao.categoria;
-    setState(() => _rotuloCategoriaAtiva = rotulo);
-    _controlador.mudarFiltros(
-      _controlador.filtros.copiarCom(
-        categoria: selecao.categoria ?? '',
-        semCategoria: selecao.semCategoria,
-      ),
-    );
-    mostrarMensagemRadar(
-      context,
-      'Filtro temporário aplicado ao catálogo salvo.',
-    );
   }
 
   Future<void> _abrirEscopoContextual() async {
@@ -910,8 +858,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       _ => area,
     };
     if (escopo == null || escopo.id == _idVoltarEscopo || !mounted) return;
+    final ativos = _controlador.filtros.escoposAtivos;
+    const outro = 'outros-novas-categorias';
+    if ((escopo.id == outro && ativos.isNotEmpty) || ativos.contains(outro)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Outros / novas categorias deve ser usado sozinho.'),
+        ),
+      );
+      return;
+    }
     _controlador.mudarFiltros(
-      _controlador.filtros.copiarCom(escopo: escopo.id),
+      _controlador.filtros.copiarCom(escopos: [...ativos, escopo.id]),
     );
   }
 
@@ -1046,56 +1004,47 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     required String descricao,
     required List<_OpcaoNavegacaoEscopo> opcoes,
     bool mostrarVoltar = true,
-  }) => showModalBottomSheet<_OpcaoNavegacaoEscopo>(
-    context: context,
-    showDragHandle: true,
-    builder: (context) => ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      children: [
-        Row(
+  }) => mostrarFolhaRadar<_OpcaoNavegacaoEscopo>(
+    context,
+    alturaMaxima: 0.9,
+    builder: (contexto) => FolhaRadar(
+      titulo: titulo,
+      descricao: descricao,
+      mostrarVoltar: mostrarVoltar,
+      aoVoltar: mostrarVoltar
+          ? () => Navigator.pop(
+              contexto,
+              const _OpcaoNavegacaoEscopo(_idVoltarEscopo, ''),
+            )
+          : null,
+      child: Flexible(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(3, 0, 3, 28),
           children: [
-            if (mostrarVoltar)
-              IconButton(
-                tooltip: 'Voltar',
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(
-                  context,
-                  const _OpcaoNavegacaoEscopo(_idVoltarEscopo, ''),
+            for (final opcao in opcoes)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(contexto, opcao),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(opcao.rotulo),
+                        if (opcao.descricao != null)
+                          Text(
+                            opcao.descricao!,
+                            style: Theme.of(contexto).textTheme.labelSmall,
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            Expanded(
-              child: Text(
-                titulo,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(descricao),
-        const SizedBox(height: 14),
-        for (final opcao in opcoes)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context, opcao),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(opcao.rotulo),
-                    if (opcao.descricao != null)
-                      Text(
-                        opcao.descricao!,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-      ],
+      ),
     ),
   );
 
@@ -1207,15 +1156,17 @@ const _areasDeEntradaProdutos = <_OpcaoNavegacaoEscopo>[
 
 class _EntradaEscopoProdutos extends StatelessWidget {
   const _EntradaEscopoProdutos({
-    required this.escopo,
-    required this.rotulo,
+    required this.escopos,
+    required this.rotulos,
     required this.aoAbrir,
+    required this.aoRemover,
     required this.aoLimpar,
   });
 
-  final String? escopo;
-  final String? rotulo;
+  final List<String> escopos;
+  final List<String> rotulos;
   final VoidCallback aoAbrir;
+  final ValueChanged<String> aoRemover;
   final VoidCallback aoLimpar;
 
   @override
@@ -1241,14 +1192,17 @@ class _EntradaEscopoProdutos extends StatelessWidget {
             ),
             child: Icon(Icons.category_outlined, color: cores.marca, size: 21),
           );
+          final temEscopos = escopos.isNotEmpty;
           final texto = Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  escopo == null
+                  !temEscopos
                       ? 'Comece por uma área'
-                      : 'Busca contextual · $rotulo',
+                      : escopos.length == 1
+                      ? 'Busca contextual · ${rotulos.first}'
+                      : 'Busca contextual · ${escopos.length} áreas',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: tema.textTheme.labelLarge?.copyWith(
@@ -1257,9 +1211,9 @@ class _EntradaEscopoProdutos extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  escopo == null
+                  !temEscopos
                       ? 'Refine a busca por tipo de produto.'
-                      : 'Recorte aplicado ao catálogo salvo.',
+                      : 'Recortes aplicados ao catálogo salvo.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: tema.textTheme.labelSmall?.copyWith(
@@ -1270,13 +1224,10 @@ class _EntradaEscopoProdutos extends StatelessWidget {
               ],
             ),
           );
-          final acao = FilledButton.tonalIcon(
-            onPressed: escopo == null ? aoAbrir : aoLimpar,
-            icon: Icon(
-              escopo == null ? Icons.arrow_forward : Icons.close,
-              size: 17,
-            ),
-            label: Text(escopo == null ? 'Explorar' : 'Limpar'),
+          final explorar = FilledButton.tonalIcon(
+            onPressed: aoAbrir,
+            icon: Icon(Icons.arrow_forward, size: 17),
+            label: Text(temEscopos ? 'Adicionar área' : 'Explorar'),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 11),
               minimumSize: const Size(0, 40),
@@ -1286,22 +1237,104 @@ class _EntradaEscopoProdutos extends StatelessWidget {
               ),
             ),
           );
-          final vertical =
-              limites.maxWidth < 360 ||
-              MediaQuery.textScalerOf(context).scale(1) > 1.2;
-          if (vertical) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(children: [icone, const SizedBox(width: 10), texto]),
-                const SizedBox(height: 8),
-                Align(alignment: Alignment.centerRight, child: acao),
-              ],
+          if (!temEscopos) {
+            final vertical =
+                limites.maxWidth < 360 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.2;
+            if (vertical) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(children: [icone, const SizedBox(width: 10), texto]),
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerRight, child: explorar),
+                ],
+              );
+            }
+            return Row(
+              children: [icone, const SizedBox(width: 10), texto, explorar],
             );
           }
-          return Row(children: [icone, const SizedBox(width: 10), texto, acao]);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [icone, const SizedBox(width: 10), texto]),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  for (var indice = 0; indice < escopos.length; indice++)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: limites.maxWidth - 30,
+                      ),
+                      child: InputChip(
+                        key: Key('escopo-produtos-${escopos[indice]}'),
+                        label: Text(
+                          rotulos[indice],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onDeleted: () => aoRemover(escopos[indice]),
+                        deleteIcon: const Icon(Icons.close, size: 17),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _AcoesEscopoProdutos(
+                explorar: explorar,
+                aoLimpar: aoLimpar,
+                empilhar:
+                    limites.maxWidth < 360 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.2,
+              ),
+            ],
+          );
         },
       ),
+    );
+  }
+}
+
+class _AcoesEscopoProdutos extends StatelessWidget {
+  const _AcoesEscopoProdutos({
+    required this.explorar,
+    required this.aoLimpar,
+    required this.empilhar,
+  });
+
+  final Widget explorar;
+  final VoidCallback aoLimpar;
+  final bool empilhar;
+
+  @override
+  Widget build(BuildContext context) {
+    final limpar = FilledButton.tonalIcon(
+      key: const Key('limpar-escopos-produtos'),
+      onPressed: aoLimpar,
+      icon: const Icon(Icons.close, size: 17),
+      label: const Text('Limpar'),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(0, 40),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+    if (empilhar) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [explorar, const SizedBox(height: 8), limpar],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: explorar),
+        const SizedBox(width: 8),
+        Expanded(child: limpar),
+      ],
     );
   }
 }
@@ -1388,90 +1421,6 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _ControleCategoriaTemporaria extends StatelessWidget {
-  const _ControleCategoriaTemporaria({
-    required this.rotulo,
-    required this.carregando,
-    required this.aoAbrir,
-  });
-
-  final String? rotulo;
-  final bool carregando;
-  final VoidCallback aoAbrir;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final filtroAtivo = rotulo != null;
-    final escuro = tema.brightness == Brightness.dark;
-    final corFundo = (escuro ? Tokens.acaoFundoEscuro : Tokens.actionSoft);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cores.borda),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Categoria nesta tela',
-                  style: tema.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Filtro temporário · não altera categorias acompanhadas',
-                  style: tema.textTheme.labelSmall?.copyWith(
-                    color: cores.textoSuave,
-                    fontSize: 8,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          OutlinedButton.icon(
-            key: const Key('categoria-nesta-tela'),
-            onPressed: carregando ? null : aoAbrir,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: filtroAtivo ? cores.acao : cores.textoSuave,
-              backgroundColor: filtroAtivo ? corFundo : null,
-              side: BorderSide(
-                color: filtroAtivo
-                    ? cores.acao.withValues(alpha: 0.5)
-                    : cores.borda,
-              ),
-              minimumSize: const Size(0, 38),
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-            ),
-            icon: carregando
-                ? const SizedBox.square(
-                    dimension: 13,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.chevron_right, size: 17),
-            label: Text(
-              filtroAtivo ? rotulo! : 'Todas',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-            ),
-            iconAlignment: IconAlignment.end,
-          ),
-        ],
       ),
     );
   }
@@ -1583,11 +1532,13 @@ class _FiltrosProdutosSheet extends StatefulWidget {
     required this.api,
     required this.filtros,
     required this.podeLerLojasSelecionadas,
+    this.mostrarCabecalho = true,
   });
 
   final Api api;
   final FiltrosProdutos filtros;
   final bool podeLerLojasSelecionadas;
+  final bool mostrarCabecalho;
 
   @override
   State<_FiltrosProdutosSheet> createState() => _EstadoFiltrosProdutosSheet();
@@ -1661,15 +1612,17 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Filtros', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(
-              'Escolha a loja. Só a faixa de preço é editável.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: CoresRadar.de(context).textoSuave,
+            if (widget.mostrarCabecalho) ...[
+              Text('Filtros', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text(
+                'Escolha a loja. Só a faixa de preço é editável.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: CoresRadar.de(context).textoSuave,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
+            ],
             if (_carregando)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 28),
@@ -1803,6 +1756,7 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
   void _aplicar() => Navigator.of(context).pop(
     FiltrosProdutos(
       categoria: widget.filtros.categoria,
+      escopos: widget.filtros.escopos,
       semCategoria: widget.filtros.semCategoria,
       loja: _loja,
       precoMin: _precoMin.text,
@@ -1855,6 +1809,7 @@ class _BuscaProdutosCompacta extends StatelessWidget {
             dica: 'Ex.: Motorola Edge 60 Pro',
             aoMudar: aoMudar,
             chaveCampo: const Key('busca-produtos'),
+            aoAcionar: () => aoMudar(controlador.text),
           ),
         ],
       ),

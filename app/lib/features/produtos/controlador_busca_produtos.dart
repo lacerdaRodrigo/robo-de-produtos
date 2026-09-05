@@ -9,7 +9,7 @@ class FiltrosProdutos {
   const FiltrosProdutos({
     this.marca = '',
     this.categoria = '',
-    this.escopo = '',
+    this.escopos = const [],
     this.semCategoria = false,
     this.loja = '',
     this.precoMin = '',
@@ -18,7 +18,13 @@ class FiltrosProdutos {
 
   final String marca;
   final String categoria;
-  final String escopo;
+
+  /// Identificadores editoriais aprovados para a busca contextual.
+  ///
+  /// A API recebe a lista serializada por vírgulas para preservar o contrato
+  /// de um único parâmetro de consulta e continuar compatível com clientes
+  /// publicados que enviam somente um escopo.
+  final List<String> escopos;
   final bool semCategoria;
   final String loja;
   final String precoMin;
@@ -27,7 +33,7 @@ class FiltrosProdutos {
   FiltrosProdutos copiarCom({
     String? marca,
     String? categoria,
-    String? escopo,
+    List<String>? escopos,
     bool? semCategoria,
     String? loja,
     String? precoMin,
@@ -35,7 +41,7 @@ class FiltrosProdutos {
   }) => FiltrosProdutos(
     marca: marca ?? this.marca,
     categoria: categoria ?? this.categoria,
-    escopo: escopo ?? this.escopo,
+    escopos: escopos ?? this.escopos,
     semCategoria: semCategoria ?? this.semCategoria,
     loja: loja ?? this.loja,
     precoMin: precoMin ?? this.precoMin,
@@ -49,7 +55,21 @@ class FiltrosProdutos {
 
   String? get marcaOpcional => _opcional(marca);
   String? get categoriaOpcional => semCategoria ? null : _opcional(categoria);
-  String? get escopoOpcional => _opcional(escopo);
+  List<String> get escoposAtivos {
+    final vistos = <String>{};
+    final ativos = <String>[];
+    for (final escopo in escopos) {
+      final limpo = escopo.trim();
+      if (limpo.isNotEmpty && vistos.add(limpo)) ativos.add(limpo);
+    }
+    return List.unmodifiable(ativos);
+  }
+
+  String? get escopoOpcional {
+    final ativos = escoposAtivos;
+    return ativos.isEmpty ? null : ativos.join(',');
+  }
+
   String? get lojaOpcional => _opcional(loja);
   String? get precoMinOpcional => _opcional(precoMin);
   String? get precoMaxOpcional => _opcional(precoMax);
@@ -68,7 +88,7 @@ class FiltrosProdutos {
       other is FiltrosProdutos &&
       other.marca == marca &&
       other.categoria == categoria &&
-      other.escopo == escopo &&
+      listEquals(other.escoposAtivos, escoposAtivos) &&
       other.semCategoria == semCategoria &&
       other.loja == loja &&
       other.precoMin == precoMin &&
@@ -78,7 +98,7 @@ class FiltrosProdutos {
   int get hashCode => Object.hash(
     marca,
     categoria,
-    escopo,
+    Object.hashAll(escoposAtivos),
     semCategoria,
     loja,
     precoMin,
@@ -118,6 +138,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   int _pagina = 0;
   int _porPagina = 20;
   int _totalItens = 0;
+  int _totalPaginas = 1;
   bool _temProxima = false;
   bool _carregando = false;
   bool _carregandoMais = false;
@@ -134,6 +155,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   int get totalItens => _totalItens;
   int get pagina => _pagina;
   int get porPagina => _porPagina;
+  int get totalPaginas => _totalPaginas;
   bool get temProxima => _temProxima;
   bool get carregando => _carregando;
   bool get carregandoMais => _carregandoMais;
@@ -192,11 +214,39 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     }
   }
 
+  /// Troca a página visível sem acumular cards das páginas anteriores.
+  Future<void> irParaPagina(int pagina) async {
+    if (!podeBuscar ||
+        _carregando ||
+        _carregandoMais ||
+        pagina < 1 ||
+        pagina > _totalPaginas ||
+        pagina == _pagina) {
+      return;
+    }
+    final versao = _versao;
+    _carregandoMais = true;
+    _erroMais = null;
+    notifyListeners();
+    try {
+      final resposta = await _buscar(pagina: pagina);
+      if (_ativa(versao)) _aplicar(resposta, substituir: true);
+    } catch (erro) {
+      if (_ativa(versao)) _erroMais = erro;
+    } finally {
+      if (_ativa(versao)) {
+        _carregandoMais = false;
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> _reiniciar({bool adiar = false}) async {
     _temporizador?.cancel();
     _versao++;
     _erro = null;
     _erroMais = null;
+    _totalPaginas = 1;
     _carregandoMais = false;
     _carregando = podeBuscar;
     notifyListeners();
@@ -248,6 +298,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     _pagina = resposta.pagina;
     _porPagina = resposta.porPagina;
     _totalItens = resposta.totalItens;
+    _totalPaginas = resposta.totalPaginas;
     _temProxima = resposta.temProxima;
     _atualizadoEm = substituir
         ? resposta.atualizadoEm

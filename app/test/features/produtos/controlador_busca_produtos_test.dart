@@ -211,6 +211,36 @@ void main() {
     },
   );
 
+  test('serializa os recortes contextuais únicos na ordem escolhida', () async {
+    final escopos = <String?>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            escopos.add(escopo);
+            return _pagina(const []);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarFiltros(
+      const FiltrosProdutos(escopos: ['tv-smart', 'freezers', 'tv-smart']),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(escopos.single, 'tv-smart,freezers');
+  });
+
   test('Sem categoria é enviado separado do valor externo', () async {
     final consultas = <(String?, bool)>[];
     final controlador = ControladorBuscaProdutos(

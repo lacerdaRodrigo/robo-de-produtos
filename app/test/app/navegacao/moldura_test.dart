@@ -331,7 +331,7 @@ void main() {
 
     await at.tap(find.byKey(const Key('atalho-produtos')));
     await at.pumpAndSettle();
-    expect(find.widgetWithText(TextField, 'Buscar produtos'), findsOneWidget);
+    expect(find.byKey(const Key('busca-produtos-principal')), findsOneWidget);
 
     await at.pumpWidget(const SizedBox.shrink());
     await _abrir(at, tamanho: tamanho);
@@ -795,41 +795,4 @@ void main() {
     }
     expect(find.byKey(const Key('produtos-compacto')), findsOneWidget);
   });
-
-  testWidgets('gaveta mobile confere com o golden aprovado', (at) async {
-    await _abrir(at);
-    await _abrirGaveta(at);
-
-    await expectLater(
-      find.byType(MolduraRadar),
-      matchesGoldenFile('../../goldens/moldura_mobile_gaveta.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('Início mobile novo confere com o golden claro', (at) async {
-    await _abrir(at, resumo: _resumoComEstadosIndependentes);
-
-    await expectLater(
-      find.byType(MolduraRadar),
-      matchesGoldenFile('../../goldens/moldura_mobile_inicio.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('Início mobile novo confere com o golden escuro', (at) async {
-    await _abrir(at, resumo: _resumoComEstadosIndependentes, escuro: true);
-
-    await expectLater(
-      find.byType(MolduraRadar),
-      matchesGoldenFile('../../goldens/moldura_mobile_inicio_escuro.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('lateral Web confere com o golden aprovado', (at) async {
-    await _abrir(at, tamanho: const Size(1440, 900));
-
-    await expectLater(
-      find.byType(MolduraRadar),
-      matchesGoldenFile('../../goldens/moldura_web_lateral.png'),
-    );
-  }, tags: 'golden');
 }

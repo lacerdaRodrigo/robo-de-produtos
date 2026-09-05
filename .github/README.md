@@ -14,7 +14,7 @@ nunca em arquivo versionado.
 | [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
 | [`app-robo.yml`](workflows/app-robo.yml) | CI mobile: format, analyze e unitários/widgets permitidos | a cada push/PR | nenhum |
 
-O CI do app não executa Web, golden, integration, E2E ou smoke e não faz deploy.
+O CI do app não executa Web, integration, E2E ou smoke e não faz deploy.
 Os workflows de coleta permanecem separados do workflow de validação Flutter.
 
 ## Permissões

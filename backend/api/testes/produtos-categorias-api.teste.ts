@@ -84,6 +84,25 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("une recortes contextuais sem repetir categorias externas", async () => {
+    const resposta = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?q=oferta&escopo=tv-smart,freezers",
+      ),
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.buscar).toHaveBeenCalledWith(
+      "oferta",
+      1,
+      20,
+      "42",
+      expect.objectContaining({
+        categorias: ["Smart TV", "Freezer", "Freezer Horizontal"],
+      }),
+    );
+  });
+
   it("separa fogões, micro-ondas e refrigeração nos recortes de casa", async () => {
     const resposta = await GET(
       new Request(
@@ -196,5 +215,17 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
       ),
     );
     expect(combinados.status).toBe(400);
+
+    const escopoDuplicado = await GET(
+      new Request("http://localhost/api/inter/produtos?q=tv&escopo=tv-smart,tv-smart"),
+    );
+    expect(escopoDuplicado.status).toBe(400);
+
+    const outrosCombinado = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?q=tv&escopo=outros-novas-categorias,tv-smart",
+      ),
+    );
+    expect(outrosCombinado.status).toBe(400);
   });
 });

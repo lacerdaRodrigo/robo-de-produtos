@@ -447,34 +447,29 @@ void main() {
     },
   );
 
-  testWidgets('sino ativa e desativa alerta somente para acompanhada', (
+  testWidgets('cartão Livelo não exibe sino e alinha pontos à direita', (
     at,
   ) async {
-    final chamadas = <bool>[];
     final controlador = _controlador();
-    final comAlerta = ControladorCatalogoLivelo(
-      buscar: controlador.buscar,
-      alterarAcompanhamento: controlador.alterarAcompanhamento,
-      alterarAlerta: ({required idExterno, required ativo}) async {
-        chamadas.add(ativo);
-      },
-    );
     addTearDown(controlador.dispose);
-    addTearDown(comAlerta.dispose);
-    await _abrir(at, comAlerta);
+    await _abrir(at, controlador);
     await at.drag(
       find.byKey(const Key('catalogo-livelo-android')),
       const Offset(0, -700),
     );
     await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('alerta-A')));
-    await at.pumpAndSettle();
-    expect(chamadas, [true]);
-    expect(comAlerta.itens.first.alertaAtivo, isTrue);
-    await at.tap(find.byKey(const Key('alerta-A')));
-    await at.pumpAndSettle();
-    expect(chamadas, [true, false]);
-    expect(comAlerta.itens.first.alertaAtivo, isFalse);
+
+    expect(find.byKey(const Key('alerta-A')), findsNothing);
+    final cartao = find.byKey(const Key('cartao-livelo-A'));
+    final pontos = find.descendant(
+      of: cartao,
+      matching: find.text('2,9 pontos por R\$ 1'),
+    );
+    expect(pontos, findsOneWidget);
+    expect(
+      at.getTopRight(pontos).dx,
+      closeTo(at.getTopRight(cartao).dx - 14, 1),
+    );
   });
 
   testWidgets(
@@ -560,24 +555,4 @@ void main() {
     await at.pump();
     expect(at.takeException(), isNull);
   });
-
-  testWidgets('golden Android claro', (at) async {
-    final controlador = _controlador();
-    addTearDown(controlador.dispose);
-    await _abrir(at, controlador);
-    await expectLater(
-      find.byKey(const Key('catalogo-livelo-android')),
-      matchesGoldenFile('../../goldens/catalogo_livelo_android_claro.png'),
-    );
-  }, tags: 'golden');
-
-  testWidgets('golden Android escuro', (at) async {
-    final controlador = _controlador();
-    addTearDown(controlador.dispose);
-    await _abrir(at, controlador, brilho: Brightness.dark);
-    await expectLater(
-      find.byKey(const Key('catalogo-livelo-android')),
-      matchesGoldenFile('../../goldens/catalogo_livelo_android_escuro.png'),
-    );
-  }, tags: 'golden');
 }

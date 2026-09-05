@@ -230,10 +230,14 @@ Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia → Freezer
 Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia → Lavadoras e secadoras
 ```
 
-O último nível sempre envia um único identificador de escopo à API. No caso
-acima, `geladeiras`, `freezers` e `lavadoras`; Fogões/fornos e Micro-ondas
-continuam como folhas próprias no nível de Eletrodomésticos. A API resolve cada
-folha para uma lista declarada de valores
+O último nível envia um identificador de escopo à API. A pessoa pode adicionar
+mais folhas ao mesmo recorte; o app envia os identificadores únicos e ordenados
+no parâmetro `escopo` separado por vírgulas. No caso acima, `geladeiras`,
+`freezers` e `lavadoras`; Fogões/fornos e Micro-ondas continuam como folhas
+próprias no nível de Eletrodomésticos. A API resolve cada folha e une as listas
+de valores declarados, sempre por correspondência exata. `Outros / novas
+categorias` permanece exclusivo porque é uma exclusão dinâmica. Nenhum escopo
+desconhecido ou repetido é aceito. Cada lista contém valores
 literais do Inter. A mesma jornada em níveis vale para Eletrônicos, Beleza,
 Mercado, Bebês e brinquedos, Pet, Esporte e lazer, Ferramentas e construção,
 Auto e Moda.
@@ -255,10 +259,11 @@ coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
 regras já existentes de histórico e publicação.
 
 No Flutter mobile V11, a entrada **Comece por uma área** permanece uma ação de
-descoberta contextual, sem alterar o contrato da API. Ela usa cartão com ícone,
+descoberta contextual. Ela usa cartão com ícone,
 texto de apoio e CTA `Explorar`; quando um recorte está ativo, o mesmo controle
-exibe o rótulo contextual e oferece `Limpar`. Em larguras estreitas ou com texto
-ampliado, o CTA ocupa uma segunda linha para manter a jornada sem overflow.
+exibe o rótulo contextual, um chip removível por recorte e oferece `Adicionar
+área` e `Limpar`. Em larguras estreitas ou com texto ampliado, as ações ocupam
+uma segunda linha para manter a jornada sem overflow.
 
 App e API precisam ser publicados de forma compatível quando um identificador
 novo de escopo entrar. Um app mais novo contra uma API antiga recebe erro de
@@ -524,7 +529,7 @@ Seguir `AGENTS.md`: somente unitários/widgets diretamente afetados.
 - [ ] nomes longos continuam sem overflow;
 - [ ] claro/escuro continuam funcionando onde aplicável.
 
-Não criar golden, integração, E2E, smoke, performance ou teste Web para esta mudança.
+Não criar integração, E2E, smoke, performance ou teste Web para esta mudança.
 
 ### Fase 8 — migração/limpeza de banco
 

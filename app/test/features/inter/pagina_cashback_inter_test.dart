@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/tema/tema.dart';
 import 'package:app_robo/app/paginas/lojas.dart';
 import 'package:app_robo/core/api/api.dart';
@@ -41,13 +42,14 @@ CashbackInter _loja({
 Pagina<CashbackInter> _pagina(
   List<CashbackInter> itens, {
   int? total,
+  int porPagina = 20,
   bool proxima = false,
   String? atualizadaEm = '2026-08-22T12:00:00Z',
   String? ultimaTentativaEstado,
 }) => Pagina(
   itens: itens,
   pagina: 1,
-  porPagina: 20,
+  porPagina: porPagina,
   totalItens: total ?? itens.length,
   totalPaginas: proxima ? 2 : 1,
   temProxima: proxima,
@@ -98,6 +100,7 @@ void main() {
     resposta.complete(_pagina([_loja()]));
     await at.pumpAndSettle();
 
+    expect(find.byType(CampoBuscaRadar), findsOneWidget);
     expect(find.text('Maior cashback'), findsOneWidget);
     expect(find.text('Nome A–Z'), findsOneWidget);
     expect(find.text('Magazine Luiza'), findsOneWidget);
@@ -579,7 +582,8 @@ void main() {
         if (pagina == 1) {
           return _pagina(
             [_loja(), _loja(nome: 'Renner')],
-            total: 3,
+            total: 11,
+            porPagina: 10,
             proxima: true,
           );
         }
@@ -595,14 +599,23 @@ void main() {
     await at.pumpWidget(_tela(controlador));
     await at.pumpAndSettle();
     expect(find.byType(Wrap), findsNWidgets(2));
-    await at.tap(find.text('Carregar mais'));
+    await at.tap(find.byKey(const Key('paginacao-radar-2')));
     await at.pumpAndSettle();
-    expect(find.text('Tentar carregar mais'), findsOneWidget);
+    expect(find.byTooltip('Tentar próxima página'), findsOneWidget);
 
-    await at.tap(find.text('Tentar carregar mais'));
+    await at.tap(find.byTooltip('Tentar próxima página'));
     await at.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    paginaDois.complete(_pagina([_loja(nome: 'C&A')], total: 3));
+    paginaDois.complete(
+      Pagina(
+        itens: [_loja(nome: 'C&A')],
+        pagina: 2,
+        porPagina: 10,
+        totalItens: 11,
+        totalPaginas: 2,
+        temProxima: false,
+      ),
+    );
     await at.pumpAndSettle();
     expect(find.text('C&A'), findsOneWidget);
   }, tags: 'web');

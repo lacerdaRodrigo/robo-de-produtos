@@ -94,6 +94,7 @@ void main() {
 
     await api.buscarProdutos(
       'tv',
+      porPagina: 10,
       marca: 'Samsung',
       loja: 'casas-bahia',
       categoria: 'Smart TV',
@@ -107,6 +108,7 @@ void main() {
       isFalse,
     );
     expect(consultas.single.queryParameters['q'], 'tv');
+    expect(consultas.single.queryParameters['por_pagina'], '10');
   });
 
   test('buscarProdutos envia Sem categoria como filtro separado', () async {
@@ -333,6 +335,7 @@ void main() {
       q: 'casa',
       ordenar: 'alerta',
       pagina: 2,
+      porPagina: 10,
     );
 
     expect(consulta!.path, '/api/livelo/painel');
@@ -340,7 +343,7 @@ void main() {
       'q': 'casa',
       'ordenar': 'alerta',
       'pagina': '2',
-      'por_pagina': '20',
+      'por_pagina': '10',
     });
     expect(resposta.itens.single.pontosAtuais, '2.90');
     expect(resposta.itens.single.pontosClube, isNull);
@@ -383,6 +386,7 @@ void main() {
       categoria: 'Beleza',
       ordenar: 'nome',
       pagina: 2,
+      porPagina: 10,
     );
     await api.alterarAcompanhamentoLivelo(idExterno: 'NAT', acompanhada: true);
     await api.alterarAlertaLivelo(idExterno: 'NAT', ativo: true);
@@ -397,7 +401,7 @@ void main() {
       'categoria': 'Beleza',
       'ordenar': 'nome',
       'pagina': '2',
-      'por_pagina': '20',
+      'por_pagina': '10',
     });
     expect(requisicoes[1].url.path, '/api/livelo/catalogo/NAT/acompanhamento');
     expect(requisicoes[1].body, '{"acompanhada":true}');
@@ -452,7 +456,7 @@ void main() {
       ordenar: 'nome',
       pagina: 2,
       apenasAcompanhadas: true,
-      porPagina: 1,
+      porPagina: 10,
     );
 
     expect(consulta!.path, '/api/inter/cashback');
@@ -460,7 +464,7 @@ void main() {
       'q': 'c&a',
       'ordenar': 'nome',
       'pagina': '2',
-      'por_pagina': '1',
+      'por_pagina': '10',
       'acompanhadas': 'true',
     });
     expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
@@ -644,6 +648,7 @@ void main() {
       final diretas = await api.lojasDiretas(
         ordenar: 'cashback',
         filtro: 'acompanhadas',
+        porPagina: 10,
       );
       await api.alterarSelecaoLojaDireta(id: 'direta-1', selecionada: true);
 
@@ -661,6 +666,7 @@ void main() {
       expect(requisicoes[1].body, '{"id":"parceira-1","favorita":true}');
       expect(requisicoes[2].url.queryParameters['ordenar'], 'cashback');
       expect(requisicoes[2].url.queryParameters['filtro'], 'acompanhadas');
+      expect(requisicoes[2].url.queryParameters['por_pagina'], '10');
       expect(requisicoes[3].method, 'PATCH');
       expect(requisicoes[3].body, '{"id":"direta-1","selecionada":true}');
     },

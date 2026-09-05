@@ -42,7 +42,7 @@ jobs:
             ! -name 'controlador_painel_livelo_test.dart' \
             ! -name 'pagina_painel_livelo_test.dart' \
             -print0 |
-            xargs -0 flutter test --exclude-tags 'golden || web'
+            xargs -0 flutter test --exclude-tags web
 
       - name: Gerar APK debug para aceite manual
         if: github.event_name == 'workflow_dispatch'

@@ -467,7 +467,9 @@ Informa que os resultados pertencem às lojas escolhidas no Compre direto e perm
 
 ### `ProductFilterSheet`
 
-Campos existentes: marca, categoria, loja, preço mínimo e preço máximo. Valores monetários inválidos exibem mensagem e não aplicam o filtro.
+Campos editáveis: loja, preço mínimo e preço máximo. Categoria e marca não são
+controles separados nesta tela; a busca por área conduz o recorte contextual.
+Valores monetários inválidos exibem mensagem e não aplicam o filtro.
 
 ### Navegação contextual de categorias
 
@@ -483,7 +485,11 @@ Os recortes editoriais de maior volume incluem cozinhas e jantar, quarto e
 camas, aparelhos para cabelo, depilação, higiene feminina, limpeza e passar,
 climatização, saúde e primeiros socorros e festas e decoração. Eles são portas
 de busca contextual, não categorias novas persistidas no produto.
-**Buscar em todo o catálogo** remove o recorte. Área e subárea são portas de
+Depois do primeiro recorte, o mesmo cartão contextual preserva o resumo, exibe
+um chip removível por área e oferece `Adicionar área` e `Limpar`. Assim a
+pessoa pode combinar folhas distintas sem apagar a busca anterior; `Outros /
+novas categorias` é exclusivo por ser uma exclusão dinâmica. **Buscar em todo
+o catálogo** remove o recorte. Área e subárea são portas de
 entrada, não novas categorias de produto: a API as resolve para categorias externas exatas e o
 resultado continua paginado, local e filtrável por loja e preço. Categorias
 novas ou não mapeadas continuam alcançáveis por busca global e em **Outros /

@@ -34,6 +34,7 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
 
 class _EstadoPaginaCatalogoLiveloAndroid
     extends State<PaginaCatalogoLiveloAndroid> {
+  static const _itensPorPagina = 10;
   static const _intervaloAcompanhamento = Duration(seconds: 30);
   static const _maximoTentativasAcompanhamento = 21;
   static const _maximoFalhasConsecutivas = 3;
@@ -58,6 +59,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               categoria: categoria,
               ordenar: ordenar,
               pagina: pagina,
+              porPagina: _itensPorPagina,
             ),
         alterarAcompanhamento: ({required idExterno, required acompanhada}) =>
             widget.api.alterarAcompanhamentoLivelo(
@@ -111,20 +113,6 @@ class _EstadoPaginaCatalogoLiveloAndroid
     );
   }
 
-  Future<void> _alternarAlerta(ParceiroCatalogoLivelo parceiro) async {
-    final sucesso = await _controlador.alternarAlerta(parceiro);
-    if (!mounted) return;
-    mostrarMensagemRadar(
-      context,
-      sucesso
-          ? (parceiro.alertaAtivo
-                ? 'Alerta desativado para esta loja.'
-                : 'Alerta ativado para esta loja.')
-          : 'Não foi possível salvar o alerta.',
-      sucesso: sucesso,
-    );
-  }
-
   Future<void> _abrirHistorico(ParceiroCatalogoLivelo parceiro) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -138,10 +126,9 @@ class _EstadoPaginaCatalogoLiveloAndroid
   }
 
   Future<void> _abrirDetalhes(ParceiroCatalogoLivelo parceiro) async {
-    final abrirHistorico = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: false,
+    final abrirHistorico = await mostrarFolhaRadar<bool>(
+      context,
+      alturaMaxima: 0.9,
       builder: (contexto) => ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(contexto).height * 0.9,
@@ -196,6 +183,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               controlador: _busca,
               dica: 'Buscar loja',
               aoMudar: _controlador.mudarBusca,
+              somenteBusca: true,
             ),
           ),
         ),
@@ -316,9 +304,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
   Future<void> _abrirFiltros() async {
     var ordenacao = _controlador.ordenacao;
     var categoria = _controlador.categoria;
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: false,
+    await mostrarFolhaRadar<void>(
+      context,
       builder: (contexto) => StatefulBuilder(
         builder: (contexto, atualizar) => FolhaRadar(
           titulo: 'Filtrar todas as lojas',
@@ -457,12 +444,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
               pendente: _controlador.mutacoesPendentes.contains(
                 parceiro.idExterno,
               ),
-              alertaPendente: _controlador.mutacoesPendentes.contains(
-                'alerta:${parceiro.idExterno}',
-              ),
               podeAdministrar: widget.administrador,
               aoAlternar: () => _alternar(parceiro),
-              aoAlternarAlerta: () => _alternarAlerta(parceiro),
               aoDetalhes: () => _abrirDetalhes(parceiro),
             );
           },
@@ -476,23 +459,20 @@ class _EstadoPaginaCatalogoLiveloAndroid
   }
 
   Widget _paginacao() {
-    if (_controlador.carregandoMais) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_controlador.erroMais != null) {
-      return FilledButton.tonalIcon(
-        onPressed: _controlador.carregarMais,
-        icon: const Icon(Icons.refresh),
-        label: const Text('Tentar carregar mais'),
-      );
-    }
-    if (_controlador.temProxima) {
-      return FilledButton(
-        onPressed: _controlador.carregarMais,
-        child: const Text('Carregar mais'),
-      );
-    }
-    return const Center(child: Text('Todos os resultados foram carregados.'));
+    return PaginacaoRadar(
+      pagina: _controlador.pagina,
+      totalItens: _controlador.totalItens,
+      porPagina: _controlador.porPagina,
+      carregando: _controlador.carregandoMais,
+      erro: _controlador.erroMais,
+      aoIrParaPagina: _irParaPagina,
+    );
+  }
+
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (!mounted || _controlador.pagina != pagina) return;
+    await rolarParaInicioPaginaRadar(_rolagem);
   }
 }
 

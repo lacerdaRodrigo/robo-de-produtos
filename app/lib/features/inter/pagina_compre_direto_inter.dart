@@ -52,12 +52,15 @@ class PaginaCompreDiretoInter extends StatefulWidget {
 
 class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     with WidgetsBindingObserver {
+  static const _itensPorPagina = 10;
+
   late final ControladorCatalogoAdministracao<LojaDireto> _controlador =
       widget.controlador ??
       ControladorCatalogoAdministracao<LojaDireto>(
         buscar: ({required q, required pagina}) => widget.api.lojasDiretas(
           q: q,
           pagina: pagina,
+          porPagina: _itensPorPagina,
           ordenar: 'nome',
           filtro: _filtro == _FiltroCompreDireto.acompanhadas
               ? 'acompanhadas'
@@ -75,6 +78,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   late final bool _controladorExterno = widget.controlador != null;
   late final _busca = TextEditingController(text: _controlador.busca);
   final _alterando = <String>{};
+  final _rolagem = ScrollController();
   late var _filtro = widget.filtroInicial == 'acompanhadas'
       ? _FiltroCompreDireto.acompanhadas
       : _FiltroCompreDireto.todas;
@@ -94,6 +98,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _busca.dispose();
+    _rolagem.dispose();
     if (!_controladorExterno) _controlador.dispose();
     if (widget.controladorCategorias == null) {
       _controladorCategorias.dispose();
@@ -117,6 +122,12 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     final atualizarResumo = widget.aoAtualizar;
     if (atualizarResumo != null) tarefas.add(atualizarResumo());
     await Future.wait(tarefas);
+  }
+
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (!mounted || _controlador.pagina != pagina) return;
+    await rolarParaInicioPaginaRadar(_rolagem);
   }
 
   Future<void> _configurarCategorias() async {
@@ -211,6 +222,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       onRefresh: _atualizarDados,
       child: CustomScrollView(
         key: const PageStorageKey('compre-direto-inter'),
+        controller: _rolagem,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           ...widget.sliversAntes,
@@ -245,6 +257,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
                   controlador: _busca,
                   dica: 'Buscar loja no Compre direto',
                   aoMudar: _controlador.mudarBusca,
+                  somenteBusca: true,
                 ),
               ),
             ),
@@ -336,21 +349,13 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       SliverPadding(
         padding: const EdgeInsets.all(18),
         sliver: SliverToBoxAdapter(
-          child: Center(
-            child: _controlador.carregandoMais
-                ? const CircularProgressIndicator()
-                : _controlador.erroMais != null
-                ? OutlinedButton.icon(
-                    onPressed: _controlador.carregarMais,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Tentar carregar mais'),
-                  )
-                : _controlador.temProxima
-                ? FilledButton(
-                    onPressed: _controlador.carregarMais,
-                    child: const Text('Carregar mais'),
-                  )
-                : const Text('Todas as lojas foram carregadas.'),
+          child: PaginacaoRadar(
+            pagina: _controlador.pagina,
+            totalItens: _controlador.total,
+            porPagina: _controlador.porPagina,
+            carregando: _controlador.carregandoMais,
+            erro: _controlador.erroMais,
+            aoIrParaPagina: _irParaPagina,
           ),
         ),
       ),

@@ -10,7 +10,6 @@ Durante este ciclo, **não trabalhar no Web**:
 
 - não investigar protótipos ou documentação visual fora da V11;
 - não redesenhar Flutter Web;
-- não executar golden Web por rotina;
 - não investigar CSS/site/Next.js/Vercel;
 - não atualizar documentação Web;
 - não gastar contexto tentando manter paridade visual com desktop.
@@ -99,15 +98,12 @@ Os únicos tipos de teste autorizados neste ciclo são:
 
 Não criar, atualizar ou executar como parte deste plano:
 
-- golden tests;
 - testes de integração;
 - E2E;
 - smoke automatizado;
 - performance;
 - regressão visual automatizada;
 - testes Web.
-
-Não apague testes existentes dessas categorias. Eles ficam preservados para um ciclo posterior.
 
 `dart format` e `flutter analyze` continuam obrigatórios porque são validações estáticas, não tipos de teste.
 
