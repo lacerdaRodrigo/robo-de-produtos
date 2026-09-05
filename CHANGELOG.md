@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.60.0 (2026-09-05)
+
+### Features
+
+- **inter**: Abre lojas parceiras em rota individual
+  ([`6277c11`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6277c11e864596841c7b2e08fe7b404898ac3be9))
+
+### Testing
+
+- **app**: Estabiliza seleção no Compre direto
+  ([`3f93253`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3f932537ce0ea056dfe38cf1d408fd3a9cf22130))
+
+
 ## v1.59.0 (2026-09-05)
 
 ### Features
