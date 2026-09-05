@@ -103,10 +103,10 @@ produtos.
 | Departamento | Subgrupos de entrada | Exemplos de categorias externas que dão base ao recorte |
 |---|---|---|
 | Eletrônicos | Celulares, TV e imagem, Computadores, Áudio, Acessórios | `Android`, `Smartphones`, `Smart TV`, `TVs`, `Notebooks`, `Tablet`, `Monitores`, `Caixas Acústicas` |
-| Casa e cozinha | Eletrodomésticos (refrigeração/lavanderia, fogões/fornos e micro-ondas), Eletroportáteis, Móveis, Mesa e utilidades | `Geladeira / Refrigerador`, `Freezer`, `Lava e Seca`, `Fogões`, `Micro-ondas`, `Fritadeiras`, `Panelas` |
+| Casa e cozinha | Eletrodomésticos (refrigeração/lavanderia, fogões/fornos, micro-ondas, limpeza e climatização), Cozinhas e jantar, Móveis, Mesa e utilidades, Festas e decoração | `Geladeira / Refrigerador`, `Freezer`, `Lava e Seca`, `Fogões`, `Micro-ondas`, `Aspirador de Pó`, `Ventilador de Mesa`, `Cozinha Modulada`, `Balcões e Fruteiras`, `Fantasias e Acessórios`, `Panelas` |
 | Móveis e decoração | Sala, Quarto, Escritório, Organização, Decoração | `Sofás`, `Guarda-roupas e Roupeiros`, `Racks e Painéis`, `Escrivaninhas`, `Organização` |
-| Beleza e cuidados pessoais | Maquiagem, Cabelos, Pele, Perfumaria, Barbear | `Base`, `Batom`, `Cabelos`, `Cuidados Faciais`, `Perfumes`, `Aparelhos de Depilação` |
-| Saúde e bem-estar | Cuidados de saúde, Farmácia, Mobilidade, Fitness | `Saúde`, `Medicamentos`, `Primeiros Socorros`, `Ortopedia`, `Esteiras Ergométricas` |
+| Beleza e cuidados pessoais | Maquiagem, Cabelos, Pele, Perfumaria, Cuidados pessoais | `Base`, `Batom`, `Cabelos`, `Secadores de Cabelo`, `Cuidados Faciais`, `Perfumes`, `Aparelhos de Depilação`, `Absorvente` |
+| Saúde e bem-estar | Saúde e primeiros socorros | `Saúde`, `Medicamentos`, `Primeiros Socorros`, `Ortopedia`, `Nebulizadores e Inaladores` |
 | Mercado | Alimentos, Bebidas, Doces e snacks, Suplementos | `Biscoito`, `Chocolate`, `Balas e Drops`, `Bebidas`, `Suplementos e Vitaminas` |
 | Bebês, crianças e brinquedos | Bebê, Brinquedos, Infantil | `Mamadeiras`, `Fralda`, `Bonecas`, `Brinquedos`, `Berços e Cercados Portáteis` |
 | Pet | Alimentação, Higiene, Saúde, Acessórios | `Ração`, `Antipulgas`, `Areia Higiênica`, `Farmácia pet` |
@@ -189,9 +189,12 @@ externa é ausente; o rótulo existe somente na consulta e na interface.
 ## Implementação inicial e evolução
 
 A API possui um mapeamento versionado de subáreas para categorias externas
-exatas e o Flutter envia somente o identificador de escopo. Estão cobertos os
-recortes iniciais de Eletrônicos, Casa, Beleza, Mercado, Bebês e infantil, Pet,
-Esporte e lazer, Ferramentas, Auto e Moda. **Outros / novas categorias** é
+exatas. Os identificadores continuam disponíveis para compatibilidade e
+eventual reexposição no Flutter; a tela atual usa o controle temporário de
+categoria externa. Estão cobertos os recortes iniciais de Eletrônicos, Casa
+(incluindo cozinhas, quarto/camas, limpeza e climatização), Beleza (incluindo
+aparelhos para cabelo, depilação e higiene feminina), Saúde, Mercado, Bebês e
+infantil, Pet, Esporte e lazer, Ferramentas, Auto e Moda. **Outros / novas categorias** é
 calculado no servidor por exclusão dos valores já mapeados; portanto, uma
 categoria nova de loja continua pesquisável sem release do app.
 

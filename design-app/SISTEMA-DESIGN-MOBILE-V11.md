@@ -476,6 +476,13 @@ folha inferior apresenta uma lista de subáreas e, quando necessário, outra lis
 antes do recorte final — por exemplo, Casa e cozinha → Eletrodomésticos →
 Refrigeração e lavanderia → Geladeiras/Freezers/Lavadoras e secadoras. Ao escolher o recorte,
 o campo de busca permanece em foco e a busca passa a ocorrer naquele recorte.
+Cada folha exibe uma seta de voltar no cabeçalho; voltar retorna à lista
+anterior sem aplicar um filtro. A ação de fechar continua disponível
+separadamente.
+Os recortes editoriais de maior volume incluem cozinhas e jantar, quarto e
+camas, aparelhos para cabelo, depilação, higiene feminina, limpeza e passar,
+climatização, saúde e primeiros socorros e festas e decoração. Eles são portas
+de busca contextual, não categorias novas persistidas no produto.
 **Buscar em todo o catálogo** remove o recorte. Área e subárea são portas de
 entrada, não novas categorias de produto: a API as resolve para categorias externas exatas e o
 resultado continua paginado, local e filtrável por loja e preço. Categorias

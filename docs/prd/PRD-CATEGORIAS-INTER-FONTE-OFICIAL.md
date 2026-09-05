@@ -238,6 +238,12 @@ literais do Inter. A mesma jornada em níveis vale para Eletrônicos, Beleza,
 Mercado, Bebês e brinquedos, Pet, Esporte e lazer, Ferramentas e construção,
 Auto e Moda.
 
+Também existem folhas editoriais para `Cozinhas`, `Mesas e jantar`, `Quarto e
+camas`, `Aparelhos para cabelo`, `Depilação`, `Higiene feminina`, `Limpeza e
+passar`, `Climatização`, `Saúde e primeiros socorros` e `Festas e decoração`.
+São apenas rótulos de navegação: cada identificador é resolvido pela API para
+textos exatos do Inter e nunca é gravado como categoria do produto.
+
 Os recortes não dependem de seis lojas, nem de qualquer quantidade fixa de
 lojas. Eles consultam os produtos ativos das lojas que estiverem ativas e
 selecionadas a cada execução; entrar, sair ou variar a quantidade de lojas não
@@ -247,6 +253,12 @@ continua pesquisável pela busca global e, enquanto não houver recorte próprio
 aparece em **Outros / novas categorias**. Quando uma oferta deixa de vir numa
 coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
 regras já existentes de histórico e publicação.
+
+No Flutter mobile V11, a entrada **Comece por uma área** permanece uma ação de
+descoberta contextual, sem alterar o contrato da API. Ela usa cartão com ícone,
+texto de apoio e CTA `Explorar`; quando um recorte está ativo, o mesmo controle
+exibe o rótulo contextual e oferece `Limpar`. Em larguras estreitas ou com texto
+ampliado, o CTA ocupa uma segunda linha para manter a jornada sem overflow.
 
 App e API precisam ser publicados de forma compatível quando um identificador
 novo de escopo entrar. Um app mais novo contra uma API antiga recebe erro de

@@ -704,25 +704,16 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     final area = await _escolherNivelDeEscopo(
       titulo: 'Escolha uma área',
       descricao: 'Depois você escolhe o tipo de produto.',
-      opcoes: const [
-        _OpcaoNavegacaoEscopo('eletronicos', 'Eletrônicos'),
-        _OpcaoNavegacaoEscopo('casa', 'Casa e cozinha'),
-        _OpcaoNavegacaoEscopo('beleza', 'Beleza e cuidados'),
-        _OpcaoNavegacaoEscopo('mercado', 'Mercado'),
-        _OpcaoNavegacaoEscopo('infantil', 'Bebês e brinquedos'),
-        _OpcaoNavegacaoEscopo('pet-area', 'Pet'),
-        _OpcaoNavegacaoEscopo('esporte-area', 'Esporte e lazer'),
-        _OpcaoNavegacaoEscopo('ferramentas-area', 'Ferramentas e construção'),
-        _OpcaoNavegacaoEscopo('auto-area', 'Auto'),
-        _OpcaoNavegacaoEscopo('moda-area', 'Moda'),
-        _OpcaoNavegacaoEscopo(
+      opcoes: [
+        ..._areasDeEntradaProdutos,
+        const _OpcaoNavegacaoEscopo(
           'outros-novas-categorias',
           'Outros / novas categorias',
           'Itens ainda sem recorte próprio',
         ),
       ],
     );
-    if (area == null || !mounted) return;
+    if (area == null || area.id == _idVoltarEscopo || !mounted) return;
 
     final escopo = switch (area.id) {
       'eletronicos' => await _escolherSubgrupo(
@@ -772,6 +763,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               'tratamento-cabelos',
               'Tratamento e finalização',
             ),
+            _OpcaoNavegacaoEscopo('cabelos-aparelhos', 'Aparelhos para cabelo'),
           ]),
           _OpcaoNavegacaoEscopo('pele', 'Pele e banho', null, [
             _OpcaoNavegacaoEscopo('cuidados-faciais', 'Cuidados faciais'),
@@ -782,6 +774,26 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             _OpcaoNavegacaoEscopo('perfumes', 'Perfumes'),
             _OpcaoNavegacaoEscopo('desodorantes', 'Desodorantes'),
           ]),
+          _OpcaoNavegacaoEscopo(
+            'cuidados-pessoais',
+            'Cuidados pessoais',
+            null,
+            [
+              _OpcaoNavegacaoEscopo('depilacao', 'Depilação'),
+              _OpcaoNavegacaoEscopo('higiene-feminina', 'Higiene feminina'),
+            ],
+          ),
+        ],
+      ),
+      'saude-area' => await _escolherSubgrupo(
+        titulo: 'Saúde e bem-estar',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo(
+            'saude-primeiros-socorros',
+            'Saúde e primeiros socorros',
+            'Medicamentos, cuidados e equipamentos de saúde',
+          ),
         ],
       ),
       'mercado' => await _escolherSubgrupo(
@@ -897,7 +909,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       ),
       _ => area,
     };
-    if (escopo == null || !mounted) return;
+    if (escopo == null || escopo.id == _idVoltarEscopo || !mounted) return;
     _controlador.mudarFiltros(
       _controlador.filtros.copiarCom(escopo: escopo.id),
     );
@@ -941,6 +953,24 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               'Fogões, cooktops e fornos',
             ),
             _OpcaoNavegacaoEscopo('microondas', 'Micro-ondas'),
+            _OpcaoNavegacaoEscopo(
+              'limpeza-climatizacao',
+              'Limpeza e climatização',
+              'Aspiradores, ferros, ventiladores e ar-condicionado',
+              [
+                _OpcaoNavegacaoEscopo('limpeza-eletro', 'Limpeza e passar'),
+                _OpcaoNavegacaoEscopo('climatizacao', 'Climatização'),
+              ],
+            ),
+          ],
+        ),
+        _OpcaoNavegacaoEscopo(
+          'cozinhas-jantar',
+          'Cozinhas e jantar',
+          'Cozinhas, balcões e mesas',
+          [
+            _OpcaoNavegacaoEscopo('cozinhas-modulares', 'Cozinhas'),
+            _OpcaoNavegacaoEscopo('mesa-jantar', 'Mesas e jantar'),
           ],
         ),
         _OpcaoNavegacaoEscopo('eletroportateis', 'Eletroportáteis', null, [
@@ -959,6 +989,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           _OpcaoNavegacaoEscopo('comodas', 'Cômodas'),
           _OpcaoNavegacaoEscopo('escritorio', 'Escritório'),
           _OpcaoNavegacaoEscopo('poltronas', 'Poltronas'),
+          _OpcaoNavegacaoEscopo('quarto-camas', 'Quarto e camas'),
         ]),
         _OpcaoNavegacaoEscopo('utilidades', 'Mesa e utilidades', null, [
           _OpcaoNavegacaoEscopo('panelas', 'Panelas'),
@@ -967,6 +998,11 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           _OpcaoNavegacaoEscopo('formas', 'Formas e assadeiras'),
           _OpcaoNavegacaoEscopo('organizacao', 'Organização'),
         ]),
+        _OpcaoNavegacaoEscopo(
+          'festas-decoracao',
+          'Festas e decoração',
+          'Artigos para festas, fantasias e enfeites',
+        ),
       ],
     );
   }
@@ -975,33 +1011,66 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     required String titulo,
     required String descricao,
     required List<_OpcaoNavegacaoEscopo> opcoes,
+    bool mostrarVoltar = true,
   }) async {
     var opcao = await _escolherNivelDeEscopo(
       titulo: titulo,
       descricao: descricao,
       opcoes: opcoes,
+      mostrarVoltar: mostrarVoltar,
     );
-    while (opcao?.filhos != null && mounted) {
-      opcao = await _escolherNivelDeEscopo(
-        titulo: opcao!.rotulo,
+    while (opcao != null && mounted) {
+      if (opcao.id == _idVoltarEscopo) return opcao;
+      if (opcao.filhos == null) return opcao;
+      final filho = await _escolherSubgrupo(
+        titulo: opcao.rotulo,
         descricao: opcao.descricao ?? 'Escolha o tipo de produto.',
         opcoes: opcao.filhos!,
       );
+      if (filho?.id == _idVoltarEscopo) {
+        opcao = await _escolherNivelDeEscopo(
+          titulo: titulo,
+          descricao: descricao,
+          opcoes: opcoes,
+          mostrarVoltar: mostrarVoltar,
+        );
+        continue;
+      }
+      return filho;
     }
-    return opcao;
+    return null;
   }
 
   Future<_OpcaoNavegacaoEscopo?> _escolherNivelDeEscopo({
     required String titulo,
     required String descricao,
     required List<_OpcaoNavegacaoEscopo> opcoes,
+    bool mostrarVoltar = true,
   }) => showModalBottomSheet<_OpcaoNavegacaoEscopo>(
     context: context,
     showDragHandle: true,
     builder: (context) => ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        Text(titulo, style: Theme.of(context).textTheme.titleLarge),
+        Row(
+          children: [
+            if (mostrarVoltar)
+              IconButton(
+                tooltip: 'Voltar',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(
+                  context,
+                  const _OpcaoNavegacaoEscopo(_idVoltarEscopo, ''),
+                ),
+              ),
+            Expanded(
+              child: Text(
+                titulo,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 4),
         Text(descricao),
         const SizedBox(height: 14),
@@ -1048,6 +1117,16 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     'cabelos' => 'Beleza · Cabelos',
     'pele' => 'Beleza · Pele e banho',
     'perfumaria' => 'Beleza · Perfumaria',
+    'cabelos-aparelhos' => 'Beleza · Cabelos · Aparelhos para cabelo',
+    'depilacao' => 'Beleza · Cuidados pessoais · Depilação',
+    'higiene-feminina' => 'Beleza · Cuidados pessoais · Higiene feminina',
+    'saude-primeiros-socorros' => 'Saúde · Primeiros socorros e cuidados',
+    'cozinhas-modulares' => 'Casa · Cozinhas e jantar · Cozinhas',
+    'mesa-jantar' => 'Casa · Cozinhas e jantar · Mesas e jantar',
+    'quarto-camas' => 'Casa · Móveis · Quarto e camas',
+    'limpeza-eletro' => 'Casa · Eletrodomésticos · Limpeza e passar',
+    'climatizacao' => 'Casa · Eletrodomésticos · Climatização',
+    'festas-decoracao' => 'Casa · Festas e decoração',
     'alimentos' => 'Mercado · Alimentos',
     'bebidas' => 'Mercado · Bebidas',
     'snacks' => 'Mercado · Doces e snacks',
@@ -1078,6 +1157,54 @@ class _OpcaoNavegacaoEscopo {
   final List<_OpcaoNavegacaoEscopo>? filhos;
 }
 
+const _idVoltarEscopo = '__voltar__';
+
+const _areasDeEntradaProdutos = <_OpcaoNavegacaoEscopo>[
+  _OpcaoNavegacaoEscopo(
+    'eletronicos',
+    'Eletrônicos',
+    'Celulares, TV, computadores e áudio',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'casa',
+    'Casa e cozinha',
+    'Eletrodomésticos, móveis e utilidades',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'beleza',
+    'Beleza e cuidados',
+    'Maquiagem, cabelos e perfumaria',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'mercado',
+    'Mercado',
+    'Alimentos, bebidas e suplementos',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'saude-area',
+    'Saúde e bem-estar',
+    'Cuidados de saúde, farmácia e primeiros socorros',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'infantil',
+    'Bebês e brinquedos',
+    'Itens infantis e diversão',
+  ),
+  _OpcaoNavegacaoEscopo('pet-area', 'Pet', 'Alimentação, higiene e acessórios'),
+  _OpcaoNavegacaoEscopo(
+    'esporte-area',
+    'Esporte e lazer',
+    'Fitness, bikes e lazer',
+  ),
+  _OpcaoNavegacaoEscopo(
+    'ferramentas-area',
+    'Ferramentas e construção',
+    'Construção e casa',
+  ),
+  _OpcaoNavegacaoEscopo('auto-area', 'Auto', 'Pneus e acessórios'),
+  _OpcaoNavegacaoEscopo('moda-area', 'Moda', 'Roupas, calçados e acessórios'),
+];
+
 class _EntradaEscopoProdutos extends StatelessWidget {
   const _EntradaEscopoProdutos({
     required this.escopo,
@@ -1092,32 +1219,91 @@ class _EntradaEscopoProdutos extends StatelessWidget {
   final VoidCallback aoLimpar;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: CoresRadar.de(context).superficieAlternativa,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: CoresRadar.de(context).borda),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            escopo == null
-                ? 'Comece por uma área'
-                : 'Busca contextual · $rotulo',
-            style: Theme.of(
-              context,
-            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ),
-        TextButton(
-          onPressed: escopo == null ? aoAbrir : aoLimpar,
-          child: Text(escopo == null ? 'Explorar' : 'Limpar'),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: tema.cardColor,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: cores.borda),
+        boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+      ),
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          final icone = Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: tema.colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(Icons.category_outlined, color: cores.marca, size: 21),
+          );
+          final texto = Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  escopo == null
+                      ? 'Comece por uma área'
+                      : 'Busca contextual · $rotulo',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: tema.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  escopo == null
+                      ? 'Refine a busca por tipo de produto.'
+                      : 'Recorte aplicado ao catálogo salvo.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: cores.textoSuave,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          );
+          final acao = FilledButton.tonalIcon(
+            onPressed: escopo == null ? aoAbrir : aoLimpar,
+            icon: Icon(
+              escopo == null ? Icons.arrow_forward : Icons.close,
+              size: 17,
+            ),
+            label: Text(escopo == null ? 'Explorar' : 'Limpar'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              minimumSize: const Size(0, 40),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          final vertical =
+              limites.maxWidth < 360 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.2;
+          if (vertical) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [icone, const SizedBox(width: 10), texto]),
+                const SizedBox(height: 8),
+                Align(alignment: Alignment.centerRight, child: acao),
+              ],
+            );
+          }
+          return Row(children: [icone, const SizedBox(width: 10), texto, acao]);
+        },
+      ),
+    );
+  }
 }
 
 class _AvisoFalhaBuscaProdutos extends StatelessWidget {

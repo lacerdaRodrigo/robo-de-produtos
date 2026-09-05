@@ -175,6 +175,16 @@ const ESCOPOS: readonly EscopoNavegacaoProdutosInter[] = [
   { id: "roupas", categorias: ["Blusas e Camisetas", "Casacos e Jaquetas"] },
   { id: "calcados", categorias: ["Chinelos"] },
   { id: "acessorios-moda", categorias: ["Mochilas", "Moda", "Feminino", "Masculino"] },
+  { id: "cozinhas-modulares", categorias: ["Cozinha Modulada", "Cozinha Compacta", "Cozinhas", "Cozinha"] },
+  { id: "mesa-jantar", categorias: ["Balcões e Fruteiras", "Conjuntos de Mesas e Cadeiras de Jantar", "Cadeira de Jantar", "Mesa de Jantar", "Mesas", "Fruteiras"] },
+  { id: "quarto-camas", categorias: ["Cabeceiras", "Colchão de Casal", "Colchão de Solteiro", "Colchão Queen", "Colchão King", "Camas e Colchões", "Base Cama Box Casal", "Base Cama Box Queen", "Base Cama Box King", "Base Cama Box Solteiro", "Travesseiro", "Fronha", "Lençol", "Cobertor e Manta", "Manta Siliconizada", "Colchão Infantil", "Colchões Infláveis e Colchonetes", "Protetor / Capa para Colchão"] },
+  { id: "cabelos-aparelhos", categorias: ["Secadores de Cabelo", "Modeladores e Escovas Rotativas", "Pranchas (Chapinhas)", "Máquinas de Cortar Cabelo", "Aparadores de Pelos", "Vaporizador"] },
+  { id: "depilacao", categorias: ["Aparelhos de Depilação", "Barba e Depilação", "Cuidados para a Depilação"] },
+  { id: "higiene-feminina", categorias: ["Absorvente", "Absorventes"] },
+  { id: "limpeza-eletro", categorias: ["Aspirador de Pó", "Aspirador Água e Pó", "Lavadoras de Pressão", "Limpeza da Casa", "Ferro a Vapor", "Ferro de Passar", "Ferro a Seco", "Tábua de Passar"] },
+  { id: "climatizacao", categorias: ["Ventilador de Mesa", "Ventilador de Coluna", "Ventilador de Parede", "Ventilador de Teto", "Split", "Climatizadores", "Umidificador e Desumidificador", "Aquecedores", "Ar-Condicionado", "Janela"] },
+  { id: "saude-primeiros-socorros", categorias: ["Primeiros Socorros", "Higiene e Saúde", "Saúde", "Medicamentos", "Ortopedia", "Medidores", "Medidores de Pressão", "Termômetros", "Nebulizadores e Inaladores", "Diabetes", "Digestivo", "Cicatrizantes", "Cirúrgico", "Analgésico", "Antigripal"] },
+  { id: "festas-decoracao", categorias: ["Fantasias e Acessórios", "Artigos para Festas", "Enfeites e Decoração", "Balões e Acessórios"] },
 ];
 
 export const ESCOPO_OUTROS_NOVAS_CATEGORIAS = "outros-novas-categorias";
