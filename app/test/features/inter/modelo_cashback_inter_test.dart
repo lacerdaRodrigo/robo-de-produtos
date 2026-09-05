@@ -18,7 +18,7 @@ void main() {
       'descricao_secundaria': null,
       'encontrada': true,
       'favorita': false,
-      'link': 'https://shopping.inter.co/site-parceiro/lojas',
+      'link': 'https://shopping.inter.co/site-parceiro/lojas/loja-e-cia',
     });
 
     expect(loja.cashbackPrincipalTexto, 'Até 12% de cashback');
@@ -26,7 +26,10 @@ void main() {
     expect(loja.cashbackSecundarioValor, '2.00');
     expect(loja.descricaoSecundaria, isNull);
     expect(loja.encontrada, isTrue);
-    expect(loja.link, 'https://shopping.inter.co/site-parceiro/lojas');
+    expect(
+      loja.link,
+      'https://shopping.inter.co/site-parceiro/lojas/loja-e-cia',
+    );
   });
 
   test('formata coleta do Inter em Brasília e atrasa apenas depois de 24h', () {

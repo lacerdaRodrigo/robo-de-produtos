@@ -49,7 +49,7 @@ describe("catálogo paginado de cashback Inter", () => {
 
     expect(resultado.itens[0]).toMatchObject({
       nome: "C&A",
-      link: "https://shopping.inter.co/site-parceiro/lojas",
+      link: "https://shopping.inter.co/site-parceiro/lojas/ca",
     });
     expect(resultado.total).toBe(37);
     expect(resultado.pagina).toBe(1);

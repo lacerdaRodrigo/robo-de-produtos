@@ -22,7 +22,7 @@ O contrato operacional da branch `re-design` é o [`AGENTS.md`](../AGENTS.md): F
 
 ## Legado preservado ou incerto
 
-- [ ] Decidir em ciclo próprio o destino de `ranking_inter.py`, `LINK_SHOPPING_INTER` e `app/lib/inter_preview.dart`; permanecem por contrato de teste/PRD ou possível uso manual.
+- [ ] Decidir em ciclo próprio o destino de `ranking_inter.py` e `app/lib/inter_preview.dart`; `LINK_SHOPPING_INTER` continua como base da rota oficial individual dos Sites parceiros.
 - [ ] Planejar, em migration futura separada, eventual remoção das tabelas legadas `oferta_direta_inter_atual` e `disparo_manual*`. Não há remoção de schema neste ciclo.
 - [ ] Reavaliar o painel Livelo legado somente quando o layout não compacto e a compatibilidade da rota `/api/livelo/painel` deixarem de ser necessários.
 

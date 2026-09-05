@@ -19,5 +19,26 @@ String dataHoraProduto(String? iso) {
       '${dois(brasilia.hour)}:${dois(brasilia.minute)}';
 }
 
+String dataHistoricoProduto(String? iso) {
+  final instante = instanteProduto(iso);
+  if (instante == null) return 'Data não informada';
+  final brasilia = instante.subtract(const Duration(hours: 3));
+  const meses = <String>[
+    'jan',
+    'fev',
+    'mar',
+    'abr',
+    'mai',
+    'jun',
+    'jul',
+    'ago',
+    'set',
+    'out',
+    'nov',
+    'dez',
+  ];
+  return '${brasilia.day} ${meses[brasilia.month - 1]} ${brasilia.year}';
+}
+
 /// Valor NUMERIC do histórico, sem converter para double.
 String? valorMonetario(String? valor) => moeda(valor);

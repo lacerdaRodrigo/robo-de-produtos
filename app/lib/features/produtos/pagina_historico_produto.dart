@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
+import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import 'formato_produtos.dart';
@@ -88,140 +89,89 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Histórico do produto')),
-      body: _corpo(),
-    );
-  }
+  Widget build(BuildContext context) => _corpo();
 
   Widget _corpo() {
-    if (_carregando) return const Carregando(mensagem: 'Carregando histórico…');
+    if (_carregando) {
+      return const SizedBox(
+        height: 180,
+        child: Carregando(mensagem: 'Carregando histórico…'),
+      );
+    }
     if (_erro != null) {
       return EstadoFalha(
         mensagem: 'Não foi possível carregar o histórico deste produto.',
         voltar: _carregar,
       );
     }
+
     final resumo = _resumo!;
     return ListView(
-      padding: const EdgeInsets.all(24),
+      key: const Key('historico-produto-conteudo'),
+      padding: const EdgeInsets.fromLTRB(1, 0, 1, 12),
       children: [
-        Text(
-          resumo.produto.nome,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 4),
-        Text(resumo.produto.lojaNome),
         if (resumo.produto.ativo == false) ...[
-          const SizedBox(height: 12),
-          const ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.info_outline),
-            title: Text('Oferta não está mais ativa'),
-            subtitle: Text('O histórico de preços continua disponível.'),
-          ),
+          const _BlocoInformativo(),
+          const SizedBox(height: 8),
         ],
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _ResumoValor(
-              rotulo: 'Preço atual',
-              valor: resumo.produto.precoAtualTexto,
-            ),
-            _ResumoValor(
-              rotulo: 'Cashback atual',
-              valor: resumo.produto.cashbackTexto,
-            ),
-            _ResumoValor(
-              rotulo: 'Menor em 30 dias',
-              valor: valorMonetario(resumo.minimo),
-            ),
-            _ResumoValor(
-              rotulo: 'Maior em 30 dias',
-              valor: valorMonetario(resumo.maximo),
-            ),
-          ],
+        if (resumo.minimo != null || resumo.maximo != null) ...[
+          _ResumoHistorico(minimo: resumo.minimo, maximo: resumo.maximo),
+          const SizedBox(height: 10),
+        ],
+        Text(
+          '${resumo.totalItens} ${resumo.totalItens == 1 ? 'medição' : 'medições'} '
+          'nos últimos 30 dias',
+          style: TextStyle(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        const SizedBox(height: 24),
-        Text('Medições', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, limites) => limites.maxWidth >= 700
-              ? SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text('Quando')),
-                      DataColumn(label: Text('Preço')),
-                      DataColumn(label: Text('Cashback')),
-                      DataColumn(label: Text('Após cashback')),
-                    ],
-                    rows: [
-                      for (final medicao in _medicoes)
-                        DataRow(
-                          cells: [
-                            DataCell(Text(dataHoraProduto(medicao.momento))),
-                            DataCell(
-                              Text(
-                                valorMonetario(medicao.precoAtualValor) ?? '—',
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                valorMonetario(medicao.cashbackValor) ?? '—',
-                              ),
-                            ),
-                            DataCell(
-                              Text(
-                                valorMonetario(medicao.precoLiquidoValor) ??
-                                    '—',
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (final medicao in _medicoes)
-                      Card(
-                        child: ListTile(
-                          title: Text(
-                            valorMonetario(medicao.precoAtualValor) ?? '—',
-                          ),
-                          subtitle: Text(dataHoraProduto(medicao.momento)),
-                          trailing: medicao.cashbackValor == null
-                              ? null
-                              : Text(
-                                  'Cashback\n'
-                                  '${valorMonetario(medicao.cashbackValor)}',
-                                ),
-                        ),
-                      ),
-                  ],
-                ),
+        if (_medicoes.isEmpty)
+          const _HistoricoVazio()
+        else ...[
+          for (final medicao in _medicoes)
+            _LinhaHistorico(
+              rotulo: dataHistoricoProduto(medicao.momento),
+              valor: valorMonetario(medicao.precoAtualValor) ?? '—',
+              detalheRotulo: 'Cashback',
+              detalheValor: valorMonetario(medicao.cashbackValor),
+              detalheSecundarioRotulo: 'Após cashback',
+              detalheSecundarioValor: valorMonetario(medicao.precoLiquidoValor),
+            ),
+        ],
+        const SizedBox(height: 10),
+        Text(
+          'O histórico é paginado e limitado à janela de 30 dias.',
+          style: TextStyle(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 12,
+            height: 1.45,
+          ),
         ),
         if (_carregandoMais)
           const Padding(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.only(top: 12),
             child: Center(child: CircularProgressIndicator()),
           )
         else if (_erroMais != null)
-          Center(
-            child: FilledButton.tonal(
-              onPressed: () => _carregar(mais: true),
-              child: const Text('Tentar carregar mais medições'),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Center(
+              child: FilledButton.tonal(
+                onPressed: () => _carregar(mais: true),
+                child: const Text('Tentar carregar mais medições'),
+              ),
             ),
           )
         else if (_temProxima)
-          Center(
-            child: FilledButton(
-              onPressed: () => _carregar(mais: true),
-              child: const Text('Carregar mais medições'),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => _carregar(mais: true),
+                child: const Text('Carregar mais medições'),
+              ),
             ),
           ),
       ],
@@ -229,26 +179,207 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
   }
 }
 
-class _ResumoValor extends StatelessWidget {
-  const _ResumoValor({required this.rotulo, required this.valor});
+class _LinhaHistorico extends StatelessWidget {
+  const _LinhaHistorico({
+    required this.rotulo,
+    required this.valor,
+    this.detalheRotulo,
+    this.detalheValor,
+    this.detalheSecundarioRotulo,
+    this.detalheSecundarioValor,
+  });
 
   final String rotulo;
-  final String? valor;
+  final String valor;
+  final String? detalheRotulo;
+  final String? detalheValor;
+  final String? detalheSecundarioRotulo;
+  final String? detalheSecundarioValor;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Container(
+      constraints: const BoxConstraints(minHeight: 54),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: cores.borda)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            rotulo,
+            style: TextStyle(
+              color: cores.textoSuave,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 7),
+          _MetricaHistorico(
+            rotulo: 'Preço atual',
+            valor: valor,
+            cor: Theme.of(context).colorScheme.onSurface,
+          ),
+          if (detalheRotulo != null) ...[
+            const SizedBox(height: 4),
+            _MetricaHistorico(
+              rotulo: detalheRotulo!,
+              valor: detalheValor ?? 'Não informado',
+              cor: detalheValor == null ? cores.textoSuave : cores.ganho,
+            ),
+          ],
+          if (detalheSecundarioRotulo != null) ...[
+            const SizedBox(height: 4),
+            _MetricaHistorico(
+              rotulo: detalheSecundarioRotulo!,
+              valor: detalheSecundarioValor ?? 'Não informado',
+              cor: detalheSecundarioValor == null
+                  ? cores.textoSuave
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricaHistorico extends StatelessWidget {
+  const _MetricaHistorico({
+    required this.rotulo,
+    required this.valor,
+    required this.cor,
+  });
+
+  final String rotulo;
+  final String valor;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Expanded(
+        child: Text(
+          rotulo,
+          style: TextStyle(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 10,
+          ),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Text(
+        valor,
+        textAlign: TextAlign.right,
+        style: TextStyle(color: cor, fontSize: 11, fontWeight: FontWeight.w800),
+      ),
+    ],
+  );
+}
+
+class _ResumoHistorico extends StatelessWidget {
+  const _ResumoHistorico({required this.minimo, required this.maximo});
+
+  final String? minimo;
+  final String? maximo;
+
+  @override
+  Widget build(BuildContext context) {
+    final itens = <Widget>[
+      if (minimo != null)
+        Expanded(
+          child: _DestaqueHistorico(
+            rotulo: 'Mínimo no contrato',
+            valor: valorMonetario(minimo) ?? '—',
+          ),
+        ),
+      if (minimo != null && maximo != null) const SizedBox(width: 8),
+      if (maximo != null)
+        Expanded(
+          child: _DestaqueHistorico(
+            rotulo: 'Máximo no contrato',
+            valor: valorMonetario(maximo) ?? '—',
+          ),
+        ),
+    ];
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: itens);
+  }
+}
+
+class _DestaqueHistorico extends StatelessWidget {
+  const _DestaqueHistorico({required this.rotulo, required this.valor});
+
+  final String rotulo;
+  final String valor;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+      decoration: BoxDecoration(
+        color: cores.superficieAlternativa,
+        border: Border.all(color: cores.borda),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            rotulo,
+            style: TextStyle(
+              color: cores.textoSuave,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            valor,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlocoInformativo extends StatelessWidget {
+  const _BlocoInformativo();
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     decoration: BoxDecoration(
-      border: Border.all(color: Theme.of(context).dividerColor),
-      borderRadius: BorderRadius.circular(8),
+      color: CoresRadar.de(context).superficieAlternativa,
+      borderRadius: BorderRadius.circular(14),
     ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
+    child: const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(rotulo),
-        Text(valor ?? '—', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Oferta não está mais ativa',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        ),
+        SizedBox(height: 2),
+        Text('O histórico de preços continua disponível.'),
       ],
+    ),
+  );
+}
+
+class _HistoricoVazio extends StatelessWidget {
+  const _HistoricoVazio();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 18),
+    child: Text(
+      'Nenhuma medição disponível nos últimos 30 dias.',
+      style: TextStyle(color: CoresRadar.de(context).textoSuave, fontSize: 12),
     ),
   );
 }

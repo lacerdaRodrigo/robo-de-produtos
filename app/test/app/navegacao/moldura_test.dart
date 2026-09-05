@@ -21,7 +21,7 @@ const _cashbackInter =
     '"cashback_secundario_valor":null,"etiqueta":null,'
     '"descricao_principal":null,"descricao_secundaria":null,'
     '"encontrada":true,"favorita":true,'
-    '"link":"https://shopping.inter.co/site-parceiro/lojas"}],'
+    '"link":"https://shopping.inter.co/site-parceiro/lojas/magalu"}],'
     '"pagina":1,"por_pagina":20,'
     '"total_itens":1,"total_paginas":1,"tem_proxima":false,'
     '"atualizado_em":"2026-08-23T11:38:00Z"}';

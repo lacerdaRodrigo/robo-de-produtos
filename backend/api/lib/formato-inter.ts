@@ -2,6 +2,12 @@ export const LINK_SHOPPING_INTER = "https://shopping.inter.co/site-parceiro/loja
 export const DESCRICAO_INTER_AUSENTE =
   "O Inter não informou condições adicionais nesta consulta";
 
+/** Destino oficial do card de uma loja no catálogo de Sites parceiros. */
+export function linkShoppingInterDaLoja(slug: string): string {
+  const slugNormalizado = slug.trim();
+  return `${LINK_SHOPPING_INTER}/${encodeURIComponent(slugNormalizado)}`;
+}
+
 export type CashbackOrdenavel = {
   nome: string;
   slug: string;

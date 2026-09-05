@@ -585,15 +585,22 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       produto: produto,
       compacto: compacto,
       mostrarLoja: mostrarLoja,
-      aoAbrirHistorico: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                PaginaHistoricoProduto(api: widget.api, produto: produto),
-          ),
-        );
-      },
+      aoAbrirHistorico: () => _abrirHistorico(produto),
       aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
+    );
+  }
+
+  Future<void> _abrirHistorico(ProdutoDireto produto) async {
+    await mostrarFolhaRadar<void>(
+      context,
+      alturaMaxima: 0.9,
+      builder: (contexto) => FolhaRadar(
+        titulo: 'Histórico de preço',
+        descricao: '${produto.nome} · ${produto.lojaNome}',
+        child: Flexible(
+          child: PaginaHistoricoProduto(api: widget.api, produto: produto),
+        ),
+      ),
     );
   }
 
@@ -1049,47 +1056,50 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   );
 
   String? _rotuloDoEscopo(String? escopo) => switch (escopo) {
-    'celulares' => 'Eletrônicos · Celulares e smartphones',
-    'tv-imagem' => 'Eletrônicos · TV e imagem',
-    'computadores' => 'Eletrônicos · Computadores',
-    'audio' => 'Eletrônicos · Áudio',
-    'geladeiras' => 'Casa · Eletrodomésticos · Refrigeração · Geladeiras',
-    'freezers' => 'Casa · Eletrodomésticos · Refrigeração · Freezers',
-    'lavadoras' =>
-      'Casa · Eletrodomésticos · Lavanderia · Lavadoras e secadoras',
-    'fogoes-fornos' => 'Casa · Eletrodomésticos · Fogões e fornos',
-    'microondas' => 'Casa · Eletrodomésticos · Micro-ondas',
-    'eletroportateis' => 'Casa · Eletroportáteis',
-    'moveis' => 'Casa · Móveis',
-    'utilidades' => 'Casa · Mesa e utilidades',
-    'maquiagem' => 'Beleza · Maquiagem',
-    'cabelos' => 'Beleza · Cabelos',
-    'pele' => 'Beleza · Pele e banho',
-    'perfumaria' => 'Beleza · Perfumaria',
-    'cabelos-aparelhos' => 'Beleza · Cabelos · Aparelhos para cabelo',
-    'depilacao' => 'Beleza · Cuidados pessoais · Depilação',
-    'higiene-feminina' => 'Beleza · Cuidados pessoais · Higiene feminina',
-    'saude-primeiros-socorros' => 'Saúde · Primeiros socorros e cuidados',
-    'cozinhas-modulares' => 'Casa · Cozinhas e jantar · Cozinhas',
-    'mesa-jantar' => 'Casa · Cozinhas e jantar · Mesas e jantar',
-    'quarto-camas' => 'Casa · Móveis · Quarto e camas',
-    'limpeza-eletro' => 'Casa · Eletrodomésticos · Limpeza e passar',
-    'climatizacao' => 'Casa · Eletrodomésticos · Climatização',
-    'festas-decoracao' => 'Casa · Festas e decoração',
-    'alimentos' => 'Mercado · Alimentos',
-    'bebidas' => 'Mercado · Bebidas',
-    'snacks' => 'Mercado · Doces e snacks',
-    'suplementos' => 'Mercado · Suplementos',
-    'bebe' => 'Bebês e brinquedos · Bebês e infantil',
-    'brinquedos' => 'Bebês e brinquedos · Brinquedos',
-    'pet' => 'Pet · Alimentação, higiene e acessórios',
-    'esporte' => 'Esporte e lazer · Fitness, bikes e lazer',
-    'ferramentas' => 'Ferramentas e construção · Ferramentas e casa',
-    'auto' => 'Auto · Pneus e acessórios',
-    'moda' => 'Moda · Roupas, calçados e acessórios',
+    'celulares' => 'Celulares e smartphones',
+    'celulares-android' => 'Celulares Android',
+    'celulares-smartphones' => 'Smartphones',
+    'tv-imagem' => 'TV e imagem',
+    'tv-smart' => 'Smart TVs',
+    'tv-convencional' => 'TVs convencionais',
+    'suportes-tv' => 'Suportes para TV',
+    'computadores' => 'Computadores',
+    'audio' => 'Áudio',
+    'caixas-acusticas' => 'Caixas acústicas',
+    'fones' => 'Fones e headsets',
+    'som-portatil' => 'Som portátil',
+    'soundbars' => 'Soundbars',
+    'geladeiras' => 'Geladeiras',
+    'freezers' => 'Freezers',
+    'lavadoras' => 'Lavadoras e secadoras',
+    'fogoes-fornos' => 'Fogões e fornos',
+    'microondas' => 'Micro-ondas',
+    'eletroportateis' => 'Eletroportáteis',
+    'moveis' => 'Móveis',
+    'utilidades' => 'Mesa e utilidades',
+    'cabelos-aparelhos' => 'Aparelhos para cabelo',
+    'higiene-feminina' => 'Higiene feminina',
+    'saude-primeiros-socorros' => 'Saúde e primeiros socorros',
+    'cozinhas-modulares' => 'Cozinhas',
+    'mesa-jantar' => 'Mesas e jantar',
+    'quarto-camas' => 'Quarto e camas',
+    'limpeza-eletro' => 'Limpeza e passar',
+    'festas-decoracao' => 'Festas e decoração',
+    'bebe' => 'Bebês e infantil',
+    'pet' => 'Pet',
+    'esporte' => 'Esporte e lazer',
+    'ferramentas' => 'Ferramentas e construção',
+    'auto' => 'Auto',
+    'moda' => 'Moda',
     'outros-novas-categorias' => 'Outros / novas categorias',
-    _ => escopo,
+    _ => _humanizarEscopo(escopo),
   };
+
+  String? _humanizarEscopo(String? escopo) {
+    if (escopo == null || escopo.isEmpty) return null;
+    final texto = escopo.replaceAll('-', ' ');
+    return '${texto[0].toUpperCase()}${texto.substring(1)}';
+  }
 }
 
 class _OpcaoNavegacaoEscopo {
@@ -1201,8 +1211,8 @@ class _EntradaEscopoProdutos extends StatelessWidget {
                   !temEscopos
                       ? 'Comece por uma área'
                       : escopos.length == 1
-                      ? 'Busca contextual · ${rotulos.first}'
-                      : 'Busca contextual · ${escopos.length} áreas',
+                      ? 'Buscando em 1 área'
+                      : 'Buscando em ${escopos.length} áreas',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: tema.textTheme.labelLarge?.copyWith(
@@ -1212,8 +1222,10 @@ class _EntradaEscopoProdutos extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   !temEscopos
-                      ? 'Refine a busca por tipo de produto.'
-                      : 'Recortes aplicados ao catálogo salvo.',
+                      ? 'Escolha uma categoria para começar.'
+                      : escopos.length == 1
+                      ? 'Adicione outra área ou remova esta seleção.'
+                      : 'Os resultados podem estar em qualquer uma delas.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: tema.textTheme.labelSmall?.copyWith(
@@ -1224,35 +1236,31 @@ class _EntradaEscopoProdutos extends StatelessWidget {
               ],
             ),
           );
-          final explorar = FilledButton.tonalIcon(
-            onPressed: aoAbrir,
-            icon: Icon(Icons.arrow_forward, size: 17),
-            label: Text(temEscopos ? 'Adicionar área' : 'Explorar'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-              minimumSize: const Size(0, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
           if (!temEscopos) {
-            final vertical =
-                limites.maxWidth < 360 ||
-                MediaQuery.textScalerOf(context).scale(1) > 1.2;
-            if (vertical) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(children: [icone, const SizedBox(width: 10), texto]),
-                  const SizedBox(height: 8),
-                  Align(alignment: Alignment.centerRight, child: explorar),
-                ],
-              );
-            }
-            return Row(
-              children: [icone, const SizedBox(width: 10), texto, explorar],
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [icone, const SizedBox(width: 10), texto]),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('escolher-area-produtos'),
+                  onPressed: aoAbrir,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: const Text('Escolher categoria'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: cores.marca,
+                    backgroundColor: cores.superficieAlternativa,
+                    side: BorderSide(
+                      color: cores.marca.withValues(alpha: 0.38),
+                    ),
+                    minimumSize: const Size.fromHeight(44),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                ),
+              ],
             );
           }
           return Column(
@@ -1279,62 +1287,55 @@ class _EntradaEscopoProdutos extends StatelessWidget {
                         onDeleted: () => aoRemover(escopos[indice]),
                         deleteIcon: const Icon(Icons.close, size: 17),
                         visualDensity: VisualDensity.compact,
+                        backgroundColor: cores.superficieAlternativa,
+                        side: BorderSide(color: cores.borda),
+                        shape: const StadiumBorder(),
+                        labelStyle: tema.textTheme.labelMedium?.copyWith(
+                          color: tema.colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 10),
-              _AcoesEscopoProdutos(
-                explorar: explorar,
-                aoLimpar: aoLimpar,
-                empilhar:
-                    limites.maxWidth < 360 ||
-                    MediaQuery.textScalerOf(context).scale(1) > 1.2,
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 5,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    key: const Key('limpar-escopos-produtos'),
+                    onPressed: aoLimpar,
+                    icon: const Icon(Icons.close, size: 17),
+                    label: const Text('Limpar áreas'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: cores.textoSuave,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: aoAbrir,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Adicionar área'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: cores.marca,
+                      side: BorderSide(
+                        color: cores.marca.withValues(alpha: 0.42),
+                      ),
+                      minimumSize: const Size(0, 40),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
         },
       ),
-    );
-  }
-}
-
-class _AcoesEscopoProdutos extends StatelessWidget {
-  const _AcoesEscopoProdutos({
-    required this.explorar,
-    required this.aoLimpar,
-    required this.empilhar,
-  });
-
-  final Widget explorar;
-  final VoidCallback aoLimpar;
-  final bool empilhar;
-
-  @override
-  Widget build(BuildContext context) {
-    final limpar = FilledButton.tonalIcon(
-      key: const Key('limpar-escopos-produtos'),
-      onPressed: aoLimpar,
-      icon: const Icon(Icons.close, size: 17),
-      label: const Text('Limpar'),
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(0, 40),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-    if (empilhar) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [explorar, const SizedBox(height: 8), limpar],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(child: explorar),
-        const SizedBox(width: 8),
-        Expanded(child: limpar),
-      ],
     );
   }
 }

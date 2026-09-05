@@ -485,10 +485,16 @@ Os recortes editoriais de maior volume incluem cozinhas e jantar, quarto e
 camas, aparelhos para cabelo, depilação, higiene feminina, limpeza e passar,
 climatização, saúde e primeiros socorros e festas e decoração. Eles são portas
 de busca contextual, não categorias novas persistidas no produto.
-Depois do primeiro recorte, o mesmo cartão contextual preserva o resumo, exibe
-um chip removível por área e oferece `Adicionar área` e `Limpar`. Assim a
-pessoa pode combinar folhas distintas sem apagar a busca anterior; `Outros /
-novas categorias` é exclusivo por ser uma exclusão dinâmica. **Buscar em todo
+Sem recorte ativo, o cartão usa uma ação contornada de largura total chamada
+`Escolher categoria`, com superfície suave e alvo de toque de 44 px. O texto evita o
+verbo genérico “Explorar” e usa a instrução curta “Escolha uma categoria para
+começar”.
+Depois do primeiro recorte, o mesmo cartão contextual informa quantas áreas
+estão ativas, exibe um chip removível com nome humano por área e oferece
+`Adicionar área` como botão contornado e `Limpar áreas` como ação textual
+secundária. Identificadores técnicos, como `tv-convencional`, nunca aparecem na
+interface. A pessoa pode combinar folhas distintas sem apagar a busca anterior;
+`Outros / novas categorias` é exclusivo por ser uma exclusão dinâmica. **Buscar em todo
 o catálogo** remove o recorte. Área e subárea são portas de
 entrada, não novas categorias de produto: a API as resolve para categorias externas exatas e o
 resultado continua paginado, local e filtrável por loja e preço. Categorias

@@ -58,6 +58,10 @@ void main() {
     expect(dataHoraProduto('2026-08-22T15:30:00Z'), '22/08/2026, 12:30');
   });
 
+  test('histórico exibe a data em formato curto de Brasília', () {
+    expect(dataHistoricoProduto('2026-08-22T15:30:00Z'), '22 ago 2026');
+  });
+
   test('loja direta aceita booleanos compatíveis do contrato HTTP', () {
     final loja = LojaDireto.parse({
       'id': 12,

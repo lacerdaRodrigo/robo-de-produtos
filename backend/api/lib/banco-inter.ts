@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
-import { LINK_SHOPPING_INTER, normalizarBuscaInter } from "./formato-inter";
+import { linkShoppingInterDaLoja, normalizarBuscaInter } from "./formato-inter";
 
 function conectar() {
   const url = process.env.DATABASE_URL;
@@ -207,7 +207,7 @@ export async function buscarCashbacksInter(
   `) as Array<Omit<CashbackInter, "link">>;
   const itens = itensPersistidos.map((item) => ({
     ...item,
-    link: LINK_SHOPPING_INTER,
+    link: linkShoppingInterDaLoja(item.slug),
   }));
   return { itens, total, pagina: paginaFinal };
 }

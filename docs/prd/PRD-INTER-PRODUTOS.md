@@ -460,6 +460,22 @@ Após a troca, a lista retorna ao início com uma animação suave.
 
 O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V11. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
 
+### 9.3 Histórico de preço
+
+Ao tocar em `Histórico` em um produto, o Flutter abre uma `FolhaRadar` somente
+para leitura sobre a lista atual. O cabeçalho informa “Histórico de preço” e
+identifica o produto e a loja. O conteúdo usa uma lista compacta de métricas:
+as medições reais em ordem decrescente, com preço, cashback e preço após
+cashback de cada coleta, seguidas pelo menor e maior preço observados na janela
+de 30 dias. As datas são formatadas para leitura em português, sem substituir
+as datas recebidas pela API por exemplos do protótipo. Quando o cashback ou o
+preço após cashback não for informado, a interface mantém essa ausência
+explícita, sem convertê-la em zero.
+
+O painel mantém a paginação do endpoint e informa que o histórico é limitado a
+30 dias. Carregar mais medições não inicia coleta, não perde os dados já
+exibidos e oferece nova tentativa quando uma página adicional falhar.
+
 #### Lojas
 
 - Para conta administrativa, o aplicativo percorre todas as páginas de `GET /api/inter/produtos/lojas?filtro=acompanhadas`, e mostra somente os registros com `selecionada=true`.
@@ -470,7 +486,7 @@ O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V11.
 
 #### Categoria e preços
 
-- Categoria não aparece como controle separado na tela de Produtos. A busca por área é a porta visual para recortes contextuais e escolhe identificadores aprovados; a pessoa pode somar vários recortes, vê-los como chips removíveis e pode limpar todos sem perder o restante da busca. Não há categoria digitada, aproximada ou inventada.
+- Categoria não aparece como controle separado na tela de Produtos. A busca por área é a porta visual para recortes contextuais e escolhe identificadores aprovados; sem seleção, o CTA contornado `Escolher categoria` ocupa a largura disponível e oferece alvo de toque de 44 px. A pessoa pode somar vários recortes, vê-los como chips removíveis com nomes humanos e pode limpar todos sem perder o restante da busca. O cartão resume a quantidade escolhida, usa `Adicionar área` como ação contornada e `Limpar áreas` como ação textual secundária; slugs técnicos não são exibidos. Não há categoria digitada, aproximada ou inventada.
 - O app serializa os identificadores ativos, únicos e ordenados no parâmetro `escopo` separado por vírgulas (por exemplo, `tv-smart,freezers`). A API mantém compatibilidade com um único identificador, resolve a união para categorias externas exatas e rejeita recorte desconhecido, repetido ou `Outros / novas categorias` combinado com outro recorte. Esse último é uma exclusão dinâmica e só faz sentido sozinho.
 - A folha `Filtros` não carrega nem lista categorias. Ela se mantém em meia tela e contém somente a seleção de Lojas e a faixa de preço.
 - Marca deixa de ser filtro exposto na interface. O dado de marca pode continuar aparecendo no card quando fornecido pela origem, mas não há campo “Marca” para digitação.

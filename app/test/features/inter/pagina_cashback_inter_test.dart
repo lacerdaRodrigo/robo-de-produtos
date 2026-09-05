@@ -22,7 +22,7 @@ CashbackInter _loja({
   bool encontrada = true,
   bool favorita = false,
   String? secundaria = '2% de cashback',
-  String? link = 'https://shopping.inter.co/site-parceiro/lojas',
+  String? link = 'https://shopping.inter.co/site-parceiro/lojas/magazine-luiza',
 }) => CashbackInter(
   id: nome.toLowerCase(),
   slug: nome.toLowerCase(),
@@ -513,7 +513,10 @@ void main() {
 
     await at.tap(find.text('Ir para o Inter'));
     await at.pumpAndSettle();
-    expect(aberta, Uri.parse('https://shopping.inter.co/site-parceiro/lojas'));
+    expect(
+      aberta,
+      Uri.parse('https://shopping.inter.co/site-parceiro/lojas/magazine-luiza'),
+    );
   });
 
   testWidgets('Sites parceiros informa quando o sistema não abre o destino', (

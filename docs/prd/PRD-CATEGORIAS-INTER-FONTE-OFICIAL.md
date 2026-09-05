@@ -259,11 +259,14 @@ coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
 regras já existentes de histórico e publicação.
 
 No Flutter mobile V11, a entrada **Comece por uma área** permanece uma ação de
-descoberta contextual. Ela usa cartão com ícone,
-texto de apoio e CTA `Explorar`; quando um recorte está ativo, o mesmo controle
-exibe o rótulo contextual, um chip removível por recorte e oferece `Adicionar
-área` e `Limpar`. Em larguras estreitas ou com texto ampliado, as ações ocupam
-uma segunda linha para manter a jornada sem overflow.
+descoberta contextual. Ela usa cartão com ícone, texto de apoio e CTA
+contornado `Escolher categoria`, com largura total e alvo de toque de 44 px; quando
+um recorte está ativo, o mesmo controle
+informa a quantidade escolhida, exibe um chip removível com nome legível por
+recorte e oferece `Adicionar área` em botão contornado e `Limpar áreas` como
+ação textual secundária. Slugs técnicos nunca aparecem para a pessoa. Em
+larguras estreitas ou com texto ampliado, as ações quebram de linha sem ocupar
+dois blocos de destaque nem causar overflow.
 
 App e API precisam ser publicados de forma compatível quando um identificador
 novo de escopo entrar. Um app mais novo contra uma API antiga recebe erro de

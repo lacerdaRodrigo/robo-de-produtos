@@ -240,7 +240,7 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Explorar'));
+    await at.tap(find.byKey(const Key('escolher-area-produtos')));
     await at.pumpAndSettle();
     expect(find.byTooltip('Voltar'), findsOneWidget);
     await at.tap(find.text('Casa e cozinha'));
@@ -251,10 +251,8 @@ void main() {
     await at.pumpAndSettle();
 
     expect(escopos, contains('fogoes-fornos'));
-    expect(
-      find.text('Busca contextual · Casa · Eletrodomésticos · Fogões e fornos'),
-      findsOneWidget,
-    );
+    expect(find.text('Buscando em 1 área'), findsOneWidget);
+    expect(find.text('Fogões e fornos'), findsOneWidget);
   });
 
   testWidgets('acrescenta, remove e limpa recortes contextuais', (at) async {
@@ -291,13 +289,13 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Explorar'));
+    await at.tap(find.byKey(const Key('escolher-area-produtos')));
     await at.pumpAndSettle();
     await at.tap(find.text('Eletrônicos'));
     await at.pumpAndSettle();
     await at.tap(find.text('TV e imagem'));
     await at.pumpAndSettle();
-    await at.tap(find.text('Smart TVs'));
+    await at.tap(find.text('TVs'));
     await at.pumpAndSettle();
 
     await at.tap(find.text('Adicionar área'));
@@ -311,8 +309,15 @@ void main() {
     await at.tap(find.text('Freezers'));
     await at.pumpAndSettle();
 
-    expect(escopos, contains('tv-smart,freezers'));
-    expect(find.byKey(const Key('escopo-produtos-tv-smart')), findsOneWidget);
+    expect(escopos, contains('tv-convencional,freezers'));
+    expect(find.text('Buscando em 2 áreas'), findsOneWidget);
+    expect(find.text('TVs convencionais'), findsOneWidget);
+    expect(find.text('Freezers'), findsOneWidget);
+    expect(find.textContaining('tv-convencional'), findsNothing);
+    expect(
+      find.byKey(const Key('escopo-produtos-tv-convencional')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('escopo-produtos-freezers')), findsOneWidget);
 
     await at.tap(
@@ -322,12 +327,66 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    expect(escopos.last, 'tv-smart');
+    expect(escopos.last, 'tv-convencional');
 
     await at.tap(find.byKey(const Key('limpar-escopos-produtos')));
     await at.pumpAndSettle();
     expect(escopos.last, isNull);
     expect(find.text('Comece por uma área'), findsOneWidget);
+  });
+
+  testWidgets('card de áreas não estoura em 320 px no tema escuro', (at) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina(const []),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.escuro(),
+        home: PaginaProdutos(
+          api: _api(),
+          controlador: controlador,
+          experienciaCompacta: true,
+        ),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(1.3)),
+          child: child!,
+        ),
+      ),
+    );
+    controlador.mudarFiltros(
+      const FiltrosProdutos(escopos: ['tv-convencional', 'freezers']),
+    );
+    await at.pumpAndSettle();
+    await at.drag(
+      find.byKey(const Key('produtos-compacto')),
+      const Offset(0, -240),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('Buscando em 2 áreas'), findsOneWidget);
+    expect(find.text('Limpar áreas'), findsOneWidget);
+    expect(find.text('Adicionar área'), findsOneWidget);
+    expect(at.takeException(), isNull);
   });
 
   testWidgets('escopo contextual separa refrigeração em três opções', (
@@ -366,7 +425,7 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Explorar'));
+    await at.tap(find.byKey(const Key('escolher-area-produtos')));
     await at.pumpAndSettle();
     await at.tap(find.text('Casa e cozinha'));
     await at.pumpAndSettle();
@@ -418,7 +477,7 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    await at.tap(find.text('Explorar'));
+    await at.tap(find.byKey(const Key('escolher-area-produtos')));
     await at.pumpAndSettle();
     await at.tap(find.text('Casa e cozinha'));
     await at.pumpAndSettle();
@@ -465,7 +524,7 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Explorar'));
+    await at.tap(find.byKey(const Key('escolher-area-produtos')));
     await at.pumpAndSettle();
     await at.tap(find.text('Casa e cozinha'));
     await at.pumpAndSettle();
@@ -568,6 +627,9 @@ void main() {
     final pagina = at.widget<PaginaHistoricoProduto>(
       find.byType(PaginaHistoricoProduto),
     );
+    expect(find.byKey(const Key('folha-radar-modal')), findsOneWidget);
+    expect(find.text('Histórico de preço'), findsOneWidget);
+    expect(find.text('Motorola Edge 60 Pro · Ponto'), findsOneWidget);
     expect(pagina.produto.idExterno, 'ponto-42');
     expect(pagina.produto.lojaSlug, 'ponto');
     expect(pagina.produto.lojaNome, 'Ponto');
@@ -811,7 +873,7 @@ void main() {
     expect(find.text('O que você procura?'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
     expect(find.byIcon(Icons.category_outlined), findsOneWidget);
-    expect(find.text('Refine a busca por tipo de produto.'), findsOneWidget);
+    expect(find.text('Escolha uma categoria para começar.'), findsOneWidget);
     expect(find.text('Todas selecionadas'), findsOneWidget);
     expect(find.text('Escolher lojas'), findsNothing);
     expect(find.text('+ escolher lojas'), findsNothing);
@@ -871,7 +933,7 @@ void main() {
       expect(find.byKey(const Key('categoria-nesta-tela')), findsNothing);
       expect(find.text('Categoria nesta tela'), findsNothing);
       expect(find.text('Comece por uma área'), findsOneWidget);
-      expect(find.text('Explorar'), findsOneWidget);
+      expect(find.text('Escolher categoria'), findsOneWidget);
     },
   );
 
@@ -970,7 +1032,17 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Filtros'));
+    final filtros = find.text('Filtros');
+    final rolagemProdutos = find
+        .descendant(
+          of: find.byKey(const Key('produtos-compacto')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await at.scrollUntilVisible(filtros, 120, scrollable: rolagemProdutos);
+    await at.drag(rolagemProdutos, const Offset(0, -80));
+    await at.pumpAndSettle();
+    await at.tap(filtros);
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
@@ -1088,10 +1160,30 @@ void main() {
     );
     await at.pumpAndSettle();
 
+    expect(find.text('22 ago 2026'), findsOneWidget);
+    expect(find.text('2 medições nos últimos 30 dias'), findsOneWidget);
+    expect(find.text('Preço atual'), findsOneWidget);
+    expect(find.text('Cashback'), findsOneWidget);
+    expect(find.text('R\$ 332,00'), findsOneWidget);
+    expect(find.text('Após cashback'), findsOneWidget);
+    expect(find.text('R\$ 3.356,89'), findsOneWidget);
     expect(find.text('R\$ 3.500,00'), findsOneWidget);
     expect(find.text('R\$ 4.000,00'), findsOneWidget);
+    expect(
+      (at.getCenter(find.text('Preço atual')).dy -
+              at.getCenter(find.text('R\$ 3.688,89')).dy)
+          .abs(),
+      lessThan(2),
+    );
+    expect(
+      (at.getCenter(find.text('Cashback')).dy -
+              at.getCenter(find.text('R\$ 332,00')).dy)
+          .abs(),
+      lessThan(2),
+    );
     await at.tap(find.text('Carregar mais medições'));
     await at.pumpAndSettle();
+    expect(find.text('21 ago 2026'), findsOneWidget);
     expect(find.text('R\$ 3.600,00'), findsOneWidget);
   });
 
@@ -1115,7 +1207,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('R\$ 3.500,00'), findsOneWidget);
-    expect(find.text('Medições'), findsOneWidget);
+    expect(find.text('22 ago 2026'), findsOneWidget);
+    expect(
+      find.text('O histórico é paginado e limitado à janela de 30 dias.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('histórico com falha inicial permite nova tentativa', (at) async {
@@ -1136,7 +1232,7 @@ void main() {
 
     await at.tap(find.text('Tentar novamente'));
     await at.pumpAndSettle();
-    expect(find.text('Menor em 30 dias'), findsOneWidget);
+    expect(find.text('Mínimo no contrato'), findsOneWidget);
   });
 
   testWidgets('falha em página adicional mantém o histórico já mostrado', (

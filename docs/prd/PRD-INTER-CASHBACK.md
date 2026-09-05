@@ -19,7 +19,7 @@ Hoje essa consulta exige abrir o Shopping Inter, localizar a área de lojas parc
 1. O robô lê todas as lojas disponíveis.
 2. A pessoa procura e seleciona as lojas que quer acompanhar.
 3. O aplicativo consulta o catálogo persistido, com busca, ordenação e filtro de lojas acompanhadas.
-4. Cada card explica as condições da promoção e leva ao endereço genérico do Shopping Inter.
+4. Cada card explica as condições da promoção e leva à página individual da loja no Shopping Inter.
 
 ### 1.1 Evidência levantada na fonte real
 
@@ -56,7 +56,7 @@ Inter e Livelo têm conceitos parecidos, mas semânticas diferentes:
 | `Parceiro` | `LojaInter` |
 | Pontuação base, atual e Clube | Oferta para Cliente Inter Shopping e oferta para não-correntista |
 | Letra miúda em `legalTerms` | Condições em `redirectWarning` |
-| Link individual validado | Link genérico para a página de lojas |
+| Link individual validado | Rota oficial `/site-parceiro/lojas/{slug}` do catálogo |
 | Regra de alerta por multiplicador e piso | Ranking pelo cashback numérico atual |
 
 Forçar os dois domínios na mesma estrutura produziria campos vazios e regras condicionais espalhadas. A V3 reutiliza infraestrutura genérica, mas mantém modelos e regras de negócio próprios.
@@ -88,7 +88,7 @@ O4 (portfólio) também ganha valor: o projeto passa a demonstrar duas integraç
 - Ranking das favoritas pelo cashback numérico destinado a Cliente Inter Shopping.
 - Exibição da descrição completa disponível para a oferta.
 - Exibição honesta de lojas sem descrição ou sem percentual numérico.
-- Link genérico `https://shopping.inter.co/site-parceiro/lojas` em todos os cards.
+- Link individual `https://shopping.inter.co/site-parceiro/lojas/{slug}` em cada card, derivado do `slug` persistido e validado no app.
 - Área própria no aplicativo, banco separado por tabelas e workflow separado.
 - Execução agendada e disparo manual protegido pela mesma sessão administrativa já existente.
 
@@ -145,7 +145,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RF24** | Ordenar as favoritas por maior `fullCashbackValue`, com opções de busca por nome e ordenação alfabética |
 | **RF25** | Mostrar no card o texto de cashback, o valor numérico quando aplicável, a etiqueta promocional e a descrição completa de `redirectWarning` |
 | **RF26** | Guardar também `partialCashback`, `partialCashbackValue` e `redirectWarningBasicAccount`, mas não misturá-los com a oferta principal |
-| **RF27** | Usar em todos os cards o link genérico `https://shopping.inter.co/site-parceiro/lojas`, aberto somente por ação da pessoa |
+| **RF27** | Usar em cada card a rota individual oficial `https://shopping.inter.co/site-parceiro/lojas/{slug}`, aberta somente por ação da pessoa |
 | **RF28** | Criar páginas próprias para consulta e cadastro do Inter e incluí-las na navegação sem mudar o comportamento das rotas da Livelo |
 | **RF29** | Registrar cada execução do Inter com momento, versão, total lido, total válido, favoritas encontradas e estado final |
 | **RF30** | Executar o robô do Inter em workflow próprio, nos horários 09h, 14h e 20h de Brasília e por disparo manual |
@@ -177,7 +177,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **C12** | `fullCashbackValue = 0` também pode significar “Ofertas disponíveis”, não ausência de benefício | Texto e valor precisam ser preservados separadamente |
 | **C13** | `redirectWarning` pode estar vazio, conter instrução genérica ou várias faixas de cashback | A descrição não pode ser resumida automaticamente para uma única frase |
 | **C14** | A semântica dos campos `full*` e `partial*` vem dos textos da própria resposta, não de documentação contratual encontrada | A interface usa os rótulos observados e evita promessas sobre elegibilidade |
-| **C15** | O link solicitado é genérico e exige nova busca no Shopping Inter | Decisão consciente da V3; link individual fica fora até ser solicitado e validado |
+| **C15** | A fonte não entrega uma URL individual, apenas o `slug` usado pela própria página do Shopping Inter | A API compõe a rota oficial com o `slug` persistido; não há URL livre nem nova consulta por loja |
 | **C16** | O cron do GitHub Actions pode atrasar | O aplicativo mostra o momento real da coleta, não apenas o horário previsto |
 
 ---
@@ -198,7 +198,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RN41** | Toda escrita de uma execução é transacional: catálogo e retrato novo aparecem juntos, ou o retrato anterior continua sendo o último válido |
 | **RN42** | Loja ausente em uma rodada não é apagada. Fica inativa e a favorita mostra “não encontrada nesta consulta” |
 | **RN43** | Uma execução com menos de 100 lojas válidas falha antes de substituir o catálogo ou o retrato anterior |
-| **RN44** | Todos os cards apontam para o link genérico aprovado; nenhum campo externo vira URL clicável na V3 |
+| **RN44** | Cada card aponta para `https://shopping.inter.co/site-parceiro/lojas/{slug}`; o caminho é composto somente do `slug` persistido e o app aceita apenas HTTPS no host `shopping.inter.co` |
 | **RN45** | Nenhuma imagem retornada em `imageUrl` é baixada, armazenada ou exibida |
 | **RN46** | O horário exibido é o da execução concluída, convertido para Brasília, e pertence somente ao Inter |
 | **RN47** | Leitura é pública; seleção e remoção de favoritas e disparo manual exigem a sessão administrativa já usada pela Livelo |
@@ -451,7 +451,7 @@ Cada card contém:
 5. Condições completas ou mensagem explícita de ausência.
 6. Oferta secundária recolhida, quando existir.
 7. Momento da coleta.
-8. Botão “Abrir Shopping Inter” com o link genérico.
+8. Botão “Ir para o Inter” com a rota individual da loja.
 
 O topo mostra total de favoritas, total de lojas lidas e maior cashback numérico entre as favoritas. Não chama o primeiro lugar de “melhor oferta”, conforme §6.3.
 
@@ -499,7 +499,7 @@ Nome, etiqueta e descrições são dados hostis para fins de renderização:
 - Python remove caracteres de controle indevidos, mas preserva quebras de linha.
 - Logs mostram contagens e identificador curto da loja com erro, nunca o payload completo.
 - URLs de imagem são ignoradas.
-- O único link clicável é a constante definida em RN44, nunca um valor vindo da resposta.
+- O único link clicável é a rota composta pela API a partir do `slug` persistido, sob o host definido em RN44; nenhum campo livre da resposta vira URL clicável.
 
 ### 10.3 Autenticação e segredos
 
@@ -551,7 +551,7 @@ Os casos abaixo começam em **CT-175**, depois do último caso catalogado antes 
 | **CT-191** | RF24 | Ordenação principal segue o valor numérico e mantém zero no final |
 | **CT-192** | RF25 | Card da Magalu mostra “Até 20%” e as três condições da mesma execução |
 | **CT-193** | RN39 | Card sem descrição mostra a mensagem neutra |
-| **CT-194** | RN44 | Todos os botões usam exatamente o link genérico permitido |
+| **CT-194** | RN44 | Cada botão usa a rota individual oficial do `slug`, sem trocar o host aprovado |
 | **CT-195** | RNF22 | Texto contendo tags aparece escapado, nunca executado |
 | **CT-196** | RF31 | Sem execução, execução falha, dado atrasado e loja ausente têm mensagens diferentes |
 | **CT-197** | RN47 | Pessoa sem sessão não seleciona, remove nem dispara o Inter |
@@ -609,7 +609,7 @@ Ordem obrigatória: o catálogo real entra antes do cadastro no site. A tela nã
 4. O ranking coloca primeiro a maior `fullCashbackValue` entre as favoritas.
 5. Magazine Luiza, quando a fixture medida for usada, mostra 20%, 11% e 2% com suas condições corretas.
 6. Loja sem descrição mostra ausência de detalhe, sem inventar regra promocional.
-7. O botão do card abre exatamente `https://shopping.inter.co/site-parceiro/lojas`.
+7. O botão do card da C&A abre exatamente `https://shopping.inter.co/site-parceiro/lojas/ca`, e lojas diferentes recebem seus próprios `slug`s.
 8. Uma resposta pequena ou inválida mantém o último retrato e marca a falha.
 9. O botão manual dispara apenas o workflow do Inter e respeita seu limite próprio.
 10. A suíte da Livelo continua verde e o workflow `robo.yml` permanece funcional.
@@ -674,7 +674,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 | Texto versus número | O texto original é exibido; o número serve para ordenação. “Até” nunca é removido |
 | Descrição | `redirectWarning` integral, como texto seguro; vazio usa exatamente “O Inter não informou condições adicionais nesta consulta” |
 | Etiqueta | `promotionTag` é informativa e nunca decide ranking ou elegibilidade |
-| Link | Todos os cards usam somente `https://shopping.inter.co/site-parceiro/lojas` |
+| Link | Cada card usa somente `https://shopping.inter.co/site-parceiro/lojas/{slug}` no host aprovado |
 | Imagens | `imageUrl` e logotipos são ignorados e não persistidos |
 | Frescor | Após 24 horas da última execução válida, `/inter` mostra “dados atrasados” |
 

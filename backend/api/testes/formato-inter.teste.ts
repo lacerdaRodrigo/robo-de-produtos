@@ -9,7 +9,7 @@ import {
   estadoInter,
   filtrarCashbacksInter,
   idadeInter,
-  LINK_SHOPPING_INTER,
+  linkShoppingInterDaLoja,
   normalizarBuscaInter,
   ordenarCashbacksInter,
 } from "../lib/formato-inter";
@@ -76,9 +76,17 @@ describe("CT-192/193 descrição da promoção", () => {
   });
 });
 
-describe("CT-194 link genérico", () => {
-  it("usa somente a página de lojas aprovada", () => {
-    expect(LINK_SHOPPING_INTER).toBe("https://shopping.inter.co/site-parceiro/lojas");
+describe("CT-194 destino individual da loja", () => {
+  it("usa a rota oficial do slug da loja", () => {
+    expect(linkShoppingInterDaLoja("ca")).toBe(
+      "https://shopping.inter.co/site-parceiro/lojas/ca",
+    );
+  });
+
+  it("codifica slug recebido do catálogo sem trocar o domínio aprovado", () => {
+    expect(linkShoppingInterDaLoja("loja & cia")).toBe(
+      "https://shopping.inter.co/site-parceiro/lojas/loja%20%26%20cia",
+    );
   });
 });
 
