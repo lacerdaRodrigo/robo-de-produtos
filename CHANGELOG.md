@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.59.0 (2026-09-05)
+
+### Features
+
+- **app**: Padroniza busca e filtros mobile
+  ([`ba28e97`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/ba28e97a73ad64a0521827a78bea18db3b9dcc5e))
+
+
 ## v1.58.0 (2026-09-05)
 
 
