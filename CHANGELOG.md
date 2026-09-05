@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.55.0 (2026-09-05)
+
+### Documentation
+
+- Planeja agrupamento dinamico do catalogo Inter
+  ([`de953bf`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/de953bfd504ae097985b0b6c79fed8b95e7d27da))
+
+### Features
+
+- Adiciona escopos de navegacao ao catalogo Inter
+  ([`9ce160d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9ce160dbbb5b87bd3b6daca53f476aefeb37660f))
+
+- **app**: Aplica escopo contextual na busca Inter
+  ([`2dcc066`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/2dcc066aafea7288c51b08fd1398eafec768660d))
+
+
 ## v1.54.0 (2026-09-04)
 
 ### Bug Fixes
