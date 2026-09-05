@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.56.0 (2026-09-05)
+
+### Features
+
+- Amplia escopos do catalogo Inter
+  ([`c8fc9da`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c8fc9da00badf4a525e318d2f2d8bff37e374fcc))
+
+
 ## v1.55.0 (2026-09-05)
 
 ### Documentation
