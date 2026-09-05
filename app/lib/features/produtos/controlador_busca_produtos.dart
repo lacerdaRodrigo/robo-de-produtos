@@ -9,6 +9,7 @@ class FiltrosProdutos {
   const FiltrosProdutos({
     this.marca = '',
     this.categoria = '',
+    this.escopo = '',
     this.semCategoria = false,
     this.loja = '',
     this.precoMin = '',
@@ -17,6 +18,7 @@ class FiltrosProdutos {
 
   final String marca;
   final String categoria;
+  final String escopo;
   final bool semCategoria;
   final String loja;
   final String precoMin;
@@ -25,6 +27,7 @@ class FiltrosProdutos {
   FiltrosProdutos copiarCom({
     String? marca,
     String? categoria,
+    String? escopo,
     bool? semCategoria,
     String? loja,
     String? precoMin,
@@ -32,6 +35,7 @@ class FiltrosProdutos {
   }) => FiltrosProdutos(
     marca: marca ?? this.marca,
     categoria: categoria ?? this.categoria,
+    escopo: escopo ?? this.escopo,
     semCategoria: semCategoria ?? this.semCategoria,
     loja: loja ?? this.loja,
     precoMin: precoMin ?? this.precoMin,
@@ -45,6 +49,7 @@ class FiltrosProdutos {
 
   String? get marcaOpcional => _opcional(marca);
   String? get categoriaOpcional => semCategoria ? null : _opcional(categoria);
+  String? get escopoOpcional => _opcional(escopo);
   String? get lojaOpcional => _opcional(loja);
   String? get precoMinOpcional => _opcional(precoMin);
   String? get precoMaxOpcional => _opcional(precoMax);
@@ -52,6 +57,7 @@ class FiltrosProdutos {
   bool get estaVazio =>
       marcaOpcional == null &&
       categoriaOpcional == null &&
+      escopoOpcional == null &&
       !semCategoria &&
       lojaOpcional == null &&
       precoMinOpcional == null &&
@@ -62,14 +68,22 @@ class FiltrosProdutos {
       other is FiltrosProdutos &&
       other.marca == marca &&
       other.categoria == categoria &&
+      other.escopo == escopo &&
       other.semCategoria == semCategoria &&
       other.loja == loja &&
       other.precoMin == precoMin &&
       other.precoMax == precoMax;
 
   @override
-  int get hashCode =>
-      Object.hash(marca, categoria, semCategoria, loja, precoMin, precoMax);
+  int get hashCode => Object.hash(
+    marca,
+    categoria,
+    escopo,
+    semCategoria,
+    loja,
+    precoMin,
+    precoMax,
+  );
 }
 
 typedef BuscarProdutos =
@@ -78,6 +92,7 @@ typedef BuscarProdutos =
       required int pagina,
       String? marca,
       String? categoria,
+      String? escopo,
       required bool semCategoria,
       String? loja,
       String? precoMin,
@@ -214,6 +229,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     pagina: pagina,
     marca: _filtros.marcaOpcional,
     categoria: _filtros.categoriaOpcional,
+    escopo: _filtros.escopoOpcional,
     semCategoria: _filtros.semCategoria,
     loja: _filtros.lojaOpcional,
     precoMin: _filtros.precoMinOpcional,

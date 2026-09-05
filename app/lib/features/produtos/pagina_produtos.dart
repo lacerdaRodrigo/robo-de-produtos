@@ -47,6 +47,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               required pagina,
               marca,
               categoria,
+              escopo,
               required semCategoria,
               loja,
               precoMin,
@@ -56,6 +57,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               pagina: pagina,
               marca: marca,
               categoria: categoria,
+              escopo: escopo,
               semCategoria: semCategoria,
               loja: loja,
               precoMin: precoMin,
@@ -292,6 +294,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             child: _BuscaProdutosCompacta(
               controlador: _campoBusca,
               aoMudar: _controlador.mudarTermo,
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+          sliver: SliverToBoxAdapter(
+            child: _EntradaEscopoProdutos(
+              escopo: _controlador.filtros.escopoOpcional,
+              aoAbrir: _abrirEscopoContextual,
+              aoLimpar: () => _controlador.mudarFiltros(
+                _controlador.filtros.copiarCom(escopo: ''),
+              ),
             ),
           ),
         ),
@@ -684,6 +698,79 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       'Filtro temporário aplicado ao catálogo salvo.',
     );
   }
+
+  Future<void> _abrirEscopoContextual() async {
+    const opcoes = <(String, String)>[
+      ('celulares', 'Celulares e smartphones'),
+      ('tv-imagem', 'TV e imagem'),
+      ('computadores', 'Computadores'),
+      ('audio', 'Áudio'),
+    ];
+    final escopo = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          Text('Eletrônicos', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 4),
+          const Text('Escolha um assunto e descreva o que procura.'),
+          const SizedBox(height: 14),
+          for (final opcao in opcoes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, opcao.$1),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(opcao.$2),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (escopo == null || !mounted) return;
+    _controlador.mudarFiltros(_controlador.filtros.copiarCom(escopo: escopo));
+  }
+}
+
+class _EntradaEscopoProdutos extends StatelessWidget {
+  const _EntradaEscopoProdutos({
+    required this.escopo,
+    required this.aoAbrir,
+    required this.aoLimpar,
+  });
+
+  final String? escopo;
+  final VoidCallback aoAbrir;
+  final VoidCallback aoLimpar;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: CoresRadar.de(context).superficieAlternativa,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: CoresRadar.de(context).borda),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            escopo == null ? 'Comece por uma área' : 'Eletrônicos · $escopo',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        TextButton(
+          onPressed: escopo == null ? aoAbrir : aoLimpar,
+          child: Text(escopo == null ? 'Eletrônicos' : 'Limpar'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _AvisoFalhaBuscaProdutos extends StatelessWidget {
