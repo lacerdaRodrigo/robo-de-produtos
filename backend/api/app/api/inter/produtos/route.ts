@@ -12,7 +12,11 @@ import {
   buscarProdutosDiretosPaginado,
   statusCatalogoProdutos,
 } from "@/lib/banco-produtos-inter";
-import { categoriasDoEscopoNavegacaoProdutosInter } from "@/lib/escopos-navegacao-produtos-inter";
+import {
+  categoriasDoEscopoNavegacaoProdutosInter,
+  categoriasMapeadasNavegacaoProdutosInter,
+  escopoEhOutrosNovasCategorias,
+} from "@/lib/escopos-navegacao-produtos-inter";
 
 const MIN_Q = 2;
 const MAX_Q = 100;
@@ -72,6 +76,7 @@ export async function GET(requisicao: Request) {
   const escopoBruto = url.searchParams.get("escopo");
   const escopo = escopoBruto?.trim() || null;
   const categoriasDoEscopo = categoriasDoEscopoNavegacaoProdutosInter(escopo);
+  const escopoOutros = escopoEhOutrosNovasCategorias(escopo);
   const semCategoria = booleanoOpcional(url.searchParams.get("sem_categoria"));
 
   if (
@@ -89,7 +94,7 @@ export async function GET(requisicao: Request) {
       { status: STATUS.INVALIDA },
     );
   }
-  if (escopoBruto !== null && (!escopo || categoriasDoEscopo === null)) {
+  if (escopoBruto !== null && (!escopo || (!escopoOutros && categoriasDoEscopo === null))) {
     return NextResponse.json(
       corpoErro("validacao", "escopo de navegacao invalido"),
       { status: STATUS.INVALIDA },
@@ -126,6 +131,9 @@ export async function GET(requisicao: Request) {
           : null,
         categoria,
         ...(categoriasDoEscopo ? { categorias: categoriasDoEscopo } : {}),
+        ...(escopoOutros
+          ? { categorias_excluidas: categoriasMapeadasNavegacaoProdutosInter() }
+          : {}),
         sem_categoria: semCategoria,
         loja: url.searchParams.get("loja")
           ? String(url.searchParams.get("loja"))

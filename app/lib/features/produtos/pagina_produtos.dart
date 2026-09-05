@@ -705,6 +705,26 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       ('tv-imagem', 'TV e imagem'),
       ('computadores', 'Computadores'),
       ('audio', 'Áudio'),
+      ('linha-branca', 'Casa · Linha branca'),
+      ('eletroportateis', 'Casa · Eletroportáteis'),
+      ('moveis', 'Casa · Móveis'),
+      ('utilidades', 'Casa · Mesa e utilidades'),
+      ('maquiagem', 'Beleza · Maquiagem'),
+      ('cabelos', 'Beleza · Cabelos'),
+      ('pele', 'Beleza · Pele e banho'),
+      ('perfumaria', 'Beleza · Perfumaria'),
+      ('alimentos', 'Mercado · Alimentos'),
+      ('bebidas', 'Mercado · Bebidas'),
+      ('snacks', 'Mercado · Doces e snacks'),
+      ('suplementos', 'Mercado · Suplementos'),
+      ('bebe', 'Bebês e infantil'),
+      ('brinquedos', 'Brinquedos'),
+      ('pet', 'Pet'),
+      ('esporte', 'Esporte e lazer'),
+      ('ferramentas', 'Ferramentas e construção'),
+      ('auto', 'Auto'),
+      ('moda', 'Moda'),
+      ('outros-novas-categorias', 'Outros / novas categorias'),
     ];
     final escopo = await showModalBottomSheet<String>(
       context: context,
@@ -712,7 +732,10 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       builder: (context) => ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
-          Text('Eletrônicos', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Escolha uma área',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 4),
           const Text('Escolha um assunto e descreva o que procura.'),
           const SizedBox(height: 14),
@@ -758,7 +781,9 @@ class _EntradaEscopoProdutos extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            escopo == null ? 'Comece por uma área' : 'Eletrônicos · $escopo',
+            escopo == null
+                ? 'Comece por uma área'
+                : 'Busca contextual · $escopo',
             style: Theme.of(
               context,
             ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -766,7 +791,7 @@ class _EntradaEscopoProdutos extends StatelessWidget {
         ),
         TextButton(
           onPressed: escopo == null ? aoAbrir : aoLimpar,
-          child: Text(escopo == null ? 'Eletrônicos' : 'Limpar'),
+          child: Text(escopo == null ? 'Explorar' : 'Limpar'),
         ),
       ],
     ),

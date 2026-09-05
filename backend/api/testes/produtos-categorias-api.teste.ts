@@ -84,6 +84,25 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("encaminha Outros como exclusão dinâmica das categorias já mapeadas", async () => {
+    const resposta = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?q=pipoca&escopo=outros-novas-categorias",
+      ),
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.buscar).toHaveBeenCalledWith(
+      "pipoca",
+      1,
+      20,
+      "42",
+      expect.objectContaining({
+        categorias_excluidas: expect.arrayContaining(["Android", "Smartphones"]),
+      }),
+    );
+  });
+
   it("rejeita termo curto, categoria malformada e combinação ambígua", async () => {
     const termoCurto = await GET(
       new Request("http://localhost/api/inter/produtos?q=t"),

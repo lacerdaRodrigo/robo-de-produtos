@@ -1,6 +1,8 @@
 # Catálogo do Inter — inventário e agrupamento de navegação proposto
 
-**Estado:** estudo de produto. Não implementado no Flutter, API, banco ou robô.
+**Estado:** implementação inicial entregue em Flutter e API. O catálogo, as
+lojas e a revisão editorial do mapeamento continuam dinâmicos; robô e categoria
+original do produto não foram alterados.
 
 **Fonte e data:** leitura `READ ONLY` do catálogo de produtos diretos do Inter em
 04/09/2026. A fotografia considerou os produtos ativos das **seis** lojas Inter
@@ -184,13 +186,16 @@ externa é ausente; o rótulo existe somente na consulta e na interface.
    Uma categoria compartilhada por várias lojas é agregada uma vez na navegação,
    mantendo seus produtos e lojas de origem no resultado.
 
-## Próximo passo proposto
+## Implementação inicial e evolução
 
-Antes de desenhar a tela, transformar este inventário em uma tabela de
-mapeamento inicial e testável, começando pelos subgrupos de maior intenção:
-Celulares, TVs, Notebooks, Geladeiras, Fogões, Cozinha, Móveis, Beleza, Mercado
-e Saúde. A tabela precisa cobrir explicitamente: categoria compartilhada por
-mais de uma loja; chegada de loja nova; categoria nova sem mapeamento;
-desativação ou remoção da seleção de uma loja; e `Sem categoria`. Os demais
-entram por departamento e busca global desde o primeiro lançamento, sem bloquear
-produto raro nem exigir revisão manual.
+A API possui um mapeamento versionado de subáreas para categorias externas
+exatas e o Flutter envia somente o identificador de escopo. Estão cobertos os
+recortes iniciais de Eletrônicos, Casa, Beleza, Mercado, Bebês e infantil, Pet,
+Esporte e lazer, Ferramentas, Auto e Moda. **Outros / novas categorias** é
+calculado no servidor por exclusão dos valores já mapeados; portanto, uma
+categoria nova de loja continua pesquisável sem release do app.
+
+O trabalho contínuo é revisar amostras reais antes de ampliar ou mover um valor
+entre subáreas. Categoria compartilhada por mais de uma loja, chegada ou saída
+de loja, categoria nova e `Sem categoria` continuam cobertos pelos mesmos
+critérios dinâmicos; não há aprovação automática produto a produto.
