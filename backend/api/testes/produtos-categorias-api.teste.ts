@@ -135,6 +135,28 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     }
   });
 
+  it("resolve os novos recortes editoriais sem alterar a categoria externa", async () => {
+    const recortes = [
+      ["cozinhas-modulares", ["Cozinha Modulada", "Cozinha Compacta", "Cozinhas", "Cozinha"]],
+      ["cabelos-aparelhos", ["Secadores de Cabelo", "Modeladores e Escovas Rotativas", "Pranchas (Chapinhas)", "Máquinas de Cortar Cabelo", "Aparadores de Pelos", "Vaporizador"]],
+      ["saude-primeiros-socorros", ["Primeiros Socorros", "Higiene e Saúde", "Saúde", "Medicamentos", "Ortopedia", "Medidores", "Medidores de Pressão", "Termômetros", "Nebulizadores e Inaladores", "Diabetes", "Digestivo", "Cicatrizantes", "Cirúrgico", "Analgésico", "Antigripal"]],
+    ] as const;
+
+    for (const [escopo, categorias] of recortes) {
+      const resposta = await GET(
+        new Request(`http://localhost/api/inter/produtos?q=teste&escopo=${escopo}`),
+      );
+      expect(resposta.status).toBe(200);
+      expect(dependencias.buscar).toHaveBeenLastCalledWith(
+        "teste",
+        1,
+        20,
+        "42",
+        expect.objectContaining({ categorias }),
+      );
+    }
+  });
+
   it("encaminha Outros como exclusão dinâmica das categorias já mapeadas", async () => {
     const resposta = await GET(
       new Request(

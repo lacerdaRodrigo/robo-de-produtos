@@ -413,6 +413,7 @@
     .sheet-head h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
     .sheet-head p { margin: 5px 0 0; color: var(--radar-muted); font-size: 11px; }
     .sheet-close { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 12px; background: var(--radar-paper-soft); color: var(--radar-ink); }
+    .sheet-back { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 12px; background: transparent; color: var(--radar-ink); }
     .detail-block { padding: 14px 0; border-top: 1px solid var(--radar-line); }
     .detail-block h3 { margin: 0 0 8px; font-size: 13px; }
     .detail-block p { margin: 0; color: var(--radar-muted); font-size: 12px; line-height: 1.55; }
@@ -593,6 +594,7 @@
               <button class="category-entry-button" type="button" data-open-product-category="casa"><strong>Casa e cozinha</strong><small>Eletrodomésticos, móveis e utilidades</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="beleza"><strong>Beleza e cuidados</strong><small>Maquiagem, cabelos e perfumaria</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="mercado"><strong>Mercado</strong><small>Alimentos, bebidas e suplementos</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="saude"><strong>Saúde e bem-estar</strong><small>Cuidados de saúde e primeiros socorros</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="infantil"><strong>Bebês e brinquedos</strong><small>Itens infantis e diversão</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="pet"><strong>Pet</strong><small>Alimentação, higiene e acessórios</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="esporte"><strong>Esporte e lazer</strong><small>Fitness, bikes e lazer</small></button>
@@ -642,7 +644,7 @@
   <div class="scrim" id="scrim"></div>
   <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="sheet-grab"></div>
-    <div class="sheet-head"><div><h2 id="sheet-title">Detalhes</h2><p id="sheet-subtitle"></p></div><button class="sheet-close" type="button" aria-label="Fechar"><svg><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sheet-head"><button class="sheet-back" type="button" data-sheet-back aria-label="Voltar"><svg><path d="m15 18-6-6 6-6"/></svg></button><div><h2 id="sheet-title">Detalhes</h2><p id="sheet-subtitle"></p></div><button class="sheet-close" type="button" aria-label="Fechar"><svg><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div id="sheet-content"></div>
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -661,6 +663,8 @@
       let toastTimer;
       const liveloFilters = { category: 'all', order: 'name' };
       const productFilters = { store: 'all', minPrice: '', maxPrice: '' };
+      let productSheetHistory = [];
+      let productSheetCurrent = null;
       const productAreas = {
         eletronicos: {
           nome: 'Eletrônicos',
@@ -676,7 +680,7 @@
           nome: 'Casa e cozinha',
           descricao: 'Escolha uma seção para refinar a busca.',
           subareas: [
-            ['eletrodomesticos', 'Eletrodomésticos', 'Refrigeração, fogões e micro-ondas', [
+            ['eletrodomesticos', 'Eletrodomésticos', 'Refrigeração, fogões, limpeza e climatização', [
               ['refrigeracao-lavanderia', 'Refrigeração e lavanderia', 'Geladeiras, freezers e lavadoras', [
                 ['geladeiras', 'Geladeiras', 'Geladeiras, refrigeradores e frigobares'],
                 ['freezers', 'Freezers', 'Freezers verticais e horizontais'],
@@ -684,10 +688,13 @@
               ]],
               ['fogoes-fornos', 'Fogões e fornos', 'Fogões, cooktops e fornos'],
               ['microondas', 'Micro-ondas', 'Modelos para preparar e aquecer'],
+              ['limpeza-climatizacao', 'Limpeza e climatização', 'Aspiradores, ferros, ventiladores e ar-condicionado', [['limpeza-eletro', 'Limpeza e passar', 'Aspiradores, lavadoras e ferros'], ['climatizacao', 'Climatização', 'Ventiladores e ar-condicionado']]],
             ]],
+            ['cozinhas-jantar', 'Cozinhas e jantar', 'Cozinhas, balcões e mesas', [['cozinhas-modulares', 'Cozinhas', 'Cozinhas moduladas, compactas e planejadas'], ['mesa-jantar', 'Mesas e jantar', 'Balcões, mesas e cadeiras de jantar']]],
             ['eletroportateis', 'Eletroportáteis', 'Air fryer, cafeteiras e mixers', [['fritadeiras', 'Fritadeiras', 'Air fryer e fritadeiras'], ['liquidificadores', 'Liquidificadores', 'Liquidificadores'], ['cafeteiras', 'Cafeteiras', 'Cafeteiras'], ['chaleiras', 'Chaleiras', 'Chaleiras elétricas'], ['mixers', 'Mixers', 'Mixers'], ['panelas-eletricas', 'Panelas elétricas', 'Panelas elétricas'], ['processadores', 'Processadores', 'Processadores de alimentos']]],
-            ['moveis', 'Móveis', 'Sala, quarto e escritório', [['sofas', 'Sofás', 'Sofás'], ['racks-paineis', 'Racks e painéis', 'Racks e painéis'], ['guarda-roupas', 'Guarda-roupas', 'Guarda-roupas e roupeiros'], ['comodas', 'Cômodas', 'Cômodas'], ['escritorio', 'Escritório', 'Escrivaninhas e cadeiras'], ['poltronas', 'Poltronas', 'Poltronas']]],
+            ['moveis', 'Móveis', 'Sala, quarto e escritório', [['sofas', 'Sofás', 'Sofás'], ['racks-paineis', 'Racks e painéis', 'Racks e painéis'], ['guarda-roupas', 'Guarda-roupas', 'Guarda-roupas e roupeiros'], ['comodas', 'Cômodas', 'Cômodas'], ['escritorio', 'Escritório', 'Escrivaninhas e cadeiras'], ['poltronas', 'Poltronas', 'Poltronas'], ['quarto-camas', 'Quarto e camas', 'Colchões, cabeceiras e roupas de cama']]],
             ['utilidades', 'Mesa e utilidades', 'Panelas, copos e organização', [['panelas', 'Panelas', 'Panelas e conjuntos'], ['copos', 'Copos', 'Copos'], ['potes', 'Potes e tigelas', 'Potes e tigelas'], ['formas', 'Formas e assadeiras', 'Formas e assadeiras'], ['organizacao', 'Organização', 'Organização doméstica']]],
+            ['festas-decoracao', 'Festas e decoração', 'Artigos para festas, fantasias e enfeites'],
           ],
         },
         beleza: {
@@ -695,9 +702,10 @@
           descricao: 'Escolha o tipo de produto para refinar a busca.',
           subareas: [
             ['maquiagem', 'Maquiagem', 'Base, batom e olhos', [['bases', 'Bases', 'Bases e BB cream'], ['batons', 'Batons', 'Batons'], ['blushes', 'Blushes', 'Blushes'], ['glosses', 'Glosses', 'Glosses'], ['olhos', 'Olhos', 'Delineadores e olhos'], ['esmaltes', 'Esmaltes', 'Esmaltes']]],
-            ['cabelos', 'Cabelos', 'Shampoo, tratamento e finalização', [['shampoos', 'Shampoos', 'Shampoos'], ['condicionadores', 'Condicionadores', 'Condicionadores'], ['tratamento-cabelos', 'Tratamento e finalização', 'Hidratação e finalizadores']]],
+            ['cabelos', 'Cabelos', 'Shampoo, tratamento, aparelhos e finalização', [['shampoos', 'Shampoos', 'Shampoos'], ['condicionadores', 'Condicionadores', 'Condicionadores'], ['tratamento-cabelos', 'Tratamento e finalização', 'Hidratação e finalizadores'], ['cabelos-aparelhos', 'Aparelhos para cabelo', 'Secadores, pranchas e modeladores']]],
             ['pele', 'Pele e banho', 'Cuidados faciais e corpo', [['cuidados-faciais', 'Cuidados faciais', 'Cuidados e limpeza facial'], ['corpo-banho', 'Corpo e banho', 'Hidratantes e banho'], ['protetores-solares', 'Protetor solar', 'Proteção solar']]],
             ['perfumaria', 'Perfumaria', 'Perfumes e desodorantes', [['perfumes', 'Perfumes', 'Perfumes e colônias'], ['desodorantes', 'Desodorantes', 'Desodorantes']]],
+            ['cuidados-pessoais', 'Cuidados pessoais', 'Depilação e higiene feminina', [['depilacao', 'Depilação', 'Aparelhos e cuidados para depilação'], ['higiene-feminina', 'Higiene feminina', 'Absorventes']]],
           ],
         },
         mercado: {
@@ -709,6 +717,10 @@
             ['snacks', 'Doces e snacks', 'Balas, chicletes e salgadinhos', [['balas-doces', 'Balas e doces', 'Balas e doces'], ['chicletes', 'Chicletes', 'Chicletes'], ['salgadinhos', 'Salgadinhos', 'Salgadinhos e snacks']]],
             ['suplementos', 'Suplementos', 'Vitaminas e nutrição', [['suplementos-vitaminas', 'Vitaminas e suplementos', 'Vitaminas e nutrição']]],
           ],
+        },
+        saude: {
+          nome: 'Saúde e bem-estar', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['saude-primeiros-socorros', 'Saúde e primeiros socorros', 'Medicamentos, cuidados e equipamentos de saúde']],
         },
         infantil: {
           nome: 'Bebês e brinquedos', descricao: 'Escolha o tipo de produto para refinar a busca.',
@@ -780,9 +792,11 @@
         scrim.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow = 'hidden';
       }
       function closeSheet() { scrim.classList.remove('open'); sheet.classList.remove('open'); document.body.style.overflow = ''; }
-      function abrirAreaDeProdutos(chave) {
+      function abrirAreaDeProdutos(chave, registrar = true) {
         const area = productAreas[chave];
         if (!area) return;
+        if (registrar) productSheetHistory = [];
+        productSheetCurrent = { chave, subarea: null };
         title.textContent = area.nome;
         subtitle.textContent = area.descricao;
         content.innerHTML = '<div class="category-sheet-list">' + area.subareas.map(([valor, nome, descricao, filhos]) =>
@@ -790,11 +804,26 @@
         ).join('') + '</div>';
         scrim.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow = 'hidden';
       }
-      function abrirSubareaDeProdutos(chave, subarea) {
+      function abrirSubareaDeProdutos(chave, subarea, registrar = true) {
         const area = productAreas[chave];
-        const detalhe = area?.subareas.find(([valor]) => valor === subarea);
+        const encontrar = itens => {
+          for (const item of itens || []) {
+            if (item[0] === subarea) return item;
+            const encontrado = encontrar(item[3]);
+            if (encontrado) return encontrado;
+          }
+          return null;
+        };
+        const detalhe = encontrar(area?.subareas);
         const filhos = detalhe?.[3];
         if (!area || !detalhe || !filhos) return;
+        if (registrar && productSheetCurrent) {
+          const anterior = productSheetCurrent;
+          productSheetHistory.push(anterior.subarea
+            ? () => abrirSubareaDeProdutos(chave, anterior.subarea, false)
+            : () => abrirAreaDeProdutos(chave, false));
+        }
+        productSheetCurrent = { chave, subarea };
         title.textContent = detalhe[1]; subtitle.textContent = 'Escolha o tipo de produto para refinar a busca.';
         content.innerHTML = '<div class="category-sheet-list">' + filhos.map(([valor, nome, descricao]) =>
           '<button class="category-sheet-option" type="button" data-select-product-scope="' + valor + '" data-product-area="' + chave + '"><span><strong>' + nome + '</strong><small>' + descricao + '</small></span><span>›</span></button>'
@@ -908,6 +937,11 @@
         if (interMode) setInterMode(interMode.dataset.interMode);
         if (event.target.closest('[data-open-direct-stores]')) { go('inter'); setInterMode('direct'); }
         const close = event.target.closest('.sheet-close'); if (close) closeSheet();
+        const back = event.target.closest('[data-sheet-back]');
+        if (back) {
+          const anterior = productSheetHistory.pop();
+          if (anterior) anterior(); else closeSheet();
+        }
         const msg = event.target.closest('[data-toast]'); if (msg) showToast(msg.dataset.toast);
         const sheetMsg = event.target.closest('[data-sheet-toast]'); if (sheetMsg) { showToast(sheetMsg.dataset.sheetToast); closeSheet(); }
         const sheetGo = event.target.closest('[data-sheet-go]'); if (sheetGo) { closeSheet(); go(sheetGo.dataset.sheetGo); }
