@@ -13,6 +13,13 @@ documentação antes de abrir arquivos isolados.
 | [`testes/`](testes/) | Catálogo técnico de casos de teste por módulo. | Ao alterar testes ou confirmar a cobertura esperada de uma regra. |
 | [`guias/`](guias/) | Orientações operacionais e de uso do ambiente. | Para tarefas de operação ou configuração descritas no guia correspondente. |
 
+## Planos em avaliação
+
+| Documento | Finalidade |
+|---|---|
+| [`planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md`](planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md) | Inventário de categorias do Shopping Inter e proposta de navegação por agrupamento com busca contextual; não implementado. |
+| [`planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md`](planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md) | Proposta anterior de seletor literal de categorias do Inter, mantida como referência e substituída pela proposta de agrupamento. |
+
 ## Documentos na raiz
 
 | Documento | Finalidade |
