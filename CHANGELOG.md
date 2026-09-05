@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.57.0 (2026-09-05)
+
+### Features
+
+- **app**: Refina navegacao por familias de produtos
+  ([`011b618`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/011b61856d1711647b355a596d23a54dd74733a7))
+
+
 ## v1.56.0 (2026-09-05)
 
 ### Features
