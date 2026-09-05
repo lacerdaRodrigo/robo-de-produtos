@@ -84,6 +84,32 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("separa fogões, micro-ondas e refrigeração nos recortes de casa", async () => {
+    const resposta = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?q=brastemp&escopo=fogoes-fornos",
+      ),
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.buscar).toHaveBeenCalledWith(
+      "brastemp",
+      1,
+      20,
+      "42",
+      expect.objectContaining({
+        categorias: [
+          "Fogões",
+          "Piso 4 Bocas",
+          "Piso 5 Bocas",
+          "Cooktop",
+          "Forno Elétrico",
+          "Fornos",
+        ],
+      }),
+    );
+  });
+
   it("encaminha Outros como exclusão dinâmica das categorias já mapeadas", async () => {
     const resposta = await GET(
       new Request(

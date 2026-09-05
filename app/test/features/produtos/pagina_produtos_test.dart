@@ -232,6 +232,58 @@ Widget _tela(ControladorBuscaProdutos controlador) => MaterialApp(
 );
 
 void main() {
+  testWidgets('escopo contextual percorre as listas de Casa até Fogões', (
+    at,
+  ) async {
+    final escopos = <String?>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            escopos.add(escopo);
+            return _pagina(const []);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaProdutos(
+          api: _api(),
+          controlador: controlador,
+          experienciaCompacta: true,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Explorar'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Casa e cozinha'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrodomésticos'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Fogões e fornos'));
+    await at.pumpAndSettle();
+
+    expect(escopos, contains('fogoes-fornos'));
+    expect(
+      find.text('Busca contextual · Casa · Eletrodomésticos · Fogões e fornos'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('oferta compacta identifica loja e Banco Inter', (at) async {
     await at.pumpWidget(
       MaterialApp(

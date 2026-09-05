@@ -17,7 +17,7 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md`](planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md) | Inventário de categorias do Shopping Inter e proposta de navegação por agrupamento com busca contextual; não implementado. |
+| [`planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md`](planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md) | Inventário que fundamenta os recortes editoriais já implementados; o contrato vigente está no PRD de categorias. |
 | [`planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md`](planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md) | Proposta anterior de seletor literal de categorias do Inter, mantida como referência e substituída pela proposta de agrupamento. |
 
 ## Documentos na raiz

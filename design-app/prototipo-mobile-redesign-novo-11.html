@@ -590,9 +590,15 @@
             <div class="category-entry-head"><span><strong id="category-entry-title">Comece por uma área</strong><small>Depois descreva marca, modelo ou característica para buscar no catálogo salvo.</small></span><button class="quiet" type="button" data-clear-product-scope>Buscar em todo catálogo</button></div>
             <div class="category-grid" aria-label="Áreas para buscar produtos">
               <button class="category-entry-button" type="button" data-open-product-category="eletronicos"><strong>Eletrônicos</strong><small>Celulares, TV, computadores e áudio</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="casa"><strong>Casa e cozinha</strong><small>Linha branca, móveis e utilidades</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="casa"><strong>Casa e cozinha</strong><small>Eletrodomésticos, móveis e utilidades</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="beleza"><strong>Beleza e cuidados</strong><small>Maquiagem, cabelos e perfumaria</small></button>
               <button class="category-entry-button" type="button" data-open-product-category="mercado"><strong>Mercado</strong><small>Alimentos, bebidas e suplementos</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="infantil"><strong>Bebês e brinquedos</strong><small>Itens infantis e diversão</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="pet"><strong>Pet</strong><small>Alimentação, higiene e acessórios</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="esporte"><strong>Esporte e lazer</strong><small>Fitness, bikes e lazer</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="ferramentas"><strong>Ferramentas</strong><small>Construção e casa</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="auto"><strong>Auto</strong><small>Pneus e acessórios</small></button>
+              <button class="category-entry-button" type="button" data-open-product-category="moda"><strong>Moda</strong><small>Roupas, calçados e acessórios</small></button>
             </div>
           </section>
           <div class="toolbar">
@@ -668,9 +674,13 @@
         },
         casa: {
           nome: 'Casa e cozinha',
-          descricao: 'Escolha o tipo de produto para refinar a busca.',
+          descricao: 'Escolha uma seção para refinar a busca.',
           subareas: [
-            ['linha-branca', 'Linha branca', 'Geladeiras, fogões e lavadoras'],
+            ['eletrodomesticos', 'Eletrodomésticos', 'Refrigeração, fogões e micro-ondas', [
+              ['refrigeracao-lavanderia', 'Refrigeração e lavanderia', 'Geladeiras, freezers e lavadoras'],
+              ['fogoes-fornos', 'Fogões e fornos', 'Fogões, cooktops e fornos'],
+              ['microondas', 'Micro-ondas', 'Modelos para preparar e aquecer'],
+            ]],
             ['eletroportateis', 'Eletroportáteis', 'Air fryer, cafeteiras e mixers'],
             ['moveis', 'Móveis', 'Sala, quarto e escritório'],
             ['utilidades', 'Mesa e utilidades', 'Panelas, copos e organização'],
@@ -695,6 +705,30 @@
             ['snacks', 'Doces e snacks', 'Balas, chicletes e salgadinhos'],
             ['suplementos', 'Suplementos', 'Vitaminas e nutrição'],
           ],
+        },
+        infantil: {
+          nome: 'Bebês e brinquedos', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['bebe', 'Bebês e infantil', 'Mamadeiras, fraldas e berços'], ['brinquedos', 'Brinquedos', 'Bonecas, jogos e diversão']],
+        },
+        pet: {
+          nome: 'Pet', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['pet', 'Alimentação, higiene e acessórios', 'Ração, saúde e cuidados']],
+        },
+        esporte: {
+          nome: 'Esporte e lazer', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['esporte', 'Fitness, bikes e lazer', 'Bicicletas, esteiras e piscina']],
+        },
+        ferramentas: {
+          nome: 'Ferramentas e construção', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['ferramentas', 'Ferramentas e casa', 'Furadeiras, elétrica e torneiras']],
+        },
+        auto: {
+          nome: 'Auto', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['auto', 'Pneus e acessórios', 'Pneus, rodas e limpeza']],
+        },
+        moda: {
+          nome: 'Moda', descricao: 'Escolha o tipo de produto para refinar a busca.',
+          subareas: [['moda', 'Roupas, calçados e acessórios', 'Peças para vestir e levar']],
         },
       };
       let productScope = null;
@@ -747,14 +781,24 @@
         if (!area) return;
         title.textContent = area.nome;
         subtitle.textContent = area.descricao;
-        content.innerHTML = '<div class="category-sheet-list">' + area.subareas.map(([valor, nome, descricao]) =>
-          '<button class="category-sheet-option" type="button" data-select-product-scope="' + valor + '" data-product-area="' + chave + '"><span><strong>' + nome + '</strong><small>' + descricao + '</small></span><span>›</span></button>'
+        content.innerHTML = '<div class="category-sheet-list">' + area.subareas.map(([valor, nome, descricao, filhos]) =>
+          '<button class="category-sheet-option" type="button" ' + (filhos ? 'data-open-product-subcategory="' + valor + '"' : 'data-select-product-scope="' + valor + '"') + ' data-product-area="' + chave + '"><span><strong>' + nome + '</strong><small>' + descricao + '</small></span><span>›</span></button>'
         ).join('') + '</div>';
         scrim.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow = 'hidden';
       }
+      function abrirSubareaDeProdutos(chave, subarea) {
+        const area = productAreas[chave];
+        const detalhe = area?.subareas.find(([valor]) => valor === subarea);
+        const filhos = detalhe?.[3];
+        if (!area || !detalhe || !filhos) return;
+        title.textContent = detalhe[1]; subtitle.textContent = 'Escolha o tipo de produto para refinar a busca.';
+        content.innerHTML = '<div class="category-sheet-list">' + filhos.map(([valor, nome, descricao]) =>
+          '<button class="category-sheet-option" type="button" data-select-product-scope="' + valor + '" data-product-area="' + chave + '"><span><strong>' + nome + '</strong><small>' + descricao + '</small></span><span>›</span></button>'
+        ).join('') + '</div>';
+      }
       function aplicarEscopoDeProdutos(area, subarea) {
         const definicao = productAreas[area];
-        const detalhe = definicao?.subareas.find(([valor]) => valor === subarea);
+        const detalhe = definicao?.subareas.find(([valor]) => valor === subarea) || definicao?.subareas.flatMap(item => item[3] || []).find(([valor]) => valor === subarea);
         if (!definicao || !detalhe) return;
         productScope = { area, subarea, nome: detalhe[1] };
         document.getElementById('product-scope-title').textContent = definicao.nome + ' · ' + detalhe[1];
@@ -844,6 +888,7 @@
       document.addEventListener('click', event => {
         const open = event.target.closest('[data-open-sheet]'); if (open) openSheet(open.dataset.openSheet);
         const areaProduto = event.target.closest('[data-open-product-category]'); if (areaProduto) abrirAreaDeProdutos(areaProduto.dataset.openProductCategory);
+        const subcategoriaProduto = event.target.closest('[data-open-product-subcategory]'); if (subcategoriaProduto) abrirSubareaDeProdutos(subcategoriaProduto.dataset.productArea, subcategoriaProduto.dataset.openProductSubcategory);
         const subareaProduto = event.target.closest('[data-select-product-scope]'); if (subareaProduto) aplicarEscopoDeProdutos(subareaProduto.dataset.productArea, subareaProduto.dataset.selectProductScope);
         if (event.target.closest('[data-clear-product-scope]')) limparEscopoDeProdutos();
         const nav = event.target.closest('[data-go]'); if (nav) go(nav.dataset.go);

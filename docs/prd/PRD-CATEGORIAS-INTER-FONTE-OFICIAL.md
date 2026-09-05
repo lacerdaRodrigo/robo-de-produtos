@@ -218,6 +218,40 @@ de navegação aprovado pode ser resolvido pela API como uma lista declarada de
 valores externos exatos; ele é uma união de correspondências exatas, não uma
 inferência pelo nome de produto, marca ou categoria.
 
+### 8.1 Navegação contextual hierárquica
+
+A árvore de navegação é somente uma forma de a pessoa chegar ao recorte de
+busca; ela não cria nem persiste categoria pai/filha no produto. A interface
+pode ter mais de dois níveis quando isso melhora a descoberta, por exemplo:
+
+```text
+Casa e cozinha → Eletrodomésticos → Fogões e fornos
+Casa e cozinha → Eletrodomésticos → Micro-ondas
+Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia
+```
+
+O último nível sempre envia um único identificador de escopo à API. No caso
+acima, respectivamente, `fogoes-fornos`, `microondas` e
+`refrigeracao-lavanderia`; a API os resolve para listas declaradas de valores
+literais do Inter. A mesma jornada em níveis vale para Eletrônicos, Beleza,
+Mercado, Bebês e brinquedos, Pet, Esporte e lazer, Ferramentas e construção,
+Auto e Moda.
+
+Os recortes não dependem de seis lojas, nem de qualquer quantidade fixa de
+lojas. Eles consultam os produtos ativos das lojas que estiverem ativas e
+selecionadas a cada execução; entrar, sair ou variar a quantidade de lojas não
+exige alteração no Flutter. Uma categoria nova, uma categoria não mapeada ou
+uma categoria que esteja temporariamente sem produtos não é apagada nem perdida:
+continua pesquisável pela busca global e, enquanto não houver recorte próprio,
+aparece em **Outros / novas categorias**. Quando uma oferta deixa de vir numa
+coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
+regras já existentes de histórico e publicação.
+
+App e API precisam ser publicados de forma compatível quando um identificador
+novo de escopo entrar. Um app mais novo contra uma API antiga recebe erro de
+validação; nesse caso, a interface preserva os cards anteriores como estado de
+falha e deve sinalizar que eles não são uma resposta válida para o novo recorte.
+
 `Sem categoria` deve ser tratado como identificador funcional reservado do fallback, sem conflitar com a categoria externa original.
 
 ## 9. Estado atual que precisa ser simplificado

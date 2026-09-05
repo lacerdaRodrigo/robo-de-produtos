@@ -302,6 +302,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
           sliver: SliverToBoxAdapter(
             child: _EntradaEscopoProdutos(
               escopo: _controlador.filtros.escopoOpcional,
+              rotulo: _rotuloDoEscopo(_controlador.filtros.escopoOpcional),
               aoAbrir: _abrirEscopoContextual,
               aoLimpar: () => _controlador.mudarFiltros(
                 _controlador.filtros.copiarCom(escopo: ''),
@@ -700,72 +701,231 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Future<void> _abrirEscopoContextual() async {
-    const opcoes = <(String, String)>[
-      ('celulares', 'Celulares e smartphones'),
-      ('tv-imagem', 'TV e imagem'),
-      ('computadores', 'Computadores'),
-      ('audio', 'Áudio'),
-      ('linha-branca', 'Casa · Linha branca'),
-      ('eletroportateis', 'Casa · Eletroportáteis'),
-      ('moveis', 'Casa · Móveis'),
-      ('utilidades', 'Casa · Mesa e utilidades'),
-      ('maquiagem', 'Beleza · Maquiagem'),
-      ('cabelos', 'Beleza · Cabelos'),
-      ('pele', 'Beleza · Pele e banho'),
-      ('perfumaria', 'Beleza · Perfumaria'),
-      ('alimentos', 'Mercado · Alimentos'),
-      ('bebidas', 'Mercado · Bebidas'),
-      ('snacks', 'Mercado · Doces e snacks'),
-      ('suplementos', 'Mercado · Suplementos'),
-      ('bebe', 'Bebês e infantil'),
-      ('brinquedos', 'Brinquedos'),
-      ('pet', 'Pet'),
-      ('esporte', 'Esporte e lazer'),
-      ('ferramentas', 'Ferramentas e construção'),
-      ('auto', 'Auto'),
-      ('moda', 'Moda'),
-      ('outros-novas-categorias', 'Outros / novas categorias'),
-    ];
-    final escopo = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        children: [
-          Text(
-            'Escolha uma área',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 4),
-          const Text('Escolha um assunto e descreva o que procura.'),
-          const SizedBox(height: 14),
-          for (final opcao in opcoes)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, opcao.$1),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(opcao.$2),
+    final area = await _escolherNivelDeEscopo(
+      titulo: 'Escolha uma área',
+      descricao: 'Depois você escolhe o tipo de produto.',
+      opcoes: const [
+        _OpcaoNavegacaoEscopo('eletronicos', 'Eletrônicos'),
+        _OpcaoNavegacaoEscopo('casa', 'Casa e cozinha'),
+        _OpcaoNavegacaoEscopo('beleza', 'Beleza e cuidados'),
+        _OpcaoNavegacaoEscopo('mercado', 'Mercado'),
+        _OpcaoNavegacaoEscopo('infantil', 'Bebês e brinquedos'),
+        _OpcaoNavegacaoEscopo('pet-area', 'Pet'),
+        _OpcaoNavegacaoEscopo('esporte-area', 'Esporte e lazer'),
+        _OpcaoNavegacaoEscopo('ferramentas-area', 'Ferramentas e construção'),
+        _OpcaoNavegacaoEscopo('auto-area', 'Auto'),
+        _OpcaoNavegacaoEscopo('moda-area', 'Moda'),
+        _OpcaoNavegacaoEscopo(
+          'outros-novas-categorias',
+          'Outros / novas categorias',
+          'Itens ainda sem recorte próprio',
+        ),
+      ],
+    );
+    if (area == null || !mounted) return;
+
+    final escopo = switch (area.id) {
+      'eletronicos' => await _escolherNivelDeEscopo(
+        titulo: 'Eletrônicos',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('celulares', 'Celulares e smartphones'),
+          _OpcaoNavegacaoEscopo('tv-imagem', 'TV e imagem'),
+          _OpcaoNavegacaoEscopo('computadores', 'Computadores'),
+          _OpcaoNavegacaoEscopo('audio', 'Áudio'),
+        ],
+      ),
+      'casa' => await _escolherEscopoDeCasa(),
+      'beleza' => await _escolherNivelDeEscopo(
+        titulo: 'Beleza e cuidados',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('maquiagem', 'Maquiagem'),
+          _OpcaoNavegacaoEscopo('cabelos', 'Cabelos'),
+          _OpcaoNavegacaoEscopo('pele', 'Pele e banho'),
+          _OpcaoNavegacaoEscopo('perfumaria', 'Perfumaria'),
+        ],
+      ),
+      'mercado' => await _escolherNivelDeEscopo(
+        titulo: 'Mercado',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('alimentos', 'Alimentos'),
+          _OpcaoNavegacaoEscopo('bebidas', 'Bebidas'),
+          _OpcaoNavegacaoEscopo('snacks', 'Doces e snacks'),
+          _OpcaoNavegacaoEscopo('suplementos', 'Suplementos'),
+        ],
+      ),
+      'infantil' => await _escolherNivelDeEscopo(
+        titulo: 'Bebês e brinquedos',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('bebe', 'Bebês e infantil'),
+          _OpcaoNavegacaoEscopo('brinquedos', 'Brinquedos'),
+        ],
+      ),
+      'pet-area' => await _escolherNivelDeEscopo(
+        titulo: 'Pet',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('pet', 'Alimentação, higiene e acessórios'),
+        ],
+      ),
+      'esporte-area' => await _escolherNivelDeEscopo(
+        titulo: 'Esporte e lazer',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('esporte', 'Fitness, bikes e lazer'),
+        ],
+      ),
+      'ferramentas-area' => await _escolherNivelDeEscopo(
+        titulo: 'Ferramentas e construção',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('ferramentas', 'Ferramentas e casa'),
+        ],
+      ),
+      'auto-area' => await _escolherNivelDeEscopo(
+        titulo: 'Auto',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [_OpcaoNavegacaoEscopo('auto', 'Pneus e acessórios')],
+      ),
+      'moda-area' => await _escolherNivelDeEscopo(
+        titulo: 'Moda',
+        descricao: 'Escolha o tipo de produto.',
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('moda', 'Roupas, calçados e acessórios'),
+        ],
+      ),
+      _ => area,
+    };
+    if (escopo == null || !mounted) return;
+    _controlador.mudarFiltros(
+      _controlador.filtros.copiarCom(escopo: escopo.id),
+    );
+  }
+
+  Future<_OpcaoNavegacaoEscopo?> _escolherEscopoDeCasa() async {
+    final grupo = await _escolherNivelDeEscopo(
+      titulo: 'Casa e cozinha',
+      descricao: 'Escolha uma seção.',
+      opcoes: const [
+        _OpcaoNavegacaoEscopo('eletrodomesticos', 'Eletrodomésticos'),
+        _OpcaoNavegacaoEscopo('eletroportateis', 'Eletroportáteis'),
+        _OpcaoNavegacaoEscopo('moveis', 'Móveis'),
+        _OpcaoNavegacaoEscopo('utilidades', 'Mesa e utilidades'),
+      ],
+    );
+    if (grupo == null || !mounted) return null;
+    if (grupo.id != 'eletrodomesticos') return grupo;
+    return _escolherNivelDeEscopo(
+      titulo: 'Eletrodomésticos',
+      descricao: 'Escolha o tipo de produto.',
+      opcoes: const [
+        _OpcaoNavegacaoEscopo(
+          'refrigeracao-lavanderia',
+          'Refrigeração e lavanderia',
+          'Geladeiras, freezers e lavadoras',
+        ),
+        _OpcaoNavegacaoEscopo(
+          'fogoes-fornos',
+          'Fogões e fornos',
+          'Fogões, cooktops e fornos',
+        ),
+        _OpcaoNavegacaoEscopo('microondas', 'Micro-ondas'),
+      ],
+    );
+  }
+
+  Future<_OpcaoNavegacaoEscopo?> _escolherNivelDeEscopo({
+    required String titulo,
+    required String descricao,
+    required List<_OpcaoNavegacaoEscopo> opcoes,
+  }) => showModalBottomSheet<_OpcaoNavegacaoEscopo>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+      children: [
+        Text(titulo, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text(descricao),
+        const SizedBox(height: 14),
+        for (final opcao in opcoes)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context, opcao),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(opcao.rotulo),
+                    if (opcao.descricao != null)
+                      Text(
+                        opcao.descricao!,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                  ],
                 ),
               ),
             ),
-        ],
-      ),
-    );
-    if (escopo == null || !mounted) return;
-    _controlador.mudarFiltros(_controlador.filtros.copiarCom(escopo: escopo));
-  }
+          ),
+      ],
+    ),
+  );
+
+  String? _rotuloDoEscopo(String? escopo) => switch (escopo) {
+    'celulares' => 'Eletrônicos · Celulares e smartphones',
+    'tv-imagem' => 'Eletrônicos · TV e imagem',
+    'computadores' => 'Eletrônicos · Computadores',
+    'audio' => 'Eletrônicos · Áudio',
+    'refrigeracao-lavanderia' =>
+      'Casa · Eletrodomésticos · Refrigeração e lavanderia',
+    'fogoes-fornos' => 'Casa · Eletrodomésticos · Fogões e fornos',
+    'microondas' => 'Casa · Eletrodomésticos · Micro-ondas',
+    'eletroportateis' => 'Casa · Eletroportáteis',
+    'moveis' => 'Casa · Móveis',
+    'utilidades' => 'Casa · Mesa e utilidades',
+    'maquiagem' => 'Beleza · Maquiagem',
+    'cabelos' => 'Beleza · Cabelos',
+    'pele' => 'Beleza · Pele e banho',
+    'perfumaria' => 'Beleza · Perfumaria',
+    'alimentos' => 'Mercado · Alimentos',
+    'bebidas' => 'Mercado · Bebidas',
+    'snacks' => 'Mercado · Doces e snacks',
+    'suplementos' => 'Mercado · Suplementos',
+    'bebe' => 'Bebês e brinquedos · Bebês e infantil',
+    'brinquedos' => 'Bebês e brinquedos · Brinquedos',
+    'pet' => 'Pet · Alimentação, higiene e acessórios',
+    'esporte' => 'Esporte e lazer · Fitness, bikes e lazer',
+    'ferramentas' => 'Ferramentas e construção · Ferramentas e casa',
+    'auto' => 'Auto · Pneus e acessórios',
+    'moda' => 'Moda · Roupas, calçados e acessórios',
+    'outros-novas-categorias' => 'Outros / novas categorias',
+    _ => escopo,
+  };
+}
+
+class _OpcaoNavegacaoEscopo {
+  const _OpcaoNavegacaoEscopo(this.id, this.rotulo, [this.descricao]);
+
+  final String id;
+  final String rotulo;
+  final String? descricao;
 }
 
 class _EntradaEscopoProdutos extends StatelessWidget {
   const _EntradaEscopoProdutos({
     required this.escopo,
+    required this.rotulo,
     required this.aoAbrir,
     required this.aoLimpar,
   });
 
   final String? escopo;
+  final String? rotulo;
   final VoidCallback aoAbrir;
   final VoidCallback aoLimpar;
 
@@ -783,7 +943,7 @@ class _EntradaEscopoProdutos extends StatelessWidget {
           child: Text(
             escopo == null
                 ? 'Comece por uma área'
-                : 'Busca contextual · $escopo',
+                : 'Busca contextual · $rotulo',
             style: Theme.of(
               context,
             ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -811,7 +971,7 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
       liveRegion: true,
       label:
           'Não foi possível atualizar esta busca. '
-          'A lista anterior foi preservada.',
+          'A lista anterior foi preservada e pode não pertencer ao recorte atual.',
       child: Container(
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
@@ -841,7 +1001,7 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         'A lista anterior foi preservada sem perder o termo '
-                        'ou os filtros.',
+                        'ou os filtros; ela pode não pertencer ao recorte atual.',
                         style: tema.textTheme.labelSmall?.copyWith(
                           color: cores.textoSuave,
                           fontSize: 9,
