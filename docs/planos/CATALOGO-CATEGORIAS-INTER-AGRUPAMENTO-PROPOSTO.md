@@ -103,7 +103,7 @@ produtos.
 | Departamento | Subgrupos de entrada | Exemplos de categorias externas que dão base ao recorte |
 |---|---|---|
 | Eletrônicos | Celulares, TV e imagem, Computadores, Áudio, Acessórios | `Android`, `Smartphones`, `Smart TV`, `TVs`, `Notebooks`, `Tablet`, `Monitores`, `Caixas Acústicas` |
-| Casa e cozinha | Cozinhas e móveis, Eletroportáteis, Linha branca, Mesa e utilidades | `Cozinha Modulada`, `Cozinhas`, `Fritadeiras`, `Liquidificadores`, `Geladeira / Refrigerador`, `Panelas` |
+| Casa e cozinha | Eletrodomésticos (refrigeração/lavanderia, fogões/fornos e micro-ondas), Eletroportáteis, Móveis, Mesa e utilidades | `Geladeira / Refrigerador`, `Freezer`, `Lava e Seca`, `Fogões`, `Micro-ondas`, `Fritadeiras`, `Panelas` |
 | Móveis e decoração | Sala, Quarto, Escritório, Organização, Decoração | `Sofás`, `Guarda-roupas e Roupeiros`, `Racks e Painéis`, `Escrivaninhas`, `Organização` |
 | Beleza e cuidados pessoais | Maquiagem, Cabelos, Pele, Perfumaria, Barbear | `Base`, `Batom`, `Cabelos`, `Cuidados Faciais`, `Perfumes`, `Aparelhos de Depilação` |
 | Saúde e bem-estar | Cuidados de saúde, Farmácia, Mobilidade, Fitness | `Saúde`, `Medicamentos`, `Primeiros Socorros`, `Ortopedia`, `Esteiras Ergométricas` |

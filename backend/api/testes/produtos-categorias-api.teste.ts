@@ -110,6 +110,31 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("resolve as três folhas de refrigeração em categorias distintas", async () => {
+    const folhas = [
+      ["geladeiras", ["Geladeira / Refrigerador", "Side by Side", "Frigobar"]],
+      ["freezers", ["Freezer", "Freezer Horizontal"]],
+      [
+        "lavadoras",
+        ["Lava e Seca", "Lava-Louças", "Máquina de Lavar", "Secadoras de Roupas", "Tanquinho"],
+      ],
+    ] as const;
+
+    for (const [escopo, categorias] of folhas) {
+      const resposta = await GET(
+        new Request(`http://localhost/api/inter/produtos?q=teste&escopo=${escopo}`),
+      );
+      expect(resposta.status).toBe(200);
+      expect(dependencias.buscar).toHaveBeenLastCalledWith(
+        "teste",
+        1,
+        20,
+        "42",
+        expect.objectContaining({ categorias }),
+      );
+    }
+  });
+
   it("encaminha Outros como exclusão dinâmica das categorias já mapeadas", async () => {
     const resposta = await GET(
       new Request(

@@ -284,6 +284,60 @@ void main() {
     );
   });
 
+  testWidgets('escopo contextual separa refrigeração em três opções', (
+    at,
+  ) async {
+    final escopos = <String?>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            escopos.add(escopo);
+            return _pagina(const []);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaProdutos(
+          api: _api(),
+          controlador: controlador,
+          experienciaCompacta: true,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Explorar'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Casa e cozinha'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Eletrodomésticos'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Refrigeração e lavanderia'));
+    await at.pumpAndSettle();
+
+    expect(find.text('Geladeiras'), findsOneWidget);
+    expect(find.text('Freezers'), findsOneWidget);
+    expect(find.text('Lavadoras e secadoras'), findsOneWidget);
+
+    await at.tap(find.text('Freezers'));
+    await at.pumpAndSettle();
+    expect(escopos, contains('freezers'));
+  });
+
   testWidgets('oferta compacta identifica loja e Banco Inter', (at) async {
     await at.pumpWidget(
       MaterialApp(

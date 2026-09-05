@@ -666,10 +666,10 @@
           nome: 'Eletrônicos',
           descricao: 'Escolha o tipo de produto para refinar a busca.',
           subareas: [
-            ['celulares', 'Celulares e smartphones', 'Modelos, marcas e acessórios'],
-            ['tv-imagem', 'TV e imagem', 'Smart TVs, projetores e suportes'],
-            ['computadores', 'Computadores', 'Notebooks, tablets e periféricos'],
-            ['audio', 'Áudio', 'Fones, caixas e soundbars'],
+            ['celulares', 'Celulares e smartphones', 'Modelos, marcas e acessórios', [['celulares-android', 'Android', 'Celulares Android'], ['celulares-smartphones', 'Smartphones', 'Modelos e marcas']]],
+            ['tv-imagem', 'TV e imagem', 'Smart TVs, projetores e suportes', [['tv-smart', 'Smart TVs', 'Televisores inteligentes'], ['tv-convencional', 'TVs', 'Televisores'], ['suportes-tv', 'Suportes para TV', 'Suportes e acessórios']]],
+            ['computadores', 'Computadores', 'Notebooks, tablets e periféricos', [['notebooks', 'Notebooks', 'Notebooks comuns e gamer'], ['tablets', 'Tablets', 'Tablets'], ['monitores', 'Monitores', 'Monitores'], ['e-readers', 'E-readers', 'Leitores digitais']]],
+            ['audio', 'Áudio', 'Fones, caixas e soundbars', [['caixas-acusticas', 'Caixas acústicas', 'Caixas de som'], ['fones', 'Fones e headsets', 'Fones de ouvido e headsets'], ['som-portatil', 'Som portátil', 'Som portátil'], ['soundbars', 'Soundbars', 'Barras de som']]],
           ],
         },
         casa: {
@@ -677,58 +677,62 @@
           descricao: 'Escolha uma seção para refinar a busca.',
           subareas: [
             ['eletrodomesticos', 'Eletrodomésticos', 'Refrigeração, fogões e micro-ondas', [
-              ['refrigeracao-lavanderia', 'Refrigeração e lavanderia', 'Geladeiras, freezers e lavadoras'],
+              ['refrigeracao-lavanderia', 'Refrigeração e lavanderia', 'Geladeiras, freezers e lavadoras', [
+                ['geladeiras', 'Geladeiras', 'Geladeiras, refrigeradores e frigobares'],
+                ['freezers', 'Freezers', 'Freezers verticais e horizontais'],
+                ['lavadoras', 'Lavadoras e secadoras', 'Máquinas de lavar, lava e seca e secadoras'],
+              ]],
               ['fogoes-fornos', 'Fogões e fornos', 'Fogões, cooktops e fornos'],
               ['microondas', 'Micro-ondas', 'Modelos para preparar e aquecer'],
             ]],
-            ['eletroportateis', 'Eletroportáteis', 'Air fryer, cafeteiras e mixers'],
-            ['moveis', 'Móveis', 'Sala, quarto e escritório'],
-            ['utilidades', 'Mesa e utilidades', 'Panelas, copos e organização'],
+            ['eletroportateis', 'Eletroportáteis', 'Air fryer, cafeteiras e mixers', [['fritadeiras', 'Fritadeiras', 'Air fryer e fritadeiras'], ['liquidificadores', 'Liquidificadores', 'Liquidificadores'], ['cafeteiras', 'Cafeteiras', 'Cafeteiras'], ['chaleiras', 'Chaleiras', 'Chaleiras elétricas'], ['mixers', 'Mixers', 'Mixers'], ['panelas-eletricas', 'Panelas elétricas', 'Panelas elétricas'], ['processadores', 'Processadores', 'Processadores de alimentos']]],
+            ['moveis', 'Móveis', 'Sala, quarto e escritório', [['sofas', 'Sofás', 'Sofás'], ['racks-paineis', 'Racks e painéis', 'Racks e painéis'], ['guarda-roupas', 'Guarda-roupas', 'Guarda-roupas e roupeiros'], ['comodas', 'Cômodas', 'Cômodas'], ['escritorio', 'Escritório', 'Escrivaninhas e cadeiras'], ['poltronas', 'Poltronas', 'Poltronas']]],
+            ['utilidades', 'Mesa e utilidades', 'Panelas, copos e organização', [['panelas', 'Panelas', 'Panelas e conjuntos'], ['copos', 'Copos', 'Copos'], ['potes', 'Potes e tigelas', 'Potes e tigelas'], ['formas', 'Formas e assadeiras', 'Formas e assadeiras'], ['organizacao', 'Organização', 'Organização doméstica']]],
           ],
         },
         beleza: {
           nome: 'Beleza e cuidados',
           descricao: 'Escolha o tipo de produto para refinar a busca.',
           subareas: [
-            ['maquiagem', 'Maquiagem', 'Base, batom e olhos'],
-            ['cabelos', 'Cabelos', 'Shampoo, tratamento e finalização'],
-            ['pele', 'Pele e banho', 'Cuidados faciais e corpo'],
-            ['perfumaria', 'Perfumaria', 'Perfumes e desodorantes'],
+            ['maquiagem', 'Maquiagem', 'Base, batom e olhos', [['bases', 'Bases', 'Bases e BB cream'], ['batons', 'Batons', 'Batons'], ['blushes', 'Blushes', 'Blushes'], ['glosses', 'Glosses', 'Glosses'], ['olhos', 'Olhos', 'Delineadores e olhos'], ['esmaltes', 'Esmaltes', 'Esmaltes']]],
+            ['cabelos', 'Cabelos', 'Shampoo, tratamento e finalização', [['shampoos', 'Shampoos', 'Shampoos'], ['condicionadores', 'Condicionadores', 'Condicionadores'], ['tratamento-cabelos', 'Tratamento e finalização', 'Hidratação e finalizadores']]],
+            ['pele', 'Pele e banho', 'Cuidados faciais e corpo', [['cuidados-faciais', 'Cuidados faciais', 'Cuidados e limpeza facial'], ['corpo-banho', 'Corpo e banho', 'Hidratantes e banho'], ['protetores-solares', 'Protetor solar', 'Proteção solar']]],
+            ['perfumaria', 'Perfumaria', 'Perfumes e desodorantes', [['perfumes', 'Perfumes', 'Perfumes e colônias'], ['desodorantes', 'Desodorantes', 'Desodorantes']]],
           ],
         },
         mercado: {
           nome: 'Mercado',
           descricao: 'Escolha o tipo de produto para refinar a busca.',
           subareas: [
-            ['alimentos', 'Alimentos', 'Biscoitos, chocolates e mercearia'],
-            ['bebidas', 'Bebidas', 'Água, sucos e café'],
-            ['snacks', 'Doces e snacks', 'Balas, chicletes e salgadinhos'],
-            ['suplementos', 'Suplementos', 'Vitaminas e nutrição'],
+            ['alimentos', 'Alimentos', 'Biscoitos, chocolates e mercearia', [['biscoitos', 'Biscoitos', 'Biscoitos'], ['chocolates', 'Chocolates', 'Chocolates'], ['mercearia', 'Mercearia', 'Cereais, farinhas e pães']]],
+            ['bebidas', 'Bebidas', 'Água, sucos e café', [['bebidas-agua', 'Bebidas', 'Bebidas'], ['chas-cafes', 'Chás e cafés', 'Chás e cafés'], ['sucos-aguas', 'Sucos e águas', 'Sucos e águas']]],
+            ['snacks', 'Doces e snacks', 'Balas, chicletes e salgadinhos', [['balas-doces', 'Balas e doces', 'Balas e doces'], ['chicletes', 'Chicletes', 'Chicletes'], ['salgadinhos', 'Salgadinhos', 'Salgadinhos e snacks']]],
+            ['suplementos', 'Suplementos', 'Vitaminas e nutrição', [['suplementos-vitaminas', 'Vitaminas e suplementos', 'Vitaminas e nutrição']]],
           ],
         },
         infantil: {
           nome: 'Bebês e brinquedos', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['bebe', 'Bebês e infantil', 'Mamadeiras, fraldas e berços'], ['brinquedos', 'Brinquedos', 'Bonecas, jogos e diversão']],
+          subareas: [['bebe', 'Bebês e infantil', 'Mamadeiras, fraldas e berços', [['mamadeiras', 'Mamadeiras', 'Mamadeiras'], ['fraldas', 'Fraldas', 'Fraldas'], ['bercos', 'Berços', 'Berços'], ['amamentacao', 'Amamentação e troca', 'Amamentação e troca']]], ['brinquedos', 'Brinquedos', 'Bonecas, jogos e diversão', [['bonecas', 'Bonecas', 'Bonecas'], ['bonecos', 'Bonecos', 'Bonecos'], ['jogos', 'Jogos', 'Jogos'], ['pelucias', 'Pelúcias', 'Pelúcias']]]],
         },
         pet: {
           nome: 'Pet', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['pet', 'Alimentação, higiene e acessórios', 'Ração, saúde e cuidados']],
+          subareas: [['pet', 'Alimentação, higiene e acessórios', 'Ração, saúde e cuidados', [['racao', 'Ração', 'Ração'], ['saude-pet', 'Saúde pet', 'Antipulgas e farmácia'], ['higiene-pet', 'Higiene pet', 'Areia higiênica'], ['acessorios-pet', 'Acessórios pet', 'Acessórios']]]],
         },
         esporte: {
           nome: 'Esporte e lazer', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['esporte', 'Fitness, bikes e lazer', 'Bicicletas, esteiras e piscina']],
+          subareas: [['esporte', 'Fitness, bikes e lazer', 'Bicicletas, esteiras e piscina', [['bicicletas', 'Bicicletas', 'Bicicletas e ergométricas'], ['patinetes-patins', 'Patinetes e patins', 'Patinetes e patins'], ['fitness', 'Fitness', 'Pilates, yoga e esteiras'], ['piscinas', 'Piscinas', 'Piscinas']]]],
         },
         ferramentas: {
           nome: 'Ferramentas e construção', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['ferramentas', 'Ferramentas e casa', 'Furadeiras, elétrica e torneiras']],
+          subareas: [['ferramentas', 'Ferramentas e casa', 'Furadeiras, elétrica e torneiras', [['furadeiras', 'Furadeiras', 'Furadeiras'], ['parafusadeiras', 'Parafusadeiras', 'Parafusadeiras'], ['ferramentas-basicas', 'Ferramentas manuais e elétricas', 'Ferramentas'], ['eletrica', 'Elétrica', 'Lâmpadas e elétrica'], ['torneiras', 'Torneiras', 'Torneiras']]]],
         },
         auto: {
           nome: 'Auto', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['auto', 'Pneus e acessórios', 'Pneus, rodas e limpeza']],
+          subareas: [['auto', 'Pneus e acessórios', 'Pneus, rodas e limpeza', [['pneus', 'Pneus e rodas', 'Pneus, rodas e calotas'], ['limpeza-auto', 'Limpeza automotiva', 'Limpeza de automóveis']]]],
         },
         moda: {
           nome: 'Moda', descricao: 'Escolha o tipo de produto para refinar a busca.',
-          subareas: [['moda', 'Roupas, calçados e acessórios', 'Peças para vestir e levar']],
+          subareas: [['moda', 'Roupas, calçados e acessórios', 'Peças para vestir e levar', [['roupas', 'Roupas', 'Blusas e camisetas'], ['calcados', 'Calçados', 'Chinelos'], ['acessorios-moda', 'Acessórios', 'Moda e acessórios']]]],
         },
       };
       let productScope = null;
@@ -798,7 +802,15 @@
       }
       function aplicarEscopoDeProdutos(area, subarea) {
         const definicao = productAreas[area];
-        const detalhe = definicao?.subareas.find(([valor]) => valor === subarea) || definicao?.subareas.flatMap(item => item[3] || []).find(([valor]) => valor === subarea);
+        const encontrar = itens => {
+          for (const item of itens || []) {
+            if (item[0] === subarea) return item;
+            const encontrado = encontrar(item[3]);
+            if (encontrado) return encontrado;
+          }
+          return null;
+        };
+        const detalhe = encontrar(definicao?.subareas);
         if (!definicao || !detalhe) return;
         productScope = { area, subarea, nome: detalhe[1] };
         document.getElementById('product-scope-title').textContent = definicao.nome + ' · ' + detalhe[1];

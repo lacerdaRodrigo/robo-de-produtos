@@ -225,14 +225,15 @@ busca; ela não cria nem persiste categoria pai/filha no produto. A interface
 pode ter mais de dois níveis quando isso melhora a descoberta, por exemplo:
 
 ```text
-Casa e cozinha → Eletrodomésticos → Fogões e fornos
-Casa e cozinha → Eletrodomésticos → Micro-ondas
-Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia
+Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia → Geladeiras
+Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia → Freezers
+Casa e cozinha → Eletrodomésticos → Refrigeração e lavanderia → Lavadoras e secadoras
 ```
 
 O último nível sempre envia um único identificador de escopo à API. No caso
-acima, respectivamente, `fogoes-fornos`, `microondas` e
-`refrigeracao-lavanderia`; a API os resolve para listas declaradas de valores
+acima, `geladeiras`, `freezers` e `lavadoras`; Fogões/fornos e Micro-ondas
+continuam como folhas próprias no nível de Eletrodomésticos. A API resolve cada
+folha para uma lista declarada de valores
 literais do Inter. A mesma jornada em níveis vale para Eletrônicos, Beleza,
 Mercado, Bebês e brinquedos, Pet, Esporte e lazer, Ferramentas e construção,
 Auto e Moda.

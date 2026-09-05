@@ -474,7 +474,7 @@ Campos existentes: marca, categoria, loja, preço mínimo e preço máximo. Valo
 Antes da busca, Produtos apresenta áreas de intenção. Ao tocar uma área, uma
 folha inferior apresenta uma lista de subáreas e, quando necessário, outra lista
 antes do recorte final — por exemplo, Casa e cozinha → Eletrodomésticos →
-Fogões e fornos/Micro-ondas/Refrigeração e lavanderia. Ao escolher o recorte,
+Refrigeração e lavanderia → Geladeiras/Freezers/Lavadoras e secadoras. Ao escolher o recorte,
 o campo de busca permanece em foco e a busca passa a ocorrer naquele recorte.
 **Buscar em todo o catálogo** remove o recorte. Área e subárea são portas de
 entrada, não novas categorias de produto: a API as resolve para categorias externas exatas e o

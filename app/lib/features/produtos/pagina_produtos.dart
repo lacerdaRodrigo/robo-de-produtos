@@ -725,76 +725,174 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     if (area == null || !mounted) return;
 
     final escopo = switch (area.id) {
-      'eletronicos' => await _escolherNivelDeEscopo(
+      'eletronicos' => await _escolherSubgrupo(
         titulo: 'Eletrônicos',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('celulares', 'Celulares e smartphones'),
-          _OpcaoNavegacaoEscopo('tv-imagem', 'TV e imagem'),
-          _OpcaoNavegacaoEscopo('computadores', 'Computadores'),
-          _OpcaoNavegacaoEscopo('audio', 'Áudio'),
+          _OpcaoNavegacaoEscopo('celulares', 'Celulares e smartphones', null, [
+            _OpcaoNavegacaoEscopo('celulares-android', 'Android'),
+            _OpcaoNavegacaoEscopo('celulares-smartphones', 'Smartphones'),
+          ]),
+          _OpcaoNavegacaoEscopo('tv-imagem', 'TV e imagem', null, [
+            _OpcaoNavegacaoEscopo('tv-smart', 'Smart TVs'),
+            _OpcaoNavegacaoEscopo('tv-convencional', 'TVs'),
+            _OpcaoNavegacaoEscopo('suportes-tv', 'Suportes para TV'),
+          ]),
+          _OpcaoNavegacaoEscopo('computadores', 'Computadores', null, [
+            _OpcaoNavegacaoEscopo('notebooks', 'Notebooks'),
+            _OpcaoNavegacaoEscopo('tablets', 'Tablets'),
+            _OpcaoNavegacaoEscopo('monitores', 'Monitores'),
+            _OpcaoNavegacaoEscopo('e-readers', 'E-readers'),
+          ]),
+          _OpcaoNavegacaoEscopo('audio', 'Áudio', null, [
+            _OpcaoNavegacaoEscopo('caixas-acusticas', 'Caixas acústicas'),
+            _OpcaoNavegacaoEscopo('fones', 'Fones e headsets'),
+            _OpcaoNavegacaoEscopo('som-portatil', 'Som portátil'),
+            _OpcaoNavegacaoEscopo('soundbars', 'Soundbars'),
+          ]),
         ],
       ),
       'casa' => await _escolherEscopoDeCasa(),
-      'beleza' => await _escolherNivelDeEscopo(
+      'beleza' => await _escolherSubgrupo(
         titulo: 'Beleza e cuidados',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('maquiagem', 'Maquiagem'),
-          _OpcaoNavegacaoEscopo('cabelos', 'Cabelos'),
-          _OpcaoNavegacaoEscopo('pele', 'Pele e banho'),
-          _OpcaoNavegacaoEscopo('perfumaria', 'Perfumaria'),
+          _OpcaoNavegacaoEscopo('maquiagem', 'Maquiagem', null, [
+            _OpcaoNavegacaoEscopo('bases', 'Bases'),
+            _OpcaoNavegacaoEscopo('batons', 'Batons'),
+            _OpcaoNavegacaoEscopo('blushes', 'Blushes'),
+            _OpcaoNavegacaoEscopo('glosses', 'Glosses'),
+            _OpcaoNavegacaoEscopo('olhos', 'Olhos'),
+            _OpcaoNavegacaoEscopo('esmaltes', 'Esmaltes'),
+          ]),
+          _OpcaoNavegacaoEscopo('cabelos', 'Cabelos', null, [
+            _OpcaoNavegacaoEscopo('shampoos', 'Shampoos'),
+            _OpcaoNavegacaoEscopo('condicionadores', 'Condicionadores'),
+            _OpcaoNavegacaoEscopo(
+              'tratamento-cabelos',
+              'Tratamento e finalização',
+            ),
+          ]),
+          _OpcaoNavegacaoEscopo('pele', 'Pele e banho', null, [
+            _OpcaoNavegacaoEscopo('cuidados-faciais', 'Cuidados faciais'),
+            _OpcaoNavegacaoEscopo('corpo-banho', 'Corpo e banho'),
+            _OpcaoNavegacaoEscopo('protetores-solares', 'Protetor solar'),
+          ]),
+          _OpcaoNavegacaoEscopo('perfumaria', 'Perfumaria', null, [
+            _OpcaoNavegacaoEscopo('perfumes', 'Perfumes'),
+            _OpcaoNavegacaoEscopo('desodorantes', 'Desodorantes'),
+          ]),
         ],
       ),
-      'mercado' => await _escolherNivelDeEscopo(
+      'mercado' => await _escolherSubgrupo(
         titulo: 'Mercado',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('alimentos', 'Alimentos'),
-          _OpcaoNavegacaoEscopo('bebidas', 'Bebidas'),
-          _OpcaoNavegacaoEscopo('snacks', 'Doces e snacks'),
-          _OpcaoNavegacaoEscopo('suplementos', 'Suplementos'),
+          _OpcaoNavegacaoEscopo('alimentos', 'Alimentos', null, [
+            _OpcaoNavegacaoEscopo('biscoitos', 'Biscoitos'),
+            _OpcaoNavegacaoEscopo('chocolates', 'Chocolates'),
+            _OpcaoNavegacaoEscopo('mercearia', 'Mercearia'),
+          ]),
+          _OpcaoNavegacaoEscopo('bebidas', 'Bebidas', null, [
+            _OpcaoNavegacaoEscopo('bebidas-agua', 'Bebidas'),
+            _OpcaoNavegacaoEscopo('chas-cafes', 'Chás e cafés'),
+            _OpcaoNavegacaoEscopo('sucos-aguas', 'Sucos e águas'),
+          ]),
+          _OpcaoNavegacaoEscopo('snacks', 'Doces e snacks', null, [
+            _OpcaoNavegacaoEscopo('balas-doces', 'Balas e doces'),
+            _OpcaoNavegacaoEscopo('chicletes', 'Chicletes'),
+            _OpcaoNavegacaoEscopo('salgadinhos', 'Salgadinhos'),
+          ]),
+          _OpcaoNavegacaoEscopo('suplementos', 'Suplementos', null, [
+            _OpcaoNavegacaoEscopo(
+              'suplementos-vitaminas',
+              'Vitaminas e suplementos',
+            ),
+          ]),
         ],
       ),
-      'infantil' => await _escolherNivelDeEscopo(
+      'infantil' => await _escolherSubgrupo(
         titulo: 'Bebês e brinquedos',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('bebe', 'Bebês e infantil'),
-          _OpcaoNavegacaoEscopo('brinquedos', 'Brinquedos'),
+          _OpcaoNavegacaoEscopo('bebe', 'Bebês e infantil', null, [
+            _OpcaoNavegacaoEscopo('mamadeiras', 'Mamadeiras'),
+            _OpcaoNavegacaoEscopo('fraldas', 'Fraldas'),
+            _OpcaoNavegacaoEscopo('bercos', 'Berços'),
+            _OpcaoNavegacaoEscopo('amamentacao', 'Amamentação e troca'),
+          ]),
+          _OpcaoNavegacaoEscopo('brinquedos', 'Brinquedos', null, [
+            _OpcaoNavegacaoEscopo('bonecas', 'Bonecas'),
+            _OpcaoNavegacaoEscopo('bonecos', 'Bonecos'),
+            _OpcaoNavegacaoEscopo('jogos', 'Jogos'),
+            _OpcaoNavegacaoEscopo('pelucias', 'Pelúcias'),
+          ]),
         ],
       ),
-      'pet-area' => await _escolherNivelDeEscopo(
+      'pet-area' => await _escolherSubgrupo(
         titulo: 'Pet',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('pet', 'Alimentação, higiene e acessórios'),
+          _OpcaoNavegacaoEscopo('pet', 'Pet', null, [
+            _OpcaoNavegacaoEscopo('racao', 'Ração'),
+            _OpcaoNavegacaoEscopo('saude-pet', 'Saúde pet'),
+            _OpcaoNavegacaoEscopo('higiene-pet', 'Higiene pet'),
+            _OpcaoNavegacaoEscopo('acessorios-pet', 'Acessórios pet'),
+          ]),
         ],
       ),
-      'esporte-area' => await _escolherNivelDeEscopo(
+      'esporte-area' => await _escolherSubgrupo(
         titulo: 'Esporte e lazer',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('esporte', 'Fitness, bikes e lazer'),
+          _OpcaoNavegacaoEscopo('esporte', 'Esporte e lazer', null, [
+            _OpcaoNavegacaoEscopo('bicicletas', 'Bicicletas'),
+            _OpcaoNavegacaoEscopo('patinetes-patins', 'Patinetes e patins'),
+            _OpcaoNavegacaoEscopo('fitness', 'Fitness'),
+            _OpcaoNavegacaoEscopo('piscinas', 'Piscinas'),
+          ]),
         ],
       ),
-      'ferramentas-area' => await _escolherNivelDeEscopo(
+      'ferramentas-area' => await _escolherSubgrupo(
         titulo: 'Ferramentas e construção',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('ferramentas', 'Ferramentas e casa'),
+          _OpcaoNavegacaoEscopo(
+            'ferramentas',
+            'Ferramentas e construção',
+            null,
+            [
+              _OpcaoNavegacaoEscopo('furadeiras', 'Furadeiras'),
+              _OpcaoNavegacaoEscopo('parafusadeiras', 'Parafusadeiras'),
+              _OpcaoNavegacaoEscopo(
+                'ferramentas-basicas',
+                'Ferramentas manuais e elétricas',
+              ),
+              _OpcaoNavegacaoEscopo('eletrica', 'Elétrica'),
+              _OpcaoNavegacaoEscopo('torneiras', 'Torneiras'),
+            ],
+          ),
         ],
       ),
-      'auto-area' => await _escolherNivelDeEscopo(
+      'auto-area' => await _escolherSubgrupo(
         titulo: 'Auto',
         descricao: 'Escolha o tipo de produto.',
-        opcoes: const [_OpcaoNavegacaoEscopo('auto', 'Pneus e acessórios')],
+        opcoes: const [
+          _OpcaoNavegacaoEscopo('auto', 'Auto', null, [
+            _OpcaoNavegacaoEscopo('pneus', 'Pneus e rodas'),
+            _OpcaoNavegacaoEscopo('limpeza-auto', 'Limpeza automotiva'),
+          ]),
+        ],
       ),
-      'moda-area' => await _escolherNivelDeEscopo(
+      'moda-area' => await _escolherSubgrupo(
         titulo: 'Moda',
         descricao: 'Escolha o tipo de produto.',
         opcoes: const [
-          _OpcaoNavegacaoEscopo('moda', 'Roupas, calçados e acessórios'),
+          _OpcaoNavegacaoEscopo('moda', 'Moda', null, [
+            _OpcaoNavegacaoEscopo('roupas', 'Roupas'),
+            _OpcaoNavegacaoEscopo('calcados', 'Calçados'),
+            _OpcaoNavegacaoEscopo('acessorios-moda', 'Acessórios'),
+          ]),
         ],
       ),
       _ => area,
@@ -806,35 +904,91 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Future<_OpcaoNavegacaoEscopo?> _escolherEscopoDeCasa() async {
-    final grupo = await _escolherNivelDeEscopo(
+    return _escolherSubgrupo(
       titulo: 'Casa e cozinha',
       descricao: 'Escolha uma seção.',
       opcoes: const [
-        _OpcaoNavegacaoEscopo('eletrodomesticos', 'Eletrodomésticos'),
-        _OpcaoNavegacaoEscopo('eletroportateis', 'Eletroportáteis'),
-        _OpcaoNavegacaoEscopo('moveis', 'Móveis'),
-        _OpcaoNavegacaoEscopo('utilidades', 'Mesa e utilidades'),
+        _OpcaoNavegacaoEscopo(
+          'eletrodomesticos',
+          'Eletrodomésticos',
+          'Escolha o tipo de eletrodoméstico.',
+          [
+            _OpcaoNavegacaoEscopo(
+              'refrigeracao-lavanderia',
+              'Refrigeração e lavanderia',
+              'Escolha uma categoria de produto.',
+              [
+                _OpcaoNavegacaoEscopo(
+                  'geladeiras',
+                  'Geladeiras',
+                  'Geladeiras, refrigeradores e frigobares',
+                ),
+                _OpcaoNavegacaoEscopo(
+                  'freezers',
+                  'Freezers',
+                  'Freezers verticais e horizontais',
+                ),
+                _OpcaoNavegacaoEscopo(
+                  'lavadoras',
+                  'Lavadoras e secadoras',
+                  'Máquinas de lavar, lava e seca e secadoras',
+                ),
+              ],
+            ),
+            _OpcaoNavegacaoEscopo(
+              'fogoes-fornos',
+              'Fogões e fornos',
+              'Fogões, cooktops e fornos',
+            ),
+            _OpcaoNavegacaoEscopo('microondas', 'Micro-ondas'),
+          ],
+        ),
+        _OpcaoNavegacaoEscopo('eletroportateis', 'Eletroportáteis', null, [
+          _OpcaoNavegacaoEscopo('fritadeiras', 'Fritadeiras'),
+          _OpcaoNavegacaoEscopo('liquidificadores', 'Liquidificadores'),
+          _OpcaoNavegacaoEscopo('cafeteiras', 'Cafeteiras'),
+          _OpcaoNavegacaoEscopo('chaleiras', 'Chaleiras'),
+          _OpcaoNavegacaoEscopo('mixers', 'Mixers'),
+          _OpcaoNavegacaoEscopo('panelas-eletricas', 'Panelas elétricas'),
+          _OpcaoNavegacaoEscopo('processadores', 'Processadores'),
+        ]),
+        _OpcaoNavegacaoEscopo('moveis', 'Móveis', null, [
+          _OpcaoNavegacaoEscopo('sofas', 'Sofás'),
+          _OpcaoNavegacaoEscopo('racks-paineis', 'Racks e painéis'),
+          _OpcaoNavegacaoEscopo('guarda-roupas', 'Guarda-roupas'),
+          _OpcaoNavegacaoEscopo('comodas', 'Cômodas'),
+          _OpcaoNavegacaoEscopo('escritorio', 'Escritório'),
+          _OpcaoNavegacaoEscopo('poltronas', 'Poltronas'),
+        ]),
+        _OpcaoNavegacaoEscopo('utilidades', 'Mesa e utilidades', null, [
+          _OpcaoNavegacaoEscopo('panelas', 'Panelas'),
+          _OpcaoNavegacaoEscopo('copos', 'Copos'),
+          _OpcaoNavegacaoEscopo('potes', 'Potes e tigelas'),
+          _OpcaoNavegacaoEscopo('formas', 'Formas e assadeiras'),
+          _OpcaoNavegacaoEscopo('organizacao', 'Organização'),
+        ]),
       ],
     );
-    if (grupo == null || !mounted) return null;
-    if (grupo.id != 'eletrodomesticos') return grupo;
-    return _escolherNivelDeEscopo(
-      titulo: 'Eletrodomésticos',
-      descricao: 'Escolha o tipo de produto.',
-      opcoes: const [
-        _OpcaoNavegacaoEscopo(
-          'refrigeracao-lavanderia',
-          'Refrigeração e lavanderia',
-          'Geladeiras, freezers e lavadoras',
-        ),
-        _OpcaoNavegacaoEscopo(
-          'fogoes-fornos',
-          'Fogões e fornos',
-          'Fogões, cooktops e fornos',
-        ),
-        _OpcaoNavegacaoEscopo('microondas', 'Micro-ondas'),
-      ],
+  }
+
+  Future<_OpcaoNavegacaoEscopo?> _escolherSubgrupo({
+    required String titulo,
+    required String descricao,
+    required List<_OpcaoNavegacaoEscopo> opcoes,
+  }) async {
+    var opcao = await _escolherNivelDeEscopo(
+      titulo: titulo,
+      descricao: descricao,
+      opcoes: opcoes,
     );
+    while (opcao?.filhos != null && mounted) {
+      opcao = await _escolherNivelDeEscopo(
+        titulo: opcao!.rotulo,
+        descricao: opcao.descricao ?? 'Escolha o tipo de produto.',
+        opcoes: opcao.filhos!,
+      );
+    }
+    return opcao;
   }
 
   Future<_OpcaoNavegacaoEscopo?> _escolherNivelDeEscopo({
@@ -881,8 +1035,10 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     'tv-imagem' => 'Eletrônicos · TV e imagem',
     'computadores' => 'Eletrônicos · Computadores',
     'audio' => 'Eletrônicos · Áudio',
-    'refrigeracao-lavanderia' =>
-      'Casa · Eletrodomésticos · Refrigeração e lavanderia',
+    'geladeiras' => 'Casa · Eletrodomésticos · Refrigeração · Geladeiras',
+    'freezers' => 'Casa · Eletrodomésticos · Refrigeração · Freezers',
+    'lavadoras' =>
+      'Casa · Eletrodomésticos · Lavanderia · Lavadoras e secadoras',
     'fogoes-fornos' => 'Casa · Eletrodomésticos · Fogões e fornos',
     'microondas' => 'Casa · Eletrodomésticos · Micro-ondas',
     'eletroportateis' => 'Casa · Eletroportáteis',
@@ -909,11 +1065,17 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
 }
 
 class _OpcaoNavegacaoEscopo {
-  const _OpcaoNavegacaoEscopo(this.id, this.rotulo, [this.descricao]);
+  const _OpcaoNavegacaoEscopo(
+    this.id,
+    this.rotulo, [
+    this.descricao,
+    this.filhos,
+  ]);
 
   final String id;
   final String rotulo;
   final String? descricao;
+  final List<_OpcaoNavegacaoEscopo>? filhos;
 }
 
 class _EntradaEscopoProdutos extends StatelessWidget {
