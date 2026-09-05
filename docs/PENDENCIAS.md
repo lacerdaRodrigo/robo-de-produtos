@@ -13,7 +13,7 @@ O contrato operacional da branch `re-design` é o [`AGENTS.md`](../AGENTS.md): F
 
 - [ ] Confirmar operacionalmente a aplicação das migrations `016_preserva_historico_livelo.sql` e `017_qualidade_livelo.sql`. Elas são tratadas externamente; este repositório não registra confirmação de aplicação.
 - [ ] Validar a migration `020_categorias_inter_fonte_oficial.sql` em ambiente descartável e decidir sua aplicação somente com autorização explícita. Ela remove a taxonomia Radar obsoleta depois de confirmar que não há seleção legada de categorias.
-- [ ] Após decisão de produto, converter a proposta de agrupamento do catálogo Inter em mapeamento versionado e validado. O recorte deve permanecer dinâmico para qualquer quantidade de lojas ativas e selecionadas, incluindo categorias novas e compartilhadas entre lojas; não implementar antes dessa decisão.
+- [ ] Implementar e validar o mapeamento versionado de navegação do catálogo Inter já aprovado. O recorte deve permanecer dinâmico para qualquer quantidade de lojas ativas e selecionadas, incluindo categorias novas e compartilhadas entre lojas.
 - [ ] Fechar o rollout externo do App Check antes de exigir enforcement. Não declarar Web/iOS observados nem enforcement ativo sem confirmação.
 - [ ] Confirmar a revogação/rotação de qualquer credencial Gmail antiga e remover secrets externos obsoletos, se ainda existirem. O código e os workflows atuais não possuem envio SMTP/e-mail ativo.
 

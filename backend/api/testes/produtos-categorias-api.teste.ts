@@ -69,6 +69,21 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("resolve escopo de navegação em categorias externas exatas", async () => {
+    const resposta = await GET(
+      new Request("http://localhost/api/inter/produtos?q=galaxy&escopo=celulares"),
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.buscar).toHaveBeenCalledWith(
+      "galaxy",
+      1,
+      20,
+      "42",
+      expect.objectContaining({ categorias: ["Android", "Smartphones"] }),
+    );
+  });
+
   it("rejeita termo curto, categoria malformada e combinação ambígua", async () => {
     const termoCurto = await GET(
       new Request("http://localhost/api/inter/produtos?q=t"),

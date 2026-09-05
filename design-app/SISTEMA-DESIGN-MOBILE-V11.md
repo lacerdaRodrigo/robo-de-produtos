@@ -469,6 +469,17 @@ Informa que os resultados pertencem às lojas escolhidas no Compre direto e perm
 
 Campos existentes: marca, categoria, loja, preço mínimo e preço máximo. Valores monetários inválidos exibem mensagem e não aplicam o filtro.
 
+### Navegação contextual de categorias
+
+Antes da busca, Produtos apresenta áreas de intenção. Ao tocar uma área, uma
+folha inferior apresenta subáreas; ao escolher uma delas, o campo de busca
+permanece em foco e a busca passa a ocorrer naquele recorte. **Buscar em todo o
+catálogo** remove o recorte. Área e subárea são portas de entrada, não novas
+categorias de produto: a API as resolve para categorias externas exatas e o
+resultado continua paginado, local e filtrável por loja e preço. Categorias
+novas ou não mapeadas continuam alcançáveis por busca global e em **Outros /
+novas categorias**; nunca desaparecem por falta de agrupamento.
+
 ### `ProductStoreGroup`
 
 Classes: `.product-store-group`, `.product-store-head`, `.store-offer-count`.

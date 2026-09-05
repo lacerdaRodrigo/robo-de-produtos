@@ -28,7 +28,10 @@ API
 App
 ```
 
-O Radar deixa de ter a responsabilidade de inventar, inferir, agrupar, traduzir, hierarquizar ou reclassificar categorias de produtos do Shopping Inter.
+O Radar não reclassifica o produto nem altera sua categoria externa. Uma camada
+editorial, versionada e exclusivamente de **navegação** pode reunir categorias
+externas já observadas para abrir uma busca contextual; ela não substitui a
+origem, não é persistida no produto e não decide sua existência no catálogo.
 
 ## 2. Evidência que motivou a mudança
 
@@ -127,7 +130,8 @@ O Radar não deve mais:
 - criar categoria pai/filha por interpretação interna;
 - exigir `categoria_radar_id` para um produto ser exibido;
 - excluir produtos que não tenham mapeamento interno;
-- manter regras manuais de mapeamento entre categoria externa e categoria Radar.
+- manter taxonomia Radar ou mapeamento que regrave, esconda ou altere a
+  categoria externa do produto.
 
 Se o Inter enviar `Notebooks gamer`, o Radar usa `Notebooks gamer`.
 
@@ -207,7 +211,12 @@ Não adicionar normalização semântica como:
 - IA/classificador;
 - tabela manual de equivalência.
 
-Para filtro por uma categoria selecionada na interface, preferir correspondência exata do valor persistido, e não busca parcial por `ILIKE`, para evitar que uma categoria selecione acidentalmente outra categoria de nome parecido.
+Para filtro por uma categoria selecionada na interface, preferir correspondência
+exata do valor persistido, e não busca parcial por `ILIKE`, para evitar que uma
+categoria selecione acidentalmente outra categoria de nome parecido. Um escopo
+de navegação aprovado pode ser resolvido pela API como uma lista declarada de
+valores externos exatos; ele é uma união de correspondências exatas, não uma
+inferência pelo nome de produto, marca ou categoria.
 
 `Sem categoria` deve ser tratado como identificador funcional reservado do fallback, sem conflitar com a categoria externa original.
 

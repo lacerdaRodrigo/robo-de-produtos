@@ -12,6 +12,7 @@ import {
   buscarProdutosDiretosPaginado,
   statusCatalogoProdutos,
 } from "@/lib/banco-produtos-inter";
+import { categoriasDoEscopoNavegacaoProdutosInter } from "@/lib/escopos-navegacao-produtos-inter";
 
 const MIN_Q = 2;
 const MAX_Q = 100;
@@ -68,6 +69,9 @@ export async function GET(requisicao: Request) {
   const precoMax = precoValido(url.searchParams.get("preco_max") ?? "");
   const categoriaBruta = url.searchParams.get("categoria");
   const categoria = categoriaBruta?.trim() || null;
+  const escopoBruto = url.searchParams.get("escopo");
+  const escopo = escopoBruto?.trim() || null;
+  const categoriasDoEscopo = categoriasDoEscopoNavegacaoProdutosInter(escopo);
   const semCategoria = booleanoOpcional(url.searchParams.get("sem_categoria"));
 
   if (
@@ -85,11 +89,17 @@ export async function GET(requisicao: Request) {
       { status: STATUS.INVALIDA },
     );
   }
-  if (categoria && semCategoria) {
+  if (escopoBruto !== null && (!escopo || categoriasDoEscopo === null)) {
+    return NextResponse.json(
+      corpoErro("validacao", "escopo de navegacao invalido"),
+      { status: STATUS.INVALIDA },
+    );
+  }
+  if ((categoria && semCategoria) || (categoria && escopo)) {
     return NextResponse.json(
       corpoErro(
         "validacao",
-        "categoria e sem_categoria nao podem ser usados juntos",
+        "categoria, escopo e sem_categoria nao podem ser combinados",
       ),
       { status: STATUS.INVALIDA },
     );
@@ -115,6 +125,7 @@ export async function GET(requisicao: Request) {
           ? String(url.searchParams.get("marca"))
           : null,
         categoria,
+        ...(categoriasDoEscopo ? { categorias: categoriasDoEscopo } : {}),
         sem_categoria: semCategoria,
         loja: url.searchParams.get("loja")
           ? String(url.searchParams.get("loja"))

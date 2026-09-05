@@ -116,6 +116,7 @@ export type HistoricoProduto = {
 export type FiltrosProdutosDiretos = {
   marca?: string | null;
   categoria?: string | null;
+  categorias?: readonly string[] | null;
   sem_categoria?: boolean;
   loja?: string | null; // slug da loja direta
   preco_min?: string | null; // string decimal (NUMERIC) >= 0
@@ -271,6 +272,9 @@ export async function buscarProdutosDiretosPaginado(
   }
   if (filtros.sem_categoria) {
     condicoes.push(`(p.categoria IS NULL OR btrim(p.categoria) = '')`);
+  } else if (filtros.categorias?.length) {
+    params.push(filtros.categorias);
+    condicoes.push(`p.categoria = ANY($${params.length}::text[])`);
   } else if (filtros.categoria) {
     params.push(filtros.categoria);
     condicoes.push(`p.categoria = $${params.length}`);
