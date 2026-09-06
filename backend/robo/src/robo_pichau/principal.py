@@ -4,15 +4,23 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from collections.abc import Callable
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
 from . import __version__
-from .adaptadores import FontePichauSeleniumBase, RepositorioPichauPostgres, agora_utc
-from .extrator import extrair_pagina
+from .adaptadores import (
+    FontePichauAndroid,
+    FontePichauSeleniumBase,
+    RepositorioPichauPostgres,
+    agora_utc,
+)
+from .extrator import extrair_pagina, tem_payload_catalogo
 from .modelos import PichauProduto, ResumoColetaPichau
 from .portas import (
     ConfiguracaoPichauInvalida,
+    FalhaAoObterPichau,
     FalhaPichau,
     FontePichau,
     PaginacaoPichauInvalida,
@@ -31,6 +39,9 @@ def coletar_catalogo(
     """Lê páginas sequenciais e rejeita paginação repetida ou incoerente."""
 
     iniciada = datetime.now(UTC)
+    # A fonte Android usa a maior página que o catálogo público aceita. As
+    # demais fontes conservam o contrato histórico de 36 itens por página.
+    por_pagina = int(getattr(fonte, "por_pagina", por_pagina))
     produtos: dict[str, PichauProduto] = {}
     fingerprints: set[tuple[str, ...]] = set()
     total_declarado: int | None = None
@@ -74,7 +85,7 @@ def coletar_catalogo(
                 "O catalogo nao encerrou dentro do limite de paginas.", codigo="limite"
             )
         total = total_declarado or 0
-        degradada = itens_lidos < total
+        degradada = itens_lidos < total or len(produtos) < total
         resumo = ResumoColetaPichau(
             iniciada_em=iniciada,
             concluida_em=datetime.now(UTC),
@@ -93,19 +104,104 @@ def coletar_catalogo(
         raise
 
 
-def criar_fonte_pichau() -> FontePichauSeleniumBase:
+def criar_fonte_pichau() -> FontePichau:
     modo = os.getenv("PICHAU_MODO_NAVEGADOR", "headless2").strip().lower()
     if modo == "headless2":
         return FontePichauSeleniumBase(headless2=True, xvfb=False)
     if modo == "xvfb":
         return FontePichauSeleniumBase(headless2=False, xvfb=True)
+    if modo == "android":
+        porta_adb = os.getenv("PICHAU_ANDROID_ADB_PORT", "").strip()
+        try:
+            adb_port = int(porta_adb) if porta_adb else None
+        except ValueError as erro:
+            raise ConfiguracaoPichauInvalida(
+                "PICHAU_ANDROID_ADB_PORT deve ser um numero.", codigo="configuracao"
+            ) from erro
+        return FontePichauAndroid(
+            appium_url=os.getenv("PICHAU_APPIUM_URL", "http://127.0.0.1:4723"),
+            device_name=os.getenv("PICHAU_ANDROID_DEVICE_NAME", "Android"),
+            udid=os.getenv("PICHAU_ANDROID_UDID") or None,
+            adb_port=adb_port,
+        )
     raise ConfiguracaoPichauInvalida(
-        "PICHAU_MODO_NAVEGADOR deve ser headless2 ou xvfb.", codigo="configuracao"
+        "PICHAU_MODO_NAVEGADOR deve ser headless2, xvfb ou android.", codigo="configuracao"
     )
 
 
-def executar() -> int:
+def diagnosticar_catalogo(fonte: FontePichau) -> None:
+    """Valida uma pagina sem abrir conexao ou criar execucao no banco."""
+
+    url = fonte.url_categoria
+    html = fonte.pagina(1)
+    pagina = extrair_pagina(html, pagina_esperada=1, por_pagina=36, base_url=url)
+    if not tem_payload_catalogo(html):
+        raise FalhaAoObterPichau(
+            "O diagnostico nao encontrou products.items na resposta.", codigo="diagnostico"
+        )
+    if not pagina.produtos:
+        raise FalhaAoObterPichau(
+            "O diagnostico nao encontrou produtos na primeira pagina.", codigo="diagnostico"
+        )
+    # O caminho Android/CDP lê a grade renderizada, que não publica SKU no
+    # DOM. A publicação reconcilia a identidade por URL; o diagnóstico ainda
+    # exige os campos comerciais e a URL segura, mas não inventa SKU.
+    exige_sku = not (
+        isinstance(fonte, FontePichauAndroid) and fonte.criar_driver is None
+    )
+    faltantes = []
+    disponibilidades = {"disponivel", "esgotado", "pre_venda", "nao_informado"}
+    for produto in pagina.produtos:
+        if exige_sku and not produto.sku:
+            faltantes.append("sku")
+        analisada = urlparse(produto.url_produto)
+        if analisada.scheme != "https" or analisada.hostname not in {
+            "pichau.com.br",
+            "www.pichau.com.br",
+        }:
+            faltantes.append("url")
+        if produto.preco_pix_valor is None and produto.preco_cartao_valor is None:
+            faltantes.append("preco")
+        if produto.disponibilidade not in disponibilidades:
+            faltantes.append("disponibilidade")
+    if faltantes:
+        raise FalhaAoObterPichau(
+            "O diagnostico encontrou campos comerciais ausentes: "
+            + ", ".join(sorted(set(faltantes))),
+            codigo="diagnostico",
+        )
+    _log.info(
+        "Diagnostico Pichau aprovado: pagina=1 total=%d itens=%d skus=%d "
+        "precos=%d disponibilidades=%s",
+        pagina.total,
+        len(pagina.produtos),
+        sum(1 for produto in pagina.produtos if produto.sku),
+        sum(
+            1
+            for produto in pagina.produtos
+            if produto.preco_pix_valor is not None or produto.preco_cartao_valor is not None
+        ),
+        sorted({produto.disponibilidade for produto in pagina.produtos}),
+    )
+
+
+def executar(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+    argumentos = list(sys.argv[1:] if argv is None else argv)
+    if argumentos not in ([], ["--diagnostico"]):
+        raise ConfiguracaoPichauInvalida(
+            "Uso: python -m robo_pichau.principal [--diagnostico].", codigo="configuracao"
+        )
+    diagnostico = argumentos == ["--diagnostico"]
+    if diagnostico:
+        try:
+            with criar_fonte_pichau() as fonte:
+                diagnosticar_catalogo(fonte)
+            return 0
+        except FalhaPichau as erro:
+            _log.error("Diagnostico Pichau nao aprovado: %s", erro)
+            return 2
+
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise ConfiguracaoPichauInvalida("DATABASE_URL nao configurada.", codigo="configuracao")
