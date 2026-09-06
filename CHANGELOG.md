@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.61.0 (2026-09-06)
+
+### Features
+
+- **pichau**: Adiciona catalogo pc gamer
+  ([`c170efd`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c170efddf600d2bda20d13b75433a2a338ba0614))
+
+
 ## v1.60.0 (2026-09-05)
 
 ### Features
