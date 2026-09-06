@@ -27,6 +27,7 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
 - [ ] Fazer a primeira coleta real e validar que falha/parcial preserva o último snapshot sem afetar Livelo ou Inter.
 - [ ] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo.
+- [ ] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; o agendamento permanece em `headless2` até haver evidência.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

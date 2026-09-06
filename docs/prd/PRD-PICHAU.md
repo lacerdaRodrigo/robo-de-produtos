@@ -145,6 +145,8 @@ execução ainda depende da validação operacional da fonte e da publicação d
 workflow. Em falhas de navegador, o robô registra somente metadados seguros da
 resposta: título, URL final, tamanho e marcadores de desafio/manutenção/payload;
 HTML, cookies e headers não são persistidos nem enviados ao log.
+O agendamento usa `headless2`; uma execução manual pode selecionar `xvfb` para
+comparar os modos sem alterar o padrão agendado.
 
 ## Jornada mobile V11 entregue
 

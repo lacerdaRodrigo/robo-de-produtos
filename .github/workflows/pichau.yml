@@ -6,6 +6,15 @@ on:
     # Os intervalos entre execuções são de pelo menos seis horas.
     - cron: "0 0,12,18 * * *"
   workflow_dispatch:
+    inputs:
+      modo_navegador:
+        description: "Modo do navegador para esta execução manual"
+        required: false
+        default: headless2
+        type: choice
+        options:
+          - headless2
+          - xvfb
 
 concurrency:
   group: pichau-pc-gamer
@@ -28,4 +37,5 @@ jobs:
       - name: Coletar e publicar Pichau
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PICHAU_MODO_NAVEGADOR: ${{ inputs.modo_navegador || 'headless2' }}
         run: python -m robo_pichau.principal

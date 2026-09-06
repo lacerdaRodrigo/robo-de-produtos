@@ -93,6 +93,17 @@ def coletar_catalogo(
         raise
 
 
+def criar_fonte_pichau() -> FontePichauSeleniumBase:
+    modo = os.getenv("PICHAU_MODO_NAVEGADOR", "headless2").strip().lower()
+    if modo == "headless2":
+        return FontePichauSeleniumBase(headless2=True, xvfb=False)
+    if modo == "xvfb":
+        return FontePichauSeleniumBase(headless2=False, xvfb=True)
+    raise ConfiguracaoPichauInvalida(
+        "PICHAU_MODO_NAVEGADOR deve ser headless2 ou xvfb.", codigo="configuracao"
+    )
+
+
 def executar() -> int:
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     database_url = os.getenv("DATABASE_URL")
@@ -101,7 +112,7 @@ def executar() -> int:
     repositorio = RepositorioPichauPostgres(database_url)
     execucao_id = repositorio.iniciar_execucao(agora_utc(), __version__)
     try:
-        with FontePichauSeleniumBase() as fonte:
+        with criar_fonte_pichau() as fonte:
             produtos, resumo = coletar_catalogo(fonte, dormir=fonte.esperar)
         if resumo.degradada:
             repositorio.falhar(execucao_id, "parcial")

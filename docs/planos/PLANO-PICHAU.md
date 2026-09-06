@@ -266,6 +266,8 @@ snapshot válido.
 
 - execução independente;
 - execução às 09h, 15h e 21h de Brasília, com intervalo mínimo de seis horas;
+- agendamento em `headless2`, com `xvfb` disponível somente como modo manual de
+  diagnóstico;
 - publicação atômica do catálogo válido;
 - último catálogo válido preservado quando uma tentativa falhar;
 - métricas de páginas, itens lidos, únicos, duração e estado;

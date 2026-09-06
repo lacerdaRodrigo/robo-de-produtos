@@ -24,8 +24,13 @@ from robo_pichau.extrator import (
     primeiro_preco,
 )
 from robo_pichau.modelos import PichauProduto, ResumoColetaPichau
-from robo_pichau.portas import FalhaAoObterPichau, PaginacaoPichauInvalida, RespostaPichauInvalida
-from robo_pichau.principal import coletar_catalogo
+from robo_pichau.portas import (
+    ConfiguracaoPichauInvalida,
+    FalhaAoObterPichau,
+    PaginacaoPichauInvalida,
+    RespostaPichauInvalida,
+)
+from robo_pichau.principal import coletar_catalogo, criar_fonte_pichau
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
 
@@ -246,6 +251,19 @@ def teste_diagnostico_seleniumbase_nao_registra_html(caplog) -> None:
     assert "titulo='Just a moment'" in caplog.text
     assert "bytes=" in caplog.text
     assert "cookie=nao-publicar" not in caplog.text
+
+
+def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:
+    monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "xvfb")
+    fonte = criar_fonte_pichau()
+    assert fonte.headless2 is False
+    assert fonte.xvfb is True
+
+
+def teste_rejeita_modo_de_navegador_desconhecido(monkeypatch) -> None:
+    monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "outro")
+    with pytest.raises(ConfiguracaoPichauInvalida, match="headless2 ou xvfb"):
+        criar_fonte_pichau()
 
 
 def teste_url_produto_precisa_ser_https_no_dominio_da_fonte() -> None:
