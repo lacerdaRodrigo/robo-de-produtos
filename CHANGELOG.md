@@ -2,6 +2,35 @@
 
 <!-- version list -->
 
+## v1.63.0 (2026-09-06)
+
+### Documentation
+
+- **pichau**: Fecha gate de coletas consecutivas
+  ([`40ae7bf`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/40ae7bfd6950a5b367f7581db4a3cbe589c23f99))
+
+- **pichau**: Planeja executor Android local
+  ([`7a95187`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/7a951870f4b809dae1e9591d3bbb603d00ad270a))
+
+- **pichau**: Registra segunda coleta rapida valida
+  ([`fb89971`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/fb899710113ac1cbf5f76954fb567add4284b5fe))
+
+### Features
+
+- **pichau**: Acelera executor Android local
+  ([`7c40736`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/7c407360361cedabf14700affa1ea07d04f8179c))
+
+### Performance Improvements
+
+- **pichau**: Fecha coleta Android em 12 paginas
+  ([`b729881`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b729881f832b849f68fc08d87c2ad405ce3c67ee))
+
+### Testing
+
+- **pichau**: Permite diagnostico manual com xvfb
+  ([`c0a123a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c0a123a613db77f3038c9355fd54e678bef9d33f))
+
+
 ## v1.62.1 (2026-09-06)
 
 ### Bug Fixes
