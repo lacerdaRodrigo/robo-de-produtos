@@ -49,6 +49,8 @@ include = [
     "*/robo_livelo/retrato_inter.py",
     "*/robo_livelo/modelos_produtos_inter.py",
     "*/robo_livelo/extrator_produtos_inter.py",
+    "*/robo_pichau/modelos.py",
+    "*/robo_pichau/extrator.py",
 ]
 
 [tool.ruff]

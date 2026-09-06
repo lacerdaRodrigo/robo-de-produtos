@@ -10,6 +10,7 @@ nunca em arquivo versionado.
 |---|---|---|---|
 | [`robo.yml`](workflows/robo.yml) | Coleta Livelo e publica catálogo/retrato | 09h/14h/20h + manual | `DATABASE_URL` |
 | [`inter.yml`](workflows/inter.yml) | Atualiza cashback, sincroniza as lojas e coleta os produtos selecionados do Shopping Inter | 09h/14h/20h + botão do app | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
+| [`pichau.yml`](workflows/pichau.yml) | Coleta e publica o catálogo PC Gamer da Pichau, isolado dos demais robôs | 09h/14h/20h + manual técnico | `DATABASE_URL` |
 | [`testes.yml`](workflows/testes.yml) | CI de robôs/API: Ruff, Pytest, TypeScript, ESLint e Vitest | a cada push/PR | nenhum |
 | [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
 | [`app-robo.yml`](workflows/app-robo.yml) | CI mobile: format, analyze e unitários/widgets permitidos | a cada push/PR | nenhum |

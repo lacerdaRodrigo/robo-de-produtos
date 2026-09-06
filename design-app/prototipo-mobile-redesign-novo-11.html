@@ -242,6 +242,8 @@
     .service-capabilities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 15px; }
     .service-capabilities span { padding: 6px 8px; border-radius: 9px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 9px; font-weight: 700; }
     .service-enter { display: flex; align-items: center; justify-content: space-between; margin-top: 17px; padding-top: 13px; border-top: 1px solid var(--radar-line); color: var(--radar-action-strong); font-size: 11px; font-weight: 800; }
+    .service-card.pichau-card .store-monogram { background: var(--radar-action-soft); color: var(--radar-action-strong); }
+    .service-card.pichau-card .service-kind { background: var(--radar-plum-soft); color: var(--radar-plum); }
 
     .toolbar { display: grid; gap: 10px; margin-bottom: 16px; }
     .search-box { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px; min-height: 52px; padding: 0 8px 0 15px; border: 1px solid var(--radar-line); border-radius: 17px; background: var(--radar-paper); box-shadow: var(--radar-shadow-soft); color: var(--radar-muted); }
@@ -384,6 +386,71 @@
     .product-actions button { min-height: 41px; border-radius: 13px; font-size: 10px; }
     .price-filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 12px; }
 
+    .pichau-state-preview { margin: 0 0 16px; padding: 13px; border: 1px solid var(--radar-line); border-radius: 18px; background: var(--radar-paper-soft); }
+    .pichau-state-preview-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+    .pichau-state-preview-head strong { font-size: 11px; }
+    .pichau-state-preview-head small { color: var(--radar-muted); font-size: 8px; }
+    .pichau-state-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 -2px; padding: 2px; scrollbar-width: none; }
+    .pichau-state-tabs::-webkit-scrollbar { display: none; }
+    .pichau-state-tab { flex: 0 0 auto; min-height: 36px; padding: 0 11px; border: 1px solid var(--radar-line); border-radius: 11px; background: var(--radar-paper); color: var(--radar-muted); font-size: 9px; font-weight: 800; white-space: nowrap; }
+    .pichau-state-tab.active { border-color: var(--radar-plum); background: var(--radar-plum); color: var(--radar-on-plum); }
+    .pichau-state-panel { padding: 17px 15px; border: 1px solid var(--radar-line); border-radius: 20px 20px 20px 8px; background: var(--radar-paper); box-shadow: var(--radar-shadow-soft); }
+    .pichau-state-panel[hidden] { display: none; }
+    .pichau-state-panel h2 { margin: 0; font-size: 17px; letter-spacing: -.03em; }
+    .pichau-state-panel p { margin: 7px 0 0; color: var(--radar-muted); font-size: 11px; line-height: 1.5; }
+    .pichau-state-kicker { color: var(--radar-action-strong); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    .pichau-state-panel .primary, .pichau-state-panel .secondary { width: 100%; margin-top: 15px; }
+    .pichau-state-panel.danger { border-color: color-mix(in srgb, var(--radar-danger) 32%, var(--radar-line)); }
+    .pichau-state-panel.danger .pichau-state-kicker { color: var(--radar-danger); }
+    .pichau-state-panel.warning { border-color: color-mix(in srgb, var(--radar-warning) 34%, var(--radar-line)); }
+    .pichau-state-panel.warning .pichau-state-kicker { color: var(--radar-warning); }
+    .pichau-state-details { display: grid; gap: 0; margin-top: 14px; border-top: 1px solid var(--radar-line); }
+    .pichau-state-detail { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--radar-line); font-size: 9px; }
+    .pichau-state-detail span { color: var(--radar-muted); }
+    .pichau-state-detail strong { text-align: right; }
+    .pichau-skeleton-list { display: grid; gap: 9px; margin-top: 15px; }
+    .pichau-skeleton { height: 12px; border-radius: 99px; background: linear-gradient(90deg, var(--radar-paper-soft), color-mix(in srgb, var(--radar-line) 70%, var(--radar-paper-soft)), var(--radar-paper-soft)); background-size: 220% 100%; animation: pichau-loading 1.2s ease-in-out infinite; }
+    .pichau-skeleton:first-child { width: 78%; height: 18px; }
+    .pichau-skeleton:nth-child(3) { width: 56%; }
+    @keyframes pichau-loading { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+    .pichau-results-shell[hidden] { display: none; }
+    .pichau-product-card { border-radius: 21px 21px 21px 8px; }
+    .pichau-product-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 15px 15px 11px; }
+    .pichau-product-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
+    .pichau-product-tags span { padding: 4px 7px; border-radius: 7px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 8px; font-weight: 800; }
+    .pichau-product-tags span:last-child { background: var(--radar-plum-soft); color: var(--radar-plum); }
+    .pichau-product-name { max-width: 235px; margin: 7px 0 0; font-size: 15px; line-height: 1.28; letter-spacing: -.025em; }
+    .pichau-product-brand { margin: 4px 0 0; color: var(--radar-muted); font-size: 9px; }
+    .pichau-origin { flex: 0 0 auto; padding: 6px 8px; border-radius: 9px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 8px; font-weight: 800; }
+    .pichau-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 15px 10px; }
+    .pichau-price { min-width: 0; padding: 11px; border-radius: 14px; background: var(--radar-paper-soft); }
+    .pichau-price.featured { background: var(--radar-positive-soft); color: var(--radar-positive); }
+    .pichau-price span, .pichau-price strong, .pichau-price small { display: block; }
+    .pichau-price span { color: var(--radar-muted); font-size: 8px; font-weight: 700; }
+    .pichau-price.featured span { color: currentColor; opacity: .85; }
+    .pichau-price strong { margin-top: 4px; font-size: 14px; }
+    .pichau-price small { margin-top: 3px; color: var(--radar-muted); font-size: 8px; line-height: 1.3; }
+    .pichau-price.featured small { color: currentColor; opacity: .82; }
+    .pichau-product-meta { display: flex; flex-wrap: wrap; gap: 5px 9px; padding: 0 15px 11px; color: var(--radar-muted); font-size: 8px; }
+    .pichau-product-meta span { display: inline-flex; align-items: center; gap: 4px; }
+    .pichau-product-meta span::before { width: 4px; height: 4px; border-radius: 50%; background: var(--radar-positive); content: ""; }
+    .pichau-product-meta .sold-out { color: var(--radar-danger); font-weight: 800; }
+    .pichau-product-meta .sold-out::before { background: var(--radar-danger); }
+    .pichau-product-meta .tag { color: var(--radar-action-strong); }
+    .pichau-product-meta .tag::before { background: var(--radar-action); }
+    .pichau-product-actions { display: grid; grid-template-columns: .85fr 1.15fr; gap: 8px; padding: 0 15px 15px; }
+    .pichau-product-actions .primary { min-height: 43px; }
+    .pichau-product-actions .secondary { min-height: 43px; padding: 0 10px; font-size: 10px; }
+    .pichau-product-card.sold-out .pichau-origin { background: var(--radar-warning-soft); color: var(--radar-warning); }
+    .pichau-sold-out-copy { margin: 0 15px 12px; padding: 9px 10px; border-radius: 11px; background: var(--radar-warning-soft); color: var(--radar-warning); font-size: 9px; line-height: 1.4; }
+    .pichau-sold-out-card { margin-top: 14px; }
+    .pichau-partial-notice[hidden] { display: none; }
+    .pichau-partial-notice { margin-bottom: 13px; }
+    .pichau-external-note { margin: 11px 2px 0; color: var(--radar-muted); font-size: 8px; line-height: 1.45; text-align: center; }
+    .pichau-catalog-status.warning { background: var(--radar-warning-soft); color: var(--radar-warning); }
+    .pichau-catalog-status.danger { background: color-mix(in srgb, var(--radar-danger) 14%, transparent); color: var(--radar-danger); }
+    .pichau-catalog-status.neutral { background: var(--radar-paper-soft); color: var(--radar-muted); }
+
     .admin-row { display: grid; grid-template-columns: 42px 1fr 20px; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; text-align: left; }
     .admin-row strong, .admin-row small { display: block; }
     .admin-row strong { font-size: 13px; }
@@ -497,7 +564,7 @@
           <div class="toolbar">
             <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Pesquisar serviços</span><input id="service-search" type="search" placeholder="Pesquisar serviço"><button type="button" aria-label="Pesquisar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
           </div>
-          <div class="result-meta"><span id="service-count">2 serviços disponíveis</span><span>estrutura expansível</span></div>
+          <div class="result-meta"><span id="service-count">3 serviços disponíveis</span><span>estrutura expansível</span></div>
           <div class="service-list" id="service-results">
             <button class="service-card" type="button" data-service="livelo pontos lojas campanhas historico" data-go="livelo">
               <span class="service-head"><span class="store-monogram">LI</span><span class="service-kind">Pontos</span></span>
@@ -510,6 +577,12 @@
               <h2>Banco Inter</h2><p>Encontre lojas de cashback ou pesquise produtos do catálogo Compre direto.</p>
               <span class="service-capabilities"><span>Sites parceiros</span><span>Cashback</span><span>Compre direto</span></span>
               <span class="service-enter"><span>Abrir serviço</span><svg><path d="m8 5 7 7-7 7"/></svg></span>
+            </button>
+            <button class="service-card pichau-card" type="button" data-service="pichau pc gamer computadores catálogo preços disponibilidade" data-go="pichau">
+              <span class="service-head"><span class="store-monogram">PI</span><span class="service-kind">PC Gamer</span></span>
+              <h2>Pichau</h2><p>Consulte o catálogo salvo de PCs Gamer com preço Pix, cartão e disponibilidade.</p>
+              <span class="service-capabilities"><span>Catálogo PC Gamer</span><span>Pix + cartão</span><span>Estoque</span></span>
+              <span class="service-enter"><span>Abrir catálogo</span><svg><path d="m8 5 7 7-7 7"/></svg></span>
             </button>
           </div>
           <p class="empty" id="service-empty">Nenhum serviço encontrado.</p>
@@ -583,6 +656,72 @@
             <p class="empty" id="direct-empty">Nenhuma loja encontrada.</p>
             <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Mais lojas seriam carregadas pela API.">2</button><button type="button" data-toast="Mais lojas seriam carregadas pela API." aria-label="Próxima página">›</button></div>
           </div>
+        </section>
+
+        <section class="page" data-page="pichau" data-layout="catalogo-direto">
+          <button class="back-button" type="button" data-go="services"><svg><path d="m15 18-6-6 6-6"/></svg>Serviços</button>
+          <div class="page-heading"><p class="eyebrow">PC Gamer</p><h1 class="page-title">Pichau</h1><p class="page-lead">Veja o catálogo salvo de PCs Gamer e abra o produto no site da Pichau.</p></div>
+          <p class="sample-note">Protótipo visual V11: preços, SKUs e estados abaixo são ilustrativos. O aplicativo real exibirá somente o último catálogo válido entregue pela API.</p>
+
+          <section class="pichau-state-preview" aria-labelledby="pichau-state-title">
+            <div class="pichau-state-preview-head"><strong id="pichau-state-title">Estado demonstrado</strong><small>validação visual da jornada</small></div>
+            <div class="pichau-state-tabs" role="tablist" aria-label="Estados do catálogo Pichau">
+              <button class="pichau-state-tab active" type="button" role="tab" aria-selected="true" data-pichau-state="updated">Atualizado</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="loading">Carregando</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="partial">Parcial / atrasado</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="empty">Catálogo vazio</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="failure">Falha</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="soldout">Esgotado</button>
+              <button class="pichau-state-tab" type="button" role="tab" aria-selected="false" data-pichau-state="out-of-catalog">Fora do catálogo</button>
+            </div>
+          </section>
+
+          <div class="toolbar">
+            <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar PC Gamer na Pichau</span><input id="pichau-search" type="search" placeholder="Buscar por nome, marca ou SKU"></label>
+          </div>
+          <div class="collection-bar"><span class="collection-copy"><strong id="pichau-count">2 ofertas encontradas</strong><small id="pichau-context">Catálogo completo · última coleta válida</small></span><span class="status-label pichau-catalog-status" id="pichau-status">Catálogo atualizado</span></div>
+
+          <div class="pichau-partial-notice catalog-notice" id="pichau-partial-notice" hidden><svg><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/></svg><span>A coleta está parcial e atrasada. O último catálogo válido continua visível; nenhum preço é convertido em zero ou substituído por dado fictício.</span></div>
+
+          <div class="pichau-state-panel" id="pichau-loading-state" data-pichau-state-panel="loading" hidden>
+            <span class="pichau-state-kicker">Coleta em andamento</span><h2>Carregando catálogo</h2><p>A API está preparando a resposta paginada da categoria PC Gamer.</p>
+            <div class="pichau-skeleton-list" aria-hidden="true"><span class="pichau-skeleton"></span><span class="pichau-skeleton"></span><span class="pichau-skeleton"></span></div>
+          </div>
+          <div class="pichau-state-panel" id="pichau-empty-state" data-pichau-state-panel="empty" hidden>
+            <span class="pichau-state-kicker">Sem resultado persistido</span><h2>Catálogo vazio</h2><p>Nenhum PC Gamer foi publicado na última coleta completa. Tente novamente quando houver uma nova medição válida.</p>
+          </div>
+          <div class="pichau-state-panel danger" id="pichau-failure-state" data-pichau-state-panel="failure" hidden>
+            <span class="pichau-state-kicker">Falha na atualização</span><h2>Não foi possível carregar o catálogo</h2><p>O erro pertence à Pichau. O aplicativo não deve apagar nem inventar o último snapshot válido.</p><button class="secondary" type="button" data-pichau-state="loading">Tentar novamente</button>
+          </div>
+          <div class="pichau-state-panel warning" id="pichau-soldout-state" data-pichau-state-panel="soldout" hidden>
+            <span class="pichau-state-kicker">Disponibilidade informada pela fonte</span><h2>Produto esgotado</h2><p>O item continua presente no catálogo, mas a Pichau informou que não há estoque.</p>
+            <div class="pichau-state-details"><div class="pichau-state-detail"><span>Presença no catálogo</span><strong>Presente</strong></div><div class="pichau-state-detail"><span>Disponibilidade</span><strong>Esgotado</strong></div><div class="pichau-state-detail"><span>Preço observado</span><strong>Último Pix preservado</strong></div></div>
+          </div>
+          <div class="pichau-state-panel" id="pichau-out-of-catalog-state" data-pichau-state-panel="out-of-catalog" hidden>
+            <span class="pichau-state-kicker">Ausência após coleta completa</span><h2>Produto fora do catálogo</h2><p>O item não apareceu na última coleta completa. Essa ausência é diferente de estar esgotado e não altera o preço para zero.</p>
+            <div class="pichau-state-details"><div class="pichau-state-detail"><span>Presença no catálogo</span><strong>Não presente</strong></div><div class="pichau-state-detail"><span>Disponibilidade</span><strong>Fora do catálogo</strong></div><div class="pichau-state-detail"><span>Identidade</span><strong>SKU preservado</strong></div></div>
+          </div>
+
+          <div class="pichau-results-shell" id="pichau-results-shell">
+            <div class="result-list" id="pichau-results">
+              <article class="result-card pichau-product-card" data-pichau-product="pichau gaming 7800x3d rtx 4070 super pc gamer pg-7800" data-pichau-price="7499.90">
+                <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming 7800X3D RTX 4070 Super</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7800</p></div><span class="pichau-origin">Origem Pichau</span></div>
+                <div class="pichau-price-grid"><div class="pichau-price featured"><span>Preço Pix</span><strong>R$ 7.499,90</strong><small>De R$ 8.199,90 · 9% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 7.999,90</strong><small>12x de R$ 666,66</small></div></div>
+                <div class="pichau-product-meta"><span>Disponível</span><span>12x sem juros</span><span class="tag">Oferta</span><span class="tag">Montado</span></div>
+                <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7800">Histórico</button><button class="primary" type="button" data-toast="Demonstração: o produto real seria aberto na Pichau em uma URL http/https validada pela API.">Ver na Pichau</button></div>
+              </article>
+              <article class="result-card pichau-product-card sold-out" data-pichau-product="pichau gaming ryzen 5 rx 7600 pc gamer pg-7600" data-pichau-price="4699.90">
+                <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming Ryzen 5 RX 7600</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7600</p></div><span class="pichau-origin">Origem Pichau</span></div>
+                <div class="pichau-price-grid"><div class="pichau-price featured"><span>Último preço Pix</span><strong>R$ 4.699,90</strong><small>De R$ 5.199,90 · 10% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 4.899,90</strong><small>12x de R$ 408,32</small></div></div>
+                <p class="pichau-sold-out-copy">Esgotado informado pela Pichau. O produto segue identificado, mas não está disponível para compra agora.</p>
+                <div class="pichau-product-meta"><span class="sold-out">Esgotado</span><span>Última medição preservada</span><span class="tag">Montado</span></div>
+                <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7600">Histórico</button><button class="primary" type="button" data-toast="Demonstração: a página real seria aberta na Pichau, mesmo com disponibilidade esgotada.">Ver na Pichau</button></div>
+              </article>
+            </div>
+            <p class="empty" id="pichau-empty">Nenhum PC Gamer encontrado nesta busca.</p>
+            <div class="pagination" id="pichau-pagination"><button class="active" type="button" aria-label="Página 1">1</button><button type="button" data-toast="Demonstração: a página 2 seria solicitada à API autenticada.">2</button><button type="button" data-toast="Demonstração: a próxima página seria solicitada à API autenticada." aria-label="Próxima página">›</button></div>
+          </div>
+          <p class="pichau-external-note">O histórico de preços fica no backend e não é exibido nesta primeira tela. Imagens não são armazenadas pelo Radar.</p>
         </section>
 
         <section class="page" data-page="products">
@@ -766,6 +905,8 @@
         'inter-ca': ['C&A', 'Percentuais da fixture Inter', '<div class="metric-list"><div class="metric-line"><span>Conta principal</span><strong>até 12%</strong></div><div class="metric-line"><span>Conta básica</span><strong>até 8,4%</strong></div></div><div class="detail-block"><p>A fixture não fornece texto adicional de condição; a interface não inventa uma descrição.</p></div>'],
         'inter-amazon': ['Amazon', 'Ausência de percentual preservada', '<div class="detail-block"><p>O contrato informa “Ofertas disponíveis”, sem percentual numérico. A interface mantém ausência diferente de 0%.</p></div>'],
         'product-history': ['Histórico de preço', 'Motorola Edge 60 Pro · Casas Bahia', '<div class="metric-list"><div class="metric-line"><span>22 ago 2026</span><strong>R$ 3.688,89</strong></div><div class="metric-line"><span>21 ago 2026</span><strong>R$ 3.600,00</strong></div><div class="metric-line"><span>Mínimo no contrato</span><strong>R$ 3.500,00</strong></div><div class="metric-line"><span>Máximo no contrato</span><strong>R$ 4.000,00</strong></div></div><div class="detail-block"><p>O histórico é paginado e limitado à janela de 30 dias.</p></div>'],
+        'pichau-history-7800': ['Histórico de preço', 'Pichau Gaming 7800X3D RTX 4070 Super · Pichau', '<div class="metric-list"><div class="metric-line"><span>04 set 2026 · Pix</span><strong>R$ 7.499,90</strong></div><div class="metric-line"><span>03 set 2026 · Pix</span><strong>R$ 7.599,90</strong></div><div class="metric-line"><span>Mínimo em 30 dias</span><strong>R$ 7.399,90</strong></div><div class="metric-line"><span>Máximo em 30 dias</span><strong>R$ 7.899,90</strong></div></div><div class="detail-block"><p>Dados ilustrativos do protótipo. O histórico real será somente leitura, paginado e limitado às medições de até 30 dias recebidas pela API.</p></div>'],
+        'pichau-history-7600': ['Histórico de preço', 'Pichau Gaming Ryzen 5 RX 7600 · Pichau', '<div class="metric-list"><div class="metric-line"><span>04 set 2026 · Pix</span><strong>R$ 4.699,90</strong></div><div class="metric-line"><span>02 set 2026 · Pix</span><strong>R$ 4.799,90</strong></div><div class="metric-line"><span>Mínimo em 30 dias</span><strong>R$ 4.599,90</strong></div><div class="metric-line"><span>Máximo em 30 dias</span><strong>R$ 4.999,90</strong></div></div><div class="detail-block"><p>Dados ilustrativos do protótipo. O histórico permanece disponível mesmo quando a fonte informa estoque esgotado.</p></div>'],
         'livelo-filters': ['Filtrar todas as lojas', 'Refine o catálogo completo da Livelo', '<label class="field"><span>Categoria</span><select id="livelo-category"><option value="all">Todas as categorias</option><option value="marketplace">Marketplace</option><option value="beleza">Beleza</option><option value="viagem">Viagem</option></select></label><label class="field" style="margin-top:12px"><span>Ordenar por</span><select id="livelo-order"><option value="name">Nome da loja</option><option value="score">Maior pontuação</option></select></label><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-livelo-filters>Limpar</button><button class="primary" type="button" data-apply-livelo-filters>Ver lojas</button></div>'],
         'product-filters': ['Filtros', 'Escolha a loja. Só a faixa de preço é editável.', '<label class="field"><span>Lojas selecionadas para coleta</span><select id="product-store"><option value="all">Todas as lojas selecionadas</option><option value="casas-bahia">Casas Bahia</option><option value="ponto">Ponto</option></select></label><div class="price-filter-grid"><label class="field"><span>Preço mínimo</span><input id="product-min-price" inputmode="decimal" placeholder="R$ 0"></label><label class="field"><span>Preço máximo</span><input id="product-max-price" inputmode="decimal" placeholder="Sem limite"></label></div><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-product-filters>Limpar</button><button class="primary" type="button" data-apply-product-filters>Ver ofertas</button></div>'],
         'admin-preferences': ['Preferências Livelo', 'GET/PATCH autorizado', '<label class="field"><span>Multiplicador padrão</span><input value="2"></label><label class="field" style="margin-top:12px"><span>Piso de pontos</span><input value="3"></label><button class="primary" style="width:100%;margin-top:14px" type="button" data-sheet-toast="Preferências salvas pelo PATCH existente.">Salvar preferências</button>'],
@@ -855,7 +996,7 @@
       }
       function go(page) {
         document.querySelectorAll('[data-page]').forEach(node => node.classList.toggle('active', node.dataset.page === page));
-        const dockPage = page === 'livelo' || page === 'inter' ? 'services' : page;
+        const dockPage = page === 'livelo' || page === 'inter' || page === 'pichau' ? 'services' : page;
         document.querySelectorAll('.dock-button').forEach(node => node.classList.toggle('active', node.dataset.go === dockPage));
         document.querySelector('.dock').classList.toggle('hidden', page === 'admin');
         window.scrollTo({top: 0, behavior: 'smooth'});
@@ -933,6 +1074,7 @@
         const subareaProduto = event.target.closest('[data-select-product-scope]'); if (subareaProduto) aplicarEscopoDeProdutos(subareaProduto.dataset.productArea, subareaProduto.dataset.selectProductScope);
         if (event.target.closest('[data-clear-product-scope]')) limparEscopoDeProdutos();
         const nav = event.target.closest('[data-go]'); if (nav) go(nav.dataset.go);
+        const pichauState = event.target.closest('[data-pichau-state]'); if (pichauState) setPichauState(pichauState.dataset.pichauState);
         const interMode = event.target.closest('[data-inter-mode]');
         if (interMode) setInterMode(interMode.dataset.interMode);
         if (event.target.closest('[data-open-direct-stores]')) { go('inter'); setInterMode('direct'); }
@@ -1095,13 +1237,61 @@
         document.getElementById('product-empty').classList.toggle('show', visible === 0);
         document.getElementById('product-count').textContent = visible + (visible === 1 ? ' oferta encontrada' : ' ofertas encontradas');
       }
+      let pichauState = 'updated';
+      const pichauStates = {
+        updated: { count: '2 ofertas encontradas', context: 'Catálogo completo · última coleta válida', status: 'Catálogo atualizado', tone: '' },
+        loading: { count: 'Carregando catálogo', context: 'Aguardando resposta da API', status: 'Carregando', tone: 'neutral' },
+        partial: { count: '2 ofertas preservadas', context: 'Coleta parcial e atrasada · último snapshot válido', status: 'Parcial / atrasado', tone: 'warning' },
+        empty: { count: '0 ofertas encontradas', context: 'Nenhum item na última coleta completa', status: 'Catálogo vazio', tone: 'neutral' },
+        failure: { count: 'Catálogo indisponível', context: 'Falha isolada na fonte Pichau', status: 'Falha', tone: 'danger' },
+        soldout: { count: '1 produto identificado', context: 'Presente no catálogo · sem estoque', status: 'Esgotado', tone: 'warning' },
+        'out-of-catalog': { count: 'Produto não publicado', context: 'Ausência após coleta completa', status: 'Fora do catálogo', tone: 'neutral' },
+      };
+      function searchPichau() {
+        const input = document.getElementById('pichau-search');
+        const q = normalizeText(input.value);
+        let visible = 0;
+        document.querySelectorAll('#pichau-results [data-pichau-product]').forEach(card => {
+          const show = !q || normalizeText(card.dataset.pichauProduct).includes(q);
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        document.getElementById('pichau-empty').classList.toggle('show', visible === 0);
+        if (pichauState === 'updated' || pichauState === 'partial') {
+          document.getElementById('pichau-count').textContent = visible + (visible === 1 ? ' oferta encontrada' : ' ofertas encontradas');
+        }
+      }
+      function setPichauState(state) {
+        if (!pichauStates[state]) return;
+        pichauState = state;
+        const meta = pichauStates[state];
+        document.querySelectorAll('[data-pichau-state]').forEach(button => {
+          const active = button.dataset.pichauState === state;
+          button.classList.toggle('active', active);
+          if (button.getAttribute('role') === 'tab') button.setAttribute('aria-selected', String(active));
+        });
+        document.getElementById('pichau-count').textContent = meta.count;
+        document.getElementById('pichau-context').textContent = meta.context;
+        const status = document.getElementById('pichau-status');
+        status.textContent = meta.status;
+        status.classList.remove('warning', 'danger', 'neutral');
+        if (meta.tone) status.classList.add(meta.tone);
+        const hasCatalog = state === 'updated' || state === 'partial';
+        document.getElementById('pichau-results-shell').hidden = !hasCatalog;
+        document.getElementById('pichau-pagination').hidden = !hasCatalog;
+        document.getElementById('pichau-partial-notice').hidden = state !== 'partial';
+        document.querySelectorAll('[data-pichau-state-panel]').forEach(panel => { panel.hidden = panel.dataset.pichauStatePanel !== state; });
+        if (hasCatalog) searchPichau();
+      }
       document.getElementById('product-submit').addEventListener('click', searchProducts);
       productSearch.addEventListener('input', searchProducts);
+      document.getElementById('pichau-search').addEventListener('input', searchPichau);
       updateFollowedCount();
       updateInterFollowedCount();
       updateDirectSelectedCount();
       sortLiveloCards();
       searchProducts();
+      setPichauState('updated');
       content.addEventListener('click', () => {});
     })();
   </script>

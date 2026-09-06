@@ -7,6 +7,7 @@ import {
   type ResumoProdutosPersistido,
 } from "./banco-produtos-inter";
 import { resumoLiveloPersistido, type ResumoLiveloPersistido } from "./banco";
+import { resumoPichauPersistido, type ResumoPichauPersistido } from "./banco-pichau";
 
 export type EstadoGeralResumo = "atualizado" | "atencao" | "sem_dados" | "indisponivel";
 export type EstadoLiveloResumo =
@@ -31,6 +32,15 @@ export type EstadoProdutosResumo =
   | "degradado"
   | "sem_dados"
   | "indisponivel";
+export type EstadoPichauResumo =
+  | "atualizado"
+  | "atrasado"
+  | "atualizando"
+  | "parcial"
+  | "falha_recente"
+  | "degradado"
+  | "sem_dados"
+  | "indisponivel";
 
 export type ResumoInicio = {
   gerado_em: string;
@@ -41,6 +51,7 @@ export type ResumoInicio = {
   };
   cashback_inter: ResumoCashbackInterPersistido & { estado: EstadoCashbackResumo };
   produtos: ResumoProdutosPersistido & { estado: EstadoProdutosResumo };
+  pichau: ResumoPichauPersistido & { estado: EstadoPichauResumo };
   atividade_recente: AtividadeRecente[];
 };
 
@@ -54,17 +65,20 @@ export type DependenciasResumoInicio = {
   livelo: () => Promise<ResumoLiveloPersistido>;
   cashbackInter: () => Promise<ResumoCashbackInterPersistido>;
   produtos: () => Promise<ResumoProdutosPersistido>;
+  pichau: () => Promise<ResumoPichauPersistido>;
 };
 
 const dependenciasPadrao: DependenciasResumoInicio = {
   livelo: resumoLiveloPersistido,
   cashbackInter: resumoCashbackInterPersistido,
   produtos: resumoProdutosPersistido,
+  pichau: resumoPichauPersistido,
 };
 
 const LIMITE_LIVELO_MS = 12 * 60 * 60 * 1000;
 const LIMITE_CASHBACK_MS = 24 * 60 * 60 * 1000;
 const LIMITE_PRODUTOS_MS = 12 * 60 * 60 * 1000;
+const LIMITE_PICHAU_MS = 12 * 60 * 60 * 1000;
 
 function instante(valor: string | null): number | null {
   if (!valor) return null;
@@ -169,6 +183,15 @@ function estadoProdutos(dados: ResumoProdutosPersistido, agora: Date): EstadoPro
     : "atualizado";
 }
 
+function estadoPichau(dados: ResumoPichauPersistido, agora: Date): EstadoPichauResumo {
+  if (dados.ultima_tentativa_estado === "iniciada" && tentativaPosterior(dados.ultima_tentativa_em, dados.ultimo_sucesso_em)) return "atualizando";
+  if (dados.ultima_tentativa_estado === "parcial" && tentativaPosterior(dados.ultima_tentativa_em, dados.ultimo_sucesso_em)) return "parcial";
+  if (dados.ultima_tentativa_estado === "falha" && tentativaPosterior(dados.ultima_tentativa_em, dados.ultimo_sucesso_em)) return "falha_recente";
+  if (!dados.ultimo_sucesso_em) return "sem_dados";
+  if (dados.qualidade === "degradada") return "degradado";
+  return atrasado(dados.ultimo_sucesso_em, agora, LIMITE_PICHAU_MS) ? "atrasado" : "atualizado";
+}
+
 const liveloIndisponivel: ResumoInicio["livelo"] = {
   estado: "indisponivel",
   ultima_tentativa_em: null,
@@ -197,15 +220,25 @@ const produtosIndisponivel: ResumoInicio["produtos"] = {
   lojas_sem_coleta: 0,
   produtos_ativos: 0,
 };
+const pichauIndisponivel: ResumoInicio["pichau"] = {
+  estado: "indisponivel",
+  ultima_tentativa_em: null,
+  ultima_tentativa_estado: null,
+  ultimo_sucesso_em: null,
+  qualidade: null,
+  produtos_ativos: 0,
+  produtos_esgotados: 0,
+};
 
 export async function carregarResumoInicio(
   deps: DependenciasResumoInicio = dependenciasPadrao,
   agora = new Date(),
 ): Promise<ResumoInicio> {
-  const [liveloLido, cashbackLido, produtosLidos] = await Promise.allSettled([
+  const [liveloLido, cashbackLido, produtosLidos, pichauLido] = await Promise.allSettled([
     deps.livelo(),
     deps.cashbackInter(),
     deps.produtos(),
+    deps.pichau(),
   ]);
 
   const livelo: ResumoInicio["livelo"] =
@@ -220,8 +253,12 @@ export async function carregarResumoInicio(
     produtosLidos.status === "fulfilled"
       ? { ...produtosLidos.value, estado: estadoProdutos(produtosLidos.value, agora) }
       : produtosIndisponivel;
+  const pichau: ResumoInicio["pichau"] =
+    pichauLido.status === "fulfilled"
+      ? { ...pichauLido.value, estado: estadoPichau(pichauLido.value, agora) }
+      : pichauIndisponivel;
 
-  const estados = [livelo.estado, cashback.estado, produtos.estado];
+  const estados = [livelo.estado, cashback.estado, produtos.estado, pichau.estado];
   const estadoGeral: EstadoGeralResumo = estados.every((estado) => estado === "atualizado")
     ? "atualizado"
     : estados.every((estado) => estado === "sem_dados")
@@ -236,6 +273,7 @@ export async function carregarResumoInicio(
     livelo,
     cashback_inter: cashback,
     produtos,
+    pichau,
     atividade_recente: atividadeRecente(livelo, cashback, produtos),
   };
 }

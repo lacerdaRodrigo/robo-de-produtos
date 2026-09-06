@@ -33,6 +33,14 @@ function dependencias(): DependenciasResumoInicio {
       lojas_sem_coleta: 0,
       produtos_ativos: 3310,
     }),
+    pichau: async () => ({
+      ultima_tentativa_em: "2026-08-23T07:00:00.000Z",
+      ultima_tentativa_estado: "sucesso",
+      ultimo_sucesso_em: "2026-08-23T07:00:00.000Z",
+      qualidade: "completa",
+      produtos_ativos: 100,
+      produtos_esgotados: 4,
+    }),
   };
 }
 
@@ -49,6 +57,7 @@ describe("resumo real do Início", () => {
       lojas_acompanhadas: 4,
     });
     expect(resumo.produtos).toMatchObject({ estado: "atualizado", produtos_ativos: 3310 });
+    expect(resumo.pichau).toMatchObject({ estado: "atualizado", produtos_ativos: 100 });
   });
 
   it("falha nova do cashback não apaga o último sucesso", async () => {
@@ -179,6 +188,14 @@ describe("resumo real do Início", () => {
         lojas_sem_coleta: 0,
         produtos_ativos: 0,
       }),
+      pichau: async () => ({
+        ultima_tentativa_em: null,
+        ultima_tentativa_estado: null,
+        ultimo_sucesso_em: null,
+        qualidade: null,
+        produtos_ativos: 0,
+        produtos_esgotados: 0,
+      }),
     };
     expect((await carregarResumoInicio(vazias, agora)).estado_geral).toBe("sem_dados");
 
@@ -186,6 +203,7 @@ describe("resumo real do Início", () => {
       livelo: async () => Promise.reject(new Error("x")),
       cashbackInter: async () => Promise.reject(new Error("x")),
       produtos: async () => Promise.reject(new Error("x")),
+      pichau: async () => Promise.reject(new Error("x")),
     };
     expect((await carregarResumoInicio(falhas, agora)).estado_geral).toBe("indisponivel");
   });

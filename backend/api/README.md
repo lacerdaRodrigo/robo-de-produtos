@@ -13,7 +13,7 @@ contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
 ```text
 backend/api/
 ├── app/            # rotas HTTP (Next.js App Router), uma pasta por endpoint
-│   └── api/        #  /status, /resumo, /perfil, /livelo, /inter, /administracao
+│   └── api/        #  /status, /resumo, /perfil, /livelo, /inter, /pichau, /administracao
 ├── lib/            # lógica da API (banco, autenticação, formato, limpeza, disparos)
 ├── examples/       # .env.example (modelo de variáveis)
 └── package.json
@@ -24,7 +24,7 @@ backend/api/
 | Rota | Métodos | Função | Auth |
 |---|---|---|---|
 | `status` | GET | Health-check público (`{saudavel:true}`) | — |
-| `resumo` | GET | Início agregado (Livelo+Inter+produtos) | Firebase |
+| `resumo` | GET | Início agregado (Livelo+Inter+produtos+Pichau) | Firebase |
 | `perfil` | GET | Perfil mínimo (gate de entrada) | Firebase |
 | `livelo/painel` | GET | Painel Livelo paginado | Firebase |
 | `livelo/catalogo` | GET | Catálogo completo, filtros e resumo Livelo (`alertas_ativos` reflete os sinos ligados) | Firebase |
@@ -39,6 +39,8 @@ backend/api/
 | `inter/produtos` | GET | Busca produtos paginada | Firebase |
 | `inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
 | `inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
+| `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU e paginação | Firebase |
+| `pichau/catalogo/[id_externo]/historico` | GET | Histórico Pichau limitado a 30 dias | Firebase |
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
 
