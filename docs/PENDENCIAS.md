@@ -26,8 +26,9 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Aplicar `migracoes/021_pichau_pc_gamer.sql` em ambiente autorizado; a confirmação do responsável e a leitura somente do banco encontraram as três tabelas Pichau.
 - [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
 - [ ] Fazer a primeira coleta real e validar que falha/parcial preserva o último snapshot sem afetar Livelo ou Inter.
-- [ ] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo.
-- [ ] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; o agendamento permanece em `headless2` até haver evidência.
+- [x] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo. As execuções `34006575148` (`headless2`) e `34006802532` (`xvfb`) receberam `Site em Manutenção - Pru Pru`, sem payload de catálogo ou marcador de desafio, e não publicaram dados.
+- [x] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; ambas retornaram a mesma página de manutenção, portanto o agendamento continua em `headless2` e o executor Android fica como alternativa em avaliação.
+- [ ] Executar o plano de validação do telefone Android como executor local da Pichau; o aparelho informado tem 4 GB de RAM, mas Termux, navegador, ARM64, estabilidade em segundo plano e publicação no banco ainda não foram validados.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

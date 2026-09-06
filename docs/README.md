@@ -19,6 +19,7 @@ documentação antes de abrir arquivos isolados.
 |---|---|
 | [`planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md`](planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md) | Inventário que fundamenta os recortes editoriais já implementados; o contrato vigente está no PRD de categorias. |
 | [`planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md`](planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md) | Proposta anterior de seletor literal de categorias do Inter, mantida como referência e substituída pela proposta de agrupamento. |
+| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Proposta para usar um telefone Android como executor local da coleta Pichau, ainda sem implementação. |
 
 ## PRDs de domínio
 

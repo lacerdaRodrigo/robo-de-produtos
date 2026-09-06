@@ -148,6 +148,19 @@ HTML, cookies e headers não são persistidos nem enviados ao log.
 O agendamento usa `headless2`; uma execução manual pode selecionar `xvfb` para
 comparar os modos sem alterar o padrão agendado.
 
+## Executor Android local — proposta separada
+
+Está em avaliação o uso de um telefone Android conectado ao Wi‑Fi residencial
+como executor local da coleta Pichau. O telefone não será servidor da API, não
+será acessado diretamente pelo Flutter e não hospedará o banco; ele apenas
+executará o robô e publicará no Postgres/API já existentes.
+
+O plano separado está em
+[`docs/planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](../planos/PLANO-SERVIDOR-ANDROID-PICHAU.md).
+Essa alternativa ainda não faz parte da operação aprovada, não altera o
+workflow hospedado do GitHub e só poderá avançar após uma prova de uma página,
+uma coleta completa e a validação de estabilidade do Android em segundo plano.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
