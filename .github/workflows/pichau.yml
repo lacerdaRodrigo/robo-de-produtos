@@ -2,8 +2,9 @@ name: pichau-pc-gamer
 
 on:
   schedule:
-    # 09h, 14h e 20h em America/Sao_Paulo (UTC-3 sem horario de verao).
-    - cron: "0 12,17,23 * * *"
+    # 09h, 15h e 21h em America/Sao_Paulo (UTC-3 sem horario de verao).
+    # Os intervalos entre execuções são de pelo menos seis horas.
+    - cron: "0 0,12,18 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +24,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Instalar robo
-        run: python -m pip install --no-cache-dir ./backend/robo
+        run: python -m pip install --no-cache-dir "./backend/robo[pichau]"
       - name: Coletar e publicar Pichau
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

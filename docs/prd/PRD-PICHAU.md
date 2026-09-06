@@ -17,6 +17,23 @@ Este documento incorpora o recorte mobile e o backend executados a partir de
 publicação da API não são considerados aplicados ou publicados apenas por
 existirem no repositório.
 
+## Gate obrigatório de viabilidade da fonte
+
+Para qualquer fonte externa de catálogo, inclusive uma retomada da Pichau,
+uma prova técnica pequena, real e dentro do método autorizado é obrigatória **antes** de criar
+código dependente da fonte (coletor, persistência, API, workflow ou catálogo
+Flutter). O protótipo visual pode precedê-la, mas não é evidência de que a
+integração funcionará.
+
+A prova deve executar do ambiente previsto para o robô, obter uma resposta
+real de catálogo (não uma página de bloqueio), extrair ao menos uma página com
+identificador, URL e campos comerciais esperados e registrar a permissão,
+limites e método autorizado. Para esta execução, o termo fornecido autoriza
+UC/CDP e resolução de CAPTCHA dentro do domínio, volume, intervalo e limites
+registrados em `docs/PENDENCIAS.md`. O gate foi aprovado com duas execuções
+controladas; a coleta completa ainda precisa ser validada operacionalmente.
+Proxy, rotação de IP e qualquer técnica fora do termo continuam proibidos.
+
 ## Escopo funcional da primeira versão
 
 - Categoria acompanhada: **PC Gamer**.
@@ -108,17 +125,24 @@ O pacote independente `backend/robo/src/robo_pichau/` usa as tabelas próprias
 falhas/parciais e marca ausência somente após coleta completa. A disponibilidade
 `esgotado` só vem de indicação explícita da fonte.
 
-O coletor tem HTTP conservador, retries para respostas transitórias, validação
-de URL/domínio, controle de paginação, deduplicação, fallback JSON-LD e não
-armazena imagens. Fixtures sanitizadas exercitam o núcleo sem representar
-catálogo real. Durante o levantamento de 2026-09-05, as requisições diretas
-receberam 403/manutenção; portanto não há aceite de coleta real, confirmação
-operacional de `robots.txt`/termos nem publicação externa.
+O coletor tem SeleniumBase UC/CDP como caminho padrão do workflow, retries
+limitados a três tentativas por página, espera aleatória de 2 a 5 segundos,
+limite de 300 páginas por job, validação de URL/domínio, controle de
+paginação, deduplicação e fallback para HTTP/JSON-LD em testes ou operação
+controlada. O parser lê o payload `products.items` embutido pelo Next.js e
+ignora imagens. Fixtures sanitizadas exercitam o núcleo sem representar
+catálogo real. Durante o levantamento de 2026-09-05, as requisições diretas e
+os testes transparentes com Playwright e SeleniumBase em modo comum receberam
+`403` da Cloudflare ou uma página de manutenção, sem catálogo. Com o termo de
+autorização fornecido, duas execuções controladas em UC/CDP receberam o
+payload `products.items`, o SKU `PCM-Pichau-Gamer-67332` e `total_count=1169`.
+Ainda não foi executada a coleta paginada completa nem a publicação externa.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
-14h e 20h de Brasília, com `DATABASE_URL` em secret e sem alterar os demais
-robôs. A migration foi aplicada, mas a primeira execução ainda depende da
-validação operacional da fonte e da publicação do workflow.
+15h e 21h de Brasília, com intervalos mínimos de seis horas, `DATABASE_URL` em
+secret e sem alterar os demais robôs. A migration foi aplicada, mas a primeira
+execução ainda depende da validação operacional da fonte e da publicação do
+workflow.
 
 ## Jornada mobile V11 entregue
 
@@ -134,7 +158,8 @@ validação operacional da fonte e da publicação do workflow.
 ## Pendências de operação desta entrega
 
 - Configurar/deployar a API e o workflow e executar a primeira coleta real.
-- Aceitar operacionalmente a fonte após a resposta 403/manutenção observada.
+- Validar a primeira coleta completa após a resposta 403/manutenção observada;
+  a autorização fornecida já cobre o caminho UC/CDP usado no workflow.
 - Inclusão da Pichau na busca global de Produtos.
 
 ## Critérios de aceite

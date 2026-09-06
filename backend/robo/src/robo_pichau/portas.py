@@ -36,6 +36,8 @@ class RespostaPichauInvalida(FalhaPichau):
 
 @runtime_checkable
 class FontePichau(Protocol):
+    url_categoria: str
+
     def pagina(self, pagina: int) -> str: ...
 
     def detalhe(self, url_produto: str) -> str: ...

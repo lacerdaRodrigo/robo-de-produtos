@@ -2,18 +2,18 @@
 
 > **Decisões funcionais fechadas em 2026-09-05:** a primeira versão coleta
 > somente a categoria **PC Gamer**, percorre o catálogo completo sem filtros
-> adicionais, roda três vezes ao dia nos mesmos horários de Livelo e Inter,
+> adicionais, roda três vezes ao dia às 09h, 15h e 21h de Brasília,
 > não armazena imagens, usa tabelas próprias da Pichau, mantém histórico de
 > preços por 30 dias e oferece no card o link real do produto na Pichau.
-> Endpoint, HTML ou uma combinação dos dois serão escolhidos pelo levantamento
-> técnico da fonte.
+> O caminho aprovado usa HTML renderizado com payload Next.js, mantendo HTTP e
+> JSON-LD como fallback controlado.
 
 > **Estado da execução em 2026-09-05:** o protótipo V11, a jornada Flutter
 > mobile, o pacote `robo_pichau`, a migration, as rotas autenticadas da API e o
 > workflow separado foram versionados e a migration `021_pichau_pc_gamer.sql`
-> foi aplicada no banco. Nenhuma coleta real foi publicada e nenhum deploy foi
-> declarado. A fonte respondeu
-> 403/manutenção durante o levantamento, deixando o aceite operacional aberto.
+> foi aplicada no banco. O parser do payload Next.js e a fonte SeleniumBase
+> UC/CDP foram integrados ao workflow, mas nenhuma coleta paginada completa foi
+> publicada e nenhum deploy foi declarado.
 
 ## 1. Objetivo
 
@@ -21,7 +21,9 @@ Adicionar a **Pichau** ao Radar de Benefícios como uma nova fonte independente 
 
 A Pichau deve aparecer em **Serviços**, ao lado de Livelo e Banco Inter, sem criar um novo destino principal na navegação inferior.
 
-Este plano é de implementação futura. Ele não altera o comportamento atual do Banco Inter, da Livelo ou da busca de produtos até que suas fases sejam executadas e validadas.
+Este documento registra as decisões do domínio e o estado da implementação.
+Pichau não altera semanticamente Banco Inter, Livelo ou a busca global de
+Produtos; a operação completa continua condicionada à validação externa.
 
 ---
 
@@ -30,11 +32,17 @@ Este plano é de implementação futura. Ele não altera o comportamento atual d
 1. **Pichau é uma fonte independente.** Não reutilizar tabelas, modelos ou regras do Inter como se fossem da Pichau.
 2. **Coleta e apresentação permanecem separadas.** O robô acessa a fonte pública, persiste o retrato e o Flutter consulta somente a API/banco.
 3. **Sem coleta durante a busca no aplicativo.** A tela Produtos sempre consulta o último catálogo persistido.
-4. **Sem técnicas de evasão.** Nada de CAPTCHA bypass, rotação de proxy, disfarce de identidade ou contorno de bloqueios.
+4. **Método limitado pela autorização da fonte.** O termo fornecido permite UC/CDP e resolução de CAPTCHA somente nas páginas públicas e dentro dos limites registrados; proxy, rotação de IP e técnicas fora do termo continuam proibidos.
 5. **Precisão monetária.** Valores financeiros usam `Decimal` no Python, `NUMERIC` no Postgres e strings seguras nos contratos JSON.
 6. **Origem sempre explícita.** Toda oferta precisa identificar que veio da Pichau.
 7. **Falha da Pichau não pode interromper Livelo ou Inter.** Workflow, domínio e persistência devem ser isolados.
 8. **O Radar controla o que interessa.** A integração deve nascer compatível com o plano global de categorias/interesses do Radar.
+9. **Gate de viabilidade antes de código dependente da fonte.** Após o protótipo,
+   uma prova real, executada do ambiente previsto e dentro da autorização,
+   precisa obter HTML/JSON de catálogo, extrair uma página com identificador,
+   URL e campos comerciais e confirmar os limites. Esse gate foi aprovado em
+   UC/CDP dentro do termo fornecido; a primeira coleta completa continua sendo
+   uma validação operacional separada.
 
 ---
 
@@ -59,18 +67,28 @@ A área pública de computadores gamer da Pichau expõe cards com informações 
 
 A área de periféricos segue estrutura comercial semelhante e indica que uma única integração Pichau pode atender diferentes famílias de produtos, sem criar um robô separado por categoria.
 
-Antes da implementação, a fonte real deve ser levantada novamente para confirmar contrato, estabilidade, paginação, limites, `robots.txt`, termos públicos aplicáveis e eventual endpoint estruturado usado pelo frontend.
+Antes da implementação dependente da fonte, o gate de viabilidade deve ser
+aprovado: a fonte real precisa responder ao ambiente do robô com conteúdo de
+catálogo extraível, dentro do método autorizado, e confirmar contrato,
+estabilidade, paginação, limites, `robots.txt`, termos públicos aplicáveis e
+eventual endpoint estruturado usado pelo frontend. Esse resultado foi obtido
+em duas execuções controladas; a coleta completa permanece como validação
+operacional.
 
 ### Resultado do levantamento de 2026-09-05
 
 Uma leitura pública da categoria observou listagem paginada, cards com preços
 original/Pix/cartão, desconto, parcelamento e disponibilidade, além de página
 2 por `?page=2`. A página individual observada também expôs marca, SKU, preços,
-parcelamento e estado de indisponibilidade. As requisições diretas usadas para
-validar a coleta, porém, receberam 403/manutenção; por isso essa observação
-serve para orientar fixtures e contrato, não para autorizar coleta real. A
-confirmação operacional de endpoint, HTML/JSON, `robots.txt`, limites e termos
-permanece pendente.
+parcelamento e estado de indisponibilidade. As requisições diretas e os testes
+transparentes com Playwright e SeleniumBase em modo comum, porém, receberam
+403/manutenção e não entregaram o catálogo; por isso essa observação serve
+para orientar fixtures e contrato, não para autorizar coleta fora do termo. A
+confirmação operacional de uma coleta completa permanece pendente. O termo
+fornecido autorizou a prova controlada em UC/CDP, com até 300 páginas por job,
+intervalo de 2 a 5 segundos e parada após três falhas consecutivas; duas
+execuções receberam `products.items`, o SKU `PCM-Pichau-Gamer-67332` e
+`total_count=1169`, aprovando o gate de viabilidade.
 
 ---
 
@@ -164,9 +182,9 @@ armazena imagens.
 
 ### Decisões de coleta da primeira versão
 
-- A fonte será híbrida quando necessário: preferir endpoint público estruturado
-  estável; usar HTML com dados estruturados embutidos ou parsing controlado como
-  fallback.
+- A fonte aprovada para o workflow é o HTML renderizado pelo navegador, cujo
+  payload Next.js estruturado enumera e pagina o catálogo; o adaptador HTTP e
+  JSON-LD ficam como fallback controlado para testes ou operação autorizada.
 - A listagem da categoria será a responsável por enumerar o catálogo e controlar
   a paginação.
 - A página individual será consultada somente quando for necessária para
@@ -174,8 +192,8 @@ armazena imagens.
   comerciais que não estejam disponíveis na listagem.
 - O robô não usará filtros adicionais da página PC Gamer na primeira versão.
   O escopo fixo da coleta é todo o catálogo da categoria.
-- A coleta será agendada três vezes por dia, às 09h, 14h e 20h de Brasília,
-  nos mesmos horários operacionais de Livelo e Inter.
+- A coleta será agendada três vezes por dia, às 09h, 15h e 21h de Brasília,
+  respeitando intervalo mínimo de seis horas entre execuções.
 - A execução, os logs, o estado de publicação e as falhas da Pichau serão
   isolados das demais fontes, mesmo quando o horário for compartilhado.
 
@@ -183,12 +201,12 @@ armazena imagens.
 
 1. Revisar a categoria pública `computadores/pichau-gamer` como único escopo
    inicial.
-2. Identificar se o frontend usa endpoint público estruturado para catálogo e
+2. Usar o payload Next.js embutido no HTML renderizado para catálogo e
    paginação.
-3. Preferir endpoint público estável quando ele reproduzir os dados exibidos
-   no site.
-4. Usar HTML público como alternativa ou complemento quando não houver contrato
-   estruturado adequado.
+3. Preservar o adaptador HTTP/JSON-LD somente como fallback controlado quando
+   a fonte autorizada entregar uma resposta compatível.
+4. Não persistir o HTML bruto nem imagens; o banco recebe somente o snapshot
+   comercial normalizado.
 5. Confirmar quais campos aparecem na listagem e quais exigem visita à página
    individual.
 6. Confirmar paginação, IDs/SKUs, preço Pix, preço de cartão, parcelamento,
@@ -247,7 +265,7 @@ snapshot válido.
 ### Fase 5 — Orquestração
 
 - execução independente;
-- execução às 09h, 14h e 20h de Brasília, no mesmo calendário das fontes atuais;
+- execução às 09h, 15h e 21h de Brasília, com intervalo mínimo de seis horas;
 - publicação atômica do catálogo válido;
 - último catálogo válido preservado quando uma tentativa falhar;
 - métricas de páginas, itens lidos, únicos, duração e estado;
@@ -441,14 +459,11 @@ Não registrar payloads completos, dados desnecessários ou informações sensí
 
 O código backend foi concluído no repositório. A próxima execução autorizada deve:
 
-1. fazer levantamento técnico atualizado da categoria PC Gamer;
-2. confirmar endpoint estruturado, HTML ou combinação híbrida;
-3. confirmar campos da listagem e necessidade de páginas individuais;
-4. executar coletor isolado com o calendário de 09h, 14h e 20h;
-5. validar snapshot, histórico de 30 dias e estados de presença/disponibilidade;
-6. publicar API/workflow em ambiente autorizado e fazer a primeira coleta real;
-7. decidir, em evolução separada, quando a Pichau alimentará a busca global;
-8. só depois ampliar para outras categorias ou discutir equivalência automática
+1. executar o workflow isolado em ambiente autorizado;
+2. validar snapshot, histórico de 30 dias e estados de presença/disponibilidade;
+3. publicar API/workflow em ambiente autorizado e fazer a primeira coleta real;
+4. decidir, em evolução separada, quando a Pichau alimentará a busca global;
+5. só depois ampliar para outras categorias ou discutir equivalência automática
    entre fontes.
 
 ---
@@ -459,7 +474,7 @@ A primeira versão da integração estará pronta quando:
 
 - Pichau existir como fonte independente;
 - nenhuma regra existente de Livelo ou Inter for reutilizada de forma semanticamente incorreta;
-- coleta pública funcionar sem evasão;
+- coleta pública funcionar dentro do método autorizado;
 - preços Pix e cartão forem preservados separadamente quando disponíveis;
 - histórico não misturar medições de produtos/ofertas diferentes;
 - produto ausente após coleta completa ser distinguido de produto esgotado;
@@ -481,19 +496,19 @@ As decisões funcionais da primeira versão estão fechadas:
 
 - escopo somente PC Gamer;
 - catálogo completo da categoria, sem filtros adicionais;
-- fonte híbrida conforme a evidência técnica;
+- HTML renderizado com payload Next.js como fonte do workflow, HTTP/JSON-LD como fallback controlado;
 - listagem para descoberta e paginação, página individual somente quando
   necessária para completar dados;
 - tabelas próprias `pichau_execucao`, `pichau_produto` e `pichau_medicao`;
 - histórico de preços por 30 dias;
-- coleta às 09h, 14h e 20h de Brasília;
+- coleta às 09h, 15h e 21h de Brasília, com intervalo mínimo de seis horas;
 - nenhuma imagem armazenada;
 - estados distintos para disponibilidade, ausência e falha;
 - link real do produto no card do Flutter;
 - nenhuma equivalência automática com produtos de outras fontes.
 
-Durante a implementação ainda será necessário validar tecnicamente, sem reabrir
-essas decisões:
+Após a implementação, ainda é necessário validar tecnicamente em execução real,
+sem reabrir essas decisões:
 
 - endpoint, HTML ou JSON embutido realmente disponível na Pichau;
 - campos reais da listagem e das páginas individuais;

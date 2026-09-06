@@ -565,10 +565,10 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 
 | ID | Regra | Aceite | Cobertura |
 |---|---|---|---|
-| CT-369 | Extração comercial sem imagem | Preços Pix/cartão, desconto, parcelamento, etiquetas e disponibilidade são extraídos; opcionais ausentes não viram zero | `backend/robo/testes/teste_pichau.py` |
+| CT-369 | Extração comercial sem imagem | Payload Next.js ou fixture HTML extrai preços Pix/cartão, desconto, parcelamento, etiquetas e disponibilidade; opcionais ausentes não viram zero | `backend/robo/testes/teste_pichau.py` |
 | CT-370 | Identidade e URL segura | SKU/ID é estável, URLs ficam restritas a HTTPS no domínio Pichau e imagens não entram no modelo | `teste_pichau.py` |
 | CT-371 | Paginação conservadora | Página repetida, total incoerente ou limite não encerrado rejeitam a coleta | `teste_pichau.py` |
-| CT-372 | Retry sem evasão | Respostas transitórias podem repetir com cooldown; 403 é falha controlada sem bypass | `teste_pichau.py` |
+| CT-372 | Retry e bloqueio autorizado | Respostas transitórias e falhas de navegador podem repetir dentro do limite de três tentativas e cooldown de 2–5 s; bloqueio persistente encerra a coleta | `teste_pichau.py` |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
 

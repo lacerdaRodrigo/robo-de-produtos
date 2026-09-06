@@ -18,6 +18,7 @@ MOEDA_RE = re.compile(r"R\$\s*[-+]?\d[\d\s.,]*", re.IGNORECASE)
 PERCENTUAL_RE = re.compile(r"(\d{1,3})\s*%")
 SKU_RE = re.compile(r"(?:sku|c[oó]digo)\s*[:#-]?\s*([A-Za-z0-9][A-Za-z0-9._-]{2,})", re.I)
 TOTAL_RE = re.compile(r"(?:de|of)\s+(\d[\d.]*)\s+resultados", re.I)
+NEXT_PUSH_RE = re.compile(r"self\.__next_f\.push\((\[.*\])\)\s*$", re.S)
 
 
 def texto(tag: Tag | None) -> str | None:
@@ -214,6 +215,138 @@ def _json_ld(soup: BeautifulSoup) -> list[dict]:
     return itens
 
 
+def _catalogo_next(html: str) -> dict | None:
+    """Localiza o catálogo serializado pelo Next.js no HTML renderizado."""
+
+    soup = BeautifulSoup(html, "lxml")
+    decoder = json.JSONDecoder(parse_float=Decimal)
+    for script in soup.find_all("script"):
+        conteudo = script.string or script.get_text()
+        if not conteudo or "self.__next_f.push(" not in conteudo:
+            continue
+        encontrado = NEXT_PUSH_RE.search(conteudo)
+        if not encontrado:
+            continue
+        try:
+            registro = json.loads(encontrado.group(1))
+        except json.JSONDecodeError:
+            continue
+        if len(registro) < 2 or not isinstance(registro[1], str):
+            continue
+        payload = registro[1]
+        for _ in range(3):
+            inicio = payload.find('{"category"')
+            if inicio < 0:
+                inicio = payload.find('{"query"')
+            if inicio >= 0:
+                try:
+                    documento, _ = decoder.raw_decode(payload[inicio:])
+                except json.JSONDecodeError:
+                    documento = None
+                if (
+                    isinstance(documento, dict)
+                    and isinstance(documento.get("products"), dict)
+                    and isinstance(documento["products"].get("items"), list)
+                ):
+                    return documento
+            payload = payload.replace('\\"', '"')
+    return None
+
+
+def _texto_moeda(valor: Decimal | int | float | None) -> str | None:
+    if valor is None:
+        return None
+    decimal = valor if isinstance(valor, Decimal) else Decimal(str(valor))
+    formatado = f"{decimal:,.2f}".replace(",", "#").replace(".", ",").replace("#", ".")
+    return f"R$ {formatado}"
+
+
+def _decimal_valor(valor: object) -> Decimal | None:
+    if isinstance(valor, Decimal):
+        return valor
+    if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+        return Decimal(str(valor))
+    if isinstance(valor, str):
+        return decimal_brasileiro(valor)
+    return None
+
+
+def _produto_next(item: dict, base_url: str) -> PichauProduto | None:
+    nome = item.get("name")
+    slug = item.get("url_key")
+    if not isinstance(nome, str) or not nome.strip() or not isinstance(slug, str):
+        return None
+    try:
+        origem = urlparse(base_url)
+        base_origem = f"{origem.scheme}://{origem.netloc}/"
+        url = _url_segura(slug, base_origem)
+    except RespostaPichauInvalida:
+        return None
+    precos = item.get("pichau_prices")
+    precos = precos if isinstance(precos, dict) else {}
+    pix = _decimal_valor(precos.get("avista"))
+    original = _decimal_valor(precos.get("base_price"))
+    cartao = _decimal_valor(precos.get("final_price"))
+    parcelas = precos.get("max_installments")
+    valor_parcela = _decimal_valor(precos.get("min_installment_price"))
+    desconto = _decimal_valor(precos.get("avista_discount"))
+    marca_info = item.get("marcas_info")
+    marca = marca_info.get("name") if isinstance(marca_info, dict) else None
+    sku = item.get("sku") if isinstance(item.get("sku"), str) else None
+    estado_fonte = str(item.get("stock_status") or "").upper()
+    if item.get("pichau_prevenda"):
+        disponibilidade = "pre_venda"
+    elif estado_fonte in {"IN_STOCK", "AVAILABLE"}:
+        disponibilidade = "disponivel"
+    elif estado_fonte in {"OUT_OF_STOCK", "UNAVAILABLE"}:
+        disponibilidade = "esgotado"
+    else:
+        disponibilidade = "nao_informado"
+    etiquetas: list[str] = ["PC Gamer"]
+    rotulo = item.get("amasty_label")
+    if isinstance(rotulo, dict):
+        for grupo in ("product_labels", "category_labels"):
+            valores = rotulo.get(grupo)
+            if not isinstance(valores, list):
+                continue
+            etiquetas.extend(
+                valor["label"]
+                for valor in valores
+                if isinstance(valor, dict) and isinstance(valor.get("label"), str)
+            )
+    etiquetas = list(dict.fromkeys(etiquetas))
+    parcelamento = None
+    valor_parcela_texto = _texto_moeda(valor_parcela)
+    if parcelas is not None and valor_parcela_texto:
+        try:
+            parcelas_texto = str(int(parcelas))
+        except (TypeError, ValueError):
+            parcelas_texto = str(parcelas)
+        parcelamento = f"{parcelas_texto}x de {valor_parcela_texto}"
+    identificador = sku or (f"pichau-{item['id']}" if item.get("id") is not None else None)
+    return PichauProduto(
+        id_externo=id_por_url(url, identificador),
+        nome=nome.strip(),
+        url_produto=url,
+        sku=sku,
+        marca=marca if isinstance(marca, str) else None,
+        disponibilidade=disponibilidade,
+        preco_original_texto=_texto_moeda(original),
+        preco_original_valor=original,
+        preco_pix_texto=_texto_moeda(pix),
+        preco_pix_valor=pix,
+        desconto_pix_texto=f"{desconto}% no Pix" if desconto is not None else None,
+        desconto_pix_valor=desconto,
+        preco_cartao_texto=_texto_moeda(cartao),
+        preco_cartao_valor=cartao,
+        parcelamento=parcelamento,
+        valor_parcela_texto=valor_parcela_texto,
+        sem_juros=None,
+        estoque_texto=str(item.get("stock_status")) if item.get("stock_status") else None,
+        etiquetas=tuple(etiquetas),
+    )
+
+
 def _produto_json_ld(item: dict, base_url: str) -> PichauProduto | None:
     if (
         item.get("@type") not in ("Product", "ProductGroup")
@@ -273,9 +406,25 @@ def extrair_pagina(
         produtos = [
             produto for item in _json_ld(soup) if (produto := _produto_json_ld(item, base_url))
         ]
-    texto_pagina = " ".join(soup.stripped_strings)
-    total_match = TOTAL_RE.search(texto_pagina)
-    total = int(total_match.group(1).replace(".", "")) if total_match else len(produtos)
+    total: int | None = None
+    if not produtos:
+        catalogo = _catalogo_next(html)
+        if catalogo:
+            dados_produtos = catalogo["products"]
+            produtos = [
+                produto
+                for item in dados_produtos["items"]
+                if isinstance(item, dict) and (produto := _produto_next(item, base_url)) is not None
+            ]
+            total_bruto = dados_produtos.get("total_count")
+            try:
+                total = int(total_bruto) if total_bruto is not None else None
+            except (TypeError, ValueError):
+                total = None
+    if total is None:
+        texto_pagina = " ".join(soup.stripped_strings)
+        total_match = TOTAL_RE.search(texto_pagina)
+        total = int(total_match.group(1).replace(".", "")) if total_match else len(produtos)
     pagina_no_html = parse_qs(urlparse(base_url).query).get("page", [str(pagina_esperada)])[0]
     if pagina_no_html.isdigit() and int(pagina_no_html) != pagina_esperada:
         raise PaginacaoPichauInvalida(

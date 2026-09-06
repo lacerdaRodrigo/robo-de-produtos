@@ -8,19 +8,24 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 from . import __version__
-from .adaptadores import FontePichauHttp, RepositorioPichauPostgres, agora_utc
+from .adaptadores import FontePichauSeleniumBase, RepositorioPichauPostgres, agora_utc
 from .extrator import extrair_pagina
 from .modelos import PichauProduto, ResumoColetaPichau
-from .portas import ConfiguracaoPichauInvalida, FalhaPichau, PaginacaoPichauInvalida
+from .portas import (
+    ConfiguracaoPichauInvalida,
+    FalhaPichau,
+    FontePichau,
+    PaginacaoPichauInvalida,
+)
 
 _log = logging.getLogger(__name__)
 
 
 def coletar_catalogo(
-    fonte: FontePichauHttp,
+    fonte: FontePichau,
     *,
     por_pagina: int = 36,
-    max_paginas: int = 200,
+    max_paginas: int = 300,
     dormir: Callable[[float], None] | None = None,
 ) -> tuple[tuple[PichauProduto, ...], ResumoColetaPichau]:
     """Lê páginas sequenciais e rejeita paginação repetida ou incoerente."""
@@ -42,7 +47,7 @@ def coletar_catalogo(
                 html,
                 pagina_esperada=numero,
                 por_pagina=por_pagina,
-                base_url=f"{fonte.url_categoria}{'?page=' + str(numero) if numero > 1 else ''}",
+                base_url=(f"{fonte.url_categoria}{'?page=' + str(numero) if numero > 1 else ''}"),
             )
             fingerprint = tuple(item.id_externo for item in pagina.produtos)
             if fingerprint and fingerprint in fingerprints:
@@ -93,11 +98,11 @@ def executar() -> int:
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise ConfiguracaoPichauInvalida("DATABASE_URL nao configurada.", codigo="configuracao")
-    fonte = FontePichauHttp()
     repositorio = RepositorioPichauPostgres(database_url)
     execucao_id = repositorio.iniciar_execucao(agora_utc(), __version__)
     try:
-        produtos, resumo = coletar_catalogo(fonte)
+        with FontePichauSeleniumBase() as fonte:
+            produtos, resumo = coletar_catalogo(fonte, dormir=fonte.esperar)
         if resumo.degradada:
             repositorio.falhar(execucao_id, "parcial")
             _log.error("Coleta Pichau parcial; snapshot anterior preservado.")

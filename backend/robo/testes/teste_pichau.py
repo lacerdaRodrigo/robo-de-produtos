@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import sys
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -7,7 +9,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from robo_pichau.adaptadores import FontePichauHttp, RepositorioPichauPostgres, robots_permite
+from robo_pichau.adaptadores import (
+    FontePichauHttp,
+    FontePichauSeleniumBase,
+    RepositorioPichauPostgres,
+    robots_permite,
+)
 from robo_pichau.extrator import (
     decimal_brasileiro,
     extrair_detalhe_produto,
@@ -58,6 +65,57 @@ def teste_extrai_precos_disponibilidade_etiquetas_sem_imagem() -> None:
     assert all("image" not in item.__repr__().lower() for item in pagina.produtos)
 
 
+def teste_extrai_catalogo_next_com_total_precos_e_sku() -> None:
+    documento = {
+        "category": {"name": "Pichau Gamer"},
+        "products": {
+            "total_count": 1169,
+            "items": [
+                {
+                    "id": 67332,
+                    "sku": "PCM-Pichau-Gamer-67332",
+                    "name": "PC Gamer Pichau Ryzen 9",
+                    "url_key": "pc-gamer-pichau-ryzen-9",
+                    "marcas_info": {"name": "Pichau"},
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {
+                        "avista": 6708.46,
+                        "avista_discount": 15,
+                        "base_price": 11069.03,
+                        "final_price": 7892.30,
+                        "max_installments": 12,
+                        "min_installment_price": 657.69,
+                    },
+                    "amasty_label": {
+                        "product_labels": [{"label": "Montado e Certificado"}],
+                        "category_labels": [],
+                    },
+                    "image": {"url": "https://imagem.invalid/nao-armazenar.jpg"},
+                }
+            ],
+        },
+    }
+    payload = json.dumps([1, json.dumps(documento, ensure_ascii=False)])
+    pagina = extrair_pagina(
+        f"<html><script>self.__next_f.push({payload})</script></html>",
+        pagina_esperada=1,
+        por_pagina=36,
+    )
+
+    produto = pagina.produtos[0]
+    assert pagina.total == 1169
+    assert produto.sku == "PCM-Pichau-Gamer-67332"
+    assert produto.id_externo == produto.sku
+    assert produto.preco_pix_valor == Decimal("6708.46")
+    assert produto.preco_cartao_valor == Decimal("7892.30")
+    assert produto.preco_original_valor == Decimal("11069.03")
+    assert produto.parcelamento == "12x de R$ 657,69"
+    assert produto.desconto_pix_valor == Decimal("15")
+    assert produto.disponibilidade == "disponivel"
+    assert "Montado e Certificado" in produto.etiquetas
+    assert "imagem.invalid" not in produto.__repr__()
+
+
 def teste_ausencia_de_preco_nao_vira_zero() -> None:
     produto = extrair_pagina(html(), pagina_esperada=1, por_pagina=36).produtos[1]
     assert produto.preco_original_valor is None
@@ -98,6 +156,76 @@ def teste_fonte_retry_transitorio_e_nao_bypassa_403() -> None:
     )
     with pytest.raises(FalhaAoObterPichau, match="recusou"):
         bloqueada.pagina(1)
+
+
+def teste_fonte_seleniumbase_usa_catalogo_renderizado_e_fecha_contexto(monkeypatch) -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-UC-1",
+                    "name": "PC UC",
+                    "url_key": "pc-uc-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class Navegador:
+        class Driver:
+            def set_page_load_timeout(self, _valor) -> None:
+                pass
+
+        driver = Driver()
+
+        def uc_open_with_reconnect(self, url, reconnect_time) -> None:
+            self.url = url
+            self.reconnect_time = reconnect_time
+
+        def sleep(self, _segundos) -> None:
+            pass
+
+        def get_page_source(self) -> str:
+            return conteudo
+
+        def get_title(self) -> str:
+            return "PC Gamer"
+
+    class Contexto:
+        def __init__(self) -> None:
+            self.navegador = Navegador()
+            self.fechado = False
+
+        def __enter__(self):
+            return self.navegador
+
+        def __exit__(self, *_args) -> None:
+            self.fechado = True
+
+    contextos = []
+
+    def SB(**opcoes):
+        contexto = Contexto()
+        contextos.append((contexto, opcoes))
+        return contexto
+
+    monkeypatch.setitem(sys.modules, "seleniumbase", SimpleNamespace(SB=SB))
+    fonte = FontePichauSeleniumBase(dormir=lambda _: None)
+    with fonte:
+        pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
+
+    assert pagina.total == 1
+    assert pagina.produtos[0].sku == "SKU-UC-1"
+    assert contextos[0][0].fechado is True
+    assert contextos[0][1]["uc"] is True
+    assert contextos[0][1]["headless2"] is True
+    assert contextos[0][1]["xvfb"] is False
 
 
 def teste_url_produto_precisa_ser_https_no_dominio_da_fonte() -> None:

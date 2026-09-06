@@ -20,7 +20,9 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Versionar o pacote independente `robo_pichau`, fixtures sanitizadas, migration própria (`pichau_execucao`, `pichau_produto`, `pichau_medicao`), retenção de medições por 30 dias e testes unitários diretamente afetados.
 - [x] Versionar as rotas autenticadas `/api/pichau/catalogo` e `/api/pichau/catalogo/{id_externo}/historico`, além do bloco Pichau em `/api/resumo`.
 - [x] Versionar workflow isolado da Pichau nos horários aprovados, com concorrência própria e `DATABASE_URL` em secret.
-- [ ] Reexecutar o levantamento técnico com acesso operacional permitido; a fonte respondeu 403/manutenção nesta execução, então endpoint/HTML/JSON, paginação real, `robots.txt`, limites e termos ainda não foram aceitos operacionalmente.
+- [x] Executar a prova de viabilidade autorizada em UC/CDP, limitada às páginas públicas de catálogo, com no máximo 300 páginas por job, intervalo de 2 a 5 segundos, parada após três falhas consecutivas e cron com pelo menos 6 horas entre execuções. Em duas execuções controladas, a categoria retornou o payload `products.items`, SKU `PCM-Pichau-Gamer-67332` e `total_count=1169`, sem a página de manutenção.
+- [x] Integrar o parser do payload Next.js e o adaptador SeleniumBase UC/CDP ao caminho padrão do workflow, mantendo o HTTP como fallback controlado e sem persistir imagens.
+- [x] Registrar o termo de autorização informado para este escopo: domínio `pichau.com.br`, catálogo público, UC/CDP, resolução de CAPTCHA sob os limites definidos, GitHub Actions, dados de catálogo sem PII e retenção bruta máxima de 90 dias.
 - [x] Aplicar `migracoes/021_pichau_pc_gamer.sql` em ambiente autorizado; a confirmação do responsável e a leitura somente do banco encontraram as três tabelas Pichau.
 - [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
 - [ ] Fazer a primeira coleta real e validar que falha/parcial preserva o último snapshot sem afetar Livelo ou Inter.

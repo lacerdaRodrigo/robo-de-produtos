@@ -1,8 +1,9 @@
-"""Adaptadores HTTP e Postgres do coletor Pichau."""
+"""Adaptadores HTTP, SeleniumBase e Postgres do coletor Pichau."""
 
 from __future__ import annotations
 
 import logging
+import random
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -11,7 +12,7 @@ from urllib.parse import urlencode, urlparse
 import requests
 
 from .modelos import PichauProduto, ResumoColetaPichau
-from .portas import FalhaAoGuardarPichau, FalhaAoObterPichau
+from .portas import FalhaAoGuardarPichau, FalhaAoObterPichau, FalhaPichau
 
 _log = logging.getLogger(__name__)
 
@@ -141,6 +142,168 @@ class FontePichauHttp:
     def _esperar(self, tentativa: int, contexto: str) -> None:
         _log.warning("Pichau: %s; tentativa %d de %d.", contexto, tentativa, self.tentativas)
         self.dormir(min(30.0, 2.0 * tentativa))
+
+
+class FontePichauSeleniumBase:
+    """Abre o catálogo público em UC/CDP e devolve o HTML renderizado.
+
+    O navegador fica isolado por execução do workflow. A classe não acessa
+    áreas autenticadas, não salva imagens e encerra após três falhas seguidas
+    na mesma página.
+    """
+
+    _TITULOS_BLOQUEIO = ("just a moment", "site em manutenção", "access denied")
+    _MARCADORES_DESAFIO = ("cf-turnstile", "g-recaptcha", "hcaptcha")
+
+    def __init__(
+        self,
+        url_categoria: str = URL_CATEGORIA,
+        *,
+        tentativas: int = 3,
+        timeout: float = 60.0,
+        tamanho_maximo: int = TAMANHO_MAXIMO,
+        dormir: Callable[[float], None] = time.sleep,
+        headless2: bool = True,
+        xvfb: bool = False,
+    ) -> None:
+        self.url_categoria = url_categoria
+        self.tentativas = max(1, min(3, tentativas))
+        self.timeout = timeout
+        self.tamanho_maximo = tamanho_maximo
+        self.dormir = dormir
+        self.headless2 = headless2
+        self.xvfb = xvfb
+        self._sessao = None
+        self._contexto = None
+
+    def __enter__(self) -> FontePichauSeleniumBase:
+        try:
+            from seleniumbase import SB
+
+            self._contexto = SB(
+                uc=True,
+                test=True,
+                locale="pt-BR",
+                headless2=self.headless2,
+                xvfb=self.xvfb,
+            )
+            self._sessao = self._contexto.__enter__()
+            self._sessao.driver.set_page_load_timeout(self.timeout)
+        except Exception as erro:
+            if self._contexto is not None:
+                self._contexto.__exit__(type(erro), erro, erro.__traceback__)
+            self._sessao = None
+            self._contexto = None
+            raise FalhaAoObterPichau(
+                "Nao foi possivel iniciar o navegador SeleniumBase.", codigo="navegador"
+            ) from erro
+        return self
+
+    def __exit__(self, tipo, valor, traceback) -> None:
+        if self._contexto is not None:
+            self._contexto.__exit__(tipo, valor, traceback)
+            self._sessao = None
+            self._contexto = None
+
+    def pagina(self, pagina: int) -> str:
+        if pagina < 1:
+            raise FalhaAoObterPichau("Numero de pagina invalido.", codigo="pagina")
+        url = self.url_categoria
+        if pagina > 1:
+            separador = "&" if "?" in url else "?"
+            url = f"{url}{separador}{urlencode({'page': pagina})}"
+        return self._obter(url, "catalogo", pagina)
+
+    def detalhe(self, url_produto: str) -> str:
+        analisada = urlparse(url_produto)
+        if analisada.scheme != "https" or analisada.hostname not in HOSTES_VALIDOS:
+            raise FalhaAoObterPichau("URL de produto fora do dominio permitido.", codigo="url")
+        return self._obter(url_produto, "produto", None)
+
+    def esperar(self, _segundos: float | None = None) -> None:
+        """Aplica o intervalo autorizado entre páginas ou tentativas."""
+
+        self.dormir(random.uniform(2.0, 5.0))
+
+    def _obter(self, url: str, contexto: str, pagina: int | None) -> str:
+        self._exigir_sessao()
+        for tentativa in range(1, self.tentativas + 1):
+            try:
+                self._sessao.uc_open_with_reconnect(url, reconnect_time=4)
+                self._sessao.sleep(3)
+                fonte = self._sessao.get_page_source()
+                titulo = self._sessao.get_title().lower()
+                if self._tem_desafio(fonte, titulo):
+                    self._sessao.uc_gui_click_captcha()
+                    self._sessao.sleep(3)
+                    fonte = self._sessao.get_page_source()
+                    titulo = self._sessao.get_title().lower()
+                if self._tem_bloqueio(fonte, titulo):
+                    raise FalhaAoObterPichau(
+                        "A Pichau exibiu um bloqueio ou pagina de manutencao.", codigo="acesso"
+                    )
+                if len(fonte.encode("utf-8")) > self.tamanho_maximo:
+                    raise FalhaAoObterPichau(
+                        "Resposta da Pichau excede o limite seguro.", codigo="resposta_grande"
+                    )
+                if contexto == "catalogo":
+                    self._validar_catalogo(fonte, pagina or 1, url)
+                return fonte
+            except FalhaPichau:
+                if tentativa == self.tentativas:
+                    raise
+                self._esperar(tentativa, contexto)
+            except Exception as erro:
+                if tentativa == self.tentativas:
+                    raise FalhaAoObterPichau(
+                        f"Falha do navegador ao ler {contexto}.", codigo="navegador"
+                    ) from erro
+                self._esperar(tentativa, contexto)
+        raise FalhaAoObterPichau(f"A Pichau falhou ao ler {contexto}.", codigo="acesso")
+
+    def _exigir_sessao(self) -> None:
+        if self._sessao is None:
+            raise FalhaAoObterPichau(
+                "A fonte SeleniumBase precisa ser usada dentro de um contexto.",
+                codigo="navegador",
+            )
+
+    def _validar_catalogo(self, fonte: str, pagina: int, url: str) -> None:
+        from .extrator import extrair_pagina
+
+        if "self.__next_f.push(" in fonte:
+            return
+        pagina_extraida = extrair_pagina(
+            fonte,
+            pagina_esperada=pagina,
+            por_pagina=36,
+            base_url=url,
+        )
+        if not pagina_extraida.produtos:
+            raise FalhaAoObterPichau(
+                "A resposta nao apresentou um catalogo Pichau valido.", codigo="acesso"
+            )
+
+    def _tem_desafio(self, fonte: str, titulo: str) -> bool:
+        conteudo = fonte.lower()
+        return any(marcador in conteudo for marcador in self._MARCADORES_DESAFIO) or any(
+            titulo.startswith(item) for item in self._TITULOS_BLOQUEIO[:1]
+        )
+
+    def _tem_bloqueio(self, fonte: str, titulo: str) -> bool:
+        conteudo = fonte.lower()
+        return any(item in titulo for item in self._TITULOS_BLOQUEIO[1:]) or (
+            "just a moment" in titulo and "self.__next_f.push" not in conteudo
+        )
+
+    def _esperar(self, tentativa: int, contexto: str) -> None:
+        _log.warning(
+            "Pichau SeleniumBase: %s; tentativa %d de %d.",
+            contexto,
+            tentativa,
+            self.tentativas,
+        )
+        self.esperar()
 
 
 class RepositorioPichauPostgres:
