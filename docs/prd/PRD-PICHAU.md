@@ -187,10 +187,10 @@ e recuperação após reboot quando Wi‑Fi ou depuração sem fio forem desliga
 
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
-Postgres exclusiva para operação contínua. A execução 22 percorreu 12 páginas
-em aproximadamente 3m55s e publicou `1169/1169` itens, zero duplicados e
-1.169 medições. Três execuções consecutivas, reinicialização e validação
-API/Flutter permanecem gates finais. Livelo e Inter permanecem fora desta
+Postgres exclusiva para operação contínua. As execuções 22 e 23 percorreram 12
+páginas e publicaram `1169/1169` itens, zero duplicados e 1.169 medições; a
+execução 23 terminou em 225 segundos. Falta uma terceira execução consecutiva,
+reinicialização e validação API/Flutter. Livelo e Inter permanecem fora desta
 prova.
 
 ## Jornada mobile V11 entregue

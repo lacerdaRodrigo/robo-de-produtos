@@ -190,10 +190,12 @@ foram mantidas como histórico de tentativas rejeitadas: a 18 teve
 `itens_unicos=1163`/6 duplicados e a 19 foi recusada como parcial. A execução
 22 corrigiu a espera da última página e publicou `sucesso`, qualidade
 `completa`, `total_declarado=1169`, `paginas=12`, `itens_lidos=1169`,
-`itens_unicos=1169` e `duplicados=0`, em aproximadamente 3m55s. O Postgres
-confirmou 1.169 produtos presentes e 1.169 medições na execução 22. Registros
-inativos das tentativas anteriores permanecem para histórico e não aparecem no
-catálogo da API, que filtra `presente_no_catalogo=TRUE`.
+`itens_unicos=1169` e `duplicados=0`, em aproximadamente 3m55s. A execução 23,
+com a reconciliação em lote por URL, repetiu `1169/1169`, zero duplicados e
+1.169 medições em 225 segundos (3m45s). O Postgres confirmou 1.169 produtos
+presentes. Registros inativos das tentativas anteriores permanecem para
+histórico e não aparecem no catálogo da API, que filtra
+`presente_no_catalogo=TRUE`.
 
 Ainda falta conferir o resultado pela API autenticada e pelo aplicativo Flutter:
 
