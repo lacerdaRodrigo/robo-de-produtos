@@ -69,17 +69,20 @@ def _url_segura(url: str, base: str = "https://www.pichau.com.br") -> str:
     return completa
 
 
-def id_por_url(url: str, sku: str | None = None) -> str:
+def id_por_url(
+    url: str, sku: str | None = None, *, preferir_slug: bool = False
+) -> str:
     if sku:
         return sku.strip()
     caminho = urlparse(url).path.rstrip("/")
-    numeros = re.search(r"(?:-|/)(\d{3,})(?:$|-)", caminho)
-    if numeros:
-        return f"pichau-{numeros.group(1)}"
     slug = caminho.rsplit("/", 1)[-1]
     slug = re.sub(r"[^A-Za-z0-9_-]+", "-", slug).strip("-")
     if not slug:
         raise RespostaPichauInvalida("Produto sem identificador estavel.", codigo="identidade")
+    if not preferir_slug:
+        numeros = re.search(r"(?:-|/)(\d{3,})(?:$|-)", caminho)
+        if numeros:
+            return f"pichau-{numeros.group(1)}"
     return f"pichau-{slug[:180]}"
 
 
@@ -329,9 +332,16 @@ def _produto_next(item: dict, base_url: str) -> PichauProduto | None:
         except (TypeError, ValueError):
             parcelas_texto = str(parcelas)
         parcelamento = f"{parcelas_texto}x de {valor_parcela_texto}"
-    identificador = sku or (f"pichau-{item['id']}" if item.get("id") is not None else None)
+    if sku:
+        identidade = id_por_url(url, sku)
+    elif item.get("id") is not None:
+        identidade = f"pichau-{item['id']}"
+    else:
+        # O DOM Android não publica SKU nem id interno. O slug completo evita
+        # colisões entre URLs que terminam com o mesmo código numérico.
+        identidade = id_por_url(url, preferir_slug=True)
     return PichauProduto(
-        id_externo=id_por_url(url, identificador),
+        id_externo=identidade,
         nome=nome.strip(),
         url_produto=url,
         sku=sku,

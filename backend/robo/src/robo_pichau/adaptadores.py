@@ -157,7 +157,6 @@ class FontePichauSeleniumBase:
 
     _TITULOS_BLOQUEIO = ("just a moment", "site em manutenção", "access denied")
     _MARCADORES_DESAFIO = ("cf-turnstile", "g-recaptcha", "hcaptcha")
-
     def __init__(
         self,
         url_categoria: str = URL_CATEGORIA,
@@ -622,6 +621,13 @@ class _ChromeDevTools:
             # hidratado; aguarde a estrutura JSON de products/items.
             if self._catalogo_pronto(valor, url):
                 break
+        if resultado is None or not self._catalogo_pronto(
+            resultado.get("result", {}).get("result", {}).get("value"), url
+        ):
+            raise FalhaAoObterPichau(
+                "O Chrome Android nao renderizou todos os itens da pagina.",
+                codigo="acesso",
+            )
         return resultado
 
     def _obter_por_dom(self, socket) -> dict:
@@ -662,13 +668,14 @@ class _ChromeDevTools:
                     const parcelas = parcelasMatch ? Number(parcelasMatch[1]) : null;
                     const parcela = numeroMoeda(parcelaTexto || parcelado);
                     const final = parcela !== null && parcelas ? parcela * parcelas : null;
-                    const idMatch = href.match(/-(\\d+)(?:[/?#]|$)/);
                     const etiquetas = Array.from(card.querySelectorAll('[class*="tag"]'))
                         .map((tag) => (tag.innerText || "").trim())
                         .filter(Boolean);
                     const texto = card.innerText || "";
                     return {
-                        id: idMatch ? Number(idMatch[1]) : null,
+                        // Sem SKU no DOM, deixe o extrator usar o slug inteiro
+                        // da URL como identidade estável.
+                        id: null,
                         sku: null,
                         name: nome,
                         url_key: href,
@@ -759,16 +766,21 @@ class _ChromeDevTools:
         try:
             itens = int(valor.get("item_count", 0))
             total = int(valor.get("total_count", 0))
-            pagina = int(parse_qs(urlparse(alvo).query).get("page", ["1"])[0])
+            consulta = parse_qs(urlparse(alvo).query)
+            pagina = int(consulta.get("page", ["1"])[0])
+            por_pagina = int(consulta.get("pageSize", ["36"])[0])
             faixa_inicio = int(valor.get("range_start", 0))
             faixa_fim = int(valor.get("range_end", 0))
         except (TypeError, ValueError):
             return False
-        esperado_inicio = (pagina - 1) * 36 + 1
-        esperado_fim = min(pagina * 36, total)
+        if por_pagina < 1:
+            return False
+        esperado_inicio = (pagina - 1) * por_pagina + 1
+        esperado_fim = min(pagina * por_pagina, total)
         if (faixa_inicio, faixa_fim) != (esperado_inicio, esperado_fim):
             return False
-        return itens >= 36 or pagina * 36 >= total
+        quantidade_esperada = max(0, esperado_fim - esperado_inicio + 1)
+        return itens >= quantidade_esperada
 
     @staticmethod
     def _url_corresponde(valor: object, alvo: str) -> bool:
@@ -852,6 +864,9 @@ class FontePichauAndroid:
 
     _TITULOS_BLOQUEIO = ("just a moment", "site em manutenção", "access denied")
     _MARCADORES_DESAFIO = ("cf-turnstile", "g-recaptcha", "hcaptcha")
+    # A listagem Pichau aceita 100 itens e reduz a janela em que o catálogo
+    # pode se mover entre páginas durante a coleta.
+    _POR_PAGINA = 100
 
     def __init__(
         self,
@@ -869,6 +884,7 @@ class FontePichauAndroid:
         cdp: _ChromeDevTools | None = None,
     ) -> None:
         self.url_categoria = url_categoria
+        self.por_pagina = self._POR_PAGINA
         self.appium_url = self._validar_url_appium(appium_url)
         self.device_name = device_name
         self.udid = udid
@@ -1078,7 +1094,7 @@ class FontePichauAndroid:
         pagina_extraida = extrair_pagina(
             fonte,
             pagina_esperada=pagina,
-            por_pagina=36,
+            por_pagina=self.por_pagina,
             base_url=url,
         )
         if not pagina_extraida.produtos:
@@ -1105,10 +1121,11 @@ class FontePichauAndroid:
         self.esperar()
 
     def _url_pagina(self, pagina: int) -> str:
-        if pagina == 1:
-            return self.url_categoria
+        parametros = {"pageSize": self.por_pagina}
+        if pagina > 1:
+            parametros["page"] = pagina
         separador = "&" if "?" in self.url_categoria else "?"
-        return f"{self.url_categoria}{separador}{urlencode({'page': pagina})}"
+        return f"{self.url_categoria}{separador}{urlencode(parametros)}"
 
     def _url_atual(self) -> str:
         try:
@@ -1183,7 +1200,35 @@ class RepositorioPichauPostgres:
         concluida = resumo.concluida_em
         try:
             with self.conectar(self.url) as conexao, conexao.cursor() as cursor:
+                ids_publicados: list[str] = []
+                identidades_por_url: dict[str, str] = {}
+                if any(produto.sku is None for produto in produtos):
+                    # Uma única leitura substitui uma consulta por produto no
+                    # caminho DOM Android, sem perder a preferência pela
+                    # identidade histórica que possui SKU.
+                    cursor.execute(
+                        """
+                            SELECT DISTINCT ON (url_produto) url_produto, id_externo
+                              FROM pichau_produto
+                             WHERE categoria_externa=%s
+                             ORDER BY url_produto,
+                                      CASE WHEN sku IS NULL THEN 1 ELSE 0 END,
+                                      id
+                        """,
+                        ("PC Gamer",),
+                    )
+                    for url_produto, id_existente in cursor.fetchall():
+                        if isinstance(url_produto, str) and isinstance(id_existente, str):
+                            identidades_por_url[url_produto] = id_existente
                 for produto in produtos:
+                    id_externo = produto.id_externo
+                    if produto.sku is None:
+                        # A listagem DOM do Android não expõe SKU. Quando a
+                        # URL já foi catalogada por uma coleta SSR, reutilize
+                        # a identidade histórica para não criar uma segunda
+                        # linha do mesmo produto.
+                        id_externo = identidades_por_url.get(produto.url_produto, id_externo)
+                    ids_publicados.append(id_externo)
                     cursor.execute(
                         """
                             INSERT INTO pichau_produto (
@@ -1192,8 +1237,10 @@ class RepositorioPichauPostgres:
                               url_produto, disponibilidade, presente_no_catalogo, visto_em
                             ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,TRUE,%s)
                             ON CONFLICT (id_externo) DO UPDATE SET
-                              sku=EXCLUDED.sku, nome=EXCLUDED.nome, nome_busca=EXCLUDED.nome_busca,
-                              marca=EXCLUDED.marca, categoria_externa=EXCLUDED.categoria_externa,
+                              sku=COALESCE(EXCLUDED.sku, pichau_produto.sku),
+                              nome=EXCLUDED.nome, nome_busca=EXCLUDED.nome_busca,
+                              marca=COALESCE(EXCLUDED.marca, pichau_produto.marca),
+                              categoria_externa=EXCLUDED.categoria_externa,
                               url_produto=EXCLUDED.url_produto,
                               disponibilidade=EXCLUDED.disponibilidade,
                               presente_no_catalogo=TRUE, visto_em=EXCLUDED.visto_em,
@@ -1201,7 +1248,7 @@ class RepositorioPichauPostgres:
                             RETURNING id
                             """,
                         (
-                            produto.id_externo,
+                            id_externo,
                             produto.sku,
                             produto.nome,
                             _busca(produto.nome),
@@ -1247,7 +1294,7 @@ class RepositorioPichauPostgres:
                     "UPDATE pichau_produto SET presente_no_catalogo=FALSE, "
                     "atualizado_em=now() WHERE categoria_externa='PC Gamer' "
                     "AND id_externo <> ALL(%s)",
-                    ([produto.id_externo for produto in produtos],),
+                    (ids_publicados,),
                 )
                 cursor.execute(
                     """

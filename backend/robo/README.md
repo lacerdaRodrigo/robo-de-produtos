@@ -54,7 +54,9 @@ python -m robo_pichau.principal --diagnostico
   tentativa Android, instale `.[pichau-android]`, mantenha Appium/UiAutomator2
   em `127.0.0.1` e use `PICHAU_MODO_NAVEGADOR=android`. No Samsung 32-bit,
   UiAutomator2 abre o Chrome nativo e `websocket-client` lê o DOM pelo CDP
-  local via ADB; não há download de ChromeDriver ARM32.
+  local via ADB; não há download de ChromeDriver ARM32. A listagem Android
+  usa `pageSize=100`, exige a faixa completa renderizada inclusive na última
+  página e reconcilia por URL com SKU histórico quando o DOM não o publica.
 - No Termux, instale `libxml2`, `libxslt` e `libpq` antes do ambiente Python.
   O Android ARM32 usa `psycopg` puro contra o `libpq` do Termux; os runners
   Linux e desktop continuam usando `psycopg[binary]`. Se o ambiente virtual
@@ -69,7 +71,7 @@ python -m robo_pichau.principal --diagnostico
   via ADB: o Appium/UiAutomator2 fica disponível para configuração,
   diagnóstico e recuperação, mas não bloqueia cada coleta com um novo boot.
   A extração devolve somente a grade principal e os campos comerciais mínimos;
-  a URL, a faixa exibida e os 36 cards intermediários são validados antes de
+  a URL, a faixa exibida e todos os cards esperados são validados antes de
   aceitar uma página. O intervalo Android é de 1–2 segundos entre páginas.
   `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
   o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço

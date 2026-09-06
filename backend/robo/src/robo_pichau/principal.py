@@ -39,6 +39,9 @@ def coletar_catalogo(
     """Lê páginas sequenciais e rejeita paginação repetida ou incoerente."""
 
     iniciada = datetime.now(UTC)
+    # A fonte Android usa a maior página que o catálogo público aceita. As
+    # demais fontes conservam o contrato histórico de 36 itens por página.
+    por_pagina = int(getattr(fonte, "por_pagina", por_pagina))
     produtos: dict[str, PichauProduto] = {}
     fingerprints: set[tuple[str, ...]] = set()
     total_declarado: int | None = None
@@ -140,10 +143,16 @@ def diagnosticar_catalogo(fonte: FontePichau) -> None:
         raise FalhaAoObterPichau(
             "O diagnostico nao encontrou produtos na primeira pagina.", codigo="diagnostico"
         )
+    # O caminho Android/CDP lê a grade renderizada, que não publica SKU no
+    # DOM. A publicação reconcilia a identidade por URL; o diagnóstico ainda
+    # exige os campos comerciais e a URL segura, mas não inventa SKU.
+    exige_sku = not (
+        isinstance(fonte, FontePichauAndroid) and fonte.criar_driver is None
+    )
     faltantes = []
     disponibilidades = {"disponivel", "esgotado", "pre_venda", "nao_informado"}
     for produto in pagina.produtos:
-        if not produto.sku:
+        if exige_sku and not produto.sku:
             faltantes.append("sku")
         analisada = urlparse(produto.url_produto)
         if analisada.scheme != "https" or analisada.hostname not in {

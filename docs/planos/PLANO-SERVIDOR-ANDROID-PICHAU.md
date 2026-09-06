@@ -1,9 +1,9 @@
 # Plano — Samsung como executor local da Pichau
 
 **Status:** executor rápido Android e publicação no Postgres estão implementados;
-o gate de integridade ainda rejeitou uma rodada parcial/duplicada. Três
-execuções consecutivas, reboot autônomo, credencial exclusiva e validação
-API/Flutter continuam pendentes.
+uma coleta rápida completa foi comprovada no Samsung. Três execuções
+consecutivas, reboot autônomo, credencial exclusiva e validação API/Flutter
+continuam pendentes.
 
 **Última atualização:** 2026-09-06
 
@@ -61,9 +61,13 @@ nesta etapa.
   limite de 300 páginas, marcadores de bloqueio/manutenção e diagnóstico sem
   HTML bruto;
 - extração dos cards da grade principal dentro do Chrome, payload mínimo para
-  o Python, validação de URL/faixa de paginação e exigência de 36 cards nas
-  páginas intermediárias; uma coleta com itens únicos abaixo do total é
-  rejeitada como parcial e não deve substituir o snapshot válido;
+  o Python, `pageSize=100`, validação de URL/faixa de paginação e exigência da
+  quantidade exata de cards em cada página, inclusive na última; uma coleta
+  com itens únicos abaixo do total é rejeitada como parcial e não substitui o
+  snapshot válido;
+- quando o DOM não expõe SKU, a identidade transitória usa o slug completo da
+  URL; na publicação, uma consulta em lote reconcilia a URL com o SKU
+  histórico, preservando a identidade já conhecida sem criar produto novo;
 - `python -m robo_pichau.principal --diagnostico`, que lê somente a primeira
   página, valida `products.items`, SKU, URL HTTPS, preço e disponibilidade, e
   não cria execução no banco;
@@ -150,16 +154,18 @@ Depois executar:
 python -m robo_pichau.principal --diagnostico
 ```
 
-O diagnóstico deve encontrar `products.items`, pelo menos um SKU, uma URL
-HTTPS da Pichau, preço e disponibilidade. Ele registra apenas contagem,
-título, URL, tamanho e marcadores seguros; não publica, não cria
-`pichau_execucao` e não grava HTML, cookie ou imagem.
+O diagnóstico deve encontrar `products.items`, uma URL HTTPS da Pichau, preço
+e disponibilidade. O SKU continua obrigatório quando o payload SSR/Appium o
+oferece; no caminho recorrente DOM/CDP, que não expõe SKU, a identidade é
+reconciliada por URL na publicação. Ele registra apenas contagem, título, URL,
+tamanho e marcadores seguros; não publica, não cria `pichau_execucao` e não
+grava HTML, cookie ou imagem.
 
 No Samsung SM-M135M, a sessão nativa iniciou, o CDP local retornou o DOM e o
-diagnóstico encontrou `total=1169`, `itens=36`, `skus=36`, `precos=36` e
-disponibilidade `disponivel`. O diagnóstico não criou conexão ou execução no
-banco. A coleta completa posterior também foi aprovada; reinicialização e
-estabilidade prolongada continuam pendentes.
+diagnóstico SSR/Appium encontrou `total=1169`, `itens=36`, `skus=36`,
+`precos=36` e disponibilidade `disponivel`. O diagnóstico não criou conexão
+ou execução no banco. A coleta rápida DOM/CDP posterior também foi aprovada;
+reinicialização e estabilidade prolongada continuam pendentes.
 
 ### Fase 3 — primeira coleta real — aprovada em 2026-09-06
 
@@ -178,12 +184,16 @@ substituiu esse snapshot. O banco confirmou que os produtos PC Gamer presentes
 continuam em 1.169.
 
 A otimização direta pelo DOM reduziu o transporte por página de aproximadamente
-1,4 MB de HTML/scripts para cerca de 10–22 KB. A execução 18 percorreu as 33
-páginas em cerca de 5m23s, mas encontrou `itens_lidos=1169`,
-`itens_unicos=1163` e `duplicados=6`; ela não é aceite como prova íntegra. A
-execução 19 foi recusada como `parcial` pelo gate de integridade, preservando o
-catálogo anterior. O trabalho seguinte é reduzir a janela e fechar
-`1169/1169`, `duplicados=0`, antes de marcar a otimização como aprovada.
+1,4 MB de HTML/scripts para cerca de 10–22 KB. O parâmetro público
+`pageSize=100` reduziu a coleta de 33 para 12 páginas. As execuções 18 e 19
+foram mantidas como histórico de tentativas rejeitadas: a 18 teve
+`itens_unicos=1163`/6 duplicados e a 19 foi recusada como parcial. A execução
+22 corrigiu a espera da última página e publicou `sucesso`, qualidade
+`completa`, `total_declarado=1169`, `paginas=12`, `itens_lidos=1169`,
+`itens_unicos=1169` e `duplicados=0`, em aproximadamente 3m55s. O Postgres
+confirmou 1.169 produtos presentes e 1.169 medições na execução 22. Registros
+inativos das tentativas anteriores permanecem para histórico e não aparecem no
+catálogo da API, que filtra `presente_no_catalogo=TRUE`.
 
 Ainda falta conferir o resultado pela API autenticada e pelo aplicativo Flutter:
 

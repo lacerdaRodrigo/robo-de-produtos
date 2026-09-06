@@ -1,7 +1,7 @@
 # PRD — Pichau PC Gamer
 
-**Status:** jornada mobile V11 e código backend implementados; diagnóstico,
-coleta completa e agendamento Android foram aprovados no aparelho. Credencial
+**Status:** jornada mobile V11 e código backend implementados; diagnóstico e
+uma coleta rápida completa Android foram aprovados no aparelho. Credencial
 restrita, três execuções consecutivas, reboot autônomo e validação API/Flutter
 continuam pendentes.
 
@@ -143,19 +143,22 @@ payload `products.items`, o SKU `PCM-Pichau-Gamer-67332` e `total_count=1169`.
 No Samsung, as execuções 6 e 8 percorreram 33 páginas, publicaram 1.169
 produtos e 1.169 medições com qualidade `completa`. A execução concorrente 7
 falhou com código `acesso` antes de publicar e o snapshot anterior permaneceu
-válido.
+válido. O caminho Android rápido usa `pageSize=100`, extrai a grade principal
+por CDP e exige a quantidade esperada de cartões, inclusive na última página.
+Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
+identidade histórica e preserva o SKU já persistido.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 15h e 21h de Brasília, com intervalos mínimos de seis horas, `DATABASE_URL` em
-secret e sem alterar os demais robôs. A migration foi aplicada, mas a primeira
-execução ainda depende da validação operacional da fonte e da publicação do
-workflow. Em falhas de navegador, o robô registra somente metadados seguros da
+secret e sem alterar os demais robôs. A migration foi aplicada e a execução
+Android 22 validou a publicação no Postgres; a publicação externa do workflow
+continua pendente. Em falhas de navegador, o robô registra somente metadados seguros da
 resposta: título, URL final, tamanho e marcadores de desafio/manutenção/payload;
 HTML, cookies e headers não são persistidos nem enviados ao log.
 O agendamento usa `headless2`; uma execução manual pode selecionar `xvfb` para
 comparar os modos sem alterar o padrão agendado.
 
-## Executor Android local — implementação versionada, operação parcialmente aprovada
+## Executor Android local — implementação versionada, uma coleta completa aprovada
 
 O uso de um telefone Android conectado ao Wi‑Fi residencial foi separado do
 workflow hospedado. O telefone não será servidor da API, não será acessado
@@ -184,12 +187,11 @@ e recuperação após reboot quando Wi‑Fi ou depuração sem fio forem desliga
 
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
-Postgres exclusiva para operação contínua. A coleta completa histórica e o job
-persistente foram aprovados; o caminho rápido ainda precisa fechar uma rodada
-com 1.169 itens únicos e zero duplicados: a execução 18 leu 1.169, mas teve
-1.163 únicos/6 duplicados, e a execução 19 foi recusada como parcial. Três
-execuções consecutivas, reinicialização e validação API/Flutter permanecem
-gates finais. Livelo e Inter permanecem fora desta prova.
+Postgres exclusiva para operação contínua. A execução 22 percorreu 12 páginas
+em aproximadamente 3m55s e publicou `1169/1169` itens, zero duplicados e
+1.169 medições. Três execuções consecutivas, reinicialização e validação
+API/Flutter permanecem gates finais. Livelo e Inter permanecem fora desta
+prova.
 
 ## Jornada mobile V11 entregue
 

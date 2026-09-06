@@ -31,7 +31,12 @@ from robo_pichau.portas import (
     PaginacaoPichauInvalida,
     RespostaPichauInvalida,
 )
-from robo_pichau.principal import coletar_catalogo, criar_fonte_pichau, executar
+from robo_pichau.principal import (
+    coletar_catalogo,
+    criar_fonte_pichau,
+    diagnosticar_catalogo,
+    executar,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
 
@@ -292,7 +297,7 @@ def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
         pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
 
     assert pagina.produtos[0].sku == "SKU-ANDROID-1"
-    assert drivers[0].urls == [fonte.url_categoria]
+    assert drivers[0].urls == [fonte._url_pagina(1)]
     assert drivers[0].fechado is True
 
 
@@ -344,7 +349,7 @@ def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
         pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
 
     assert pagina.produtos[0].sku == "SKU-CDP-1"
-    assert devtools.alvos == [fonte.url_categoria]
+    assert devtools.alvos == [fonte._url_pagina(1)]
     assert devtools.fechado is True
 
 
@@ -416,6 +421,31 @@ def teste_diagnostico_de_uma_pagina_nao_cria_execucao_no_banco(monkeypatch) -> N
     )
 
     assert executar(["--diagnostico"]) == 0
+
+
+def teste_diagnostico_android_dom_pode_nao_ter_sku() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "name": "PC Android DOM",
+                    "url_key": "pc-android-dom-12345",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1234.56},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class FonteDom(FontePichauAndroid):
+        def pagina(self, pagina: int) -> str:
+            assert pagina == 1
+            return conteudo
+
+    diagnosticar_catalogo(FonteDom())
 
 
 def teste_execucao_normal_exige_database_url(monkeypatch) -> None:
@@ -549,3 +579,68 @@ def teste_repositorio_publica_em_transacao_e_preserva_codigo_parcial() -> None:
     consultas = "\n".join(consulta for consulta, _ in conexao.cursor_obj.chamadas)
     assert "presente_no_catalogo=FALSE" in consultas
     assert "estado=CASE WHEN" in consultas
+
+
+def teste_repositorio_reconcilia_android_por_url_em_lote() -> None:
+    class Cursor:
+        def __init__(self) -> None:
+            self.chamadas: list[tuple[str, object]] = []
+
+        def __enter__(self) -> Cursor:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, consulta: str, parametros: object = None) -> None:
+            self.chamadas.append((consulta, parametros))
+
+        def fetchone(self) -> tuple[int]:
+            return (99,)
+
+        def fetchall(self) -> list[tuple[str, str]]:
+            return [
+                (
+                    "https://www.pichau.com.br/pc-gamer-exemplo-12345",
+                    "PC-Pichau-Gamer-12345",
+                )
+            ]
+
+    class Conexao:
+        def __init__(self) -> None:
+            self.cursor_obj = Cursor()
+
+        def __enter__(self) -> Conexao:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def cursor(self) -> Cursor:
+            return self.cursor_obj
+
+    conexao = Conexao()
+    repositorio = RepositorioPichauPostgres("postgres://teste", conectar=lambda _: conexao)
+    agora = datetime.now(UTC)
+    produto = PichauProduto(
+        id_externo="pichau-pc-gamer-exemplo-12345",
+        nome="PC Gamer exemplo",
+        url_produto="https://www.pichau.com.br/pc-gamer-exemplo-12345",
+    )
+
+    repositorio.publicar(
+        99,
+        (produto,),
+        ResumoColetaPichau(agora, agora, 1, 1, 1, 1, 0),
+    )
+
+    insercao = next(
+        parametros
+        for consulta, parametros in conexao.cursor_obj.chamadas
+        if "INSERT INTO pichau_produto" in consulta
+    )
+    assert insercao[0] == "PC-Pichau-Gamer-12345"
+    assert any(
+        "SELECT DISTINCT ON (url_produto)" in consulta
+        for consulta, _ in conexao.cursor_obj.chamadas
+    )
