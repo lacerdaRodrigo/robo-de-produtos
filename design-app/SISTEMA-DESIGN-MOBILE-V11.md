@@ -21,6 +21,7 @@ O produto reúne os seguintes domínios:
 - autenticação e perfil;
 - resumo operacional da conta;
 - catálogo de serviços;
+- catálogo Pichau de PCs Gamer;
 - catálogo Livelo, acompanhamento, campanha e histórico;
 - Cashback do Banco Inter, acompanhamento e condições;
 - seleção de lojas do Compre direto;
@@ -50,6 +51,7 @@ flowchart TD
     B --> C["Serviços"]
     C --> D["Livelo"]
     C --> E["Banco Inter"]
+    C --> I["Pichau"]
     E --> F["Cashback"]
     E --> G["Compre direto"]
     G --> H["Produtos"]
@@ -274,7 +276,7 @@ Classes: `.app-bar`, `.mini-brand`, `.sync-line`, `.sync-dot`, `.app-actions`.
 
 Classes: `.dock`, `.dock-button`, `.active`.
 
-Possui três destinos: Resumo, Serviços e Produtos. O item ativo recebe fundo `radar-plum`. Livelo e Banco Inter mantêm Serviços selecionado porque pertencem a esse domínio de navegação.
+Possui três destinos: Resumo, Serviços e Produtos. O item ativo recebe fundo `radar-plum`. Livelo, Banco Inter e Pichau mantêm Serviços selecionado porque pertencem a esse domínio de navegação. Pichau não cria um quarto item no dock.
 
 ## 10. Tela Resumo
 
@@ -323,6 +325,34 @@ Anatomia:
 5. ação de entrada.
 
 A pesquisa utiliza `data-service` com termos associados. Um serviço só aparece quando existe contrato funcional correspondente.
+
+O card Pichau usa monograma próprio e informa **PC Gamer** como tipo. Sua
+descrição é “Catálogo de PCs Gamer com preços e disponibilidade”, com as
+capacidades **Catálogo PC Gamer**, **Pix + cartão** e **Estoque**. O toque abre
+uma subárea interna de Serviços; o retorno volta ao catálogo de Serviços e não
+altera a seleção do `BottomDock`.
+
+### `PichauCatalog`
+
+A página Pichau começa pelo cabeçalho contextual **PC Gamer / Pichau**, busca
+por nome, marca ou SKU e barra de estado do último catálogo válido. O catálogo
+é sempre paginado e consulta a API autenticada; digitação nunca consulta a
+Pichau diretamente.
+
+O `PichauProductCard` reutiliza a anatomia de `ProductCard`, mas tem hierarquia
+própria para:
+
+1. etiquetas **PC Gamer**, **Pichau** e **Origem Pichau**;
+2. nome, marca e SKU;
+3. preço Pix e preço no cartão em blocos separados;
+4. preço original, desconto, parcelamento e etiquetas quando informados;
+5. disponibilidade distinta entre disponível, esgotado e fora do catálogo;
+6. ação secundária **Histórico**, que abre uma `BottomSheet` somente leitura;
+7. ação primária **Ver na Pichau**, que abre a URL `http`/`https` recebida da
+   API no navegador externo.
+
+O card não exibe nem depende de imagem armazenada pelo Radar. Campo comercial
+ausente permanece neutro e nunca vira `R$ 0,00`.
 
 ## 12. Livelo
 
@@ -571,13 +601,18 @@ Aviso operacional próximo do catálogo afetado. Usa amarelo para atenção e ve
 
 ## 18. Contratos e endpoints
 
-| Área | Endpoint existente | Uso na interface |
+Os endpoints abaixo são existentes, exceto os identificados como **planejados**.
+O Flutter nunca acessa a fonte externa nem o banco diretamente.
+
+| Área | Endpoint | Uso na interface |
 |---|---|---|
 | Resumo | `GET /api/resumo` | Estado geral, horários, contagens e atividade |
 | Perfil | `GET /api/perfil` | Identidade e autorização |
 | Livelo | `GET /api/livelo/catalogo` | Busca, filtros, ordenação e paginação |
 | Acompanhar Livelo | `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento` | Acompanhar ou remover loja |
 | Histórico Livelo | `GET /api/livelo/catalogo/{id_externo}/historico` | Últimas medições salvas |
+| Catálogo Pichau (planejado) | `GET /api/pichau/catalogo?q=&pagina=&por_pagina=` | PCs Gamer persistidos, busca e paginação |
+| Histórico Pichau (planejado) | `GET /api/pichau/catalogo/{id_externo}/historico` | Medições Pix/cartão dos últimos 30 dias |
 | Cashback Inter | `GET /api/inter/cashback` | Cashback, busca, ordem e paginação |
 | Cashback acompanhadas | `GET /api/inter/cashback?acompanhadas=true` | Lista das favoritas |
 | Favorita Inter | `PATCH /api/inter/lojas` | Alterar `favorita` por ID |
@@ -604,6 +639,10 @@ Cada área deve prever:
 | Sem dado | Texto neutro, nunca valor numérico inventado |
 
 Uma falha de um robô não deve transformar todos os serviços em erro. Cada card mantém estado independente.
+
+Na Pichau, o catálogo atualizado, vazio, carregando, falho, parcial/atrasado,
+produto esgotado e produto fora do catálogo são estados distintos. Falha ou
+coleta parcial mantém o último retrato válido.
 
 ## 20. Acessibilidade
 
@@ -655,6 +694,9 @@ Os nomes concretos podem seguir a convenção do projeto, mas anatomia, tokens, 
 - [ ] Todo número da Home identifica o robô de origem.
 - [ ] Avisos aparecem dentro do serviço afetado.
 - [ ] A lista de Serviços é pesquisável e expansível.
+- [ ] Pichau aparece somente em Serviços, abre catálogo paginado e retorna para o hub sem novo item no dock.
+- [ ] O card Pichau separa Pix e cartão, identifica a origem e distingue esgotado de fora do catálogo.
+- [ ] Histórico Pichau abre pela folha existente e o link externo aceita somente URL `http`/`https` fornecida pela API.
 - [ ] Livelo mostra condição somente quando o backend a fornece.
 - [ ] O link Livelo só aparece para URL HTTPS válida.
 - [ ] Cashback principal é o dado dominante no card Inter.
@@ -675,6 +717,7 @@ Ao adicionar um novo robô:
 1. implementar e validar o contrato no backend;
 2. criar o card na tela Serviços;
 3. adicionar seu resumo com estado independente;
+   no caso da Pichau, manter o catálogo interno subordinado a Serviços;
 4. reutilizar tokens e componentes deste documento;
 5. mostrar no máximo três ou quatro robôs na Home;
 6. não adicionar campos que o contrato não entrega;

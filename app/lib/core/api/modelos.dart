@@ -688,6 +688,36 @@ class ResumoProdutos {
   final int produtosAtivos;
 }
 
+class ResumoPichau {
+  const ResumoPichau({
+    required this.estado,
+    required this.ultimaTentativaEm,
+    required this.ultimaTentativaEstado,
+    required this.ultimoSucessoEm,
+    required this.qualidade,
+    required this.produtosAtivos,
+    required this.produtosEsgotados,
+  });
+
+  factory ResumoPichau.parse(Map<String, dynamic> objeto) => ResumoPichau(
+    estado: EstadoResumo.parse(objeto['estado']),
+    ultimaTentativaEm: _textoOpcional(objeto['ultima_tentativa_em']),
+    ultimaTentativaEstado: _textoOpcional(objeto['ultima_tentativa_estado']),
+    ultimoSucessoEm: _textoOpcional(objeto['ultimo_sucesso_em']),
+    qualidade: _textoOpcional(objeto['qualidade']),
+    produtosAtivos: _inteiroNaoNegativo(objeto['produtos_ativos']),
+    produtosEsgotados: _inteiroNaoNegativo(objeto['produtos_esgotados']),
+  );
+
+  final EstadoResumo estado;
+  final String? ultimaTentativaEm;
+  final String? ultimaTentativaEstado;
+  final String? ultimoSucessoEm;
+  final String? qualidade;
+  final int produtosAtivos;
+  final int produtosEsgotados;
+}
+
 class ResumoInicio {
   const ResumoInicio({
     required this.geradoEm,
@@ -695,6 +725,7 @@ class ResumoInicio {
     required this.livelo,
     required this.cashbackInter,
     required this.produtos,
+    required this.pichau,
     this.atividadeRecente = const [],
   });
 
@@ -704,6 +735,7 @@ class ResumoInicio {
     livelo: ResumoLivelo.parse(_mapa(objeto['livelo'])),
     cashbackInter: ResumoCashbackInter.parse(_mapa(objeto['cashback_inter'])),
     produtos: ResumoProdutos.parse(_mapa(objeto['produtos'])),
+    pichau: ResumoPichau.parse(_mapa(objeto['pichau'])),
     atividadeRecente:
         (objeto['atividade_recente'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
@@ -717,6 +749,7 @@ class ResumoInicio {
   final ResumoLivelo livelo;
   final ResumoCashbackInter cashbackInter;
   final ResumoProdutos produtos;
+  final ResumoPichau pichau;
   final List<AtividadeRecente> atividadeRecente;
 }
 

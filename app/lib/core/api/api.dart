@@ -1,6 +1,7 @@
 import 'cliente.dart';
 import 'modelos.dart';
 import 'pagina.dart';
+import '../../features/pichau/modelos_pichau.dart';
 
 /// API v1 exposta para o Flutter.
 ///
@@ -152,6 +153,42 @@ class Api {
       },
     );
     return Pagina.parse(corpo, ProdutoDireto.parse);
+  }
+
+  /// Catálogo paginado de PC Gamer da Pichau.
+  ///
+  /// A rota pertence ao backend protegido; o cliente nunca consulta a fonte
+  /// externa durante a digitação.
+  Future<Pagina<PichauProduto>> catalogoPichau({
+    String q = '',
+    int pagina = 1,
+    int? porPagina,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/pichau/catalogo',
+      consulta: <String, String>{
+        'q': q,
+        'pagina': '$pagina',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
+      },
+    );
+    return Pagina.parse(corpo, PichauProduto.parse);
+  }
+
+  /// Histórico de preço de uma identidade Pichau, limitado pelo backend a 30 dias.
+  Future<HistoricoPichau> historicoPichau({
+    required String idExterno,
+    int pagina = 1,
+    int porPagina = 30,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/pichau/catalogo/$idExterno/historico',
+      consulta: <String, String>{
+        'pagina': '$pagina',
+        'por_pagina': '$porPagina',
+      },
+    );
+    return HistoricoPichau.parse(corpo);
   }
 
   /// Categorias externas reais disponíveis no catálogo atual do Inter.

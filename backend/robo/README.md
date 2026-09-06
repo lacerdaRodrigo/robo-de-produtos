@@ -1,12 +1,12 @@
 # `backend/robo/` — Robôs Python (coleta e publicação)
 
 Núcleo do backend: robôs que coletam das **fontes públicas** (Livelo e Shopping
-Inter) e gravam no Postgres (Neon). É processado separadamente pelo GitHub
+Inter e Pichau) e gravam no Postgres (Neon). É processado separadamente pelo GitHub
 Actions a cada 3×/dia; não tem servidor próprio.
 
 ## Domínios isolados
 
-São **três integrações independentes**, cada uma com código, tabelas e workflow
+São **quatro integrações independentes**, cada uma com código, tabelas e workflow
 próprios — não misturam regras nem se afetam:
 
 1. **Livelo** — publica o catálogo completo atual, calcula o retrato somente das
@@ -16,12 +16,15 @@ próprios — não misturam regras nem se afetam:
    `src/robo_livelo/principal_inter.py`.
 3. **Inter — Compre direto** — coleta de produtos das lojas escolhidas, com busca
    e histórico de 30 dias (V4). Entrada: `src/robo_livelo/principal_produtos_inter.py`.
+4. **Pichau — PC Gamer** — coleta pública independente, snapshot e histórico de
+   preços de 30 dias. Entrada: `src/robo_pichau/principal.py`.
 
 ## Estrutura
 
 ```text
 backend/robo/
 ├── src/robo_livelo/   # código (domínio puro + portas + adaptadores)
+├── src/robo_pichau/   # coletor, extração, portas e publicação Pichau
 ├── testes/            # pytest (prefixo teste_)
 ├── config/            # lojas_favoritas.toml (reserva local da seleção Livelo)
 ├── scripts/           # utilitários (carregar_catalogo.py, medir_v4.py)
@@ -40,6 +43,7 @@ cp ../../backend/api/examples/.env.example .env   # ou um .env com seus dados
 python -m robo_livelo.principal
 python -m robo_livelo.principal_inter
 python -m robo_livelo.principal_produtos_inter
+python -m robo_pichau.principal
 ```
 
 - O coletor do Inter exige `DATABASE_URL`.

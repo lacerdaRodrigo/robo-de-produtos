@@ -311,17 +311,49 @@ void main() {
     expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
   });
 
-  testWidgets('Serviços agrega Livelo e Inter com busca local', (at) async {
+  testWidgets('Serviços agrega Livelo, Inter e Pichau com busca local', (
+    at,
+  ) async {
     await _abrir(at, tamanho: const Size(390, 1200));
     await _irParaCompacto(at, DestinoCompacto.programas);
 
     expect(find.byKey(const Key('programa-livelo')), findsOneWidget);
     expect(find.byKey(const Key('programa-inter')), findsOneWidget);
+    expect(find.byKey(const Key('programa-pichau')), findsOneWidget);
     await at.enterText(find.byKey(const Key('busca-programas')), 'inter');
     await at.pump();
     expect(find.byKey(const Key('programa-livelo')), findsNothing);
     expect(find.byKey(const Key('programa-inter')), findsOneWidget);
+    expect(find.byKey(const Key('programa-pichau')), findsNothing);
   });
+
+  testWidgets(
+    'Pichau abre como subárea de Serviços sem novo destino na barra',
+    (at) async {
+      await _abrir(at, tamanho: const Size(390, 1200));
+      await _irParaCompacto(at, DestinoCompacto.programas);
+      final programa = find.byKey(const Key('programa-pichau'));
+      final rolagemProgramas = find
+          .descendant(
+            of: find.byKey(const Key('pagina-programas')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
+      await at.fling(rolagemProgramas, const Offset(0, -400), 1000);
+      await at.pumpAndSettle();
+      await at.ensureVisible(programa);
+      await at.tap(
+        find.ancestor(of: programa, matching: find.byType(InkWell)).first,
+      );
+      await at.pumpAndSettle();
+
+      expect(find.byKey(const Key('voltar-programas-pichau')), findsOneWidget);
+      expect(find.byKey(const Key('pagina-pichau')), findsOneWidget);
+      expect(find.byKey(const Key('barra-programas')), findsOneWidget);
+      expect(find.byKey(const Key('barra-pichau')), findsNothing);
+    },
+  );
 
   testWidgets('atalhos do Início abrem Produtos e os dois domínios de Lojas', (
     at,

@@ -548,6 +548,30 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-338 | Folha e busca V11 são únicas | Filtros, seletores, detalhes e folhas de conta usam `FolhaRadar` com fundo desfocado, cabeçalho V11 e retorno preservado; todas as buscas usam `CampoBuscaRadar` | Testes de widget dos fluxos Livelo, Produtos, categorias e fundação |
 | CT-338A | Paginação V11 de cartões | Produtos, Livelo, Sites parceiros e Compre direto solicitam 10 itens; com 9/10 não há paginação e com 11 há acesso à página 2 sem acumular cards | Widget da fundação, controladores e `MockClient` das telas afetadas |
 
+### Pichau — jornada mobile V11
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-361 | Serviço Pichau subordinado | O card Pichau aparece em Serviços e abre uma subárea interna sem criar item no `BottomDock` | Widget de `MolduraRadar` e navegação compacta |
+| CT-362 | Contrato comercial sem zeros inventados | Pix, cartão, parcelamento e opcionais ausentes permanecem textuais/opcionais; esgotado e fora do catálogo são estados diferentes | `modelos_pichau_test.dart` |
+| CT-363 | Catálogo paginado e busca server-side | A tela envia `pagina`, `por_pagina` e `q` à API protegida, preservando o catálogo como consulta do backend | `pagina_pichau_test.dart` e cliente `Api` |
+| CT-364 | Card Pichau e link externo | Card próprio exibe origem, preços separados, disponibilidade e etiquetas; somente URL `http`/`https` válida habilita a ação externa | `pagina_pichau_test.dart` e `link_pichau_test.dart` |
+| CT-365 | Histórico em folha V11 | A ação Histórico abre o componente de folha existente e mostra medições somente leitura sem misturar o produto | `pagina_pichau_test.dart` |
+| CT-366 | Estados de coleta | Loading, catálogo vazio, falha sem retrato e aviso de parcial/atrasado permanecem distintos e não fabricam preço zero | `pagina_pichau_test.dart` |
+| CT-367 | Larguras mobile aprovadas | A jornada continua alcançável em 320, 390 e 430 px | `pagina_pichau_test.dart` com viewports controlados |
+| CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V11 | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
+
+### Pichau — backend/API versionados
+
+| ID | Regra | Aceite | Cobertura |
+|---|---|---|---|
+| CT-369 | Extração comercial sem imagem | Preços Pix/cartão, desconto, parcelamento, etiquetas e disponibilidade são extraídos; opcionais ausentes não viram zero | `backend/robo/testes/teste_pichau.py` |
+| CT-370 | Identidade e URL segura | SKU/ID é estável, URLs ficam restritas a HTTPS no domínio Pichau e imagens não entram no modelo | `teste_pichau.py` |
+| CT-371 | Paginação conservadora | Página repetida, total incoerente ou limite não encerrado rejeitam a coleta | `teste_pichau.py` |
+| CT-372 | Retry sem evasão | Respostas transitórias podem repetir com cooldown; 403 é falha controlada sem bypass | `teste_pichau.py` |
+| CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
+| CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
+
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução e os totais da
 fundação foram verificados junto com os casos do catálogo Android em 28 de

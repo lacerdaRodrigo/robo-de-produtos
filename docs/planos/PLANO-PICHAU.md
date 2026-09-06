@@ -1,5 +1,20 @@
 # Plano — Integração Pichau
 
+> **Decisões funcionais fechadas em 2026-09-05:** a primeira versão coleta
+> somente a categoria **PC Gamer**, percorre o catálogo completo sem filtros
+> adicionais, roda três vezes ao dia nos mesmos horários de Livelo e Inter,
+> não armazena imagens, usa tabelas próprias da Pichau, mantém histórico de
+> preços por 30 dias e oferece no card o link real do produto na Pichau.
+> Endpoint, HTML ou uma combinação dos dois serão escolhidos pelo levantamento
+> técnico da fonte.
+
+> **Estado da execução em 2026-09-05:** o protótipo V11, a jornada Flutter
+> mobile, o pacote `robo_pichau`, a migration, as rotas autenticadas da API e o
+> workflow separado foram versionados e a migration `021_pichau_pc_gamer.sql`
+> foi aplicada no banco. Nenhuma coleta real foi publicada e nenhum deploy foi
+> declarado. A fonte respondeu
+> 403/manutenção durante o levantamento, deixando o aceite operacional aberto.
+
 ## 1. Objetivo
 
 Adicionar a **Pichau** ao Radar de Benefícios como uma nova fonte independente de produtos e preços, preservando a arquitetura atual do projeto e preparando a integração para alimentar a área global de Produtos.
@@ -46,6 +61,17 @@ A área de periféricos segue estrutura comercial semelhante e indica que uma ú
 
 Antes da implementação, a fonte real deve ser levantada novamente para confirmar contrato, estabilidade, paginação, limites, `robots.txt`, termos públicos aplicáveis e eventual endpoint estruturado usado pelo frontend.
 
+### Resultado do levantamento de 2026-09-05
+
+Uma leitura pública da categoria observou listagem paginada, cards com preços
+original/Pix/cartão, desconto, parcelamento e disponibilidade, além de página
+2 por `?page=2`. A página individual observada também expôs marca, SKU, preços,
+parcelamento e estado de indisponibilidade. As requisições diretas usadas para
+validar a coleta, porém, receberam 403/manutenção; por isso essa observação
+serve para orientar fixtures e contrato, não para autorizar coleta real. A
+confirmação operacional de endpoint, HTML/JSON, `robots.txt`, limites e termos
+permanece pendente.
+
 ---
 
 ## 4. Escopo inicial
@@ -53,6 +79,9 @@ Antes da implementação, a fonte real deve ser levantada novamente para confirm
 ### 4.1 Dentro do escopo
 
 - criar domínio/coletor Pichau independente;
+- coletar inicialmente somente `https://www.pichau.com.br/computadores/pichau-gamer`;
+- percorrer todas as páginas da categoria PC Gamer, sem aplicar filtros de fabricante,
+  processador, placa de vídeo, armazenamento, preço ou montagem;
 - coletar somente conteúdo público;
 - identificar produtos por chave externa estável quando possível;
 - preservar origem, nome, marca, categoria externa e URL;
@@ -61,8 +90,10 @@ Antes da implementação, a fonte real deve ser levantada novamente para confirm
 - registrar parcelamento quando disponível;
 - registrar disponibilidade/estoque quando a fonte fornecer informação confiável;
 - guardar catálogo atual e histórico de preços conforme a política definida para Produtos;
+- manter as medições de preço por 30 dias;
 - publicar estado da coleta e horário do último sucesso;
 - integrar Pichau ao catálogo de Serviços do aplicativo;
+- exibir no card do produto uma ação para abrir a URL real na Pichau;
 - preparar os produtos Pichau para classificação nas categorias globais do Radar;
 - permitir que a futura busca global de Produtos encontre ofertas Pichau.
 
@@ -70,9 +101,12 @@ Antes da implementação, a fonte real deve ser levantada novamente para confirm
 
 - autenticar na Pichau;
 - montar carrinho ou realizar compra;
+- coletar categorias Pichau além de PC Gamer na primeira versão;
+- limitar a coleta por interesses escolhidos pela pessoa na primeira versão;
 - calcular frete por CEP;
 - burlar bloqueios ou limites da fonte;
 - baixar e armazenar imagens sem decisão específica;
+- armazenar imagens de produtos;
 - coletar avaliações/comentários de usuários;
 - tentar identificar automaticamente produtos equivalentes entre lojas por aproximação textual;
 - criar comparação automática de preço entre produtos que ainda não possuam identidade canônica confiável;
@@ -92,8 +126,14 @@ A integração precisa distinguir campos que hoje podem aparecer condensados em 
 - `nome`;
 - `marca`, quando disponível;
 - `categoria_externa`;
-- `caminho/url`;
-- `ativo/disponivel` quando determinável.
+- `url_produto`;
+- `presente_no_catalogo`;
+- `disponibilidade`, quando determinável: `disponivel`, `esgotado`,
+  `pre_venda` ou `nao_informado`.
+
+Quando `presente_no_catalogo = false`, a API e o aplicativo podem exibir
+`fora_do_catalogo`. Ausência em uma coleta completa nunca será convertida em
+`esgotado`.
 
 ### Medição comercial
 
@@ -114,20 +154,49 @@ A integração precisa distinguir campos que hoje podem aparecer condensados em 
 
 Nenhum campo ausente deve virar zero por conveniência.
 
+O link do produto é dado de origem e deve chegar ao Flutter pela API. O app
+abre esse link no navegador externo; não cria URL por conta própria e não
+armazena imagens.
+
 ---
 
 ## 6. Estratégia de coleta
 
+### Decisões de coleta da primeira versão
+
+- A fonte será híbrida quando necessário: preferir endpoint público estruturado
+  estável; usar HTML com dados estruturados embutidos ou parsing controlado como
+  fallback.
+- A listagem da categoria será a responsável por enumerar o catálogo e controlar
+  a paginação.
+- A página individual será consultada somente quando for necessária para
+  confirmar ou completar campos como SKU, marca, disponibilidade ou condições
+  comerciais que não estejam disponíveis na listagem.
+- O robô não usará filtros adicionais da página PC Gamer na primeira versão.
+  O escopo fixo da coleta é todo o catálogo da categoria.
+- A coleta será agendada três vezes por dia, às 09h, 14h e 20h de Brasília,
+  nos mesmos horários operacionais de Livelo e Inter.
+- A execução, os logs, o estado de publicação e as falhas da Pichau serão
+  isolados das demais fontes, mesmo quando o horário for compartilhado.
+
 ### Fase 1 — Levantamento técnico
 
-1. Revisar a categoria pública `computadores/pichau-gamer` e outras categorias candidatas.
-2. Identificar se o frontend usa endpoint público estruturado para catálogo, filtros e paginação.
-3. Preferir endpoint público estável quando ele reproduzir os dados exibidos no site.
-4. Usar HTML público como alternativa quando não houver contrato estruturado adequado.
-5. Confirmar paginação, IDs, categorias, preço Pix, cartão e disponibilidade.
-6. Medir quantidade de páginas, duração e volume aproximado de dados.
-7. Definir ritmo conservador, retries e cooldown.
-8. Registrar explicitamente qualquer limitação observada.
+1. Revisar a categoria pública `computadores/pichau-gamer` como único escopo
+   inicial.
+2. Identificar se o frontend usa endpoint público estruturado para catálogo e
+   paginação.
+3. Preferir endpoint público estável quando ele reproduzir os dados exibidos
+   no site.
+4. Usar HTML público como alternativa ou complemento quando não houver contrato
+   estruturado adequado.
+5. Confirmar quais campos aparecem na listagem e quais exigem visita à página
+   individual.
+6. Confirmar paginação, IDs/SKUs, preço Pix, preço de cartão, parcelamento,
+   etiquetas e disponibilidade.
+7. Medir quantidade de páginas, duração, volume aproximado e custo de visitar
+   páginas individuais.
+8. Definir ritmo conservador, retries e cooldown respeitando a fonte pública.
+9. Registrar explicitamente qualquer limitação observada.
 
 ### Fase 2 — Núcleo puro
 
@@ -153,33 +222,74 @@ Implementar adaptadores próprios para:
 
 ### Fase 4 — Persistência
 
-Criar schema aditivo e isolado da Pichau ou, caso o Plano de Modificação de Produtos já tenha introduzido uma camada global de ofertas, persistir por essa camada mantendo a origem `pichau` explícita.
+Criar schema aditivo e próprio da Pichau, separado das tabelas da Livelo e do
+Inter. A primeira versão terá, no mínimo, as seguintes tabelas:
 
-A decisão final do schema deve ocorrer somente depois de definir a ordem de implementação entre este plano e o plano global de Produtos.
+- `pichau_execucao`: execução, horário, categoria/escopo, estado (`iniciada`,
+  `sucesso`, `parcial`, `falha`), páginas, itens lidos, itens únicos,
+  duplicados, versão e código controlado de falha;
+- `pichau_produto`: identidade estável, SKU/ID externo, nome, marca, categoria
+  externa, `url_produto`, `presente_no_catalogo`, disponibilidade e datas de
+  criação/atualização;
+- `pichau_medicao`: execução, produto, momento, preço original, preço Pix,
+  desconto Pix, preço no cartão, parcelas, valor da parcela, `sem_juros`,
+  estoque e etiquetas, preservando texto editorial e valor `NUMERIC` quando
+  houver número confiável.
+
+As medições com mais de 30 dias serão expurgadas conforme a política do
+catálogo de Produtos. A identidade do produto permanece no banco mesmo quando
+ele sai do catálogo, para permitir reativação sem duplicidade.
+
+O catálogo atual lido pela API deve considerar somente produtos presentes na
+última coleta completa. Uma coleta falha ou parcial não substitui o último
+snapshot válido.
 
 ### Fase 5 — Orquestração
 
 - execução independente;
+- execução às 09h, 14h e 20h de Brasília, no mesmo calendário das fontes atuais;
 - publicação atômica do catálogo válido;
 - último catálogo válido preservado quando uma tentativa falhar;
 - métricas de páginas, itens lidos, únicos, duração e estado;
 - falha isolada das demais fontes.
 
-### Fase 6 — API
+Após uma coleta completa e válida, produtos que não aparecerem no novo
+catálogo serão marcados com `presente_no_catalogo = false`. A API poderá
+representá-los como `fora_do_catalogo`; isso não altera a disponibilidade para
+`esgotado`. Produtos explicitamente sinalizados pela Pichau como esgotados
+recebem `disponibilidade = esgotado`.
 
-Expor somente os contratos necessários ao Flutter e à futura busca global.
+### Fase 6 — API (implementada no repositório; publicação pendente)
+
+Foram implementadas as rotas autenticadas:
+
+- `GET /api/pichau/catalogo`, com busca server-side por nome, marca, SKU/ID,
+  ordenação estável e paginação padrão de 20, máximo de 50;
+- `GET /api/pichau/catalogo/{id_externo}/historico`, com limite de 30 dias e
+  paginação própria;
+- bloco `pichau` no `GET /api/resumo`, com estados de tentativa e qualidade.
 
 A API não deve obrigar a tela Produtos a conhecer detalhes internos do scraper.
+Deploy e primeira leitura de dados reais permanecem pendentes.
 
-### Fase 7 — Flutter
+### Fase 7 — Flutter (entregue no ciclo mobile V11)
 
-Adicionar Pichau em **Serviços** seguindo o design V11:
+O recorte mobile foi implementado seguindo o design V11:
 
-- card de serviço próprio;
-- estado da fonte;
-- capacidades reais;
-- acesso à configuração específica da Pichau quando implementada;
-- sem novo destino principal no `BottomDock`.
+- [x] card de serviço próprio em **Serviços**;
+- [x] catálogo interno subordinado a Serviços, com retorno ao hub;
+- [x] busca por nome, marca e SKU enviada ao catálogo paginado da API;
+- [x] cards próprios com preços Pix/cartão, disponibilidade, etiquetas e origem;
+- [x] histórico somente leitura em folha usando o componente V11 existente;
+- [x] ação **Ver na Pichau** com validação de URL `http`/`https`;
+- [x] estados de loading, vazio, falha, parcial/atrasado, esgotado e fora do catálogo;
+- [x] nenhum novo destino principal no `BottomDock`;
+- [ ] alimentar a busca global de Produtos, que permanece inalterada na v1;
+- [x] exibir estado real da fonte no card de Serviços quando o backend entregar esse bloco.
+
+Na área de Produtos, o card Pichau deve mostrar a origem e oferecer a ação
+**Ver na Pichau**, abrindo `url_produto` no navegador externo. O card não deve
+exibir ou depender de imagem armazenada pelo Radar.
 
 A navegação principal continua:
 
@@ -193,7 +303,9 @@ A navegação principal continua:
 
 A Pichau não deve definir a taxonomia do Radar.
 
-Ela fornece sua categoria externa, por exemplo:
+Na primeira versão, o próprio escopo fixo `PC Gamer` será a origem da coleta.
+A Pichau ainda fornecerá sua categoria externa quando ela estiver disponível,
+por exemplo:
 
 ```text
 Pichau: Computadores > Pichau Gamer
@@ -216,19 +328,25 @@ O mapeamento pertence à integração da fonte, enquanto a categoria oficial per
 
 Produtos sem correspondência confiável permanecem não classificados até existir decisão explícita.
 
+A seleção por interesses globais não limitará a coleta inicial. Ela poderá ser
+adicionada no futuro, quando outras categorias Pichau entrarem no escopo e o
+contrato global de Produtos estiver pronto.
+
 ---
 
 ## 8. Seleção do que acompanhar
 
-A Pichau deve respeitar o mesmo princípio global planejado para Produtos:
+Na primeira versão, a seleção é fixa e não depende de configuração do usuário:
 
 1. a fonte está habilitada;
-2. o usuário escolhe as categorias/interesses do Radar que deseja acompanhar;
-3. o adaptador Pichau traduz esses interesses para os recortes que a fonte suporta;
-4. a coleta evita conteúdo fora do interesse quando a fonte permitir filtro confiável;
-5. a persistência mantém somente o escopo definido pela regra de produto.
+2. o robô coleta toda a categoria `PC Gamer`;
+3. nenhum filtro adicional da Pichau é aplicado;
+4. todos os produtos válidos da categoria entram no snapshot;
+5. a classificação em categorias globais fica disponível para evolução futura.
 
-Não coletar todo o catálogo da Pichau por padrão se a fonte permitir limitar a coleta de forma confiável ao conjunto desejado.
+Quando novas categorias forem aprovadas, o contrato poderá introduzir interesses
+globais e recortes de coleta. Essa evolução não deve alterar a semântica do
+catálogo PC Gamer já publicado.
 
 ---
 
@@ -246,6 +364,19 @@ Produto/oferta Pichau
 ```
 
 No primeiro momento, identidade da Pichau significa **o mesmo item dentro da Pichau**.
+
+O registro de identidade continua no banco quando o produto deixa de aparecer.
+Somente uma coleta completa pode marcar `presente_no_catalogo = false`; uma
+resposta parcial, erro de rede, página repetida ou catálogo incoerente mantém o
+último estado válido. A ausência exposta ao app é `fora_do_catalogo`, nunca
+`esgotado` por inferência.
+
+As medições de preço ficam disponíveis por 30 dias. Se o produto voltar a ser
+coletado nesse período ou depois, o SKU/ID estável deve reativar o mesmo
+registro, sem misturar medições de outro item.
+
+O `url_produto` pertence à oferta e deve ser preservado para o botão **Ver na
+Pichau** no card do Flutter. Imagens não fazem parte da persistência.
 
 Afirmar que uma oferta Pichau e uma oferta Casas Bahia representam exatamente o mesmo produto será uma etapa separada e exigirá identificador confiável, como EAN/GTIN, MPN/modelo ou outra regra específica aprovada.
 
@@ -271,9 +402,18 @@ Backend/robô:
 - produto desconhecido permanece não classificado;
 - falha de página não publica catálogo inválido;
 - último sucesso é preservado;
+- catálogo completo sem filtros adicionais da categoria PC Gamer;
+- paginação que não avança, página repetida e total incoerente são rejeitados;
+- produto ausente em coleta completa vira `fora_do_catalogo`, não `esgotado`;
+- coleta parcial ou falha mantém o último estado válido;
+- disponibilidade explícita da fonte é preservada separadamente da presença no catálogo;
+- preço e histórico são guardados por 30 dias;
+- URL real do produto é preservada sem armazenar imagem;
 - limites de coleta e retries.
 
-API/Flutter somente quando seus contratos forem implementados.
+Os testes Flutter e os testes unitários de robô/API diretamente afetados estão
+catalogados abaixo. Não foram criados testes de integração, E2E, smoke ou
+regressão visual automatizada.
 
 ---
 
@@ -282,10 +422,11 @@ API/Flutter somente quando seus contratos forem implementados.
 Cada execução deve registrar de forma controlada:
 
 - início/fim;
-- categoria/escopo solicitado;
+- categoria/escopo fixo (`PC Gamer` na primeira versão);
 - páginas consultadas;
 - itens recebidos;
 - itens únicos;
+- itens duplicados;
 - itens classificados/não classificados;
 - duração;
 - estado final;
@@ -296,18 +437,19 @@ Não registrar payloads completos, dados desnecessários ou informações sensí
 
 ---
 
-## 12. Ordem recomendada
+## 12. Próxima ordem recomendada — operação backend
 
-1. Aprovar o **Plano de Modificação de Produtos** e a taxonomia mínima inicial.
-2. Fazer levantamento técnico atualizado da Pichau.
-3. Definir o contrato Pichau com os campos realmente disponíveis.
-4. Implementar coletor isolado.
-5. Implementar persistência/histórico.
-6. Mapear as primeiras categorias oficiais do Radar.
-7. Expor API necessária.
-8. Adicionar Pichau a Serviços.
-9. Fazer a Pichau alimentar a busca global de Produtos.
-10. Só depois discutir equivalência automática do mesmo produto entre fontes.
+O código backend foi concluído no repositório. A próxima execução autorizada deve:
+
+1. fazer levantamento técnico atualizado da categoria PC Gamer;
+2. confirmar endpoint estruturado, HTML ou combinação híbrida;
+3. confirmar campos da listagem e necessidade de páginas individuais;
+4. executar coletor isolado com o calendário de 09h, 14h e 20h;
+5. validar snapshot, histórico de 30 dias e estados de presença/disponibilidade;
+6. publicar API/workflow em ambiente autorizado e fazer a primeira coleta real;
+7. decidir, em evolução separada, quando a Pichau alimentará a busca global;
+8. só depois ampliar para outras categorias ou discutir equivalência automática
+   entre fontes.
 
 ---
 
@@ -320,22 +462,46 @@ A primeira versão da integração estará pronta quando:
 - coleta pública funcionar sem evasão;
 - preços Pix e cartão forem preservados separadamente quando disponíveis;
 - histórico não misturar medições de produtos/ofertas diferentes;
+- produto ausente após coleta completa ser distinguido de produto esgotado;
 - categorias Pichau puderem ser associadas às categorias oficiais do Radar;
 - Produtos conseguir identificar claramente a origem Pichau;
+- o card abrir o link real do produto na Pichau;
+- nenhuma imagem ser armazenada pelo Radar;
 - falha Pichau não afetar outras integrações;
+- histórico de preços permanecer limitado a 30 dias;
+- coleta ocorrer nos três horários definidos e registrar métricas de paginação;
 - testes diretamente relacionados passarem;
 - documentação final refletir limitações reais observadas.
 
 ---
 
-## 14. Decisões que ainda precisam ser tomadas durante a implementação
+## 14. Decisões fechadas e validações técnicas restantes
 
-- endpoint estruturado público versus HTML;
-- categorias iniciais Pichau que entrarão no primeiro rollout;
-- política exata de retenção histórica compartilhada com Produtos;
-- uso ou não de URL de imagem externa;
-- periodicidade de coleta da Pichau;
-- schema físico final, dependendo da execução prévia do plano global de Produtos;
-- identificadores confiáveis disponíveis para futura comparação entre fontes.
+As decisões funcionais da primeira versão estão fechadas:
 
-Nenhuma dessas decisões deve ser inventada antes do levantamento da fonte e da validação do modelo global de Produtos.
+- escopo somente PC Gamer;
+- catálogo completo da categoria, sem filtros adicionais;
+- fonte híbrida conforme a evidência técnica;
+- listagem para descoberta e paginação, página individual somente quando
+  necessária para completar dados;
+- tabelas próprias `pichau_execucao`, `pichau_produto` e `pichau_medicao`;
+- histórico de preços por 30 dias;
+- coleta às 09h, 14h e 20h de Brasília;
+- nenhuma imagem armazenada;
+- estados distintos para disponibilidade, ausência e falha;
+- link real do produto no card do Flutter;
+- nenhuma equivalência automática com produtos de outras fontes.
+
+Durante a implementação ainda será necessário validar tecnicamente, sem reabrir
+essas decisões:
+
+- endpoint, HTML ou JSON embutido realmente disponível na Pichau;
+- campos reais da listagem e das páginas individuais;
+- tamanho da página, total, última página e comportamento quando o catálogo muda
+  durante a coleta;
+- limites de requisição, retries, cooldown, `robots.txt` e termos públicos;
+- custo operacional de consultar páginas individuais;
+- mapeamento dos identificadores estáveis e dos valores de disponibilidade.
+
+Essas validações devem registrar evidências reais da fonte e podem ajustar a
+implementação técnica sem ampliar o escopo funcional aprovado neste plano.

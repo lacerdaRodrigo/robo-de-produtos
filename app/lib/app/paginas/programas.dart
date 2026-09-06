@@ -16,12 +16,14 @@ class PaginaProgramas extends StatefulWidget {
     required this.api,
     required this.aoAbrirLivelo,
     required this.aoAbrirInter,
+    required this.aoAbrirPichau,
     this.ativa = true,
   });
 
   final Api api;
   final VoidCallback aoAbrirLivelo;
   final VoidCallback aoAbrirInter;
+  final VoidCallback aoAbrirPichau;
   final bool ativa;
 
   @override
@@ -102,6 +104,19 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
             ? null
             : '${_resumo!.cashbackInter.lojasAcompanhadas} acompanhadas',
         aoTocar: widget.aoAbrirInter,
+      ),
+      _ProgramaRadar(
+        chave: const Key('programa-pichau'),
+        titulo: 'Pichau',
+        descricao: 'Catálogo de PCs Gamer com preços e disponibilidade',
+        tipo: 'PC Gamer',
+        capacidades: const ['Catálogo PC Gamer', 'Pix + cartão', 'Estoque'],
+        termos: 'pichau pc gamer computadores catalogo preços disponibilidade',
+        estado: _resumo == null ? null : _rotuloEstado(_resumo!.pichau.estado),
+        detalhe: _resumo == null
+            ? null
+            : '${_resumo!.pichau.produtosAtivos} produtos disponíveis',
+        aoTocar: widget.aoAbrirPichau,
       ),
     ];
     final visiveis = programas
@@ -234,7 +249,11 @@ class _CartaoPrograma extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    programa.titulo == 'Livelo' ? 'LI' : 'BI',
+                    programa.titulo == 'Livelo'
+                        ? 'LI'
+                        : programa.titulo == 'Pichau'
+                        ? 'PI'
+                        : 'BI',
                     style: TextStyle(
                       color: cores.marca,
                       fontSize: 12,

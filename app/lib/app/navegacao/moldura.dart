@@ -7,6 +7,7 @@ import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
+import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
@@ -120,6 +121,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             ativa: _selecionadoCompacto == DestinoCompacto.programas,
             aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
             aoAbrirInter: () => _selecionarCompacto(DestinoCompacto.inter),
+            aoAbrirPichau: () => _selecionarCompacto(DestinoCompacto.pichau),
           )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.livelo)
@@ -151,6 +153,17 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
               administrador: widget.administrador,
               experienciaCompacta: true,
               ativa: _selecionadoCompacto == DestinoCompacto.inter,
+            ),
+          )
+        : const SizedBox.shrink(),
+    _visitadosCompactos.contains(DestinoCompacto.pichau)
+        ? _PaginaProgramaInterna(
+            chaveVoltar: const Key('voltar-programas-pichau'),
+            aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
+            child: PaginaPichau(
+              key: const PageStorageKey('pichau-catalogo-nativo'),
+              api: widget.api,
+              ativa: _selecionadoCompacto == DestinoCompacto.pichau,
             ),
           )
         : const SizedBox.shrink(),
