@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.62.0 (2026-09-06)
+
+### Features
+
+- **pichau**: Integra coleta SeleniumBase e payload Next.js
+  ([`942fb91`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/942fb91818e6a35aea43125c9dcff71223dbca94))
+
+
 ## v1.61.0 (2026-09-06)
 
 ### Features
