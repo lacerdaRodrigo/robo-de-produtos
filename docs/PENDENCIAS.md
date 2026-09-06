@@ -25,7 +25,7 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Registrar o termo de autorização informado para este escopo: domínio `pichau.com.br`, catálogo público, UC/CDP, resolução de CAPTCHA sob os limites definidos, GitHub Actions, dados de catálogo sem PII e retenção bruta máxima de 90 dias.
 - [x] Aplicar `migracoes/021_pichau_pc_gamer.sql` em ambiente autorizado; a confirmação do responsável e a leitura somente do banco encontraram as três tabelas Pichau.
 - [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
-- [x] Fazer a primeira coleta real no Samsung: as execuções 6 e 8 provaram o caminho histórico de 33 páginas; as execuções 22 e 23 aprovaram o caminho rápido com 12 páginas, `1169/1169` itens únicos, zero duplicados e 1.169 medições; a 23 terminou em 225 segundos. A tentativa concorrente 7 falhou com código `acesso` sem substituir snapshot.
+- [x] Fazer a primeira coleta real no Samsung: as execuções 6 e 8 provaram o caminho histórico de 33 páginas; as execuções 22, 23 e 24 aprovaram o caminho rápido com 12 páginas, `1169/1169` itens únicos, zero duplicados e 1.169 medições; as duas últimas terminaram em 225 e 227 segundos. A tentativa concorrente 7 falhou com código `acesso` sem substituir snapshot.
 - [x] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo. As execuções `34006575148` (`headless2`) e `34006802532` (`xvfb`) receberam `Site em Manutenção - Pru Pru`, sem payload de catálogo ou marcador de desafio, e não publicaram dados.
 - [x] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; ambas retornaram a mesma página de manutenção, portanto o agendamento continua em `headless2` e o executor Android fica como alternativa em avaliação.
 - [x] Registrar o levantamento do executor Android: Samsung SM-M135M, Android 14, aproximadamente 3,8 GB de RAM, Chrome instalado e ABI `armeabi-v7a/armeabi` 32-bit; a compatibilidade 32-bit passou a ser o primeiro gate explícito.
@@ -35,8 +35,9 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [ ] Confirmar o receiver do Termux:Boot após reinicialização com a ROM Samsung; o pacote foi habilitado e o runner inicia Appium por conta própria quando um job real existir, mas o receiver não foi observado automaticamente nesta prova. Após o reboot de validação, o Wi‑Fi voltou desconectado e a depuração sem fio ficou desligada, impedindo uma nova prova autônoma.
 - [ ] Criar e testar fora do repositório a role Postgres exclusiva do robô Pichau, com acesso somente às três tabelas/sequências Pichau e conexão SSL; nenhuma senha deve entrar no Git ou no log.
 - [x] Executar no aparelho o diagnóstico e as coletas de prova; as execuções 6 e 8 fecharam 1.169/1.169 com zero duplicados antes da otimização. Livelo e Inter continuam fora da prova.
-- [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: a execução 22 publicou `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
-- [ ] Fazer mais uma execução consecutiva do caminho rápido, validar o receiver do Termux:Boot após reinicialização e conferir API/Flutter.
+- [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: as execuções 22, 23 e 24 publicaram `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
+- [x] Fazer três execuções consecutivas do caminho rápido: 22, 23 e 24 fecharam `sucesso`/`completa`, `1169/1169` únicos, zero duplicados e 1.169 medições.
+- [ ] Validar o receiver do Termux:Boot após reinicialização e conferir API/Flutter.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

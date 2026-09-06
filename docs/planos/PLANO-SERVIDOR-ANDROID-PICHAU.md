@@ -1,9 +1,8 @@
 # Plano — Samsung como executor local da Pichau
 
 **Status:** executor rápido Android e publicação no Postgres estão implementados;
-uma coleta rápida completa foi comprovada no Samsung. Três execuções
-consecutivas, reboot autônomo, credencial exclusiva e validação API/Flutter
-continuam pendentes.
+três coletas rápidas consecutivas foram comprovadas no Samsung. Reboot
+autônomo, credencial exclusiva e validação API/Flutter continuam pendentes.
 
 **Última atualização:** 2026-09-06
 
@@ -192,8 +191,9 @@ foram mantidas como histórico de tentativas rejeitadas: a 18 teve
 `completa`, `total_declarado=1169`, `paginas=12`, `itens_lidos=1169`,
 `itens_unicos=1169` e `duplicados=0`, em aproximadamente 3m55s. A execução 23,
 com a reconciliação em lote por URL, repetiu `1169/1169`, zero duplicados e
-1.169 medições em 225 segundos (3m45s). O Postgres confirmou 1.169 produtos
-presentes. Registros inativos das tentativas anteriores permanecem para
+1.169 medições em 225 segundos (3m45s). A execução 24 repetiu o mesmo resultado
+em 227 segundos (3m47s). O Postgres confirmou 1.169 produtos presentes.
+Registros inativos das tentativas anteriores permanecem para
 histórico e não aparecem no catálogo da API, que filtra
 `presente_no_catalogo=TRUE`.
 
@@ -229,10 +229,10 @@ deve observar o aparelho quando quiser acompanhar esse risco.
 
 ### Fase 5 — observação
 
-O telefone só é aceito como executor quando houver três execuções consecutivas
-bem-sucedidas, reinicialização com retorno do agendamento, falha preservando o
-snapshot anterior, `itens_unicos=total_declarado`, `duplicados=0` e nenhuma
-concorrência. Temperatura, bateria e armazenamento
+O telefone já fechou três execuções consecutivas bem-sucedidas (22, 23 e 24),
+com `itens_unicos=total_declarado` e `duplicados=0`. A aceitação operacional
+final ainda exige reinicialização com retorno do agendamento, falha preservando
+o snapshot anterior e nenhuma concorrência. Temperatura, bateria e armazenamento
 devem ser observados manualmente, mas não criam alerta automático nem tornam o
 carregador obrigatório. Livelo e Inter só podem ser avaliados depois disso.
 
