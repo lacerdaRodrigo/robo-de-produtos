@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.62.1 (2026-09-06)
+
+### Bug Fixes
+
+- **pichau**: Adiciona diagnostico seguro do bloqueio
+  ([`a0bd368`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a0bd368984ef5a33c0b86e6b45c37c73cbc7984d))
+
+
 ## v1.62.0 (2026-09-06)
 
 ### Features
