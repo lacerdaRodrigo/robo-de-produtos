@@ -569,6 +569,8 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-370 | Identidade e URL segura | SKU/ID é estável, URLs ficam restritas a HTTPS no domínio Pichau e imagens não entram no modelo | `teste_pichau.py` |
 | CT-371 | Paginação conservadora | Página repetida, total incoerente ou limite não encerrado rejeitam a coleta | `teste_pichau.py` |
 | CT-372 | Retry, bloqueio e diagnóstico seguro | Respostas transitórias e falhas de navegador podem repetir dentro do limite de três tentativas e cooldown de 2–5 s; bloqueio persistente encerra a coleta, o log registra apenas metadados seguros e o modo Xvfb manual é validado sem alterar o padrão agendado | `teste_pichau.py` |
+| CT-375 | Adaptador Android isolado | Appium local abre o Chrome nativo com UiAutomator2, o CDP local via ADB lê `products.items`, preserva o mesmo parser e encerra a ponte/driver; URL remota é rejeitada | `teste_pichau.py` |
+| CT-376 | Diagnóstico não publica | `--diagnostico` valida somente a primeira página e não instancia o repositório; a execução normal continua exigindo `DATABASE_URL` | `teste_pichau.py` |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
 

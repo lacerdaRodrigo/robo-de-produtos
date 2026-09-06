@@ -27,7 +27,7 @@ backend/robo/
 ├── src/robo_pichau/   # coletor, extração, portas e publicação Pichau
 ├── testes/            # pytest (prefixo teste_)
 ├── config/            # lojas_favoritas.toml (reserva local da seleção Livelo)
-├── scripts/           # utilitários (carregar_catalogo.py, medir_v4.py)
+├── scripts/           # utilitários e runner local Termux da Pichau
 └── pyproject.toml     # dependências, versão, gates
 ```
 
@@ -44,9 +44,42 @@ python -m robo_livelo.principal
 python -m robo_livelo.principal_inter
 python -m robo_livelo.principal_produtos_inter
 python -m robo_pichau.principal
+python -m robo_pichau.principal --diagnostico
 ```
 
 - O coletor do Inter exige `DATABASE_URL`.
+- O diagnóstico Pichau lê somente a primeira página, valida `products.items` e
+  não cria execução ou conexão no banco. A coleta normal exige `DATABASE_URL`.
+- O workflow hospedado continua usando `.[pichau]` e SeleniumBase. Para a
+  tentativa Android, instale `.[pichau-android]`, mantenha Appium/UiAutomator2
+  em `127.0.0.1` e use `PICHAU_MODO_NAVEGADOR=android`. No Samsung 32-bit,
+  UiAutomator2 abre o Chrome nativo e `websocket-client` lê o DOM pelo CDP
+  local via ADB; não há download de ChromeDriver ARM32.
+- No Termux, instale `libxml2`, `libxslt` e `libpq` antes do ambiente Python.
+  O Android ARM32 usa `psycopg` puro contra o `libpq` do Termux; os runners
+  Linux e desktop continuam usando `psycopg[binary]`. Se o ambiente virtual
+  tiver sido criado antes do ajuste de arquitetura, complete-o com
+  `python -m pip install "psycopg>=3.2"`. O script
+  `scripts/pichau-android-run.sh` lê um arquivo privado
+  `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
+  `flock`, `termux-wake-lock` e um `.venv`; `PICHAU_ANDROID_ADB_PORT` é
+  opcional para uma ponte ADB local durante a validação; ele não imprime a
+  `DATABASE_URL`.
+  Na execução recorrente, o Chrome já aberto é lido diretamente pelo CDP local
+  via ADB: o Appium/UiAutomator2 fica disponível para configuração,
+  diagnóstico e recuperação, mas não bloqueia cada coleta com um novo boot.
+  A extração devolve somente a grade principal e os campos comerciais mínimos;
+  a URL, a faixa exibida e os 36 cards intermediários são validados antes de
+  aceitar uma página. O intervalo Android é de 1–2 segundos entre páginas.
+  `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
+  o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço
+  persistente não bloquear o próximo job;
+  `scripts/pichau-android-schedule.sh` agenda uma janela aproximada de seis
+  horas, somente em rede não tarifada e sem exigir carregador, e
+  `scripts/pichau-android-boot.sh` inicia o Appium e pode ser instalado no
+  Termux:Boot. A bateria é uma condição operacional do Android: não há alerta
+  automático; se o aparelho desligar por falta de bateria, a tentativa termina
+  e o último catálogo válido permanece no banco.
 - Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.
 - Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
   válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.

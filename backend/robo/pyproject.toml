@@ -12,12 +12,20 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
     "python-dotenv>=1.0",
-    "psycopg[binary]>=3.2",
+    # O Python do Termux reporta Linux, embora o processo seja Android. O
+    # wheel binario nao cobre o userland ARM32 (armv7l/armv8l); nesses alvos
+    # o pacote puro usa o libpq fornecido pelo proprio Termux.
+    "psycopg[binary]>=3.2; platform_machine not in 'armv7l armv8l'",
+    "psycopg>=3.2; platform_machine in 'armv7l armv8l'",
 ]
 
 [project.optional-dependencies]
 pichau = [
     "seleniumbase>=4.53,<5",
+]
+pichau-android = [
+    "Appium-Python-Client>=4.0,<6",
+    "websocket-client>=1.8,<2",
 ]
 dev = [
     "pytest>=8.0",

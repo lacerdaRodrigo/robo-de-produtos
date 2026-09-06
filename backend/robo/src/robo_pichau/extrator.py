@@ -253,6 +253,12 @@ def _catalogo_next(html: str) -> dict | None:
     return None
 
 
+def tem_payload_catalogo(html: str) -> bool:
+    """Indica se a resposta contem o payload Next.js de products.items."""
+
+    return _catalogo_next(html) is not None
+
+
 def _texto_moeda(valor: Decimal | int | float | None) -> str | None:
     if valor is None:
         return None

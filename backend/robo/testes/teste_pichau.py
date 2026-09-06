@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from robo_pichau.adaptadores import (
+    FontePichauAndroid,
     FontePichauHttp,
     FontePichauSeleniumBase,
     RepositorioPichauPostgres,
@@ -30,7 +31,7 @@ from robo_pichau.portas import (
     PaginacaoPichauInvalida,
     RespostaPichauInvalida,
 )
-from robo_pichau.principal import coletar_catalogo, criar_fonte_pichau
+from robo_pichau.principal import coletar_catalogo, criar_fonte_pichau, executar
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
 
@@ -233,6 +234,125 @@ def teste_fonte_seleniumbase_usa_catalogo_renderizado_e_fecha_contexto(monkeypat
     assert contextos[0][1]["xvfb"] is False
 
 
+def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-ANDROID-1",
+                    "name": "PC Android",
+                    "url_key": "pc-android-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class Driver:
+        current_url = "about:blank"
+        title = "PC Gamer"
+
+        def __init__(self) -> None:
+            self.urls = []
+            self.fechado = False
+
+        def set_page_load_timeout(self, _valor) -> None:
+            pass
+
+        def get(self, url) -> None:
+            self.urls.append(url)
+            self.current_url = url
+
+        @property
+        def page_source(self) -> str:
+            return conteudo
+
+        def quit(self) -> None:
+            self.fechado = True
+
+    drivers = []
+
+    def criar_driver(url, capacidades):
+        assert url == "http://127.0.0.1:4723"
+        assert capacidades["appium:automationName"] == "UiAutomator2"
+        assert capacidades["appium:appPackage"] == "com.android.chrome"
+        assert capacidades["appium:appActivity"] == "com.google.android.apps.chrome.Main"
+        assert "browserName" not in capacidades
+        driver = Driver()
+        drivers.append(driver)
+        return driver
+
+    fonte = FontePichauAndroid(criar_driver=criar_driver, dormir=lambda _: None)
+    with fonte:
+        pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
+
+    assert pagina.produtos[0].sku == "SKU-ANDROID-1"
+    assert drivers[0].urls == [fonte.url_categoria]
+    assert drivers[0].fechado is True
+
+
+def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-CDP-1",
+                    "name": "PC CDP",
+                    "url_key": "pc-cdp-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class Driver:
+        def set_page_load_timeout(self, _valor) -> None:
+            pass
+
+        def quit(self) -> None:
+            pass
+
+    class DevTools:
+        def __init__(self) -> None:
+            self.alvos = []
+            self.fechado = False
+
+        def obter(self, url):
+            self.alvos.append(url)
+            return conteudo, "PC Gamer", url
+
+        def fechar(self) -> None:
+            self.fechado = True
+
+    devtools = DevTools()
+    fonte = FontePichauAndroid(
+        criar_driver=lambda *_args: Driver(),
+        cdp=devtools,
+        dormir=lambda _: None,
+    )
+    with fonte:
+        pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
+
+    assert pagina.produtos[0].sku == "SKU-CDP-1"
+    assert devtools.alvos == [fonte.url_categoria]
+    assert devtools.fechado is True
+
+
+def teste_fonte_android_nao_aceita_appium_remoto() -> None:
+    with pytest.raises(FalhaAoObterPichau, match="Appium local"):
+        FontePichauAndroid(appium_url="http://servidor-remoto:4723")
+
+
 def teste_diagnostico_seleniumbase_nao_registra_html(caplog) -> None:
     fonte = FontePichauSeleniumBase()
     caplog.set_level("INFO")
@@ -253,6 +373,57 @@ def teste_diagnostico_seleniumbase_nao_registra_html(caplog) -> None:
     assert "cookie=nao-publicar" not in caplog.text
 
 
+def teste_diagnostico_de_uma_pagina_nao_cria_execucao_no_banco(monkeypatch) -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "id": 2,
+                    "sku": "SKU-DIAGNOSTICO-1",
+                    "name": "PC Diagnostico",
+                    "url_key": "pc-diagnostico-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 2},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class Fonte:
+        url_categoria = "https://www.pichau.com.br/computadores/pichau-gamer"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+        def pagina(self, pagina: int) -> str:
+            assert pagina == 1
+            return conteudo
+
+        def detalhe(self, _url_produto: str) -> str:
+            return ""
+
+    monkeypatch.setattr("robo_pichau.principal.criar_fonte_pichau", lambda: Fonte())
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setattr(
+        "robo_pichau.principal.RepositorioPichauPostgres",
+        lambda *_args, **_kwargs: pytest.fail("diagnostico nao pode criar repositorio"),
+    )
+
+    assert executar(["--diagnostico"]) == 0
+
+
+def teste_execucao_normal_exige_database_url(monkeypatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(ConfiguracaoPichauInvalida, match="DATABASE_URL"):
+        executar([])
+
+
 def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:
     monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "xvfb")
     fonte = criar_fonte_pichau()
@@ -260,9 +431,17 @@ def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:
     assert fonte.xvfb is True
 
 
+def teste_cria_fonte_no_modo_android(monkeypatch) -> None:
+    monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "android")
+    monkeypatch.setenv("PICHAU_APPIUM_URL", "http://127.0.0.1:4723/wd/hub")
+    fonte = criar_fonte_pichau()
+    assert isinstance(fonte, FontePichauAndroid)
+    assert fonte.appium_url.endswith("/wd/hub")
+
+
 def teste_rejeita_modo_de_navegador_desconhecido(monkeypatch) -> None:
     monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "outro")
-    with pytest.raises(ConfiguracaoPichauInvalida, match="headless2 ou xvfb"):
+    with pytest.raises(ConfiguracaoPichauInvalida, match="headless2, xvfb ou android"):
         criar_fonte_pichau()
 
 
