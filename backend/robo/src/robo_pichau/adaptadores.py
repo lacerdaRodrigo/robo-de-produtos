@@ -232,13 +232,46 @@ class FontePichauSeleniumBase:
                 self._sessao.uc_open_with_reconnect(url, reconnect_time=4)
                 self._sessao.sleep(3)
                 fonte = self._sessao.get_page_source()
-                titulo = self._sessao.get_title().lower()
-                if self._tem_desafio(fonte, titulo):
+                titulo_original = self._sessao.get_title()
+                titulo = titulo_original.lower()
+                desafio = self._tem_desafio(fonte, titulo)
+                self._diagnosticar(
+                    contexto=contexto,
+                    pagina=pagina,
+                    tentativa=tentativa,
+                    fase="resposta_inicial",
+                    alvo=url,
+                    fonte=fonte,
+                    titulo=titulo_original,
+                    desafio=desafio,
+                )
+                if desafio:
                     self._sessao.uc_gui_click_captcha()
                     self._sessao.sleep(3)
                     fonte = self._sessao.get_page_source()
-                    titulo = self._sessao.get_title().lower()
+                    titulo_original = self._sessao.get_title()
+                    titulo = titulo_original.lower()
+                    self._diagnosticar(
+                        contexto=contexto,
+                        pagina=pagina,
+                        tentativa=tentativa,
+                        fase="apos_desafio",
+                        alvo=url,
+                        fonte=fonte,
+                        titulo=titulo_original,
+                        desafio=self._tem_desafio(fonte, titulo),
+                    )
                 if self._tem_bloqueio(fonte, titulo):
+                    self._diagnosticar(
+                        contexto=contexto,
+                        pagina=pagina,
+                        tentativa=tentativa,
+                        fase="bloqueio_detectado",
+                        alvo=url,
+                        fonte=fonte,
+                        titulo=titulo_original,
+                        desafio=self._tem_desafio(fonte, titulo),
+                    )
                     raise FalhaAoObterPichau(
                         "A Pichau exibiu um bloqueio ou pagina de manutencao.", codigo="acesso"
                     )
@@ -254,12 +287,66 @@ class FontePichauSeleniumBase:
                     raise
                 self._esperar(tentativa, contexto)
             except Exception as erro:
+                _log.warning(
+                    "Pichau SeleniumBase: falha tecnica em %s; tentativa %d de %d; tipo=%s.",
+                    contexto,
+                    tentativa,
+                    self.tentativas,
+                    type(erro).__name__,
+                )
                 if tentativa == self.tentativas:
                     raise FalhaAoObterPichau(
                         f"Falha do navegador ao ler {contexto}.", codigo="navegador"
                     ) from erro
                 self._esperar(tentativa, contexto)
         raise FalhaAoObterPichau(f"A Pichau falhou ao ler {contexto}.", codigo="acesso")
+
+    def _diagnosticar(
+        self,
+        *,
+        contexto: str,
+        pagina: int | None,
+        tentativa: int,
+        fase: str,
+        alvo: str,
+        fonte: str,
+        titulo: str,
+        desafio: bool,
+    ) -> None:
+        """Registra metadados seguros, nunca o HTML, cookies ou headers."""
+
+        conteudo = fonte.casefold()
+        manutencao = "site em manutenção" in titulo.casefold()
+        bloqueio = "access denied" in titulo.casefold()
+        just_a_moment = "just a moment" in titulo.casefold()
+        _log.info(
+            "Pichau SeleniumBase diagnostico: contexto=%s pagina=%s tentativa=%d "
+            "fase=%s url_alvo=%s url_final=%s titulo=%r bytes=%d "
+            "next_payload=%s desafio=%s turnstile=%s recaptcha=%s hcaptcha=%s "
+            "manutencao=%s access_denied=%s just_a_moment=%s",
+            contexto,
+            pagina,
+            tentativa,
+            fase,
+            alvo,
+            self._url_atual(),
+            titulo,
+            len(fonte.encode("utf-8")),
+            "self.__next_f.push(" in conteudo,
+            desafio,
+            "cf-turnstile" in conteudo,
+            "g-recaptcha" in conteudo,
+            "hcaptcha" in conteudo,
+            manutencao,
+            bloqueio,
+            just_a_moment,
+        )
+
+    def _url_atual(self) -> str:
+        try:
+            return str(self._sessao.driver.current_url)
+        except Exception:
+            return "indisponivel"
 
     def _exigir_sessao(self) -> None:
         if self._sessao is None:

@@ -26,6 +26,7 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Aplicar `migracoes/021_pichau_pc_gamer.sql` em ambiente autorizado; a confirmação do responsável e a leitura somente do banco encontraram as três tabelas Pichau.
 - [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
 - [ ] Fazer a primeira coleta real e validar que falha/parcial preserva o último snapshot sem afetar Livelo ou Inter.
+- [ ] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

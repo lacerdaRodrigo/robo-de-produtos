@@ -449,6 +449,9 @@ Cada execução deve registrar de forma controlada:
 - duração;
 - estado final;
 - códigos HTTP relevantes;
+- em falhas de navegador, título, URL final, tamanho da resposta e presença
+  de marcadores de desafio/manutenção/payload, sem registrar HTML, cookies ou
+  headers;
 - motivo controlado de falha.
 
 Não registrar payloads completos, dados desnecessários ou informações sensíveis.

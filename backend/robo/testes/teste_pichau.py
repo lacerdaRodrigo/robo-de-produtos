@@ -228,6 +228,26 @@ def teste_fonte_seleniumbase_usa_catalogo_renderizado_e_fecha_contexto(monkeypat
     assert contextos[0][1]["xvfb"] is False
 
 
+def teste_diagnostico_seleniumbase_nao_registra_html(caplog) -> None:
+    fonte = FontePichauSeleniumBase()
+    caplog.set_level("INFO")
+
+    fonte._diagnosticar(
+        contexto="catalogo",
+        pagina=1,
+        tentativa=3,
+        fase="bloqueio_detectado",
+        alvo="https://www.pichau.com.br/computadores/pichau-gamer",
+        fonte="<html>cookie=nao-publicar</html>",
+        titulo="Just a moment",
+        desafio=True,
+    )
+
+    assert "titulo='Just a moment'" in caplog.text
+    assert "bytes=" in caplog.text
+    assert "cookie=nao-publicar" not in caplog.text
+
+
 def teste_url_produto_precisa_ser_https_no_dominio_da_fonte() -> None:
     fonte = FontePichauHttp(obter=lambda *_args, **_kwargs: resposta(200, html()))
     with pytest.raises(FalhaAoObterPichau):

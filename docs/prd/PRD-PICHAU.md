@@ -142,7 +142,9 @@ O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 15h e 21h de Brasília, com intervalos mínimos de seis horas, `DATABASE_URL` em
 secret e sem alterar os demais robôs. A migration foi aplicada, mas a primeira
 execução ainda depende da validação operacional da fonte e da publicação do
-workflow.
+workflow. Em falhas de navegador, o robô registra somente metadados seguros da
+resposta: título, URL final, tamanho e marcadores de desafio/manutenção/payload;
+HTML, cookies e headers não são persistidos nem enviados ao log.
 
 ## Jornada mobile V11 entregue
 
