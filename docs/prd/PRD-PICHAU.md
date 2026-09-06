@@ -1,9 +1,9 @@
 # PRD — Pichau PC Gamer
 
 **Status:** jornada mobile V11 e código backend implementados; diagnóstico e
-uma coleta rápida completa Android foram aprovados no aparelho. Credencial
-restrita, três execuções consecutivas, reboot autônomo e validação API/Flutter
-continuam pendentes.
+três coletas rápidas consecutivas Android foram aprovados no aparelho.
+Credencial restrita, reboot autônomo e validação API/Flutter continuam
+pendentes.
 
 **Última atualização:** 2026-09-06
 
@@ -208,8 +208,8 @@ permanecem fora desta prova.
 
 - Configurar/deployar a API e o workflow; o repositório e a execução Android não
   provam publicação externa desses serviços.
-- Criar a role Postgres exclusiva, executar três coletas consecutivas, validar
-  o retorno após reinicialização e conferir o catálogo pela API/Flutter.
+- Criar a role Postgres exclusiva, validar o retorno após reinicialização e
+  conferir o catálogo pela API/Flutter.
 - Inclusão da Pichau na busca global de Produtos.
 
 ## Critérios de aceite
