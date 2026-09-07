@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.64.0 (2026-09-07)
+
+### Documentation
+
+- **pichau**: Alinha status apos coletas validas
+  ([`a7f1f69`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a7f1f69755a43cc30c5965b39eac9005e69a3bc2))
+
+### Features
+
+- **pichau**: Dispatch coleta para worker Android
+  ([`6db859e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6db859e0915ba9ae7ec44e5bf0bb1e9e67b73243))
+
+
 ## v1.63.0 (2026-09-06)
 
 ### Documentation
