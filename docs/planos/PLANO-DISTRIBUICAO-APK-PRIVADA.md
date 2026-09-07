@@ -1,9 +1,9 @@
 # Plano — distribuição privada de APK após a `main`
 
 **Status:** implementação versionada na branch `feat/distribuicao-apk-drive`;
-bootstrap OAuth concluído e os três secrets do Drive cadastrados no GitHub. A
-primeira execução distribuível ainda será validada pelo workflow antes do
-merge.
+bootstrap OAuth concluído, os três secrets do Drive cadastrados no GitHub e a
+primeira APK distribuída com sucesso pelo workflow manual
+[34148748135](https://github.com/lacerdaRodrigo/robo-de-produtos/actions/runs/34148748135).
 
 O código de distribuição, o workflow e os testes unitários já estão no
 repositório. A autorização OAuth está em **Testing**, com
@@ -204,7 +204,8 @@ git diff --check
 O bootstrap OAuth foi validado contra a Google Drive API real. A execução
 manual do workflow ainda é o aceite final de build, upload, ACL e e-mail.
 
-O aceite externo será uma execução manual controlada após a configuração:
+O aceite externo foi iniciado por uma execução manual controlada e o workflow
+confirmou build, upload, ACL e notificação:
 
 1. confirmar que a APK aparece na pasta correta e apenas o proprietário e
    `EMAIL_DESTINO` conseguem abri-la;
@@ -215,6 +216,11 @@ O aceite externo será uma execução manual controlada após a configuração:
    que somente builds marcadas antigas são removidas;
 6. abrir pull request e push na `main` para confirmar que PR só valida e a
    última `main` aprovada distribui uma vez.
+
+Na execução `34148748135`, a APK `robo-app-debug-1.64.0-34148748135-db433367.apk`
+foi compilada com sucesso, publicada no Drive privado e notificada por e-mail.
+O teste de instalação no Samsung e a confirmação visual de acesso pela conta
+destinatária continuam sendo validações manuais posteriores.
 
 ## 7. Critérios de aceite
 
