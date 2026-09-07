@@ -27,6 +27,7 @@ from robo_pichau.extrator import (
 from robo_pichau.modelos import PichauProduto, ResumoColetaPichau
 from robo_pichau.portas import (
     ConfiguracaoPichauInvalida,
+    FalhaAoGuardarPichau,
     FalhaAoObterPichau,
     PaginacaoPichauInvalida,
     RespostaPichauInvalida,
@@ -155,6 +156,22 @@ def teste_coleta_deduplica_e_rejeita_pagina_repetida() -> None:
 
     with pytest.raises(PaginacaoPichauInvalida, match="repetiu"):
         coletar_catalogo(Fonte(), dormir=lambda _: None)
+
+
+def teste_coleta_registra_tempos_sem_dados_sensiveis(caplog) -> None:
+    class Fonte:
+        url_categoria = "https://www.pichau.com.br/computadores/pichau-gamer"
+
+        def pagina(self, pagina: int) -> str:
+            assert pagina == 1
+            return html()
+
+    caplog.set_level("INFO")
+    coletar_catalogo(Fonte(), dormir=lambda _: None)
+
+    assert "etapa=pagina_processada" in caplog.text
+    assert "etapa=coleta" in caplog.text
+    assert "cookie" not in caplog.text.lower()
 
 
 def teste_fonte_retry_transitorio_e_nao_bypassa_403() -> None:
@@ -353,6 +370,83 @@ def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
     assert devtools.fechado is True
 
 
+def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 101,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-FETCH-1",
+                    "name": "PC Fetch",
+                    "url_key": "pc-fetch-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class DevTools:
+        def __init__(self, falhar_fetch: bool = False) -> None:
+            self.falhar_fetch = falhar_fetch
+            self.fetches: list[str] = []
+            self.dom: list[str] = []
+            self.fechado = False
+
+        def abrir(self) -> None:
+            pass
+
+        def fechar(self) -> None:
+            self.fechado = True
+
+        def obter(self, url):
+            self.dom.append(url)
+            return conteudo, "PC Gamer", url
+
+        def obter_fetch(self, url):
+            self.fetches.append(url)
+            if self.falhar_fetch:
+                raise TimeoutError("SSR indisponivel")
+            return conteudo, "PC Gamer", url
+
+    devtools = DevTools()
+    fonte = FontePichauAndroid(cdp=devtools, estrategia_leitura="fetch", dormir=lambda _: None)
+    with fonte:
+        extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=100)
+        extrair_pagina(fonte.pagina(2), pagina_esperada=2, por_pagina=100)
+
+    assert devtools.fetches == [fonte._url_pagina(2)]
+    assert devtools.dom == [fonte._url_pagina(1)]
+
+    fallback = DevTools(falhar_fetch=True)
+    fonte_fallback = FontePichauAndroid(
+        cdp=fallback, estrategia_leitura="fetch", dormir=lambda _: None
+    )
+    with fonte_fallback:
+        extrair_pagina(fonte_fallback.pagina(2), pagina_esperada=2, por_pagina=100)
+
+    assert fallback.fetches == [fonte_fallback._url_pagina(2)]
+    assert fallback.dom == [fonte_fallback._url_pagina(2)]
+
+
+def teste_fonte_android_rejeita_estrategia_de_leitura_desconhecida() -> None:
+    with pytest.raises(FalhaAoObterPichau, match="dom ou fetch"):
+        FontePichauAndroid(estrategia_leitura="outro")
+
+
+def teste_fonte_android_aplica_ordenacao_publica() -> None:
+    fonte = FontePichauAndroid(ordenacao="name-asc")
+    assert fonte._url_pagina(2).endswith("pageSize=100&sort=name-asc&page=2")
+
+
+def teste_fonte_android_rejeita_ordenacao_desconhecida() -> None:
+    with pytest.raises(FalhaAoObterPichau, match="PICHAU_ANDROID_ORDENACAO"):
+        FontePichauAndroid(ordenacao="outro")
+
+
 def teste_fonte_android_nao_aceita_appium_remoto() -> None:
     with pytest.raises(FalhaAoObterPichau, match="Appium local"):
         FontePichauAndroid(appium_url="http://servidor-remoto:4723")
@@ -464,9 +558,13 @@ def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:
 def teste_cria_fonte_no_modo_android(monkeypatch) -> None:
     monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "android")
     monkeypatch.setenv("PICHAU_APPIUM_URL", "http://127.0.0.1:4723/wd/hub")
+    monkeypatch.setenv("PICHAU_ESTRATEGIA_LEITURA", "fetch")
+    monkeypatch.setenv("PICHAU_ANDROID_ORDENACAO", "name-asc")
     fonte = criar_fonte_pichau()
     assert isinstance(fonte, FontePichauAndroid)
     assert fonte.appium_url.endswith("/wd/hub")
+    assert fonte.estrategia_leitura == "fetch"
+    assert fonte.ordenacao == "name-asc"
 
 
 def teste_rejeita_modo_de_navegador_desconhecido(monkeypatch) -> None:
@@ -539,6 +637,8 @@ def teste_repositorio_publica_em_transacao_e_preserva_codigo_parcial() -> None:
     class Cursor:
         def __init__(self) -> None:
             self.chamadas: list[tuple[str, object]] = []
+            self.ultima_consulta = ""
+            self.ultimos_parametros: object = None
 
         def __enter__(self) -> Cursor:
             return self
@@ -548,9 +648,17 @@ def teste_repositorio_publica_em_transacao_e_preserva_codigo_parcial() -> None:
 
         def execute(self, consulta: str, parametros: object = None) -> None:
             self.chamadas.append((consulta, parametros))
+            self.ultima_consulta = consulta
+            self.ultimos_parametros = parametros
 
         def fetchone(self) -> tuple[int]:
             return (42,)
+
+        def fetchall(self) -> list[tuple[int, str]]:
+            if "RETURNING id, id_externo" in self.ultima_consulta:
+                assert isinstance(self.ultimos_parametros, tuple)
+                return [(42, str(self.ultimos_parametros[0]))]
+            return []
 
     class Conexao:
         def __init__(self) -> None:
@@ -585,6 +693,8 @@ def teste_repositorio_reconcilia_android_por_url_em_lote() -> None:
     class Cursor:
         def __init__(self) -> None:
             self.chamadas: list[tuple[str, object]] = []
+            self.ultima_consulta = ""
+            self.ultimos_parametros: object = None
 
         def __enter__(self) -> Cursor:
             return self
@@ -594,17 +704,23 @@ def teste_repositorio_reconcilia_android_por_url_em_lote() -> None:
 
         def execute(self, consulta: str, parametros: object = None) -> None:
             self.chamadas.append((consulta, parametros))
+            self.ultima_consulta = consulta
+            self.ultimos_parametros = parametros
 
         def fetchone(self) -> tuple[int]:
             return (99,)
 
         def fetchall(self) -> list[tuple[str, str]]:
-            return [
-                (
-                    "https://www.pichau.com.br/pc-gamer-exemplo-12345",
-                    "PC-Pichau-Gamer-12345",
-                )
-            ]
+            if "SELECT DISTINCT ON (url_produto)" in self.ultima_consulta:
+                return [
+                    (
+                        "https://www.pichau.com.br/pc-gamer-exemplo-12345",
+                        "PC-Pichau-Gamer-12345",
+                    )
+                ]
+            if "RETURNING id, id_externo" in self.ultima_consulta:
+                return [(99, "PC-Pichau-Gamer-12345")]
+            return []
 
     class Conexao:
         def __init__(self) -> None:
@@ -644,3 +760,140 @@ def teste_repositorio_reconcilia_android_por_url_em_lote() -> None:
         "SELECT DISTINCT ON (url_produto)" in consulta
         for consulta, _ in conexao.cursor_obj.chamadas
     )
+
+
+def teste_repositorio_rejeita_colisao_de_identidade_antes_de_escrever() -> None:
+    class Cursor:
+        def __init__(self) -> None:
+            self.chamadas: list[tuple[str, object]] = []
+            self.ultima_consulta = ""
+
+        def __enter__(self) -> Cursor:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, consulta: str, parametros: object = None) -> None:
+            self.chamadas.append((consulta, parametros))
+            self.ultima_consulta = consulta
+
+        def fetchall(self) -> list[tuple[str, str]]:
+            if "SELECT DISTINCT ON (url_produto)" in self.ultima_consulta:
+                return [
+                    (
+                        "https://www.pichau.com.br/pc-gamer-colisao",
+                        "SKU-HISTORICO-COLISAO",
+                    )
+                ]
+            return []
+
+    class Conexao:
+        def __init__(self) -> None:
+            self.cursor_obj = Cursor()
+
+        def __enter__(self) -> Conexao:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def cursor(self) -> Cursor:
+            return self.cursor_obj
+
+    conexao = Conexao()
+    repositorio = RepositorioPichauPostgres("postgres://teste", conectar=lambda _: conexao)
+    agora = datetime.now(UTC)
+    produtos = tuple(
+        PichauProduto(
+            id_externo=f"pichau-transitorio-{indice}",
+            nome=f"PC Gamer colisao {indice}",
+            url_produto="https://www.pichau.com.br/pc-gamer-colisao",
+        )
+        for indice in (1, 2)
+    )
+
+    with pytest.raises(FalhaAoGuardarPichau) as falha:
+        repositorio.publicar(
+            99,
+            produtos,
+            ResumoColetaPichau(agora, agora, 2, 2, 2, 0, 0),
+        )
+
+    assert falha.value.codigo == "identidade"
+    assert not any(
+        "INSERT INTO pichau_produto" in consulta for consulta, _ in conexao.cursor_obj.chamadas
+    )
+
+
+def teste_repositorio_publica_produtos_e_medicoes_em_lotes_de_cem() -> None:
+    class Cursor:
+        def __init__(self) -> None:
+            self.chamadas: list[tuple[str, object]] = []
+            self.ultima_consulta = ""
+            self.ultimos_parametros: object = None
+
+        def __enter__(self) -> Cursor:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, consulta: str, parametros: object = None) -> None:
+            self.chamadas.append((consulta, parametros))
+            self.ultima_consulta = consulta
+            self.ultimos_parametros = parametros
+
+        def fetchall(self) -> list[tuple[int, str]]:
+            if "RETURNING id, id_externo" not in self.ultima_consulta:
+                return []
+            assert isinstance(self.ultimos_parametros, tuple)
+            return [
+                (indice + 1, str(self.ultimos_parametros[posicao]))
+                for indice, posicao in enumerate(range(0, len(self.ultimos_parametros), 11))
+            ]
+
+    class Conexao:
+        def __init__(self) -> None:
+            self.cursor_obj = Cursor()
+
+        def __enter__(self) -> Conexao:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def cursor(self) -> Cursor:
+            return self.cursor_obj
+
+    conexao = Conexao()
+    repositorio = RepositorioPichauPostgres("postgres://teste", conectar=lambda _: conexao)
+    agora = datetime.now(UTC)
+    produtos = tuple(
+        PichauProduto(
+            id_externo=f"SKU-LOTE-{indice}",
+            sku=f"SKU-LOTE-{indice}",
+            nome=f"PC Gamer lote {indice}",
+            url_produto=f"https://www.pichau.com.br/pc-gamer-lote-{indice}",
+        )
+        for indice in range(101)
+    )
+
+    repositorio.publicar(
+        99,
+        produtos,
+        ResumoColetaPichau(agora, agora, 101, 2, 101, 101, 0),
+    )
+
+    produtos_sql = [
+        parametros
+        for consulta, parametros in conexao.cursor_obj.chamadas
+        if "INSERT INTO pichau_produto" in consulta
+    ]
+    medicoes_sql = [
+        parametros
+        for consulta, parametros in conexao.cursor_obj.chamadas
+        if "INSERT INTO pichau_medicao" in consulta
+    ]
+    assert [len(parametros) for parametros in produtos_sql] == [1100, 11]
+    assert [len(parametros) for parametros in medicoes_sql] == [1600, 16]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from urllib.parse import urlparse
@@ -49,8 +50,10 @@ def coletar_catalogo(
     itens_lidos = 0
     duplicados = 0
     tentativas = 1
+    inicio_coleta = time.perf_counter()
     try:
         for numero in range(1, max_paginas + 1):
+            inicio_pagina = time.perf_counter()
             if dormir and numero > 1:
                 dormir(1.0)
             html = fonte.pagina(numero)
@@ -78,6 +81,14 @@ def coletar_catalogo(
                 if produto.id_externo in produtos:
                     duplicados += 1
                 produtos[produto.id_externo] = produto
+            _log.info(
+                "Pichau performance: etapa=pagina_processada pagina=%d "
+                "itens=%d total=%d duracao_ms=%d",
+                numero,
+                pagina.itens_lidos,
+                pagina.total,
+                round((time.perf_counter() - inicio_pagina) * 1000),
+            )
             if pagina.ultima:
                 break
         else:
@@ -96,6 +107,15 @@ def coletar_catalogo(
             duplicados=duplicados,
             tentativas=tentativas,
             degradada=degradada,
+        )
+        _log.info(
+            "Pichau performance: etapa=coleta duracao_ms=%d paginas=%d "
+            "itens=%d unicos=%d duplicados=%d",
+            round((time.perf_counter() - inicio_coleta) * 1000),
+            paginas_lidas,
+            itens_lidos,
+            len(produtos),
+            duplicados,
         )
         return tuple(
             sorted(produtos.values(), key=lambda item: (item.nome.casefold(), item.id_externo))
@@ -123,6 +143,8 @@ def criar_fonte_pichau() -> FontePichau:
             device_name=os.getenv("PICHAU_ANDROID_DEVICE_NAME", "Android"),
             udid=os.getenv("PICHAU_ANDROID_UDID") or None,
             adb_port=adb_port,
+            estrategia_leitura=os.getenv("PICHAU_ESTRATEGIA_LEITURA", "dom"),
+            ordenacao=os.getenv("PICHAU_ANDROID_ORDENACAO") or None,
         )
     raise ConfiguracaoPichauInvalida(
         "PICHAU_MODO_NAVEGADOR deve ser headless2, xvfb ou android.", codigo="configuracao"
@@ -146,9 +168,7 @@ def diagnosticar_catalogo(fonte: FontePichau) -> None:
     # O caminho Android/CDP lê a grade renderizada, que não publica SKU no
     # DOM. A publicação reconcilia a identidade por URL; o diagnóstico ainda
     # exige os campos comerciais e a URL segura, mas não inventa SKU.
-    exige_sku = not (
-        isinstance(fonte, FontePichauAndroid) and fonte.criar_driver is None
-    )
+    exige_sku = not (isinstance(fonte, FontePichauAndroid) and fonte.criar_driver is None)
     faltantes = []
     disponibilidades = {"disponivel", "esgotado", "pre_venda", "nao_informado"}
     for produto in pagina.produtos:

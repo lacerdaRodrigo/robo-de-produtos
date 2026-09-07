@@ -15,6 +15,10 @@ LOG_FILE="$LOG_DIR/coleta-$(date +%F).log"
 VENV_DIR="$ROBO_ROOT/.venv"
 APPIUM_SCRIPT="$ROBO_ROOT/scripts/pichau-android-appium.sh"
 
+agora_ms() {
+    date +%s%3N
+}
+
 fail() {
     echo "pichau-android-run: $*" >&2
     exit 1
@@ -38,7 +42,7 @@ while IFS= read -r linha || [[ -n "$linha" ]]; do
     valor="${linha#*=}"
     [[ "$chave" =~ ^[A-Z][A-Z0-9_]*$ ]] || fail "nome de variavel invalido"
     case "$chave" in
-        DATABASE_URL|PICHAU_MODO_NAVEGADOR|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|LOG_LEVEL)
+        DATABASE_URL|PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|LOG_LEVEL)
             export "$chave=$valor"
             ;;
         *)
@@ -82,15 +86,23 @@ liberar_wake_lock() {
 trap liberar_wake_lock EXIT
 
 {
+    inicio_runner_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) inicio coleta Pichau Android"
     cd "$ROBO_ROOT"
+    inicio_preparo_ms="$(agora_ms)"
     "$APPIUM_SCRIPT"
+    fim_preparo_ms="$(agora_ms)"
+    echo "$(date --iso-8601=seconds) Pichau performance: etapa=preparo_runner "\
+        "duracao_ms=$((fim_preparo_ms - inicio_preparo_ms))"
     if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
         PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_pichau.principal; then
         status=0
     else
         status=$?
     fi
+    fim_runner_ms="$(agora_ms)"
+    echo "$(date --iso-8601=seconds) Pichau performance: etapa=runner "\
+        "duracao_ms=$((fim_runner_ms - inicio_runner_ms)) status=$status"
     echo "$(date --iso-8601=seconds) fim coleta Pichau Android status=$status"
     exit "$status"
 } >> "$LOG_FILE" 2>&1

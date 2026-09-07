@@ -1,11 +1,13 @@
 # PRD — Pichau PC Gamer
 
-**Status:** jornada mobile V11 e código backend implementados; diagnóstico e
-três coletas rápidas consecutivas Android foram aprovados no aparelho.
-Credencial restrita, reboot autônomo e validação API/Flutter continuam
+**Status:** jornada mobile V11, executor Android, fila Postgres e workflow
+Pichau integrado ao Android estão versionados; diagnóstico e três coletas
+rápidas consecutivas foram aprovados no aparelho. A fila foi aplicada e o
+worker/watchdog foi validado sem trabalho pendente. A meta de tempo, a
+role/secret exclusivos, o reboot autônomo e a validação API/Flutter continuam
 pendentes.
 
-**Última atualização:** 2026-09-06
+**Última atualização:** 2026-09-07
 
 ## Objetivo
 
@@ -149,14 +151,55 @@ Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
-15h e 21h de Brasília, com intervalos mínimos de seis horas, `DATABASE_URL` em
-secret e sem alterar os demais robôs. A migration foi aplicada e a execução
-Android 22 validou a publicação no Postgres; a publicação externa do workflow
-continua pendente. Em falhas de navegador, o robô registra somente metadados seguros da
-resposta: título, URL final, tamanho e marcadores de desafio/manutenção/payload;
-HTML, cookies e headers não são persistidos nem enviados ao log.
-O agendamento usa `headless2`; uma execução manual pode selecionar `xvfb` para
-comparar os modos sem alterar o padrão agendado.
+14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
+idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
+sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
+O workflow usa preferencialmente `PICHAU_DISPATCH_DATABASE_URL` e, enquanto ele
+não for configurado, cai no secret existente `DATABASE_URL`; o telefone mantém
+a `DATABASE_URL` privada do Termux. Em falhas de navegador, o
+robô registra somente metadados seguros; HTML, cookies e headers não são
+persistidos nem enviados ao log.
+
+## Otimização de tempo Android — implementação versionada, aceite pendente
+
+As execuções rápidas 23 e 24 fecharam em 225 e 227 segundos. A publicação em
+lotes de 100 foi validada novamente em duas execuções reais: a primeira fechou
+em 354,6 segundos e a seguinte, com cancelamento da avaliação CDP presa, em
+237,4 segundos, ambas com 1.169/1.169 itens e 1.169 medições publicadas. Para
+reduzir esse tempo sem alterar o contrato do catálogo, o publicador Android
+grava produtos e medições em lotes de 100 dentro da mesma transação,
+preservando a reconciliação de identidade por URL, a inativação após coleta
+completa, a retenção de 30 dias e a preservação do snapshot anterior em
+qualquer falha. A migration `022_pichau_android_fila.sql` adiciona somente a
+fila operacional; foi aplicada no banco operacional em 2026-09-07 e não altera
+o schema do catálogo. A role exclusiva e o secret separado para o dispatcher
+ainda não foram configurados.
+
+O runner e o coletor registram tempos de preparo, cada página, coleta e
+publicação somente em logs operacionais seguros. A configuração privada
+`PICHAU_ESTRATEGIA_LEITURA` aceita `dom` (padrão) e `fetch`. Quando `fetch` é
+habilitado, a primeira página estabelece a sessão do Chrome e as páginas
+seguintes tentam ler o payload SSR compacto dentro da mesma sessão. Status,
+domínio, total, página e quantidade esperada são validados; qualquer falha
+retorna somente aquela página ao caminho DOM atual. O fallback não reduz as
+garantias de catálogo completo e não persiste HTML, imagens, cookies ou
+headers.
+
+O caminho fetch usa timeout próprio de 18 segundos e termina a avaliação
+JavaScript/CDP que perdeu o prazo antes de cair para o DOM. O aparelho pode
+definir `PICHAU_ANDROID_ORDENACAO` no arquivo privado com uma das ordenações
+públicas `name-asc`, `name-desc`, `price-asc` ou `price-desc`; isso só altera a
+ordem das páginas e mantém a validação do total, faixa e quantidade de itens.
+Em uma medição real, `name-asc` fechou em 255,2 segundos por produzir três
+fallbacks para DOM; por isso a ordenação permanece desabilitada no arquivo
+privado operacional, embora continue disponível para nova medição controlada.
+
+A meta operacional é o runner completo terminar em até 120 segundos. A
+otimização só será declarada concluída após três coletas reais consecutivas
+dentro do limite, com `itens_lidos = itens_unicos = total_declarado` e zero
+duplicados. Falhas, coletas acima do limite, bloqueios e resultados parciais
+mantêm a fase aberta para nova medição e correção; as tentativas reais
+respeitam o intervalo mínimo autorizado de seis horas.
 
 ## Executor Android local — implementação versionada, uma coleta completa aprovada
 
@@ -193,6 +236,25 @@ percorreram 12 páginas e publicaram `1169/1169` itens, zero duplicados e
 Reinicialização e validação API/Flutter continuam pendentes. Livelo e Inter
 permanecem fora desta prova.
 
+## Workflow GitHub Actions e fila Android — implementado, publicação externa pendente
+
+O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
+horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
+usa a mesma fila. Cada execução usa `github_run_id` como chave idempotente,
+insere um trabalho `pendente` e aguarda até 20 minutos os estados `sucesso` ou
+`falha`.
+
+O worker `pichau-android-worker.sh` é iniciado pelo Termux:Boot, consulta a
+fila a cada 30 segundos e reivindica somente um trabalho com `FOR UPDATE SKIP
+LOCKED`. O lease de 30 minutos permite recuperar uma solicitação abandonada
+após queda do aparelho. O job 7301 continua apenas como watchdog de uma rodada;
+ele não executa uma coleta sem solicitação do GitHub.
+
+Nenhum token GitHub é armazenado no Android e nenhuma porta do telefone é
+exposta. Para habilitar a operação, um administrador ainda precisa aplicar
+`migracoes/022_pichau_android_fila.sql`, conceder os privilégios mínimos e
+configurar `PICHAU_DISPATCH_DATABASE_URL` nos secrets do Actions.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
@@ -206,6 +268,13 @@ permanecem fora desta prova.
 
 ## Pendências de operação desta entrega
 
+- Aplicar a migration `022_pichau_android_fila.sql`, criar a credencial mínima
+  da fila, configurar `PICHAU_DISPATCH_DATABASE_URL` e sincronizar o worker no
+  checkout operacional do Samsung.
+- Validar no Samsung a publicação em lotes e a estratégia `fetch` opt-in em
+  três coletas reais consecutivas de até 120 segundos; repetir diagnóstico e
+  correção até o critério ser atingido, respeitando o intervalo mínimo de seis
+  horas.
 - Configurar/deployar a API e o workflow; o repositório e a execução Android não
   provam publicação externa desses serviços.
 - Criar a role Postgres exclusiva, validar o retorno após reinicialização e

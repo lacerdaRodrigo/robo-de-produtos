@@ -572,6 +572,15 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-375 | Adaptador Android isolado | Appium local abre o Chrome nativo com UiAutomator2, o CDP local via ADB lê `products.items`, usa `pageSize=100`, exige a faixa completa renderizada inclusive na última página, preserva o mesmo parser e encerra a ponte/driver; URL remota é rejeitada | `teste_pichau.py` |
 | CT-376 | Diagnóstico não publica | `--diagnostico` valida somente a primeira página e não instancia o repositório; a execução normal continua exigindo `DATABASE_URL` | `teste_pichau.py` |
 | CT-377 | Reconciliação Android por URL | Quando o DOM não oferece SKU, a publicação consulta identidades históricas em lote por URL, preserva o SKU existente e não cria uma identidade duplicada | `teste_pichau.py` |
+| CT-378 | Publicação Pichau em lotes | Produtos e medições são gravados em lotes de 100 dentro da mesma transação, com retorno de todos os IDs, sem alterar o schema nem perder inativação, retenção ou estado da execução | `teste_pichau.py` |
+| CT-379 | Fetch SSR opt-in com fallback | A primeira página usa DOM, páginas seguintes podem usar `PICHAU_ESTRATEGIA_LEITURA=fetch`, a avaliação CDP que perde o prazo é cancelada, e resposta inválida retorna somente a página ao DOM sem publicar catálogo parcial | `teste_pichau.py` |
+| CT-382 | Ordenação Android limitada | A ordenação opcional aceita somente valores públicos conhecidos, entra na URL de cada página e preserva o `pageSize`/faixa exigidos | `teste_pichau.py` |
+| CT-380 | Identidade duplicada não publica | Colisão após reconciliação por URL falha antes das escritas do snapshot e preserva a proteção contra duplicidade | `teste_pichau.py` |
+| CT-381 | Telemetria operacional segura | Runner, páginas, coleta e publicação registram duração e contagens, sem HTML, cookies, headers ou credenciais | `teste_pichau.py` e revisão do runner Termux |
+| CT-383 | Fila Android idempotente | A mesma chave de workflow retorna o trabalho existente; origens e chaves fora do contrato são rejeitadas sem expor a URL do banco | `teste_fila_android.py` |
+| CT-384 | Claim Android com lease | O worker reivindica um trabalho pendente ou abandonado de forma atômica, incrementa tentativas e não permite dois claims simultâneos | `teste_fila_android.py` e migration `022_pichau_android_fila.sql` |
+| CT-385 | Resultado do worker | Saída zero do `pichau-android-run.sh` encerra a fila como `sucesso`; saída diferente de zero encerra como `falha` sem publicar segredo | `teste_fila_android.py` |
+| CT-386 | Workflow produtor Android | Cron 09h/14h/20h, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
 

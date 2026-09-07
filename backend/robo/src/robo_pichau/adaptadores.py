@@ -25,6 +25,10 @@ USER_AGENT = "radar-beneficios-pichau/1 (coleta publica; contato no repositorio)
 TAMANHO_MAXIMO = 8 * 1024 * 1024
 STATUS_RETRY = {408, 425, 429}
 HOSTES_VALIDOS = {"pichau.com.br", "www.pichau.com.br"}
+ESTRATEGIAS_LEITURA_ANDROID = {"dom", "fetch"}
+ORDENACOES_ANDROID = {"name-asc", "name-desc", "price-asc", "price-desc"}
+TAMANHO_LOTE_PUBLICACAO = 100
+LIMITE_FETCH_ANDROID_MS = 18000
 
 
 def robots_permite(conteudo: str, caminho: str, user_agent: str = USER_AGENT) -> bool:
@@ -157,6 +161,7 @@ class FontePichauSeleniumBase:
 
     _TITULOS_BLOQUEIO = ("just a moment", "site em manutenção", "access denied")
     _MARCADORES_DESAFIO = ("cf-turnstile", "g-recaptcha", "hcaptcha")
+
     def __init__(
         self,
         url_categoria: str = URL_CATEGORIA,
@@ -419,9 +424,7 @@ class _ChromeDevTools:
         self._pagina_aberta = False
 
     def abrir(self) -> None:
-        self._executar(
-            ["forward", "--remove", f"tcp:{self.porta_local}"], check=False
-        )
+        self._executar(["forward", "--remove", f"tcp:{self.porta_local}"], check=False)
         self._executar(
             [
                 "forward",
@@ -435,12 +438,64 @@ class _ChromeDevTools:
     def fechar(self) -> None:
         if not self._aberto:
             return
-        self._executar(
-            ["forward", "--remove", f"tcp:{self.porta_local}"], check=False
-        )
+        self._executar(["forward", "--remove", f"tcp:{self.porta_local}"], check=False)
         self._aberto = False
 
     def obter(self, url: str) -> tuple[str, str, str]:
+        socket = self._abrir_socket()
+        try:
+            self._comando(socket, "Page.enable")
+            # A navegacao e a leitura do DOM sao usadas em todas as paginas.
+            # O caminho antigo fazia fetch do SSR e podia transportar mais de
+            # 1 MB por pagina antes de o extrator conseguir trabalhar.
+            resultado = self._navegar_e_ler(socket, url)
+            self._pagina_aberta = True
+        finally:
+            socket.close()
+        valor = resultado.get("result", {}).get("result", {}).get("value")
+        if not isinstance(valor, dict):
+            raise FalhaAoObterPichau("O CDP Android nao devolveu o documento.", codigo="navegador")
+        fonte = valor.get("html")
+        titulo = valor.get("title")
+        url_final = valor.get("url")
+        if not all(isinstance(item, str) for item in (fonte, titulo, url_final)):
+            raise FalhaAoObterPichau("O CDP Android devolveu campos invalidos.", codigo="navegador")
+        return fonte, titulo, url_final
+
+    def obter_fetch(self, url: str) -> tuple[str, str, str]:
+        """Le o payload SSR pela sessao atual, sem renderizar a pagina inteira."""
+
+        socket = self._abrir_socket(timeout=min(self.timeout, LIMITE_FETCH_ANDROID_MS / 1000 + 2.0))
+        try:
+            self._comando(socket, "Page.enable")
+            resultado = self._obter_por_fetch(socket, url)
+        except Exception:
+            self._interromper_execucao()
+            raise
+        finally:
+            socket.close()
+        valor = resultado.get("result", {}).get("result", {}).get("value")
+        if not isinstance(valor, dict):
+            raise FalhaAoObterPichau(
+                "O CDP Android nao devolveu o payload SSR.", codigo="navegador"
+            )
+        status = valor.get("status")
+        if not isinstance(status, int) or status < 200 or status >= 300:
+            raise FalhaAoObterPichau(f"A leitura SSR respondeu HTTP {status}.", codigo="acesso")
+        if not self._catalogo_pronto(valor, url):
+            raise FalhaAoObterPichau(
+                "A leitura SSR nao apresentou um catalogo completo.", codigo="acesso"
+            )
+        fonte = valor.get("html")
+        titulo = valor.get("title")
+        url_final = valor.get("url")
+        if not all(isinstance(item, str) for item in (fonte, titulo, url_final)):
+            raise FalhaAoObterPichau(
+                "O CDP Android devolveu campos SSR invalidos.", codigo="navegador"
+            )
+        return fonte, titulo, url_final
+
+    def _abrir_socket(self, *, timeout: float | None = None):
         try:
             alvo = self._alvo()
         except FalhaPichau:
@@ -461,9 +516,9 @@ class _ChromeDevTools:
         try:
             import websocket
 
-            socket = websocket.create_connection(
+            return websocket.create_connection(
                 alvo,
-                timeout=self.timeout,
+                timeout=self.timeout if timeout is None else timeout,
                 enable_multithread=False,
                 # O endpoint DevTools do Chrome Android rejeita o Origin
                 # padrao enviado pelo websocket-client.
@@ -473,37 +528,30 @@ class _ChromeDevTools:
             raise FalhaAoObterPichau(
                 "websocket-client nao instalado para o CDP Android.", codigo="configuracao"
             ) from erro
-        try:
-            self._comando(socket, "Page.enable")
-            # A navegacao e a leitura do DOM sao usadas em todas as paginas.
-            # O caminho antigo fazia fetch do SSR e podia transportar mais de
-            # 1 MB por pagina antes de o extrator conseguir trabalhar.
-            resultado = self._navegar_e_ler(socket, url)
-            self._pagina_aberta = True
-        finally:
-            socket.close()
-        valor = resultado.get("result", {}).get("result", {}).get("value")
-        if not isinstance(valor, dict):
-            raise FalhaAoObterPichau(
-                "O CDP Android nao devolveu o documento.", codigo="navegador"
-            )
-        fonte = valor.get("html")
-        titulo = valor.get("title")
-        url_final = valor.get("url")
-        if not all(isinstance(item, str) for item in (fonte, titulo, url_final)):
-            raise FalhaAoObterPichau(
-                "O CDP Android devolveu campos invalidos.", codigo="navegador"
-            )
-        return fonte, titulo, url_final
 
     def _obter_por_fetch(self, socket, url: str) -> dict:
         expressao = f"""
             (async () => {{
-                const resposta = await fetch({json.dumps(url)}, {{
-                    credentials: "include",
-                    cache: "no-store",
-                    headers: {{"Accept": "text/html,application/xhtml+xml"}}
-                }});
+                const controlador = new AbortController();
+                const limite = setTimeout(() => controlador.abort(), {LIMITE_FETCH_ANDROID_MS});
+                let resposta;
+                try {{
+                    resposta = await fetch({json.dumps(url)}, {{
+                        credentials: "include",
+                        cache: "no-store",
+                        signal: controlador.signal,
+                        headers: {{"Accept": "text/html,application/xhtml+xml"}}
+                    }});
+                }} catch (_) {{
+                    return {{
+                        status: 599,
+                        html: "",
+                        title: document.title,
+                        url: location.href
+                    }};
+                }} finally {{
+                    clearTimeout(limite);
+                }}
                 const documento = new DOMParser().parseFromString(
                     await resposta.text(), "text/html"
                 );
@@ -593,11 +641,23 @@ class _ChromeDevTools:
                         1, JSON.stringify(minimo)
                     ])}})</script>`;
                 }}
+                const consulta = new URL({json.dumps(url)}).searchParams;
+                const pagina = Number(consulta.get("page") || "1");
+                const porPagina = Number(consulta.get("pageSize") || "36");
+                const total = Number(catalogo?.products?.total_count || 0);
+                const itemCount = catalogo?.products?.items instanceof Array
+                    ? catalogo.products.items.length : 0;
+                const rangeStart = total > 0 ? ((pagina - 1) * porPagina) + 1 : 0;
+                const rangeEnd = total > 0 ? Math.min(pagina * porPagina, total) : 0;
                 return {{
                     status: resposta.status,
                     html,
                     title: document.title,
-                    url: resposta.url
+                    url: resposta.url,
+                    item_count: itemCount,
+                    total_count: total,
+                    range_start: rangeStart,
+                    range_end: rangeEnd
                 }};
             }})()
         """
@@ -606,6 +666,18 @@ class _ChromeDevTools:
             "Runtime.evaluate",
             {"expression": expressao, "returnByValue": True, "awaitPromise": True},
         )
+
+    def _interromper_execucao(self) -> None:
+        """Cancela uma avaliação CDP que perdeu o prazo, evitando fila no Chrome."""
+
+        try:
+            socket = self._abrir_socket(timeout=min(self.timeout, 5.0))
+            try:
+                self._comando(socket, "Runtime.terminateExecution")
+            finally:
+                socket.close()
+        except Exception:
+            _log.debug("Pichau Android: nao foi possivel interromper avaliacao CDP.", exc_info=True)
 
     def _navegar_e_ler(self, socket, url: str) -> dict:
         self._comando(socket, "Page.navigate", {"url": url})
@@ -757,9 +829,7 @@ class _ChromeDevTools:
 
     @classmethod
     def _catalogo_pronto(cls, valor: object, alvo: str) -> bool:
-        if not cls._resposta_catalogo_suficiente(valor) or not cls._url_corresponde(
-            valor, alvo
-        ):
+        if not cls._resposta_catalogo_suficiente(valor) or not cls._url_corresponde(valor, alvo):
             return False
         if not isinstance(valor, dict):
             return False
@@ -816,9 +886,7 @@ class _ChromeDevTools:
 
     def _comando(self, socket, metodo: str, parametros: dict | None = None) -> dict:
         identificador = next(self._ids)
-        socket.send(
-            json.dumps({"id": identificador, "method": metodo, "params": parametros or {}})
-        )
+        socket.send(json.dumps({"id": identificador, "method": metodo, "params": parametros or {}}))
         while True:
             mensagem = socket.recv()
             if isinstance(mensagem, bytes):
@@ -882,6 +950,8 @@ class FontePichauAndroid:
         dormir: Callable[[float], None] = time.sleep,
         criar_driver: Callable[..., object] | None = None,
         cdp: _ChromeDevTools | None = None,
+        estrategia_leitura: str = "dom",
+        ordenacao: str | None = None,
     ) -> None:
         self.url_categoria = url_categoria
         self.por_pagina = self._POR_PAGINA
@@ -898,6 +968,19 @@ class FontePichauAndroid:
         self.criar_driver = criar_driver
         self.cdp = cdp
         self._driver = None
+        estrategia = estrategia_leitura.strip().lower()
+        if estrategia not in ESTRATEGIAS_LEITURA_ANDROID:
+            raise FalhaAoObterPichau(
+                "PICHAU_ESTRATEGIA_LEITURA deve ser dom ou fetch.", codigo="configuracao"
+            )
+        self.estrategia_leitura = estrategia
+        ordenacao_normalizada = (ordenacao or "").strip().lower()
+        if ordenacao_normalizada and ordenacao_normalizada not in ORDENACOES_ANDROID:
+            raise FalhaAoObterPichau(
+                "PICHAU_ANDROID_ORDENACAO deve ser name-asc, name-desc, price-asc ou price-desc.",
+                codigo="configuracao",
+            )
+        self.ordenacao = ordenacao_normalizada or None
 
     def __enter__(self) -> FontePichauAndroid:
         try:
@@ -930,9 +1013,7 @@ class FontePichauAndroid:
             if self.cdp is not None:
                 self.cdp.fechar()
         except FalhaPichau as erro:
-            _log.warning(
-                "Pichau Android: falha ao remover ponte CDP; codigo=%s.", erro.codigo
-            )
+            _log.warning("Pichau Android: falha ao remover ponte CDP; codigo=%s.", erro.codigo)
         finally:
             self._encerrar_driver()
 
@@ -998,6 +1079,8 @@ class FontePichauAndroid:
     def _obter(self, url: str, contexto: str, pagina: int | None) -> str:
         self._exigir_driver()
         for tentativa in range(1, self.tentativas + 1):
+            inicio = time.perf_counter()
+            estrategia = "dom"
             try:
                 if self.cdp is None:
                     self._driver.get(url)
@@ -1005,7 +1088,34 @@ class FontePichauAndroid:
                     fonte = self._driver.page_source
                     titulo = str(getattr(self._driver, "title", ""))
                 else:
-                    fonte, titulo, url_final = self.cdp.obter(url)
+                    if (
+                        contexto == "catalogo"
+                        and (pagina or 1) > 1
+                        and self.estrategia_leitura == "fetch"
+                    ):
+                        try:
+                            fonte, titulo, url_final = self.cdp.obter_fetch(url)
+                            estrategia = "fetch"
+                        except FalhaPichau as erro_fetch:
+                            _log.warning(
+                                "Pichau Android: fetch falhou na pagina %s; "
+                                "fallback para DOM; codigo=%s.",
+                                pagina,
+                                erro_fetch.codigo,
+                            )
+                            fonte, titulo, url_final = self.cdp.obter(url)
+                            estrategia = "dom_fallback"
+                        except Exception as erro_fetch:
+                            _log.warning(
+                                "Pichau Android: fetch falhou na pagina %s; "
+                                "fallback para DOM; tipo=%s.",
+                                pagina,
+                                type(erro_fetch).__name__,
+                            )
+                            fonte, titulo, url_final = self.cdp.obter(url)
+                            estrategia = "dom_fallback"
+                    else:
+                        fonte, titulo, url_final = self.cdp.obter(url)
                 if not isinstance(fonte, str):
                     raise FalhaAoObterPichau(
                         "O navegador Android nao devolveu HTML.", codigo="navegador"
@@ -1031,6 +1141,14 @@ class FontePichauAndroid:
                     )
                 if contexto == "catalogo":
                     self._validar_catalogo(fonte, pagina or 1, url)
+                _log.info(
+                    "Pichau Android performance: etapa=pagina pagina=%s "
+                    "estrategia=%s duracao_ms=%d bytes=%d",
+                    pagina,
+                    estrategia,
+                    round((time.perf_counter() - inicio) * 1000),
+                    len(fonte.encode("utf-8")),
+                )
                 return fonte
             except FalhaPichau:
                 if tentativa == self.tentativas:
@@ -1122,6 +1240,8 @@ class FontePichauAndroid:
 
     def _url_pagina(self, pagina: int) -> str:
         parametros = {"pageSize": self.por_pagina}
+        if self.ordenacao:
+            parametros["sort"] = self.ordenacao
         if pagina > 1:
             parametros["page"] = pagina
         separador = "&" if "?" in self.url_categoria else "?"
@@ -1200,6 +1320,7 @@ class RepositorioPichauPostgres:
         concluida = resumo.concluida_em
         try:
             with self.conectar(self.url) as conexao, conexao.cursor() as cursor:
+                inicio_publicacao = time.perf_counter()
                 ids_publicados: list[str] = []
                 identidades_por_url: dict[str, str] = {}
                 if any(produto.sku is None for produto in produtos):
@@ -1220,6 +1341,8 @@ class RepositorioPichauPostgres:
                     for url_produto, id_existente in cursor.fetchall():
                         if isinstance(url_produto, str) and isinstance(id_existente, str):
                             identidades_por_url[url_produto] = id_existente
+                produtos_resolvidos: list[tuple[str, PichauProduto]] = []
+                identidades_vistas: set[str] = set()
                 for produto in produtos:
                     id_externo = produto.id_externo
                     if produto.sku is None:
@@ -1228,25 +1351,18 @@ class RepositorioPichauPostgres:
                         # a identidade histórica para não criar uma segunda
                         # linha do mesmo produto.
                         id_externo = identidades_por_url.get(produto.url_produto, id_externo)
+                    if id_externo in identidades_vistas:
+                        raise FalhaAoGuardarPichau(
+                            "A coleta resultou em identidades Pichau duplicadas.",
+                            codigo="identidade",
+                        )
+                    identidades_vistas.add(id_externo)
                     ids_publicados.append(id_externo)
-                    cursor.execute(
-                        """
-                            INSERT INTO pichau_produto (
-                              id_externo, sku, nome, nome_busca, marca, marca_busca,
-                              categoria_externa,
-                              url_produto, disponibilidade, presente_no_catalogo, visto_em
-                            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,TRUE,%s)
-                            ON CONFLICT (id_externo) DO UPDATE SET
-                              sku=COALESCE(EXCLUDED.sku, pichau_produto.sku),
-                              nome=EXCLUDED.nome, nome_busca=EXCLUDED.nome_busca,
-                              marca=COALESCE(EXCLUDED.marca, pichau_produto.marca),
-                              categoria_externa=EXCLUDED.categoria_externa,
-                              url_produto=EXCLUDED.url_produto,
-                              disponibilidade=EXCLUDED.disponibilidade,
-                              presente_no_catalogo=TRUE, visto_em=EXCLUDED.visto_em,
-                              atualizado_em=now()
-                            RETURNING id
-                            """,
+                    produtos_resolvidos.append((id_externo, produto))
+                ids_por_externo: dict[str, int] = {}
+                inicio_produtos = time.perf_counter()
+                for lote in _lotes(produtos_resolvidos):
+                    valores = [
                         (
                             id_externo,
                             produto.sku,
@@ -1257,39 +1373,96 @@ class RepositorioPichauPostgres:
                             produto.categoria_externa,
                             produto.url_produto,
                             produto.disponibilidade,
+                            True,
                             concluida,
-                        ),
-                    )
-                    produto_id = int(cursor.fetchone()[0])
+                        )
+                        for id_externo, produto in lote
+                    ]
                     cursor.execute(
-                        """
+                        f"""
+                            INSERT INTO pichau_produto (
+                              id_externo, sku, nome, nome_busca, marca, marca_busca,
+                              categoria_externa,
+                              url_produto, disponibilidade, presente_no_catalogo, visto_em
+                            ) VALUES {_placeholders(len(valores), 11)}
+                            ON CONFLICT (id_externo) DO UPDATE SET
+                              sku=COALESCE(EXCLUDED.sku, pichau_produto.sku),
+                              nome=EXCLUDED.nome, nome_busca=EXCLUDED.nome_busca,
+                              marca=COALESCE(EXCLUDED.marca, pichau_produto.marca),
+                              categoria_externa=EXCLUDED.categoria_externa,
+                              url_produto=EXCLUDED.url_produto,
+                              disponibilidade=EXCLUDED.disponibilidade,
+                              presente_no_catalogo=TRUE, visto_em=EXCLUDED.visto_em,
+                              atualizado_em=now()
+                            RETURNING id, id_externo
+                            """,
+                        _achatar(valores),
+                    )
+                    retornos = cursor.fetchall()
+                    if len(retornos) != len(lote):
+                        raise FalhaAoGuardarPichau(
+                            "A publicação Pichau não retornou todos os produtos.",
+                            codigo="banco",
+                        )
+                    for produto_id, id_lote in retornos:
+                        ids_por_externo[str(id_lote)] = int(produto_id)
+                _log.info(
+                    "Pichau performance: etapa=publicar_produtos duracao_ms=%d itens=%d lotes=%d",
+                    round((time.perf_counter() - inicio_produtos) * 1000),
+                    len(produtos_resolvidos),
+                    (len(produtos_resolvidos) + TAMANHO_LOTE_PUBLICACAO - 1)
+                    // TAMANHO_LOTE_PUBLICACAO,
+                )
+
+                inicio_medicoes = time.perf_counter()
+                for lote in _lotes(produtos_resolvidos):
+                    valores = []
+                    for id_externo, produto in lote:
+                        produto_id = ids_por_externo.get(id_externo)
+                        if produto_id is None:
+                            raise FalhaAoGuardarPichau(
+                                "A publicação Pichau perdeu a identidade de um produto.",
+                                codigo="banco",
+                            )
+                        valores.append(
+                            (
+                                execucao_id,
+                                produto_id,
+                                concluida,
+                                produto.preco_original_valor,
+                                produto.preco_original_texto,
+                                produto.preco_pix_valor,
+                                produto.preco_pix_texto,
+                                produto.desconto_pix_valor,
+                                produto.desconto_pix_texto,
+                                produto.preco_cartao_valor,
+                                produto.preco_cartao_texto,
+                                produto.parcelamento,
+                                produto.valor_parcela_texto,
+                                produto.sem_juros,
+                                produto.estoque_texto,
+                                list(produto.etiquetas),
+                            )
+                        )
+                    cursor.execute(
+                        f"""
                             INSERT INTO pichau_medicao (
                               execucao_id, produto_id, momento, preco_original,
                               preco_original_texto,
                               preco_pix, preco_pix_texto, desconto_pix, desconto_pix_texto,
                               preco_cartao, preco_cartao_texto, parcelamento, valor_parcela_texto,
                               sem_juros, estoque_texto, etiquetas
-                            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            ) VALUES {_placeholders(len(valores), 16)}
                             """,
-                        (
-                            execucao_id,
-                            produto_id,
-                            concluida,
-                            produto.preco_original_valor,
-                            produto.preco_original_texto,
-                            produto.preco_pix_valor,
-                            produto.preco_pix_texto,
-                            produto.desconto_pix_valor,
-                            produto.desconto_pix_texto,
-                            produto.preco_cartao_valor,
-                            produto.preco_cartao_texto,
-                            produto.parcelamento,
-                            produto.valor_parcela_texto,
-                            produto.sem_juros,
-                            produto.estoque_texto,
-                            list(produto.etiquetas),
-                        ),
+                        _achatar(valores),
                     )
+                _log.info(
+                    "Pichau performance: etapa=publicar_medicoes duracao_ms=%d itens=%d lotes=%d",
+                    round((time.perf_counter() - inicio_medicoes) * 1000),
+                    len(produtos_resolvidos),
+                    (len(produtos_resolvidos) + TAMANHO_LOTE_PUBLICACAO - 1)
+                    // TAMANHO_LOTE_PUBLICACAO,
+                )
                 cursor.execute(
                     "UPDATE pichau_produto SET presente_no_catalogo=FALSE, "
                     "atualizado_em=now() WHERE categoria_externa='PC Gamer' "
@@ -1320,6 +1493,13 @@ class RepositorioPichauPostgres:
                     "DELETE FROM pichau_medicao WHERE momento < %s",
                     (concluida - timedelta(days=30),),
                 )
+                _log.info(
+                    "Pichau performance: etapa=publicacao duracao_ms=%d itens=%d",
+                    round((time.perf_counter() - inicio_publicacao) * 1000),
+                    len(produtos_resolvidos),
+                )
+        except FalhaAoGuardarPichau:
+            raise
         except Exception as erro:
             raise FalhaAoGuardarPichau(
                 "Nao foi possivel publicar o snapshot Pichau.", codigo="banco"
@@ -1346,6 +1526,20 @@ def _busca(valor: str) -> str:
     return " ".join(
         unicodedata.normalize("NFKD", valor).encode("ascii", "ignore").decode().lower().split()
     )
+
+
+def _lotes(valores: list[tuple], tamanho: int = TAMANHO_LOTE_PUBLICACAO):
+    for inicio in range(0, len(valores), tamanho):
+        yield valores[inicio : inicio + tamanho]
+
+
+def _placeholders(quantidade: int, colunas: int) -> str:
+    linha = "(" + ",".join(["%s"] * colunas) + ")"
+    return ",".join([linha] * quantidade)
+
+
+def _achatar(valores: list[tuple]) -> tuple:
+    return tuple(item for linha in valores for item in linha)
 
 
 def agora_utc() -> datetime:

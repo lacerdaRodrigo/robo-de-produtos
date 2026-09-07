@@ -50,8 +50,9 @@ python -m robo_pichau.principal --diagnostico
 - O coletor do Inter exige `DATABASE_URL`.
 - O diagnóstico Pichau lê somente a primeira página, valida `products.items` e
   não cria execução ou conexão no banco. A coleta normal exige `DATABASE_URL`.
-- O workflow hospedado continua usando `.[pichau]` e SeleniumBase. Para a
-  tentativa Android, instale `.[pichau-android]`, mantenha Appium/UiAutomator2
+- O workflow Pichau enfileira a execução no Postgres e aguarda o Android; ele
+  não instala SeleniumBase nem coleta no Ubuntu. Para operação Android,
+  instale `.[pichau-android]`, mantenha Appium/UiAutomator2
   em `127.0.0.1` e use `PICHAU_MODO_NAVEGADOR=android`. No Samsung 32-bit,
   UiAutomator2 abre o Chrome nativo e `websocket-client` lê o DOM pelo CDP
   local via ADB; não há download de ChromeDriver ARM32. A listagem Android
@@ -73,15 +74,32 @@ python -m robo_pichau.principal --diagnostico
   A extração devolve somente a grade principal e os campos comerciais mínimos;
   a URL, a faixa exibida e todos os cards esperados são validados antes de
   aceitar uma página. O intervalo Android é de 1–2 segundos entre páginas.
+  Para medir a otimização, `PICHAU_ESTRATEGIA_LEITURA=fetch` pode ser definido
+  somente no arquivo privado do Termux; a primeira página continua no DOM e as
+  páginas seguintes usam o payload SSR compacto quando válido, com fallback
+  automático para DOM. `PICHAU_ANDROID_ORDENACAO` aceita somente as ordenações
+  públicas `name-asc`, `name-desc`, `price-asc` e `price-desc`; ela muda apenas
+  a ordem de leitura, não o conjunto esperado de produtos. O padrão é vazio.
+  Os logs registram duração e contagens, nunca HTML, cookies ou credenciais; a
+  publicação usa lotes de 100 na mesma transação. O fetch Android tem limite
+  controlado e cancela uma avaliação CDP que perdeu o prazo antes do fallback,
+  evitando deixar requisições pendentes no Chrome.
   `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
   o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço
   persistente não bloquear o próximo job;
-  `scripts/pichau-android-schedule.sh` agenda uma janela aproximada de seis
-  horas, somente em rede não tarifada e sem exigir carregador, e
-  `scripts/pichau-android-boot.sh` inicia o Appium e pode ser instalado no
-  Termux:Boot. A bateria é uma condição operacional do Android: não há alerta
-  automático; se o aparelho desligar por falta de bateria, a tentativa termina
-  e o último catálogo válido permanece no banco.
+  `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos e
+  executa o runner somente quando há solicitação do GitHub. O
+  `pichau-android-schedule.sh` mantém o job 7301 como watchdog de recuperação,
+  sem coleta independente; a coleta recorrente é enfileirada pelo workflow às
+  09h, 14h e 20h de Brasília. `scripts/pichau-android-boot.sh` inicia Appium,
+  worker e watchdog no Termux:Boot. A bateria é uma condição operacional do
+  Android: não há alerta automático; se o aparelho desligar, a fila permanece
+  recuperável e o último catálogo válido continua no banco.
+- A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
+  idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
+  usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
+  mantém a `DATABASE_URL` privada do Termux, sempre com SSL e permissões
+  restritas às tabelas Pichau e à fila.
 - Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.
 - Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
   válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.
