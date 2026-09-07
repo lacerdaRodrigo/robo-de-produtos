@@ -69,9 +69,7 @@ def _url_segura(url: str, base: str = "https://www.pichau.com.br") -> str:
     return completa
 
 
-def id_por_url(
-    url: str, sku: str | None = None, *, preferir_slug: bool = False
-) -> str:
+def id_por_url(url: str, sku: str | None = None, *, preferir_slug: bool = False) -> str:
     if sku:
         return sku.strip()
     caminho = urlparse(url).path.rstrip("/")
