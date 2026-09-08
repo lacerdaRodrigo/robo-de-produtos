@@ -585,6 +585,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-383 | Fila Android idempotente | A mesma chave de workflow retorna o trabalho existente; origens e chaves fora do contrato são rejeitadas sem expor a URL do banco | `teste_fila_android.py` |
 | CT-384 | Claim Android com lease | O worker reivindica um trabalho pendente ou abandonado de forma atômica, incrementa tentativas e não permite dois claims simultâneos | `teste_fila_android.py` e migration `022_pichau_android_fila.sql` |
 | CT-385 | Resultado do worker | Saída zero do `pichau-android-run.sh` encerra a fila como `sucesso`; saída diferente de zero encerra como `falha` sem publicar segredo | `teste_fila_android.py` |
+| CT-387 | Pré-voo do executor Android | O runner registra falha operacional e rejeita serial USB do host; somente um endpoint ADB `host:porta` acessível pelo próprio Android pode iniciar a coleta | `pichau-android-run.sh` e validação operacional no Samsung |
 | CT-386 | Workflow produtor Android | Cron 09h/14h/20h, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |

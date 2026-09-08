@@ -45,11 +45,16 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
   bloqueio (`directBootAware=false`) e nenhum worker/Appium iniciou enquanto ela
   estava bloqueada. É preciso aceitar esse desbloqueio após reinício ou decidir
   explicitamente sobre a remoção da tela de bloqueio; não alterar a segurança
-  do aparelho automaticamente. O transporte operacional voltou ao ADB USB;
-  Wireless Debugging permanece opcional e desligado.
-- [ ] Diagnosticar e corrigir as falhas das execuções automáticas
-  `34158686905` e `34174437207`, ocorridas após a troca do ADB TCP temporário
-  pelo serial USB; ambas falharam antes de uma nova coleta completa aceita.
+  do aparelho automaticamente. O transporte do host continua USB para
+  gerenciamento, mas o worker dentro do Samsung usa ADB TCP local em
+  `127.0.0.1:5555`, pois o processo Android não consegue usar o serial USB do
+  próprio host. Wireless Debugging permanece opcional e desligado.
+- [x] Diagnosticar e corrigir as falhas das execuções automáticas
+  `34158686905` e `34174437207`: a troca para o serial USB deixou o worker sem
+  um endpoint ADB acessível dentro do Android e o runner terminou com
+  `runner-2`/código `navegador`. O Samsung voltou ao endpoint local
+  `127.0.0.1:5555`, o runner passou a rejeitar serial USB com código explícito
+  e a execução `34182214027` confirmou fila, coleta e publicação completas.
 - [ ] Preparar e validar o Wireless Debugging pareado como transporte
   alternativo, sem remover o cabo USB; ele continua desligado e não bloqueia a
   operação atual.
@@ -57,6 +62,7 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: as execuções 22, 23 e 24 publicaram `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
 - [x] Fazer três execuções consecutivas do caminho rápido: 22, 23 e 24 fecharam `sucesso`/`completa`, `1169/1169` únicos, zero duplicados e 1.169 medições.
 - [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir `dom`, `fetch` e `rede` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa e respeitando pelo menos seis horas entre execuções. A execução `34136108063` publicou 1.169/1.169 com zero duplicados em 214,3s de runner (205,9s de coleta); a tentativa `name-asc` fechou em 255,2s e foi desabilitada. A execução `34144116813` também fechou completa, em 221,9s de runner e 214,2s de coleta. A execução `34148112344` ficou abaixo da meta, em 87,5s de runner e 79,6s de coleta, mas as duas execuções seguintes falharam após a troca para USB; a série de três coletas aceitas deverá ser reiniciada depois da correção.
+- [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir `dom`, `fetch` e `rede` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa e respeitando pelo menos seis horas entre execuções. A execução `34136108063` publicou 1.169/1.169 com zero duplicados em 214,3s de runner (205,9s de coleta); a tentativa `name-asc` fechou em 255,2s e foi desabilitada. A execução `34144116813` também fechou completa, em 221,9s de runner e 214,2s de coleta. A execução `34148112344` ficou abaixo da meta, em 87,5s de runner e 79,6s de coleta. Após a correção do transporte, `34182214027` publicou `1169/1169`, zero duplicados, em aproximadamente 73,5s de coleta; ela é a primeira rodada da nova série e ainda faltam duas, com intervalo mínimo de seis horas.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

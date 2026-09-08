@@ -20,17 +20,25 @@ agora_ms() {
 }
 
 fail() {
-    echo "pichau-android-run: $*" >&2
-    exit 1
+    local mensagem="$1"
+    local codigo="${2:-2}"
+    mkdir -p "${LOG_DIR:-/data/data/com.termux/files/usr/var/log/robo-pichau}" \
+        2>/dev/null || true
+    if [[ -n "${LOG_FILE:-}" ]]; then
+        echo "$(date --iso-8601=seconds) falha preflight codigo=$codigo mensagem=$mensagem" \
+            >> "$LOG_FILE" 2>/dev/null || true
+    fi
+    echo "pichau-android-run: $mensagem" >&2
+    exit "$codigo"
 }
+
+mkdir -p "$LOG_DIR" "$LOCK_DIR"
+chmod 700 "$LOG_DIR" "$LOCK_DIR"
 
 [[ -f "$CONFIG_FILE" ]] || fail "arquivo de configuracao ausente: $CONFIG_FILE"
 [[ -O "$CONFIG_FILE" ]] || fail "arquivo de configuracao nao pertence ao usuario atual"
 [[ "$(stat -c '%a' "$CONFIG_FILE")" == "600" || "$(stat -c '%a' "$CONFIG_FILE")" == "400" ]] \
     || fail "arquivo de configuracao deve ter permissao 600 ou 400"
-
-mkdir -p "$LOG_DIR" "$LOCK_DIR"
-chmod 700 "$LOG_DIR" "$LOCK_DIR"
 
 # O formato aceito e intencionalmente pequeno: nao ha expansao de shell,
 # command substitution ou interpretacao de aspas.
@@ -61,6 +69,21 @@ case "$DATABASE_URL" in
     *) fail "DATABASE_URL precisa exigir SSL (sslmode=require, verify-ca ou verify-full)" ;;
 esac
 
+command -v adb >/dev/null 2>&1 || fail "adb ausente; instale Android Platform Tools" 3
+ADB_PORT="${PICHAU_ANDROID_ADB_PORT:-5037}"
+ADB_TARGET="${PICHAU_ANDROID_UDID:-}"
+[[ -n "$ADB_TARGET" ]] || fail "PICHAU_ANDROID_UDID ausente no executor Android" 3
+[[ "$ADB_TARGET" == *:* ]] || fail \
+    "PICHAU_ANDROID_UDID deve ser um endpoint host:porta acessivel pelo Android; o serial USB do host nao serve" 3
+unset ADB_SERVER_SOCKET
+adb -P "$ADB_PORT" start-server >/dev/null 2>&1 \
+    || fail "servidor ADB local nao iniciou" 3
+adb -P "$ADB_PORT" connect "$ADB_TARGET" >/dev/null 2>&1 \
+    || fail "nao foi possivel conectar ao endpoint ADB $ADB_TARGET" 3
+estado_adb="$(adb -P "$ADB_PORT" -s "$ADB_TARGET" get-state 2>/dev/null || true)"
+[[ "$estado_adb" == "device" ]] || fail \
+    "endpoint ADB $ADB_TARGET nao esta pronto (estado=${estado_adb:-indisponivel})" 3
+
 command -v flock >/dev/null 2>&1 || fail "flock ausente; instale util-linux"
 command -v termux-wake-lock >/dev/null 2>&1 || fail "termux-wake-lock ausente; instale Termux:API"
 [[ -x "$VENV_DIR/bin/python" ]] || fail "ambiente Python ausente: $VENV_DIR"
@@ -88,6 +111,7 @@ trap liberar_wake_lock EXIT
 {
     inicio_runner_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) inicio coleta Pichau Android"
+    echo "$(date --iso-8601=seconds) executor ADB alvo=$ADB_TARGET"
     cd "$ROBO_ROOT"
     inicio_preparo_ms="$(agora_ms)"
     "$APPIUM_SCRIPT"

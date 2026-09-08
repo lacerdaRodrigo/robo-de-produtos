@@ -1,4 +1,4 @@
-# Plano e registro — validação Android, Cashback Inter e Pichau
+# Plano e registro — validação Android e Pichau
 
 **Status:** em execução
 
@@ -7,14 +7,14 @@
 ## Objetivo
 
 Validar no Samsung conectado por USB o retorno do Termux:Boot após reinício,
-o aplicativo mobile com as condições completas do Cashback Inter e a coleta
-Pichau com `pageSize=200`. A configuração de ADB sem fio será preparada como
-alternativa, sem remover o cabo durante esta validação.
+o aplicativo mobile na jornada Pichau e a coleta Pichau com `pageSize=200`. A
+configuração de ADB sem fio será preparada como alternativa, sem remover o
+cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
 
 ## Ordem operacional
 
 1. Confirmar ADB, Android desbloqueado, worker, Appium e job 7301 após o reboot.
-2. Instalar/abrir o APK e validar login, autorização e Cashback Inter no device.
+2. Instalar/abrir o APK e validar a jornada Pichau no device.
 3. Executar os testes unitários/widgets diretamente relacionados e os gates
    estáticos.
 4. Disparar três coletas reais Pichau em intervalos mínimos de seis horas.
@@ -25,8 +25,6 @@ alternativa, sem remover o cabo durante esta validação.
 
 - Worker, Appium e job 7301 voltam após reinício e primeiro desbloqueio.
 - Nenhuma coleta ocorre sem solicitação pendente.
-- Cashback Inter abre as condições integrais, com descrição longa, múltiplas
-  regras, quebras de linha e ausência representada corretamente.
 - Três coletas Pichau consecutivas publicam 1.169/1.169, zero duplicados,
   estado completo/sucesso e duração inferior a 120 segundos.
 - Nenhuma senha ou URL de banco aparece no repositório, nos logs ou no APK.
@@ -45,10 +43,6 @@ alternativa, sem remover o cabo durante esta validação.
 - O retorno pós-reboot foi confirmado: `sys.boot_completed=1`, worker persistente,
   Appium em `127.0.0.1:4723` e job 7301 ativo, sem coleta pendente antes dos
   disparos.
-- O APK debug foi instalado no Samsung e a folha de condições do Cashback Inter
-  foi validada com dados reais: uma loja sem descrição mostrou o estado neutro e
-  uma loja com descrição mostrou o texto integral, incluindo quebra de linha e
-  regras para correntista/não correntista.
 - A execução `34141699813` fechou `1169/1169`, `1169` únicos e zero duplicados,
   mas levou `275831 ms` no runner; é evidência de integridade, não aprovação de
   tempo.
@@ -71,13 +65,14 @@ alternativa, sem remover o cabo durante esta validação.
   contada como uma das três coletas aceitas.
 - Após essa rodada, o ADB TCP temporário foi encerrado (`service.adb.tcp.port=0`)
   e o arquivo privado passou a usar o serial USB `RX8W105DHSY`; o cabo segue
-  conectado. O Wireless Debugging continua desligado e não é necessário para
-  o transporte atual.
+  conectado. Essa configuração falhou porque o worker roda dentro do próprio
+  Android. O executor foi corrigido para usar novamente `127.0.0.1:5555`,
+  mantendo o USB do host conectado para gerenciamento.
 - As execuções automáticas `34158686905` e `34174437207` falharam logo após a
-  troca para o serial USB, antes de uma nova coleta completa aceita. O
-  diagnóstico dessa regressão ficou pendente para a próxima etapa; pela
-  política do plano, a série de três coletas aceitas será reiniciada depois da
-  correção.
+  troca para o serial USB. O diagnóstico identificou a ausência de um endpoint
+  ADB acessível pelo Android; o runner agora registra o pré-voo e rejeita essa
+  configuração. A execução `34182214027` confirmou a correção com publicação
+  completa em aproximadamente 73,5 segundos de coleta.
 
 ## Política de tentativa
 
@@ -85,6 +80,6 @@ Se uma coleta real falhar ou não cumprir qualquer critério, a sequência de tr
 rodadas será reiniciada. Diagnóstico e correção podem ocorrer imediatamente,
 mas as novas coletas reais respeitarão pelo menos seis horas entre execuções.
 
-O cabo USB não será removido durante a validação da Pichau ou do Cashback Inter.
-O ADB sem fio será pareado como alternativa; a prova sem cabo fica para uma
-operação posterior específica.
+O cabo USB não será removido durante a validação da Pichau. O ADB sem fio será
+pareado como alternativa; a prova sem cabo fica para uma operação posterior
+específica.
