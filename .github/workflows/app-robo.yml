@@ -4,10 +4,20 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      distribuir:
+        description: "Enviar a APK para o Drive privado e notificar por e-mail"
+        required: false
+        default: false
+        type: boolean
 
 # Mesma regra dos demais workflows: o token nao precisa de escrita.
 permissions:
   contents: read
+
+concurrency:
+  group: app-robo-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
 
 jobs:
   flutter:
@@ -44,15 +54,67 @@ jobs:
             -print0 |
             xargs -0 flutter test --exclude-tags web
 
-      - name: Gerar APK debug para aceite manual
-        if: github.event_name == 'workflow_dispatch'
-        run: flutter build apk --debug --dart-define=ATIVAR_APP_CHECK=false
+  distribuir_apk:
+    name: Distribuir APK privada
+    needs: flutter
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.actor != 'github-actions[bot]') ||
+      (github.event_name == 'workflow_dispatch' && inputs.distribuir == true)
+    runs-on: ubuntu-latest
 
-      - name: Disponibilizar APK
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
         with:
-          name: robo-produtos-android-debug
-          path: app/build/app/outputs/flutter-apk/app-debug.apk
-          if-no-files-found: error
-          retention-days: 7
+          flutter-version: "3.44.1"
+          cache: true
+
+      - name: Dependencias Flutter
+        working-directory: app
+        run: flutter pub get
+
+      - name: Gerar APK debug interna
+        working-directory: app
+        shell: bash
+        run: |
+          set -euo pipefail
+          build_number=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))
+          flutter build apk --debug \
+            --build-number="$build_number" \
+            --dart-define=API_URL=https://robo-de-produtos.vercel.app \
+            --dart-define=ATIVAR_APP_CHECK=false
+          mkdir -p "$RUNNER_TEMP/radar-apk"
+          short_sha="${GITHUB_SHA:0:8}"
+          app_version="$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)"
+          apk_name="robo-app-debug-${app_version}-${GITHUB_RUN_ID}-${short_sha}.apk"
+          cp build/app/outputs/flutter-apk/app-debug.apk "$RUNNER_TEMP/radar-apk/$apk_name"
+          {
+            echo "APK_PATH=$RUNNER_TEMP/radar-apk/$apk_name"
+            echo "APK_NAME=$apk_name"
+            echo "APP_VERSION=$app_version+$build_number"
+          } >> "$GITHUB_ENV"
+
+      - name: Instalar cliente Google
+        run: python3 -m pip install --disable-pip-version-check --no-input \
+          google-api-python-client google-auth google-auth-httplib2 google-auth-oauthlib
+
+      - name: Publicar no Drive privado e enviar aviso
+        env:
+          GOOGLE_DRIVE_OAUTH_CLIENT_JSON: ${{ secrets.GOOGLE_DRIVE_OAUTH_CLIENT_JSON }}
+          GOOGLE_DRIVE_REFRESH_TOKEN: ${{ secrets.GOOGLE_DRIVE_REFRESH_TOKEN }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          EMAIL_REMETENTE: ${{ secrets.EMAIL_REMETENTE }}
+          EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
+          SENHA_APP_GMAIL: ${{ secrets.SENHA_APP_GMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/distribuir_apk_drive.py distribute \
+            --apk "$APK_PATH" \
+            --file-name "$APK_NAME" \
+            --run-key "$GITHUB_RUN_ID" \
+            --run-id "$GITHUB_RUN_ID" \
+            --sha "$GITHUB_SHA" \
+            --version "$APP_VERSION"

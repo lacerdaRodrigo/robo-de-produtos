@@ -13,9 +13,14 @@ nunca em arquivo versionado.
 | [`pichau.yml`](workflows/pichau.yml) | Enfileira a coleta PC Gamer no executor Android e aguarda a publicação | 09h/14h/20h + manual | `PICHAU_DISPATCH_DATABASE_URL` ou `DATABASE_URL` |
 | [`testes.yml`](workflows/testes.yml) | CI de robôs/API: Ruff, Pytest, TypeScript, ESLint e Vitest | a cada push/PR | nenhum |
 | [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
-| [`app-robo.yml`](workflows/app-robo.yml) | CI mobile: format, analyze e unitários/widgets permitidos | a cada push/PR | nenhum |
+| [`app-robo.yml`](workflows/app-robo.yml) | CI mobile; na `main` aprovada, gera APK debug e envia cópia privada ao Drive com aviso por e-mail | a cada push/PR; distribuição na `main` ou manual | `GOOGLE_DRIVE_OAUTH_CLIENT_JSON`, `GOOGLE_DRIVE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID`, `EMAIL_DESTINO`, `EMAIL_REMETENTE`, `SENHA_APP_GMAIL` |
 
-O CI do app não executa Web, integration, E2E ou smoke e não faz deploy.
+O CI do app não executa Web, integration, E2E ou smoke. Pull requests apenas
+validam; a distribuição de APK acontece somente após push humano na `main` ou
+por disparo manual explícito. A APK não é publicada como artifact do GitHub,
+porque o repositório é público: ela vai para uma pasta privada do Drive e o
+e-mail contém somente o link autorizado. Essa distribuição não é homologação;
+o app aponta para a API atual de produção.
 Os workflows de coleta permanecem separados do workflow de validação Flutter.
 
 ## Permissões
