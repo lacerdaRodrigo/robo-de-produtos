@@ -1,16 +1,17 @@
 # Plano — Samsung como executor local da Pichau
 
 **Status:** executor rápido Android, publicação em lotes, telemetria, fila
-Postgres e workflow GitHub integrado estão versionados; três coletas rápidas
-consecutivas foram comprovadas no Samsung. A migration da fila foi aplicada, o
+Postgres e workflow GitHub integrado estão versionados. Três coletas rápidas de
+integridade já foram comprovadas no Samsung; a nova série exigida para a meta de
+até 120 segundos está em andamento. A migration da fila foi aplicada, o
 workflow real passou pelo GitHub e o worker/watchdog foi validado com
 publicação no banco. O retorno pós-reboot foi validado após o primeiro
-desbloqueio; o boot totalmente autônomo antes dele, a meta de até 120 segundos
-fica pendente. As credenciais exclusivas foram criadas e a pipeline
-`34136108063` foi validada com o secret separado. O catálogo já foi conferido
-pela API/aplicativo.
+desbloqueio; o boot totalmente autônomo antes dele continua pendente. As
+credenciais exclusivas foram criadas e a pipeline `34136108063` foi validada
+com o secret separado. O catálogo e a jornada Pichau já foram conferidos pela
+API/aplicativo.
 
-**Última atualização:** 2026-09-07
+**Última atualização:** 2026-09-08
 
 Este plano trata um telefone Android como executor local do robô Pichau
 conectado ao Wi‑Fi. O Samsung pode operar fora do notebook, usando somente a
@@ -299,14 +300,19 @@ simultâneas.
 O telefone já fechou três execuções consecutivas bem-sucedidas (22, 23 e 24),
 com `itens_unicos=total_declarado` e `duplicados=0`. As pipelines reais
 `34081623450` e `34136108063` também aguardaram o worker e terminaram com 1.169
-produtos e 1.169 medições publicadas. O código de inicialização está pronto e o retorno
-pós-reboot foi validado após o primeiro desbloqueio: o worker e o Appium
-ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
+produtos e 1.169 medições publicadas. O código de inicialização está pronto e o
+retorno pós-reboot foi validado após o primeiro desbloqueio: o worker e o
+Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
 totalmente autônoma antes desse desbloqueio permanece bloqueada pela tela de
-bloqueio do Android. Após a coleta real `34148112344`, o executor voltou ao
-ADB USB com `PICHAU_ANDROID_UDID=RX8W105DHSY` e `service.adb.tcp.port=0`,
-mantendo o cabo conectado. Provas adicionais de falha preservando o snapshot e de ausência
-de concorrência ficam como hardening futuro.
+bloqueio do Android. Depois das falhas `34158686905` e `34174437207`, o
+executor foi corrigido para usar `PICHAU_ANDROID_UDID=127.0.0.1:5555` dentro
+do Samsung; o USB `RX8W105DHSY` permanece conectado apenas para gerenciamento
+do host. A execução `34182214027` confirmou novamente fila, coleta completa e
+publicação. O Wireless Debugging foi pareado e validado no host e no Termux em
+`192.168.2.128:35613`, sem migrar o transporte operacional do worker. No APK,
+a jornada Pichau foi aceita no aparelho com catálogo, paginação, busca,
+histórico, link externo e retorno. Provas adicionais de falha preservando o
+snapshot e de ausência de concorrência ficam como hardening futuro.
 Temperatura, bateria e armazenamento devem ser observados manualmente, mas não
 criam alerta automático nem tornam o carregador obrigatório. Livelo e Inter só
 podem ser avaliados depois disso.
@@ -345,6 +351,12 @@ eventos CDP de resposta que chegam antes do retorno de `Page.navigate` e cai par
 DOM quando necessário. A ordenação opcional deve ser
 medida somente com um valor público permitido; ela não autoriza reduzir o
 intervalo entre páginas, omitir páginas ou paralelizar a coleta.
+
+A execução `34182214027` é a primeira rodada da nova série após a correção do
+transporte: publicou `1169/1169`, zero duplicados, em aproximadamente 73,5
+segundos de coleta. Ainda faltam duas coletas reais aceitas, cada uma com pelo
+menos seis horas desde a anterior. Se qualquer uma falhar ou ultrapassar 120
+segundos, a série deve ser reiniciada, sem registrar sucesso parcial.
 
 Se o aparelho estiver sem Wi‑Fi, ADB, banco ou acesso operacional, a tentativa
 fica bloqueada externamente e a pendência permanece aberta; não se deve marcar

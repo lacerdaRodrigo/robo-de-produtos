@@ -1,8 +1,10 @@
 # Plano e registro — validação Android e Pichau
 
-**Status:** em execução
+**Status:** em execução — jornada do app e transporte validados; série de tempo pendente
 
 **Data de início:** 2026-09-07
+
+**Última atualização:** 2026-09-08
 
 ## Objetivo
 
@@ -19,7 +21,8 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
    estáticos.
 4. Disparar três coletas reais Pichau em intervalos mínimos de seis horas.
 5. Medir cada rodada no banco e nos logs do Android.
-6. Configurar Wireless Debugging mantendo o USB como transporte principal.
+6. [x] Parear e validar Wireless Debugging mantendo o USB conectado e o
+   transporte local do worker preservado.
 
 ## Critérios de aceite
 
@@ -32,7 +35,9 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
 ## Estado inicial desta execução
 
 - O Samsung `SM-M135M` foi reiniciado e desbloqueado pelo responsável.
-- A conexão atual permanece `RX8W105DHSY device usb`.
+- A conexão de gerenciamento permanece `RX8W105DHSY device usb`; o host também
+  validou o endpoint Wireless Debugging `192.168.2.128:35613` sem remover o
+  cabo.
 - `sys.boot_completed=1`.
 - Processos Termux, Termux:API, Appium Settings e `tmux` estão presentes.
 - A validação dos arquivos privados do Termux será feita por comandos locais sem
@@ -73,6 +78,15 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
   ADB acessível pelo Android; o runner agora registra o pré-voo e rejeita essa
   configuração. A execução `34182214027` confirmou a correção com publicação
   completa em aproximadamente 73,5 segundos de coleta.
+- A aceitação manual do aplicativo no Samsung foi concluída: Serviços → Pichau,
+  catálogo real com 1.169 ofertas, paginação nas páginas 1 e 2 de 59, busca
+  `ryzen`, histórico com 7 medições, abertura do SKU no Chrome e retorno ao app.
+  A tela permaneceu utilizável no modo noturno do sistema e foi restaurada ao
+  modo claro.
+- O Wireless Debugging pareado foi validado no host e no Termux com
+  `adb get-state=device` em `192.168.2.128:35613`. O cabo USB continua conectado
+  e o worker não foi migrado para esse endpoint: sua configuração operacional
+  permanece `127.0.0.1:5555`.
 
 ## Política de tentativa
 
@@ -80,6 +94,6 @@ Se uma coleta real falhar ou não cumprir qualquer critério, a sequência de tr
 rodadas será reiniciada. Diagnóstico e correção podem ocorrer imediatamente,
 mas as novas coletas reais respeitarão pelo menos seis horas entre execuções.
 
-O cabo USB não será removido durante a validação da Pichau. O ADB sem fio será
-pareado como alternativa; a prova sem cabo fica para uma operação posterior
-específica.
+O cabo USB não será removido durante a validação da Pichau. O ADB sem fio foi
+pareado e validado como alternativa com o cabo conectado; a prova sem cabo fica
+para uma operação posterior específica.

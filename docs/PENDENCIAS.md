@@ -13,7 +13,12 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [ ] Fazer conferências manuais no Samsung quando uma entrega mobile exigir aceite físico. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
-- [ ] Fazer aceite manual da jornada Pichau no Samsung: entrada por Serviços, retorno, paginação, busca, histórico, estados de catálogo e abertura de link externo.
+- [x] Fazer aceite manual da jornada Pichau no Samsung: entrada por Serviços,
+  retorno, paginação (páginas 1 e 2 de 59), busca por `ryzen` (683 ofertas),
+  histórico real (7 medições), abertura do produto no Chrome e retorno ao app
+  preservando a jornada. O modo noturno do sistema também foi alternado e
+  restaurado sem overflow; estados de falha/ausência continuam cobertos pelos
+  widgets, sem fabricar dados no device.
 
 ## Pichau — operação externa e evolução
 
@@ -48,20 +53,22 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
   do aparelho automaticamente. O transporte do host continua USB para
   gerenciamento, mas o worker dentro do Samsung usa ADB TCP local em
   `127.0.0.1:5555`, pois o processo Android não consegue usar o serial USB do
-  próprio host. Wireless Debugging permanece opcional e desligado.
+  próprio host. Wireless Debugging foi pareado e validado como alternativa em
+  `192.168.2.128:35613`, mantendo o cabo USB conectado; a operação continua
+  usando o endpoint local `127.0.0.1:5555`.
 - [x] Diagnosticar e corrigir as falhas das execuções automáticas
   `34158686905` e `34174437207`: a troca para o serial USB deixou o worker sem
   um endpoint ADB acessível dentro do Android e o runner terminou com
   `runner-2`/código `navegador`. O Samsung voltou ao endpoint local
   `127.0.0.1:5555`, o runner passou a rejeitar serial USB com código explícito
   e a execução `34182214027` confirmou fila, coleta e publicação completas.
-- [ ] Preparar e validar o Wireless Debugging pareado como transporte
-  alternativo, sem remover o cabo USB; ele continua desligado e não bloqueia a
-  operação atual.
+- [x] Preparar e validar o Wireless Debugging pareado como transporte
+  alternativo, sem remover o cabo USB: o host e o Termux conectaram ao
+  endpoint `192.168.2.128:35613` e `adb get-state` retornou `device`. O cabo e
+  o transporte local do worker permanecem preservados.
 - [x] Executar no aparelho o diagnóstico e as coletas de prova; as execuções 6 e 8 fecharam 1.169/1.169 com zero duplicados antes da otimização. Livelo e Inter continuam fora da prova.
 - [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: as execuções 22, 23 e 24 publicaram `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
 - [x] Fazer três execuções consecutivas do caminho rápido: 22, 23 e 24 fecharam `sucesso`/`completa`, `1169/1169` únicos, zero duplicados e 1.169 medições.
-- [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir `dom`, `fetch` e `rede` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa e respeitando pelo menos seis horas entre execuções. A execução `34136108063` publicou 1.169/1.169 com zero duplicados em 214,3s de runner (205,9s de coleta); a tentativa `name-asc` fechou em 255,2s e foi desabilitada. A execução `34144116813` também fechou completa, em 221,9s de runner e 214,2s de coleta. A execução `34148112344` ficou abaixo da meta, em 87,5s de runner e 79,6s de coleta, mas as duas execuções seguintes falharam após a troca para USB; a série de três coletas aceitas deverá ser reiniciada depois da correção.
 - [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir `dom`, `fetch` e `rede` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa e respeitando pelo menos seis horas entre execuções. A execução `34136108063` publicou 1.169/1.169 com zero duplicados em 214,3s de runner (205,9s de coleta); a tentativa `name-asc` fechou em 255,2s e foi desabilitada. A execução `34144116813` também fechou completa, em 221,9s de runner e 214,2s de coleta. A execução `34148112344` ficou abaixo da meta, em 87,5s de runner e 79,6s de coleta. Após a correção do transporte, `34182214027` publicou `1169/1169`, zero duplicados, em aproximadamente 73,5s de coleta; ela é a primeira rodada da nova série e ainda faltam duas, com intervalo mínimo de seis horas.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
