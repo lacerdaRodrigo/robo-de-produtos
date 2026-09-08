@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.65.2 (2026-09-08)
+
+### Bug Fixes
+
+- **pichau**: Usar ADB Wi-Fi descoberto com segurança
+  ([`afd3d31`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/afd3d319f4b3df33f2f0e54aedb5ba8a08cf559f))
+
+### Documentation
+
+- Registrar aceite Android da Pichau
+  ([`58aeaa2`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/58aeaa2308f7c5797a5697f33c494c0a8023cf38))
+
+
 ## v1.65.1 (2026-09-08)
 
 ### Bug Fixes
