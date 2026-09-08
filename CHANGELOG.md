@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.65.1 (2026-09-08)
+
+### Bug Fixes
+
+- Validar transporte ADB do executor Android
+  ([`6b41c04`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6b41c047e94f7f5f6c146805066725418f6557ea))
+
+
 ## v1.65.0 (2026-09-08)
 
 ### Code Style
