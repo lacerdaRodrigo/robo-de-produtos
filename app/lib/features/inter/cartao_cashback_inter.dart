@@ -8,6 +8,81 @@ import 'formato_cashback_inter.dart';
 const _descricaoAusente =
     'O Inter não informou condições adicionais nesta consulta';
 
+Future<void> _abrirCondicoesCashback(
+  BuildContext context,
+  CashbackInter loja,
+) async {
+  await mostrarFolhaRadar<void>(
+    context,
+    alturaMaxima: 0.86,
+    builder: (contexto) => FolhaRadar(
+      titulo: 'Condições de cashback',
+      descricao: loja.nome,
+      child: Flexible(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Para correntista',
+                style: Theme.of(
+                  contexto,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                loja.cashbackPrincipalTexto ?? 'Oferta não informada',
+                style: Theme.of(contexto).textTheme.titleLarge?.copyWith(
+                  color: CoresRadar.de(contexto).ganho,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                loja.descricaoPrincipal ?? _descricaoAusente,
+                key: ValueKey('condicoes-principal-${loja.id}'),
+                style: Theme.of(contexto).textTheme.bodyMedium?.copyWith(
+                  color: CoresRadar.de(contexto).textoSuave,
+                  height: 1.45,
+                ),
+              ),
+              if (loja.cashbackSecundarioTexto != null ||
+                  loja.descricaoSecundaria != null) ...[
+                const SizedBox(height: 22),
+                const Divider(),
+                const SizedBox(height: 14),
+                Text(
+                  'Para não-correntista',
+                  style: Theme.of(contexto).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  loja.cashbackSecundarioTexto ?? 'Oferta não informada',
+                  style: Theme.of(contexto).textTheme.titleMedium?.copyWith(
+                    color: CoresRadar.de(contexto).ganho,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  loja.descricaoSecundaria ?? _descricaoAusente,
+                  key: ValueKey('condicoes-secundaria-${loja.id}'),
+                  style: Theme.of(contexto).textTheme.bodyMedium?.copyWith(
+                    color: CoresRadar.de(contexto).textoSuave,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class CartaoCashbackInter extends StatelessWidget {
   const CartaoCashbackInter({
     super.key,
@@ -333,6 +408,27 @@ class _CartaoCompacto extends StatelessWidget {
             runSpacing: 7,
             alignment: WrapAlignment.end,
             children: [
+              OutlinedButton.icon(
+                key: ValueKey('condicoes-${loja.id}'),
+                onPressed: () => _abrirCondicoesCashback(context, loja),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 8,
+                  ),
+                  foregroundColor: cores.acao,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                ),
+                icon: const Icon(Icons.subject_outlined, size: 15),
+                label: const Text('Ver condições'),
+              ),
               if (podeAdministrar)
                 OutlinedButton.icon(
                   key: ValueKey('acompanhar-${loja.id}'),

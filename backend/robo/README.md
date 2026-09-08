@@ -56,7 +56,7 @@ python -m robo_pichau.principal --diagnostico
   em `127.0.0.1` e use `PICHAU_MODO_NAVEGADOR=android`. No Samsung 32-bit,
   UiAutomator2 abre o Chrome nativo e `websocket-client` lê o DOM pelo CDP
   local via ADB; não há download de ChromeDriver ARM32. A listagem Android
-  usa `pageSize=100`, exige a faixa completa renderizada inclusive na última
+  usa `pageSize=200`, exige a faixa completa renderizada inclusive na última
   página e reconcilia por URL com SKU histórico quando o DOM não o publica.
 - No Termux, instale `libxml2`, `libxslt` e `libpq` antes do ambiente Python.
   O Android ARM32 usa `psycopg` puro contra o `libpq` do Termux; os runners
@@ -66,7 +66,9 @@ python -m robo_pichau.principal --diagnostico
   `scripts/pichau-android-run.sh` lê um arquivo privado
   `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
   `flock`, `termux-wake-lock` e um `.venv`; `PICHAU_ANDROID_ADB_PORT` é
-  opcional para uma ponte ADB local durante a validação; ele não imprime a
+  opcional para uma ponte ADB local durante a validação. Após a coleta real
+  `34148112344`, o Samsung validado usa `PICHAU_ANDROID_UDID=RX8W105DHSY`
+  pelo cabo USB, com ADB TCP temporário desligado. O runner não imprime a
   `DATABASE_URL`.
   Na execução recorrente, o Chrome já aberto é lido diretamente pelo CDP local
   via ADB: o Appium/UiAutomator2 fica disponível para configuração,
@@ -74,16 +76,20 @@ python -m robo_pichau.principal --diagnostico
   A extração devolve somente a grade principal e os campos comerciais mínimos;
   a URL, a faixa exibida e todos os cards esperados são validados antes de
   aceitar uma página. O intervalo Android é de 1–2 segundos entre páginas.
-  Para medir a otimização, `PICHAU_ESTRATEGIA_LEITURA=fetch` pode ser definido
-  somente no arquivo privado do Termux; a primeira página continua no DOM e as
-  páginas seguintes usam o payload SSR compacto quando válido, com fallback
-  automático para DOM. `PICHAU_ANDROID_ORDENACAO` aceita somente as ordenações
+  Para medir a otimização, `PICHAU_ESTRATEGIA_LEITURA=fetch` ou `rede` pode ser
+  definido somente no arquivo privado do Termux. `fetch` tenta o payload SSR
+  dentro da sessão e, no Android, pré-carrega em paralelo as páginas restantes
+  depois de descobrir o total; `rede` captura a resposta HTML antes da montagem
+  completa do DOM. Ambos têm fallback automático para DOM. O caminho DOM traz o Chrome
+  para frente e bloqueia imagens, fontes e telemetria sem uso no catálogo.
+  `PICHAU_ANDROID_ORDENACAO` aceita somente as ordenações
   públicas `name-asc`, `name-desc`, `price-asc` e `price-desc`; ela muda apenas
   a ordem de leitura, não o conjunto esperado de produtos. O padrão é vazio.
   Os logs registram duração e contagens, nunca HTML, cookies ou credenciais; a
   publicação usa lotes de 100 na mesma transação. O fetch Android tem limite
   controlado e cancela uma avaliação CDP que perdeu o prazo antes do fallback,
-  evitando deixar requisições pendentes no Chrome.
+  evitando deixar requisições pendentes no Chrome. Falha em qualquer página
+  pré-carregada aborta a coleta; não há publicação parcial.
   `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
   o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço
   persistente não bloquear o próximo job;
@@ -91,10 +97,15 @@ python -m robo_pichau.principal --diagnostico
   executa o runner somente quando há solicitação do GitHub. O
   `pichau-android-schedule.sh` mantém o job 7301 como watchdog de recuperação,
   sem coleta independente; a coleta recorrente é enfileirada pelo workflow às
-  09h, 14h e 20h de Brasília. `scripts/pichau-android-boot.sh` inicia Appium,
-  worker e watchdog no Termux:Boot. A bateria é uma condição operacional do
-  Android: não há alerta automático; se o aparelho desligar, a fila permanece
-  recuperável e o último catálogo válido continua no banco.
+  09h, 14h e 20h de Brasília. `scripts/pichau-android-boot.sh` inicia primeiro
+  worker/watchdog e depois o Appium no Termux:Boot, sem aguardar o `/status` do
+  Appium no boot, e registra `var/log/robo-pichau/boot.log`. Na ROM Samsung
+  testada, o Android mantém o receiver do Termux:Boot pendente até o primeiro
+  desbloqueio após reiniciar; essa limitação precisa ser resolvida
+  operacionalmente antes de declarar o aparelho autônomo. A bateria é uma
+  condição operacional do Android: não há alerta automático; se o aparelho
+  desligar, a fila permanece recuperável e o último catálogo válido continua
+  no banco.
 - A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
   idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
   usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone

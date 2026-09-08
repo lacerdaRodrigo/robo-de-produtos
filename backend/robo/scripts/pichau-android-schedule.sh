@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # Agenda uma verificação de recuperação da fila. Este job não coleta por conta
 # própria: o worker só executa quando existe uma solicitação do GitHub Actions.

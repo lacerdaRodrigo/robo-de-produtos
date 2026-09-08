@@ -2,10 +2,14 @@
 
 **Status:** jornada mobile V11, executor Android, fila Postgres e workflow
 Pichau integrado ao Android estão versionados; diagnóstico e três coletas
-rápidas consecutivas foram aprovados no aparelho. A fila foi aplicada e o
-worker/watchdog foi validado sem trabalho pendente. A meta de tempo, a
-role/secret exclusivos, o reboot autônomo e a validação API/Flutter continuam
-pendentes.
+rápidas consecutivas foram aprovados no aparelho. A fila foi aplicada, o
+worker/watchdog foi validado sem trabalho pendente e a execução real
+`34081623450` publicou 1.169 produtos e 1.169 medições pelo caminho completo.
+`34136108063` repetiu o caminho completo com o secret separado. A meta de tempo
+continua pendente; a
+API e o catálogo no aplicativo já foram conferidos. O código de boot foi
+corrigido e o retorno pós-reboot foi validado sem abrir o Termux; o primeiro
+desbloqueio da tela do Samsung ainda é necessário.
 
 **Última atualização:** 2026-09-07
 
@@ -16,10 +20,9 @@ fonte subordinada a **Serviços** e sem criar um quarto destino no `BottomDock`.
 O aplicativo deve consultar somente o catálogo persistido pela API e permitir
 abrir o produto real na Pichau.
 
-Este documento incorpora o recorte mobile e o backend executados a partir de
-[`planos/PLANO-PICHAU.md`](../planos/PLANO-PICHAU.md). O coletor, o banco e a
-publicação da API não são considerados aplicados ou publicados apenas por
-existirem no repositório.
+Este documento reúne o recorte mobile e o backend executados para a Pichau. O
+coletor, o banco e a publicação da API não são considerados aplicados ou
+publicados apenas por existirem no repositório.
 
 ## Gate obrigatório de viabilidade da fonte
 
@@ -145,8 +148,11 @@ payload `products.items`, o SKU `PCM-Pichau-Gamer-67332` e `total_count=1169`.
 No Samsung, as execuções 6 e 8 percorreram 33 páginas, publicaram 1.169
 produtos e 1.169 medições com qualidade `completa`. A execução concorrente 7
 falhou com código `acesso` antes de publicar e o snapshot anterior permaneceu
-válido. O caminho Android rápido usa `pageSize=100`, extrai a grade principal
+válido. O caminho Android rápido usa `pageSize=200`, extrai a grade principal
 por CDP e exige a quantidade esperada de cartões, inclusive na última página.
+A sondagem real confirmou 200 cards na primeira página, 169 na sexta e total
+1.169; a primeira coleta completa com esse novo tamanho ainda precisa ser
+medida dentro do intervalo operacional de seis horas.
 Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
 
@@ -154,9 +160,9 @@ O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
 idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
 sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
-O workflow usa preferencialmente `PICHAU_DISPATCH_DATABASE_URL` e, enquanto ele
-não for configurado, cai no secret existente `DATABASE_URL`; o telefone mantém
-a `DATABASE_URL` privada do Termux. Em falhas de navegador, o
+O workflow usa `PICHAU_DISPATCH_DATABASE_URL`; o fallback para o secret amplo
+`DATABASE_URL` permanece somente para recuperação controlada. O telefone mantém
+a credencial privada do publicador no Termux. Em falhas de navegador, o
 robô registra somente metadados seguros; HTML, cookies e headers não são
 persistidos nem enviados ao log.
 
@@ -165,28 +171,37 @@ persistidos nem enviados ao log.
 As execuções rápidas 23 e 24 fecharam em 225 e 227 segundos. A publicação em
 lotes de 100 foi validada novamente em duas execuções reais: a primeira fechou
 em 354,6 segundos e a seguinte, com cancelamento da avaliação CDP presa, em
-237,4 segundos, ambas com 1.169/1.169 itens e 1.169 medições publicadas. Para
+237,4 segundos, ambas com 1.169/1.169 itens e 1.169 medições publicadas. A
+execução `34136108063` com credenciais separadas fechou em 214,3 segundos de
+runner, com 205,9 segundos de coleta e o mesmo resultado completo. Para
 reduzir esse tempo sem alterar o contrato do catálogo, o publicador Android
 grava produtos e medições em lotes de 100 dentro da mesma transação,
 preservando a reconciliação de identidade por URL, a inativação após coleta
 completa, a retenção de 30 dias e a preservação do snapshot anterior em
 qualquer falha. A migration `022_pichau_android_fila.sql` adiciona somente a
 fila operacional; foi aplicada no banco operacional em 2026-09-07 e não altera
-o schema do catálogo. A role exclusiva e o secret separado para o dispatcher
-ainda não foram configurados.
+o schema do catálogo. As roles `pichau_dispatcher` e `pichau_publisher` foram
+configuradas com grants mínimos, e o secret separado do dispatcher foi validado
+na execução `34136108063`.
 
 O runner e o coletor registram tempos de preparo, cada página, coleta e
 publicação somente em logs operacionais seguros. A configuração privada
-`PICHAU_ESTRATEGIA_LEITURA` aceita `dom` (padrão) e `fetch`. Quando `fetch` é
-habilitado, a primeira página estabelece a sessão do Chrome e as páginas
-seguintes tentam ler o payload SSR compacto dentro da mesma sessão. Status,
+`PICHAU_ESTRATEGIA_LEITURA` aceita `dom` (padrão), `fetch` e `rede`. O caminho
+DOM traz a aba Chrome para frente, desabilita cache e bloqueia imagens, fontes
+e telemetria que não entram no modelo. O caminho `fetch` tenta ler o payload SSR
+dentro da sessão; o caminho `rede` captura a resposta HTML após
+`Network.loadingFinished`, antes da montagem completa dos cards. Status,
 domínio, total, página e quantidade esperada são validados; qualquer falha
 retorna somente aquela página ao caminho DOM atual. O fallback não reduz as
 garantias de catálogo completo e não persiste HTML, imagens, cookies ou
 headers.
 
-O caminho fetch usa timeout próprio de 18 segundos e termina a avaliação
-JavaScript/CDP que perdeu o prazo antes de cair para o DOM. O aparelho pode
+O caminho fetch usa timeout próprio de 50 segundos e termina a avaliação
+JavaScript/CDP que perdeu o prazo antes de cair para o DOM. Na coleta Android,
+a primeira página descobre o total e as páginas restantes são pré-carregadas em
+paralelo, cada uma com a mesma validação e fallback individual. O caminho rede
+preserva eventos CDP emitidos antes da confirmação de `Page.navigate` e também
+retorna ao DOM quando a resposta não pode ser capturada. O aparelho pode
 definir `PICHAU_ANDROID_ORDENACAO` no arquivo privado com uma das ordenações
 públicas `name-asc`, `name-desc`, `price-asc` ou `price-desc`; isso só altera a
 ordem das páginas e mantém a validação do total, faixa e quantidade de itens.
@@ -225,18 +240,32 @@ a própria bateria. Appium, Termux e Job Scheduler ficam locais; o carregador é
 uma ação manual opcional e o agendamento não usa a condição `--charging` nem
 envia alerta automático de bateria. Se o aparelho desligar por falta de
 energia, a tentativa pode ser interrompida sem substituir o último catálogo
-válido. Cabo USB/notebook ficam restritos à configuração inicial, diagnóstico
-e recuperação após reboot quando Wi‑Fi ou depuração sem fio forem desligados.
+válido. O Termux:Boot foi instalado e o script atualizado inicia worker,
+watchdog 7301 e Appium, com log em `var/log/robo-pichau/boot.log`; no Samsung
+testado, contudo, o Android 14 mantém esse receiver pendente na tela de
+bloqueio porque ele não é `directBootAware`. Assim, o primeiro desbloqueio
+após reiniciar ainda é uma ação operacional necessária. Cabo USB/notebook
+ficam restritos à configuração inicial, diagnóstico e recuperação quando Wi‑Fi
+ou depuração sem fio forem desligados.
 
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
 Postgres exclusiva para operação contínua. As execuções 22, 23 e 24
 percorreram 12 páginas e publicaram `1169/1169` itens, zero duplicados e
 1.169 medições; as execuções 23 e 24 terminaram em 225 e 227 segundos.
-Reinicialização e validação API/Flutter continuam pendentes. Livelo e Inter
-permanecem fora desta prova.
+O retorno após reinicialização foi testado por USB em 2026-09-07 sem abrir o
+Termux: enquanto a tela estava bloqueada, o Android manteve
+`com.termux.boot.BootReceiver` como `PENDING OFFLOAD`, com
+`directBootAware=false`; após o primeiro desbloqueio, o receiver executou o
+script e o worker, Appium e job 7301 ficaram ativos. A API autenticada e o
+catálogo no aplicativo foram conferidos após as execuções reais
+`34081623450` e `34136108063`. A execução `34148112344` validou o prefetch com
+`1169/1169`, zero duplicados, `79630 ms` de coleta e `87479 ms` de runner.
+Depois dela, o executor voltou ao ADB USB pelo serial `RX8W105DHSY`; a porta
+TCP temporária foi desligada e o cabo permanece conectado.
+Livelo e Inter permanecem fora desta prova.
 
-## Workflow GitHub Actions e fila Android — implementado, publicação externa pendente
+## Workflow GitHub Actions e fila Android — implementado e validado em execução real
 
 O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
 horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
@@ -244,16 +273,22 @@ usa a mesma fila. Cada execução usa `github_run_id` como chave idempotente,
 insere um trabalho `pendente` e aguarda até 20 minutos os estados `sucesso` ou
 `falha`.
 
-O worker `pichau-android-worker.sh` é iniciado pelo Termux:Boot, consulta a
-fila a cada 30 segundos e reivindica somente um trabalho com `FOR UPDATE SKIP
-LOCKED`. O lease de 30 minutos permite recuperar uma solicitação abandonada
-após queda do aparelho. O job 7301 continua apenas como watchdog de uma rodada;
-ele não executa uma coleta sem solicitação do GitHub.
+O worker `pichau-android-worker.sh` é iniciado pelo Termux:Boot depois que o
+Android libera o receiver, consulta a fila a cada 30 segundos e reivindica
+somente um trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos permite
+recuperar uma solicitação abandonada após queda do aparelho. O job 7301
+continua apenas como watchdog de uma rodada; ele não executa uma coleta sem
+solicitação do GitHub. O boot inicia o worker antes do Appium e não espera o
+endpoint do Appium ficar pronto; a coleta normal continua fazendo sua própria
+espera controlada.
 
-Nenhum token GitHub é armazenado no Android e nenhuma porta do telefone é
-exposta. Para habilitar a operação, um administrador ainda precisa aplicar
-`migracoes/022_pichau_android_fila.sql`, conceder os privilégios mínimos e
-configurar `PICHAU_DISPATCH_DATABASE_URL` nos secrets do Actions.
+Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
+`127.0.0.1`; o ADB TCP local necessário ao executor pode expor a porta 5555 na
+interface do aparelho e continua sujeito à configuração segura de depuração do
+Android. A migration `022_pichau_android_fila.sql` já foi aplicada e as
+execuções reais `34081623450` e `34136108063` confirmaram o caminho GitHub →
+fila → worker Android → banco/API. As credenciais mínimas separadas estão
+configuradas; o fallback para `DATABASE_URL` permanece funcional.
 
 ## Jornada mobile V11 entregue
 
@@ -268,17 +303,15 @@ configurar `PICHAU_DISPATCH_DATABASE_URL` nos secrets do Actions.
 
 ## Pendências de operação desta entrega
 
-- Aplicar a migration `022_pichau_android_fila.sql`, criar a credencial mínima
-  da fila, configurar `PICHAU_DISPATCH_DATABASE_URL` e sincronizar o worker no
-  checkout operacional do Samsung.
-- Validar no Samsung a publicação em lotes e a estratégia `fetch` opt-in em
-  três coletas reais consecutivas de até 120 segundos; repetir diagnóstico e
-  correção até o critério ser atingido, respeitando o intervalo mínimo de seis
-  horas.
-- Configurar/deployar a API e o workflow; o repositório e a execução Android não
-  provam publicação externa desses serviços.
-- Criar a role Postgres exclusiva, validar o retorno após reinicialização e
-  conferir o catálogo pela API/Flutter.
+- Decidir se o primeiro desbloqueio após reinicialização é aceitável ou se a
+  tela de bloqueio será removida explicitamente; o código não altera essa
+  proteção. O executor também depende do ADB local TCP `127.0.0.1:5555`, que
+  nesta prova foi reativado por USB e ainda não tem persistência comprovada
+  após reboot. Depois disso, validar uma falha preservando o snapshot anterior
+  e a ausência de duas coletas simultâneas.
+- Validar em três coletas reais consecutivas o alvo de até 120 segundos,
+  respeitando o intervalo mínimo de seis horas; as coletas atuais estão
+  completas, mas ainda acima do alvo.
 - Inclusão da Pichau na busca global de Produtos.
 
 ## Critérios de aceite

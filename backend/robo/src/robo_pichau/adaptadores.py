@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import random
 import subprocess
 import time
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from itertools import count
 from urllib.parse import parse_qs, urlencode, urlparse
@@ -25,10 +27,32 @@ USER_AGENT = "radar-beneficios-pichau/1 (coleta publica; contato no repositorio)
 TAMANHO_MAXIMO = 8 * 1024 * 1024
 STATUS_RETRY = {408, 425, 429}
 HOSTES_VALIDOS = {"pichau.com.br", "www.pichau.com.br"}
-ESTRATEGIAS_LEITURA_ANDROID = {"dom", "fetch"}
+ESTRATEGIAS_LEITURA_ANDROID = {"dom", "fetch", "rede"}
 ORDENACOES_ANDROID = {"name-asc", "name-desc", "price-asc", "price-desc"}
 TAMANHO_LOTE_PUBLICACAO = 100
-LIMITE_FETCH_ANDROID_MS = 18000
+# O servidor da Pichau pode levar mais de 18 s para entregar o SSR de uma
+# pagina de 200 itens. O timeout continua finito, mas deixa a leitura rapida
+# por fetch concluir antes de cair no DOM, que e bem mais caro no Android.
+LIMITE_FETCH_ANDROID_MS = 50000
+RECURSOS_BLOQUEADOS_ANDROID = (
+    "*.avif",
+    "*.gif",
+    "*.jpeg",
+    "*.jpg",
+    "*.png",
+    "*.svg",
+    "*.webp",
+    "*.woff",
+    "*.woff2",
+    "*criteo*",
+    "*doubleclick*",
+    "*facebook*",
+    "*freshchat*",
+    "*google-analytics*",
+    "*googlesyndication*",
+    "*googletagmanager*",
+    "*useinsider*",
+)
 
 
 def robots_permite(conteudo: str, caminho: str, user_agent: str = USER_AGENT) -> bool:
@@ -435,6 +459,11 @@ class _ChromeDevTools:
         self._aberto = True
         self._pagina_aberta = False
 
+    def verificar(self) -> None:
+        """Confirma que o Chrome publicou uma página DevTools acessível."""
+
+        self._alvo()
+
     def fechar(self) -> None:
         if not self._aberto:
             return
@@ -444,7 +473,7 @@ class _ChromeDevTools:
     def obter(self, url: str) -> tuple[str, str, str]:
         socket = self._abrir_socket()
         try:
-            self._comando(socket, "Page.enable")
+            self._preparar_pagina(socket)
             # A navegacao e a leitura do DOM sao usadas em todas as paginas.
             # O caminho antigo fazia fetch do SSR e podia transportar mais de
             # 1 MB por pagina antes de o extrator conseguir trabalhar.
@@ -467,7 +496,7 @@ class _ChromeDevTools:
 
         socket = self._abrir_socket(timeout=min(self.timeout, LIMITE_FETCH_ANDROID_MS / 1000 + 2.0))
         try:
-            self._comando(socket, "Page.enable")
+            self._preparar_pagina(socket)
             resultado = self._obter_por_fetch(socket, url)
         except Exception:
             self._interromper_execucao()
@@ -494,6 +523,144 @@ class _ChromeDevTools:
                 "O CDP Android devolveu campos SSR invalidos.", codigo="navegador"
             )
         return fonte, titulo, url_final
+
+    def obter_fetch_concorrente(self, urls: list[str]) -> list[tuple[str, str, str]]:
+        """Busca varias paginas SSR em paralelo no mesmo Chrome."""
+
+        if not urls:
+            return []
+        with ThreadPoolExecutor(max_workers=min(5, len(urls))) as executor:
+            futuros = [executor.submit(self.obter_fetch, url) for url in urls]
+            return [futuro.result() for futuro in futuros]
+
+    def obter_rede(self, url: str) -> tuple[str, str, str]:
+        """Le a resposta SSR antes de o Chrome terminar de montar o DOM."""
+
+        socket = self._abrir_socket()
+        try:
+            self._preparar_pagina(socket)
+            resultado = self._navegar_e_obter_resposta(socket, url)
+        finally:
+            socket.close()
+        fonte = resultado.get("html")
+        titulo = resultado.get("title")
+        url_final = resultado.get("url")
+        if not all(isinstance(item, str) for item in (fonte, titulo, url_final)):
+            raise FalhaAoObterPichau(
+                "O CDP Android nao devolveu a resposta de rede.", codigo="navegador"
+            )
+        return fonte, titulo, url_final
+
+    def _preparar_pagina(self, socket) -> None:
+        """Mantem a pagina ativa e evita recursos que nao entram no catalogo."""
+
+        self._comando(socket, "Page.enable")
+        # O Android congela timers e algumas requisicoes de uma aba que ficou
+        # atras do Termux. Isso fazia o fetch expirar e deixava o DOM muito
+        # lento. A coleta pode trazer o Chrome para frente sem toque manual.
+        self._comando(socket, "Page.bringToFront")
+        self._comando(socket, "Network.enable")
+        self._comando(socket, "Network.setCacheDisabled", {"cacheDisabled": True})
+        self._comando(
+            socket,
+            "Network.setBlockedURLs",
+            {"urls": RECURSOS_BLOQUEADOS_ANDROID},
+        )
+
+    def _navegar_e_obter_resposta(self, socket, url: str) -> dict[str, str]:
+        identificador_navegacao = next(self._ids)
+        socket.send(
+            json.dumps(
+                {
+                    "id": identificador_navegacao,
+                    "method": "Page.navigate",
+                    "params": {"url": url},
+                }
+            )
+        )
+        request_id: str | None = None
+        resposta_url: str | None = None
+        resposta_status: int | None = None
+        limite = time.monotonic() + self.timeout
+        while time.monotonic() < limite:
+            try:
+                mensagem = socket.recv()
+            except Exception as erro:
+                raise FalhaAoObterPichau(
+                    "O CDP Android nao recebeu a resposta da Pichau.", codigo="navegador"
+                ) from erro
+            if isinstance(mensagem, bytes):
+                mensagem = mensagem.decode("utf-8")
+            evento = json.loads(mensagem)
+            if evento.get("id") == identificador_navegacao:
+                if "error" in evento:
+                    raise FalhaAoObterPichau(
+                        "O Chrome Android recusou a navegacao.", codigo="navegador"
+                    )
+                continue
+            if evento.get("method") == "Network.responseReceived":
+                parametros = evento.get("params", {})
+                resposta = parametros.get("response", {})
+                url_evento = resposta.get("url")
+                if (
+                    parametros.get("type") == "Document"
+                    and isinstance(url_evento, str)
+                    and self._url_rede_corresponde(url_evento, url)
+                ):
+                    request_id = parametros.get("requestId")
+                    resposta_url = url_evento
+                    resposta_status = resposta.get("status")
+            elif (
+                evento.get("method") == "Network.loadingFinished"
+                and request_id is not None
+                and evento.get("params", {}).get("requestId") == request_id
+            ):
+                corpo = self._comando(
+                    socket,
+                    "Network.getResponseBody",
+                    {"requestId": request_id},
+                )
+                valor = corpo.get("result", {})
+                fonte = valor.get("body")
+                if valor.get("base64Encoded") and isinstance(fonte, str):
+                    fonte = base64.b64decode(fonte).decode("utf-8")
+                if not isinstance(fonte, str):
+                    raise FalhaAoObterPichau(
+                        "O CDP Android devolveu corpo de rede invalido.", codigo="navegador"
+                    )
+                titulo = (
+                    self._comando(
+                        socket,
+                        "Runtime.evaluate",
+                        {"expression": "document.title", "returnByValue": True},
+                    )
+                    .get("result", {})
+                    .get("result", {})
+                    .get("value", "")
+                )
+                return {
+                    "html": fonte,
+                    "title": titulo if isinstance(titulo, str) else "",
+                    "url": resposta_url or url,
+                    "status": str(resposta_status or 0),
+                }
+        raise FalhaAoObterPichau(
+            "A resposta de rede da Pichau excedeu o tempo limite.", codigo="rede"
+        )
+
+    @staticmethod
+    def _url_rede_corresponde(atual: str, esperado: str) -> bool:
+        url_atual = urlparse(atual)
+        url_esperado = urlparse(esperado)
+        if (
+            url_atual.scheme != url_esperado.scheme
+            or url_atual.netloc != url_esperado.netloc
+            or url_atual.path.rstrip("/") != url_esperado.path.rstrip("/")
+        ):
+            return False
+        return parse_qs(url_atual.query).get("page", [None]) == parse_qs(url_esperado.query).get(
+            "page", [None]
+        )
 
     def _abrir_socket(self, *, timeout: float | None = None):
         try:
@@ -932,9 +1099,9 @@ class FontePichauAndroid:
 
     _TITULOS_BLOQUEIO = ("just a moment", "site em manutenção", "access denied")
     _MARCADORES_DESAFIO = ("cf-turnstile", "g-recaptcha", "hcaptcha")
-    # A listagem Pichau aceita 100 itens e reduz a janela em que o catálogo
+    # A listagem Pichau aceita 200 itens e reduz a janela em que o catálogo
     # pode se mover entre páginas durante a coleta.
-    _POR_PAGINA = 100
+    _POR_PAGINA = 200
 
     def __init__(
         self,
@@ -968,10 +1135,11 @@ class FontePichauAndroid:
         self.criar_driver = criar_driver
         self.cdp = cdp
         self._driver = None
+        self._paginas_prefetch: dict[int, str] = {}
         estrategia = estrategia_leitura.strip().lower()
         if estrategia not in ESTRATEGIAS_LEITURA_ANDROID:
             raise FalhaAoObterPichau(
-                "PICHAU_ESTRATEGIA_LEITURA deve ser dom ou fetch.", codigo="configuracao"
+                "PICHAU_ESTRATEGIA_LEITURA deve ser dom, fetch ou rede.", codigo="configuracao"
             )
         self.estrategia_leitura = estrategia
         ordenacao_normalizada = (ordenacao or "").strip().lower()
@@ -990,15 +1158,29 @@ class FontePichauAndroid:
             else:
                 # O Chrome ja e o executor da coleta. Evitar criar uma nova
                 # sessao UiAutomator2 a cada job remove minutos de boot no
-                # ARM32; Appium continua disponivel para configuracao e
-                # diagnostico, mas nao bloqueia o caminho CDP recorrente.
+                # ARM32. Depois de um reboot, porem, o processo do Chrome pode
+                # existir sem publicar a porta DevTools; nesse caso o Appium
+                # local recria a sessao e deixa a ponte pronta para o CDP.
                 if self.cdp is None:
                     self.cdp = _ChromeDevTools(
                         udid=self.udid,
                         adb_port=self.adb_port,
                         timeout=self.timeout,
                     )
-                self.cdp.abrir()
+                    self.cdp.abrir()
+                    try:
+                        self.cdp.verificar()
+                    except FalhaPichau:
+                        _log.warning(
+                            "Pichau Android: DevTools indisponivel; "
+                            "recriando Chrome pelo Appium local."
+                        )
+                        self._driver = self._abrir_driver()
+                        self._driver.set_page_load_timeout(self.timeout)
+                        self.cdp.abrir()
+                        self.cdp.verificar()
+                else:
+                    self.cdp.abrir()
         except Exception as erro:
             self._encerrar_driver()
             if isinstance(erro, FalhaPichau):
@@ -1020,8 +1202,13 @@ class FontePichauAndroid:
     def pagina(self, pagina: int) -> str:
         if pagina < 1:
             raise FalhaAoObterPichau("Numero de pagina invalido.", codigo="pagina")
+        if pagina in self._paginas_prefetch:
+            return self._paginas_prefetch.pop(pagina)
         url = self._url_pagina(pagina)
-        return self._obter(url, "catalogo", pagina)
+        fonte = self._obter(url, "catalogo", pagina)
+        if pagina == 1 and self.estrategia_leitura == "fetch" and self.cdp is not None:
+            self._precarregar_paginas(fonte, url)
+        return fonte
 
     def detalhe(self, url_produto: str) -> str:
         analisada = urlparse(url_produto)
@@ -1088,11 +1275,29 @@ class FontePichauAndroid:
                     fonte = self._driver.page_source
                     titulo = str(getattr(self._driver, "title", ""))
                 else:
-                    if (
-                        contexto == "catalogo"
-                        and (pagina or 1) > 1
-                        and self.estrategia_leitura == "fetch"
-                    ):
+                    if contexto == "catalogo" and self.estrategia_leitura == "rede":
+                        try:
+                            fonte, titulo, url_final = self.cdp.obter_rede(url)
+                            estrategia = "rede"
+                        except FalhaPichau as erro_rede:
+                            _log.warning(
+                                "Pichau Android: rede falhou na pagina %s; "
+                                "fallback para DOM; codigo=%s.",
+                                pagina,
+                                erro_rede.codigo,
+                            )
+                            fonte, titulo, url_final = self.cdp.obter(url)
+                            estrategia = "rede_dom_fallback"
+                        except Exception as erro_rede:
+                            _log.warning(
+                                "Pichau Android: rede falhou na pagina %s; "
+                                "fallback para DOM; tipo=%s.",
+                                pagina,
+                                type(erro_rede).__name__,
+                            )
+                            fonte, titulo, url_final = self.cdp.obter(url)
+                            estrategia = "rede_dom_fallback"
+                    elif contexto == "catalogo" and self.estrategia_leitura == "fetch":
                         try:
                             fonte, titulo, url_final = self.cdp.obter_fetch(url)
                             estrategia = "fetch"
@@ -1204,6 +1409,36 @@ class FontePichauAndroid:
             "site em manutenção" in titulo.casefold(),
             "access denied" in titulo.casefold(),
             "just a moment" in titulo.casefold(),
+        )
+
+    def _precarregar_paginas(self, fonte: str, url: str) -> None:
+        """Busca as paginas restantes em paralelo depois de descobrir o total."""
+
+        from .extrator import extrair_pagina
+
+        primeira = extrair_pagina(
+            fonte,
+            pagina_esperada=1,
+            por_pagina=self.por_pagina,
+            base_url=url,
+        )
+        paginas = (primeira.total + self.por_pagina - 1) // self.por_pagina
+        if paginas <= 1:
+            return
+        inicio = time.perf_counter()
+        numeros = list(range(2, paginas + 1))
+
+        def carregar(numero: int) -> tuple[int, str]:
+            return numero, self._obter(self._url_pagina(numero), "catalogo", numero)
+
+        with ThreadPoolExecutor(max_workers=min(5, len(numeros))) as executor:
+            futuros = [executor.submit(carregar, numero) for numero in numeros]
+            resultados = [futuro.result() for futuro in futuros]
+        self._paginas_prefetch = dict(resultados)
+        _log.info(
+            "Pichau Android performance: etapa=prefetch paginas=%d duracao_ms=%d estrategia=fetch",
+            len(resultados),
+            round((time.perf_counter() - inicio) * 1000),
         )
 
     def _validar_catalogo(self, fonte: str, pagina: int, url: str) -> None:

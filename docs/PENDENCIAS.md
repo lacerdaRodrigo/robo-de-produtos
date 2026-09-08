@@ -24,24 +24,39 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Integrar o parser do payload Next.js e o adaptador SeleniumBase UC/CDP ao caminho padrão do workflow, mantendo o HTTP como fallback controlado e sem persistir imagens.
 - [x] Registrar o termo de autorização informado para este escopo: domínio `pichau.com.br`, catálogo público, UC/CDP, resolução de CAPTCHA sob os limites definidos, GitHub Actions, dados de catálogo sem PII e retenção bruta máxima de 90 dias.
 - [x] Aplicar `migracoes/021_pichau_pc_gamer.sql` em ambiente autorizado; a confirmação do responsável e a leitura somente do banco encontraram as três tabelas Pichau.
-- [ ] Configurar/deployar API e workflow; o repositório não prova publicação externa.
+- [x] Publicar e validar externamente o workflow Pichau e o caminho API; a execução real `34081623450` aguardou o Android, terminou com sucesso e o catálogo voltou a ficar disponível.
 - [x] Fazer a primeira coleta real no Samsung: as execuções 6 e 8 provaram o caminho histórico de 33 páginas; as execuções 22, 23 e 24 aprovaram o caminho rápido com 12 páginas, `1169/1169` itens únicos, zero duplicados e 1.169 medições; as duas últimas terminaram em 225 e 227 segundos. A tentativa concorrente 7 falhou com código `acesso` sem substituir snapshot.
 - [x] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo. As execuções `34006575148` (`headless2`) e `34006802532` (`xvfb`) receberam `Site em Manutenção - Pru Pru`, sem payload de catálogo ou marcador de desafio, e não publicaram dados.
 - [x] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; ambas retornaram a mesma página de manutenção, portanto o agendamento continua em `headless2` e o executor Android fica como alternativa em avaliação.
 - [x] Registrar o levantamento do executor Android: Samsung SM-M135M, Android 14, aproximadamente 3,8 GB de RAM, Chrome instalado e ABI `armeabi-v7a/armeabi` 32-bit; a compatibilidade 32-bit passou a ser o primeiro gate explícito.
 - [x] Versionar o adaptador Android com CDP direto/local, fallback de Appium/UiAutomator2 para configuração/recuperação, modo `PICHAU_MODO_NAVEGADOR=android`, diagnóstico sem banco, runner Termux com lock/wake-lock/logs, worker de fila e watchdog sem coleta independente. O descritor do `flock` não é herdado pelo ADB/tmux persistente.
-- [x] Instalar Termux, Termux:Boot, Termux:API, Python, Appium/UiAutomator2 e Chrome no Samsung e aprovar o diagnóstico SSR/Appium e a coleta completa histórica: `total=1169`, 36 itens na primeira página, 33 páginas e 1.169 itens publicados. O caminho DOM/CDP atual usa 12 páginas e reconcilia SKU por URL. O driver puro `psycopg` foi instalado no ARM32 contra o `libpq` local.
+- [x] Instalar Termux, Termux:Boot, Termux:API, Python, Appium/UiAutomator2 e Chrome no Samsung e aprovar o diagnóstico SSR/Appium e a coleta completa histórica: `total=1169`, 36 itens na primeira página, 33 páginas e 1.169 itens publicados. O caminho DOM/CDP foi sondado com `pageSize=200` (200 cards na primeira página, 169 na sexta e total 1.169), reduzindo a coleta prevista para 6 páginas; a reconciliação continua por URL. O driver puro `psycopg` foi instalado no ARM32 contra o `libpq` local.
 - [x] Sincronizar o worker/boot no Samsung, reaplicar o job 7301 como watchdog de 15 minutos e confirmar que ele não executa coleta sem solicitação pendente. O worker retornou `status=0` sem item pendente, e não há alerta automático de bateria.
 - [x] Aplicar `migracoes/022_pichau_android_fila.sql` no banco operacional; a fila foi criada e o worker confirmou consulta sem item pendente.
-- [ ] Criar a role/credencial mínima da fila e configurar `PICHAU_DISPATCH_DATABASE_URL` nos secrets do GitHub Actions; enquanto isso o workflow mantém fallback para o secret existente `DATABASE_URL`.
-- [x] Versionar o workflow Pichau como produtor da fila Android, com cron alinhado a 09h/14h/20h de Brasília, disparo manual, espera do resultado e falha explícita quando o Android não responde. A aplicação externa do workflow continua pendente.
-- [ ] Confirmar o receiver do Termux:Boot após reinicialização com a ROM Samsung; o pacote foi habilitado e o runner inicia Appium por conta própria quando um job real existir, mas o receiver não foi observado automaticamente nesta prova. Após o reboot de validação, o Wi‑Fi voltou desconectado e a depuração sem fio ficou desligada, impedindo uma nova prova autônoma.
-- [ ] Criar e testar fora do repositório a role Postgres exclusiva do robô Pichau, com acesso somente às três tabelas/sequências Pichau e conexão SSL; nenhuma senha deve entrar no Git ou no log.
+- [x] Criar e testar as credenciais mínimas separadas do dispatcher GitHub e do publicador Android: as roles `pichau_dispatcher` e `pichau_publisher` foram criadas com SSL obrigatório e grants restritos; `PICHAU_DISPATCH_DATABASE_URL` foi configurado no GitHub e o arquivo privado do Termux recebeu somente a credencial do publicador com modo `600`. A execução real `34136108063` passou pelo secret separado, fila, worker, coleta e publicação.
+- [x] Versionar e validar o workflow Pichau como produtor da fila Android, com cron alinhado a 09h/14h/20h de Brasília, disparo manual, espera do resultado e falha explícita quando o Android não responde. As execuções reais `34081623450` e `34136108063` passaram pelo GitHub, fila, worker, coleta e publicação.
+- [x] Confirmar que o Termux:Boot inicia o worker sem abrir o Termux: o aplicativo
+  Termux:Boot foi aberto uma vez, o arquivo efetivo foi corrigido para o
+  interpretador absoluto do Termux e, no reboot de 2026-09-07, o receiver
+  executou `pichau-android-boot.sh`; após o primeiro desbloqueio, o worker,
+  Appium e o job 7301 ficaram ativos sem comando manual no Termux.
+- [ ] Fechar o boot totalmente autônomo antes do primeiro desbloqueio: o teste
+  mostrou o Android mantendo `com.termux.boot.BootReceiver` pendente na tela de
+  bloqueio (`directBootAware=false`) e nenhum worker/Appium iniciou enquanto ela
+  estava bloqueada. É preciso aceitar esse desbloqueio após reinício ou decidir
+  explicitamente sobre a remoção da tela de bloqueio; não alterar a segurança
+  do aparelho automaticamente. O transporte operacional voltou ao ADB USB;
+  Wireless Debugging permanece opcional e desligado.
+- [ ] Diagnosticar e corrigir as falhas das execuções automáticas
+  `34158686905` e `34174437207`, ocorridas após a troca do ADB TCP temporário
+  pelo serial USB; ambas falharam antes de uma nova coleta completa aceita.
+- [ ] Preparar e validar o Wireless Debugging pareado como transporte
+  alternativo, sem remover o cabo USB; ele continua desligado e não bloqueia a
+  operação atual.
 - [x] Executar no aparelho o diagnóstico e as coletas de prova; as execuções 6 e 8 fecharam 1.169/1.169 com zero duplicados antes da otimização. Livelo e Inter continuam fora da prova.
 - [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: as execuções 22, 23 e 24 publicaram `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
 - [x] Fazer três execuções consecutivas do caminho rápido: 22, 23 e 24 fecharam `sucesso`/`completa`, `1169/1169` únicos, zero duplicados e 1.169 medições.
-- [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir primeiro o padrão `dom`, repetir com `PICHAU_ESTRATEGIA_LEITURA=fetch` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa, sem paralelizar páginas e respeitando pelo menos seis horas entre execuções. As execuções Android adicionais de 2026-09-06 publicaram 1.169/1.169 com zero duplicados em 237,4s; a tentativa `name-asc` fechou em 255,2s e foi desabilitada.
-- [ ] Validar o receiver do Termux:Boot após reinicialização e conferir API/Flutter.
+- [ ] Validar a redução de tempo da implementação em três coletas reais consecutivas de até 120 segundos: medir `dom`, `fetch` e `rede` no arquivo privado do Termux, corrigir e tentar novamente até atingir o objetivo, sempre com coleta completa e respeitando pelo menos seis horas entre execuções. A execução `34136108063` publicou 1.169/1.169 com zero duplicados em 214,3s de runner (205,9s de coleta); a tentativa `name-asc` fechou em 255,2s e foi desabilitada. A execução `34144116813` também fechou completa, em 221,9s de runner e 214,2s de coleta. A execução `34148112344` ficou abaixo da meta, em 87,5s de runner e 79,6s de coleta, mas as duas execuções seguintes falharam após a troca para USB; a série de três coletas aceitas deverá ser reiniciada depois da correção.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas
@@ -59,8 +74,9 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [ ] Definir um sistema centralizado de logs para app, API e robôs, com correlação por execução, níveis de severidade, retenção e sem registrar tokens, dados pessoais ou payloads sensíveis.
 - [ ] Completar o runbook operacional dos robôs Livelo, Inter Sites parceiros e Inter Compre direto: entradas, variáveis de ambiente, comandos, workflows, horários, tabelas escritas, códigos de saída, retries, reexecução manual e diagnóstico de falhas.
 - [ ] Reorganizar as telas Flutter e extrair componentes reutilizáveis para pastas `widgets/`, preservando a separação por domínio e sem quebrar os imports das jornadas existentes.
-- [ ] Exibir no card de Cashback Inter a descrição completa da regra publicada pela loja, incluindo produtos, categorias, vendedores, percentuais e demais condições retornadas em `redirectWarning`/`descricao_principal`.
-- [ ] Validar estados da descrição do Inter: texto longo, múltiplas condições, ausência de descrição, quebra de linha e conteúdo atualizado entre coletas.
+- [x] Exibir no card de Cashback Inter a descrição completa da regra publicada pela loja, incluindo produtos, categorias, vendedores, percentuais e demais condições retornadas em `redirectWarning`/`descricao_principal`; o card compacto abre a folha V11 “Ver condições” sem truncar o texto.
+- [x] Cobrir no Flutter os estados da descrição do Inter: texto longo, múltiplas condições, ausência de descrição e quebra de linha. A validação manual no Samsung ainda depende do aceite no device.
+- [x] Validar manualmente no Samsung a folha de condições do Cashback Inter com conta autenticada, incluindo conteúdo real retornado pela API, estado neutro sem descrição e descrição longa com quebra de linha.
 - [ ] Preparar a publicação na Google Play: nome, ícone, screenshots, classificação etária, política de privacidade, ficha de segurança de dados, versão e pacote de produção.
 - [ ] Configurar assinatura do Android e guardar keystore, senhas e credenciais somente nos secrets protegidos do ambiente de release.
 - [ ] Criar deploy automático via GitHub Actions para API e aplicativo, com ambientes de validação e produção, aprovação antes da publicação e possibilidade de rollback.

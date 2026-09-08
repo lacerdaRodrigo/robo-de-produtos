@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import robo_pichau.adaptadores as modulo_adaptadores
 from robo_pichau.adaptadores import (
     FontePichauAndroid,
     FontePichauHttp,
@@ -370,6 +371,76 @@ def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
     assert devtools.fechado is True
 
 
+def teste_cdp_android_mantem_chrome_ativo_e_bloqueia_recursos_inuteis(monkeypatch) -> None:
+    devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=10.0)
+    chamadas = []
+    monkeypatch.setattr(
+        devtools,
+        "_comando",
+        lambda _socket, metodo, parametros=None: chamadas.append((metodo, parametros)),
+    )
+
+    devtools._preparar_pagina(object())
+
+    assert [metodo for metodo, _ in chamadas] == [
+        "Page.enable",
+        "Page.bringToFront",
+        "Network.enable",
+        "Network.setCacheDisabled",
+        "Network.setBlockedURLs",
+    ]
+    assert chamadas[3][1] == {"cacheDisabled": True}
+    assert "*.jpg" in chamadas[4][1]["urls"]
+    assert "*google-analytics*" in chamadas[4][1]["urls"]
+
+
+def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
+    monkeypatch,
+) -> None:
+    class DevTools:
+        def __init__(self, **_kwargs):
+            self.aberturas = 0
+            self.verificacoes = 0
+            self.fechado = False
+
+        def abrir(self) -> None:
+            self.aberturas += 1
+
+        def verificar(self) -> None:
+            self.verificacoes += 1
+            if self.verificacoes == 1:
+                raise FalhaAoObterPichau("DevTools ausente", codigo="navegador")
+
+        def fechar(self) -> None:
+            self.fechado = True
+
+    class Driver:
+        def __init__(self):
+            self.timeout = None
+            self.fechado = False
+
+        def set_page_load_timeout(self, timeout):
+            self.timeout = timeout
+
+        def quit(self):
+            self.fechado = True
+
+    devtools = DevTools()
+    driver = Driver()
+    monkeypatch.setattr(modulo_adaptadores, "_ChromeDevTools", lambda **_: devtools)
+    fonte = FontePichauAndroid(dormir=lambda _: None)
+    monkeypatch.setattr(fonte, "_abrir_driver", lambda: driver)
+
+    with fonte:
+        assert fonte._driver is driver
+
+    assert devtools.aberturas == 2
+    assert devtools.verificacoes == 2
+    assert devtools.fechado is True
+    assert driver.timeout == fonte.timeout
+    assert driver.fechado is True
+
+
 def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
     documento = {
         "category": {},
@@ -418,8 +489,8 @@ def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
         extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=100)
         extrair_pagina(fonte.pagina(2), pagina_esperada=2, por_pagina=100)
 
-    assert devtools.fetches == [fonte._url_pagina(2)]
-    assert devtools.dom == [fonte._url_pagina(1)]
+    assert devtools.fetches == [fonte._url_pagina(1), fonte._url_pagina(2)]
+    assert devtools.dom == []
 
     fallback = DevTools(falhar_fetch=True)
     fonte_fallback = FontePichauAndroid(
@@ -432,14 +503,160 @@ def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
     assert fallback.dom == [fonte_fallback._url_pagina(2)]
 
 
+def teste_fonte_android_fetch_precarrega_paginas_restantes() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 401,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-PREFETCH-1",
+                    "name": "PC Prefetch",
+                    "url_key": "pc-prefetch-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class DevTools:
+        def __init__(self) -> None:
+            self.fetches: list[str] = []
+
+        def abrir(self) -> None:
+            pass
+
+        def fechar(self) -> None:
+            pass
+
+        def obter_fetch(self, url):
+            self.fetches.append(url)
+            return conteudo, "PC Gamer", url
+
+    devtools = DevTools()
+    fonte = FontePichauAndroid(cdp=devtools, estrategia_leitura="fetch", dormir=lambda _: None)
+    with fonte:
+        fonte.pagina(1)
+        fonte.pagina(2)
+        fonte.pagina(3)
+
+    assert sorted(devtools.fetches) == sorted(
+        [fonte._url_pagina(1), fonte._url_pagina(2), fonte._url_pagina(3)]
+    )
+
+
+def teste_fonte_android_le_resposta_de_rede_antes_do_dom() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 1,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-REDE-1",
+                    "name": "PC Rede",
+                    "url_key": "pc-rede-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class DevTools:
+        def __init__(self) -> None:
+            self.alvos: list[str] = []
+            self.fechado = False
+
+        def abrir(self) -> None:
+            pass
+
+        def fechar(self) -> None:
+            self.fechado = True
+
+        def obter_rede(self, url):
+            self.alvos.append(url)
+            return conteudo, "PC Gamer", url
+
+    devtools = DevTools()
+    fonte = FontePichauAndroid(cdp=devtools, estrategia_leitura="rede", dormir=lambda _: None)
+    with fonte:
+        pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=200)
+
+    assert pagina.produtos[0].sku == "SKU-REDE-1"
+    assert devtools.alvos == [fonte._url_pagina(1)]
+    assert devtools.fechado is True
+
+
+def teste_cdp_android_preserva_evento_de_rede_antes_da_resposta_do_navigate(
+    monkeypatch,
+) -> None:
+    url = "https://www.pichau.com.br/computadores/pichau-gamer?pageSize=200"
+    eventos = iter(
+        (
+            json.dumps(
+                {
+                    "method": "Network.responseReceived",
+                    "params": {
+                        "type": "Document",
+                        "requestId": "req-1",
+                        "response": {"url": url, "status": 200},
+                    },
+                }
+            ),
+            json.dumps({"id": 1, "result": {}}),
+            json.dumps({"method": "Network.loadingFinished", "params": {"requestId": "req-1"}}),
+        )
+    )
+
+    class Socket:
+        def __init__(self) -> None:
+            self.enviadas: list[str] = []
+
+        def send(self, mensagem: str) -> None:
+            self.enviadas.append(mensagem)
+
+        def recv(self) -> str:
+            return next(eventos)
+
+    socket = Socket()
+    devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=10.0)
+    chamadas = []
+
+    def comando(_socket, metodo, parametros=None):
+        chamadas.append((metodo, parametros))
+        if metodo == "Network.getResponseBody":
+            return {"result": {"body": "<html>catalogo</html>", "base64Encoded": False}}
+        return {"result": {"result": {"value": "Pichau"}}}
+
+    monkeypatch.setattr(devtools, "_comando", comando)
+    resposta = devtools._navegar_e_obter_resposta(socket, url)
+
+    assert resposta == {
+        "html": "<html>catalogo</html>",
+        "title": "Pichau",
+        "url": url,
+        "status": "200",
+    }
+    assert json.loads(socket.enviadas[0])["method"] == "Page.navigate"
+    assert [metodo for metodo, _ in chamadas] == [
+        "Network.getResponseBody",
+        "Runtime.evaluate",
+    ]
+
+
 def teste_fonte_android_rejeita_estrategia_de_leitura_desconhecida() -> None:
-    with pytest.raises(FalhaAoObterPichau, match="dom ou fetch"):
+    with pytest.raises(FalhaAoObterPichau, match="dom, fetch ou rede"):
         FontePichauAndroid(estrategia_leitura="outro")
 
 
 def teste_fonte_android_aplica_ordenacao_publica() -> None:
     fonte = FontePichauAndroid(ordenacao="name-asc")
-    assert fonte._url_pagina(2).endswith("pageSize=100&sort=name-asc&page=2")
+    assert fonte._url_pagina(2).endswith("pageSize=200&sort=name-asc&page=2")
 
 
 def teste_fonte_android_rejeita_ordenacao_desconhecida() -> None:

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # Inicia o Appium local em uma sessao tmux idempotente. O Chrome e aberto pelo
 # UiAutomator2 durante a coleta; nenhum servidor Appium fica exposto na rede.
@@ -49,6 +49,13 @@ else
 
     tmux new-session -d -s "$SESSION" \
         "unset ADB_SERVER_SOCKET; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level info >>$(printf '%q' "$LOG_FILE") 2>&1"
+fi
+
+# No boot do Termux, o servidor pode continuar subindo em segundo plano. O
+# runner normal não define esta opção e continua aguardando o /status.
+if [[ "${PICHAU_APPIUM_SKIP_WAIT:-0}" == "1" ]]; then
+    echo "pichau-android-appium: sessao iniciada sem aguardar /status (boot)"
+    exit 0
 fi
 
 for _tentativa in {1..30}; do

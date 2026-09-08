@@ -769,3 +769,17 @@ ordenação ao trocar a página e retornando suavemente ao início da lista.
 Em conflito com os trechos históricos de V3 que limitam `/inter` às favoritas,
 esta seção prevalece para o próximo contrato e para os protótipos. Esses trechos
 permanecem como registro fiel da implementação V3.0–V3.3.
+
+### 16.1. Condições completas no aplicativo mobile
+
+**Implementado em 7 de setembro de 2026.** O catálogo compacto do aplicativo
+mantém uma prévia curta no card e oferece a ação **Ver condições**. A ação abre
+uma folha V11 rolável com o texto integral de `descricao_principal`, preservando
+quebras de linha e múltiplas faixas retornadas em `redirectWarning`.
+
+- A descrição vazia continua usando exatamente “O Inter não informou condições
+  adicionais nesta consulta”.
+- `descricao_secundaria` aparece em bloco separado sob “Para não-correntista”.
+- A interface exibe o texto recebido pela API como texto seguro; não interpreta
+  HTML nem reconstrói regras a partir do percentual numérico.
+- A melhoria não altera o contrato da API, o schema do banco ou a paginação.

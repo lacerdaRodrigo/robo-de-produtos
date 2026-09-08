@@ -17,9 +17,9 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md`](planos/CATALOGO-CATEGORIAS-INTER-AGRUPAMENTO-PROPOSTO.md) | Inventário que fundamenta os recortes editoriais já implementados; o contrato vigente está no PRD de categorias. |
-| [`planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md`](planos/PLANO-CATALOGO-NAVEGACAO-CATEGORIAS-INTER.md) | Proposta anterior de seletor literal de categorias do Inter, mantida como referência e substituída pela proposta de agrupamento. |
 | [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Plano e runbook do Samsung como executor local da coleta Pichau, inclusive operação independente do notebook e da tomada. |
+| [`planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md`](planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md) | Plano para gerar, após a `main`, uma APK interna privada no Google Drive e avisar o destinatário por e-mail. |
+| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro da validação no Samsung, condições completas do Cashback Inter, ADB e três coletas Pichau com `pageSize=200`. |
 
 ## PRDs de domínio
 

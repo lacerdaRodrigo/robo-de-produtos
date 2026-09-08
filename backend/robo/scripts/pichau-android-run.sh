@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # Runner local do Termux. O arquivo de configuracao e lido como dados simples
 # KEY=VALUE; ele nunca e executado como shell script.

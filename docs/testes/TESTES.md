@@ -417,6 +417,8 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
 | CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
 | CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
+| CT-283A | Folha de condições completas | Card compacto abre a folha V11 com descrição integral, múltiplas regras e quebras de linha, sem truncar o texto | Widget com descrição longa e condições secundárias |
+| CT-283B | Ausência de condições | Descrição principal e secundária ausentes exibem o texto neutro do contrato, sem inventar percentual ou regra | Widget com campos de descrição nulos |
 | CT-284 | Navegação e responsividade Inter | Tocar Inter abre o painel real e a moldura preserva abas, retrato/paisagem e tela larga | Widget da moldura em viewports distintos |
 
 ### Fase 4.4 — produtos no Flutter
@@ -569,11 +571,14 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-370 | Identidade e URL segura | SKU/ID é estável, URLs ficam restritas a HTTPS no domínio Pichau e imagens não entram no modelo | `teste_pichau.py` |
 | CT-371 | Paginação conservadora | Página repetida, total incoerente ou limite não encerrado rejeitam a coleta | `teste_pichau.py` |
 | CT-372 | Retry, bloqueio e diagnóstico seguro | Respostas transitórias e falhas de navegador podem repetir dentro do limite de três tentativas e cooldown de 2–5 s; bloqueio persistente encerra a coleta, o log registra apenas metadados seguros e o modo Xvfb manual é validado sem alterar o padrão agendado | `teste_pichau.py` |
-| CT-375 | Adaptador Android isolado | Appium local abre o Chrome nativo com UiAutomator2, o CDP local via ADB lê `products.items`, usa `pageSize=100`, exige a faixa completa renderizada inclusive na última página, preserva o mesmo parser e encerra a ponte/driver; URL remota é rejeitada | `teste_pichau.py` |
+| CT-375 | Adaptador Android isolado | Appium local abre o Chrome nativo com UiAutomator2, o CDP local via ADB lê `products.items`, usa `pageSize=200`, exige a faixa completa renderizada inclusive na última página, preserva o mesmo parser e encerra a ponte/driver; URL remota é rejeitada | `teste_pichau.py` |
 | CT-376 | Diagnóstico não publica | `--diagnostico` valida somente a primeira página e não instancia o repositório; a execução normal continua exigindo `DATABASE_URL` | `teste_pichau.py` |
 | CT-377 | Reconciliação Android por URL | Quando o DOM não oferece SKU, a publicação consulta identidades históricas em lote por URL, preserva o SKU existente e não cria uma identidade duplicada | `teste_pichau.py` |
 | CT-378 | Publicação Pichau em lotes | Produtos e medições são gravados em lotes de 100 dentro da mesma transação, com retorno de todos os IDs, sem alterar o schema nem perder inativação, retenção ou estado da execução | `teste_pichau.py` |
-| CT-379 | Fetch SSR opt-in com fallback | A primeira página usa DOM, páginas seguintes podem usar `PICHAU_ESTRATEGIA_LEITURA=fetch`, a avaliação CDP que perde o prazo é cancelada, e resposta inválida retorna somente a página ao DOM sem publicar catálogo parcial | `teste_pichau.py` |
+| CT-379 | Fetch SSR opt-in com fallback | `PICHAU_ESTRATEGIA_LEITURA=fetch` lê a primeira página, descobre o total, pré-carrega as páginas restantes, cancela a avaliação CDP que perde o prazo e retorna uma página inválida ao DOM sem publicar catálogo parcial | `teste_pichau.py` |
+| CT-389 | Prefetch Android sem publicação parcial | Páginas restantes são obtidas concorrentemente, ficam disponíveis na ordem solicitada e uma falha em qualquer futuro não libera um catálogo incompleto | `teste_pichau.py` |
+| CT-387 | Preparação rápida do Chrome Android | A coleta traz a aba para frente, desabilita cache para não servir catálogo velho e bloqueia somente recursos visuais/telemetria que não entram no modelo | `teste_pichau.py` |
+| CT-388 | Resposta de rede antes do DOM | A estratégia `rede` captura o HTML SSR após `Network.loadingFinished`, preserva eventos que chegam antes da confirmação de `Page.navigate` e retorna ao DOM em falha | `teste_pichau.py` |
 | CT-382 | Ordenação Android limitada | A ordenação opcional aceita somente valores públicos conhecidos, entra na URL de cada página e preserva o `pageSize`/faixa exigidos | `teste_pichau.py` |
 | CT-380 | Identidade duplicada não publica | Colisão após reconciliação por URL falha antes das escritas do snapshot e preserva a proteção contra duplicidade | `teste_pichau.py` |
 | CT-381 | Telemetria operacional segura | Runner, páginas, coleta e publicação registram duração e contagens, sem HTML, cookies, headers ou credenciais | `teste_pichau.py` e revisão do runner Termux |

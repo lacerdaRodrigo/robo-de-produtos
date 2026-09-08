@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # Adaptador sem argumentos para o Termux:API Job Scheduler.
 set -Eeuo pipefail

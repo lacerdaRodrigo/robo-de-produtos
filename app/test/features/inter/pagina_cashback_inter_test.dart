@@ -22,6 +22,8 @@ CashbackInter _loja({
   bool encontrada = true,
   bool favorita = false,
   String? secundaria = '2% de cashback',
+  String? descricaoPrincipal = 'Em itens selecionados',
+  String? descricaoSecundaria,
   String? link = 'https://shopping.inter.co/site-parceiro/lojas/magazine-luiza',
 }) => CashbackInter(
   id: nome.toLowerCase(),
@@ -32,8 +34,10 @@ CashbackInter _loja({
   cashbackSecundarioTexto: secundaria,
   cashbackSecundarioValor: secundaria == null ? null : '2.00',
   etiqueta: 'Oferta especial',
-  descricaoPrincipal: 'Em itens selecionados',
-  descricaoSecundaria: secundaria == null ? null : 'Para não-correntistas',
+  descricaoPrincipal: descricaoPrincipal,
+  descricaoSecundaria:
+      descricaoSecundaria ??
+      (secundaria == null ? null : 'Para não-correntistas'),
   encontrada: encontrada,
   favorita: favorita,
   link: link,
@@ -420,6 +424,81 @@ void main() {
     await at.pump();
     expect(at.takeException(), isNull);
   });
+
+  testWidgets('abre condições completas preservando regras e quebra de linha', (
+    at,
+  ) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CartaoCashbackInter(
+            compacto: true,
+            loja: _loja(
+              descricaoPrincipal:
+                  '20% para o aparelho destacado.\n'
+                  '11% em itens vendidos e entregues pela loja.\n'
+                  '2% nas demais condições.',
+              descricaoSecundaria:
+                  '14% no aparelho destacado e 1,4% nas demais.',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await at.tap(find.byKey(const Key('condicoes-magazine luiza')));
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('folha-radar-modal')), findsOneWidget);
+    expect(find.text('Condições de cashback'), findsOneWidget);
+    expect(
+      find.byKey(const Key('condicoes-principal-magazine luiza')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('folha-radar-modal')),
+        matching: find.textContaining(
+          '11% em itens vendidos e entregues pela loja.',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('condicoes-secundaria-magazine luiza')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'condições ausentes mostram o estado neutro definido no contrato',
+    (at) async {
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: CartaoCashbackInter(
+              compacto: true,
+              loja: _loja(
+                secundaria: null,
+                descricaoPrincipal: null,
+                descricaoSecundaria: null,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await at.tap(find.byKey(const Key('condicoes-magazine luiza')));
+      await at.pumpAndSettle();
+
+      expect(
+        find.text('O Inter não informou condições adicionais nesta consulta'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('distingue falha sem retrato, sem coleta e busca vazia', (
     at,

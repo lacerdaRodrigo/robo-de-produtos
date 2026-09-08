@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 
 # Worker persistente da fila Pichau. Ele não coleta por agenda própria: só
 # executa quando o workflow cria uma solicitação no Postgres.
