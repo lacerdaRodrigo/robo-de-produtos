@@ -19,9 +19,10 @@ chmod 700 "$LOG_DIR"
 # e o tmux sao persistentes e nao podem herdar esse descritor.
 exec 9>&- 2>/dev/null || true
 
-# Le somente as duas opcoes de transporte necessarias ao boot. O arquivo
-# inteiro continua sendo validado pelo runner antes de qualquer coleta.
-if [[ -f "$CONFIG_FILE" ]]; then
+# Le somente as duas opcoes de transporte necessarias ao boot quando o runner
+# ainda nao resolveu um endpoint. O arquivo inteiro continua sendo validado
+# pelo runner antes de qualquer coleta.
+if [[ -z "${PICHAU_ANDROID_UDID+x}" && -f "$CONFIG_FILE" ]]; then
     while IFS= read -r linha || [[ -n "$linha" ]]; do
         [[ -z "$linha" || "$linha" == \#* ]] && continue
         [[ "$linha" == *=* ]] || continue
@@ -48,7 +49,7 @@ else
     fi
 
     tmux new-session -d -s "$SESSION" \
-        "unset ADB_SERVER_SOCKET; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level info >>$(printf '%q' "$LOG_FILE") 2>&1"
+        "unset ADB_SERVER_SOCKET; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level error >>$(printf '%q' "$LOG_FILE") 2>&1"
 fi
 
 # No boot do Termux, o servidor pode continuar subindo em segundo plano. O

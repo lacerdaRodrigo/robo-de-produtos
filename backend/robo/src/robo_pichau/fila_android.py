@@ -18,10 +18,23 @@ INTERVALO_PADRAO_SEGUNDOS = 30
 PRAZO_PADRAO_SEGUNDOS = 20 * 60
 LEASE_PADRAO_SEGUNDOS = 30 * 60
 CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau-android-run.sh"
+CODIGOS_RUNNER = {
+    30: "adb-ausente",
+    31: "adb-servidor",
+    32: "adb-wifi-descoberta",
+    33: "adb-wifi-conexao",
+    34: "adb-wifi-estado",
+}
 
 
 class FalhaFilaAndroid(RuntimeError):
     """Falha operacional segura da fila, sem expor credenciais ou payload."""
+
+
+def codigo_falha_runner(codigo: int) -> str:
+    """Converte códigos técnicos em motivos operacionais sem dados privados."""
+
+    return CODIGOS_RUNNER.get(codigo, f"runner-{codigo}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -246,7 +259,7 @@ def executar_trabalho(
     try:
         resultado = executar([str(runner)], cwd=str(runner.parent.parent), check=False)
         sucesso = resultado.returncode == 0
-        codigo = None if sucesso else f"runner-{resultado.returncode}"
+        codigo = None if sucesso else codigo_falha_runner(resultado.returncode)
     except OSError:
         sucesso = False
         codigo = "runner-indisponivel"

@@ -8,7 +8,7 @@
 
 ## Objetivo
 
-Validar no Samsung conectado por USB o retorno do Termux:Boot após reinício,
+Validar no Samsung conectado ao Wi-Fi o retorno do Termux:Boot após reinício,
 o aplicativo mobile na jornada Pichau e a coleta Pichau com `pageSize=200`. A
 configuração de ADB sem fio será preparada como alternativa, sem remover o
 cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
@@ -21,8 +21,8 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
    estáticos.
 4. Disparar três coletas reais Pichau em intervalos mínimos de seis horas.
 5. Medir cada rodada no banco e nos logs do Android.
-6. [x] Parear e validar Wireless Debugging mantendo o USB conectado e o
-   transporte local do worker preservado.
+6. [ ] Parear e validar Wireless Debugging como transporte operacional único,
+   sem dependência de USB.
 
 ## Critérios de aceite
 
@@ -34,10 +34,9 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
 
 ## Estado inicial desta execução
 
-- O Samsung `SM-M135M` foi reiniciado e desbloqueado pelo responsável.
-- A conexão de gerenciamento permanece `RX8W105DHSY device usb`; o host também
-  validou o endpoint Wireless Debugging `192.168.2.128:35613` sem remover o
-  cabo.
+- O Samsung foi reiniciado e desbloqueado pelo responsável.
+- O Wireless Debugging foi validado anteriormente, mas a migração operacional
+  por Wi-Fi ainda precisa ser confirmada sem cabo.
 - `sys.boot_completed=1`.
 - Processos Termux, Termux:API, Appium Settings e `tmux` estão presentes.
 - A validação dos arquivos privados do Termux será feita por comandos locais sem
@@ -68,11 +67,9 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
 - A estratégia de rede continua apenas experimental: a resposta SSR foi
   observada, mas a captura pelo cache do inspector não ficou confiável e não é
   contada como uma das três coletas aceitas.
-- Após essa rodada, o ADB TCP temporário foi encerrado (`service.adb.tcp.port=0`)
-  e o arquivo privado passou a usar o serial USB `RX8W105DHSY`; o cabo segue
-  conectado. Essa configuração falhou porque o worker roda dentro do próprio
-  Android. O executor foi corrigido para usar novamente `127.0.0.1:5555`,
-  mantendo o USB do host conectado para gerenciamento.
+- Após essa rodada, o transporte local temporário foi considerado inadequado
+  para operação recorrente, porque a configuração não sobrevive de forma
+  comprovada a reinicializações.
 - As execuções automáticas `34158686905` e `34174437207` falharam logo após a
   troca para o serial USB. O diagnóstico identificou a ausência de um endpoint
   ADB acessível pelo Android; o runner agora registra o pré-voo e rejeita essa
@@ -83,10 +80,9 @@ cabo durante esta validação. Livelo e Inter estão fora deste ciclo.
   `ryzen`, histórico com 7 medições, abertura do SKU no Chrome e retorno ao app.
   A tela permaneceu utilizável no modo noturno do sistema e foi restaurada ao
   modo claro.
-- O Wireless Debugging pareado foi validado no host e no Termux com
-  `adb get-state=device` em `192.168.2.128:35613`. O cabo USB continua conectado
-  e o worker não foi migrado para esse endpoint: sua configuração operacional
-  permanece `127.0.0.1:5555`.
+- O Wireless Debugging pareado foi validado anteriormente no host e no Termux,
+  mas ainda não era o transporte operacional do worker. A implementação agora
+  usa descoberta mDNS por Wi-Fi e aguarda a validação definitiva sem cabo.
 
 ## Política de tentativa
 
@@ -94,6 +90,5 @@ Se uma coleta real falhar ou não cumprir qualquer critério, a sequência de tr
 rodadas será reiniciada. Diagnóstico e correção podem ocorrer imediatamente,
 mas as novas coletas reais respeitarão pelo menos seis horas entre execuções.
 
-O cabo USB não será removido durante a validação da Pichau. O ADB sem fio foi
-pareado e validado como alternativa com o cabo conectado; a prova sem cabo fica
-para uma operação posterior específica.
+O cabo USB não é requisito da validação operacional. A prova deve ser feita com
+o cabo desconectado e repetida com ele conectado, sem alterar a configuração.

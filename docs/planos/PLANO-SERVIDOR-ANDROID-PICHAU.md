@@ -41,7 +41,7 @@ essa solicitação e o workflow aguarda o resultado.
 
 O levantamento disponível identificou:
 
-- Samsung SM-M135M;
+- Samsung Android;
 - Android 14;
 - aproximadamente 3,8 GB de RAM;
 - Chrome instalado;
@@ -200,7 +200,7 @@ reconciliada por URL na publicação. Ele registra apenas contagem, título, URL
 tamanho e marcadores seguros; não publica, não cria `pichau_execucao` e não
 grava HTML, cookie ou imagem.
 
-No Samsung SM-M135M, a sessão nativa iniciou, o CDP local retornou o DOM e o
+No Samsung Android, a sessão nativa iniciou, o CDP local retornou o DOM e o
 diagnóstico SSR/Appium encontrou `total=1169`, `itens=36`, `skus=36`,
 `precos=36` e disponibilidade `disponivel`. O diagnóstico não criou conexão
 ou execução no banco. A coleta rápida DOM/CDP posterior foi aprovada. Após
@@ -305,17 +305,18 @@ retorno pós-reboot foi validado após o primeiro desbloqueio: o worker e o
 Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
 totalmente autônoma antes desse desbloqueio permanece bloqueada pela tela de
 bloqueio do Android. Depois das falhas `34158686905` e `34174437207`, o
-executor foi corrigido para usar `PICHAU_ANDROID_UDID=127.0.0.1:5555` dentro
-do Samsung; o USB `RX8W105DHSY` permanece conectado apenas para gerenciamento
-do host. A execução `34182214027` confirmou novamente fila, coleta completa e
-publicação. O Wireless Debugging foi pareado e validado no host e no Termux em
-`192.168.2.128:35613`, sem migrar o transporte operacional do worker. No APK,
+executor passou a usar Wireless Debugging por Wi-Fi, com descoberta mDNS e
+filtro pelo host privado configurado no Termux. A execução `34182214027`
+confirmou novamente fila, coleta completa e publicação antes da migração. A
+validação definitiva do transporte sem cabo continua pendente no aparelho. No
+APK,
 a jornada Pichau foi aceita no aparelho com catálogo, paginação, busca,
 histórico, link externo e retorno. Provas adicionais de falha preservando o
 snapshot e de ausência de concorrência ficam como hardening futuro.
 Temperatura, bateria e armazenamento devem ser observados manualmente, mas não
-criam alerta automático nem tornam o carregador obrigatório. Livelo e Inter só
-podem ser avaliados depois disso.
+criam alerta automático nem tornam o carregador obrigatório. IP, porta, serial,
+código de pareamento, chave ADB e credenciais nunca entram em documentação,
+logs ou saída do workflow. Livelo e Inter só podem ser avaliados depois disso.
 
 ### Fase 6 — validar a redução de tempo — pendente
 

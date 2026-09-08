@@ -65,11 +65,21 @@ python -m robo_pichau.principal --diagnostico
   `python -m pip install "psycopg>=3.2"`. O script
   `scripts/pichau-android-run.sh` lê um arquivo privado
   `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
-  `flock`, `termux-wake-lock` e um `.venv`; `PICHAU_ANDROID_ADB_PORT` é
-  opcional para uma ponte ADB local durante a validação. Após a coleta real
-  `34148112344`, o Samsung validado usa `PICHAU_ANDROID_UDID=RX8W105DHSY`
-  pelo cabo USB, com ADB TCP temporário desligado. O runner não imprime a
-  `DATABASE_URL`.
+  `flock`, `termux-wake-lock` e um `.venv`. O transporte operacional é
+  Wireless Debugging por Wi-Fi: `PICHAU_ANDROID_UDID=auto` faz o runner
+  descobrir o serviço ADB pareado por mDNS, filtrando o host privado definido
+  em `PICHAU_ANDROID_WIFI_HOST`. IP, porta, serial, código de pareamento e
+  credenciais ficam somente no arquivo privado e nunca são escritos em logs,
+  documentação ou saída do workflow.
+  A configuração privada usa este formato, sempre com valores reais somente no
+  Termux:
+
+  ```text
+  PICHAU_ANDROID_TRANSPORTE=wifi
+  PICHAU_ANDROID_UDID=auto
+  PICHAU_ANDROID_WIFI_HOST=<IP_PRIVADO_DO_ANDROID>
+  PICHAU_ANDROID_WIFI_SERVICE=adb-tls-connect._tcp
+  ```
   Na execução recorrente, o Chrome já aberto é lido diretamente pelo CDP local
   via ADB: o Appium/UiAutomator2 fica disponível para configuração,
   diagnóstico e recuperação, mas não bloqueia cada coleta com um novo boot.

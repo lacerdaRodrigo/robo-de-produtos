@@ -14,6 +14,11 @@ LOCK_FILE="$LOCK_DIR/robo-pichau.lock"
 LOG_FILE="$LOG_DIR/coleta-$(date +%F).log"
 VENV_DIR="$ROBO_ROOT/.venv"
 APPIUM_SCRIPT="$ROBO_ROOT/scripts/pichau-android-appium.sh"
+CODIGO_ADB_AUSENTE=30
+CODIGO_ADB_SERVIDOR=31
+CODIGO_ADB_DESCOBERTA_WIFI=32
+CODIGO_ADB_CONEXAO_WIFI=33
+CODIGO_ADB_ESTADO_WIFI=34
 
 agora_ms() {
     date +%s%3N
@@ -50,7 +55,7 @@ while IFS= read -r linha || [[ -n "$linha" ]]; do
     valor="${linha#*=}"
     [[ "$chave" =~ ^[A-Z][A-Z0-9_]*$ ]] || fail "nome de variavel invalido"
     case "$chave" in
-        DATABASE_URL|PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|LOG_LEVEL)
+        DATABASE_URL|PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|PICHAU_ANDROID_TRANSPORTE|PICHAU_ANDROID_WIFI_HOST|PICHAU_ANDROID_WIFI_SERVICE|LOG_LEVEL)
             export "$chave=$valor"
             ;;
         *)
@@ -69,20 +74,63 @@ case "$DATABASE_URL" in
     *) fail "DATABASE_URL precisa exigir SSL (sslmode=require, verify-ca ou verify-full)" ;;
 esac
 
-command -v adb >/dev/null 2>&1 || fail "adb ausente; instale Android Platform Tools" 3
+command -v adb >/dev/null 2>&1 || fail "adb ausente; instale Android Platform Tools" "$CODIGO_ADB_AUSENTE"
 ADB_PORT="${PICHAU_ANDROID_ADB_PORT:-5037}"
-ADB_TARGET="${PICHAU_ANDROID_UDID:-}"
-[[ -n "$ADB_TARGET" ]] || fail "PICHAU_ANDROID_UDID ausente no executor Android" 3
-[[ "$ADB_TARGET" == *:* ]] || fail \
-    "PICHAU_ANDROID_UDID deve ser um endpoint host:porta acessivel pelo Android; o serial USB do host nao serve" 3
+TRANSPORTE="${PICHAU_ANDROID_TRANSPORTE:-wifi}"
+[[ "$TRANSPORTE" == "wifi" ]] || fail \
+    "PICHAU_ANDROID_TRANSPORTE deve ser wifi" "$CODIGO_ADB_DESCOBERTA_WIFI"
+[[ "${PICHAU_ANDROID_UDID:-}" == "auto" ]] || fail \
+    "PICHAU_ANDROID_UDID deve ser auto no transporte wifi" "$CODIGO_ADB_DESCOBERTA_WIFI"
+WIFI_HOST="${PICHAU_ANDROID_WIFI_HOST:-}"
+[[ -n "$WIFI_HOST" && "$WIFI_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || fail \
+    "PICHAU_ANDROID_WIFI_HOST invalido" "$CODIGO_ADB_DESCOBERTA_WIFI"
+WIFI_SERVICE="${PICHAU_ANDROID_WIFI_SERVICE:-adb-tls-connect._tcp}"
+[[ "$WIFI_SERVICE" =~ ^[A-Za-z0-9._-]+$ ]] || fail \
+    "PICHAU_ANDROID_WIFI_SERVICE invalido" "$CODIGO_ADB_DESCOBERTA_WIFI"
 unset ADB_SERVER_SOCKET
 adb -P "$ADB_PORT" start-server >/dev/null 2>&1 \
-    || fail "servidor ADB local nao iniciou" 3
+    || fail "servidor ADB local nao iniciou" "$CODIGO_ADB_SERVIDOR"
+
+descobrir_endpoint_wifi() {
+    local servicos servico endpoint host candidato=""
+    for _tentativa in {1..30}; do
+        servicos="$(adb -P "$ADB_PORT" mdns services 2>/dev/null || true)"
+        while read -r servico endpoint _resto; do
+            [[ "$servico" == "$WIFI_SERVICE" ]] || continue
+            [[ "$endpoint" == *:* ]] || continue
+            host="${endpoint%:*}"
+            [[ "$host" == "$WIFI_HOST" ]] || continue
+            if [[ -n "$candidato" && "$candidato" != "$endpoint" ]]; then
+                return 2
+            fi
+            candidato="$endpoint"
+        done <<< "$servicos"
+        if [[ -n "$candidato" ]]; then
+            printf '%s\n' "$candidato"
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
+if ADB_TARGET="$(descobrir_endpoint_wifi)"; then
+    :
+else
+    status_descoberta=$?
+    if [[ "$status_descoberta" == 2 ]]; then
+        fail "mais de um endpoint ADB Wi-Fi encontrado" "$CODIGO_ADB_DESCOBERTA_WIFI"
+    fi
+    fail "endpoint ADB Wi-Fi nao encontrado" "$CODIGO_ADB_DESCOBERTA_WIFI"
+fi
+
 adb -P "$ADB_PORT" connect "$ADB_TARGET" >/dev/null 2>&1 \
-    || fail "nao foi possivel conectar ao endpoint ADB $ADB_TARGET" 3
+    || fail "nao foi possivel conectar ao ADB Wi-Fi" "$CODIGO_ADB_CONEXAO_WIFI"
 estado_adb="$(adb -P "$ADB_PORT" -s "$ADB_TARGET" get-state 2>/dev/null || true)"
 [[ "$estado_adb" == "device" ]] || fail \
-    "endpoint ADB $ADB_TARGET nao esta pronto (estado=${estado_adb:-indisponivel})" 3
+    "ADB Wi-Fi nao esta pronto (estado=${estado_adb:-indisponivel})" "$CODIGO_ADB_ESTADO_WIFI"
+export PICHAU_ANDROID_UDID="$ADB_TARGET"
+export PICHAU_ANDROID_TRANSPORTE="$TRANSPORTE"
 
 command -v flock >/dev/null 2>&1 || fail "flock ausente; instale util-linux"
 command -v termux-wake-lock >/dev/null 2>&1 || fail "termux-wake-lock ausente; instale Termux:API"
@@ -111,7 +159,7 @@ trap liberar_wake_lock EXIT
 {
     inicio_runner_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) inicio coleta Pichau Android"
-    echo "$(date --iso-8601=seconds) executor ADB alvo=$ADB_TARGET"
+    echo "$(date --iso-8601=seconds) executor ADB transporte=wifi"
     cd "$ROBO_ROOT"
     inicio_preparo_ms="$(agora_ms)"
     "$APPIUM_SCRIPT"

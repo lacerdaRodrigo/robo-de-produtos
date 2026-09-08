@@ -64,6 +64,12 @@ def teste_fila_valida_url_chave_e_origem_sem_expor_segredo() -> None:
         fila_android.validar_origem("outro")
 
 
+def teste_codigo_runner_expoe_somente_categoria_operacional() -> None:
+    assert fila_android.codigo_falha_runner(32) == "adb-wifi-descoberta"
+    assert fila_android.codigo_falha_runner(34) == "adb-wifi-estado"
+    assert fila_android.codigo_falha_runner(2) == "runner-2"
+
+
 def teste_enfileirar_eh_idempotente_e_retorna_id_existente(monkeypatch) -> None:
     linha = (7, "github-7", "workflow_dispatch", "pendente", 0, None, None)
     cursor = CursorFalso([linha])
