@@ -187,8 +187,8 @@ documentado, atualmente `lacerdaa.rodrigo@gmail.com`.
 
 ## 6. Validação visual e manual no Samsung
 
-Usar preferencialmente o Samsung conectado por USB `RX8W105DHS`, com o
-dispositivo Wi-Fi `192.168.2.128:35613` como alternativa.
+Usar preferencialmente o Samsung conectado ao Wi-Fi, sem registrar em
+documentação o serial USB ou o endpoint privado de Wireless Debugging.
 
 Comparar componente por componente com o HTML V11:
 

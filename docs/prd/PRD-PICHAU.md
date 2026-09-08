@@ -254,7 +254,7 @@ O plano separado está em
 [`docs/planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](../planos/PLANO-SERVIDOR-ANDROID-PICHAU.md).
 O pacote agora possui `FontePichauAndroid`, o modo
 `PICHAU_MODO_NAVEGADOR=android`, diagnóstico sem banco e scripts de Appium,
-lock, wake-lock, logs e agendamento. No Samsung SM-M135M, Android 14, Chrome
+lock, wake-lock, logs e agendamento. No Samsung Android 14, Chrome
 e ABI `armeabi-v7a/armeabi` 32-bit, Termux/Termux:Boot/Termux:API, Appium e
 UiAutomator2 foram instalados e o diagnóstico real foi aprovado. Como não há
 ChromeDriver oficial Linux ARM32, a execução recorrente conecta diretamente
@@ -288,8 +288,8 @@ script e o worker, Appium e job 7301 ficaram ativos. A API autenticada e o
 catálogo no aplicativo foram conferidos após as execuções reais
 `34081623450` e `34136108063`. A execução `34148112344` validou o prefetch com
 `1169/1169`, zero duplicados, `79630 ms` de coleta e `87479 ms` de runner.
-Depois dela, o executor voltou ao ADB USB pelo serial `RX8W105DHSY`; a porta
-TCP temporária foi desligada e o cabo permanece conectado.
+Depois dela, o executor passou a depender do Wireless Debugging pareado no
+próprio Wi-Fi; o cabo USB não faz parte do transporte operacional.
 Livelo e Inter permanecem fora desta prova.
 
 ## Workflow GitHub Actions e fila Android — implementado e validado em execução real
@@ -310,9 +310,10 @@ endpoint do Appium ficar pronto; a coleta normal continua fazendo sua própria
 espera controlada.
 
 Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
-`127.0.0.1`; o ADB TCP local necessário ao executor pode expor a porta 5555 na
-interface do aparelho e continua sujeito à configuração segura de depuração do
-Android. A migration `022_pichau_android_fila.sql` já foi aplicada e as
+`127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e
+filtro por host privado configurado somente no Termux. IP, porta, serial,
+código de pareamento, chave ADB e credenciais não entram nos logs nem no
+workflow. A migration `022_pichau_android_fila.sql` já foi aplicada e as
 execuções reais `34081623450` e `34136108063` confirmaram o caminho GitHub →
 fila → worker Android → banco/API. As credenciais mínimas separadas estão
 configuradas; o fallback para `DATABASE_URL` permanece funcional.
@@ -334,12 +335,12 @@ configuradas; o fallback para `DATABASE_URL` permanece funcional.
 
 ## Pendências de operação desta entrega
 
-- Decidir se o primeiro desbloqueio após reinicialização é aceitável ou se a
-  tela de bloqueio será removida explicitamente; o código não altera essa
-  proteção. O executor também depende do ADB local TCP `127.0.0.1:5555`, que
-  nesta prova foi reativado por USB e ainda não tem persistência comprovada
-  após reboot. Depois disso, validar uma falha preservando o snapshot anterior
-  e a ausência de duas coletas simultâneas.
+- O primeiro desbloqueio após reinicialização continua necessário por causa do
+  `BootReceiver` do Android; o código não altera a proteção da tela. O
+  transporte operacional foi migrado para Wireless Debugging por Wi-Fi, com
+  descoberta automática do endpoint e sem dependência de cabo USB. Ainda falta
+  concluir o pareamento privado no aparelho, validar a descoberta após reboot
+  e comprovar uma falha preservando o snapshot anterior.
 - Validar em três coletas reais consecutivas o alvo de até 120 segundos,
   respeitando o intervalo mínimo de seis horas; as coletas atuais estão
   completas, mas ainda acima do alvo.

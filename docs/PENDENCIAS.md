@@ -39,7 +39,7 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 - [x] Fazer a primeira coleta real no Samsung: as execuções 6 e 8 provaram o caminho histórico de 33 páginas; as execuções 22, 23 e 24 aprovaram o caminho rápido com 12 páginas, `1169/1169` itens únicos, zero duplicados e 1.169 medições; as duas últimas terminaram em 225 e 227 segundos. A tentativa concorrente 7 falhou com código `acesso` sem substituir snapshot.
 - [x] Reexecutar o workflow após o diagnóstico de bloqueio e confirmar no log se o GitHub recebeu Cloudflare/Turnstile, manutenção ou outro HTML sem catálogo. As execuções `34006575148` (`headless2`) e `34006802532` (`xvfb`) receberam `Site em Manutenção - Pru Pru`, sem payload de catálogo ou marcador de desafio, e não publicaram dados.
 - [x] Comparar uma execução manual com `modo_navegador=xvfb` contra o `headless2`; ambas retornaram a mesma página de manutenção, portanto o agendamento continua em `headless2` e o executor Android fica como alternativa em avaliação.
-- [x] Registrar o levantamento do executor Android: Samsung SM-M135M, Android 14, aproximadamente 3,8 GB de RAM, Chrome instalado e ABI `armeabi-v7a/armeabi` 32-bit; a compatibilidade 32-bit passou a ser o primeiro gate explícito.
+- [x] Registrar o levantamento do executor Android: Samsung Android 14, aproximadamente 3,8 GB de RAM, Chrome instalado e ABI `armeabi-v7a/armeabi` 32-bit; a compatibilidade 32-bit passou a ser o primeiro gate explícito.
 - [x] Versionar o adaptador Android com CDP direto/local, fallback de Appium/UiAutomator2 para configuração/recuperação, modo `PICHAU_MODO_NAVEGADOR=android`, diagnóstico sem banco, runner Termux com lock/wake-lock/logs, worker de fila e watchdog sem coleta independente. O descritor do `flock` não é herdado pelo ADB/tmux persistente.
 - [x] Instalar Termux, Termux:Boot, Termux:API, Python, Appium/UiAutomator2 e Chrome no Samsung e aprovar o diagnóstico SSR/Appium e a coleta completa histórica: `total=1169`, 36 itens na primeira página, 33 páginas e 1.169 itens publicados. O caminho DOM/CDP foi sondado com `pageSize=200` (200 cards na primeira página, 169 na sexta e total 1.169), reduzindo a coleta prevista para 6 páginas; a reconciliação continua por URL. O driver puro `psycopg` foi instalado no ARM32 contra o `libpq` local.
 - [x] Sincronizar o worker/boot no Samsung, reaplicar o job 7301 como watchdog de 15 minutos e confirmar que ele não executa coleta sem solicitação pendente. O worker retornou `status=0` sem item pendente, e não há alerta automático de bateria.
@@ -51,27 +51,18 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
   interpretador absoluto do Termux e, no reboot de 2026-09-07, o receiver
   executou `pichau-android-boot.sh`; após o primeiro desbloqueio, o worker,
   Appium e o job 7301 ficaram ativos sem comando manual no Termux.
-- [ ] Fechar o boot totalmente autônomo antes do primeiro desbloqueio: o teste
-  mostrou o Android mantendo `com.termux.boot.BootReceiver` pendente na tela de
-  bloqueio (`directBootAware=false`) e nenhum worker/Appium iniciou enquanto ela
-  estava bloqueada. É preciso aceitar esse desbloqueio após reinício ou decidir
-  explicitamente sobre a remoção da tela de bloqueio; não alterar a segurança
-  do aparelho automaticamente. O transporte do host continua USB para
-  gerenciamento, mas o worker dentro do Samsung usa ADB TCP local em
-  `127.0.0.1:5555`, pois o processo Android não consegue usar o serial USB do
-  próprio host. Wireless Debugging foi pareado e validado como alternativa em
-  `192.168.2.128:35613`, mantendo o cabo USB conectado; a operação continua
-  usando o endpoint local `127.0.0.1:5555`.
-- [x] Diagnosticar e corrigir as falhas das execuções automáticas
-  `34158686905` e `34174437207`: a troca para o serial USB deixou o worker sem
-  um endpoint ADB acessível dentro do Android e o runner terminou com
-  `runner-2`/código `navegador`. O Samsung voltou ao endpoint local
-  `127.0.0.1:5555`, o runner passou a rejeitar serial USB com código explícito
-  e a execução `34182214027` confirmou fila, coleta e publicação completas.
-- [x] Preparar e validar o Wireless Debugging pareado como transporte
-  alternativo, sem remover o cabo USB: o host e o Termux conectaram ao
-  endpoint `192.168.2.128:35613` e `adb get-state` retornou `device`. O cabo e
-  o transporte local do worker permanecem preservados.
+- [ ] Fechar a operação por Wireless Debugging após o primeiro desbloqueio: o
+  Android mantém o `BootReceiver` pendente na tela de bloqueio
+  (`directBootAware=false`), portanto o primeiro desbloqueio continua sendo
+  necessário após reinício. O runner agora descobre o endpoint ADB Wi-Fi por
+  mDNS, sem depender de cabo, serial, IP, porta ou código de pareamento em
+  logs/documentação. Ainda falta concluir o pareamento privado no aparelho e
+  validar a descoberta após reboot.
+- [x] Diagnosticar as falhas automáticas causadas pela ausência de um endpoint
+  ADB acessível dentro do Android; a execução posterior confirmou fila,
+  coleta e publicação completas.
+- [ ] Migrar o Wireless Debugging pareado para transporte operacional único,
+  com descoberta mDNS no Termux, validação sem cabo e códigos de falha seguros.
 - [x] Executar no aparelho o diagnóstico e as coletas de prova; as execuções 6 e 8 fecharam 1.169/1.169 com zero duplicados antes da otimização. Livelo e Inter continuam fora da prova.
 - [x] Fechar o caminho rápido Android com 1.169 itens únicos e zero duplicados: as execuções 22, 23 e 24 publicaram `sucesso`/`completa` com 12 páginas, `itens_lidos=1169`, `itens_unicos=1169`, `duplicados=0` e 1.169 medições. A validação da última página renderizada e a reconciliação em lote por URL/SKU ficaram versionadas.
 - [x] Fazer três execuções consecutivas do caminho rápido: 22, 23 e 24 fecharam `sucesso`/`completa`, `1169/1169` únicos, zero duplicados e 1.169 medições.

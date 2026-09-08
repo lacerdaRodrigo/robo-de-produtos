@@ -476,7 +476,7 @@ depende de Xcode/macOS e permanece parte do smoke físico da etapa.
 
 O fechamento do módulo passou por formatação, análise, 131 testes, build Web e
 APK debug. `pagina_entrar.dart` atingiu 233/241 linhas (96,68%); a cobertura
-global observada foi 89,76%. O APK foi aberto no Samsung SM-M135M sem submeter
+global observada foi 89,76%. O APK foi aberto no Samsung Android sem submeter
 credenciais reais, e o responsável aprovou o resultado visual e dispensou o
 restante do roteiro manual.
 
@@ -497,7 +497,7 @@ O fechamento passou por formatação, análise, 137 testes, build Web e APK debu
 A cobertura global ficou em 2529/2805 linhas (90,16%); `moldura.dart` atingiu
 116/118 (98,31%) e `lojas.dart`, 70/71 (98,59%). O APK foi instalado com
 substituição, preservando os dados locais, e o responsável concluiu o teste
-manual no Samsung SM-M135M com resultado aprovado.
+manual no Samsung Android com resultado aprovado.
 
 ### Redesign — Módulo 3, Início e resumo real
 
@@ -588,7 +588,9 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-383 | Fila Android idempotente | A mesma chave de workflow retorna o trabalho existente; origens e chaves fora do contrato são rejeitadas sem expor a URL do banco | `teste_fila_android.py` |
 | CT-384 | Claim Android com lease | O worker reivindica um trabalho pendente ou abandonado de forma atômica, incrementa tentativas e não permite dois claims simultâneos | `teste_fila_android.py` e migration `022_pichau_android_fila.sql` |
 | CT-385 | Resultado do worker | Saída zero do `pichau-android-run.sh` encerra a fila como `sucesso`; saída diferente de zero encerra como `falha` sem publicar segredo | `teste_fila_android.py` |
-| CT-387 | Pré-voo do executor Android | O runner registra falha operacional e rejeita serial USB do host; somente um endpoint ADB `host:porta` acessível pelo próprio Android pode iniciar a coleta | `pichau-android-run.sh` e validação operacional no Samsung |
+| CT-387 | Pré-voo Wi-Fi do executor Android | O runner exige o modo Wi-Fi, descobre o serviço pareado por mDNS, valida `device` e falha sem expor o endpoint privado | `pichau-android-run.sh` e validação operacional no Samsung |
+| CT-390 | Descoberta ADB Wi-Fi | O runner descobre exatamente um serviço Wireless Debugging pareado por mDNS, filtra o host privado e propaga o endpoint somente em memória | `pichau-android-run.sh` e validação operacional no Samsung |
+| CT-391 | Telemetria sem identificadores privados | Falhas de ADB, Appium e fila expõem somente categorias operacionais; endpoint, serial, código de pareamento e credenciais não entram em logs ou workflow | `teste_fila_android.py`, scripts Termux e revisão de logs |
 | CT-386 | Workflow produtor Android | Cron 09h/14h/20h, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
