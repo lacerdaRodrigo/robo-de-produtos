@@ -441,6 +441,12 @@
     .pichau-product-actions { display: grid; grid-template-columns: .85fr 1.15fr; gap: 8px; padding: 0 15px 15px; }
     .pichau-product-actions .primary { min-height: 43px; }
     .pichau-product-actions .secondary { min-height: 43px; padding: 0 10px; font-size: 10px; }
+    .pichau-collection-bar { margin-bottom: 4px; }
+    .pichau-collection-bar .collection-copy { min-width: 0; }
+    .pichau-status-line { display: flex; justify-content: flex-end; min-height: 14px; margin: 0 4px 10px; }
+    .pichau-follow-row { padding: 0 15px 10px; }
+    .pichau-follow-button { width: 100%; min-height: 41px; padding: 0 13px; border: 1px solid color-mix(in srgb, var(--radar-action) 32%, var(--radar-line)); border-radius: 13px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 10px; font-weight: 800; }
+    .pichau-follow-button.active { border-color: color-mix(in srgb, var(--radar-positive) 30%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
     .pichau-product-card.sold-out .pichau-origin { background: var(--radar-warning-soft); color: var(--radar-warning); }
     .pichau-sold-out-copy { margin: 0 15px 12px; padding: 9px 10px; border-radius: 11px; background: var(--radar-warning-soft); color: var(--radar-warning); font-size: 9px; line-height: 1.4; }
     .pichau-sold-out-card { margin-top: 14px; }
@@ -679,7 +685,9 @@
           <div class="toolbar">
             <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar PC Gamer na Pichau</span><input id="pichau-search" type="search" placeholder="Buscar por nome, marca ou SKU"></label>
           </div>
-          <div class="collection-bar"><span class="collection-copy"><strong id="pichau-count">2 ofertas encontradas</strong><small id="pichau-context">Catálogo completo · última coleta válida</small></span><span class="status-label pichau-catalog-status" id="pichau-status">Catálogo atualizado</span></div>
+          <div class="catalog-tabs" data-filter-group="pichau" role="tablist" aria-label="Visualização das ofertas Pichau"><button class="catalog-tab active" type="button" role="tab" aria-selected="true" data-filter="all"><span>Todas</span><small id="pichau-all-count">2</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-filter="monitored"><span>Acompanhadas</span><small id="pichau-followed-count">1</small></button></div>
+          <div class="collection-bar pichau-collection-bar"><span class="collection-copy"><strong id="pichau-count">2 ofertas encontradas</strong><small id="pichau-context">Catálogo completo · última coleta válida</small></span><button class="filter-trigger" id="pichau-filter-trigger" type="button" data-open-sheet="pichau-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filtrar e ordenar</span></button></div>
+          <div class="pichau-status-line"><span class="status-label pichau-catalog-status" id="pichau-status">Catálogo atualizado</span></div>
 
           <div class="pichau-partial-notice catalog-notice" id="pichau-partial-notice" hidden><svg><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/></svg><span>A coleta está parcial e atrasada. O último catálogo válido continua visível; nenhum preço é convertido em zero ou substituído por dado fictício.</span></div>
 
@@ -704,17 +712,19 @@
 
           <div class="pichau-results-shell" id="pichau-results-shell">
             <div class="result-list" id="pichau-results">
-              <article class="result-card pichau-product-card" data-pichau-product="pichau gaming 7800x3d rtx 4070 super pc gamer pg-7800" data-pichau-price="7499.90">
+              <article class="result-card pichau-product-card" data-pichau-product="pichau gaming 7800x3d rtx 4070 super pc gamer pg-7800" data-pichau-price="7499.90" data-pichau-discount="9" data-pichau-availability="available" data-group="monitored">
                 <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming 7800X3D RTX 4070 Super</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7800</p></div><span class="pichau-origin">Origem Pichau</span></div>
                 <div class="pichau-price-grid"><div class="pichau-price featured"><span>Preço Pix</span><strong>R$ 7.499,90</strong><small>De R$ 8.199,90 · 9% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 7.999,90</strong><small>12x de R$ 666,66</small></div></div>
                 <div class="pichau-product-meta"><span>Disponível</span><span>12x sem juros</span><span class="tag">Oferta</span><span class="tag">Montado</span></div>
+                <div class="pichau-follow-row"><button class="pichau-follow-button active" type="button" aria-pressed="true" data-follow-pichau>Acompanhando</button></div>
                 <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7800">Histórico</button><button class="primary" type="button" data-toast="Demonstração: o produto real seria aberto na Pichau em uma URL http/https validada pela API.">Ver na Pichau</button></div>
               </article>
-              <article class="result-card pichau-product-card sold-out" data-pichau-product="pichau gaming ryzen 5 rx 7600 pc gamer pg-7600" data-pichau-price="4699.90">
+              <article class="result-card pichau-product-card sold-out" data-pichau-product="pichau gaming ryzen 5 rx 7600 pc gamer pg-7600" data-pichau-price="4699.90" data-pichau-discount="10" data-pichau-availability="soldout">
                 <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming Ryzen 5 RX 7600</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7600</p></div><span class="pichau-origin">Origem Pichau</span></div>
                 <div class="pichau-price-grid"><div class="pichau-price featured"><span>Último preço Pix</span><strong>R$ 4.699,90</strong><small>De R$ 5.199,90 · 10% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 4.899,90</strong><small>12x de R$ 408,32</small></div></div>
                 <p class="pichau-sold-out-copy">Esgotado informado pela Pichau. O produto segue identificado, mas não está disponível para compra agora.</p>
                 <div class="pichau-product-meta"><span class="sold-out">Esgotado</span><span>Última medição preservada</span><span class="tag">Montado</span></div>
+                <div class="pichau-follow-row"><button class="pichau-follow-button" type="button" aria-pressed="false" data-follow-pichau>Acompanhar</button></div>
                 <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7600">Histórico</button><button class="primary" type="button" data-toast="Demonstração: a página real seria aberta na Pichau, mesmo com disponibilidade esgotada.">Ver na Pichau</button></div>
               </article>
             </div>
@@ -908,6 +918,7 @@
         'pichau-history-7800': ['Histórico de preço', 'Pichau Gaming 7800X3D RTX 4070 Super · Pichau', '<div class="metric-list"><div class="metric-line"><span>04 set 2026 · Pix</span><strong>R$ 7.499,90</strong></div><div class="metric-line"><span>03 set 2026 · Pix</span><strong>R$ 7.599,90</strong></div><div class="metric-line"><span>Mínimo em 30 dias</span><strong>R$ 7.399,90</strong></div><div class="metric-line"><span>Máximo em 30 dias</span><strong>R$ 7.899,90</strong></div></div><div class="detail-block"><p>Dados ilustrativos do protótipo. O histórico real será somente leitura, paginado e limitado às medições de até 30 dias recebidas pela API.</p></div>'],
         'pichau-history-7600': ['Histórico de preço', 'Pichau Gaming Ryzen 5 RX 7600 · Pichau', '<div class="metric-list"><div class="metric-line"><span>04 set 2026 · Pix</span><strong>R$ 4.699,90</strong></div><div class="metric-line"><span>02 set 2026 · Pix</span><strong>R$ 4.799,90</strong></div><div class="metric-line"><span>Mínimo em 30 dias</span><strong>R$ 4.599,90</strong></div><div class="metric-line"><span>Máximo em 30 dias</span><strong>R$ 4.999,90</strong></div></div><div class="detail-block"><p>Dados ilustrativos do protótipo. O histórico permanece disponível mesmo quando a fonte informa estoque esgotado.</p></div>'],
         'livelo-filters': ['Filtrar todas as lojas', 'Refine o catálogo completo da Livelo', '<label class="field"><span>Categoria</span><select id="livelo-category"><option value="all">Todas as categorias</option><option value="marketplace">Marketplace</option><option value="beleza">Beleza</option><option value="viagem">Viagem</option></select></label><label class="field" style="margin-top:12px"><span>Ordenar por</span><select id="livelo-order"><option value="name">Nome da loja</option><option value="score">Maior pontuação</option></select></label><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-livelo-filters>Limpar</button><button class="primary" type="button" data-apply-livelo-filters>Ver lojas</button></div>'],
+        'pichau-filters': ['Filtrar catálogo Pichau', 'Refine as ofertas salvas de PC Gamer', '<label class="field"><span>Disponibilidade</span><select id="pichau-availability"><option value="all">Todas as disponibilidades</option><option value="available">Disponíveis</option><option value="soldout">Esgotados</option></select></label><label class="field" style="margin-top:12px"><span>Ordenar por</span><select id="pichau-order"><option value="name">Nome do produto</option><option value="price-asc">Menor preço Pix</option><option value="discount">Maior desconto Pix</option></select></label><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-pichau-filters>Limpar</button><button class="primary" type="button" data-apply-pichau-filters>Ver ofertas</button></div>'],
         'product-filters': ['Filtros', 'Escolha a loja. Só a faixa de preço é editável.', '<label class="field"><span>Lojas selecionadas para coleta</span><select id="product-store"><option value="all">Todas as lojas selecionadas</option><option value="casas-bahia">Casas Bahia</option><option value="ponto">Ponto</option></select></label><div class="price-filter-grid"><label class="field"><span>Preço mínimo</span><input id="product-min-price" inputmode="decimal" placeholder="R$ 0"></label><label class="field"><span>Preço máximo</span><input id="product-max-price" inputmode="decimal" placeholder="Sem limite"></label></div><div class="product-actions" style="padding:16px 0 0"><button class="secondary" type="button" data-clear-product-filters>Limpar</button><button class="primary" type="button" data-apply-product-filters>Ver ofertas</button></div>'],
         'admin-preferences': ['Preferências Livelo', 'GET/PATCH autorizado', '<label class="field"><span>Multiplicador padrão</span><input value="2"></label><label class="field" style="margin-top:12px"><span>Piso de pontos</span><input value="3"></label><button class="primary" style="width:100%;margin-top:14px" type="button" data-sheet-toast="Preferências salvas pelo PATCH existente.">Salvar preferências</button>'],
         'admin-inter': ['Seleções do Inter', 'Operações admin existentes', '<div class="sheet-actions"><button class="sheet-action" type="button" data-sheet-toast="Seleção de sites parceiros aberta."><span>✓</span><span>Sites parceiros</span><span>›</span></button><button class="sheet-action" type="button" data-sheet-toast="Seleção de lojas diretas aberta."><span>✓</span><span>Lojas do Compre direto</span><span>›</span></button></div>'],
@@ -929,6 +940,10 @@
           document.getElementById('product-store').value = productFilters.store;
           document.getElementById('product-min-price').value = productFilters.minPrice;
           document.getElementById('product-max-price').value = productFilters.maxPrice;
+        }
+        if (name === 'pichau-filters') {
+          document.getElementById('pichau-availability').value = pichauFilters.availability;
+          document.getElementById('pichau-order').value = pichauFilters.order;
         }
         scrim.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow = 'hidden';
       }
@@ -1028,6 +1043,12 @@
         const count = document.querySelectorAll('#inter-results [data-group~="monitored"]').length;
         document.getElementById('inter-followed-count').textContent = count;
       }
+      function updatePichauFollowedCount() {
+        const total = document.querySelectorAll('#pichau-results [data-pichau-product]').length;
+        const followed = document.querySelectorAll('#pichau-results [data-follow-pichau].active').length;
+        document.getElementById('pichau-all-count').textContent = total;
+        document.getElementById('pichau-followed-count').textContent = followed;
+      }
       function updateDirectSelectedCount() {
         const count = document.querySelectorAll('#direct-results [data-selected="true"]').length;
         document.getElementById('direct-selected-count').textContent = count;
@@ -1119,6 +1140,21 @@
           filterList(document.getElementById('inter-search'), 'inter-results', 'inter-empty', active?.dataset.filter || 'all');
           showToast(monitored ? 'Loja removida das acompanhadas do Inter.' : 'Loja adicionada às acompanhadas do Inter.');
         }
+        const pichauFollow = event.target.closest('[data-follow-pichau]');
+        if (pichauFollow) {
+          const card = pichauFollow.closest('[data-pichau-product]');
+          const monitored = pichauFollow.classList.contains('active');
+          const next = !monitored;
+          const groups = new Set((card.dataset.group || '').split(' ').filter(Boolean));
+          if (next) groups.add('monitored'); else groups.delete('monitored');
+          card.dataset.group = [...groups].join(' ');
+          pichauFollow.classList.toggle('active', next);
+          pichauFollow.setAttribute('aria-pressed', String(next));
+          pichauFollow.textContent = next ? 'Acompanhando' : 'Acompanhar';
+          updatePichauFollowedCount();
+          searchPichau();
+          showToast(next ? 'Produto adicionado às suas acompanhadas.' : 'Produto removido das suas acompanhadas.');
+        }
         const directSelect = event.target.closest('[data-select-direct]');
         if (directSelect) {
           const card = directSelect.closest('[data-direct-store]');
@@ -1146,6 +1182,19 @@
           document.getElementById('livelo-filter-trigger').classList.remove('has-filter');
           filterList(document.getElementById('livelo-search'), 'livelo-results', 'livelo-empty', 'all');
           closeSheet(); showToast('Filtros removidos.');
+        }
+        const applyPichauFilters = event.target.closest('[data-apply-pichau-filters]');
+        if (applyPichauFilters) {
+          pichauFilters.availability = document.getElementById('pichau-availability').value;
+          pichauFilters.order = document.getElementById('pichau-order').value;
+          document.getElementById('pichau-filter-trigger').classList.toggle('has-filter', pichauFilters.availability !== 'all' || pichauFilters.order !== 'name');
+          searchPichau(); closeSheet(); showToast('Catálogo Pichau atualizado com seus filtros.');
+        }
+        const clearPichauFilters = event.target.closest('[data-clear-pichau-filters]');
+        if (clearPichauFilters) {
+          pichauFilters.availability = 'all'; pichauFilters.order = 'name';
+          document.getElementById('pichau-filter-trigger').classList.remove('has-filter');
+          searchPichau(); closeSheet(); showToast('Filtros Pichau removidos.');
         }
         const applyProductFilters = event.target.closest('[data-apply-product-filters]');
         if (applyProductFilters) {
@@ -1186,6 +1235,10 @@
           if (groupEl.dataset.filterGroup === 'direct') {
             document.getElementById('direct-context').textContent = chip.dataset.filter === 'all' ? 'Disponíveis para seleção' : 'Selecionadas para a próxima coleta';
             filterDirectStores(chip.dataset.filter);
+          }
+          if (groupEl.dataset.filterGroup === 'pichau') {
+            pichauFilterGroup = chip.dataset.filter;
+            searchPichau();
           }
         }
       });
@@ -1238,6 +1291,8 @@
         document.getElementById('product-count').textContent = visible + (visible === 1 ? ' oferta encontrada' : ' ofertas encontradas');
       }
       let pichauState = 'updated';
+      let pichauFilterGroup = 'all';
+      const pichauFilters = { availability: 'all', order: 'name' };
       const pichauStates = {
         updated: { count: '2 ofertas encontradas', context: 'Catálogo completo · última coleta válida', status: 'Catálogo atualizado', tone: '' },
         loading: { count: 'Carregando catálogo', context: 'Aguardando resposta da API', status: 'Carregando', tone: 'neutral' },
@@ -1247,18 +1302,34 @@
         soldout: { count: '1 produto identificado', context: 'Presente no catálogo · sem estoque', status: 'Esgotado', tone: 'warning' },
         'out-of-catalog': { count: 'Produto não publicado', context: 'Ausência após coleta completa', status: 'Fora do catálogo', tone: 'neutral' },
       };
+      function sortPichauCards() {
+        const list = document.getElementById('pichau-results');
+        const cards = [...list.querySelectorAll('[data-pichau-product]')];
+        cards.sort((a, b) => {
+          if (pichauFilters.order === 'price-asc') return Number(a.dataset.pichauPrice) - Number(b.dataset.pichauPrice);
+          if (pichauFilters.order === 'discount') return Number(b.dataset.pichauDiscount) - Number(a.dataset.pichauDiscount);
+          return a.dataset.pichauProduct.localeCompare(b.dataset.pichauProduct, 'pt-BR');
+        });
+        cards.forEach(card => list.appendChild(card));
+      }
       function searchPichau() {
         const input = document.getElementById('pichau-search');
         const q = normalizeText(input.value);
+        sortPichauCards();
         let visible = 0;
         document.querySelectorAll('#pichau-results [data-pichau-product]').forEach(card => {
-          const show = !q || normalizeText(card.dataset.pichauProduct).includes(q);
+          const availabilityOk = pichauFilters.availability === 'all' || card.dataset.pichauAvailability === pichauFilters.availability;
+          const groupOk = pichauFilterGroup === 'all' || (card.dataset.group || '').split(' ').includes('monitored');
+          const show = (!q || normalizeText(card.dataset.pichauProduct).includes(q)) && availabilityOk && groupOk;
           card.hidden = !show;
           if (show) visible++;
         });
-        document.getElementById('pichau-empty').classList.toggle('show', visible === 0);
+        const empty = document.getElementById('pichau-empty');
+        empty.textContent = pichauFilterGroup === 'monitored' ? 'Você ainda não acompanha nenhum PC Gamer nesta busca.' : 'Nenhum PC Gamer encontrado nesta busca.';
+        empty.classList.toggle('show', visible === 0);
         if (pichauState === 'updated' || pichauState === 'partial') {
           document.getElementById('pichau-count').textContent = visible + (visible === 1 ? ' oferta encontrada' : ' ofertas encontradas');
+          document.getElementById('pichau-context').textContent = pichauFilterGroup === 'monitored' ? 'Suas ofertas acompanhadas' : pichauFilters.availability === 'all' ? pichauStates[pichauState].context : 'Catálogo filtrado por disponibilidade';
         }
       }
       function setPichauState(state) {
@@ -1288,6 +1359,7 @@
       document.getElementById('pichau-search').addEventListener('input', searchPichau);
       updateFollowedCount();
       updateInterFollowedCount();
+      updatePichauFollowedCount();
       updateDirectSelectedCount();
       sortLiveloCards();
       searchProducts();
