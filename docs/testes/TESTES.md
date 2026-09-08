@@ -562,6 +562,9 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-366 | Estados de coleta | Loading, catálogo vazio, falha sem retrato e aviso de parcial/atrasado permanecem distintos e não fabricam preço zero | `pagina_pichau_test.dart` |
 | CT-367 | Larguras mobile aprovadas | A jornada continua alcançável em 320, 390 e 430 px | `pagina_pichau_test.dart` com viewports controlados |
 | CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V11 | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
+| CT-390 | Abas, disponibilidade e ordenação | Todas/Acompanhadas e os filtros do protótipo são enviados à API, sem trocar o recorte silenciosamente | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
+| CT-391 | Acompanhamento autorizado | Usuário comum não muta; administrador usa PATCH idempotente e a falha restaura produto/contador | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
+| CT-392 | Acompanhadas fora do catálogo | A remoção da aba Acompanhadas só ocorre após confirmação e estados esgotado/fora do catálogo continuam distintos | `controlador_catalogo_pichau_test.dart` e `modelos_pichau_test.dart` |
 
 ### Pichau — backend/API versionados
 

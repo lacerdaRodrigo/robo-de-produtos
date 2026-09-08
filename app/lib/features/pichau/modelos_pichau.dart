@@ -20,6 +20,7 @@ class PichauProduto {
     required this.semJuros,
     required this.etiquetas,
     required this.atualizadoEm,
+    this.acompanhada = false,
   });
 
   factory PichauProduto.parse(Map<String, dynamic> objeto) {
@@ -44,6 +45,7 @@ class PichauProduto {
               .toList(growable: false) ??
           const <String>[],
       atualizadoEm: _textoOpcionalPichau(objeto['atualizado_em']),
+      acompanhada: objeto['acompanhada'] as bool? ?? false,
     );
   }
 
@@ -62,9 +64,129 @@ class PichauProduto {
   final bool? semJuros;
   final List<String> etiquetas;
   final String? atualizadoEm;
+  final bool acompanhada;
 
   bool get esgotado => disponibilidade == 'esgotado';
   bool get foraDoCatalogo => !presenteNoCatalogo;
+
+  PichauProduto copiarCom({bool? acompanhada}) => PichauProduto(
+    idExterno: idExterno,
+    nome: nome,
+    marca: marca,
+    categoria: categoria,
+    urlProduto: urlProduto,
+    presenteNoCatalogo: presenteNoCatalogo,
+    disponibilidade: disponibilidade,
+    precoOriginalTexto: precoOriginalTexto,
+    precoPixTexto: precoPixTexto,
+    descontoPixTexto: descontoPixTexto,
+    precoCartaoTexto: precoCartaoTexto,
+    parcelamento: parcelamento,
+    semJuros: semJuros,
+    etiquetas: etiquetas,
+    atualizadoEm: atualizadoEm,
+    acompanhada: acompanhada ?? this.acompanhada,
+  );
+}
+
+class ResumoCatalogoPichau {
+  const ResumoCatalogoPichau({
+    required this.totalCatalogo,
+    required this.acompanhadas,
+    this.ultimaColeta,
+    this.qualidade,
+  });
+
+  factory ResumoCatalogoPichau.parse(
+    Map<String, dynamic> objeto, {
+    int totalCatalogoPadrao = 0,
+    int acompanhadasPadrao = 0,
+  }) => ResumoCatalogoPichau(
+    totalCatalogo: _inteiroNaoNegativoPichau(
+      objeto['total_catalogo'],
+      fallback: totalCatalogoPadrao,
+    ),
+    acompanhadas: _inteiroNaoNegativoPichau(
+      objeto['acompanhadas'],
+      fallback: acompanhadasPadrao,
+    ),
+    ultimaColeta: _textoOpcionalPichau(
+      objeto['ultima_coleta'] ?? objeto['ultimo_sucesso_em'],
+    ),
+    qualidade: _textoOpcionalPichau(objeto['qualidade']),
+  );
+
+  final int totalCatalogo;
+  final int acompanhadas;
+  final String? ultimaColeta;
+  final String? qualidade;
+
+  ResumoCatalogoPichau copiarCom({int? totalCatalogo, int? acompanhadas}) {
+    final novoTotalAcompanhadas = acompanhadas ?? this.acompanhadas;
+    return ResumoCatalogoPichau(
+      totalCatalogo: totalCatalogo ?? this.totalCatalogo,
+      acompanhadas: novoTotalAcompanhadas < 0 ? 0 : novoTotalAcompanhadas,
+      ultimaColeta: ultimaColeta,
+      qualidade: qualidade,
+    );
+  }
+}
+
+class PaginaCatalogoPichau {
+  const PaginaCatalogoPichau({
+    required this.itens,
+    required this.resumo,
+    required this.pagina,
+    required this.porPagina,
+    required this.totalItens,
+    required this.totalPaginas,
+    required this.temProxima,
+    this.atualizadoEm,
+    this.qualidade,
+    this.ultimaTentativaEstado,
+  });
+
+  factory PaginaCatalogoPichau.parse(Map<String, dynamic> objeto) {
+    final itens =
+        (objeto['itens'] as List<dynamic>?)
+            ?.map((item) => PichauProduto.parse(item as Map<String, dynamic>))
+            .toList(growable: false) ??
+        const <PichauProduto>[];
+    final resumoBruto = objeto['resumo'];
+    final resumo = ResumoCatalogoPichau.parse(
+      resumoBruto is Map<String, dynamic> ? resumoBruto : const {},
+      totalCatalogoPadrao:
+          (objeto['total_itens'] as num?)?.toInt() ?? itens.length,
+      acompanhadasPadrao: itens.where((item) => item.acompanhada).length,
+    );
+    return PaginaCatalogoPichau(
+      itens: itens,
+      resumo: resumo,
+      pagina: (objeto['pagina'] as num?)?.toInt() ?? 1,
+      porPagina: (objeto['por_pagina'] as num?)?.toInt() ?? 20,
+      totalItens: (objeto['total_itens'] as num?)?.toInt() ?? itens.length,
+      totalPaginas: (objeto['total_paginas'] as num?)?.toInt() ?? 1,
+      temProxima: objeto['tem_proxima'] as bool? ?? false,
+      atualizadoEm: _textoOpcionalPichau(objeto['atualizado_em']),
+      qualidade: _textoOpcionalPichau(objeto['qualidade'] ?? resumo.qualidade),
+      ultimaTentativaEstado: _textoOpcionalPichau(
+        objeto['ultima_tentativa_estado'],
+      ),
+    );
+  }
+
+  final List<PichauProduto> itens;
+  final ResumoCatalogoPichau resumo;
+  final int pagina;
+  final int porPagina;
+  final int totalItens;
+  final int totalPaginas;
+  final bool temProxima;
+  final String? atualizadoEm;
+  final String? qualidade;
+  final String? ultimaTentativaEstado;
+
+  bool get vazia => itens.isEmpty;
 }
 
 class MedicaoPichau {
@@ -133,4 +255,9 @@ String _textoPichau(Object? valor) => valor?.toString() ?? '';
 String? _textoOpcionalPichau(Object? valor) {
   final texto = _textoPichau(valor).trim();
   return texto.isEmpty ? null : texto;
+}
+
+int _inteiroNaoNegativoPichau(Object? valor, {int fallback = 0}) {
+  final numero = valor is num ? valor.toInt() : int.tryParse('$valor');
+  return numero == null || numero < 0 ? fallback : numero;
 }

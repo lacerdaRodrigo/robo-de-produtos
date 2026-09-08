@@ -5,7 +5,7 @@ import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
-import '../../core/api/pagina.dart';
+import 'controlador_catalogo_pichau.dart';
 import 'link_pichau.dart';
 import 'modelos_pichau.dart';
 
@@ -14,9 +14,15 @@ import 'modelos_pichau.dart';
 /// A tela só renderiza o retrato entregue pela API. Busca e paginação pedem
 /// outro recorte desse retrato e nunca iniciam coleta na fonte externa.
 class PaginaPichau extends StatefulWidget {
-  const PaginaPichau({super.key, required this.api, this.ativa = true});
+  const PaginaPichau({
+    super.key,
+    required this.api,
+    this.administrador = false,
+    this.ativa = true,
+  });
 
   final Api api;
+  final bool administrador;
   final bool ativa;
 
   @override
@@ -24,85 +30,79 @@ class PaginaPichau extends StatefulWidget {
 }
 
 class _EstadoPaginaPichau extends State<PaginaPichau> {
+  late final ControladorCatalogoPichau _controlador = ControladorCatalogoPichau(
+    buscar:
+        ({
+          required String q,
+          required String aba,
+          required String disponibilidade,
+          required String ordenar,
+          required int pagina,
+        }) => widget.api.catalogoPichau(
+          q: q,
+          aba: aba,
+          disponibilidade: disponibilidade,
+          ordenar: ordenar,
+          pagina: pagina,
+        ),
+    alterarAcompanhamento:
+        ({required String idExterno, required bool acompanhada}) =>
+            widget.api.alterarAcompanhamentoPichau(
+              idExterno: idExterno,
+              acompanhada: acompanhada,
+            ),
+  );
   final _busca = TextEditingController();
   final _rolagem = ScrollController();
-  Pagina<PichauProduto>? _resposta;
-  Object? _erro;
-  var _carregando = true;
-  var _pagina = 1;
-  var _termo = '';
 
   @override
   void initState() {
     super.initState();
-    _carregar();
+    _controlador.carregarInicial();
   }
 
   @override
   void didUpdateWidget(covariant PaginaPichau antigo) {
     super.didUpdateWidget(antigo);
-    if (widget.ativa && !antigo.ativa) _carregar(silencioso: true);
+    if (widget.ativa && !antigo.ativa) {
+      _controlador.tentarNovamente();
+    }
   }
 
   @override
   void dispose() {
     _busca.dispose();
     _rolagem.dispose();
+    _controlador.dispose();
     super.dispose();
   }
 
-  Future<void> _carregar({int? pagina, bool silencioso = false}) async {
-    final destino = pagina ?? _pagina;
-    if (mounted) {
-      setState(() {
-        _pagina = destino;
-        if (!silencioso) _carregando = true;
-        _erro = null;
-      });
-    }
-    try {
-      final resposta = await widget.api.catalogoPichau(
-        q: _termo,
-        pagina: destino,
-      );
-      if (!mounted) return;
-      setState(() {
-        _resposta = resposta;
-        _erro = null;
-        _carregando = false;
-      });
-      if (pagina != null) await rolarParaInicioPaginaRadar(_rolagem);
-    } catch (erro) {
-      if (!mounted) return;
-      setState(() {
-        _erro = erro;
-        _carregando = false;
-      });
-    }
-  }
-
-  void _buscar(String termo) {
-    _termo = termo.trim();
-    _pagina = 1;
-    _carregar();
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final resposta = _resposta;
-    final parcial =
-        resposta != null &&
-        (resposta.qualidade == 'degradada' ||
-            resposta.ultimaTentativaEstado == 'parcial');
-    final falhaComRetrato = resposta != null && _erro != null;
-    final estado = _textoEstado(
-      carregando: _carregando && resposta == null,
-      falha: _erro != null,
-      parcial: parcial,
-    );
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _controlador,
+    builder: (context, _) => _conteudo(context),
+  );
 
+  Widget _conteudo(BuildContext context) {
+    final parcial =
+        _controlador.qualidade == 'degradada' ||
+        _controlador.ultimaTentativaEstado == 'parcial';
+    final carregando =
+        _controlador.carregandoInicial || _controlador.carregandoMais;
+    final itens = _controlador.itens;
+    final falha = _controlador.erroInicial != null;
+    final falhaComRetrato = falha && itens.isNotEmpty;
+    final estado = falha
+        ? 'Falha recente'
+        : parcial
+        ? 'Parcial / atrasado'
+        : _controlador.carregandoInicial
+        ? 'Carregando'
+        : _controlador.totalItens == 0
+        ? 'Catálogo vazio'
+        : 'Catálogo atualizado';
     return RefreshIndicator(
-      onRefresh: _carregar,
+      onRefresh: _controlador.tentarNovamente,
       child: ListView(
         key: const Key('pagina-pichau'),
         controller: _rolagem,
@@ -121,59 +121,88 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
             controlador: _busca,
             dica: 'Buscar por nome, marca ou SKU',
             somenteBusca: true,
-            aoMudar: _buscar,
+            aoMudar: _controlador.mudarBusca,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+          AbasRadar(
+            key: const Key('abas-pichau'),
+            rotulos: AbaCatalogoPichau.values.map((aba) => aba.rotulo).toList(),
+            contadores: [
+              _controlador.resumo?.totalCatalogo ?? 0,
+              _controlador.resumo?.acompanhadas ?? 0,
+            ],
+            expandir: true,
+            selecionada: _controlador.aba.index,
+            aoSelecionar: (indice) =>
+                _controlador.mudarAba(AbaCatalogoPichau.values[indice]),
+          ),
+          const SizedBox(height: 4),
           _BarraCatalogoPichau(
-            resposta: resposta,
+            total: _controlador.totalItens,
+            acompanhadas: _controlador.aba == AbaCatalogoPichau.acompanhadas,
             estado: estado,
-            carregando: _carregando,
+            carregando: carregando,
+            filtroAtivo:
+                _controlador.disponibilidade != DisponibilidadePichau.todas ||
+                _controlador.ordenacao != OrdenacaoPichau.nome,
+            aoFiltrar: _abrirFiltros,
           ),
           if (parcial || falhaComRetrato) ...[
             const SizedBox(height: 12),
             _AvisoQualidadePichau(falha: falhaComRetrato),
           ],
-          if (_carregando && resposta == null) ...[
+          if (_controlador.carregandoInicial && itens.isEmpty) ...[
             const SizedBox(height: 22),
             const SizedBox(
               height: 180,
               child: Carregando(mensagem: 'Carregando catálogo Pichau…'),
             ),
-          ] else if (_erro != null && resposta == null) ...[
+          ] else if (falha && itens.isEmpty) ...[
             const SizedBox(height: 12),
             EstadoFalha(
               mensagem: 'Não foi possível carregar o catálogo Pichau.',
-              voltar: _carregar,
+              voltar: _controlador.tentarNovamente,
             ),
-          ] else if (resposta == null || resposta.vazia) ...[
+          ] else if (itens.isEmpty) ...[
             const SizedBox(height: 12),
-            const EstadoVazio(
-              mensagem:
-                  'Nenhum PC Gamer foi encontrado na última coleta completa.',
+            EstadoVazio(
+              mensagem: _controlador.aba == AbaCatalogoPichau.acompanhadas
+                  ? 'Nenhum PC Gamer está acompanhado ainda.'
+                  : _controlador.busca.trim().isNotEmpty ||
+                        _controlador.disponibilidade !=
+                            DisponibilidadePichau.todas
+                  ? 'Nenhum PC Gamer corresponde aos filtros atuais.'
+                  : 'Nenhum PC Gamer foi encontrado na última coleta completa.',
             ),
           ] else ...[
             const SizedBox(height: 12),
-            for (final produto in resposta.itens) ...[
+            for (final produto in itens) ...[
               CartaoPichau(
                 produto: produto,
+                podeAdministrar: widget.administrador,
+                alterando: _controlador.mutacoesPendentes.contains(
+                  produto.idExterno,
+                ),
+                aoAlternarAcompanhamento: () =>
+                    _alternarAcompanhamento(produto),
                 aoAbrirHistorico: () => _abrirHistorico(produto),
                 aoAbrirNoSite: _acaoAbrirProduto(produto),
               ),
-              if (produto != resposta.itens.last) const SizedBox(height: 10),
+              if (produto != itens.last) const SizedBox(height: 10),
             ],
-            if (_carregando)
+            if (carregando)
               const Padding(
                 padding: EdgeInsets.only(top: 12),
                 child: LinearProgressIndicator(),
               ),
             const SizedBox(height: 17),
             PaginacaoRadar(
-              pagina: resposta.pagina,
-              totalItens: resposta.totalItens,
-              porPagina: resposta.porPagina,
-              carregando: _carregando,
-              erro: _erro,
-              aoIrParaPagina: (pagina) => _carregar(pagina: pagina),
+              pagina: _controlador.pagina,
+              totalItens: _controlador.totalItens,
+              porPagina: _controlador.porPagina,
+              carregando: _controlador.carregandoMais,
+              erro: _controlador.erroMais,
+              aoIrParaPagina: _irParaPagina,
             ),
           ],
         ],
@@ -181,16 +210,103 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
     );
   }
 
-  String _textoEstado({
-    required bool carregando,
-    required bool falha,
-    required bool parcial,
-  }) {
-    if (carregando) return 'Carregando';
-    if (falha) return 'Falha recente';
-    if (parcial) return 'Parcial / atrasado';
-    if (_resposta?.vazia ?? false) return 'Catálogo vazio';
-    return 'Catálogo atualizado';
+  Future<void> _irParaPagina(int pagina) async {
+    await _controlador.irParaPagina(pagina);
+    if (mounted && _controlador.pagina == pagina) {
+      await rolarParaInicioPaginaRadar(_rolagem);
+    }
+  }
+
+  Future<void> _alternarAcompanhamento(PichauProduto produto) async {
+    final acompanhada = !produto.acompanhada;
+    final sucesso = await _controlador.alternarAcompanhamento(produto);
+    if (!mounted) return;
+    mostrarMensagemRadar(
+      context,
+      sucesso
+          ? acompanhada
+                ? 'Produto adicionado às acompanhadas.'
+                : 'Produto removido das acompanhadas.'
+          : 'Não foi possível salvar o acompanhamento.',
+      sucesso: sucesso,
+    );
+  }
+
+  Future<void> _abrirFiltros() async {
+    var disponibilidade = _controlador.disponibilidade;
+    var ordenacao = _controlador.ordenacao;
+    await mostrarFolhaRadar<void>(
+      context,
+      builder: (contexto) => StatefulBuilder(
+        builder: (contexto, atualizar) => FolhaRadar(
+          titulo: 'Filtrar catálogo Pichau',
+          descricao: 'Refine as ofertas salvas de PC Gamer',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DropdownButtonFormField<DisponibilidadePichau>(
+                key: const Key('filtro-disponibilidade-pichau'),
+                initialValue: disponibilidade,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Disponibilidade'),
+                items: [
+                  for (final valor in DisponibilidadePichau.values)
+                    DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
+                ],
+                onChanged: (valor) => atualizar(() {
+                  if (valor != null) disponibilidade = valor;
+                }),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<OrdenacaoPichau>(
+                key: const Key('filtro-ordenacao-pichau'),
+                initialValue: ordenacao,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Ordenar por'),
+                items: [
+                  for (final valor in OrdenacaoPichau.values)
+                    DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
+                ],
+                onChanged: (valor) => atualizar(() {
+                  if (valor != null) ordenacao = valor;
+                }),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(contexto).pop();
+                        _controlador.aplicarFiltros(
+                          disponibilidade: DisponibilidadePichau.todas,
+                          ordenacao: OrdenacaoPichau.nome,
+                        );
+                      },
+                      child: const Text('Limpar'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(contexto).pop();
+                        _controlador.aplicarFiltros(
+                          disponibilidade: disponibilidade,
+                          ordenacao: ordenacao,
+                        );
+                      },
+                      child: const Text('Ver ofertas'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   VoidCallback? _acaoAbrirProduto(PichauProduto produto) {
@@ -230,11 +346,17 @@ class CartaoPichau extends StatelessWidget {
     super.key,
     required this.produto,
     required this.aoAbrirHistorico,
+    this.podeAdministrar = false,
+    this.alterando = false,
+    this.aoAlternarAcompanhamento,
     this.aoAbrirNoSite,
   });
 
   final PichauProduto produto;
   final VoidCallback aoAbrirHistorico;
+  final bool podeAdministrar;
+  final bool alterando;
+  final VoidCallback? aoAlternarAcompanhamento;
   final VoidCallback? aoAbrirNoSite;
 
   @override
@@ -342,14 +464,62 @@ class CartaoPichau extends StatelessWidget {
                     _MetaPichau(texto: etiqueta, acao: true),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 11),
+              OutlinedButton(
+                key: Key('acompanhar-pichau-${produto.idExterno}'),
+                onPressed: podeAdministrar && !alterando
+                    ? aoAlternarAcompanhamento
+                    : null,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(41),
+                  foregroundColor: produto.acompanhada
+                      ? cores.ganho
+                      : cores.acao,
+                  backgroundColor: produto.acompanhada
+                      ? cores.ganho.withValues(alpha: 0.12)
+                      : cores.acao.withValues(alpha: 0.08),
+                  side: BorderSide(
+                    color: produto.acompanhada ? cores.ganho : cores.acao,
+                  ),
+                ),
+                child: alterando
+                    ? const SizedBox(
+                        width: 17,
+                        height: 17,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        produto.acompanhada ? 'Acompanhando' : 'Acompanhar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+              ),
+              if (!podeAdministrar)
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(
+                    'Acompanhamento exige autorização administrativa.',
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       key: Key('historico-pichau-${produto.idExterno}'),
                       onPressed: aoAbrirHistorico,
-                      child: const Text('Histórico'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: const Text(
+                        'Histórico',
+                        maxLines: 1,
+                        softWrap: false,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -535,18 +705,23 @@ class _MetaPichau extends StatelessWidget {
 
 class _BarraCatalogoPichau extends StatelessWidget {
   const _BarraCatalogoPichau({
-    required this.resposta,
+    required this.total,
+    required this.acompanhadas,
     required this.estado,
     required this.carregando,
+    required this.filtroAtivo,
+    required this.aoFiltrar,
   });
 
-  final Pagina<PichauProduto>? resposta;
+  final int total;
+  final bool acompanhadas;
   final String estado;
   final bool carregando;
+  final bool filtroAtivo;
+  final VoidCallback aoFiltrar;
 
   @override
   Widget build(BuildContext context) {
-    final total = resposta?.totalItens ?? 0;
     final totalTexto = total == 1
         ? '1 oferta encontrada'
         : '$total ofertas encontradas';
@@ -555,37 +730,69 @@ class _BarraCatalogoPichau extends StatelessWidget {
         : estado == 'Parcial / atrasado' || estado == 'Falha recente'
         ? TomRadar.atencao
         : TomRadar.neutro;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    final resumo = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                resposta == null ? 'Catálogo Pichau' : totalTexto,
-                style: Theme.of(
-                  context,
-                ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                resposta?.atualizadoEm == null
-                    ? 'Último catálogo válido'
-                    : 'Última coleta: ${_momentoPichau(resposta!.atualizadoEm)}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: CoresRadar.de(context).textoSuave,
-                  fontSize: 9,
-                ),
-              ),
-            ],
+        Text(
+          totalTexto,
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          acompanhadas
+              ? 'Produtos acompanhados'
+              : 'Catálogo completo · última coleta válida',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+            fontSize: 9,
           ),
         ),
-        const SizedBox(width: 10),
-        Flexible(
+      ],
+    );
+    final filtro = OutlinedButton.icon(
+      key: const Key('filtrar-ordenar-pichau'),
+      onPressed: aoFiltrar,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, 38),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        backgroundColor: filtroAtivo
+            ? CoresRadar.de(context).acao.withValues(alpha: 0.1)
+            : null,
+      ),
+      icon: const Icon(Icons.filter_list_rounded, size: 17),
+      label: const Text('Filtrar e ordenar'),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, limites) {
+            if (limites.maxWidth < 350) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [resumo, const SizedBox(height: 8), filtro],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(child: resumo),
+                const SizedBox(width: 8),
+                filtro,
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
           child: IndicadorEstadoRadar(
-            texto: carregando && resposta != null ? 'Atualizando' : estado,
-            tom: carregando && resposta != null ? TomRadar.acao : tom,
+            texto: carregando && total > 0 ? 'Atualizando' : estado,
+            tom: carregando && total > 0 ? TomRadar.acao : tom,
           ),
         ),
       ],

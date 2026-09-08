@@ -11,7 +11,7 @@ API e o catálogo no aplicativo já foram conferidos. O código de boot foi
 corrigido e o retorno pós-reboot foi validado sem abrir o Termux; o primeiro
 desbloqueio da tela do Samsung ainda é necessário.
 
-**Última atualização:** 2026-09-07
+**Última atualização:** 2026-09-08
 
 ## Objetivo
 
@@ -83,7 +83,13 @@ diretamente.
 
 ### Catálogo
 
-`GET /api/pichau/catalogo?q=&pagina=&por_pagina=`
+`GET /api/pichau/catalogo?q=&aba=todas|acompanhadas&disponibilidade=todas|disponiveis|esgotados&ordenar=nome|preco|desconto&pagina=&por_pagina=`.
+
+Na jornada mobile V11, `aba`, `disponibilidade` e `ordenar` são filtros do
+retrato persistido e continuam server-side; a digitação não consulta a fonte
+externa. Cada item também informa `acompanhada: boolean`. O Flutter preserva
+o filtro, a busca e a página durante as ações e usa estado otimista somente
+até a confirmação da API.
 
 O contrato paginado usa `por_pagina` padrão 20 e limite máximo 50, além de
 ordenação estável por nome e identificador. Cada item deve fornecer, quando a
@@ -107,6 +113,7 @@ parcelamento
 sem_juros
 etiquetas
 atualizado_em
+acompanhada
 ```
 
 ### Histórico
@@ -117,6 +124,26 @@ O backend implementado limita as medições aos últimos 30 dias e preserva a
 identidade do produto mesmo quando ele sair do catálogo. A resposta do
 histórico é usada pela folha V11 para mostrar as medições de Pix e cartão sem
 recalcular valores financeiros no app.
+
+### Acompanhamento
+
+`PATCH /api/pichau/catalogo/{id_externo}/acompanhamento`
+
+```json
+{ "acompanhada": true }
+```
+
+A operação é idempotente, exige autorização administrativa e não inicia coleta.
+O resumo do catálogo expõe `total_catalogo` e `acompanhadas`. Produtos
+acompanhados que saírem do catálogo continuam retornáveis na aba
+`acompanhadas`, com `presente_no_catalogo=false`, estado **Fora do catálogo**
+e histórico preservado.
+
+O cliente Flutter para esse contrato está versionado nesta fase mobile. A
+rota PATCH, a persistência do acompanhamento e sua migration não foram
+alteradas neste ciclo, pois a regra operacional da branch restringe a entrega
+ao app; a publicação da API/migration é um gate externo antes de distribuir a
+APK com a ação habilitada.
 
 ### Resumo de Serviços
 
@@ -296,6 +323,10 @@ configuradas; o fallback para `DATABASE_URL` permanece funcional.
 - `DestinoCompacto.pichau` é uma subárea e não aparece no `BottomDock`.
 - `PaginaPichau` usa a fundação visual V11, busca server-side, paginação,
   loading, vazio, erro, atraso/parcial, cards próprios e histórico em folha.
+- A jornada mobile também possui abas Todas/Acompanhadas, filtros de
+  disponibilidade, ordenação por nome/preço Pix/desconto, acompanhamento
+  autorizado com rollback em erro e distinção visual entre esgotado e fora do
+  catálogo.
 - `url_launcher` recebe apenas URLs validadas por
   `linkSeguroPichau`.
 - Claro/escuro e as larguras mobile de 320, 390 e 430 px são cobertos pelos
@@ -317,10 +348,11 @@ configuradas; o fallback para `DATABASE_URL` permanece funcional.
 ## Critérios de aceite
 
 Para o ciclo mobile, a jornada é aceita quando o card abre a subárea Pichau
-dentro de Serviços, o catálogo é paginado, os preços Pix e cartão permanecem
-separados, o histórico abre pelo componente existente, os estados não se
-confundem, URLs inválidas não viram ações externas e Livelo, Inter e o
-`BottomDock` continuam sem alteração semântica.
+dentro de Serviços, o catálogo é paginado, busca/aba/filtros preservam o
+recorte solicitado, os preços Pix e cartão permanecem separados, o histórico
+abre pelo componente existente, os estados não se confundem, URLs inválidas
+não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
+Inter e o `BottomDock` continuam sem alteração semântica.
 
 A integração completa somente poderá ser declarada pronta após implementar e
 validar coletor, persistência, API autenticada, retenção de 30 dias e operação

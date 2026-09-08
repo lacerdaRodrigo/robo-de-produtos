@@ -159,8 +159,11 @@ class Api {
   ///
   /// A rota pertence ao backend protegido; o cliente nunca consulta a fonte
   /// externa durante a digitação.
-  Future<Pagina<PichauProduto>> catalogoPichau({
+  Future<PaginaCatalogoPichau> catalogoPichau({
     String q = '',
+    String aba = 'todas',
+    String disponibilidade = 'todas',
+    String ordenar = 'nome',
     int pagina = 1,
     int? porPagina,
   }) async {
@@ -168,11 +171,28 @@ class Api {
       '/api/pichau/catalogo',
       consulta: <String, String>{
         'q': q,
+        'aba': aba,
+        'disponibilidade': disponibilidade,
+        'ordenar': ordenar,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
       },
     );
-    return Pagina.parse(corpo, PichauProduto.parse);
+    return PaginaCatalogoPichau.parse(corpo);
+  }
+
+  /// Atualiza a seleção global de acompanhamento da Pichau.
+  ///
+  /// A API valida o papel administrativo e trata a operação como idempotente;
+  /// o Flutter não acessa banco nem inicia coleta.
+  Future<void> alterarAcompanhamentoPichau({
+    required String idExterno,
+    required bool acompanhada,
+  }) async {
+    await cliente.alterar(
+      '/api/pichau/catalogo/$idExterno/acompanhamento',
+      corpo: <String, Object?>{'acompanhada': acompanhada},
+    );
   }
 
   /// Histórico de preço de uma identidade Pichau, limitado pelo backend a 30 dias.
