@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v1.65.0 (2026-09-08)
+
+### Code Style
+
+- **pichau**: Aplicar formatacao do ruff
+  ([`44e231c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/44e231c26d48da96fa5fae8d931b05c7d8807a4d))
+
+### Continuous Integration
+
+- Distribuir apk privada pelo drive
+  ([`db43336`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/db4333672e4e50de16c785374d01005a807095c4))
+
+### Documentation
+
+- Registrar primeira apk distribuida
+  ([`4dc2e71`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4dc2e71f55d6492321baaddd7ba7b5ab1728c68e))
+
+### Features
+
+- Valida Android e acelera coleta Pichau
+  ([`c27cb4b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c27cb4bb5ee62be5fd92f1beb64a76afb7ccf949))
+
+
 ## v1.64.0 (2026-09-07)
 
 ### Documentation
