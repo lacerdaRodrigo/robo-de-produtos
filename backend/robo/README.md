@@ -66,9 +66,10 @@ python -m robo_pichau.principal --diagnostico
   `scripts/pichau-android-run.sh` lê um arquivo privado
   `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
   `flock`, `termux-wake-lock` e um `.venv`. O transporte operacional é
-  Wireless Debugging por Wi-Fi: `PICHAU_ANDROID_UDID=auto` faz o runner
-  descobrir o serviço ADB pareado por mDNS, filtrando o host privado definido
-  em `PICHAU_ANDROID_WIFI_HOST`. IP, porta, serial, código de pareamento e
+  Wireless Debugging por Wi-Fi: `PICHAU_ANDROID_UDID=auto` reutiliza um endpoint
+  Wi-Fi já conectado pelo ADB e, quando necessário, descobre o serviço pareado
+  por mDNS; em ambos os casos filtra o host privado definido em
+  `PICHAU_ANDROID_WIFI_HOST`. IP, porta, serial, código de pareamento e
   credenciais ficam somente no arquivo privado e nunca são escritos em logs,
   documentação ou saída do workflow.
   A configuração privada usa este formato, sempre com valores reais somente no
@@ -118,7 +119,7 @@ python -m robo_pichau.principal --diagnostico
   no banco.
 - A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
   idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
-  usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
+  usa exclusivamente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
   mantém a `DATABASE_URL` privada do Termux, sempre com SSL e permissões
   restritas às tabelas Pichau e à fila.
 - Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.

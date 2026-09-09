@@ -117,9 +117,11 @@ Nenhum código Web, Livelo, Inter, migration de catálogo ou API foi alterado
 para depender do telefone. O runner do telefone não executa migrations
 automaticamente; a migration 022 é exclusivamente operacional para
 a fila Pichau e foi aplicada no banco operacional em 2026-09-07. As roles
-`pichau_dispatcher` e `pichau_publisher` foram criadas com grants mínimos: o
+`pichau_dispatcher` e `pichau_publisher` foram criadas com grants funcionais: o
 dispatcher só lê/insere na fila; o publicador lê/atualiza a fila e publica nas
-três tabelas Pichau, com uso das sequências. O secret
+três tabelas Pichau, com uso das sequências. A auditoria de 2026-09-08 encontrou
+três `USAGE` de sequência desnecessários no dispatcher; a revogação permanece
+como ação externa, sem impedir a operação atual. O secret
 `PICHAU_DISPATCH_DATABASE_URL` foi configurado no GitHub e a URL do publicador
 foi instalada somente no arquivo privado do Termux, modo `600`; nenhum valor
 de credencial é versionado ou registrado em log.
@@ -305,8 +307,9 @@ retorno pós-reboot foi validado após o primeiro desbloqueio: o worker e o
 Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
 totalmente autônoma antes desse desbloqueio permanece bloqueada pela tela de
 bloqueio do Android. Depois das falhas `34158686905` e `34174437207`, o
-executor passou a usar Wireless Debugging por Wi-Fi, com descoberta mDNS e
-filtro pelo host privado configurado no Termux. A execução `34182214027`
+executor passou a usar Wireless Debugging por Wi-Fi, reutilizando um endpoint
+ADB Wi-Fi já conectado ou descobrindo-o por mDNS, sempre com filtro pelo host
+privado configurado no Termux. A execução `34182214027`
 confirmou novamente fila, coleta completa e publicação antes da migração. A
 validação definitiva do transporte sem cabo continua pendente no aparelho. No
 APK,

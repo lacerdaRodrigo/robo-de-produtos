@@ -91,8 +91,37 @@ unset ADB_SERVER_SOCKET
 adb -P "$ADB_PORT" start-server >/dev/null 2>&1 \
     || fail "servidor ADB local nao iniciou" "$CODIGO_ADB_SERVIDOR"
 
+endpoint_conectado_wifi() {
+    local endpoint estado host candidato=""
+    while read -r endpoint estado _resto; do
+        [[ "$estado" == "device" ]] || continue
+        [[ "$endpoint" == *:* ]] || continue
+        host="${endpoint%:*}"
+        [[ "$host" == "$WIFI_HOST" ]] || continue
+        [[ "${endpoint##*:}" =~ ^[0-9]+$ ]] || continue
+        if [[ -n "$candidato" && "$candidato" != "$endpoint" ]]; then
+            return 2
+        fi
+        candidato="$endpoint"
+    done < <(adb -P "$ADB_PORT" devices 2>/dev/null | sed '1d')
+    if [[ -n "$candidato" ]]; then
+        printf '%s\n' "$candidato"
+        return 0
+    fi
+    return 1
+}
+
 descobrir_endpoint_wifi() {
-    local servicos servico endpoint host candidato=""
+    local servicos servico endpoint host candidato="" conectado status_conectado
+    if conectado="$(endpoint_conectado_wifi)"; then
+        printf '%s\n' "$conectado"
+        return 0
+    else
+        status_conectado=$?
+        if [[ "$status_conectado" == 2 ]]; then
+            return 2
+        fi
+    fi
     for _tentativa in {1..30}; do
         servicos="$(adb -P "$ADB_PORT" mdns services 2>/dev/null || true)"
         while read -r servico endpoint _resto; do

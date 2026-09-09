@@ -22,8 +22,10 @@ jobs:
       run:
         working-directory: backend/robo
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.11"
       - name: Instalar dependencias da fila
@@ -31,7 +33,7 @@ jobs:
       - name: Enfileirar coleta no Android
         id: enfileirar
         env:
-          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL || secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL }}
         run: |
           python -m robo_pichau.fila_android enqueue \
             --chave "github-${{ github.run_id }}" \
@@ -43,7 +45,7 @@ jobs:
           echo "Solicitacao Pichau Android enfileirada: id=$job_id"
       - name: Aguardar publicação no Android
         env:
-          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL || secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL }}
         run: |
           python -m robo_pichau.fila_android wait \
             --id "${{ steps.enfileirar.outputs.job_id }}" \

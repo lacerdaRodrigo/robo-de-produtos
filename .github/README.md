@@ -1,36 +1,68 @@
-# `.github/` — Automação e CI
+# Automação e CI
 
-Workflows de **GitHub Actions** que automatizam coleta, testes, publicação e o
-app Flutter. Segredos ficam em **Settings → Secrets and variables → Actions** —
-nunca em arquivo versionado.
+Os workflows usam segredos cadastrados em **Settings → Secrets and variables
+→ Actions**. Valores de credenciais nunca pertencem ao repositório ou aos
+logs.
 
 ## Workflows
 
-| Workflow | O que faz | Agenda | Segredos que usa |
+| Arquivo | Função | Gatilho | Segredos |
 |---|---|---|---|
-| [`robo.yml`](workflows/robo.yml) | Coleta Livelo e publica catálogo/retrato | 09h/14h/20h + manual | `DATABASE_URL` |
-| [`inter.yml`](workflows/inter.yml) | Atualiza cashback, sincroniza as lojas e coleta os produtos selecionados do Shopping Inter | 09h/14h/20h + botão do app | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
-| [`pichau.yml`](workflows/pichau.yml) | Enfileira a coleta PC Gamer no executor Android e aguarda a publicação | 09h/14h/20h + manual | `PICHAU_DISPATCH_DATABASE_URL` ou `DATABASE_URL` |
-| [`testes.yml`](workflows/testes.yml) | CI de robôs/API: Ruff, Pytest, TypeScript, ESLint e Vitest | a cada push/PR | nenhum |
-| [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
-| [`app-robo.yml`](workflows/app-robo.yml) | CI mobile; na `main` aprovada, gera APK debug e envia cópia privada ao Drive com aviso por e-mail | a cada push/PR; distribuição na `main` ou manual | `GOOGLE_DRIVE_OAUTH_CLIENT_JSON`, `GOOGLE_DRIVE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID`, `EMAIL_DESTINO`, `EMAIL_REMETENTE`, `SENHA_APP_GMAIL` |
+| `robo.yml` | Coleta e publica Livelo | 09h/14h/20h e manual | `DATABASE_URL` |
+| `inter.yml` | Atualiza cashback e produtos Inter | 09h/14h/20h e manual | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
+| `pichau.yml` | Enfileira a coleta no Samsung e espera o resultado | 09h/14h/20h e manual | `PICHAU_DISPATCH_DATABASE_URL` |
+| `testes.yml` | Ruff, Pytest, tipos, ESLint, Vitest, build e auditoria npm | push, PR e manual | nenhum |
+| `app-robo.yml` | Gates Flutter e distribuição interna da APK | push, PR e manual | Drive e e-mail somente no job de distribuição |
+| `versao.yml` | Versão, changelog, tag e release | `main` | `GITHUB_TOKEN` |
 
-O CI do app não executa Web, integration, E2E ou smoke. Pull requests apenas
-validam; a distribuição de APK acontece somente após push humano na `main` ou
-por disparo manual explícito. A APK não é publicada como artifact do GitHub,
-porque o repositório é público: ela vai para uma pasta privada do Drive e o
-e-mail contém somente o link autorizado. Essa distribuição não é homologação;
-o app aponta para a API atual de produção.
-Os workflows de coleta permanecem separados do workflow de validação Flutter.
+## Controles comuns
 
-## Permissões
+- As Actions de terceiros ficam fixadas por SHA completo.
+- Checkouts somente de leitura usam `persist-credentials: false`.
+- Todos os workflows usam `contents: read`; somente o versionamento recebe
+  escrita para tag e release.
+- Dependabot acompanha GitHub Actions, Python em `backend/robo`, npm em
+  `backend/api` e Pub em `app`.
+- O CI da API falha quando `npm audit --audit-level=high` encontra
+  vulnerabilidade alta ou crítica.
 
-- Todos os workflows usam `contents: read`; só `versao.yml` usa `write` (é
-  necessário para criar tag e release).
-- Nenhum robô grava no repositório.
-- O workflow Pichau não acessa o telefone diretamente: grava uma solicitação
-  idempotente na fila Postgres e aguarda o worker Termux. O telefone não recebe
-  token do GitHub nem expõe porta pública.
-- O robô Pichau usa somente páginas públicas autorizadas, limita-se a 300
-  páginas por execução, preserva as validações de catálogo e não persiste
-  imagens, HTML ou cookies.
+## Pichau
+
+O Ubuntu não coleta a Pichau. O workflow usa exclusivamente a role dispatcher,
+via `PICHAU_DISPATCH_DATABASE_URL`, para inserir/consultar
+`pichau_android_fila`. Não há fallback para a credencial ampla.
+
+O worker do Termux reivindica a solicitação e publica com a role própria do
+telefone. Nenhum token GitHub é armazenado no Android. Appium escuta somente em
+`127.0.0.1`; endpoint Wi-Fi, serial, código de pareamento e credenciais não
+entram no workflow nem nos logs.
+
+## APK interna
+
+O contrato completo está em
+[`docs/prd/PRD-DISTRIBUICAO-APK.md`](../docs/prd/PRD-DISTRIBUICAO-APK.md).
+
+Pull requests e branches de trabalho apenas validam. A distribuição acontece
+em push humano na `main` ou por execução manual feita na própria `main` com
+`distribuir=true`. A APK não é enviada como artifact do GitHub: segue para o
+Drive privado, com ACL limitada ao proprietário e ao destinatário em modo
+somente leitura, retenção de dez arquivos e aviso por e-mail.
+
+O build atual é debug, aponta para a API de produção e desativa App Check.
+Portanto, serve apenas para distribuição interna e não atende aos requisitos de
+release público.
+
+Segredos usados nesse job:
+
+- `GOOGLE_DRIVE_OAUTH_CLIENT_JSON`;
+- `GOOGLE_DRIVE_REFRESH_TOKEN`;
+- `GOOGLE_DRIVE_FOLDER_ID`;
+- `EMAIL_DESTINO`;
+- `EMAIL_REMETENTE`;
+- `SENHA_APP_GMAIL`.
+
+## Escopo do gate Flutter
+
+O workflow executa formatação, análise estática e os testes unitários/widgets
+mobile permitidos. Não executa Web, integração, E2E, smoke, performance ou
+regressão visual automatizada.

@@ -56,7 +56,6 @@ include = [
     "*/robo_livelo/retrato.py",
     "*/robo_livelo/modelos_inter.py",
     "*/robo_livelo/extrator_inter.py",
-    "*/robo_livelo/ranking_inter.py",
     "*/robo_livelo/retrato_inter.py",
     "*/robo_livelo/modelos_produtos_inter.py",
     "*/robo_livelo/extrator_produtos_inter.py",

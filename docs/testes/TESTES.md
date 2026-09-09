@@ -237,12 +237,6 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
 | CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
 
-### `backend/robo/testes/teste_ranking_inter.py` — ordenação pura
-
-| ID | Título | Descrição | Como fazer |
-|---|---|---|---|
-| CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
-
 ### `backend/robo/testes/teste_retrato_inter.py` — favoritas da execução
 
 | ID | Título | Descrição | Como fazer |
@@ -589,7 +583,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-384 | Claim Android com lease | O worker reivindica um trabalho pendente ou abandonado de forma atômica, incrementa tentativas e não permite dois claims simultâneos | `teste_fila_android.py` e migration `022_pichau_android_fila.sql` |
 | CT-385 | Resultado do worker | Saída zero do `pichau-android-run.sh` encerra a fila como `sucesso`; saída diferente de zero encerra como `falha` sem publicar segredo | `teste_fila_android.py` |
 | CT-387 | Pré-voo Wi-Fi do executor Android | O runner exige o modo Wi-Fi, descobre o serviço pareado por mDNS, valida `device` e falha sem expor o endpoint privado | `pichau-android-run.sh` e validação operacional no Samsung |
-| CT-390 | Descoberta ADB Wi-Fi | O runner descobre exatamente um serviço Wireless Debugging pareado por mDNS, filtra o host privado e propaga o endpoint somente em memória | `pichau-android-run.sh` e validação operacional no Samsung |
+| CT-390 | Descoberta ADB Wi-Fi | O runner reutiliza exatamente um endpoint `device` já conectado ou descobre exatamente um serviço Wireless Debugging pareado por mDNS, filtra o host privado e propaga o endpoint somente em memória | `pichau-android-run.sh` e validação operacional no Samsung |
 | CT-391 | Telemetria sem identificadores privados | Falhas de ADB, Appium e fila expõem somente categorias operacionais; endpoint, serial, código de pareamento e credenciais não entram em logs ou workflow | `teste_fila_android.py`, scripts Termux e revisão de logs |
 | CT-386 | Workflow produtor Android | Cron 09h/14h/20h, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
@@ -629,6 +623,19 @@ agosto de 2026.
 | CT-357 | Previsão e atraso Livelo | As três janelas de Brasília, virada do dia e primeira conclusão posterior distinguem previsão de atraso | Relógio UTC explícito no agregador TypeScript |
 | CT-358 | Melhor acompanhada atual | Decimal textual, empate estável e zero acompanhadas não vazam o catálogo geral para o hero | Fixtures do catálogo autenticado |
 | CT-359 | Atualização administrativa preservada | Aceite/cooldown regressivo, idempotência e nova coleta atualizam silenciosamente sem perder aba, busca, páginas ou rolagem | Widget/controlador com API falsa |
+
+### Distribuição privada da APK
+
+| ID | Regra | Aceite | Cobertura |
+|---|---|---|---|
+| CT-393 | Consulta Drive segura | Apóstrofos no valor são escapados e as consultas de propriedades permanecem válidas | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-394 | Retenção limitada | Somente arquivos marcados além dos dez mais recentes são selecionados para remoção | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-395 | ACL mínima | Proprietário e destinatário leitor formam a única ACL aceita | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-396 | Link público rejeitado | Permissão `anyone`, domínio ou grupo encerra a distribuição | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-397 | Usuário estranho rejeitado | Uma conta fora do proprietário/destinatário encerra a distribuição | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-398 | Escrita rejeitada | Destinatário com papel superior a `reader` não é aceito | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-399 | Permissão elevada não é reutilizada | ACL preexistente de escrita falha em vez de seguir silenciosamente | `.github/scripts/test_distribuir_apk_drive.py` |
+| CT-400 | Manual limitado à `main` | O workflow só distribui manualmente quando `github.ref` é a `main` | revisão de `.github/workflows/app-robo.yml` |
 
 ---
 
@@ -698,12 +705,11 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_principal.py` | 27 | 29 |
 | `teste_extrator_inter.py` | 9 | 10 |
 | `teste_adaptadores_inter.py` | 2 | 4 |
-| `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
 | `teste_produtos_inter.py` | 9 | 19 |
 | `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **159** | **177** |
+| **Total (robô)** | **158** | **176** |
 | `site/testes/formato.teste.ts` | 11 | 23 |
 | `site/testes/formato-inter.teste.ts` | 10 | 8 |
 | `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
@@ -717,6 +723,7 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | **Total (site)** | **CTs catalogados + apoio** | **83** |
 | `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação | 178 confirmados nesta entrega |
 | **Total (Flutter)** | **CTs catalogados + apoio** | **178** |
+| `.github/scripts/test_distribuir_apk_drive.py` | CT-393–CT-399 | 8 |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

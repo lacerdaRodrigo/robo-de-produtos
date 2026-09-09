@@ -27,9 +27,11 @@ jobs:
         working-directory: app
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           # Mantem o ambiente mobile reproduzivel entre execucoes.
           flutter-version: "3.44.1"
@@ -60,13 +62,16 @@ jobs:
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       github.actor != 'github-actions[bot]') ||
-      (github.event_name == 'workflow_dispatch' && inputs.distribuir == true)
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+      inputs.distribuir == true)
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: "3.44.1"
           cache: true

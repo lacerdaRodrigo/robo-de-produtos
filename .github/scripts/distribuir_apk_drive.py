@@ -91,14 +91,11 @@ def validate_private_permissions(
             if role != "owner":
                 raise DistributionError("ACL do Drive não identifica o proprietário")
             seen_owner = True
-        if email == _lower_email(destination_email) and role in {
-            "owner",
-            "organizer",
-            "fileorganizer",
-            "writer",
-            "commenter",
-            "reader",
-        }:
+        if email == _lower_email(destination_email):
+            if email != _lower_email(owner_email) and role != "reader":
+                raise DistributionError(
+                    "destinatário possui acesso superior ao modo somente leitura"
+                )
             seen_destination = True
 
     if not seen_owner:
@@ -179,12 +176,13 @@ def _ensure_destination_permission(
     if destination == _lower_email(owner_email):
         return
     current = _permissions(service, file_id)
-    if any(
-        _permission_email(item) == destination
-        and str(item.get("role", "")).lower()
-        in {"owner", "organizer", "fileorganizer", "writer", "commenter", "reader"}
-        for item in current
-    ):
+    for item in current:
+        if _permission_email(item) != destination:
+            continue
+        if str(item.get("role", "")).lower() != "reader":
+            raise DistributionError(
+                "destinatário já possui acesso superior ao modo somente leitura"
+            )
         return
     (
         service.permissions()

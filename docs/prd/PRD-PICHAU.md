@@ -187,8 +187,8 @@ O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
 idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
 sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
-O workflow usa `PICHAU_DISPATCH_DATABASE_URL`; o fallback para o secret amplo
-`DATABASE_URL` permanece somente para recuperação controlada. O telefone mantém
+O workflow usa exclusivamente `PICHAU_DISPATCH_DATABASE_URL`, sem fallback para
+o secret amplo `DATABASE_URL`. O telefone mantém
 a credencial privada do publicador no Termux. Em falhas de navegador, o
 robô registra somente metadados seguros; HTML, cookies e headers não são
 persistidos nem enviados ao log.
@@ -208,8 +208,9 @@ completa, a retenção de 30 dias e a preservação do snapshot anterior em
 qualquer falha. A migration `022_pichau_android_fila.sql` adiciona somente a
 fila operacional; foi aplicada no banco operacional em 2026-09-07 e não altera
 o schema do catálogo. As roles `pichau_dispatcher` e `pichau_publisher` foram
-configuradas com grants mínimos, e o secret separado do dispatcher foi validado
-na execução `34136108063`.
+configuradas com grants funcionais e o secret separado do dispatcher foi
+validado na execução `34136108063`; três permissões de sequência excedentes no
+dispatcher aguardam revogação externa.
 
 O runner e o coletor registram tempos de preparo, cada página, coleta e
 publicação somente em logs operacionais seguros. A configuração privada
@@ -275,9 +276,9 @@ após reiniciar ainda é uma ação operacional necessária. Cabo USB/notebook
 ficam restritos à configuração inicial, diagnóstico e recuperação quando Wi‑Fi
 ou depuração sem fio forem desligados.
 
-A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
-ambiente, sempre por SSL; isso não substitui a criação externa da role
-Postgres exclusiva para operação contínua. As execuções 22, 23 e 24
+A prova inicial de publicação usou a `DATABASE_URL` operacional disponível no
+ambiente, sempre por SSL. Depois dela, as roles Postgres exclusivas
+`pichau_dispatcher` e `pichau_publisher` foram criadas e validadas. As execuções 22, 23 e 24
 percorreram 12 páginas e publicaram `1169/1169` itens, zero duplicados e
 1.169 medições; as execuções 23 e 24 terminaram em 225 e 227 segundos.
 O retorno após reinicialização foi testado por USB em 2026-09-07 sem abrir o
@@ -315,8 +316,8 @@ filtro por host privado configurado somente no Termux. IP, porta, serial,
 código de pareamento, chave ADB e credenciais não entram nos logs nem no
 workflow. A migration `022_pichau_android_fila.sql` já foi aplicada e as
 execuções reais `34081623450` e `34136108063` confirmaram o caminho GitHub →
-fila → worker Android → banco/API. As credenciais mínimas separadas estão
-configuradas; o fallback para `DATABASE_URL` permanece funcional.
+fila → worker Android → banco/API. As credenciais separadas estão configuradas
+e o workflow não possui fallback para `DATABASE_URL`.
 
 ## Jornada mobile V11 entregue
 

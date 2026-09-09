@@ -29,7 +29,6 @@ MODULOS_LIVELO = [
 MODULOS_INTER = [
     "modelos_inter.py",
     "extrator_inter.py",
-    "ranking_inter.py",
     "retrato_inter.py",
     "modelos_produtos_inter.py",
     "extrator_produtos_inter.py",
