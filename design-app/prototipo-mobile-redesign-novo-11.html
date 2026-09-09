@@ -285,6 +285,20 @@
     .result-meta { display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 10px; color: var(--radar-muted); font-size: 10px; }
     .result-card { overflow: hidden; padding: 0; border-radius: 21px 21px 21px 8px; text-align: left; }
     .result-card[hidden] { display: none; }
+    /* CatalogCard: moldura única para Livelo, Inter e Pichau; o miolo varia por domínio. */
+    .catalog-card { --catalog-accent: var(--radar-plum); position: relative; }
+    .catalog-card::before { position: absolute; inset: 0 auto 0 0; z-index: 1; width: 4px; background: var(--catalog-accent); content: ""; }
+    .catalog-card.catalog-card--livelo { --catalog-accent: var(--radar-plum); }
+    .catalog-card.catalog-card--inter { --catalog-accent: var(--radar-positive); }
+    .catalog-card.catalog-card--pichau { --catalog-accent: var(--radar-action); }
+    .catalog-card .card-top { position: relative; z-index: 2; min-height: 68px; }
+    .catalog-card .card-foot { position: relative; z-index: 2; border-top: 1px solid var(--radar-line); }
+    .catalog-card .follow-button, .catalog-card .details-button { width: 100%; min-width: 0; }
+    .catalog-card-badge { flex: 0 0 auto; max-width: 118px; padding: 6px 8px; border-radius: 999px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 8px; font-weight: 850; line-height: 1.2; text-align: center; }
+    .catalog-card--inter .catalog-card-badge { background: var(--radar-positive-soft); color: var(--radar-positive); }
+    .catalog-card--pichau .catalog-card-badge { background: var(--radar-action-soft); color: var(--radar-action-strong); }
+    .catalog-card .catalog-card-tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 15px 10px; }
+    .catalog-card .catalog-card-tags span { padding: 4px 7px; border-radius: 7px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 8px; font-weight: 800; }
     .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 15px 15px 11px; }
     .store-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .store-monogram { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 14px 14px 14px 5px; background: var(--radar-plum-soft); color: var(--radar-plum); font-size: 11px; font-weight: 800; }
@@ -292,12 +306,13 @@
     .store-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
     .store-identity small { margin-top: 3px; color: var(--radar-muted); font-size: 10px; }
     .benefit-value { color: var(--radar-action-strong); font-size: 16px; font-weight: 800; white-space: nowrap; }
+    .catalog-card--livelo .benefit-value { max-width: 112px; padding: 6px 8px; border-radius: 999px; background: var(--radar-plum-soft); color: var(--radar-plum); font-size: 8px; line-height: 1.2; text-align: center; white-space: normal; }
     .card-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--radar-line); border-top: 1px solid var(--radar-line); }
     .fact { padding: 11px 14px; background: var(--radar-paper-soft); }
     .fact span, .fact strong { display: block; }
     .fact span { color: var(--radar-muted); font-size: 9px; }
     .fact strong { margin-top: 3px; font-size: 11px; }
-    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 15px 14px; }
+    .card-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 8px; padding: 11px 15px 14px; }
     .follow-button, .details-button { min-height: 40px; border-radius: 13px; font-size: 11px; font-weight: 800; }
     .follow-button { flex: 1; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--radar-action) 32%, var(--radar-line)); background: var(--radar-action-soft); color: var(--radar-action-strong); }
     .follow-button.active { border-color: color-mix(in srgb, var(--radar-positive) 30%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
@@ -310,7 +325,7 @@
     .campaign-link svg { width: 15px; height: 15px; }
     .campaign-link:focus-visible { outline: 3px solid color-mix(in srgb, var(--radar-action) 36%, transparent); outline-offset: 3px; border-radius: 5px; }
     .cashback-card { position: relative; }
-    .cashback-card::before { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--radar-positive); content: ""; }
+    .cashback-card::before { background: var(--catalog-accent); }
     .cashback-card .card-top { align-items: center; padding-bottom: 13px; }
     .cashback-kicker { flex: 0 0 auto; padding: 6px 8px; border-radius: 99px; background: var(--radar-positive-soft); color: var(--radar-positive); font-size: 8px; font-weight: 850; }
     .cashback-highlight { margin: 0 14px 10px; padding: 14px; border-radius: 17px; background: var(--radar-positive-soft); color: var(--radar-positive); }
@@ -415,13 +430,14 @@
     @keyframes pichau-loading { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
     .pichau-results-shell[hidden] { display: none; }
     .pichau-product-card { border-radius: 21px 21px 21px 8px; }
-    .pichau-product-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 15px 15px 11px; }
+    .pichau-product-card .card-top { align-items: flex-start; padding-bottom: 8px; }
+    .pichau-product-card .store-identity { align-items: flex-start; }
+    .pichau-product-card .store-identity strong { max-width: 205px; white-space: normal; line-height: 1.25; }
+    .pichau-product-card .store-identity small { line-height: 1.35; }
+    .pichau-product-card.sold-out .catalog-card-badge { background: var(--radar-warning-soft); color: var(--radar-warning); }
     .pichau-product-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
     .pichau-product-tags span { padding: 4px 7px; border-radius: 7px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 8px; font-weight: 800; }
     .pichau-product-tags span:last-child { background: var(--radar-plum-soft); color: var(--radar-plum); }
-    .pichau-product-name { max-width: 235px; margin: 7px 0 0; font-size: 15px; line-height: 1.28; letter-spacing: -.025em; }
-    .pichau-product-brand { margin: 4px 0 0; color: var(--radar-muted); font-size: 9px; }
-    .pichau-origin { flex: 0 0 auto; padding: 6px 8px; border-radius: 9px; background: var(--radar-paper-soft); color: var(--radar-muted); font-size: 8px; font-weight: 800; }
     .pichau-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 15px 10px; }
     .pichau-price { min-width: 0; padding: 11px; border-radius: 14px; background: var(--radar-paper-soft); }
     .pichau-price.featured { background: var(--radar-positive-soft); color: var(--radar-positive); }
@@ -444,10 +460,11 @@
     .pichau-collection-bar { margin-bottom: 4px; }
     .pichau-collection-bar .collection-copy { min-width: 0; }
     .pichau-status-line { display: flex; justify-content: flex-end; min-height: 14px; margin: 0 4px 10px; }
-    .pichau-follow-row { padding: 0 15px 10px; }
+    .catalog-card-footer { position: relative; z-index: 2; border-top: 1px solid var(--radar-line); }
+    .catalog-card .pichau-follow-row { padding: 11px 15px 7px; }
+    .catalog-card .pichau-product-actions { padding-bottom: 15px; }
     .pichau-follow-button { width: 100%; min-height: 41px; padding: 0 13px; border: 1px solid color-mix(in srgb, var(--radar-action) 32%, var(--radar-line)); border-radius: 13px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 10px; font-weight: 800; }
     .pichau-follow-button.active { border-color: color-mix(in srgb, var(--radar-positive) 30%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
-    .pichau-product-card.sold-out .pichau-origin { background: var(--radar-warning-soft); color: var(--radar-warning); }
     .pichau-sold-out-copy { margin: 0 15px 12px; padding: 9px 10px; border-radius: 11px; background: var(--radar-warning-soft); color: var(--radar-warning); font-size: 9px; line-height: 1.4; }
     .pichau-sold-out-card { margin-top: 14px; }
     .pichau-partial-notice[hidden] { display: none; }
@@ -604,19 +621,19 @@
           </div>
           <div class="collection-bar"><span class="collection-copy"><strong id="livelo-count">3 lojas encontradas</strong><small id="livelo-context">Catálogo completo</small></span><button class="filter-trigger" id="livelo-filter-trigger" type="button" data-open-sheet="livelo-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filtrar e ordenar</span></button></div>
           <div class="result-list" id="livelo-results">
-            <article class="result-card" data-name="casas bahia marketplace" data-category="marketplace" data-score="4" data-group="monitored" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace</small></span></span><span class="benefit-value">4 pts/R$</span></div>
+            <article class="result-card catalog-card catalog-card--livelo" data-name="casas bahia marketplace" data-category="marketplace" data-score="4" data-group="monitored" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace</small></span></span><span class="catalog-card-badge benefit-value">4 pts/R$</span></div>
               <div class="card-facts"><span class="fact"><span>Campanha</span><strong>Promoção</strong></span><span class="fact"><span>Pontuação base</span><strong>2 pts/R$</strong></span></div>
               <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-casas">Detalhes</button></div>
             </article>
-            <article class="result-card" data-name="o boticario beleza clube" data-category="beleza" data-score="3" data-group="monitored" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza</small></span></span><span class="benefit-value">3 pts/R$</span></div>
+            <article class="result-card catalog-card catalog-card--livelo" data-name="o boticario beleza clube" data-category="beleza" data-score="3" data-group="monitored" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza</small></span></span><span class="catalog-card-badge benefit-value">3 pts/R$</span></div>
               <div class="card-facts"><span class="fact"><span>Clube Livelo</span><strong>10 pts/R$</strong></span><span class="fact"><span>Campanha</span><strong>Exclusiva Clube</strong></span></div>
               <div class="campaign-panel"><strong>Condições da campanha</strong><p>Oferta exclusiva para assinantes do Clube Livelo.</p><a class="campaign-link" href="https://livelo.com.br/juntar-pontos/parceiros/o-boticario/BOT" target="_blank" rel="noopener noreferrer"><svg><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>Ver regras completas no site da Livelo</a></div>
               <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-boticario">Detalhes</button></div>
             </article>
-            <article class="result-card" data-name="mercado livre marketplace" data-category="marketplace" data-score="1" data-group="" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace</small></span></span><span class="benefit-value">1 pt/R$</span></div>
+            <article class="result-card catalog-card catalog-card--livelo" data-name="mercado livre marketplace" data-category="marketplace" data-score="1" data-group="" data-store-card>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace</small></span></span><span class="catalog-card-badge benefit-value">1 pt/R$</span></div>
               <div class="card-facts"><span class="fact"><span>Pontuação atual</span><strong>1 pt/R$</strong></span><span class="fact"><span>Clube Livelo</span><strong>1 pt/R$</strong></span></div>
               <div class="card-foot"><button class="follow-button" type="button" data-follow-store>Acompanhar</button><button class="details-button" type="button" data-open-sheet="livelo-mercado">Detalhes</button></div>
             </article>
@@ -639,10 +656,10 @@
             </div>
             <div class="collection-bar"><span class="collection-copy"><strong id="inter-count">4 lojas encontradas</strong><small id="inter-context">Catálogo completo de cashback</small></span><span class="status-label">Página 1</span></div>
             <div class="result-list" id="inter-results">
-              <article class="result-card cashback-card" data-name="magazine luiza magalu" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Magazine Luiza</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 20% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 20%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 14%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-magalu">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="riachuelo moda" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">RI</span><span><strong>Riachuelo</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>15% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>15%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>10,5%</strong></div></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-riachuelo">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="c&a ca moda" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">C&A</span><span><strong>C&A</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 12% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 12%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 8,4%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-ca">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="amazon ofertas" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Oferta disponível</span></div><div class="cashback-highlight neutral"><span>Cashback</span><strong>Percentual não informado</strong></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-amazon">Ver detalhes</button></div></article>
+              <article class="result-card catalog-card catalog-card--inter cashback-card" data-name="magazine luiza magalu" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Magazine Luiza</strong><small>Site parceiro</small></span></span><span class="catalog-card-badge cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 20% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 20%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 14%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-magalu">Ver condições</button></div></article>
+              <article class="result-card catalog-card catalog-card--inter cashback-card" data-name="riachuelo moda" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">RI</span><span><strong>Riachuelo</strong><small>Site parceiro</small></span></span><span class="catalog-card-badge cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>15% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>15%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>10,5%</strong></div></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-riachuelo">Ver condições</button></div></article>
+              <article class="result-card catalog-card catalog-card--inter cashback-card" data-name="c&a ca moda" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">C&A</span><span><strong>C&A</strong><small>Site parceiro</small></span></span><span class="catalog-card-badge cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 12% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 12%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 8,4%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-ca">Ver condições</button></div></article>
+              <article class="result-card catalog-card catalog-card--inter cashback-card" data-name="amazon ofertas" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Site parceiro</small></span></span><span class="catalog-card-badge cashback-kicker">Oferta disponível</span></div><div class="cashback-highlight neutral"><span>Cashback</span><strong>Percentual não informado</strong></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-amazon">Ver detalhes</button></div></article>
             </div>
             <p class="empty" id="inter-empty">Nenhuma loja encontrada.</p>
             <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Próxima página seria solicitada à API.">2</button><button type="button" data-toast="Próxima página seria solicitada à API." aria-label="Próxima página">›</button></div>
@@ -712,20 +729,20 @@
 
           <div class="pichau-results-shell" id="pichau-results-shell">
             <div class="result-list" id="pichau-results">
-              <article class="result-card pichau-product-card" data-pichau-product="pichau gaming 7800x3d rtx 4070 super pc gamer pg-7800" data-pichau-price="7499.90" data-pichau-discount="9" data-pichau-availability="available" data-group="monitored">
-                <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming 7800X3D RTX 4070 Super</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7800</p></div><span class="pichau-origin">Origem Pichau</span></div>
+              <article class="result-card catalog-card catalog-card--pichau pichau-product-card" data-pichau-product="pichau gaming 7800x3d rtx 4070 super pc gamer pg-7800" data-pichau-price="7499.90" data-pichau-discount="9" data-pichau-availability="available" data-group="monitored">
+                <div class="card-top"><span class="store-identity"><span class="store-monogram">PC</span><span><strong>Pichau Gaming 7800X3D RTX 4070 Super</strong><small>PC Gamer · SKU ilustrativo PG-7800</small></span></span><span class="catalog-card-badge">Disponível</span></div>
+                <div class="catalog-card-tags pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></div>
                 <div class="pichau-price-grid"><div class="pichau-price featured"><span>Preço Pix</span><strong>R$ 7.499,90</strong><small>De R$ 8.199,90 · 9% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 7.999,90</strong><small>12x de R$ 666,66</small></div></div>
                 <div class="pichau-product-meta"><span>Disponível</span><span>12x sem juros</span><span class="tag">Oferta</span><span class="tag">Montado</span></div>
-                <div class="pichau-follow-row"><button class="pichau-follow-button active" type="button" aria-pressed="true" data-follow-pichau>Acompanhando</button></div>
-                <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7800">Histórico</button><button class="primary" type="button" data-toast="Demonstração: o produto real seria aberto na Pichau em uma URL http/https validada pela API.">Ver na Pichau</button></div>
+                <div class="catalog-card-footer"><div class="pichau-follow-row"><button class="pichau-follow-button active" type="button" aria-pressed="true" data-follow-pichau>Acompanhando</button></div><div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7800">Histórico</button><button class="primary" type="button" data-toast="Demonstração: o produto real seria aberto na Pichau em uma URL http/https validada pela API.">Ver na Pichau</button></div></div>
               </article>
-              <article class="result-card pichau-product-card sold-out" data-pichau-product="pichau gaming ryzen 5 rx 7600 pc gamer pg-7600" data-pichau-price="4699.90" data-pichau-discount="10" data-pichau-availability="soldout">
-                <div class="pichau-product-head"><div><p class="pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></p><h2 class="pichau-product-name">Pichau Gaming Ryzen 5 RX 7600</h2><p class="pichau-product-brand">Marca: Pichau · SKU ilustrativo PG-7600</p></div><span class="pichau-origin">Origem Pichau</span></div>
+              <article class="result-card catalog-card catalog-card--pichau pichau-product-card sold-out" data-pichau-product="pichau gaming ryzen 5 rx 7600 pc gamer pg-7600" data-pichau-price="4699.90" data-pichau-discount="10" data-pichau-availability="soldout">
+                <div class="card-top"><span class="store-identity"><span class="store-monogram">PC</span><span><strong>Pichau Gaming Ryzen 5 RX 7600</strong><small>PC Gamer · SKU ilustrativo PG-7600</small></span></span><span class="catalog-card-badge">Esgotado</span></div>
+                <div class="catalog-card-tags pichau-product-tags"><span>PC Gamer</span><span>Pichau</span></div>
                 <div class="pichau-price-grid"><div class="pichau-price featured"><span>Último preço Pix</span><strong>R$ 4.699,90</strong><small>De R$ 5.199,90 · 10% off</small></div><div class="pichau-price"><span>Preço no cartão</span><strong>R$ 4.899,90</strong><small>12x de R$ 408,32</small></div></div>
                 <p class="pichau-sold-out-copy">Esgotado informado pela Pichau. O produto segue identificado, mas não está disponível para compra agora.</p>
                 <div class="pichau-product-meta"><span class="sold-out">Esgotado</span><span>Última medição preservada</span><span class="tag">Montado</span></div>
-                <div class="pichau-follow-row"><button class="pichau-follow-button" type="button" aria-pressed="false" data-follow-pichau>Acompanhar</button></div>
-                <div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7600">Histórico</button><button class="primary" type="button" data-toast="Demonstração: a página real seria aberta na Pichau, mesmo com disponibilidade esgotada.">Ver na Pichau</button></div>
+                <div class="catalog-card-footer"><div class="pichau-follow-row"><button class="pichau-follow-button" type="button" aria-pressed="false" data-follow-pichau>Acompanhar</button></div><div class="pichau-product-actions"><button class="secondary" type="button" data-open-sheet="pichau-history-7600">Histórico</button><button class="primary" type="button" data-toast="Demonstração: a página real seria aberta na Pichau, mesmo com disponibilidade esgotada.">Ver na Pichau</button></div></div>
               </article>
             </div>
             <p class="empty" id="pichau-empty">Nenhum PC Gamer encontrado nesta busca.</p>

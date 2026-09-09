@@ -241,6 +241,42 @@ Classes: `.empty`, `.show`.
 
 Usa borda tracejada, texto neutro e mensagem contextual. A mensagem muda quando o usuário está vendo apenas lojas acompanhadas.
 
+### `CatalogCard` — moldura compartilhada
+
+Classes: `.catalog-card`, `.catalog-card--livelo`, `.catalog-card--inter`, `.catalog-card--pichau`, `.catalog-card-badge`, `.catalog-card-tags`, `.catalog-card-footer`.
+
+Livelo, Cashback Inter e Pichau usam a mesma moldura visual de catálogo. A
+unificação é estrutural e visual; ela não mistura contratos nem transforma os
+domínios em um catálogo único.
+
+Anatomia obrigatória:
+
+1. faixa lateral fina com a cor semântica da origem;
+2. cabeçalho com monograma, nome, subtítulo de origem e selo contextual;
+3. miolo reservado ao benefício principal e aos fatos específicos do domínio;
+4. rodapé com ações alinhadas na mesma grade e alvos de toque de pelo menos
+   `40 px`.
+
+Regras dos slots:
+
+- o selo superior comunica contexto curto, como `4 pts/R$`, `Melhor cashback`,
+  `Disponível` ou `Esgotado`;
+- o miolo nunca força dados de outra fonte: Livelo mostra pontos, Inter mostra
+  cashback e Pichau mostra preço Pix/cartão e disponibilidade;
+- ausência continua textual e neutra; nunca virar zero, desconto inventado ou
+  estado positivo;
+- as ações ficam no rodapé: acompanhar, detalhes/condições ou histórico/abrir
+  na fonte conforme o contrato real;
+- campanhas, breakdown de cashback, preços e avisos são extensões internas do
+  miolo e não novos tipos de card;
+- `ProductCard`, `DirectStoreCard` e cards de estado vazio continuam
+  componentes especializados porque representam jornadas diferentes, mas podem
+  reutilizar a mesma moldura quando a anatomia for compatível.
+
+Variantes de cor: Livelo usa `radar-plum`, Inter usa `radar-positive` e Pichau
+usa `radar-action`. O restante da superfície continua consumindo os tokens
+semânticos comuns, em claro e escuro.
+
 ## 8. Autenticação e perfil
 
 ### `AuthView`
@@ -339,8 +375,8 @@ por nome, marca ou SKU e barra de estado do último catálogo válido. O catálo
 é sempre paginado e consulta a API autenticada; digitação nunca consulta a
 Pichau diretamente.
 
-O `PichauProductCard` reutiliza a anatomia de `ProductCard`, mas tem hierarquia
-própria para:
+O `PichauProductCard` usa a moldura `.catalog-card catalog-card--pichau` e
+reutiliza a anatomia de `ProductCard`, mas tem hierarquia própria para:
 
 1. etiquetas **PC Gamer**, **Pichau** e **Origem Pichau**;
 2. nome, marca e SKU;
@@ -374,7 +410,7 @@ Combina `SearchBox`, abas Todas/Acompanhando, contador, contexto e filtro. Categ
 
 ### `LiveloStoreCard`
 
-Classes compartilhadas: `.result-card`, `.card-top`, `.store-identity`, `.store-monogram`, `.benefit-value`, `.card-facts`, `.fact`, `.card-foot`.
+Classes compartilhadas: `.catalog-card catalog-card--livelo`, `.card-top`, `.store-identity`, `.store-monogram`, `.catalog-card-badge`, `.card-facts`, `.fact`, `.card-foot`.
 
 Anatomia:
 
@@ -430,7 +466,7 @@ Usa Todas/Acompanhadas no controle segmentado compartilhado, logo abaixo da busc
 
 ### `CashbackCard`
 
-Classes: `.cashback-card`, `.cashback-kicker`, `.cashback-highlight`, `.cashback-breakdown`, `.cashback-line`.
+Classes: `.catalog-card catalog-card--inter`, `.cashback-card`, `.cashback-kicker`, `.cashback-highlight`, `.cashback-breakdown`, `.cashback-line`.
 
 Anatomia:
 
