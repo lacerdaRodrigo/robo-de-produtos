@@ -31,7 +31,7 @@ explicitamente listadas abaixo.
 
 ## Pichau — evolução ainda aberta
 
-- [ ] Validar uma execução fria sem cabo após o retry de inicialização do DevTools; a execução `34306121536` confirmou fila/Wi‑Fi ativos, mas encontrou JSON transitório do Chrome durante a criação da sessão Appium e terminou antes da coleta.
+- [x] Validar uma execução fria sem cabo após o retry de inicialização do DevTools; a execução `34306849805` passou com fila, Wi‑Fi, Appium, Chrome e publicação, em 2m17s. A falha anterior `34306121536` ficou explicada pelo JSON transitório do Chrome durante a criação da sessão Appium.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

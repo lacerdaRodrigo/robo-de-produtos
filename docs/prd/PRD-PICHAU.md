@@ -311,6 +311,8 @@ Durante o boot frio, o endpoint `/json` do Chrome pode responder JSON parcial ou
 sem uma aba por alguns segundos; o adaptador aguarda a estabilização dentro de
 um limite finito antes de recriar a sessão Appium, sem transformar essa condição
 transitória em falha definitiva.
+A execução `34306849805` confirmou esse fluxo corrigido sem cabo, com fila,
+worker, Appium, Chrome e publicação concluídos em 2m17s.
 Livelo e Inter permanecem fora desta prova.
 
 ## Workflow GitHub Actions e fila Android — implementado e validado em execução real
