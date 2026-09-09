@@ -402,6 +402,8 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
         def __init__(self, **_kwargs):
             self.aberturas = 0
             self.verificacoes = 0
+            self.urls_abertas = []
+            self.aguardas = 0
             self.fechado = False
 
         def abrir(self) -> None:
@@ -411,6 +413,12 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
             self.verificacoes += 1
             if self.verificacoes == 1:
                 raise FalhaAoObterPichau("DevTools ausente", codigo="navegador")
+
+        def abrir_url(self, url) -> None:
+            self.urls_abertas.append(url)
+
+        def aguardar_pagina(self) -> None:
+            self.aguardas += 1
 
         def fechar(self) -> None:
             self.fechado = True
@@ -436,7 +444,9 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
         assert fonte._driver is driver
 
     assert devtools.aberturas == 2
-    assert devtools.verificacoes == 2
+    assert devtools.verificacoes == 1
+    assert devtools.urls_abertas == [fonte.url_categoria]
+    assert devtools.aguardas == 1
     assert devtools.fechado is True
     assert driver.timeout == fonte.timeout
     assert driver.fechado is True

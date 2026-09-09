@@ -464,6 +464,43 @@ class _ChromeDevTools:
 
         self._alvo()
 
+    def abrir_url(self, url: str) -> None:
+        """Abre uma URL Pichau no Chrome quando a sessão não tem uma aba."""
+
+        analisada = urlparse(url)
+        if analisada.scheme != "https" or analisada.hostname not in HOSTES_VALIDOS:
+            raise FalhaAoObterPichau("URL Android fora do dominio permitido.", codigo="url")
+        self._executar(
+            [
+                "shell",
+                "am",
+                "start",
+                "-a",
+                "android.intent.action.VIEW",
+                "-d",
+                url,
+                "com.android.chrome",
+            ]
+        )
+
+    def aguardar_pagina(self, tentativas: int = 15, intervalo: float = 1.0) -> None:
+        """Aguarda a aba DevTools depois de relançar o Chrome pelo Appium."""
+
+        ultimo_erro: FalhaPichau | None = None
+        for tentativa in range(max(1, tentativas)):
+            try:
+                self.verificar()
+                return
+            except FalhaPichau as erro:
+                ultimo_erro = erro
+                if tentativa + 1 < tentativas:
+                    time.sleep(intervalo)
+        if ultimo_erro is not None:
+            raise ultimo_erro
+        raise FalhaAoObterPichau(
+            "O Chrome Android nao apresentou uma pagina DevTools.", codigo="navegador"
+        )
+
     def fechar(self) -> None:
         if not self._aberto:
             return
@@ -1178,7 +1215,8 @@ class FontePichauAndroid:
                         self._driver = self._abrir_driver()
                         self._driver.set_page_load_timeout(self.timeout)
                         self.cdp.abrir()
-                        self.cdp.verificar()
+                        self.cdp.abrir_url(self.url_categoria)
+                        self.cdp.aguardar_pagina()
                 else:
                     self.cdp.abrir()
         except Exception as erro:
