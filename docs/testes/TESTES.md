@@ -237,12 +237,6 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
 | CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
 
-### `backend/robo/testes/teste_ranking_inter.py` — ordenação pura
-
-| ID | Título | Descrição | Como fazer |
-|---|---|---|---|
-| CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
-
 ### `backend/robo/testes/teste_retrato_inter.py` — favoritas da execução
 
 | ID | Título | Descrição | Como fazer |
@@ -700,7 +694,6 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `teste_principal.py` | 27 | 29 |
 | `teste_extrator_inter.py` | 9 | 10 |
 | `teste_adaptadores_inter.py` | 2 | 4 |
-| `teste_ranking_inter.py` | 1 | 1 |
 | `teste_retrato_inter.py` | 1 | 1 |
 | `teste_principal_inter.py` | 1 | 3 |
 | `teste_produtos_inter.py` | 9 | 19 |
