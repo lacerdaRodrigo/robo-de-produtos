@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.3 (2026-09-09)
+
+### Bug Fixes
+
+- **pichau**: Abrir pagina apos fallback appium
+  ([`aa9d96c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/aa9d96cc495e42cd39698883a4ff76aed350f11b))
+
+
 ## v1.66.2 (2026-09-09)
 
 ### Bug Fixes
