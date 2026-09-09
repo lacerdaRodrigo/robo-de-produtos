@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.66.0 (2026-09-09)
+
+### Bug Fixes
+
+- **pichau**: Usar ADB Wi-Fi descoberto com segurança
+  ([`e2015fe`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e2015feb7f20a693164aaffcbc90bc426854cb19))
+
+### Features
+
+- **mobile**: Complete Pichau V11 catalog journey
+  ([`8f4c465`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8f4c4657b421157cc1891ff03aa3911d700b2857))
+
+
 ## v1.65.2 (2026-09-08)
 
 ### Bug Fixes
