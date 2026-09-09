@@ -81,6 +81,15 @@ python -m robo_pichau.principal --diagnostico
   PICHAU_ANDROID_WIFI_HOST=<IP_PRIVADO_DO_ANDROID>
   PICHAU_ANDROID_WIFI_SERVICE=adb-tls-connect._tcp
   ```
+  A fronteira de segurança é local: Appium escuta somente em `127.0.0.1`, o
+  CDP existe apenas na ponte ADB encaminhada localmente e nenhum desses
+  serviços deve ser publicado no roteador ou por encaminhamento de portas. O
+  runner usa `umask 077`, corrige os logs para `600` e não passa
+  `DATABASE_URL` ao Appium, tmux, ADB ou Chrome; a credencial entra apenas no
+  processo Python que publica. O Wireless Debugging deve permanecer pareado
+  somente com dispositivos confiáveis e em uma rede privada. O telefone deve
+  ser dedicado ao robô, sem contas pessoais, senhas salvas ou tokens no perfil
+  Chrome. Bloquear a tela ou usar modo headless não substitui essas medidas.
   Na execução recorrente, o Chrome já aberto é lido diretamente pelo CDP local
   via ADB: o Appium/UiAutomator2 fica disponível para configuração,
   diagnóstico e recuperação, mas não bloqueia cada coleta com um novo boot.

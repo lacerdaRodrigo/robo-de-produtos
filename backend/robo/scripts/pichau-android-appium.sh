@@ -3,6 +3,7 @@
 # Inicia o Appium local em uma sessao tmux idempotente. O Chrome e aberto pelo
 # UiAutomator2 durante a coleta; nenhum servidor Appium fica exposto na rede.
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 TERMUX_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
@@ -47,9 +48,11 @@ else
     if [[ -f "$LOG_FILE" && "$(stat -c '%s' "$LOG_FILE")" -gt 5242880 ]]; then
         mv -f "$LOG_FILE" "$LOG_FILE.1"
     fi
+    touch "$LOG_FILE"
+    chmod 600 "$LOG_FILE"
 
     tmux new-session -d -s "$SESSION" \
-        "unset ADB_SERVER_SOCKET; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level error >>$(printf '%q' "$LOG_FILE") 2>&1"
+        "unset ADB_SERVER_SOCKET DATABASE_URL PICHAU_ANDROID_WIFI_HOST PICHAU_ANDROID_WIFI_SERVICE PICHAU_ANDROID_UDID PICHAU_ANDROID_ADB_PORT; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level error >>$(printf '%q' "$LOG_FILE") 2>&1"
 fi
 
 # No boot do Termux, o servidor pode continuar subindo em segundo plano. O

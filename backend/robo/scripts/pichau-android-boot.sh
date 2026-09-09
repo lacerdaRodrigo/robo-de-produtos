@@ -5,6 +5,7 @@
 # O Appium local, o worker persistente e o watchdog sao recriados no boot. A
 # coleta só acontece quando o GitHub Actions cria uma solicitação na fila.
 set -Eeuo pipefail
+umask 077
 
 TERMUX_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 REPO_ROOT="${PICHAU_REPO_ROOT:-$TERMUX_PREFIX/opt/robo}"
@@ -17,6 +18,8 @@ BOOT_LOG="$LOG_DIR/boot.log"
 
 mkdir -p "$LOG_DIR"
 chmod 700 "$LOG_DIR"
+touch "$BOOT_LOG"
+chmod 600 "$BOOT_LOG"
 exec >> "$BOOT_LOG" 2>&1
 echo "$(date --iso-8601=seconds) inicio boot Pichau Android"
 

@@ -269,7 +269,13 @@ Este executor não é headless: o Chrome nativo pode aparecer no primeiro plano
 quando o Appium cria ou recupera a sessão, porque o DevTools precisa de uma aba
 real do navegador Android. A tela pode permanecer bloqueada durante a operação;
 isso não transforma o Chrome em um navegador headless nem expõe o servidor
-Appium na rede.
+Appium na rede. A segurança não depende da janela ficar invisível: Appium fica
+preso a `127.0.0.1`, o CDP usa somente encaminhamento ADB local e o runner não
+passa a credencial do banco para Appium, tmux, ADB ou Chrome. Configuração e
+logs operacionais ficam privados (`600`), e o telefone deve ser dedicado, sem
+contas pessoais, senhas salvas ou tokens no perfil Chrome. Wireless Debugging
+deve permanecer pareado apenas com dispositivos confiáveis e sem portas
+publicadas no roteador.
 
 O Samsung pode executar fora do notebook, conectado ao Wi‑Fi e usando somente
 a própria bateria. Appium, Termux e Job Scheduler ficam locais; o carregador é

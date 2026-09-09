@@ -16,6 +16,7 @@ from robo_pichau.adaptadores import (
     FontePichauSeleniumBase,
     RepositorioPichauPostgres,
     robots_permite,
+    url_para_log,
 )
 from robo_pichau.extrator import (
     decimal_brasileiro,
@@ -41,6 +42,15 @@ from robo_pichau.principal import (
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
+
+
+def teste_url_de_log_remove_query_fragmento_e_credenciais() -> None:
+    assert (
+        url_para_log("https://www.pichau.com.br/pc?page=2&token=nao-logar#aba")
+        == "https://www.pichau.com.br/pc"
+    )
+    assert url_para_log("https://usuario:senha@www.pichau.com.br/pc") == "dominio-nao-permitido"
+    assert url_para_log("http://www.pichau.com.br/pc") == "dominio-nao-permitido"
 
 
 def html() -> str:

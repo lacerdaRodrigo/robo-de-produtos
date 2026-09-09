@@ -257,7 +257,16 @@ def executar_trabalho(
     if trabalho is None:
         return None
     try:
-        resultado = executar([str(runner)], cwd=str(runner.parent.parent), check=False)
+        # A credencial é necessária para a fila Python, mas não deve ser
+        # herdada pelo Appium/ADB nem por processos filhos do navegador.
+        ambiente = os.environ.copy()
+        ambiente.pop("DATABASE_URL", None)
+        resultado = executar(
+            [str(runner)],
+            cwd=str(runner.parent.parent),
+            check=False,
+            env=ambiente,
+        )
         sucesso = resultado.returncode == 0
         codigo = None if sucesso else codigo_falha_runner(resultado.returncode)
     except OSError:

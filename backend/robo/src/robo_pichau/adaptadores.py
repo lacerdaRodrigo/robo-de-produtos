@@ -55,6 +55,22 @@ RECURSOS_BLOQUEADOS_ANDROID = (
 )
 
 
+def url_para_log(url: str | None) -> str:
+    """Retorna somente origem/caminho permitido, sem query ou credenciais."""
+
+    if not isinstance(url, str) or not url:
+        return "indisponivel"
+    analisada = urlparse(url)
+    if (
+        analisada.scheme != "https"
+        or analisada.hostname not in HOSTES_VALIDOS
+        or analisada.username
+        or analisada.password
+    ):
+        return "dominio-nao-permitido"
+    return f"https://{analisada.hostname}{analisada.path or '/'}"
+
+
 def robots_permite(conteudo: str, caminho: str, user_agent: str = USER_AGENT) -> bool:
     """Interpreta o subconjunto necessario do robots.txt sem assumir permissao."""
 
@@ -359,8 +375,8 @@ class FontePichauSeleniumBase:
             pagina,
             tentativa,
             fase,
-            alvo,
-            self._url_atual(),
+            url_para_log(alvo),
+            url_para_log(self._url_atual()),
             titulo,
             len(fonte.encode("utf-8")),
             "self.__next_f.push(" in conteudo,
@@ -1437,8 +1453,8 @@ class FontePichauAndroid:
             contexto,
             pagina,
             tentativa,
-            alvo,
-            url_final if url_final is not None else self._url_atual(),
+            url_para_log(alvo),
+            url_para_log(url_final if url_final is not None else self._url_atual()),
             titulo,
             len(fonte.encode("utf-8")),
             "self.__next_f.push(" in conteudo,

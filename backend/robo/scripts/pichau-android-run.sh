@@ -3,6 +3,7 @@
 # Runner local do Termux. O arquivo de configuracao e lido como dados simples
 # KEY=VALUE; ele nunca e executado como shell script.
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROBO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
@@ -47,6 +48,7 @@ chmod 700 "$LOG_DIR" "$LOCK_DIR"
 
 # O formato aceito e intencionalmente pequeno: nao ha expansao de shell,
 # command substitution ou interpretacao de aspas.
+unset DATABASE_URL
 while IFS= read -r linha || [[ -n "$linha" ]]; do
     [[ -z "$linha" ]] && continue
     [[ "$linha" == \#* ]] && continue
@@ -55,7 +57,10 @@ while IFS= read -r linha || [[ -n "$linha" ]]; do
     valor="${linha#*=}"
     [[ "$chave" =~ ^[A-Z][A-Z0-9_]*$ ]] || fail "nome de variavel invalido"
     case "$chave" in
-        DATABASE_URL|PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|PICHAU_ANDROID_TRANSPORTE|PICHAU_ANDROID_WIFI_HOST|PICHAU_ANDROID_WIFI_SERVICE|LOG_LEVEL)
+        DATABASE_URL)
+            DATABASE_URL="$valor"
+            ;;
+        PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|PICHAU_ANDROID_TRANSPORTE|PICHAU_ANDROID_WIFI_HOST|PICHAU_ANDROID_WIFI_SERVICE|LOG_LEVEL)
             export "$chave=$valor"
             ;;
         *)
@@ -76,6 +81,8 @@ esac
 
 command -v adb >/dev/null 2>&1 || fail "adb ausente; instale Android Platform Tools" "$CODIGO_ADB_AUSENTE"
 ADB_PORT="${PICHAU_ANDROID_ADB_PORT:-5037}"
+[[ "$ADB_PORT" =~ ^[0-9]+$ ]] && ((ADB_PORT >= 1 && ADB_PORT <= 65535)) || fail \
+    "PICHAU_ANDROID_ADB_PORT invalida" "$CODIGO_ADB_DESCOBERTA_WIFI"
 TRANSPORTE="${PICHAU_ANDROID_TRANSPORTE:-wifi}"
 [[ "$TRANSPORTE" == "wifi" ]] || fail \
     "PICHAU_ANDROID_TRANSPORTE deve ser wifi" "$CODIGO_ADB_DESCOBERTA_WIFI"
@@ -174,6 +181,8 @@ find "$LOG_DIR" -type f -name 'coleta-*.log' -mtime +14 -delete
 if [[ -f "$LOG_FILE" && "$(stat -c '%s' "$LOG_FILE")" -gt 5242880 ]]; then
     mv -f "$LOG_FILE" "$LOG_FILE.1"
 fi
+touch "$LOG_FILE"
+chmod 600 "$LOG_FILE"
 
 termux-wake-lock >/dev/null
 liberou_wake_lock=0
@@ -191,10 +200,13 @@ trap liberar_wake_lock EXIT
     echo "$(date --iso-8601=seconds) executor ADB transporte=wifi"
     cd "$ROBO_ROOT"
     inicio_preparo_ms="$(agora_ms)"
-    "$APPIUM_SCRIPT"
+    # A credencial do publicador só entra no ambiente do processo Python que
+    # publica. Appium, tmux, ADB e Chrome não precisam recebê-la.
+    env -u DATABASE_URL "$APPIUM_SCRIPT"
     fim_preparo_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) Pichau performance: etapa=preparo_runner "\
         "duracao_ms=$((fim_preparo_ms - inicio_preparo_ms))"
+    export DATABASE_URL
     if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
         PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_pichau.principal; then
         status=0

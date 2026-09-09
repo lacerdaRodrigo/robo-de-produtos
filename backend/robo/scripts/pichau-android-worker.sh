@@ -3,6 +3,7 @@
 # Worker persistente da fila Pichau. Ele não coleta por agenda própria: só
 # executa quando o workflow cria uma solicitação no Postgres.
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROBO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
@@ -51,6 +52,8 @@ chmod 700 "$LOG_DIR" "$LOCK_DIR"
 if [[ -f "$LOG_FILE" && "$(stat -c '%s' "$LOG_FILE")" -gt 5242880 ]]; then
     mv -f "$LOG_FILE" "$LOG_FILE.1"
 fi
+touch "$LOG_FILE"
+chmod 600 "$LOG_FILE"
 
 exec 9>"$LOCK_FILE"
 flock -n 9 || exit 0

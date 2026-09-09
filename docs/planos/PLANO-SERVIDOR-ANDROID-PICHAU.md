@@ -5,6 +5,9 @@ Postgres, Wireless Debugging e workflow GitHub validados. A execução real
 `34302348225` passou pelo GitHub, worker, Chrome/Appium e publicação sem cabo
 USB. A migration da fila foi aplicada, as credenciais exclusivas foram
 validadas e o catálogo/jornada Pichau foram conferidos pela API/aplicativo.
+O hardening operacional foi incorporado: Appium/CDP continuam locais,
+credencial não é herdada pelo Appium/ADB/Chrome e logs/configuração usam
+permissões privadas.
 
 **Última atualização:** 2026-09-08
 
@@ -307,8 +310,10 @@ fila, coleta completa e publicação; `34302348225` confirmou o transporte
 operacional sem cabo e a recuperação do Chrome sem aba DevTools. No
 APK,
 a jornada Pichau foi aceita no aparelho com catálogo, paginação, busca,
-histórico, link externo e retorno. Provas adicionais de falha preservando o
-snapshot e de ausência de concorrência ficam como hardening futuro.
+histórico, link externo e retorno. O hardening local de credenciais, logs e
+superfície Appium/CDP foi incorporado ao runner e aos scripts. O risco residual
+é operacional: Wireless Debugging continua sendo um canal administrativo e
+deve ficar pareado somente com dispositivos confiáveis em rede privada.
 Temperatura, bateria e armazenamento devem ser observados manualmente, mas não
 criam alerta automático nem tornam o carregador obrigatório. IP, porta, serial,
 código de pareamento, chave ADB e credenciais nunca entram em documentação,

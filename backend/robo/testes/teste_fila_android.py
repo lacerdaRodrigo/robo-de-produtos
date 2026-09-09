@@ -145,3 +145,22 @@ def teste_executar_trabalho_finaliza_sucesso_ou_falha(monkeypatch, tmp_path: Pat
     assert sucesso is True
     assert falha is False
     assert finalizados == [(7, True, None), (7, False, "runner-2")]
+
+
+def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -> None:
+    runner = tmp_path / "pichau-android-run.sh"
+    runner.touch()
+    ambiente_recebido = {}
+    monkeypatch.setenv("DATABASE_URL", "postgres://usuario:senha@host/db?sslmode=require")
+    monkeypatch.setattr(fila_android, "reivindicar", lambda _url: trabalho())
+    monkeypatch.setattr(fila_android, "finalizar", lambda *_args, **_kwargs: None)
+
+    def executar(*_args, **kwargs):
+        ambiente_recebido.update(kwargs["env"])
+        return SimpleNamespace(returncode=0)
+
+    fila_android.executar_trabalho(
+        "postgres://db?sslmode=require", runner=runner, executar=executar
+    )
+
+    assert "DATABASE_URL" not in ambiente_recebido

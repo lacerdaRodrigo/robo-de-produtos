@@ -4,6 +4,7 @@
 # própria: o worker só executa quando existe uma solicitação do GitHub Actions.
 # A coleta recorrente segue 09h/14h/20h pelo workflow Pichau.
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKER="${PICHAU_WORKER:-$SCRIPT_DIR/pichau-android-worker.sh}"

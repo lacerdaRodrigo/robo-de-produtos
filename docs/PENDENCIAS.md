@@ -6,7 +6,8 @@ O contrato operacional padrão da branch `re-design` é o [`AGENTS.md`](../AGENT
 Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e
 Web/integration/E2E fora do gate. A implementação backend Pichau desta tarefa
 foi autorizada explicitamente; o executor Android e seu transporte Wi-Fi foram
-encerrados após validação real. Permanecem somente evoluções de produto/API
+encerrados após validação real, com o hardening local de credenciais, logs e
+superfície Appium/CDP incorporado. Permanecem somente evoluções de produto/API
 explicitamente listadas abaixo.
 
 ## Ciclo mobile atual
