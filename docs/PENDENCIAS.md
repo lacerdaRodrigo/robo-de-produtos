@@ -10,6 +10,9 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
 ## Ciclo mobile atual
 
 - [ ] Concluir a Central de Alertas somente após fechar seu contrato de dados e histórico; o estado atual continua parcial/placeholder.
+- [ ] Validar visualmente no protótipo o `CatalogCard` compartilhado de Livelo,
+  Cashback Inter e Pichau e, depois do aceite, migrar a moldura para o Flutter
+  sem misturar os contratos de pontos, cashback e preços.
 - [ ] Fazer conferências manuais no Samsung quando uma entrega mobile exigir aceite físico. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
