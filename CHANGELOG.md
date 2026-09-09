@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.5 (2026-09-09)
+
+### Bug Fixes
+
+- **android**: Aguardar DevTools durante boot do Chrome
+  ([`73dbb52`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/73dbb52a979c6cef2a0c4d7adc624a9001c6da25))
+
+
 ## v1.66.4 (2026-09-09)
 
 ### Bug Fixes
