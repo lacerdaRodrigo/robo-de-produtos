@@ -305,8 +305,9 @@ retorno pós-reboot foi validado após o primeiro desbloqueio: o worker e o
 Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
 totalmente autônoma antes desse desbloqueio permanece bloqueada pela tela de
 bloqueio do Android. Depois das falhas `34158686905` e `34174437207`, o
-executor passou a usar Wireless Debugging por Wi-Fi, com descoberta mDNS e
-filtro pelo host privado configurado no Termux. A execução `34182214027`
+executor passou a usar Wireless Debugging por Wi-Fi, reutilizando um endpoint
+ADB Wi-Fi já conectado ou descobrindo-o por mDNS, sempre com filtro pelo host
+privado configurado no Termux. A execução `34182214027`
 confirmou novamente fila, coleta completa e publicação antes da migração. A
 validação definitiva do transporte sem cabo continua pendente no aparelho. No
 APK,
