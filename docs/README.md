@@ -17,10 +17,15 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Plano e runbook do Samsung como executor local da coleta Pichau, inclusive operação independente do notebook e da tomada. |
 | [`planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md`](planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md) | Plano para gerar, após a `main`, uma APK interna privada no Google Drive e avisar o destinatário por e-mail. |
-| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro da validação no Samsung, condições completas do Cashback Inter, ADB e três coletas Pichau com `pageSize=200`. |
 | [`planos/PLANO-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](planos/PLANO-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Plano da Central de Alertas, push, Ajuda, Reportar problema, privacidade e validação visual mobile V11 no Samsung. |
+
+## Registros concluídos
+
+| Documento | Finalidade |
+|---|---|
+| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro encerrado do executor Android da Pichau, fila, worker, Appium e transporte Wireless Debugging. |
+| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro encerrado da validação Android, jornada Pichau e coleta real sem cabo USB. |
 
 ## PRDs de domínio
 

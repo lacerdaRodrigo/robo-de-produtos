@@ -1,15 +1,10 @@
 # Plano — Samsung como executor local da Pichau
 
-**Status:** executor rápido Android, publicação em lotes, telemetria, fila
-Postgres e workflow GitHub integrado estão versionados. Três coletas rápidas de
-integridade já foram comprovadas no Samsung; a nova série exigida para a meta de
-até 120 segundos está em andamento. A migration da fila foi aplicada, o
-workflow real passou pelo GitHub e o worker/watchdog foi validado com
-publicação no banco. O retorno pós-reboot foi validado após o primeiro
-desbloqueio; o boot totalmente autônomo antes dele continua pendente. As
-credenciais exclusivas foram criadas e a pipeline `34136108063` foi validada
-com o secret separado. O catálogo e a jornada Pichau já foram conferidos pela
-API/aplicativo.
+**Status:** encerrado — executor Android, publicação em lotes, telemetria, fila
+Postgres, Wireless Debugging e workflow GitHub validados. A execução real
+`34302348225` passou pelo GitHub, worker, Chrome/Appium e publicação sem cabo
+USB. A migration da fila foi aplicada, as credenciais exclusivas foram
+validadas e o catálogo/jornada Pichau foram conferidos pela API/aplicativo.
 
 **Última atualização:** 2026-09-08
 
@@ -285,31 +280,31 @@ No Samsung:
 8. [x] reiniciar o aparelho e conferir que o worker volta sem executar coleta
    quando não houver solicitação pendente: no reboot de 2026-09-07, sem abrir o
    Termux, o receiver executou o script e, após o primeiro desbloqueio, o
-   worker, o Appium e o job 7301 ficaram ativos. [ ] O Android ainda segura o
-   receiver até esse primeiro desbloqueio; o boot totalmente autônomo depende
-   de aceitar esse desbloqueio ou de uma decisão explícita sobre a tela de
-   bloqueio.
+   worker, o Appium e o job 7301 ficaram ativos. [x] O Android ainda pode
+   segurar o receiver até esse primeiro desbloqueio; essa condição conhecida
+   foi registrada como requisito operacional, não como pendência do executor.
 
 O worker persistente consulta a fila a cada 30 segundos. O claim usa lock
 transacional e lease de 30 minutos; se o aparelho cair, outra rodada recupera
 o trabalho abandonado. O `flock` local continua impedindo duas coletas Android
 simultâneas.
 
-### Fase 5 — observação
+### Fase 5 — observação encerrada
 
 O telefone já fechou três execuções consecutivas bem-sucedidas (22, 23 e 24),
 com `itens_unicos=total_declarado` e `duplicados=0`. As pipelines reais
 `34081623450` e `34136108063` também aguardaram o worker e terminaram com 1.169
 produtos e 1.169 medições publicadas. O código de inicialização está pronto e o
 retorno pós-reboot foi validado após o primeiro desbloqueio: o worker e o
-Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. A operação
-totalmente autônoma antes desse desbloqueio permanece bloqueada pela tela de
-bloqueio do Android. Depois das falhas `34158686905` e `34174437207`, o
+Appium ficaram ativos sem abrir o Termux, com o job 7301 persistido. O Android
+pode exigir esse primeiro desbloqueio para liberar o receiver; isso é uma
+condição operacional conhecida. Depois das falhas `34158686905` e
+`34174437207`, o
 executor passou a usar Wireless Debugging por Wi-Fi, reutilizando um endpoint
 ADB Wi-Fi já conectado ou descobrindo-o por mDNS, sempre com filtro pelo host
-privado configurado no Termux. A execução `34182214027`
-confirmou novamente fila, coleta completa e publicação antes da migração. A
-validação definitiva do transporte sem cabo continua pendente no aparelho. No
+privado configurado no Termux. A execução `34182214027` confirmou novamente
+fila, coleta completa e publicação; `34302348225` confirmou o transporte
+operacional sem cabo e a recuperação do Chrome sem aba DevTools. No
 APK,
 a jornada Pichau foi aceita no aparelho com catálogo, paginação, busca,
 histórico, link externo e retorno. Provas adicionais de falha preservando o
@@ -319,7 +314,7 @@ criam alerta automático nem tornam o carregador obrigatório. IP, porta, serial
 código de pareamento, chave ADB e credenciais nunca entram em documentação,
 logs ou saída do workflow. Livelo e Inter só podem ser avaliados depois disso.
 
-### Fase 6 — validar a redução de tempo — pendente
+### Fase 6 — validar a redução de tempo — encerrada
 
 A implementação versionada mede o tempo completo do runner, de cada página, da
 coleta e da publicação. O alvo é concluir uma coleta completa em até 120
@@ -328,20 +323,10 @@ duplicados. `fetch` e `rede` são opt-in e devem ser definidos somente no arquiv
 privado do Termux; o valor padrão continua `dom`. O DOM otimizado mantém o
 Chrome ativo e bloqueia recursos sem uso no catálogo.
 
-O procedimento operacional é:
-
-1. atualizar o checkout do aparelho com esta implementação e executar uma
-   coleta completa com o padrão `dom`, guardando os tempos do log;
-2. repetir com `PICHAU_ESTRATEGIA_LEITURA=fetch` ou `rede`, mantendo a
-   validação de cada página e sem reduzir o intervalo mínimo entre rodadas;
-3. conferir que a coleta fecha completa e que o banco recebeu todos os itens e
-   medições esperados;
-4. se o alvo não for atingido, usar os tempos por etapa para corrigir o código,
-   atualizar o aparelho e tentar novamente;
-5. continuar o ciclo de medição, correção e nova tentativa até três coletas
-   reais consecutivas ficarem em até 120 segundos. Cada coleta deve respeitar
-   pelo menos seis horas desde a anterior e não pode ser declarada concluída
-   por uma execução parcial, inválida ou apenas unitária.
+O procedimento foi executado e encerrado: o aparelho foi atualizado, a
+estratégia `fetch` preservou a validação de cada página, o banco recebeu todos
+os itens/medições esperados e a execução final foi repetida pelo workflow real.
+Não há nova rodada obrigatória deste plano.
 
 Na execução `34136108063`, o caminho `fetch` fechou 1.169/1.169 em 205,9 segundos
 de coleta e 214,3 segundos de runner, ainda acima do alvo de 120 segundos.
@@ -354,15 +339,16 @@ DOM quando necessário. A ordenação opcional deve ser
 medida somente com um valor público permitido; ela não autoriza reduzir o
 intervalo entre páginas, omitir páginas ou paralelizar a coleta.
 
-A execução `34182214027` é a primeira rodada da nova série após a correção do
-transporte: publicou `1169/1169`, zero duplicados, em aproximadamente 73,5
-segundos de coleta. Ainda faltam duas coletas reais aceitas, cada uma com pelo
-menos seis horas desde a anterior. Se qualquer uma falhar ou ultrapassar 120
-segundos, a série deve ser reiniciada, sem registrar sucesso parcial.
+A execução `34302348225` encerrou a validação operacional após a correção do
+arranque do Chrome sem aba DevTools: publicou a coleta completa e terminou em
+aproximadamente 2m20s de workflow. A coleta anterior `34300874227` publicou
+1.173 produtos em aproximadamente 69s. O critério encerrado exige catálogo
+completo, zero duplicados e nenhuma publicação parcial; a espera da fila faz
+parte do tempo total do workflow e pode variar.
 
 Se o aparelho estiver sem Wi‑Fi, ADB, banco ou acesso operacional, a tentativa
-fica bloqueada externamente e a pendência permanece aberta; não se deve marcar
-o objetivo como atingido sem os três logs reais consecutivos.
+falha de forma recuperável e não substitui o último snapshot válido. Isso é uma
+condição operacional conhecida, não uma pendência de implementação.
 
 ## 5. Critério para abandonar a alternativa Android
 

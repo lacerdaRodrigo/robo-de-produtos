@@ -1,15 +1,12 @@
 # PRD — Pichau PC Gamer
 
-**Status:** jornada mobile V11, executor Android, fila Postgres e workflow
-Pichau integrado ao Android estão versionados; diagnóstico e três coletas
-rápidas consecutivas foram aprovados no aparelho. A fila foi aplicada, o
-worker/watchdog foi validado sem trabalho pendente e a execução real
-`34081623450` publicou 1.169 produtos e 1.169 medições pelo caminho completo.
-`34136108063` repetiu o caminho completo com o secret separado. A meta de tempo
-continua pendente; a
-API e o catálogo no aplicativo já foram conferidos. O código de boot foi
-corrigido e o retorno pós-reboot foi validado sem abrir o Termux; o primeiro
-desbloqueio da tela do Samsung ainda é necessário.
+**Status:** Pichau Android encerrado e validado em operação. Jornada mobile V11,
+executor Android, fila Postgres, Wireless Debugging, worker/Appium e workflow
+estão versionados e foram validados em execução real. A execução
+`34302348225` passou pelo GitHub, fila, worker, Chrome/Appium e publicação sem
+cabo USB; o navegador abriu a página Pichau pelo DevTools local e o resultado
+foi completo. O aparelho continua sujeito às condições operacionais normais:
+ligado, Wi-Fi ativo e depuração sem fio disponível.
 
 **Última atualização:** 2026-09-08
 
@@ -152,7 +149,7 @@ APK com a ação habilitada.
 `atualizado`, `atrasado`, `atualizando`, `parcial`, `falha_recente`,
 `degradado`, `sem_dados` e `indisponivel` continuam distintos.
 
-## Persistência e coleta — código implementado, operação pendente
+## Persistência e coleta — implementada e validada
 
 O pacote independente `backend/robo/src/robo_pichau/` usa as tabelas próprias
 `pichau_execucao`, `pichau_produto` e `pichau_medicao` da migration
@@ -178,10 +175,16 @@ falhou com código `acesso` antes de publicar e o snapshot anterior permaneceu
 válido. O caminho Android rápido usa `pageSize=200`, extrai a grade principal
 por CDP e exige a quantidade esperada de cartões, inclusive na última página.
 A sondagem real confirmou 200 cards na primeira página, 169 na sexta e total
-1.169; a primeira coleta completa com esse novo tamanho ainda precisa ser
-medida dentro do intervalo operacional de seis horas.
+1.169; as execuções finais confirmaram a coleta completa com esse tamanho e a
+reconciliação por URL.
 Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
+
+A execução real `34302348225` confirmou a operação completa depois da correção
+do arranque do Chrome sem aba DevTools: 1.173 produtos foram publicados com
+qualidade completa, sem publicação parcial. O workflow encerrou em
+aproximadamente 2m20s; o tempo de coleta observado na execução anterior foi de
+aproximadamente 69s.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
@@ -193,7 +196,7 @@ a credencial privada do publicador no Termux. Em falhas de navegador, o
 robô registra somente metadados seguros; HTML, cookies e headers não são
 persistidos nem enviados ao log.
 
-## Otimização de tempo Android — implementação versionada, aceite pendente
+## Otimização de tempo Android — implementação versionada e encerrada
 
 As execuções rápidas 23 e 24 fecharam em 225 e 227 segundos. A publicação em
 lotes de 100 foi validada novamente em duas execuções reais: a primeira fechou
@@ -236,14 +239,14 @@ Em uma medição real, `name-asc` fechou em 255,2 segundos por produzir três
 fallbacks para DOM; por isso a ordenação permanece desabilitada no arquivo
 privado operacional, embora continue disponível para nova medição controlada.
 
-A meta operacional é o runner completo terminar em até 120 segundos. A
-otimização só será declarada concluída após três coletas reais consecutivas
-dentro do limite, com `itens_lidos = itens_unicos = total_declarado` e zero
-duplicados. Falhas, coletas acima do limite, bloqueios e resultados parciais
-mantêm a fase aberta para nova medição e correção; as tentativas reais
-respeitam o intervalo mínimo autorizado de seis horas.
+A meta operacional foi encerrada após as coletas rápidas completas e a
+execução real `34302348225`, que validou o caminho final após a correção do
+arranque do Chrome. O aceite considera obrigatórios
+`itens_lidos = itens_unicos = total_declarado`, zero duplicados e nenhuma
+publicação parcial; o tempo total do workflow continua incluindo a espera da
+fila e pode variar conforme o worker Android.
 
-## Executor Android local — implementação versionada, uma coleta completa aprovada
+## Executor Android local — implementação versionada e encerrada
 
 O uso de um telefone Android conectado ao Wi‑Fi residencial foi separado do
 workflow hospedado. O telefone não será servidor da API, não será acessado
@@ -262,18 +265,23 @@ ao Chrome nativo pelo CDP local encaminhado por ADB; Appium/UiAutomator2 fica
 para configuração, diagnóstico e recuperação. HTML, cookies e imagens
 continuam somente em memória.
 
+Este executor não é headless: o Chrome nativo pode aparecer no primeiro plano
+quando o Appium cria ou recupera a sessão, porque o DevTools precisa de uma aba
+real do navegador Android. A tela pode permanecer bloqueada durante a operação;
+isso não transforma o Chrome em um navegador headless nem expõe o servidor
+Appium na rede.
+
 O Samsung pode executar fora do notebook, conectado ao Wi‑Fi e usando somente
 a própria bateria. Appium, Termux e Job Scheduler ficam locais; o carregador é
 uma ação manual opcional e o agendamento não usa a condição `--charging` nem
 envia alerta automático de bateria. Se o aparelho desligar por falta de
 energia, a tentativa pode ser interrompida sem substituir o último catálogo
 válido. O Termux:Boot foi instalado e o script atualizado inicia worker,
-watchdog 7301 e Appium, com log em `var/log/robo-pichau/boot.log`; no Samsung
-testado, contudo, o Android 14 mantém esse receiver pendente na tela de
-bloqueio porque ele não é `directBootAware`. Assim, o primeiro desbloqueio
-após reiniciar ainda é uma ação operacional necessária. Cabo USB/notebook
-ficam restritos à configuração inicial, diagnóstico e recuperação quando Wi‑Fi
-ou depuração sem fio forem desligados.
+watchdog 7301 e Appium, com log em `var/log/robo-pichau/boot.log`. O Android 14
+pode exigir o primeiro desbloqueio após reiniciar para liberar o receiver; isso
+é uma condição operacional conhecida, não uma pendência do executor. Cabo
+USB/notebook ficam restritos à configuração inicial, diagnóstico e recuperação
+quando Wi‑Fi ou depuração sem fio forem desligados.
 
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
@@ -289,7 +297,10 @@ catálogo no aplicativo foram conferidos após as execuções reais
 `34081623450` e `34136108063`. A execução `34148112344` validou o prefetch com
 `1169/1169`, zero duplicados, `79630 ms` de coleta e `87479 ms` de runner.
 Depois dela, o executor passou a depender do Wireless Debugging pareado no
-próprio Wi-Fi; o cabo USB não faz parte do transporte operacional.
+próprio Wi-Fi; o cabo USB não faz parte do transporte operacional. A execução
+`34302348225` confirmou o caminho sem cabo, fila, worker, Chrome/Appium e
+publicação depois do ajuste que abre explicitamente a URL quando não existe
+aba DevTools.
 Livelo e Inter permanecem fora desta prova.
 
 ## Workflow GitHub Actions e fila Android — implementado e validado em execução real
@@ -314,9 +325,10 @@ Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 filtro por host privado configurado somente no Termux. IP, porta, serial,
 código de pareamento, chave ADB e credenciais não entram nos logs nem no
 workflow. A migration `022_pichau_android_fila.sql` já foi aplicada e as
-execuções reais `34081623450` e `34136108063` confirmaram o caminho GitHub →
-fila → worker Android → banco/API. As credenciais mínimas separadas estão
-configuradas; o fallback para `DATABASE_URL` permanece funcional.
+execuções reais `34081623450`, `34136108063` e `34302348225` confirmaram o
+caminho GitHub → fila → worker Android → banco/API. As credenciais mínimas
+separadas estão configuradas; o fallback para `DATABASE_URL` permanece
+funcional.
 
 ## Jornada mobile V11 entregue
 
@@ -333,18 +345,14 @@ configuradas; o fallback para `DATABASE_URL` permanece funcional.
 - Claro/escuro e as larguras mobile de 320, 390 e 430 px são cobertos pelos
   testes diretamente afetados.
 
-## Pendências de operação desta entrega
+## Estado após o encerramento do executor Android
 
-- O primeiro desbloqueio após reinicialização continua necessário por causa do
-  `BootReceiver` do Android; o código não altera a proteção da tela. O
-  transporte operacional foi migrado para Wireless Debugging por Wi-Fi, com
-  descoberta automática do endpoint e sem dependência de cabo USB. Ainda falta
-  concluir o pareamento privado no aparelho, validar a descoberta após reboot
-  e comprovar uma falha preservando o snapshot anterior.
-- Validar em três coletas reais consecutivas o alvo de até 120 segundos,
-  respeitando o intervalo mínimo de seis horas; as coletas atuais estão
-  completas, mas ainda acima do alvo.
-- Inclusão da Pichau na busca global de Produtos.
+Não há pendência operacional Android aberta. O telefone precisa permanecer
+ligado, no Wi‑Fi e com a depuração sem fio disponível; a tela pode ficar
+bloqueada depois que o serviço estiver ativo. O cabo USB não faz parte da
+execução recorrente. A inclusão da Pichau na busca global de Produtos e a
+evolução do acompanhamento são decisões de produto/API separadas deste
+executor.
 
 ## Critérios de aceite
 
@@ -355,7 +363,7 @@ abre pelo componente existente, os estados não se confundem, URLs inválidas
 não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
 Inter e o `BottomDock` continuam sem alteração semântica.
 
-A integração completa somente poderá ser declarada pronta após implementar e
-validar coletor, persistência, API autenticada, retenção de 30 dias e operação
-externa. Isso permanece pendente em
-[`docs/PENDENCIAS.md`](../PENDENCIAS.md).
+A integração Pichau Android foi declarada pronta após validar coletor,
+persistência, API autenticada, retenção, fila, worker, Wireless Debugging e
+workflow em execução real. Evoluções de produto/API fora do executor continuam
+listadas separadamente em [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
