@@ -163,6 +163,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             child: PaginaPichau(
               key: const PageStorageKey('pichau-catalogo-nativo'),
               api: widget.api,
+              administrador: widget.administrador,
               ativa: _selecionadoCompacto == DestinoCompacto.pichau,
             ),
           )

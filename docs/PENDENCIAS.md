@@ -19,6 +19,12 @@ foi autorizada explicitamente; suas pendências agora são operacionais externas
   preservando a jornada. O modo noturno do sistema também foi alternado e
   restaurado sem overflow; estados de falha/ausência continuam cobertos pelos
   widgets, sem fabricar dados no device.
+- [ ] Publicar a evolução do contrato Pichau de acompanhamento antes de
+  distribuir a APK desta branch: a camada Flutter já envia `aba`,
+  `disponibilidade`, `ordenar`, `acompanhada` e o PATCH autenticado, mas a
+  rota `/api/pichau/catalogo/{id_externo}/acompanhamento`, a contagem no
+  resumo e a migration de persistência ficaram fora do ciclo mobile e ainda
+  precisam de validação/aplicação externa.
 
 ## Pichau — operação externa e evolução
 
