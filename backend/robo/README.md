@@ -130,7 +130,7 @@ python -m robo_pichau.principal --diagnostico
   no banco.
 - A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
   idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
-  usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
+  usa exclusivamente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
   mantém a `DATABASE_URL` privada do Termux, sempre com SSL e permissões
   restritas às tabelas Pichau e à fila.
 - Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.

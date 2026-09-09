@@ -17,9 +17,11 @@ jobs:
       run:
         working-directory: backend/robo
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.11"
           cache: pip
@@ -45,9 +47,11 @@ jobs:
         working-directory: backend/api
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
           cache: npm
@@ -55,6 +59,9 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
+
+      - name: Auditoria de dependencias
+        run: npm audit --audit-level=high
 
       - name: Tipos
         run: npm run checar

@@ -66,7 +66,7 @@ Radar pessoal de benefícios com três integrações. A Livelo publica catálogo
 
 ## Regras de ouro
 
-1. **O núcleo não faz I/O.** Os módulos de domínio da Livelo e `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py` e `retrato_inter.py` não podem importar rede, banco, arquivo nem ambiente. Existe um teste de fronteira que falha se isso acontecer (CT-074/CT-188).
+1. **O núcleo não faz I/O.** Os módulos de domínio da Livelo e `modelos_inter.py`, `extrator_inter.py` e `retrato_inter.py` não podem importar rede, banco, arquivo nem ambiente. Existe um teste de fronteira que falha se isso acontecer (CT-074/CT-188).
 2. **O mundo entra por contrato.** As portas da Livelo ficam em `portas.py`; as do Inter, em `portas_inter.py`. Nada de acesso externo fora dos adaptadores correspondentes.
 3. **Todo dado vindo do site é hostil.** Escapar antes de renderizar (RN07) e validar o domínio do link antes de colocá-lo no e-mail (§9.2).
 4. **Falha nunca é silenciosa.** Erro encerra com código de saída diferente de zero (RNF06). "Sem promoção" e "robô quebrado" precisam ser distinguíveis (RN13).

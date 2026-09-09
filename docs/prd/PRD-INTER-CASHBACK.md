@@ -285,7 +285,6 @@ O princípio da V1 continua: **núcleo puro, mundo por contrato**. A separação
 |---|---|---|
 | `modelos_inter.py` | Núcleo novo | `LojaInter`, `FavoritaInter`, `RetratoInter` e valores imutáveis |
 | `extrator_inter.py` | Núcleo novo | JSON bruto → lojas normalizadas; nenhuma rede |
-| `ranking_inter.py` | Núcleo novo | Ordem definida por RN37 e RN38 |
 | `retrato_inter.py` | Núcleo novo | Junta catálogo, favoritas e momento da execução |
 | `portas_inter.py` | Contratos novos | Fonte, catálogo de favoritas e repositório do Inter |
 | `adaptadores_inter.py` | Adaptadores novos | HTTP fixo e Postgres das tabelas do Inter |
@@ -533,7 +532,7 @@ Os casos abaixo começam em **CT-175**, depois do último caso catalogado antes 
 | **CT-178** | C12, RN38 | “Ofertas disponíveis” com valor zero mantém o texto e vai depois dos percentuais positivos |
 | **CT-179** | RN39 | Descrição com várias linhas é preservada; descrição vazia vira `None` |
 | **CT-180** | RN34 | C&A é identificada por ID/slug, mesmo que o nome mude |
-| **CT-181** | RN37 | Ranking decrescente e desempate alfabético |
+| **CT-181** | RN37 | Ranking decrescente e desempate alfabético; a cobertura vigente está consolidada no CT-191 da API |
 | **CT-182** | RN43 | Menos de 100 lojas válidas levanta `SiteInterMudou` |
 | **CT-183** | RF20 | JSON inválido, objeto em vez de array e timeout falham ruidosamente |
 | **CT-184** | RN42 | Favorita ausente produz retrato “não encontrada”, sem ser removida |
@@ -696,7 +695,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 
 | Tema | Decisão fechada |
 |---|---|
-| Módulos | `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
+| Módulos | `modelos_inter.py`, `extrator_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py`; a ordenação RN37/RN38 é aplicada na API por `backend/api/lib/formato-inter.ts` |
 | Entrada | `python -m robo_livelo.principal_inter` (a partir de `backend/robo/`) |
 | API | `backend/api/lib/banco-inter.ts` ativo, usado pelas rotas em `backend/api/app/api/inter/**` |
 | Dependências | Nenhuma dependência Python ou npm nova; usar `requests`, `psycopg`, React e Neon já instalados |

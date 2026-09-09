@@ -1,7 +1,19 @@
 version: 2
 updates:
   - package-ecosystem: pip
-    directory: "/"
+    directory: "/backend/robo"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: "/backend/api"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pub
+    directory: "/app"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

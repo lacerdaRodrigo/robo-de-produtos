@@ -66,6 +66,46 @@ class DistribuirApkDriveTest(unittest.TestCase):
                 destination_email="destino@gmail.com",
             )
 
+    def test_acl_rejeita_destinatario_com_permissao_de_escrita(self):
+        with self.assertRaises(MODULE.DistributionError):
+            MODULE.validate_private_permissions(
+                [
+                    {"type": "user", "role": "owner", "emailAddress": "owner@gmail.com"},
+                    {"type": "user", "role": "writer", "emailAddress": "destino@gmail.com"},
+                ],
+                owner_email="owner@gmail.com",
+                destination_email="destino@gmail.com",
+            )
+
+    def test_permissao_existente_de_escrita_nao_e_reutilizada(self):
+        class Execute:
+            def execute(self):
+                return {
+                    "permissions": [
+                        {
+                            "type": "user",
+                            "role": "writer",
+                            "emailAddress": "destino@gmail.com",
+                        }
+                    ]
+                }
+
+        class Permissions:
+            def list(self, **_kwargs):
+                return Execute()
+
+        class Service:
+            def permissions(self):
+                return Permissions()
+
+        with self.assertRaises(MODULE.DistributionError):
+            MODULE._ensure_destination_permission(
+                Service(),
+                "arquivo-id",
+                owner_email="owner@gmail.com",
+                destination_email="destino@gmail.com",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
