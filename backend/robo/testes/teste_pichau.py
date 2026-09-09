@@ -405,6 +405,28 @@ def teste_cdp_android_mantem_chrome_ativo_e_bloqueia_recursos_inuteis(monkeypatc
     assert "*google-analytics*" in chamadas[4][1]["urls"]
 
 
+def teste_cdp_android_aguarda_json_transitorio_do_devtools(monkeypatch) -> None:
+    devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=2.0)
+    respostas = iter(
+        [ValueError("JSON incompleto"), [{"type": "page", "webSocketDebuggerUrl": "ws://devtools"}]]
+    )
+
+    class Resposta:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self):
+            resposta = next(respostas)
+            if isinstance(resposta, Exception):
+                raise resposta
+            return resposta
+
+    monkeypatch.setattr(modulo_adaptadores.requests, "get", lambda *_args, **_kwargs: Resposta())
+    monkeypatch.setattr(modulo_adaptadores.time, "sleep", lambda _: None)
+
+    assert devtools._alvo() == "ws://devtools"
+
+
 def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
     monkeypatch,
 ) -> None:

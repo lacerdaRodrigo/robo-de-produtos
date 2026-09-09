@@ -307,6 +307,10 @@ próprio Wi-Fi; o cabo USB não faz parte do transporte operacional. A execuçã
 `34302348225` confirmou o caminho sem cabo, fila, worker, Chrome/Appium e
 publicação depois do ajuste que abre explicitamente a URL quando não existe
 aba DevTools.
+Durante o boot frio, o endpoint `/json` do Chrome pode responder JSON parcial ou
+sem uma aba por alguns segundos; o adaptador aguarda a estabilização dentro de
+um limite finito antes de recriar a sessão Appium, sem transformar essa condição
+transitória em falha definitiva.
 Livelo e Inter permanecem fora desta prova.
 
 ## Workflow GitHub Actions e fila Android — implementado e validado em execução real

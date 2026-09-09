@@ -34,6 +34,9 @@ TAMANHO_LOTE_PUBLICACAO = 100
 # pagina de 200 itens. O timeout continua finito, mas deixa a leitura rapida
 # por fetch concluir antes de cair no DOM, que e bem mais caro no Android.
 LIMITE_FETCH_ANDROID_MS = 50000
+# Chrome Android pode publicar uma resposta DevTools parcial durante o boot.
+# Aguarde a estabilizacao antes de acionar uma nova sessao UiAutomator2.
+LIMITE_INICIALIZACAO_DEVTOOLS_ANDROID_S = 20.0
 RECURSOS_BLOQUEADOS_ANDROID = (
     "*.avif",
     "*.gif",
@@ -1087,22 +1090,39 @@ class _ChromeDevTools:
         )
 
     def _alvo(self) -> str:
-        try:
-            resposta = requests.get(
-                f"http://127.0.0.1:{self.porta_local}/json",
-                timeout=self.timeout,
-            )
-        except requests.RequestException as erro:
-            raise FalhaAoObterPichau(
-                "O endpoint DevTools do Chrome Android nao respondeu.", codigo="navegador"
-            ) from erro
-        resposta.raise_for_status()
-        for item in resposta.json():
-            if item.get("type") == "page" and isinstance(item.get("webSocketDebuggerUrl"), str):
-                return item["webSocketDebuggerUrl"]
-        raise FalhaAoObterPichau(
-            "O Chrome Android nao apresentou uma pagina DevTools.", codigo="navegador"
-        )
+        limite = time.monotonic() + min(self.timeout, LIMITE_INICIALIZACAO_DEVTOOLS_ANDROID_S)
+        ultimo_erro: Exception | None = None
+        while True:
+            try:
+                resposta = requests.get(
+                    f"http://127.0.0.1:{self.porta_local}/json",
+                    timeout=min(self.timeout, 2.0),
+                )
+                resposta.raise_for_status()
+                itens = resposta.json()
+                if not isinstance(itens, list):
+                    raise ValueError("resposta DevTools nao e uma lista")
+                for item in itens:
+                    if item.get("type") == "page" and isinstance(
+                        item.get("webSocketDebuggerUrl"), str
+                    ):
+                        return item["webSocketDebuggerUrl"]
+                ultimo_erro = FalhaAoObterPichau(
+                    "O Chrome Android nao apresentou uma pagina DevTools.", codigo="navegador"
+                )
+            except (requests.RequestException, ValueError) as erro:
+                # Durante a inicializacao o endpoint pode responder com JSON
+                # parcial. Isso e transitivo; nao deve abortar a coleta.
+                ultimo_erro = erro
+
+            if time.monotonic() >= limite:
+                if isinstance(ultimo_erro, FalhaPichau):
+                    raise ultimo_erro
+                raise FalhaAoObterPichau(
+                    "O endpoint DevTools do Chrome Android nao respondeu.",
+                    codigo="navegador",
+                ) from ultimo_erro
+            time.sleep(0.5)
 
     def _comando(self, socket, metodo: str, parametros: dict | None = None) -> dict:
         identificador = next(self._ids)
