@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.66.4 (2026-09-09)
+
+### Bug Fixes
+
+- **security**: Isolar credenciais do executor Android
+  ([`20cb031`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/20cb031f7a60a8b08ce680bfe2baf750d3042daf))
+
+### Documentation
+
+- **pichau**: Encerrar validacao android
+  ([`a0795e4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a0795e45f6a46f7dacced8c290d7ea7cbb26d3c8))
+
+
 ## v1.66.3 (2026-09-09)
 
 ### Bug Fixes
