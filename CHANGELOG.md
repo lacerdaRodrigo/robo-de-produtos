@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.2 (2026-09-09)
+
+### Bug Fixes
+
+- **pichau**: Relancar chrome sem devtools
+  ([`6c54194`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/6c54194f7e54c2abb2b677b5ae28e931569270d5))
+
+
 ## v1.66.1 (2026-09-09)
 
 ### Bug Fixes
