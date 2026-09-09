@@ -1230,6 +1230,7 @@ class FontePichauAndroid:
                 "appium:appPackage": "com.android.chrome",
                 "appium:appActivity": "com.google.android.apps.chrome.Main",
                 "appium:noReset": True,
+                "appium:forceAppLaunch": True,
                 "appium:newCommandTimeout": max(120, int(self.timeout * 2)),
             }
             if self.udid:
@@ -1253,6 +1254,7 @@ class FontePichauAndroid:
             "appium:appPackage": "com.android.chrome",
             "appium:appActivity": "com.google.android.apps.chrome.Main",
             "appium:noReset": True,
+            "appium:forceAppLaunch": True,
             "appium:newCommandTimeout": max(120, int(self.timeout * 2)),
         }
         if self.udid:

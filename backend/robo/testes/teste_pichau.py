@@ -305,6 +305,7 @@ def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
         assert capacidades["appium:automationName"] == "UiAutomator2"
         assert capacidades["appium:appPackage"] == "com.android.chrome"
         assert capacidades["appium:appActivity"] == "com.google.android.apps.chrome.Main"
+        assert capacidades["appium:forceAppLaunch"] is True
         assert "browserName" not in capacidades
         driver = Driver()
         drivers.append(driver)

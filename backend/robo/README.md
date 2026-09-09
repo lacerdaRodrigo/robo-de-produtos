@@ -102,6 +102,8 @@ python -m robo_pichau.principal --diagnostico
   evitando deixar requisições pendentes no Chrome. Falha em qualquer página
   pré-carregada aborta a coleta; não há publicação parcial.
   `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
+  a sessão UiAutomator2 força o relançamento do Chrome quando o processo antigo
+  ficou aberto sem publicar DevTools após bloqueio, reboot ou reconexão ADB.
   o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço
   persistente não bloquear o próximo job;
   `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos e
