@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.1 (2026-09-09)
+
+### Bug Fixes
+
+- **pichau**: Reutilizar adb wifi conectado
+  ([`3029826`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3029826b81c89b2f8e4c4155df50b181958eedc7))
+
+
 ## v1.66.0 (2026-09-09)
 
 ### Bug Fixes
