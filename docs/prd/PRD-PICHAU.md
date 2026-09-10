@@ -431,6 +431,16 @@ deixa o prefetch paralelo restrito ao fetch e serializa qualquer fallback DOM;
 por ter existido uma falha, a janela operacional de 72 horas reinicia após a
 implantação e a validação desta correção.
 
+A correção foi implantada no Samsung pelo commit `4940436` e validada pela
+execução `34429829770` (fila 48) em 2026-09-09. Com a tela em `Dozing` e o
+descanso de 30 segundos restaurado, o trabalho passou por
+`pendente → executando → sucesso` em uma tentativa: seis páginas, 1.176 itens
+lidos/únicos, zero duplicados e publicação completa. O workflow terminou verde
+em 2min16s. Nesta coleta todos os cinco fetches do prefetch passaram
+(`pendentes=0`), portanto ela comprova ausência de regressão no caminho normal;
+o caminho de falha concorrente permanece coberto pelo teste unitário CT-398.
+Esta execução reinicia o gate das nove coletas agendadas em 72 horas.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
