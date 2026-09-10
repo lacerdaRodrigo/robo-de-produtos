@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.66.10 (2026-09-10)
+
+### Bug Fixes
+
+- **pichau**: Estabiliza ciclo Android e diagnóstico da fila
+  ([`f4a94da`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f4a94dacd79930c90a99091e7f1fdd6b66e9036f))
+
+### Documentation
+
+- **pichau**: Registra validacao Android
+  ([`1531979`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1531979a27df0b35a7925bd4b87d4135cabf2ea0))
+
+
 ## v1.66.9 (2026-09-10)
 
 ### Bug Fixes
