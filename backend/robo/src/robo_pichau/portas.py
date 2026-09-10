@@ -9,9 +9,16 @@ from .modelos import PichauProduto, ResumoColetaPichau
 
 
 class FalhaPichau(RuntimeError):
-    def __init__(self, mensagem: str, *, codigo: str = "inesperada") -> None:
+    def __init__(
+        self,
+        mensagem: str,
+        *,
+        codigo: str = "inesperada",
+        status_http: int | None = None,
+    ) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
+        self.status_http = status_http
 
 
 class FalhaAoObterPichau(FalhaPichau):

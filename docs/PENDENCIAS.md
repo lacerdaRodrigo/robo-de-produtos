@@ -6,9 +6,11 @@ O contrato operacional padrão da branch `re-design` é o [`AGENTS.md`](../AGENT
 Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e
 Web/integration/E2E fora do gate. A implementação backend Pichau desta tarefa
 foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
-a disponibilidade contínua do executor Android foi reaberta depois que as
-execuções `34370533995` e `34395714110` permaneceram sem claim. O hardening de
-ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
+a disponibilidade contínua do executor Android continua aberta. A execução
+`34519730452`, em 2026-09-10, falhou como `pichau-acesso`; uma coleta anterior
+passou no mesmo commit também com o Chrome aberto, portanto o estado residual é
+um risco removido pelo novo ciclo limpo, não uma causa isolada comprovada. Essa
+falha reiniciou o gate operacional.
 
 ## Ciclo mobile atual
 
@@ -31,22 +33,27 @@ ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
 
 ## Pichau — evolução ainda aberta
 
-- [x] Validar uma execução fria sem cabo após o retry de inicialização do DevTools; a execução `34306849805` passou com fila, Wi‑Fi, Appium, Chrome e publicação, em 2m17s. A falha anterior `34306121536` ficou explicada pelo JSON transitório do Chrome durante a criação da sessão Appium.
-- [x] Implantar no Samsung o worker foreground com wake/Wi-Fi lock persistente,
-  recuperador 7301, Appium sob demanda e link do Termux:Boot para o checkout;
-  após reboot, o status confirmou worker foreground, watchdog, fila e Appium
-  sob demanda, sem worker tmux.
-- [x] Validar a coleta manual inicial com tela bloqueada: a execução
-  `34424475472`, job 42, passou em uma tentativa e publicou 1.176/1.176 itens,
-  zero duplicados. As tentativas 40 e 41 diagnosticaram a descoberta ADB e o
-  timeout `pageLoad` nativo e não contam para o aceite.
-- [x] Repetir a coleta sem o responsável próximo ao aparelho e sem cabo de
-  dados: `34425228841`, job 43, passou de `pendente` a `sucesso` em uma tentativa.
-  A evidência confirma a operação normal via Wi‑Fi, mas não conta como execução
-  agendada do gate de 72 horas.
+- A validação branch-first da `024` foi concluída em 2026-09-10 numa branch
+  temporária derivada de `production`, sem aplicar a `023`: coluna e constraints
+  válidas, 47 linhas existentes compatíveis com `{}` e grants preservados para
+  `pichau_dispatcher` (`SELECT/INSERT`) e `pichau_publisher` (`SELECT/UPDATE`). A
+  branch temporária foi descartada sem alterar `production`. Depois da
+  confirmação, o responsável aplicou a migration em `production`; a
+  verificação somente de leitura confirmou coluna, constraints, 47 linhas com
+  `{}` e os mesmos grants.
+- [ ] Atualizar o checkout do Samsung por USB autorizado, conferir
+  worker/watchdog/fila/ADB e retirar o cabo.
+- [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
+  metadados seguros do log local da falha de 10/09. Essa investigação foi
+  adiada pelo responsável e não bloqueia a migration nem a implementação local.
+- [ ] Executar uma coleta manual real com a tela bloqueada e somente Wi-Fi:
+  exigir no máximo duas sessões, recuperação visível quando usada, catálogo e
+  contagens completos, nenhuma publicação parcial, fila/sumário detalhados no
+  Actions e Chrome/Appium ociosos ao final. Registrar a run no PRD.
 - [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
   dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
-  entre as coletas. Uma falha reinicia a janela.
+  entre as coletas. A janela recomeça após a validação manual desta correção;
+  qualquer nova falha a reinicia novamente.
 - [ ] Decidir depois do gate se a exigência de recuperação manual após reboot é
   aceitável: ligar e desbloquear uma vez, ativar “Depuração por Wi‑Fi”, executar
   `adb tcpip 5555` por USB autorizado, conferir o status e retirar o cabo. A

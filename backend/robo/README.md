@@ -95,9 +95,10 @@ python -m robo_pichau.principal --diagnostico
   somente com dispositivos confiáveis e em uma rede privada. O telefone deve
   ser dedicado ao robô, sem contas pessoais, senhas salvas ou tokens no perfil
   Chrome. Bloquear a tela ou usar modo headless não substitui essas medidas.
-  Na execução recorrente, o Chrome já aberto é lido diretamente pelo CDP local
-  via ADB: o Appium/UiAutomator2 fica disponível para configuração,
-  diagnóstico e recuperação, mas não bloqueia cada coleta com um novo boot.
+  Cada execução começa com `am force-stop com.android.chrome`, abre diretamente
+  a URL pública permitida por ADB e aguarda o CDP local. Uma sessão
+  Appium/UiAutomator2 só é criada quando essa inicialização direta falha; ela
+  mantém `noReset`, `forceAppLaunch` e `shouldTerminateApp`.
   A extração devolve somente a grade principal e os campos comerciais mínimos;
   a URL, a faixa exibida e todos os cards esperados são validados antes de
   aceitar uma página. O intervalo Android é de 1–2 segundos entre páginas.
@@ -113,12 +114,17 @@ python -m robo_pichau.principal --diagnostico
   Os logs registram duração e contagens, nunca HTML, cookies ou credenciais; a
   publicação usa lotes de 100 na mesma transação. O fetch Android tem limite
   controlado e cancela uma avaliação CDP que perdeu o prazo antes do fallback,
-  evitando deixar requisições pendentes no Chrome. Falha em qualquer página
-  pré-carregada aborta a coleta; não há publicação parcial.
+  evitando deixar requisições pendentes no Chrome. Depois dos retries por
+  página, falhas transitórias de navegador, rede, HTTP 408/425/429/5xx ou
+  catálogo incompleto encerram o Chrome e repetem a coleta completa uma única
+  vez após 10 segundos. Bloqueio/desafio, manutenção, HTTP 401/403,
+  configuração, dados, banco e parcial não iniciam essa recuperação. A segunda
+  sessão descarta integralmente a primeira; não há publicação parcial.
   `scripts/pichau-android-appium.sh` aceita `start`, `stop` e `status`; o runner
-  mantém a sessão tmux somente durante a coleta e a encerra ao sair. A sessão
-  UiAutomator2 força o relançamento do Chrome quando o processo antigo ficou
-  aberto sem publicar DevTools após bloqueio, reboot ou reconexão ADB.
+  mantém a sessão tmux somente durante a coleta e a encerra ao sair. Ao sair, o
+  adaptador encerra a sessão, confirma o `force-stop` do Chrome e remove a ponte
+  CDP antes da publicação. O trap do runner repete o fechamento em sucesso,
+  falha ou sinal sem substituir a causa original.
   `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
   tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
   a vida do daemon. O runner não libera esse lock quando foi iniciado pelo
@@ -176,7 +182,12 @@ python -m robo_pichau.principal --diagnostico
   ADB, Appium, configuração, navegador, acesso, dados, banco e parcial. O workflow
   usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
   mantém a `DATABASE_URL` privada do Termux, sempre com SSL e permissões
-  restritas às tabelas Pichau e à fila.
+  restritas às tabelas Pichau e à fila. A migration independente
+  `../../migracoes/024_pichau_android_diagnostico.sql` acrescenta um objeto
+  JSONB de até 2 KiB. O worker passa somente o ID numérico da fila ao coletor;
+  o publicador atualiza a própria linha em execução. O `wait` mostra apenas
+  pares `chave=valor` validados, cria anotações e resumo no GitHub Actions e
+  continua compatível com linhas cujo diagnóstico está vazio ou ausente.
 - Não há envio SMTP/e-mail ativo; a Livelo persiste catálogo, histórico e alertas para a API.
 - Com `DATABASE_URL`, as acompanhadas vêm de `loja` no Postgres. Banco vazio é
   válido e não aciona o TOML; sem banco, o arquivo permite diagnóstico local.

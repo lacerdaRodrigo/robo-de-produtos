@@ -28,10 +28,13 @@ cria o `001` e carrega o catálogo.
 | `018_categorias_produtos_inter.sql` | taxonomia Radar e classificação auditável de categorias | Inter produtos (histórico) |
 | `019_classificacao_exata_categorias_produtos_inter.sql` | semeia somente mapeamentos por igualdade exata | Inter produtos (histórico) |
 | `020_categorias_inter_fonte_oficial.sql` | substitui a taxonomia Radar por categorias externas exatas do Inter | Inter produtos |
+| `021_pichau_pc_gamer.sql` | catálogo/histórico persistido de PCs Gamer | Pichau |
+| `022_pichau_android_fila.sql` | fila idempotente do executor Android | Pichau |
+| `024_pichau_android_diagnostico.sql` | diagnóstico JSONB seguro e limitado na fila Android | Pichau |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009` e `013`–`020` (coleta Livelo/Inter/produtos, histórico e categorias).
+- Robôs: `001`–`009`, `013`–`022` e `024` (coleta Livelo/Inter/produtos, histórico, categorias e Pichau).
 - API do app: `010`–`020` (autenticação, disparos e catálogos).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
@@ -39,3 +42,12 @@ cria o `001` e carrega o catálogo.
 > rodar uma migração ainda não aplicada. O repositório não comprova o estado do
 > Neon: confira `docs/PENDENCIAS.md` e o ambiente alvo, especialmente antes da
 > `020`, que exige não haver seleção legada de categorias Radar.
+
+`024` depende somente de `022` e não aplica nem exige a `023`. Em 2026-09-10,
+ela foi validada numa branch temporária derivada de `production`: coluna e
+constraints válidas, 47 linhas antigas compatíveis com `{}` e grants existentes
+de `pichau_dispatcher` (`SELECT/INSERT`) e `pichau_publisher`
+(`SELECT/UPDATE`) preservados. A branch foi descartada sem alterar
+`production`. Depois da confirmação do responsável, a migration foi aplicada
+em `production`; a verificação somente de leitura confirmou os mesmos
+resultados nas 47 linhas existentes.

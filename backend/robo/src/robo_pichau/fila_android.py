@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import psycopg
+
+from .diagnostico import formatar_diagnostico, sanitizar_diagnostico
 
 ESTADOS_TERMINAIS = {"sucesso", "falha"}
 ORIGENS_VALIDAS = {"schedule", "workflow_dispatch"}
@@ -34,6 +37,7 @@ CODIGOS_RUNNER = {
     44: "pichau-banco",
     45: "pichau-parcial",
 }
+_CODIGO_FALHA_SEGURO = re.compile(r"^[a-z0-9][a-z0-9_-]{0,79}$")
 
 
 class FalhaFilaAndroid(RuntimeError):
@@ -55,6 +59,12 @@ class TrabalhoAndroid:
     tentativas: int
     execucao_id: int | None
     codigo_falha: str | None
+    diagnostico: dict[str, object] = field(default_factory=dict)
+
+
+def validar_codigo_falha(codigo: object, *, padrao: str = "runner") -> str:
+    valor = str(codigo or "").strip().lower()
+    return valor if _CODIGO_FALHA_SEGURO.fullmatch(valor) else padrao
 
 
 def validar_database_url(database_url: str | None) -> str:
@@ -103,16 +113,18 @@ def _trabalho(linha: tuple[object, ...] | None) -> TrabalhoAndroid | None:
         estado=str(linha[3]),
         tentativas=int(linha[4]),
         execucao_id=int(linha[5]) if linha[5] is not None else None,
-        codigo_falha=str(linha[6]) if linha[6] is not None else None,
+        codigo_falha=(validar_codigo_falha(linha[6]) if linha[6] is not None else None),
+        diagnostico=sanitizar_diagnostico(linha[7] if len(linha) > 7 else {}),
     )
 
 
 COLUNAS_TRABALHO = """
-    id, chave_idempotencia, origem, estado, tentativas, execucao_id, codigo_falha
+    id, chave_idempotencia, origem, estado, tentativas, execucao_id, codigo_falha,
+    diagnostico
 """
 COLUNAS_TRABALHO_FILA = """
     fila.id, fila.chave_idempotencia, fila.origem, fila.estado,
-    fila.tentativas, fila.execucao_id, fila.codigo_falha
+    fila.tentativas, fila.execucao_id, fila.codigo_falha, fila.diagnostico
 """
 
 
@@ -189,6 +201,7 @@ def aguardar(
 ) -> TrabalhoAndroid:
     limite = time.monotonic() + prazo_segundos
     ultimo_estado: str | None = None
+    ultimo_diagnostico = ""
     while True:
         trabalho = obter(database_url, trabalho_id)
         if trabalho.estado != ultimo_estado:
@@ -198,19 +211,66 @@ def aguardar(
                 flush=True,
             )
             ultimo_estado = trabalho.estado
+        diagnostico_formatado = formatar_diagnostico(trabalho.diagnostico)
+        if diagnostico_formatado and diagnostico_formatado != ultimo_diagnostico:
+            print(f"Pichau Android diagnostico: {diagnostico_formatado}", flush=True)
+            if trabalho.diagnostico.get("estado") == "recuperando":
+                _anotar_github("warning", diagnostico_formatado)
+            ultimo_diagnostico = diagnostico_formatado
         if trabalho.estado in ESTADOS_TERMINAIS:
+            codigo = "sucesso" if trabalho.estado == "sucesso" else _codigo_trabalho(trabalho)
+            _escrever_resumo_github(trabalho, codigo=codigo)
             if trabalho.estado == "falha":
-                codigo = trabalho.codigo_falha or "runner"
+                _anotar_github("error", f"id={trabalho.id} codigo={codigo}")
                 raise FalhaFilaAndroid(f"runner Android terminou com falha: {codigo}")
             return trabalho
         if time.monotonic() >= limite:
             if trabalho.estado == "pendente":
+                _escrever_resumo_github(trabalho, codigo="executor-offline")
+                _anotar_github("error", f"id={trabalho.id} codigo=executor-offline")
                 raise FalhaFilaAndroid(
                     "executor Android nao reivindicou a solicitacao dentro do prazo: "
                     "executor-offline."
                 )
+            _escrever_resumo_github(trabalho, codigo="executor-timeout")
+            _anotar_github("error", f"id={trabalho.id} codigo=executor-timeout")
             raise FalhaFilaAndroid("tempo limite aguardando o executor Android.")
         dormir(intervalo_segundos)
+
+
+def _codigo_trabalho(trabalho: TrabalhoAndroid) -> str:
+    diagnostico = sanitizar_diagnostico(trabalho.diagnostico)
+    granular = diagnostico.get("codigo")
+    if granular is not None:
+        return validar_codigo_falha(granular)
+    return validar_codigo_falha(trabalho.codigo_falha)
+
+
+def _anotar_github(nivel: str, mensagem: str) -> None:
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        print(f"::{nivel} title=Pichau Android::{mensagem}", flush=True)
+
+
+def _escrever_resumo_github(trabalho: TrabalhoAndroid, *, codigo: str) -> None:
+    caminho = os.getenv("GITHUB_STEP_SUMMARY", "").strip()
+    if not caminho:
+        return
+    diagnostico = formatar_diagnostico(trabalho.diagnostico)
+    linhas = [
+        "### Pichau Android",
+        "",
+        f"- `id={trabalho.id} estado={trabalho.estado} tentativas={trabalho.tentativas}`",
+        f"- `codigo={validar_codigo_falha(codigo)}`",
+    ]
+    if diagnostico:
+        linhas.append(f"- `{diagnostico}`")
+    try:
+        with Path(caminho).open("a", encoding="utf-8") as arquivo:
+            arquivo.write("\n".join(linhas) + "\n")
+    except OSError:
+        # O resumo é diagnóstico auxiliar; a fila continua sendo a fonte do
+        # resultado e não deve mudar de estado por falha local do runner.
+        return
 
 
 def reivindicar(
@@ -252,7 +312,8 @@ def reivindicar(
                    iniciada_em = now(),
                    concluida_em = NULL,
                    lease_ate = now() + make_interval(secs => %s),
-                   codigo_falha = NULL
+                   codigo_falha = NULL,
+                   diagnostico = '{{}}'::jsonb
               FROM candidata
              WHERE fila.id = candidata.id
             RETURNING {COLUNAS_TRABALHO_FILA}
@@ -272,7 +333,7 @@ def finalizar(
     execucao_id: int | None = None,
 ) -> None:
     estado = "sucesso" if sucesso else "falha"
-    codigo = None if sucesso else (codigo_falha or "runner")[:80]
+    codigo = None if sucesso else validar_codigo_falha(codigo_falha)
     with _conectar(database_url) as conexao, conexao.cursor() as cursor:
         cursor.execute(
             """
@@ -306,6 +367,7 @@ def executar_trabalho(
         # herdada pelo Appium/ADB nem por processos filhos do navegador.
         ambiente = os.environ.copy()
         ambiente.pop("DATABASE_URL", None)
+        ambiente["PICHAU_ANDROID_FILA_ID"] = str(trabalho.id)
         resultado = executar(
             [str(runner)],
             cwd=str(runner.parent.parent),
@@ -317,7 +379,18 @@ def executar_trabalho(
     except OSError:
         sucesso = False
         codigo = "runner-indisponivel"
-    finalizar(database_url, trabalho.id, sucesso=sucesso, codigo_falha=codigo)
+    atual = obter(database_url, trabalho.id)
+    if not sucesso:
+        codigo = _codigo_trabalho(atual) if atual.diagnostico else codigo
+    finalizar(
+        database_url,
+        trabalho.id,
+        sucesso=sucesso,
+        codigo_falha=codigo,
+        execucao_id=atual.diagnostico.get("execucao_id")
+        if isinstance(atual.diagnostico.get("execucao_id"), int)
+        else None,
+    )
     estado = "sucesso" if sucesso else "falha"
     print(
         f"Pichau Android fila: id={trabalho.id} estado={estado} tentativas={trabalho.tentativas}",

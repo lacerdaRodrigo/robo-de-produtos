@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 import requests
 
+from .diagnostico import codigo_operacional, validar_diagnostico
 from .modelos import PichauProduto, ResumoColetaPichau
 from .portas import FalhaAoGuardarPichau, FalhaAoObterPichau, FalhaPichau
 
@@ -502,6 +503,28 @@ class _ChromeDevTools:
             ]
         )
 
+    def forcar_parada(self, *, confirmar: bool = False) -> None:
+        """Encerra o Chrome e, quando pedido, confirma que o processo sumiu."""
+
+        for tentativa in range(1, 4):
+            self._executar(
+                ["shell", "am", "force-stop", "com.android.chrome"],
+                check=False,
+            )
+            if not confirmar:
+                return
+            resultado = self._executar(
+                ["shell", "pidof", "com.android.chrome"],
+                check=False,
+            )
+            if resultado.returncode != 0 or not resultado.stdout.strip():
+                return
+            if tentativa < 3:
+                time.sleep(0.5)
+        raise FalhaAoObterPichau(
+            "O Chrome Android permaneceu ativo depois da coleta.", codigo="navegador"
+        )
+
     def aguardar_pagina(self, tentativas: int = 15, intervalo: float = 1.0) -> None:
         """Aguarda a aba DevTools depois de relançar o Chrome pelo Appium."""
 
@@ -566,10 +589,22 @@ class _ChromeDevTools:
             )
         status = valor.get("status")
         if not isinstance(status, int) or status < 200 or status >= 300:
-            raise FalhaAoObterPichau(f"A leitura SSR respondeu HTTP {status}.", codigo="acesso")
+            codigo = (
+                "http_transitorio"
+                if isinstance(status, int) and (status in STATUS_RETRY or status >= 500)
+                else "acesso"
+                if status in {401, 403}
+                else "http"
+            )
+            raise FalhaAoObterPichau(
+                f"A leitura SSR respondeu HTTP {status}.",
+                codigo=codigo,
+                status_http=status if isinstance(status, int) else None,
+            )
         if not self._catalogo_pronto(valor, url):
             raise FalhaAoObterPichau(
-                "A leitura SSR nao apresentou um catalogo completo.", codigo="acesso"
+                "A leitura SSR nao apresentou um catalogo completo.",
+                codigo="catalogo_incompleto",
             )
         fonte = valor.get("html")
         titulo = valor.get("title")
@@ -601,6 +636,23 @@ class _ChromeDevTools:
         fonte = resultado.get("html")
         titulo = resultado.get("title")
         url_final = resultado.get("url")
+        try:
+            status = int(resultado.get("status", 0))
+        except (TypeError, ValueError):
+            status = 0
+        if status < 200 or status >= 300:
+            codigo = (
+                "http_transitorio"
+                if status in STATUS_RETRY or status >= 500
+                else "acesso"
+                if status in {401, 403}
+                else "http"
+            )
+            raise FalhaAoObterPichau(
+                f"A resposta de rede recebeu HTTP {status}.",
+                codigo=codigo,
+                status_http=status or None,
+            )
         if not all(isinstance(item, str) for item in (fonte, titulo, url_final)):
             raise FalhaAoObterPichau(
                 "O CDP Android nao devolveu a resposta de rede.", codigo="navegador"
@@ -921,7 +973,7 @@ class _ChromeDevTools:
         ):
             raise FalhaAoObterPichau(
                 "O Chrome Android nao renderizou todos os itens da pagina.",
-                codigo="acesso",
+                codigo="catalogo_incompleto",
             )
         return resultado
 
@@ -1140,13 +1192,15 @@ class _ChromeDevTools:
                 )
             return resposta
 
-    def _executar(self, argumentos: list[str], *, check: bool = True) -> None:
+    def _executar(
+        self, argumentos: list[str], *, check: bool = True
+    ) -> subprocess.CompletedProcess[bytes]:
         comando = ["adb"]
         if self.adb_port is not None:
             comando.extend(["-P", str(self.adb_port)])
         comando.extend(["-s", self.udid, *argumentos])
         try:
-            subprocess.run(
+            return subprocess.run(
                 comando,
                 check=check,
                 capture_output=True,
@@ -1192,6 +1246,7 @@ class FontePichauAndroid:
         cdp: _ChromeDevTools | None = None,
         estrategia_leitura: str = "dom",
         ordenacao: str | None = None,
+        observar_diagnostico: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
         self.url_categoria = url_categoria
         self.por_pagina = self._POR_PAGINA
@@ -1207,6 +1262,7 @@ class FontePichauAndroid:
         self.dormir = dormir
         self.criar_driver = criar_driver
         self.cdp = cdp
+        self.observar_diagnostico = observar_diagnostico
         self._driver = None
         self._paginas_prefetch: dict[int, str] = {}
         estrategia = estrategia_leitura.strip().lower()
@@ -1225,40 +1281,45 @@ class FontePichauAndroid:
 
     def __enter__(self) -> FontePichauAndroid:
         try:
-            if self.criar_driver is not None:
-                self._driver = self._abrir_driver()
-                self._driver.set_page_load_timeout(self.timeout)
-            else:
-                # O Chrome ja e o executor da coleta. Evitar criar uma nova
-                # sessao UiAutomator2 a cada job remove minutos de boot no
-                # ARM32. Depois de um reboot, porem, o processo do Chrome pode
-                # existir sem publicar a porta DevTools; nesse caso o Appium
-                # local recria a sessao e deixa a ponte pronta para o CDP.
-                if self.cdp is None:
-                    self.cdp = _ChromeDevTools(
-                        udid=self.udid,
-                        adb_port=self.adb_port,
-                        timeout=self.timeout,
+            if self.cdp is None:
+                self.cdp = _ChromeDevTools(
+                    udid=self.udid,
+                    adb_port=self.adb_port,
+                    timeout=self.timeout,
+                )
+            self._emitir_diagnostico(estado="iniciando", etapa="chrome_limpeza")
+            self.cdp.forcar_parada()
+            try:
+                self._abrir_chrome_direto()
+            except FalhaPichau as erro_direto:
+                _log.warning(
+                    "Pichau Android: abertura ADB/CDP falhou; usando fallback Appium; codigo=%s.",
+                    erro_direto.codigo,
+                )
+                self._emitir_diagnostico(
+                    estado="iniciando",
+                    etapa="appium_fallback",
+                    codigo=codigo_operacional(
+                        erro_direto.codigo,
+                        erro_direto.status_http,
+                    ),
+                )
+                try:
+                    self.cdp.fechar()
+                    self.cdp.forcar_parada()
+                except FalhaPichau as erro_limpeza:
+                    _log.warning(
+                        "Pichau Android: limpeza antes do fallback Appium falhou; codigo=%s.",
+                        erro_limpeza.codigo,
                     )
-                    self.cdp.abrir()
-                    try:
-                        self.cdp.verificar()
-                    except FalhaPichau:
-                        _log.warning(
-                            "Pichau Android: DevTools indisponivel; "
-                            "recriando Chrome pelo Appium local."
-                        )
-                        self._driver = self._abrir_driver()
-                        # A sessão é nativa (UiAutomator2), não um contexto Web.
-                        # O driver atual rejeita o timeout W3C `pageLoad`; as
-                        # navegações seguintes usam o CDP e seus limites finitos.
-                        self.cdp.abrir()
-                        self.cdp.abrir_url(self.url_categoria)
-                        self.cdp.aguardar_pagina()
-                else:
-                    self.cdp.abrir()
+                self._driver = self._abrir_driver()
+                # A sessão é nativa (UiAutomator2), não um contexto Web. As
+                # navegações seguintes usam o CDP e seus limites finitos.
+                self.cdp.abrir()
+                self.cdp.abrir_url(self.url_categoria)
+                self.cdp.aguardar_pagina()
         except Exception as erro:
-            self._encerrar_driver()
+            self._limpar_navegador(preservar=erro)
             if isinstance(erro, FalhaPichau):
                 raise
             raise FalhaAoObterPichau(
@@ -1267,13 +1328,43 @@ class FontePichauAndroid:
         return self
 
     def __exit__(self, tipo, valor, traceback) -> None:
-        try:
-            if self.cdp is not None:
-                self.cdp.fechar()
-        except FalhaPichau as erro:
-            _log.warning("Pichau Android: falha ao remover ponte CDP; codigo=%s.", erro.codigo)
-        finally:
-            self._encerrar_driver()
+        self._limpar_navegador(preservar=valor if tipo is not None else None)
+
+    def _abrir_chrome_direto(self) -> None:
+        if self.cdp is None:
+            raise FalhaAoObterPichau("Ponte CDP Android ausente.", codigo="navegador")
+        self._emitir_diagnostico(estado="iniciando", etapa="chrome_abertura")
+        self.cdp.abrir_url(self.url_categoria)
+        self.cdp.abrir()
+        self.cdp.aguardar_pagina()
+
+    def _limpar_navegador(self, *, preservar: BaseException | None) -> None:
+        """Encerra sessão, Chrome e ponte sem mascarar uma falha anterior."""
+
+        falha_limpeza: FalhaPichau | None = None
+        self._encerrar_driver()
+        if self.cdp is not None:
+            try:
+                self._emitir_diagnostico(estado="iniciando", etapa="chrome_limpeza")
+            except FalhaPichau as erro:
+                falha_limpeza = erro
+            try:
+                self.cdp.forcar_parada(confirmar=True)
+            except FalhaPichau as erro:
+                falha_limpeza = falha_limpeza or erro
+            finally:
+                try:
+                    self.cdp.fechar()
+                except FalhaPichau as erro:
+                    falha_limpeza = falha_limpeza or erro
+        if falha_limpeza is not None:
+            if preservar is not None:
+                _log.warning(
+                    "Pichau Android: limpeza falhou sem substituir a causa; codigo=%s.",
+                    falha_limpeza.codigo,
+                )
+                return
+            raise falha_limpeza
 
     def pagina(self, pagina: int) -> str:
         if pagina < 1:
@@ -1307,6 +1398,7 @@ class FontePichauAndroid:
                 "appium:appActivity": "com.google.android.apps.chrome.Main",
                 "appium:noReset": True,
                 "appium:forceAppLaunch": True,
+                "appium:shouldTerminateApp": True,
                 "appium:newCommandTimeout": max(120, int(self.timeout * 2)),
             }
             if self.udid:
@@ -1331,6 +1423,7 @@ class FontePichauAndroid:
             "appium:appActivity": "com.google.android.apps.chrome.Main",
             "appium:noReset": True,
             "appium:forceAppLaunch": True,
+            "appium:shouldTerminateApp": True,
             "appium:newCommandTimeout": max(120, int(self.timeout * 2)),
         }
         if self.udid:
@@ -1355,6 +1448,13 @@ class FontePichauAndroid:
         for tentativa in range(1, limite_tentativas + 1):
             inicio = time.perf_counter()
             estrategia = "dom"
+            self._emitir_diagnostico(
+                estado="coletando",
+                etapa="pagina",
+                pagina=pagina,
+                estrategia=estrategia,
+                tentativa_pagina=tentativa,
+            )
             try:
                 if self.cdp is None:
                     self._driver.get(url)
@@ -1445,8 +1545,25 @@ class FontePichauAndroid:
                     round((time.perf_counter() - inicio) * 1000),
                     len(fonte.encode("utf-8")),
                 )
+                self._emitir_diagnostico(
+                    estado="coletando",
+                    etapa="pagina",
+                    pagina=pagina,
+                    estrategia=self._estrategia_diagnostico(estrategia),
+                    tentativa_pagina=tentativa,
+                    status_http=200,
+                )
                 return fonte
-            except FalhaPichau:
+            except FalhaPichau as erro:
+                self._emitir_diagnostico(
+                    estado="coletando",
+                    etapa="pagina",
+                    pagina=pagina,
+                    estrategia=self._estrategia_diagnostico(estrategia),
+                    tentativa_pagina=tentativa,
+                    status_http=erro.status_http,
+                    codigo=codigo_operacional(erro.codigo, erro.status_http),
+                )
                 if tentativa == limite_tentativas:
                     raise
                 self._esperar(tentativa, contexto, limite_tentativas)
@@ -1459,9 +1576,18 @@ class FontePichauAndroid:
                     type(erro).__name__,
                 )
                 if tentativa == limite_tentativas:
-                    raise FalhaAoObterPichau(
+                    falha = FalhaAoObterPichau(
                         f"Falha do navegador Android ao ler {contexto}.", codigo="navegador"
-                    ) from erro
+                    )
+                    self._emitir_diagnostico(
+                        estado="coletando",
+                        etapa="pagina",
+                        pagina=pagina,
+                        estrategia=self._estrategia_diagnostico(estrategia),
+                        tentativa_pagina=tentativa,
+                        codigo=codigo_operacional(falha.codigo),
+                    )
+                    raise falha from erro
                 self._esperar(tentativa, contexto, limite_tentativas)
         raise FalhaAoObterPichau(f"A Pichau falhou ao ler {contexto}.", codigo="acesso")
 
@@ -1482,15 +1608,12 @@ class FontePichauAndroid:
         conteudo = fonte.casefold()
         _log.info(
             "Pichau Android diagnostico: contexto=%s pagina=%s tentativa=%d "
-            "url_alvo=%s url_final=%s titulo=%r bytes=%d next_payload=%s "
+            "bytes=%d next_payload=%s "
             "desafio=%s turnstile=%s recaptcha=%s hcaptcha=%s manutencao=%s "
             "access_denied=%s just_a_moment=%s",
             contexto,
             pagina,
             tentativa,
-            url_para_log(alvo),
-            url_para_log(url_final if url_final is not None else self._url_atual()),
-            titulo,
             len(fonte.encode("utf-8")),
             "self.__next_f.push(" in conteudo,
             desafio,
@@ -1501,6 +1624,19 @@ class FontePichauAndroid:
             "access denied" in titulo.casefold(),
             "just a moment" in titulo.casefold(),
         )
+
+    @staticmethod
+    def _estrategia_diagnostico(estrategia: str) -> str:
+        return "fallback" if "fallback" in estrategia else estrategia
+
+    def _emitir_diagnostico(self, **campos: object) -> None:
+        if self.observar_diagnostico is None:
+            return
+        evento = {chave: valor for chave, valor in campos.items() if valor is not None}
+        # O observador recebe somente o mesmo vocabulário fechado que poderá
+        # chegar à fila; qualquer regressão falha antes de transportar dados.
+        evento.setdefault("versao", 1)
+        self.observar_diagnostico(validar_diagnostico(evento))
 
     def _precarregar_paginas(self, fonte: str, url: str) -> None:
         """Busca as paginas restantes em paralelo depois de descobrir o total."""
@@ -1571,7 +1707,8 @@ class FontePichauAndroid:
         )
         if not pagina_extraida.produtos:
             raise FalhaAoObterPichau(
-                "A resposta nao apresentou um catalogo Pichau valido.", codigo="acesso"
+                "A resposta nao apresentou um catalogo Pichau valido.",
+                codigo="catalogo_incompleto",
             )
 
     def _tem_desafio(self, fonte: str, titulo: str) -> bool:
@@ -1645,15 +1782,40 @@ class FontePichauAndroid:
 class RepositorioPichauPostgres:
     """Publica somente snapshots completos; falhas preservam o ultimo snapshot."""
 
-    def __init__(self, url: str, *, conectar=None) -> None:
+    def __init__(self, url: str, *, fila_id: int | None = None, conectar=None) -> None:
         if not url:
             raise FalhaAoGuardarPichau("DATABASE_URL nao configurada.", codigo="configuracao")
+        if fila_id is not None and (isinstance(fila_id, bool) or fila_id < 1):
+            raise FalhaAoGuardarPichau("ID da fila Android invalido.", codigo="configuracao")
         self.url = url
+        self.fila_id = fila_id
         if conectar is None:
             import psycopg
 
             conectar = psycopg.connect
         self.conectar = conectar
+
+    def atualizar_diagnostico(self, diagnostico: dict[str, object]) -> None:
+        """Atualiza somente a linha em execução recebida do worker Android."""
+
+        if self.fila_id is None:
+            return
+        seguro = validar_diagnostico(diagnostico)
+        serializado = json.dumps(seguro, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
+        try:
+            with self.conectar(self.url) as conexao, conexao.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE pichau_android_fila
+                       SET diagnostico = %s::jsonb
+                     WHERE id = %s AND estado = 'executando'
+                    """,
+                    (serializado, self.fila_id),
+                )
+        except Exception as erro:
+            raise FalhaAoGuardarPichau(
+                "Nao foi possivel atualizar o diagnostico Pichau.", codigo="banco"
+            ) from erro
 
     def iniciar_execucao(self, momento: datetime, versao: str) -> int:
         try:

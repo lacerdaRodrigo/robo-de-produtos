@@ -43,6 +43,7 @@ from robo_pichau.principal import (
     CODIGO_SAIDA_PARCIAL,
     codigo_saida_falha,
     coletar_catalogo,
+    coletar_com_recuperacao,
     criar_fonte_pichau,
     diagnosticar_catalogo,
     executar,
@@ -50,6 +51,17 @@ from robo_pichau.principal import (
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
+
+
+class CicloDevToolsFalso:
+    def forcar_parada(self, *, confirmar: bool = False) -> None:
+        pass
+
+    def abrir_url(self, _url: str) -> None:
+        pass
+
+    def aguardar_pagina(self) -> None:
+        pass
 
 
 def teste_url_de_log_remove_query_fragmento_e_credenciais() -> None:
@@ -295,26 +307,39 @@ def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
     conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
 
     class Driver:
-        current_url = "about:blank"
-        title = "PC Gamer"
-
         def __init__(self) -> None:
-            self.urls = []
             self.fechado = False
-
-        def set_page_load_timeout(self, _valor) -> None:
-            pass
-
-        def get(self, url) -> None:
-            self.urls.append(url)
-            self.current_url = url
-
-        @property
-        def page_source(self) -> str:
-            return conteudo
 
         def quit(self) -> None:
             self.fechado = True
+
+    class DevTools(CicloDevToolsFalso):
+        def __init__(self) -> None:
+            self.paradas: list[bool] = []
+            self.urls: list[str] = []
+            self.aberturas = 0
+            self.aguardas = 0
+            self.fechamentos = 0
+
+        def forcar_parada(self, *, confirmar: bool = False) -> None:
+            self.paradas.append(confirmar)
+
+        def abrir_url(self, url: str) -> None:
+            self.urls.append(url)
+
+        def abrir(self) -> None:
+            self.aberturas += 1
+
+        def aguardar_pagina(self) -> None:
+            self.aguardas += 1
+            if self.aguardas == 1:
+                raise FalhaAoObterPichau("DevTools indisponivel", codigo="navegador")
+
+        def obter(self, url: str):
+            return conteudo, "PC Gamer", url
+
+        def fechar(self) -> None:
+            self.fechamentos += 1
 
     drivers = []
 
@@ -324,18 +349,28 @@ def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
         assert capacidades["appium:appPackage"] == "com.android.chrome"
         assert capacidades["appium:appActivity"] == "com.google.android.apps.chrome.Main"
         assert capacidades["appium:forceAppLaunch"] is True
+        assert capacidades["appium:noReset"] is True
+        assert capacidades["appium:shouldTerminateApp"] is True
         assert "browserName" not in capacidades
         driver = Driver()
         drivers.append(driver)
         return driver
 
-    fonte = FontePichauAndroid(criar_driver=criar_driver, dormir=lambda _: None)
+    devtools = DevTools()
+    fonte = FontePichauAndroid(
+        criar_driver=criar_driver,
+        cdp=devtools,
+        dormir=lambda _: None,
+    )
     with fonte:
         pagina = extrair_pagina(fonte.pagina(1), pagina_esperada=1, por_pagina=36)
 
     assert pagina.produtos[0].sku == "SKU-ANDROID-1"
-    assert drivers[0].urls == [fonte._url_pagina(1)]
     assert drivers[0].fechado is True
+    assert devtools.urls == [fonte.url_categoria, fonte.url_categoria]
+    assert devtools.aberturas == 2
+    assert devtools.fechamentos == 2
+    assert devtools.paradas == [False, False, True]
 
 
 def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
@@ -364,10 +399,13 @@ def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
         def quit(self) -> None:
             pass
 
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self) -> None:
             self.alvos = []
             self.fechado = False
+
+        def abrir(self) -> None:
+            pass
 
         def obter(self, url):
             self.alvos.append(url)
@@ -378,7 +416,6 @@ def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
 
     devtools = DevTools()
     fonte = FontePichauAndroid(
-        criar_driver=lambda *_args: Driver(),
         cdp=devtools,
         dormir=lambda _: None,
     )
@@ -438,27 +475,27 @@ def teste_cdp_android_aguarda_json_transitorio_do_devtools(monkeypatch) -> None:
 def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
     monkeypatch,
 ) -> None:
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self, **_kwargs):
             self.aberturas = 0
-            self.verificacoes = 0
             self.urls_abertas = []
             self.aguardas = 0
             self.fechado = False
+            self.paradas = []
 
         def abrir(self) -> None:
             self.aberturas += 1
 
-        def verificar(self) -> None:
-            self.verificacoes += 1
-            if self.verificacoes == 1:
+        def forcar_parada(self, *, confirmar: bool = False) -> None:
+            self.paradas.append(confirmar)
+
+        def aguardar_pagina(self) -> None:
+            self.aguardas += 1
+            if self.aguardas == 1:
                 raise FalhaAoObterPichau("DevTools ausente", codigo="navegador")
 
         def abrir_url(self, url) -> None:
             self.urls_abertas.append(url)
-
-        def aguardar_pagina(self) -> None:
-            self.aguardas += 1
 
         def fechar(self) -> None:
             self.fechado = True
@@ -483,11 +520,45 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
         assert fonte._driver is driver
 
     assert devtools.aberturas == 2
-    assert devtools.verificacoes == 1
-    assert devtools.urls_abertas == [fonte.url_categoria]
-    assert devtools.aguardas == 1
+    assert devtools.urls_abertas == [fonte.url_categoria, fonte.url_categoria]
+    assert devtools.aguardas == 2
+    assert devtools.paradas == [False, False, True]
     assert devtools.fechado is True
     assert driver.fechado is True
+
+
+def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() -> None:
+    class DevTools(CicloDevToolsFalso):
+        def __init__(self) -> None:
+            self.paradas: list[bool] = []
+
+        def forcar_parada(self, *, confirmar: bool = False) -> None:
+            self.paradas.append(confirmar)
+            if confirmar:
+                raise FalhaAoObterPichau("limpeza falhou", codigo="navegador")
+
+        def abrir(self) -> None:
+            pass
+
+        def fechar(self) -> None:
+            pass
+
+    devtools_falha = DevTools()
+    with (
+        pytest.raises(FalhaAoObterPichau, match="bloqueio original") as original,
+        FontePichauAndroid(cdp=devtools_falha),
+    ):
+        raise FalhaAoObterPichau("bloqueio original", codigo="acesso")
+    assert original.value.codigo == "acesso"
+
+    devtools_sucesso = DevTools()
+    with (
+        pytest.raises(FalhaAoObterPichau, match="limpeza falhou") as limpeza,
+        FontePichauAndroid(cdp=devtools_sucesso),
+    ):
+        pass
+    assert limpeza.value.codigo == "navegador"
+    assert devtools_sucesso.paradas == [False, True]
 
 
 def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
@@ -509,7 +580,7 @@ def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
     }
     conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
 
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self, falhar_fetch: bool = False) -> None:
             self.falhar_fetch = falhar_fetch
             self.fetches: list[str] = []
@@ -571,7 +642,7 @@ def teste_fonte_android_fetch_precarrega_paginas_restantes() -> None:
     }
     conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
 
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self) -> None:
             self.fetches: list[str] = []
 
@@ -616,7 +687,7 @@ def teste_fonte_android_prefetch_nao_concorre_no_fallback_dom() -> None:
     }
     conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
 
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self) -> None:
             self.fetches: list[str] = []
             self.dom: list[str] = []
@@ -670,7 +741,7 @@ def teste_fonte_android_le_resposta_de_rede_antes_do_dom() -> None:
     }
     conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
 
-    class DevTools:
+    class DevTools(CicloDevToolsFalso):
         def __init__(self) -> None:
             self.alvos: list[str] = []
             self.fechado = False
@@ -881,6 +952,177 @@ def teste_cli_classifica_falhas_operacionais_sem_runner_generico(monkeypatch) ->
     assert executar_cli([]) == CODIGO_SAIDA_CONFIGURACAO
 
 
+def teste_recuperacao_completa_descarta_primeira_sessao_e_para_na_segunda() -> None:
+    def catalogo(sku: str, total: int = 1) -> str:
+        documento = {
+            "category": {},
+            "products": {
+                "total_count": total,
+                "items": [
+                    {
+                        "id": sku,
+                        "sku": sku,
+                        "name": sku,
+                        "url_key": sku.lower(),
+                        "stock_status": "IN_STOCK",
+                        "pichau_prices": {"avista": 1},
+                    }
+                ],
+            },
+        }
+        return f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class Fonte:
+        url_categoria = "https://www.pichau.com.br/computadores/pichau-gamer"
+
+        def __init__(self, sessao: int) -> None:
+            self.sessao = sessao
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+        def esperar(self, _segundos: float | None = None) -> None:
+            pass
+
+        def pagina(self, pagina: int) -> str:
+            if self.sessao == 1:
+                if pagina == 1:
+                    return catalogo("PRIMEIRA-PARCIAL", total=37)
+                raise FalhaAoObterPichau("rede caiu", codigo="rede")
+            return catalogo("SEGUNDA-COMPLETA")
+
+    class Diagnostico:
+        def __init__(self) -> None:
+            self.eventos: list[dict[str, object]] = []
+            self.primeiras: list[str] = []
+
+        def atualizar(self, **campos: object) -> None:
+            self.eventos.append(campos)
+
+        def registrar_primeira_falha(self, codigo: str) -> None:
+            self.primeiras.append(codigo)
+
+    sessoes: list[Fonte] = []
+    diagnostico = Diagnostico()
+
+    def fabrica() -> Fonte:
+        fonte = Fonte(len(sessoes) + 1)
+        sessoes.append(fonte)
+        return fonte
+
+    produtos, resumo = coletar_com_recuperacao(
+        SimpleNamespace(),
+        diagnostico,
+        criar_fonte=fabrica,
+        dormir=lambda segundos: diagnostico.eventos.append({"cooldown": segundos}),
+    )
+
+    assert [produto.sku for produto in produtos] == ["SEGUNDA-COMPLETA"]
+    assert resumo.tentativas == 2
+    assert len(sessoes) == 2
+    assert diagnostico.primeiras == ["pichau-rede"]
+    assert {"cooldown": 10.0} in diagnostico.eventos
+
+
+@pytest.mark.parametrize(
+    ("codigo", "sessoes_esperadas"),
+    [
+        ("navegador", 2),
+        ("rede", 2),
+        ("http_transitorio", 2),
+        ("catalogo_incompleto", 2),
+        ("acesso", 1),
+        ("http", 1),
+        ("configuracao", 1),
+        ("banco", 1),
+        ("parcial", 1),
+    ],
+)
+def teste_recuperacao_seleciona_somente_falhas_transitorias(
+    codigo: str, sessoes_esperadas: int
+) -> None:
+    class Fonte:
+        url_categoria = "https://www.pichau.com.br/computadores/pichau-gamer"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+        def esperar(self, _segundos: float | None = None) -> None:
+            pass
+
+        def pagina(self, _pagina: int) -> str:
+            raise FalhaAoObterPichau("falha controlada", codigo=codigo, status_http=503)
+
+    class Diagnostico:
+        def atualizar(self, **_campos: object) -> None:
+            pass
+
+        def registrar_primeira_falha(self, _codigo: str) -> None:
+            pass
+
+    sessoes = 0
+
+    def fabrica() -> Fonte:
+        nonlocal sessoes
+        sessoes += 1
+        return Fonte()
+
+    with pytest.raises(FalhaAoObterPichau) as falha:
+        coletar_com_recuperacao(
+            SimpleNamespace(),
+            Diagnostico(),
+            criar_fonte=fabrica,
+            dormir=lambda _segundos: None,
+        )
+
+    assert falha.value.codigo == codigo
+    assert sessoes == sessoes_esperadas
+
+
+def teste_snapshot_parcial_nao_publica_nem_abre_sessao_de_recuperacao(monkeypatch) -> None:
+    class Repositorio:
+        def __init__(self, *_args, **_kwargs) -> None:
+            self.publicacoes = 0
+            self.falhas: list[str] = []
+
+        def iniciar_execucao(self, *_args) -> int:
+            return 77
+
+        def atualizar_diagnostico(self, _diagnostico) -> None:
+            pass
+
+        def publicar(self, *_args) -> None:
+            self.publicacoes += 1
+
+        def falhar(self, _execucao_id: int, codigo: str) -> None:
+            self.falhas.append(codigo)
+
+    repositorio = Repositorio()
+    agora = datetime.now(UTC)
+    resumo = ResumoColetaPichau(agora, agora, 2, 1, 1, 1, 0, degradada=True)
+    monkeypatch.setenv("DATABASE_URL", "postgres://teste")
+    monkeypatch.setattr(
+        "robo_pichau.principal.RepositorioPichauPostgres", lambda *_a, **_k: repositorio
+    )
+    monkeypatch.setattr(
+        "robo_pichau.principal.coletar_com_recuperacao",
+        lambda *_args, **_kwargs: (
+            (PichauProduto("um", "Um", "https://www.pichau.com.br/um"),),
+            resumo,
+        ),
+    )
+
+    assert executar([]) == CODIGO_SAIDA_PARCIAL
+    assert repositorio.publicacoes == 0
+    assert repositorio.falhas == ["parcial"]
+
+
 def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:
     monkeypatch.setenv("PICHAU_MODO_NAVEGADOR", "xvfb")
     fonte = criar_fonte_pichau()
@@ -1020,6 +1262,68 @@ def teste_repositorio_publica_em_transacao_e_preserva_codigo_parcial() -> None:
     consultas = "\n".join(consulta for consulta, _ in conexao.cursor_obj.chamadas)
     assert "presente_no_catalogo=FALSE" in consultas
     assert "estado=CASE WHEN" in consultas
+
+
+def teste_publicador_persiste_diagnostico_somente_na_propria_linha_em_execucao() -> None:
+    class Cursor:
+        def __init__(self) -> None:
+            self.chamadas: list[tuple[str, object]] = []
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+        def execute(self, consulta: str, parametros: object = None) -> None:
+            self.chamadas.append((consulta, parametros))
+
+    class Conexao:
+        def __init__(self) -> None:
+            self.cursor_obj = Cursor()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            pass
+
+        def cursor(self) -> Cursor:
+            return self.cursor_obj
+
+    conexao = Conexao()
+    repositorio = RepositorioPichauPostgres(
+        "postgres://teste", fila_id=42, conectar=lambda _: conexao
+    )
+
+    repositorio.atualizar_diagnostico(
+        {
+            "versao": 1,
+            "estado": "coletando",
+            "etapa": "pagina",
+            "pagina": 2,
+            "estrategia": "fetch",
+            "tentativa_pagina": 1,
+            "tentativa_sessao": 1,
+            "recuperacao_utilizada": False,
+        }
+    )
+
+    consulta, parametros = conexao.cursor_obj.chamadas[0]
+    assert "WHERE id = %s AND estado = 'executando'" in consulta
+    assert parametros[1] == 42
+    persistido = json.loads(parametros[0])
+    assert persistido["estrategia"] == "fetch"
+    assert set(persistido) <= {
+        "versao",
+        "estado",
+        "etapa",
+        "pagina",
+        "estrategia",
+        "tentativa_pagina",
+        "tentativa_sessao",
+        "recuperacao_utilizada",
+    }
 
 
 def teste_repositorio_reconcilia_android_por_url_em_lote() -> None:

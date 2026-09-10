@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
@@ -16,6 +17,12 @@ from .adaptadores import (
     FontePichauSeleniumBase,
     RepositorioPichauPostgres,
     agora_utc,
+)
+from .diagnostico import (
+    VERSAO_DIAGNOSTICO,
+    codigo_operacional,
+    resumir_primeira_falha,
+    validar_diagnostico,
 )
 from .extrator import extrair_pagina, tem_payload_catalogo
 from .modelos import PichauProduto, ResumoColetaPichau
@@ -35,6 +42,56 @@ CODIGO_SAIDA_ACESSO = 42
 CODIGO_SAIDA_DADOS = 43
 CODIGO_SAIDA_BANCO = 44
 CODIGO_SAIDA_PARCIAL = 45
+RESFRIAMENTO_RECUPERACAO_SEGUNDOS = 10.0
+CODIGOS_RECUPERAVEIS = {
+    "navegador",
+    "rede",
+    "http_transitorio",
+    "catalogo_incompleto",
+}
+
+
+class _DiagnosticoExecucao:
+    """Acumula somente campos seguros e os entrega ao publicador."""
+
+    def __init__(self, repositorio: RepositorioPichauPostgres, execucao_id: int) -> None:
+        self.repositorio = repositorio
+        self.inicio = time.perf_counter()
+        self.dados: dict[str, object] = {
+            "versao": VERSAO_DIAGNOSTICO,
+            "estado": "iniciando",
+            "etapa": "execucao",
+            "tentativa_sessao": 1,
+            "recuperacao_utilizada": False,
+            "execucao_id": execucao_id,
+        }
+        self._persistir()
+
+    def atualizar(self, **campos: object | None) -> None:
+        for chave, valor in campos.items():
+            if valor is None:
+                self.dados.pop(chave, None)
+            else:
+                self.dados[chave] = valor
+        self._persistir()
+
+    def observar(self, evento: dict[str, object]) -> None:
+        seguro = validar_diagnostico(evento)
+        if "codigo" not in seguro:
+            self.dados.pop("codigo", None)
+        if "status_http" not in seguro:
+            self.dados.pop("status_http", None)
+        self.dados.update(seguro)
+        self._persistir()
+
+    def registrar_primeira_falha(self, codigo: str) -> None:
+        self.dados["primeira_falha"] = resumir_primeira_falha(self.dados, codigo)
+        self._persistir()
+
+    def _persistir(self) -> None:
+        self.dados["duracao_ms"] = round((time.perf_counter() - self.inicio) * 1000)
+        self.dados = validar_diagnostico(self.dados)
+        self.repositorio.atualizar_diagnostico(self.dados)
 
 
 def codigo_saida_falha(codigo: str) -> int:
@@ -44,7 +101,7 @@ def codigo_saida_falha(codigo: str) -> int:
         return CODIGO_SAIDA_CONFIGURACAO
     if codigo == "navegador":
         return CODIGO_SAIDA_NAVEGADOR
-    if codigo in {"acesso", "http", "rede"}:
+    if codigo in {"acesso", "http", "http_transitorio", "rede"}:
         return CODIGO_SAIDA_ACESSO
     if codigo == "banco":
         return CODIGO_SAIDA_BANCO
@@ -147,6 +204,74 @@ def coletar_catalogo(
         raise
 
 
+def coletar_com_recuperacao(
+    repositorio: RepositorioPichauPostgres,
+    diagnostico: _DiagnosticoExecucao,
+    *,
+    criar_fonte: Callable[[], FontePichau] | None = None,
+    dormir: Callable[[float], None] = time.sleep,
+) -> tuple[tuple[PichauProduto, ...], ResumoColetaPichau]:
+    """Repete a coleta completa uma vez após falha transitória já retentada."""
+
+    fabrica_fonte = criar_fonte or criar_fonte_pichau
+    for tentativa_sessao in (1, 2):
+        diagnostico.atualizar(
+            estado="iniciando",
+            etapa="execucao",
+            tentativa_sessao=tentativa_sessao,
+            codigo=None,
+            status_http=None,
+            pagina=None,
+            estrategia=None,
+            tentativa_pagina=None,
+        )
+        try:
+            fonte = fabrica_fonte()
+            if isinstance(fonte, FontePichauAndroid):
+                fonte.observar_diagnostico = diagnostico.observar
+            with fonte:
+                produtos, resumo = coletar_catalogo(fonte, dormir=fonte.esperar)
+            resumo = replace(resumo, tentativas=tentativa_sessao)
+            diagnostico.atualizar(
+                estado="coletando",
+                etapa="coleta",
+                paginas=resumo.paginas,
+                itens=resumo.itens_lidos,
+                itens_unicos=resumo.itens_unicos,
+                total_declarado=resumo.total_declarado,
+                codigo=None,
+                status_http=None,
+            )
+            return produtos, resumo
+        except FalhaPichau as erro:
+            codigo = codigo_operacional(erro.codigo, erro.status_http)
+            diagnostico.atualizar(
+                estado="falha",
+                codigo=codigo,
+                status_http=erro.status_http,
+            )
+            if tentativa_sessao == 1 and erro.codigo in CODIGOS_RECUPERAVEIS:
+                diagnostico.registrar_primeira_falha(codigo)
+                diagnostico.atualizar(
+                    estado="recuperando",
+                    etapa="recuperacao",
+                    recuperacao_utilizada=True,
+                    codigo=None,
+                    status_http=None,
+                )
+                _log.warning(
+                    "Pichau Android: reiniciando a coleta completa; codigo=%s cooldown_s=%d.",
+                    codigo,
+                    round(RESFRIAMENTO_RECUPERACAO_SEGUNDOS),
+                )
+                dormir(RESFRIAMENTO_RECUPERACAO_SEGUNDOS)
+                continue
+            raise
+    raise FalhaAoObterPichau(
+        "A recuperacao Android excedeu o limite de sessoes.", codigo="navegador"
+    )
+
+
 def criar_fonte_pichau() -> FontePichau:
     modo = os.getenv("PICHAU_MODO_NAVEGADOR", "headless2").strip().lower()
     if modo == "headless2":
@@ -172,6 +297,17 @@ def criar_fonte_pichau() -> FontePichau:
     raise ConfiguracaoPichauInvalida(
         "PICHAU_MODO_NAVEGADOR deve ser headless2, xvfb ou android.", codigo="configuracao"
     )
+
+
+def fila_id_android() -> int | None:
+    valor = os.getenv("PICHAU_ANDROID_FILA_ID", "").strip()
+    if not valor:
+        return None
+    if not valor.isdecimal() or int(valor) < 1:
+        raise ConfiguracaoPichauInvalida(
+            "PICHAU_ANDROID_FILA_ID deve ser um inteiro positivo.", codigo="configuracao"
+        )
+    return int(valor)
 
 
 def diagnosticar_catalogo(fonte: FontePichau) -> None:
@@ -248,21 +384,47 @@ def executar(argv: list[str] | None = None) -> int:
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise ConfiguracaoPichauInvalida("DATABASE_URL nao configurada.", codigo="configuracao")
-    repositorio = RepositorioPichauPostgres(database_url)
+    repositorio = RepositorioPichauPostgres(database_url, fila_id=fila_id_android())
     execucao_id = repositorio.iniciar_execucao(agora_utc(), __version__)
+    diagnostico_execucao: _DiagnosticoExecucao | None = None
     try:
-        with criar_fonte_pichau() as fonte:
-            produtos, resumo = coletar_catalogo(fonte, dormir=fonte.esperar)
+        diagnostico_execucao = _DiagnosticoExecucao(repositorio, execucao_id)
+        produtos, resumo = coletar_com_recuperacao(repositorio, diagnostico_execucao)
         if resumo.degradada:
+            diagnostico_execucao.atualizar(
+                estado="falha",
+                etapa="coleta",
+                paginas=resumo.paginas,
+                itens=resumo.itens_lidos,
+                itens_unicos=resumo.itens_unicos,
+                total_declarado=resumo.total_declarado,
+                codigo="pichau-parcial",
+            )
             repositorio.falhar(execucao_id, "parcial")
             _log.error("Coleta Pichau parcial; snapshot anterior preservado.")
             return CODIGO_SAIDA_PARCIAL
+        diagnostico_execucao.atualizar(estado="publicando", etapa="publicacao")
         repositorio.publicar(execucao_id, produtos, resumo)
+        diagnostico_execucao.atualizar(
+            estado="sucesso",
+            etapa="finalizacao",
+            codigo=None,
+            status_http=None,
+        )
         _log.info("Coleta Pichau publicada: %d produtos.", len(produtos))
         return 0
     except FalhaPichau as erro:
+        if diagnostico_execucao is not None:
+            try:
+                diagnostico_execucao.atualizar(
+                    estado="falha",
+                    codigo=codigo_operacional(erro.codigo, erro.status_http),
+                    status_http=erro.status_http,
+                )
+            except FalhaPichau:
+                _log.warning("Pichau: diagnostico final indisponivel; causa original preservada.")
         repositorio.falhar(execucao_id, erro.codigo)
-        _log.error("Coleta Pichau nao publicada: %s", erro)
+        _log.error("Coleta Pichau nao publicada; codigo=%s.", erro.codigo)
         return codigo_saida_falha(erro.codigo)
 
 

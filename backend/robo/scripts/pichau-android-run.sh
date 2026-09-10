@@ -73,6 +73,12 @@ while IFS= read -r linha || [[ -n "$linha" ]]; do
 done < "$CONFIG_FILE"
 
 [[ -n "${DATABASE_URL:-}" ]] || fail "DATABASE_URL ausente"
+FILA_ID_ANDROID="${PICHAU_ANDROID_FILA_ID:-}"
+unset PICHAU_ANDROID_FILA_ID
+if [[ -n "$FILA_ID_ANDROID" ]]; then
+    [[ "$FILA_ID_ANDROID" =~ ^[1-9][0-9]*$ ]] \
+        || fail "PICHAU_ANDROID_FILA_ID invalido"
+fi
 PICHAU_MODO_NAVEGADOR="${PICHAU_MODO_NAVEGADOR:-android}"
 export PICHAU_MODO_NAVEGADOR
 [[ "$PICHAU_MODO_NAVEGADOR" == "android" ]] \
@@ -215,8 +221,15 @@ fi
 
 limpar_runner() {
     if [[ "$appium_gerenciado" == 1 ]]; then
-        env -u DATABASE_URL "$APPIUM_SCRIPT" stop >/dev/null 2>&1 || true
+        env -u DATABASE_URL -u PICHAU_ANDROID_FILA_ID \
+            "$APPIUM_SCRIPT" stop >/dev/null 2>&1 || true
         appium_gerenciado=0
+    fi
+    if [[ -n "${ADB_TARGET:-}" ]]; then
+        adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
+            am force-stop com.android.chrome >/dev/null 2>&1 || true
+        adb -P "$ADB_PORT" -s "$ADB_TARGET" forward \
+            --remove tcp:9222 >/dev/null 2>&1 || true
     fi
     if [[ "$wake_lock_proprio" == 1 ]]; then
         termux-wake-unlock >/dev/null 2>&1 || true
@@ -237,14 +250,15 @@ trap 'exit 129' HUP
     # A credencial do publicador só entra no ambiente do processo Python que
     # publica. Appium, tmux, ADB e Chrome não precisam recebê-la.
     appium_gerenciado=1
-    if ! env -u DATABASE_URL "$APPIUM_SCRIPT" start; then
+    if ! env -u DATABASE_URL -u PICHAU_ANDROID_FILA_ID "$APPIUM_SCRIPT" start; then
         fail "Appium nao ficou pronto" "$CODIGO_APPIUM"
     fi
     fim_preparo_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) Pichau performance: etapa=preparo_runner "\
         "duracao_ms=$((fim_preparo_ms - inicio_preparo_ms))"
     export DATABASE_URL
-    if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
+    if PICHAU_ANDROID_FILA_ID="$FILA_ID_ANDROID" \
+        PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
         PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_pichau.principal; then
         status=0
     else

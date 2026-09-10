@@ -1,14 +1,15 @@
 # PRD — Pichau PC Gamer
 
-**Status:** jornada mobile e coleta Android versionadas; estabilização do
-executor dedicado implantada no Samsung e aguardando o aceite de 72 horas. A
-execução `34302348225` provou coleta completa sem
-cabo, mas as execuções agendadas posteriores `34370533995` e `34395714110`
-ficaram `pendente/tentativas=0`: o worker estava indisponível quando o robô foi
-chamado. Essa evidência invalida o encerramento operacional anterior;
-isoladamente, ela não identifica qual camada do Android interrompeu o processo.
+**Status:** jornada mobile e coleta Android versionadas; a correção de ciclo
+limpo, autorrecuperação única e diagnóstico estruturado está implementada e
+validada, e a migration passou pela validação branch-first e foi aplicada em
+produção. A correção aguarda implantação no Samsung e aceite real. A execução
+`34519730452`, em 2026-09-10, falhou como `pichau-acesso`. Uma coleta anterior
+passou no mesmo commit também deixando o Chrome aberto: o processo residual é
+um risco real agora eliminado, mas não ficou comprovado como causa isolada.
+Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-09
+**Última atualização:** 2026-09-10
 
 ## Objetivo
 
@@ -180,6 +181,16 @@ reconciliação por URL.
 Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
 
+Cada sessão Android começa sem estado de navegador: executa
+`am force-stop com.android.chrome`, abre a URL pública permitida diretamente por
+ADB e aguarda o DevTools. Appium/UiAutomator2 só cria uma sessão nativa se essa
+inicialização direta falhar; as capacidades mantêm `noReset` e
+`forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o driver é encerrado,
+o Chrome é forçado a parar com confirmação e a ponte CDP é removida. Sem outra
+exceção, falhar essa confirmação impede a publicação; com uma causa anterior,
+a limpeza é repetida sem mascará-la. O trap do runner também força o fechamento
+em sucesso, falha ou sinal.
+
 A execução real `34302348225` confirmou a operação completa depois da correção
 do arranque do Chrome sem aba DevTools: 1.173 produtos foram publicados com
 qualidade completa, sem publicação parcial. O workflow encerrou em
@@ -192,9 +203,10 @@ idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
 sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
 O workflow usa `PICHAU_DISPATCH_DATABASE_URL`; o fallback para o secret amplo
 `DATABASE_URL` permanece somente para recuperação controlada. O telefone mantém
-a credencial privada do publicador no Termux. Em falhas de navegador, o
-robô registra somente metadados seguros; HTML, cookies e headers não são
-persistidos nem enviados ao log.
+a credencial privada do publicador no Termux. Em falhas de navegador, o robô
+registra somente metadados seguros; mensagem de exceção, HTML, título, URL,
+cookies, headers e identificadores privados não são persistidos nem enviados ao
+workflow.
 
 ## Otimização de tempo Android — implementação versionada e encerrada
 
@@ -243,12 +255,50 @@ Em uma medição real, `name-asc` fechou em 255,2 segundos por produzir três
 fallbacks para DOM; por isso a ordenação permanece desabilitada no arquivo
 privado operacional, embora continue disponível para nova medição controlada.
 
-A meta operacional foi encerrada após as coletas rápidas completas e a
-execução real `34302348225`, que validou o caminho final após a correção do
-arranque do Chrome. O aceite considera obrigatórios
+A meta de tempo foi encerrada após as coletas rápidas completas. O aceite de
+conteúdo continua exigindo
 `itens_lidos = itens_unicos = total_declarado`, zero duplicados e nenhuma
 publicação parcial; o tempo total do workflow continua incluindo a espera da
 fila e pode variar conforme o worker Android.
+
+## Estabilização de sessão e diagnóstico estruturado
+
+Depois dos retries de página existentes, `navegador`, `rede`, HTTP
+408/425/429/5xx e catálogo incompleto permitem uma única recuperação completa.
+O primeiro conjunto de produtos é descartado, o Chrome é fechado, há cooldown
+de 10 segundos e uma nova fonte inicia do zero. Não existe terceira sessão.
+Bloqueio ou desafio explícito, manutenção, HTTP 401/403, configuração, dados
+inválidos, banco e resultado parcial não repetem. Nenhum produto é publicado
+antes de a sessão escolhida terminar completa e de o fechamento do Chrome ser
+confirmado.
+
+A migration independente `024_pichau_android_diagnostico.sql`, que depende
+somente da `022` e não aplica a `023`, acrescenta `diagnostico JSONB NOT NULL
+DEFAULT '{}'` à fila. O banco limita o valor a objeto de até 2 KiB; o código
+aceita apenas versão, estado/etapa, página/estratégia, tentativa de
+página/sessão, recuperação, duração, contagens, total declarado, status HTTP,
+execução, código seguro e resumo compacto da primeira falha. Mensagem de
+exceção, HTML, título, URL, cookie, header, IP, porta, serial, perfil e
+credencial não fazem parte do vocabulário.
+
+Em 2026-09-10, a `024` foi aplicada somente numa branch temporária derivada de
+`production`, sem a `023`. A validação confirmou a coluna `jsonb` obrigatória
+com default `{}`, as constraints de objeto e 2 KiB, a compatibilidade das 47
+linhas existentes e os grants mínimos dos dois papéis operacionais. A branch
+temporária foi descartada sem alterar `production`. Depois da confirmação do
+responsável, a migration foi aplicada em `production`; uma verificação somente
+de leitura confirmou novamente coluna, constraints, 47 linhas com `{}` e os
+grants esperados.
+
+O worker remove `DATABASE_URL` do ambiente do runner e passa apenas o ID
+numérico da fila. O runner lê sua configuração privada e entrega credencial e
+ID somente ao processo Python publicador; Appium, ADB e Chrome não os recebem.
+O publicador atualiza o diagnóstico com `WHERE id = ? AND estado =
+'executando'`. O comando `fila_android wait` imprime mudanças em pares
+`chave=valor`, emite `warning` na recuperação, `error` na falha e preenche o
+resumo do Actions. Um código granular validado prevalece sobre a categoria do
+exit code; `{}`, JSON inválido ou linha produzida por telefone/workflow antigo
+mantém o comportamento anterior sem expor o conteúdo recusado.
 
 ## Executor Android local — hardening de disponibilidade versionado
 
@@ -270,10 +320,11 @@ para configuração, diagnóstico e recuperação. HTML, cookies e imagens
 continuam somente em memória.
 
 Este executor não é headless: o Chrome nativo pode aparecer no primeiro plano
-quando o Appium cria ou recupera a sessão, porque o DevTools precisa de uma aba
-real do navegador Android. A tela pode permanecer bloqueada durante a operação;
-isso não transforma o Chrome em um navegador headless nem expõe o servidor
-Appium na rede. A segurança não depende da janela ficar invisível: Appium fica
+quando a URL é aberta por ADB ou quando o Appium recupera a sessão, porque o
+DevTools precisa de uma aba real do navegador Android. A tela pode permanecer
+bloqueada durante a operação; isso não transforma o Chrome em um navegador
+headless nem expõe o servidor Appium na rede. A segurança não depende da janela
+ficar invisível: Appium fica
 preso a `127.0.0.1`, o CDP usa somente encaminhamento ADB local e o runner não
 passa a credencial do banco para Appium, tmux, ADB ou Chrome. Configuração e
 logs operacionais ficam privados (`600`), e o telefone deve ser dedicado, sem
@@ -364,9 +415,9 @@ permissão de update; quando o publicador voltar, o worker encerra pendências
 antigas como `falha/executor-offline` antes do próximo claim, impedindo que
 pipelines já encerradas sejam coletadas horas depois. Trabalhos `executando` não
 são expirados por essa limpeza e continuam protegidos pelo lease. Falhas
-reivindicadas chegam ao workflow nas categorias seguras
-`appium`, `pichau-configuracao`, `pichau-navegador`, `pichau-acesso`,
-`pichau-dados`, `pichau-banco`, `pichau-parcial` ou `runner-inesperado`.
+reivindicadas chegam ao workflow nas categorias seguras do runner ou, quando o
+publicador já registrou diagnóstico, em códigos mais granulares como
+`pichau-rede`, `pichau-http-503` e `pichau-catalogo-incompleto`.
 
 O comando `pichau-android-status.sh` verifica checkout, arquivo privado, lock do
 worker, wake lock de propriedade do worker, watchdog, banco da fila e ADB Wi-Fi
@@ -391,7 +442,8 @@ Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 `127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e
 filtro por host privado configurado somente no Termux. IP, porta, serial,
 código de pareamento, chave ADB e credenciais não entram nos logs nem no
-workflow. A migration `022_pichau_android_fila.sql` já foi aplicada e as
+workflow. A migration `022_pichau_android_fila.sql` já foi aplicada; a `024`
+passou pela validação branch-first e também foi aplicada em produção. As
 execuções reais `34081623450`, `34136108063` e `34302348225` confirmaram o
 caminho GitHub → fila → worker Android → banco/API. As credenciais mínimas
 separadas estão configuradas; o fallback para `DATABASE_URL` permanece
@@ -423,13 +475,9 @@ gate de 72 horas.
 A execução `34427865543` (job 46) falhou em 2026-09-09 depois que cinco páginas
 perderam o fetch e tentaram o fallback DOM concorrentemente na mesma aba do
 Chrome. O resultado `pichau-acesso` veio dos timeouts WebSocket dessa disputa,
-não do bloqueio de tela. A contraprova `34428373217` (job 47) terminou com
-sucesso, uma tentativa, seis páginas e 1.176 itens completos no mesmo estado:
-Chrome aberto e tela em `Dozing`. O descanso de tela de 30 segundos pode ser
-mantido e voltar à Home não é pré-condição para a próxima coleta. A correção
-deixa o prefetch paralelo restrito ao fetch e serializa qualquer fallback DOM;
-por ter existido uma falha, a janela operacional de 72 horas reinicia após a
-implantação e a validação desta correção.
+não do bloqueio de tela. A correção deixou o prefetch paralelo restrito ao fetch
+e serializou qualquer fallback DOM; a contraprova `34428373217` terminou com
+sucesso e catálogo completo.
 
 A correção foi implantada no Samsung pelo commit `4940436` e validada pela
 execução `34429829770` (fila 48) em 2026-09-09. Com a tela em `Dozing` e o
@@ -439,7 +487,15 @@ lidos/únicos, zero duplicados e publicação completa. O workflow terminou verd
 em 2min16s. Nesta coleta todos os cinco fetches do prefetch passaram
 (`pendentes=0`), portanto ela comprova ausência de regressão no caminho normal;
 o caminho de falha concorrente permanece coberto pelo teste unitário CT-398.
-Esta execução reinicia o gate das nove coletas agendadas em 72 horas.
+Essa execução reiniciou, naquele momento, o gate das nove coletas agendadas em
+72 horas.
+
+Em 2026-09-10, a execução `34519730452` falhou novamente como
+`pichau-acesso`. Uma coleta anterior no mesmo commit havia passado também com o
+Chrome aberto ao final. Logo, deixar o navegador aberto não explica sozinho a
+falha e deixa de ser comportamento aceito: o contrato vigente sempre começa e
+termina com Chrome parado. A `34519730452` reinicia o gate; a nova janela só
+começa depois da implantação no Samsung e da coleta manual real registrada.
 
 ## Jornada mobile V11 entregue
 
@@ -458,8 +514,9 @@ Esta execução reinicia o gate das nove coletas agendadas em 72 horas.
 
 ## Estado operacional do executor Android
 
-O hardening está versionado e implantado; somente a observação de 72 horas
-continua pendente. O telefone precisa
+O hardening anterior e a migration desta revisão estão implantados; a
+estabilização ainda depende da atualização do Samsung e da coleta manual real
+antes da nova observação de 72 horas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de
@@ -474,8 +531,10 @@ abre pelo componente existente, os estados não se confundem, URLs inválidas
 não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
 Inter e o `BottomDock` continuam sem alteração semântica.
 
-A integração Pichau Android só volta ao estado pronto depois do gate de 72
-horas. Coletor, persistência, API autenticada e Wireless Debugging continuam
-validados; a disponibilidade contínua do worker é o item reaberto. Evoluções de
-produto/API e o aceite operacional permanecem listados separadamente em
+A integração Pichau Android só volta ao estado pronto depois da coleta manual
+da correção e do gate de 72 horas. Catálogo,
+persistência, API autenticada e Wireless Debugging anteriores continuam
+validados; ciclo de Chrome, diagnóstico no Actions e disponibilidade contínua
+aguardam a nova prova. Evoluções de produto/API e o aceite operacional
+permanecem listados separadamente em
 [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
