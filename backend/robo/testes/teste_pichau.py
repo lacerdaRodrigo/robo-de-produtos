@@ -597,6 +597,60 @@ def teste_fonte_android_fetch_precarrega_paginas_restantes() -> None:
     )
 
 
+def teste_fonte_android_prefetch_nao_concorre_no_fallback_dom() -> None:
+    documento = {
+        "category": {},
+        "products": {
+            "total_count": 401,
+            "items": [
+                {
+                    "id": 1,
+                    "sku": "SKU-PREFETCH-FALLBACK-1",
+                    "name": "PC Prefetch Fallback",
+                    "url_key": "pc-prefetch-fallback-1",
+                    "stock_status": "IN_STOCK",
+                    "pichau_prices": {"avista": 1},
+                }
+            ],
+        },
+    }
+    conteudo = f"<script>self.__next_f.push({json.dumps([1, json.dumps(documento)])})</script>"
+
+    class DevTools:
+        def __init__(self) -> None:
+            self.fetches: list[str] = []
+            self.dom: list[str] = []
+
+        def abrir(self) -> None:
+            pass
+
+        def fechar(self) -> None:
+            pass
+
+        def obter_fetch(self, url):
+            self.fetches.append(url)
+            if "page=" in url:
+                raise TimeoutError("SSR indisponivel")
+            return conteudo, "PC Gamer", url
+
+        def obter(self, url):
+            self.dom.append(url)
+            return conteudo, "PC Gamer", url
+
+    devtools = DevTools()
+    fonte = FontePichauAndroid(cdp=devtools, estrategia_leitura="fetch", dormir=lambda _: None)
+    with fonte:
+        fonte.pagina(1)
+        assert devtools.dom == []
+
+        fonte.pagina(2)
+
+    assert devtools.dom == [fonte._url_pagina(2)]
+    assert devtools.fetches.count(fonte._url_pagina(1)) == 1
+    assert devtools.fetches.count(fonte._url_pagina(2)) == 2
+    assert devtools.fetches.count(fonte._url_pagina(3)) == 1
+
+
 def teste_fonte_android_le_resposta_de_rede_antes_do_dom() -> None:
     documento = {
         "category": {},

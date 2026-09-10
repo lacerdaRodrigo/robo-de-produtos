@@ -229,7 +229,11 @@ headers.
 O caminho fetch usa timeout próprio de 50 segundos e termina a avaliação
 JavaScript/CDP que perdeu o prazo antes de cair para o DOM. Na coleta Android,
 a primeira página descobre o total e as páginas restantes são pré-carregadas em
-paralelo, cada uma com a mesma validação e fallback individual. O caminho rede
+paralelo somente por fetch, cada uma com a mesma validação. Uma página cujo
+fetch falha não tenta navegar a aba compartilhada dentro da thread: ela fica
+pendente e volta ao fluxo sequencial normal, no qual o fallback DOM continua
+disponível. Isso impede várias conexões CDP de navegarem simultaneamente a
+única aba do Chrome. O caminho rede
 preserva eventos CDP emitidos antes da confirmação de `Page.navigate` e também
 retorna ao DOM quando a resposta não pode ser capturada. O aparelho pode
 definir `PICHAU_ANDROID_ORDENACAO` no arquivo privado com uma das ordenações
@@ -415,6 +419,17 @@ uma tentativa, e o workflow terminou verde. Esse resultado reforça que a
 operação normal bloqueada via Wi‑Fi não depende da presença física do notebook;
 continua sendo evidência manual e não substitui as nove execuções agendadas do
 gate de 72 horas.
+
+A execução `34427865543` (job 46) falhou em 2026-09-09 depois que cinco páginas
+perderam o fetch e tentaram o fallback DOM concorrentemente na mesma aba do
+Chrome. O resultado `pichau-acesso` veio dos timeouts WebSocket dessa disputa,
+não do bloqueio de tela. A contraprova `34428373217` (job 47) terminou com
+sucesso, uma tentativa, seis páginas e 1.176 itens completos no mesmo estado:
+Chrome aberto e tela em `Dozing`. O descanso de tela de 30 segundos pode ser
+mantido e voltar à Home não é pré-condição para a próxima coleta. A correção
+deixa o prefetch paralelo restrito ao fetch e serializa qualquer fallback DOM;
+por ter existido uma falha, a janela operacional de 72 horas reinicia após a
+implantação e a validação desta correção.
 
 ## Jornada mobile V11 entregue
 

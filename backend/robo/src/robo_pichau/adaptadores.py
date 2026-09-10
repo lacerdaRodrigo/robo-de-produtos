@@ -1341,9 +1341,18 @@ class FontePichauAndroid:
         opcoes.load_capabilities(capacidades)
         return webdriver.Remote(command_executor=self.appium_url, options=opcoes)
 
-    def _obter(self, url: str, contexto: str, pagina: int | None) -> str:
+    def _obter(
+        self,
+        url: str,
+        contexto: str,
+        pagina: int | None,
+        *,
+        permitir_fallback_dom: bool = True,
+        tentativas: int | None = None,
+    ) -> str:
         self._exigir_driver()
-        for tentativa in range(1, self.tentativas + 1):
+        limite_tentativas = self.tentativas if tentativas is None else max(1, tentativas)
+        for tentativa in range(1, limite_tentativas + 1):
             inicio = time.perf_counter()
             estrategia = "dom"
             try:
@@ -1380,6 +1389,8 @@ class FontePichauAndroid:
                             fonte, titulo, url_final = self.cdp.obter_fetch(url)
                             estrategia = "fetch"
                         except FalhaPichau as erro_fetch:
+                            if not permitir_fallback_dom:
+                                raise
                             _log.warning(
                                 "Pichau Android: fetch falhou na pagina %s; "
                                 "fallback para DOM; codigo=%s.",
@@ -1389,6 +1400,8 @@ class FontePichauAndroid:
                             fonte, titulo, url_final = self.cdp.obter(url)
                             estrategia = "dom_fallback"
                         except Exception as erro_fetch:
+                            if not permitir_fallback_dom:
+                                raise
                             _log.warning(
                                 "Pichau Android: fetch falhou na pagina %s; "
                                 "fallback para DOM; tipo=%s.",
@@ -1434,22 +1447,22 @@ class FontePichauAndroid:
                 )
                 return fonte
             except FalhaPichau:
-                if tentativa == self.tentativas:
+                if tentativa == limite_tentativas:
                     raise
-                self._esperar(tentativa, contexto)
+                self._esperar(tentativa, contexto, limite_tentativas)
             except Exception as erro:
                 _log.warning(
                     "Pichau Android: falha tecnica em %s; tentativa %d de %d; tipo=%s.",
                     contexto,
                     tentativa,
-                    self.tentativas,
+                    limite_tentativas,
                     type(erro).__name__,
                 )
-                if tentativa == self.tentativas:
+                if tentativa == limite_tentativas:
                     raise FalhaAoObterPichau(
                         f"Falha do navegador Android ao ler {contexto}.", codigo="navegador"
                     ) from erro
-                self._esperar(tentativa, contexto)
+                self._esperar(tentativa, contexto, limite_tentativas)
         raise FalhaAoObterPichau(f"A Pichau falhou ao ler {contexto}.", codigo="acesso")
 
     def _diagnosticar(
@@ -1506,16 +1519,44 @@ class FontePichauAndroid:
         inicio = time.perf_counter()
         numeros = list(range(2, paginas + 1))
 
-        def carregar(numero: int) -> tuple[int, str]:
-            return numero, self._obter(self._url_pagina(numero), "catalogo", numero)
+        def carregar(numero: int) -> tuple[int, str] | None:
+            try:
+                # O fetch pode ocorrer em paralelo porque não navega a aba. O
+                # DOM controla uma única aba do Chrome e precisa permanecer
+                # sequencial; páginas instáveis serão lidas por pagina().
+                return numero, self._obter(
+                    self._url_pagina(numero),
+                    "catalogo",
+                    numero,
+                    permitir_fallback_dom=False,
+                    tentativas=1,
+                )
+            except FalhaPichau as erro:
+                _log.warning(
+                    "Pichau Android: prefetch adiado para leitura sequencial; pagina=%d codigo=%s.",
+                    numero,
+                    erro.codigo,
+                )
+                return None
+            except Exception as erro:
+                _log.warning(
+                    "Pichau Android: prefetch adiado para leitura sequencial; pagina=%d tipo=%s.",
+                    numero,
+                    type(erro).__name__,
+                )
+                return None
 
         with ThreadPoolExecutor(max_workers=min(5, len(numeros))) as executor:
             futuros = [executor.submit(carregar, numero) for numero in numeros]
-            resultados = [futuro.result() for futuro in futuros]
+            resultados = [
+                resultado for futuro in futuros if (resultado := futuro.result()) is not None
+            ]
         self._paginas_prefetch = dict(resultados)
         _log.info(
-            "Pichau Android performance: etapa=prefetch paginas=%d duracao_ms=%d estrategia=fetch",
+            "Pichau Android performance: etapa=prefetch paginas=%d pendentes=%d "
+            "duracao_ms=%d estrategia=fetch",
             len(resultados),
+            len(numeros) - len(resultados),
             round((time.perf_counter() - inicio) * 1000),
         )
 
@@ -1545,9 +1586,12 @@ class FontePichauAndroid:
             "just a moment" in titulo.lower() and "self.__next_f.push(" not in conteudo
         )
 
-    def _esperar(self, tentativa: int, contexto: str) -> None:
+    def _esperar(self, tentativa: int, contexto: str, limite_tentativas: int | None = None) -> None:
         _log.warning(
-            "Pichau Android: %s; tentativa %d de %d.", contexto, tentativa, self.tentativas
+            "Pichau Android: %s; tentativa %d de %d.",
+            contexto,
+            tentativa,
+            limite_tentativas or self.tentativas,
         )
         self.esperar()
 
