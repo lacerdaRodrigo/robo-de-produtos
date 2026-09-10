@@ -19,11 +19,20 @@ PRAZO_PADRAO_SEGUNDOS = 20 * 60
 LEASE_PADRAO_SEGUNDOS = 30 * 60
 CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau-android-run.sh"
 CODIGOS_RUNNER = {
+    1: "runner-inesperado",
+    2: "runner-inesperado",
     30: "adb-ausente",
     31: "adb-servidor",
     32: "adb-wifi-descoberta",
     33: "adb-wifi-conexao",
     34: "adb-wifi-estado",
+    35: "appium",
+    40: "pichau-configuracao",
+    41: "pichau-navegador",
+    42: "pichau-acesso",
+    43: "pichau-dados",
+    44: "pichau-banco",
+    45: "pichau-parcial",
 }
 
 
@@ -34,7 +43,7 @@ class FalhaFilaAndroid(RuntimeError):
 def codigo_falha_runner(codigo: int) -> str:
     """Converte códigos técnicos em motivos operacionais sem dados privados."""
 
-    return CODIGOS_RUNNER.get(codigo, f"runner-{codigo}")
+    return CODIGOS_RUNNER.get(codigo, "runner-inesperado")
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +169,16 @@ def obter(database_url: str, trabalho_id: int) -> TrabalhoAndroid:
     return trabalho
 
 
+def verificar_saude(database_url: str) -> None:
+    """Confirma acesso mínimo à fila sem expor detalhes da conexão."""
+
+    try:
+        with _conectar(database_url) as conexao, conexao.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM pichau_android_fila LIMIT 0")
+    except psycopg.Error as erro:
+        raise FalhaFilaAndroid("banco da fila Android indisponivel.") from erro
+
+
 def aguardar(
     database_url: str,
     trabalho_id: int,
@@ -175,7 +194,8 @@ def aguardar(
         if trabalho.estado != ultimo_estado:
             print(
                 "Pichau Android fila: "
-                f"id={trabalho.id} estado={trabalho.estado} tentativas={trabalho.tentativas}"
+                f"id={trabalho.id} estado={trabalho.estado} tentativas={trabalho.tentativas}",
+                flush=True,
             )
             ultimo_estado = trabalho.estado
         if trabalho.estado in ESTADOS_TERMINAIS:
@@ -184,6 +204,11 @@ def aguardar(
                 raise FalhaFilaAndroid(f"runner Android terminou com falha: {codigo}")
             return trabalho
         if time.monotonic() >= limite:
+            if trabalho.estado == "pendente":
+                raise FalhaFilaAndroid(
+                    "executor Android nao reivindicou a solicitacao dentro do prazo: "
+                    "executor-offline."
+                )
             raise FalhaFilaAndroid("tempo limite aguardando o executor Android.")
         dormir(intervalo_segundos)
 
@@ -192,8 +217,24 @@ def reivindicar(
     database_url: str,
     *,
     lease_segundos: int = LEASE_PADRAO_SEGUNDOS,
+    prazo_pendente_segundos: int = PRAZO_PADRAO_SEGUNDOS,
 ) -> TrabalhoAndroid | None:
     with _conectar(database_url) as conexao, conexao.cursor() as cursor:
+        # Uma pipeline que já desistiu não pode virar uma coleta atrasada quando
+        # o telefone reaparecer horas depois. Jobs em execução permanecem sob o
+        # lease e continuam recuperáveis pelo contrato existente.
+        cursor.execute(
+            """
+            UPDATE pichau_android_fila
+               SET estado = 'falha',
+                   concluida_em = now(),
+                   lease_ate = NULL,
+                   codigo_falha = 'executor-offline'
+             WHERE estado = 'pendente'
+               AND criada_em <= now() - make_interval(secs => %s)
+            """,
+            (prazo_pendente_segundos,),
+        )
         cursor.execute(
             f"""
             WITH candidata AS (
@@ -256,6 +297,10 @@ def executar_trabalho(
     trabalho = reivindicar(database_url)
     if trabalho is None:
         return None
+    print(
+        f"Pichau Android fila: id={trabalho.id} estado=executando tentativas={trabalho.tentativas}",
+        flush=True,
+    )
     try:
         # A credencial é necessária para a fila Python, mas não deve ser
         # herdada pelo Appium/ADB nem por processos filhos do navegador.
@@ -273,6 +318,11 @@ def executar_trabalho(
         sucesso = False
         codigo = "runner-indisponivel"
     finalizar(database_url, trabalho.id, sucesso=sucesso, codigo_falha=codigo)
+    estado = "sucesso" if sucesso else "falha"
+    print(
+        f"Pichau Android fila: id={trabalho.id} estado={estado} tentativas={trabalho.tentativas}",
+        flush=True,
+    )
     return sucesso
 
 
@@ -299,6 +349,9 @@ def criar_parser() -> argparse.ArgumentParser:
     worker = subparsers.add_parser("worker", help="processa uma solicitacao pendente")
     worker.add_argument("--database-url")
     worker.add_argument("--once", action="store_true")
+
+    health = subparsers.add_parser("health", help="confirma acesso ao banco da fila")
+    health.add_argument("--database-url")
     return parser
 
 
@@ -321,6 +374,10 @@ def executar_cli(argv: list[str] | None = None) -> int:
             prazo_segundos=argumentos.timeout_seconds,
             intervalo_segundos=argumentos.poll_seconds,
         )
+        return 0
+    if argumentos.comando == "health":
+        verificar_saude(database_url)
+        print("Pichau Android fila: banco acessivel.")
         return 0
     resultado = executar_trabalho(database_url)
     return 1 if resultado is False else 0

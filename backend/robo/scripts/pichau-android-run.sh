@@ -12,6 +12,7 @@ CONFIG_FILE="${PICHAU_ENV_FILE:-$TERMUX_PREFIX/etc/robo-pichau/env}"
 LOG_DIR="$TERMUX_PREFIX/var/log/robo-pichau"
 LOCK_DIR="$TERMUX_PREFIX/var/run"
 LOCK_FILE="$LOCK_DIR/robo-pichau.lock"
+WORKER_LOCK_FILE="$LOCK_DIR/robo-pichau-worker.lock"
 LOG_FILE="$LOG_DIR/coleta-$(date +%F).log"
 VENV_DIR="$ROBO_ROOT/.venv"
 APPIUM_SCRIPT="$ROBO_ROOT/scripts/pichau-android-appium.sh"
@@ -20,6 +21,8 @@ CODIGO_ADB_SERVIDOR=31
 CODIGO_ADB_DESCOBERTA_WIFI=32
 CODIGO_ADB_CONEXAO_WIFI=33
 CODIGO_ADB_ESTADO_WIFI=34
+CODIGO_APPIUM=35
+CODIGO_CONFIGURACAO=40
 
 agora_ms() {
     date +%s%3N
@@ -27,7 +30,7 @@ agora_ms() {
 
 fail() {
     local mensagem="$1"
-    local codigo="${2:-2}"
+    local codigo="${2:-$CODIGO_CONFIGURACAO}"
     mkdir -p "${LOG_DIR:-/data/data/com.termux/files/usr/var/log/robo-pichau}" \
         2>/dev/null || true
     if [[ -n "${LOG_FILE:-}" ]]; then
@@ -81,7 +84,8 @@ esac
 
 command -v adb >/dev/null 2>&1 || fail "adb ausente; instale Android Platform Tools" "$CODIGO_ADB_AUSENTE"
 ADB_PORT="${PICHAU_ANDROID_ADB_PORT:-5037}"
-[[ "$ADB_PORT" =~ ^[0-9]+$ ]] && ((ADB_PORT >= 1 && ADB_PORT <= 65535)) || fail \
+[[ "$ADB_PORT" =~ ^[0-9]{1,5}$ ]] \
+    && ((10#$ADB_PORT >= 1 && 10#$ADB_PORT <= 65535)) || fail \
     "PICHAU_ANDROID_ADB_PORT invalida" "$CODIGO_ADB_DESCOBERTA_WIFI"
 TRANSPORTE="${PICHAU_ANDROID_TRANSPORTE:-wifi}"
 [[ "$TRANSPORTE" == "wifi" ]] || fail \
@@ -169,7 +173,7 @@ export PICHAU_ANDROID_UDID="$ADB_TARGET"
 export PICHAU_ANDROID_TRANSPORTE="$TRANSPORTE"
 
 command -v flock >/dev/null 2>&1 || fail "flock ausente; instale util-linux"
-command -v termux-wake-lock >/dev/null 2>&1 || fail "termux-wake-lock ausente; instale Termux:API"
+command -v termux-wake-lock >/dev/null 2>&1 || fail "termux-wake-lock ausente; atualize o Termux"
 [[ -x "$VENV_DIR/bin/python" ]] || fail "ambiente Python ausente: $VENV_DIR"
 [[ -x "$APPIUM_SCRIPT" ]] || fail "script Appium ausente: $APPIUM_SCRIPT"
 
@@ -184,15 +188,32 @@ fi
 touch "$LOG_FILE"
 chmod 600 "$LOG_FILE"
 
-termux-wake-lock >/dev/null
-liberou_wake_lock=0
-liberar_wake_lock() {
-    if [[ "$liberou_wake_lock" == 0 ]]; then
+wake_lock_proprio=0
+appium_gerenciado=0
+worker_lock_ativo=0
+if [[ -e "$WORKER_LOCK_FILE" ]] \
+    && ! flock -n "$WORKER_LOCK_FILE" -c true 2>/dev/null; then
+    worker_lock_ativo=1
+fi
+if [[ "${PICHAU_WAKE_LOCK_OWNER:-}" != "worker" || "$worker_lock_ativo" != 1 ]]; then
+    termux-wake-lock >/dev/null
+    wake_lock_proprio=1
+fi
+
+limpar_runner() {
+    if [[ "$appium_gerenciado" == 1 ]]; then
+        env -u DATABASE_URL "$APPIUM_SCRIPT" stop >/dev/null 2>&1 || true
+        appium_gerenciado=0
+    fi
+    if [[ "$wake_lock_proprio" == 1 ]]; then
         termux-wake-unlock >/dev/null 2>&1 || true
-        liberou_wake_lock=1
+        wake_lock_proprio=0
     fi
 }
-trap liberar_wake_lock EXIT
+trap limpar_runner EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
 {
     inicio_runner_ms="$(agora_ms)"
@@ -202,7 +223,10 @@ trap liberar_wake_lock EXIT
     inicio_preparo_ms="$(agora_ms)"
     # A credencial do publicador só entra no ambiente do processo Python que
     # publica. Appium, tmux, ADB e Chrome não precisam recebê-la.
-    env -u DATABASE_URL "$APPIUM_SCRIPT"
+    appium_gerenciado=1
+    if ! env -u DATABASE_URL "$APPIUM_SCRIPT" start; then
+        fail "Appium nao ficou pronto" "$CODIGO_APPIUM"
+    fi
     fim_preparo_ms="$(agora_ms)"
     echo "$(date --iso-8601=seconds) Pichau performance: etapa=preparo_runner "\
         "duracao_ms=$((fim_preparo_ms - inicio_preparo_ms))"

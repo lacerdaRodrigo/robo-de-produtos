@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Inicia o Appium local em uma sessao tmux idempotente. O Chrome e aberto pelo
-# UiAutomator2 durante a coleta; nenhum servidor Appium fica exposto na rede.
+# Gerencia o Appium local em uma sessao tmux durante a coleta. O Chrome e
+# aberto pelo UiAutomator2; nenhum servidor Appium fica exposto na rede.
 set -Eeuo pipefail
 umask 077
 
@@ -12,6 +12,16 @@ SESSION="${PICHAU_APPIUM_SESSION:-robo-pichau-appium}"
 LOG_DIR="$TERMUX_PREFIX/var/log/robo-pichau"
 LOG_FILE="$LOG_DIR/appium.log"
 SDK_DIR="${ANDROID_HOME:-$TERMUX_PREFIX/android-sdk}"
+ACAO="${1:-start}"
+
+[[ "$#" -le 1 ]] || {
+    echo "Uso: pichau-android-appium.sh [start|stop|status]" >&2
+    exit 2
+}
+[[ "$ACAO" == "start" || "$ACAO" == "stop" || "$ACAO" == "status" ]] || {
+    echo "Uso: pichau-android-appium.sh [start|stop|status]" >&2
+    exit 2
+}
 
 mkdir -p "$LOG_DIR"
 chmod 700 "$LOG_DIR"
@@ -20,9 +30,24 @@ chmod 700 "$LOG_DIR"
 # e o tmux sao persistentes e nao podem herdar esse descritor.
 exec 9>&- 2>/dev/null || true
 
-# Le somente as duas opcoes de transporte necessarias ao boot quando o runner
-# ainda nao resolveu um endpoint. O arquivo inteiro continua sendo validado
-# pelo runner antes de qualquer coleta.
+if [[ "$ACAO" == "stop" ]]; then
+    if tmux has-session -t "$SESSION" 2>/dev/null; then
+        tmux kill-session -t "$SESSION"
+    fi
+    exit 0
+fi
+
+if [[ "$ACAO" == "status" ]]; then
+    tmux has-session -t "$SESSION" 2>/dev/null || exit 1
+    "$TERMUX_PREFIX/bin/python" -c \
+        'import urllib.request; urllib.request.urlopen("http://127.0.0.1:4723/status", timeout=1)' \
+        >/dev/null 2>&1
+    exit $?
+fi
+
+# Le somente as duas opcoes de transporte necessarias quando o runner ainda
+# nao resolveu um endpoint. O arquivo inteiro continua sendo validado pelo
+# runner antes de qualquer coleta.
 if [[ -z "${PICHAU_ANDROID_UDID+x}" && -f "$CONFIG_FILE" ]]; then
     while IFS= read -r linha || [[ -n "$linha" ]]; do
         [[ -z "$linha" || "$linha" == \#* ]] && continue
@@ -38,6 +63,11 @@ fi
 
 unset ADB_SERVER_SOCKET
 ADB_PORT="${PICHAU_ANDROID_ADB_PORT:-5037}"
+[[ "$ADB_PORT" =~ ^[0-9]{1,5}$ ]] \
+    && ((10#$ADB_PORT >= 1 && 10#$ADB_PORT <= 65535)) || {
+    echo "pichau-android-appium: porta ADB invalida" >&2
+    exit 1
+}
 if [[ "${PICHAU_ANDROID_UDID:-}" == *:* ]]; then
     adb -P "$ADB_PORT" connect "$PICHAU_ANDROID_UDID" >/dev/null 2>&1 || true
 fi
@@ -53,13 +83,6 @@ else
 
     tmux new-session -d -s "$SESSION" \
         "unset ADB_SERVER_SOCKET DATABASE_URL PICHAU_ANDROID_WIFI_HOST PICHAU_ANDROID_WIFI_SERVICE PICHAU_ANDROID_UDID PICHAU_ANDROID_ADB_PORT; export ANDROID_HOME=$(printf '%q' "$SDK_DIR"); export ANDROID_SDK_ROOT=$(printf '%q' "$SDK_DIR"); exec appium --address 127.0.0.1 --port 4723 --log-level error >>$(printf '%q' "$LOG_FILE") 2>&1"
-fi
-
-# No boot do Termux, o servidor pode continuar subindo em segundo plano. O
-# runner normal não define esta opção e continua aguardando o /status.
-if [[ "${PICHAU_APPIUM_SKIP_WAIT:-0}" == "1" ]]; then
-    echo "pichau-android-appium: sessao iniciada sem aguardar /status (boot)"
-    exit 0
 fi
 
 for _tentativa in {1..30}; do

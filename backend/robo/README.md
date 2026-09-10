@@ -110,26 +110,45 @@ python -m robo_pichau.principal --diagnostico
   controlado e cancela uma avaliação CDP que perdeu o prazo antes do fallback,
   evitando deixar requisições pendentes no Chrome. Falha em qualquer página
   pré-carregada aborta a coleta; não há publicação parcial.
-  `scripts/pichau-android-appium.sh` mantém o Appium local em uma sessão tmux;
-  a sessão UiAutomator2 força o relançamento do Chrome quando o processo antigo
-  ficou aberto sem publicar DevTools após bloqueio, reboot ou reconexão ADB.
-  o descritor do `flock` é fechado antes de iniciar ADB/tmux, para o serviço
-  persistente não bloquear o próximo job;
-  `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos e
-  executa o runner somente quando há solicitação do GitHub. O
-  `pichau-android-schedule.sh` mantém o job 7301 como watchdog de recuperação,
-  sem coleta independente; a coleta recorrente é enfileirada pelo workflow às
-  09h, 14h e 20h de Brasília. `scripts/pichau-android-boot.sh` inicia primeiro
-  worker/watchdog e depois o Appium no Termux:Boot, sem aguardar o `/status` do
-  Appium no boot, e registra `var/log/robo-pichau/boot.log`. Na ROM Samsung
-  testada, o Android mantém o receiver do Termux:Boot pendente até o primeiro
-  desbloqueio após reiniciar; essa limitação precisa ser resolvida
-  operacionalmente antes de declarar o aparelho autônomo. A bateria é uma
-  condição operacional do Android: não há alerta automático; se o aparelho
-  desligar, a fila permanece recuperável e o último catálogo válido continua
-  no banco.
+  `scripts/pichau-android-appium.sh` aceita `start`, `stop` e `status`; o runner
+  mantém a sessão tmux somente durante a coleta e a encerra ao sair. A sessão
+  UiAutomator2 força o relançamento do Chrome quando o processo antigo ficou
+  aberto sem publicar DevTools após bloqueio, reboot ou reconexão ADB.
+  `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
+  tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
+  a vida do daemon. O runner não libera esse lock quando foi iniciado pelo
+  worker. `pichau-android-schedule.sh` agenda o job 7301 a cada 15 minutos com
+  rede `any` e sem condições de bateria/armazenamento; o job chama
+  `pichau-android-recover.sh`, que só assume o daemon quando o `flock` está
+  livre. `pichau-android-status.sh` verifica checkout, configuração, worker,
+  watchdog, fila e ADB sem imprimir identificadores privados.
+  `scripts/pichau-android-boot.sh` registra o watchdog e transfere o próprio
+  processo ao worker; Appium permanece desligado quando não há coleta. Instale
+  esse arquivo como link simbólico, não como cópia separada, para o boot usar o
+  checkout atualizado:
+
+  ```bash
+  mkdir -p "$HOME/.termux/boot"
+  if [[ -e "$HOME/.termux/boot/pichau-android-boot.sh" \
+      && ! -L "$HOME/.termux/boot/pichau-android-boot.sh" ]]; then
+    mv "$HOME/.termux/boot/pichau-android-boot.sh" \
+      "$HOME/.termux/boot/pichau-android-boot.sh.bak"
+  fi
+  ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/pichau-android-boot.sh" \
+    "$HOME/.termux/boot/pichau-android-boot.sh"
+  ```
+
+  O Samsung deve ser dedicado, permanecer carregando, usar Wi-Fi privado e
+  manter Termux, Termux:API e Termux:Boot como bateria irrestrita e fora das
+  listas de suspensão. Após reboot, o primeiro desbloqueio continua obrigatório;
+  depois dele a tela pode ficar bloqueada durante as coletas. A operação só será
+  aceita após nove execuções agendadas consecutivas em 72 horas.
 - A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
   idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
+  identifica como `executor-offline` uma pendência sem claim após 20 minutos;
+  quando o publicador voltar, ele encerra essas linhas antigas antes do próximo
+  claim, sem coletá-las horas depois. Falhas do runner usam categorias seguras de
+  ADB, Appium, configuração, navegador, acesso, dados, banco e parcial. O workflow
   usa preferencialmente o secret `PICHAU_DISPATCH_DATABASE_URL`; o telefone
   mantém a `DATABASE_URL` privada do Termux, sempre com SSL e permissões
   restritas às tabelas Pichau e à fila.

@@ -1,14 +1,14 @@
 # PRD — Pichau PC Gamer
 
-**Status:** Pichau Android encerrado e validado em operação. Jornada mobile V11,
-executor Android, fila Postgres, Wireless Debugging, worker/Appium e workflow
-estão versionados e foram validados em execução real. A execução
-`34302348225` passou pelo GitHub, fila, worker, Chrome/Appium e publicação sem
-cabo USB; o navegador abriu a página Pichau pelo DevTools local e o resultado
-foi completo. O aparelho continua sujeito às condições operacionais normais:
-ligado, Wi-Fi ativo e depuração sem fio disponível.
+**Status:** jornada mobile e coleta Android versionadas; estabilização do
+executor dedicado implementada no repositório e aguardando implantação/aceite
+de 72 horas no Samsung. A execução `34302348225` provou coleta completa sem
+cabo, mas as execuções agendadas posteriores `34370533995` e `34395714110`
+ficaram `pendente/tentativas=0`: o worker estava indisponível quando o robô foi
+chamado. Essa evidência invalida o encerramento operacional anterior;
+isoladamente, ela não identifica qual camada do Android interrompeu o processo.
 
-**Última atualização:** 2026-09-08
+**Última atualização:** 2026-09-09
 
 ## Objetivo
 
@@ -246,7 +246,7 @@ arranque do Chrome. O aceite considera obrigatórios
 publicação parcial; o tempo total do workflow continua incluindo a espera da
 fila e pode variar conforme o worker Android.
 
-## Executor Android local — implementação versionada e encerrada
+## Executor Android local — hardening de disponibilidade versionado
 
 O uso de um telefone Android conectado ao Wi‑Fi residencial foi separado do
 workflow hospedado. O telefone não será servidor da API, não será acessado
@@ -277,17 +277,15 @@ contas pessoais, senhas salvas ou tokens no perfil Chrome. Wireless Debugging
 deve permanecer pareado apenas com dispositivos confiáveis e sem portas
 publicadas no roteador.
 
-O Samsung pode executar fora do notebook, conectado ao Wi‑Fi e usando somente
-a própria bateria. Appium, Termux e Job Scheduler ficam locais; o carregador é
-uma ação manual opcional e o agendamento não usa a condição `--charging` nem
-envia alerta automático de bateria. Se o aparelho desligar por falta de
-energia, a tentativa pode ser interrompida sem substituir o último catálogo
-válido. O Termux:Boot foi instalado e o script atualizado inicia worker,
-watchdog 7301 e Appium, com log em `var/log/robo-pichau/boot.log`. O Android 14
-pode exigir o primeiro desbloqueio após reiniciar para liberar o receiver; isso
-é uma condição operacional conhecida, não uma pendência do executor. Cabo
-USB/notebook ficam restritos à configuração inicial, diagnóstico e recuperação
-quando Wi‑Fi ou depuração sem fio forem desligados.
+O Samsung é um executor dedicado: deve permanecer carregando, conectado ao
+Wi-Fi privado, com proteção de bateria habilitada quando disponível e Termux,
+Termux:API e Termux:Boot configurados como bateria irrestrita e fora das listas
+de suspensão da Samsung. O daemon mantém wake/Wi-Fi lock continuamente. O
+agendamento não exige `--charging`, para que uma desconexão breve do cabo não
+bloqueie a recuperação. O Android 14 pode exigir o primeiro desbloqueio após
+reiniciar para liberar o receiver; depois desse desbloqueio a tela pode voltar a
+ficar bloqueada. Cabo USB/notebook ficam restritos à configuração inicial e à
+recuperação quando Wi-Fi ou depuração sem fio forem desligados.
 
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
@@ -315,7 +313,7 @@ A execução `34306849805` confirmou esse fluxo corrigido sem cabo, com fila,
 worker, Appium, Chrome e publicação concluídos em 2m17s.
 Livelo e Inter permanecem fora desta prova.
 
-## Workflow GitHub Actions e fila Android — implementado e validado em execução real
+## Workflow GitHub Actions e fila Android — contrato versionado, aceite em observação
 
 O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
 horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
@@ -323,14 +321,33 @@ usa a mesma fila. Cada execução usa `github_run_id` como chave idempotente,
 insere um trabalho `pendente` e aguarda até 20 minutos os estados `sucesso` ou
 `falha`.
 
-O worker `pichau-android-worker.sh` é iniciado pelo Termux:Boot depois que o
-Android libera o receiver, consulta a fila a cada 30 segundos e reivindica
-somente um trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos permite
-recuperar uma solicitação abandonada após queda do aparelho. O job 7301
-continua apenas como watchdog de uma rodada; ele não executa uma coleta sem
-solicitação do GitHub. O boot inicia o worker antes do Appium e não espera o
-endpoint do Appium ficar pronto; a coleta normal continua fazendo sua própria
-espera controlada.
+O worker `pichau-android-worker.sh` é iniciado diretamente pelo Termux:Boot,
+sem ser destacado em tmux: o script de boot transfere o processo com `exec`, o
+Termux mantém a tarefa foreground e o worker conserva wake/Wi-Fi lock durante
+toda a vida do daemon. Ele consulta a fila a cada 30 segundos e reivindica um
+trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos continua permitindo
+recuperar uma execução abandonada.
+
+O job 7301 chama `pichau-android-recover.sh` a cada 15 minutos com rede `any`,
+sem condições de bateria ou armazenamento. O recuperador tenta iniciar o mesmo
+daemon; o `flock` torna a chamada inofensiva quando o worker principal está
+ativo. Appium não permanece carregado no boot: o runner o inicia sob demanda e
+o encerra ao terminar, reduzindo processos ociosos no aparelho antigo.
+
+Uma solicitação que permanecer `pendente` por 20 minutos é informada pelo
+workflow como `executor-offline`. A credencial restrita do dispatcher não ganha
+permissão de update; quando o publicador voltar, o worker encerra pendências
+antigas como `falha/executor-offline` antes do próximo claim, impedindo que
+pipelines já encerradas sejam coletadas horas depois. Trabalhos `executando` não
+são expirados por essa limpeza e continuam protegidos pelo lease. Falhas
+reivindicadas chegam ao workflow nas categorias seguras
+`appium`, `pichau-configuracao`, `pichau-navegador`, `pichau-acesso`,
+`pichau-dados`, `pichau-banco`, `pichau-parcial` ou `runner-inesperado`.
+
+O comando `pichau-android-status.sh` verifica checkout, arquivo privado, lock do
+worker, wake lock de propriedade do worker, watchdog, banco da fila e ADB Wi-Fi
+sem imprimir URL, host, porta ou serial. O arquivo do Termux:Boot deve ser um
+link para o checkout em `PREFIX/opt/robo`, evitando divergência após `git pull`.
 
 Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 `127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e
@@ -341,6 +358,14 @@ execuções reais `34081623450`, `34136108063` e `34302348225` confirmaram o
 caminho GitHub → fila → worker Android → banco/API. As credenciais mínimas
 separadas estão configuradas; o fallback para `DATABASE_URL` permanece
 funcional.
+
+O novo aceite operacional exige uma coleta manual inicial após implantação e
+nove execuções agendadas consecutivas durante 72 horas, com tela bloqueada e
+sem abrir o Termux. Todas devem ser reivindicadas uma vez e concluir dentro do
+workflow. Qualquer falha reinicia a janela depois da correção. Se
+`executor-offline` persistir com o aparelho dedicado, carregando e configurado
+como nunca suspender, esta ROM/aparelho não será aceita como servidor; a coleta
+deve ser planejada com controlador Linux residencial separado.
 
 ## Jornada mobile V11 entregue
 
@@ -357,14 +382,14 @@ funcional.
 - Claro/escuro e as larguras mobile de 320, 390 e 430 px são cobertos pelos
   testes diretamente afetados.
 
-## Estado após o encerramento do executor Android
+## Estado operacional do executor Android
 
-Não há pendência operacional Android aberta. O telefone precisa permanecer
-ligado, no Wi‑Fi e com a depuração sem fio disponível; a tela pode ficar
-bloqueada depois que o serviço estiver ativo. O cabo USB não faz parte da
-execução recorrente. A inclusão da Pichau na busca global de Produtos e a
-evolução do acompanhamento são decisões de produto/API separadas deste
-executor.
+O hardening está versionado, mas sua implantação no Samsung, a coleta manual
+inicial e a observação de 72 horas continuam pendentes. O telefone precisa
+permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
+pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
+faz parte da execução recorrente. A inclusão da Pichau na busca global de
+Produtos e a evolução do acompanhamento são decisões de produto/API separadas.
 
 ## Critérios de aceite
 
@@ -375,7 +400,8 @@ abre pelo componente existente, os estados não se confundem, URLs inválidas
 não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
 Inter e o `BottomDock` continuam sem alteração semântica.
 
-A integração Pichau Android foi declarada pronta após validar coletor,
-persistência, API autenticada, retenção, fila, worker, Wireless Debugging e
-workflow em execução real. Evoluções de produto/API fora do executor continuam
-listadas separadamente em [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
+A integração Pichau Android só volta ao estado pronto depois do gate de 72
+horas. Coletor, persistência, API autenticada e Wireless Debugging continuam
+validados; a disponibilidade contínua do worker é o item reaberto. Evoluções de
+produto/API e o aceite operacional permanecem listados separadamente em
+[`docs/PENDENCIAS.md`](../PENDENCIAS.md).

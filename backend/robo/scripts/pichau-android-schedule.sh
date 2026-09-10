@@ -7,17 +7,12 @@ set -Eeuo pipefail
 umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-WORKER="${PICHAU_WORKER:-$SCRIPT_DIR/pichau-android-worker.sh}"
-WORKER_ONCE="${PICHAU_WORKER_ONCE:-$SCRIPT_DIR/pichau-android-worker-once.sh}"
+RECOVER="${PICHAU_RECOVER:-$SCRIPT_DIR/pichau-android-recover.sh}"
 JOB_ID="${PICHAU_JOB_ID:-7301}"
 PERIOD_MS="${PICHAU_PERIOD_MS:-900000}"
 
-[[ -x "$WORKER" ]] || {
-    echo "pichau-android-schedule: worker nao executavel: $WORKER" >&2
-    exit 1
-}
-[[ -x "$WORKER_ONCE" ]] || {
-    echo "pichau-android-schedule: worker de uma rodada nao executavel: $WORKER_ONCE" >&2
+[[ -x "$RECOVER" ]] || {
+    echo "pichau-android-schedule: recuperador nao executavel: $RECOVER" >&2
     exit 1
 }
 command -v termux-job-scheduler >/dev/null 2>&1 || {
@@ -27,9 +22,9 @@ command -v termux-job-scheduler >/dev/null 2>&1 || {
 
 termux-job-scheduler \
     --job-id "$JOB_ID" \
-    --script "$WORKER_ONCE" \
+    --script "$RECOVER" \
     --period-ms "$PERIOD_MS" \
-    --network unmetered \
-    --battery-not-low true \
-    --storage-not-low true \
+    --network any \
+    --battery-not-low false \
+    --storage-not-low false \
     --persisted true

@@ -24,8 +24,8 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro encerrado do executor Android da Pichau, fila, worker, Appium e transporte Wireless Debugging. |
-| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro encerrado da validação Android, jornada Pichau e coleta real sem cabo USB. |
+| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro histórico da primeira validação do executor; o contrato vigente e o novo gate de disponibilidade estão no PRD Pichau. |
+| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro histórico da jornada Android e da coleta real sem cabo; não comprova disponibilidade contínua do worker. |
 
 ## PRDs de domínio
 

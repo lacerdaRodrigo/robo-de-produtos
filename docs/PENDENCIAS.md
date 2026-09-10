@@ -5,10 +5,10 @@ Lista viva somente do que continua aberto. Histórico concluído permanece no Gi
 O contrato operacional padrão da branch `re-design` é o [`AGENTS.md`](../AGENTS.md):
 Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e
 Web/integration/E2E fora do gate. A implementação backend Pichau desta tarefa
-foi autorizada explicitamente; o executor Android e seu transporte Wi-Fi foram
-encerrados após validação real, com o hardening local de credenciais, logs e
-superfície Appium/CDP incorporado. Permanecem somente evoluções de produto/API
-explicitamente listadas abaixo.
+foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
+a disponibilidade contínua do executor Android foi reaberta depois que as
+execuções `34370533995` e `34395714110` permaneceram sem claim. O hardening de
+ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
 
 ## Ciclo mobile atual
 
@@ -32,6 +32,12 @@ explicitamente listadas abaixo.
 ## Pichau — evolução ainda aberta
 
 - [x] Validar uma execução fria sem cabo após o retry de inicialização do DevTools; a execução `34306849805` passou com fila, Wi‑Fi, Appium, Chrome e publicação, em 2m17s. A falha anterior `34306121536` ficou explicada pelo JSON transitório do Chrome durante a criação da sessão Appium.
+- [ ] Implantar no Samsung o worker foreground com wake/Wi-Fi lock persistente,
+  recuperador 7301, Appium sob demanda e link do Termux:Boot para o checkout;
+  depois do reboot, desbloquear uma vez e confirmar `pichau-android-status.sh`.
+- [ ] Validar uma coleta manual e nove execuções agendadas consecutivas em 72
+  horas, com o aparelho dedicado, carregando, no Wi-Fi e com a tela bloqueada,
+  sem abrir o Termux entre as coletas. Uma falha reinicia a janela.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

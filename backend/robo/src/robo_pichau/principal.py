@@ -29,6 +29,29 @@ from .portas import (
 
 _log = logging.getLogger(__name__)
 
+CODIGO_SAIDA_CONFIGURACAO = 40
+CODIGO_SAIDA_NAVEGADOR = 41
+CODIGO_SAIDA_ACESSO = 42
+CODIGO_SAIDA_DADOS = 43
+CODIGO_SAIDA_BANCO = 44
+CODIGO_SAIDA_PARCIAL = 45
+
+
+def codigo_saida_falha(codigo: str) -> int:
+    """Traduz falhas esperadas para categorias seguras usadas pela fila."""
+
+    if codigo == "configuracao":
+        return CODIGO_SAIDA_CONFIGURACAO
+    if codigo == "navegador":
+        return CODIGO_SAIDA_NAVEGADOR
+    if codigo in {"acesso", "http", "rede"}:
+        return CODIGO_SAIDA_ACESSO
+    if codigo == "banco":
+        return CODIGO_SAIDA_BANCO
+    if codigo == "parcial":
+        return CODIGO_SAIDA_PARCIAL
+    return CODIGO_SAIDA_DADOS
+
 
 def coletar_catalogo(
     fonte: FontePichau,
@@ -220,7 +243,7 @@ def executar(argv: list[str] | None = None) -> int:
             return 0
         except FalhaPichau as erro:
             _log.error("Diagnostico Pichau nao aprovado: %s", erro)
-            return 2
+            return codigo_saida_falha(erro.codigo)
 
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
@@ -233,15 +256,25 @@ def executar(argv: list[str] | None = None) -> int:
         if resumo.degradada:
             repositorio.falhar(execucao_id, "parcial")
             _log.error("Coleta Pichau parcial; snapshot anterior preservado.")
-            return 2
+            return CODIGO_SAIDA_PARCIAL
         repositorio.publicar(execucao_id, produtos, resumo)
         _log.info("Coleta Pichau publicada: %d produtos.", len(produtos))
         return 0
     except FalhaPichau as erro:
         repositorio.falhar(execucao_id, erro.codigo)
         _log.error("Coleta Pichau nao publicada: %s", erro)
-        return 2
+        return codigo_saida_falha(erro.codigo)
+
+
+def executar_cli(argv: list[str] | None = None) -> int:
+    """Executa a CLI sem transformar falha operacional esperada em traceback."""
+
+    try:
+        return executar(argv)
+    except FalhaPichau as erro:
+        _log.error("Coleta Pichau nao iniciada; codigo=%s.", erro.codigo)
+        return codigo_saida_falha(erro.codigo)
 
 
 if __name__ == "__main__":
-    raise SystemExit(executar())
+    raise SystemExit(executar_cli())

@@ -1,27 +1,17 @@
 # Plano — Samsung como executor local da Pichau
 
-**Status:** encerrado — executor Android, publicação em lotes, telemetria, fila
-Postgres, Wireless Debugging e workflow GitHub validados. A execução real
-`34302348225` passou pelo GitHub, worker, Chrome/Appium e publicação sem cabo
-USB. A migration da fila foi aplicada, as credenciais exclusivas foram
-validadas e o catálogo/jornada Pichau foram conferidos pela API/aplicativo.
-O hardening operacional foi incorporado: Appium/CDP continuam locais,
-credencial não é herdada pelo Appium/ADB/Chrome e logs/configuração usam
-permissões privadas.
+**Status:** registro histórico da primeira prova. Não usar as instruções antigas
+de worker tmux/Appium no boot como runbook vigente. As falhas sem claim de
+2026-09-09 invalidaram o encerramento da disponibilidade contínua; o contrato
+atual, o worker foreground e o gate de 72 horas estão no
+[`PRD-PICHAU.md`](../prd/PRD-PICHAU.md).
 
-**Última atualização:** 2026-09-08
+**Última atualização:** 2026-09-09
 
-Este plano trata um telefone Android como executor local do robô Pichau
-conectado ao Wi‑Fi. O Samsung pode operar fora do notebook, usando somente a
-própria bateria, desde que esteja conectado a uma rede Wi‑Fi não tarifada e
-tenha Appium, Termux e Job Scheduler locais. O aparelho não é servidor da API,
-banco ou cliente direto do aplicativo.
-
-O carregador é opcional e será conectado manualmente somente quando o
-responsável considerar necessário. O agendamento não exige carregamento e não
-há alerta automático de bateria. Se a bateria acabar durante uma coleta, o
-aparelho pode desligar e a tentativa será interrompida; o último catálogo
-válido continuará preservado no Postgres.
+Este plano registrou a prova de um telefone Android como executor local do robô
+Pichau. Para a nova operação, o Samsung é dedicado, permanece carregando e usa
+Termux/Termux:API/Termux:Boot fora das listas de suspensão. O aparelho não é
+servidor da API, banco ou cliente direto do aplicativo.
 
 O cabo USB e o notebook são necessários apenas para a configuração inicial,
 diagnóstico e recuperação após reboot quando o Wi‑Fi ou a depuração sem fio
@@ -91,17 +81,18 @@ nesta etapa.
 - `backend/robo/scripts/pichau-android-run.sh`, com configuração privada,
   SSL obrigatório na `DATABASE_URL`, `flock`, `termux-wake-lock` e logs sem
   segredos;
-- `pichau-android-appium.sh`, que mantém o servidor Appium restrito a
-  `127.0.0.1:4723` em uma sessão tmux e reconecta o ADB Wi‑Fi configurado;
-- `pichau-android-worker.sh`, que consulta a fila Postgres a cada 30 segundos,
-  reivindica um trabalho com lease e executa o runner somente quando há pedido;
-- `pichau-android-schedule.sh`, que mantém o job 7301 como watchdog de uma
-  rodada, sem criar coleta independente;
-- `pichau-android-worker-once.sh`, adaptador sem argumentos para o Job Scheduler;
-- `pichau-android-boot.sh`, para ser copiado para a pasta de boot do
-  Termux:Boot e iniciar primeiro o worker/watchdog e depois o Appium sem
-  bloquear o boot; o processo registra o diagnóstico em
-  `PREFIX/var/log/robo-pichau/boot.log`. Os scripts Android usam o
+- `pichau-android-appium.sh`, que aceita `start|stop|status` e mantém o servidor
+  restrito a `127.0.0.1:4723` somente durante a coleta;
+- `pichau-android-worker.sh`, que consulta a fila Postgres a cada 30 segundos
+  como tarefa foreground, mantém wake/Wi-Fi lock e executa o runner somente
+  quando há pedido;
+- `pichau-android-schedule.sh` e `pichau-android-recover.sh`, que mantêm o job
+  7301 como recuperação idempotente do daemon, sem coleta independente;
+- `pichau-android-status.sh`, diagnóstico seguro de checkout, worker, watchdog,
+  fila e ADB;
+- `pichau-android-boot.sh`, instalado como link para o checkout na pasta do
+  Termux:Boot, que agenda o watchdog e transfere o processo ao worker; o
+  diagnóstico fica em `PREFIX/var/log/robo-pichau/boot.log`. Os scripts usam o
   interpretador absoluto do Termux, pois o boot executa os arquivos diretamente
   e o `/usr/bin/env` do Linux não existe nesse ambiente;
 - `migracoes/022_pichau_android_fila.sql`, que cria a fila idempotente com
@@ -259,7 +250,7 @@ continuam descritos abaixo:
 - ausência de imagem, HTML bruto e cookie persistido;
 - catálogo legível no aplicativo Flutter.
 
-### Fase 4 — workflow e fila Android — implementado e validado em execução real
+### Fase 4 — workflow e fila Android — prova histórica, disponibilidade reaberta
 
 O disparo recorrente deve seguir os mesmos horários de Livelo e Inter:
 `09h`, `14h` e `20h` de Brasília, configurados no workflow como
@@ -267,32 +258,28 @@ O disparo recorrente deve seguir os mesmos horários de Livelo e Inter:
 
 O workflow não coleta no Ubuntu. Ele instala somente o pacote Python da fila,
 insere uma solicitação com `github_run_id` como chave idempotente e aguarda o
-estado terminal por até 20 minutos. Uma falha ou telefone offline torna a
-pipeline vermelha e mantém o trabalho recuperável; não há fallback silencioso.
+estado terminal por até 20 minutos. Uma solicitação nunca reivindicada é
+informada como `executor-offline`; quando o publicador volta, ele encerra a
+pendência antes de qualquer novo claim. Não há fallback silencioso nem coleta
+tardia de uma pipeline já encerrada.
 
 No Samsung:
 
 1. manter aplicada a migration `022_pichau_android_fila.sql` no banco autorizado;
 2. configurar a credencial privada da fila no arquivo `env`, sempre com SSL;
-3. copiar o checkout atualizado para `PREFIX/opt/robo`;
-4. manter `pichau-android-appium.sh` local para configuração/recuperação;
-5. instalar `pichau-android-boot.sh` no Termux:Boot;
-6. executar `pichau-android-schedule.sh`, que recria o job 7301 como watchdog
-   de 15 minutos, chamando somente `pichau-android-worker-once.sh`;
-7. confirmar o worker tmux e o job por `termux-job-scheduler --pending`;
-8. [x] reiniciar o aparelho e conferir que o worker volta sem executar coleta
-   quando não houver solicitação pendente: no reboot de 2026-09-07, sem abrir o
-   Termux, o receiver executou o script e, após o primeiro desbloqueio, o
-   worker, o Appium e o job 7301 ficaram ativos. [x] O Android ainda pode
-   segurar o receiver até esse primeiro desbloqueio; essa condição conhecida
-   foi registrada como requisito operacional, não como pendência do executor.
+3. atualizar o checkout em `PREFIX/opt/robo`;
+4. instalar `pichau-android-boot.sh` como link para esse checkout;
+5. manter os três aplicativos Termux fora das listas de suspensão, com o
+   Samsung dedicado, carregando e no Wi-Fi privado;
+6. reiniciar, desbloquear uma vez e executar `pichau-android-status.sh`;
+7. validar uma coleta manual e nove agendadas consecutivas em 72 horas.
 
-O worker persistente consulta a fila a cada 30 segundos. O claim usa lock
-transacional e lease de 30 minutos; se o aparelho cair, outra rodada recupera
-o trabalho abandonado. O `flock` local continua impedindo duas coletas Android
-simultâneas.
+O worker persistente consulta a fila a cada 30 segundos como processo
+foreground e mantém wake/Wi-Fi lock. O claim usa lock transacional e lease de
+30 minutos; se o processo cair, o job 7301 tenta relançar o daemon. O `flock`
+local continua impedindo duas coletas Android simultâneas.
 
-### Fase 5 — observação encerrada
+### Fase 5 — observação histórica invalidada para disponibilidade contínua
 
 O telefone já fechou três execuções consecutivas bem-sucedidas (22, 23 e 24),
 com `itens_unicos=total_declarado` e `duplicados=0`. As pipelines reais
@@ -314,8 +301,10 @@ histórico, link externo e retorno. O hardening local de credenciais, logs e
 superfície Appium/CDP foi incorporado ao runner e aos scripts. O risco residual
 é operacional: Wireless Debugging continua sendo um canal administrativo e
 deve ficar pareado somente com dispositivos confiáveis em rede privada.
-Temperatura, bateria e armazenamento devem ser observados manualmente, mas não
-criam alerta automático nem tornam o carregador obrigatório. IP, porta, serial,
+As execuções posteriores `34370533995` e `34395714110` permaneceram sem claim e
+mostraram que as provas manuais não validaram a sobrevivência contínua do
+worker. Temperatura, bateria e armazenamento devem ser observados manualmente;
+o carregador agora é requisito operacional. IP, porta, serial,
 código de pareamento, chave ADB e credenciais nunca entram em documentação,
 logs ou saída do workflow. Livelo e Inter só podem ser avaliados depois disso.
 

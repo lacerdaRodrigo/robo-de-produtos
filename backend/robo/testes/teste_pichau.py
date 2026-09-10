@@ -35,10 +35,18 @@ from robo_pichau.portas import (
     RespostaPichauInvalida,
 )
 from robo_pichau.principal import (
+    CODIGO_SAIDA_ACESSO,
+    CODIGO_SAIDA_BANCO,
+    CODIGO_SAIDA_CONFIGURACAO,
+    CODIGO_SAIDA_DADOS,
+    CODIGO_SAIDA_NAVEGADOR,
+    CODIGO_SAIDA_PARCIAL,
+    codigo_saida_falha,
     coletar_catalogo,
     criar_fonte_pichau,
     diagnosticar_catalogo,
     executar,
+    executar_cli,
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "pichau_catalogo.html"
@@ -806,6 +814,19 @@ def teste_execucao_normal_exige_database_url(monkeypatch) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(ConfiguracaoPichauInvalida, match="DATABASE_URL"):
         executar([])
+
+
+def teste_cli_classifica_falhas_operacionais_sem_runner_generico(monkeypatch) -> None:
+    assert codigo_saida_falha("configuracao") == CODIGO_SAIDA_CONFIGURACAO
+    assert codigo_saida_falha("navegador") == CODIGO_SAIDA_NAVEGADOR
+    assert codigo_saida_falha("acesso") == CODIGO_SAIDA_ACESSO
+    assert codigo_saida_falha("rede") == CODIGO_SAIDA_ACESSO
+    assert codigo_saida_falha("pagina") == CODIGO_SAIDA_DADOS
+    assert codigo_saida_falha("banco") == CODIGO_SAIDA_BANCO
+    assert codigo_saida_falha("parcial") == CODIGO_SAIDA_PARCIAL
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    assert executar_cli([]) == CODIGO_SAIDA_CONFIGURACAO
 
 
 def teste_cria_fonte_no_modo_xvfb(monkeypatch) -> None:

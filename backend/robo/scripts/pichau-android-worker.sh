@@ -16,6 +16,7 @@ LOCK_FILE="$LOCK_DIR/robo-pichau-worker.lock"
 VENV_DIR="$ROBO_ROOT/.venv"
 MODO="${1:---daemon}"
 INTERVALO_SEGUNDOS="${PICHAU_WORKER_INTERVAL_SECONDS:-30}"
+WAKE_LOCK_OWNER="worker"
 
 fail() {
     echo "pichau-android-worker: $*" >&2
@@ -59,15 +60,34 @@ exec 9>"$LOCK_FILE"
 flock -n 9 || exit 0
 exec >>"$LOG_FILE" 2>&1
 
+liberou_wake_lock=0
+liberar_wake_lock() {
+    if [[ "$liberou_wake_lock" == 0 ]]; then
+        termux-wake-unlock >/dev/null 2>&1 || true
+        liberou_wake_lock=1
+    fi
+}
+
+if [[ "$MODO" == "--daemon" ]]; then
+    command -v termux-wake-lock >/dev/null 2>&1 \
+        || fail "termux-wake-lock ausente; atualize o Termux"
+    termux-wake-lock >/dev/null
+    export PICHAU_WAKE_LOCK_OWNER="$WAKE_LOCK_OWNER"
+    trap liberar_wake_lock EXIT
+    trap 'exit 0' INT TERM HUP
+    echo "$(date --iso-8601=seconds) worker persistente ativo com wake lock"
+fi
+
 executar_uma() {
-    echo "$(date --iso-8601=seconds) inicio verificacao fila Pichau Android"
     if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
         PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_pichau.fila_android worker --once; then
         status=0
     else
         status=$?
     fi
-    echo "$(date --iso-8601=seconds) fim verificacao fila Pichau Android status=$status"
+    if [[ "$status" != 0 ]]; then
+        echo "$(date --iso-8601=seconds) verificacao fila Pichau Android falhou status=$status"
+    fi
     return "$status"
 }
 
@@ -76,7 +96,12 @@ if [[ "$MODO" == "--once" ]]; then
     exit $?
 fi
 
+verificacoes=0
 while true; do
     executar_uma || true
+    ((verificacoes += 1))
+    if ((verificacoes % 60 == 0)); then
+        echo "$(date --iso-8601=seconds) worker persistente ativo"
+    fi
     sleep "$INTERVALO_SEGUNDOS"
 done

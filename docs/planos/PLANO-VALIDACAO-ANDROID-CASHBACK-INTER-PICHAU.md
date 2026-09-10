@@ -1,10 +1,12 @@
 # Plano e registro — validação Android e Pichau
 
-**Status:** encerrado — jornada do app, Wireless Debugging e coleta Pichau validados
+**Status:** registro histórico — jornada, Wireless Debugging e uma coleta real
+foram validados; as falhas sem claim de 2026-09-09 mostraram que este aceite não
+comprovou disponibilidade contínua. O gate vigente está no PRD Pichau.
 
 **Data de início:** 2026-09-07
 
-**Última atualização:** 2026-09-08
+**Última atualização:** 2026-09-09
 
 ## Objetivo
 
@@ -12,9 +14,10 @@ Validar no Samsung conectado ao Wi-Fi o retorno do Termux:Boot após reinício,
 o aplicativo mobile na jornada Pichau e a coleta Pichau com `pageSize=200`,
 sem depender de cabo USB. Livelo e Inter estão fora deste ciclo.
 
-## Ordem operacional
+## Ordem executada na prova histórica
 
-1. Confirmar ADB, Android desbloqueado, worker, Appium e job 7301 após o reboot.
+1. Confirmar ADB, Android desbloqueado, worker, Appium e job 7301 após o reboot,
+   conforme o ciclo antigo em que o Appium ainda subia no boot.
 2. Instalar/abrir o APK e validar a jornada Pichau no device.
 3. Executar os testes unitários/widgets diretamente relacionados e os gates
    estáticos.
@@ -23,7 +26,7 @@ sem depender de cabo USB. Livelo e Inter estão fora deste ciclo.
 6. [x] Parear e validar Wireless Debugging como transporte operacional único,
    sem dependência de USB.
 
-## Critérios de aceite
+## Critérios usados na prova histórica
 
 - Worker, Appium e job 7301 voltam após reinício e primeiro desbloqueio.
 - Nenhuma coleta ocorre sem solicitação pendente.
@@ -86,11 +89,12 @@ sem depender de cabo USB. Livelo e Inter estão fora deste ciclo.
 
 ## Encerramento
 
-O plano foi encerrado após a execução `34302348225`. Falhas futuras devem usar
-o lease da fila e preservar o último snapshot válido; não reabrem este plano
-automaticamente. O Chrome nativo pode aparecer no primeiro plano durante a
-criação/recuperação da sessão Appium, porque a coleta usa uma aba DevTools real;
-isso não é um modo headless.
+Este registro foi encerrado após a execução `34302348225`, mas não deve ser usado
+como aceite da disponibilidade contínua. O contrato atual usa worker foreground,
+wake/Wi-Fi lock persistente, Appium sob demanda, recuperação pelo job 7301 e
+observação de nove execuções agendadas em 72 horas. O Chrome nativo pode aparecer
+no primeiro plano durante a criação/recuperação da sessão Appium; isso não é um
+modo headless.
 
 O cabo USB não é requisito da validação operacional. A prova final foi feita
 com o cabo desconectado; ele permanece apenas como recurso de configuração ou

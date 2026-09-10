@@ -67,7 +67,10 @@ def teste_fila_valida_url_chave_e_origem_sem_expor_segredo() -> None:
 def teste_codigo_runner_expoe_somente_categoria_operacional() -> None:
     assert fila_android.codigo_falha_runner(32) == "adb-wifi-descoberta"
     assert fila_android.codigo_falha_runner(34) == "adb-wifi-estado"
-    assert fila_android.codigo_falha_runner(2) == "runner-2"
+    assert fila_android.codigo_falha_runner(35) == "appium"
+    assert fila_android.codigo_falha_runner(41) == "pichau-navegador"
+    assert fila_android.codigo_falha_runner(2) == "runner-inesperado"
+    assert fila_android.codigo_falha_runner(99) == "runner-inesperado"
 
 
 def teste_enfileirar_eh_idempotente_e_retorna_id_existente(monkeypatch) -> None:
@@ -114,8 +117,32 @@ def teste_reivindicar_usa_lease_e_pode_recuperar_trabalho_abandonado(monkeypatch
         execucao_id=None,
         codigo_falha=None,
     )
-    assert "FOR UPDATE SKIP LOCKED" in cursor.consultas[0][0]
-    assert cursor.consultas[0][1] == (1800,)
+    assert "executor-offline" in cursor.consultas[0][0]
+    assert cursor.consultas[0][1] == (fila_android.PRAZO_PADRAO_SEGUNDOS,)
+    assert "FOR UPDATE SKIP LOCKED" in cursor.consultas[1][0]
+    assert cursor.consultas[1][1] == (1800,)
+
+
+def teste_timeout_identifica_job_nunca_reivindicado(monkeypatch) -> None:
+    pendente = fila_android.TrabalhoAndroid(
+        id=7,
+        chave_idempotencia="github-7",
+        origem="schedule",
+        estado="pendente",
+        tentativas=0,
+        execucao_id=None,
+        codigo_falha=None,
+    )
+    monkeypatch.setattr(fila_android, "obter", lambda *_args: pendente)
+
+    with pytest.raises(fila_android.FalhaFilaAndroid, match="executor-offline"):
+        fila_android.aguardar(
+            "postgres://db?sslmode=require",
+            7,
+            prazo_segundos=0,
+            intervalo_segundos=1,
+            dormir=lambda _segundos: pytest.fail("nao deve dormir apos o prazo"),
+        )
 
 
 def teste_executar_trabalho_finaliza_sucesso_ou_falha(monkeypatch, tmp_path: Path) -> None:
@@ -144,7 +171,7 @@ def teste_executar_trabalho_finaliza_sucesso_ou_falha(monkeypatch, tmp_path: Pat
 
     assert sucesso is True
     assert falha is False
-    assert finalizados == [(7, True, None), (7, False, "runner-2")]
+    assert finalizados == [(7, True, None), (7, False, "runner-inesperado")]
 
 
 def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -> None:
@@ -152,6 +179,7 @@ def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -
     runner.touch()
     ambiente_recebido = {}
     monkeypatch.setenv("DATABASE_URL", "postgres://usuario:senha@host/db?sslmode=require")
+    monkeypatch.setenv("PICHAU_WAKE_LOCK_OWNER", "worker")
     monkeypatch.setattr(fila_android, "reivindicar", lambda _url: trabalho())
     monkeypatch.setattr(fila_android, "finalizar", lambda *_args, **_kwargs: None)
 
@@ -164,3 +192,14 @@ def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -
     )
 
     assert "DATABASE_URL" not in ambiente_recebido
+    assert ambiente_recebido["PICHAU_WAKE_LOCK_OWNER"] == "worker"
+
+
+def teste_health_faz_somente_sondagem_minima(monkeypatch) -> None:
+    cursor = CursorFalso([])
+    conexao = ConexaoFalsa(cursor)
+    monkeypatch.setattr(fila_android, "_conectar", lambda _url: conexao)
+
+    fila_android.verificar_saude("postgres://db?sslmode=require")
+
+    assert cursor.consultas == [("SELECT 1 FROM pichau_android_fila LIMIT 0", None)]
