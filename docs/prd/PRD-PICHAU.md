@@ -348,6 +348,8 @@ O comando `pichau-android-status.sh` verifica checkout, arquivo privado, lock do
 worker, wake lock de propriedade do worker, watchdog, banco da fila e ADB Wi-Fi
 sem imprimir URL, host, porta ou serial. O arquivo do Termux:Boot deve ser um
 link para o checkout em `PREFIX/opt/robo`, evitando divergência após `git pull`.
+Backups ficam fora de `.termux/boot`, porque todos os arquivos presentes nessa
+pasta são executados durante a inicialização.
 
 Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 `127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e

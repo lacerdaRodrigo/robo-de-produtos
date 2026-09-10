@@ -128,15 +128,18 @@ python -m robo_pichau.principal --diagnostico
   checkout atualizado:
 
   ```bash
-  mkdir -p "$HOME/.termux/boot"
+  mkdir -p "$HOME/.termux/boot" "$HOME/.termux/boot-backups"
   if [[ -e "$HOME/.termux/boot/pichau-android-boot.sh" \
       && ! -L "$HOME/.termux/boot/pichau-android-boot.sh" ]]; then
     mv "$HOME/.termux/boot/pichau-android-boot.sh" \
-      "$HOME/.termux/boot/pichau-android-boot.sh.bak"
+      "$HOME/.termux/boot-backups/pichau-android-boot.sh.bak"
   fi
   ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/pichau-android-boot.sh" \
     "$HOME/.termux/boot/pichau-android-boot.sh"
   ```
+
+  Não mantenha backups em `.termux/boot`: o Termux:Boot executa todos os
+  arquivos dessa pasta, independentemente da extensão.
 
   O Samsung deve ser dedicado, permanecer carregando, usar Wi-Fi privado e
   manter Termux, Termux:API e Termux:Boot como bateria irrestrita e fora das
