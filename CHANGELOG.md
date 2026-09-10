@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.66.7 (2026-09-10)
+
+### Bug Fixes
+
+- Reconecta ADB Wi-Fi sem depender de mDNS
+  ([`e79f382`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e79f382a5858fc7677a7363d97c5a726909b9f52))
+
+### Documentation
+
+- Mantém backups fora do Termux Boot
+  ([`8c82aca`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8c82aca003e66dfb763c1efa2a399233ea6afbe1))
+
+
 ## v1.66.6 (2026-09-10)
 
 ### Bug Fixes
