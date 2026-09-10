@@ -1,8 +1,8 @@
 # PRD — Pichau PC Gamer
 
 **Status:** jornada mobile e coleta Android versionadas; estabilização do
-executor dedicado implementada no repositório e aguardando implantação/aceite
-de 72 horas no Samsung. A execução `34302348225` provou coleta completa sem
+executor dedicado implantada no Samsung e aguardando o aceite de 72 horas. A
+execução `34302348225` provou coleta completa sem
 cabo, mas as execuções agendadas posteriores `34370533995` e `34395714110`
 ficaram `pendente/tentativas=0`: o worker estava indisponível quando o robô foi
 chamado. Essa evidência invalida o encerramento operacional anterior;
@@ -381,6 +381,13 @@ workflow. Qualquer falha reinicia a janela depois da correção. Se
 como nunca suspender, esta ROM/aparelho não será aceita como servidor; a coleta
 deve ser planejada com controlador Linux residencial separado.
 
+A coleta manual inicial `34424475472` passou em 2026-09-09 com a tela em
+`Dozing`: fila `pendente → executando → sucesso`, uma tentativa, seis páginas,
+1.176 itens lidos/únicos, zero duplicados e publicação concluída em cerca de 97
+segundos de runner. Depois da execução, Appium voltou ao estado ocioso e worker,
+watchdog, fila e ADB Wi-Fi permaneceram saudáveis. Essa prova inicia a
+observação, mas não substitui as nove execuções agendadas.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
@@ -398,8 +405,8 @@ deve ser planejada com controlador Linux residencial separado.
 
 ## Estado operacional do executor Android
 
-O hardening está versionado, mas sua implantação no Samsung, a coleta manual
-inicial e a observação de 72 horas continuam pendentes. O telefone precisa
+O hardening está versionado e implantado; somente a observação de 72 horas
+continua pendente. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de

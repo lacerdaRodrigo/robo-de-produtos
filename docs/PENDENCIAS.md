@@ -32,14 +32,17 @@ ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
 ## Pichau — evolução ainda aberta
 
 - [x] Validar uma execução fria sem cabo após o retry de inicialização do DevTools; a execução `34306849805` passou com fila, Wi‑Fi, Appium, Chrome e publicação, em 2m17s. A falha anterior `34306121536` ficou explicada pelo JSON transitório do Chrome durante a criação da sessão Appium.
-- [ ] Implantar no Samsung o worker foreground com wake/Wi-Fi lock persistente,
+- [x] Implantar no Samsung o worker foreground com wake/Wi-Fi lock persistente,
   recuperador 7301, Appium sob demanda e link do Termux:Boot para o checkout;
-  depois do reboot, desbloquear uma vez e confirmar `pichau-android-status.sh`.
-- [ ] Validar uma coleta manual e nove execuções agendadas consecutivas em 72
-  horas, com o aparelho dedicado, carregando, no Wi-Fi e com a tela bloqueada,
-  sem abrir o Termux entre as coletas. Uma falha reinicia a janela. As tentativas
-  40 e 41 diagnosticaram, respectivamente, a descoberta ADB e o timeout
-  `pageLoad` nativo; não iniciaram a janela de aceite.
+  após reboot, o status confirmou worker foreground, watchdog, fila e Appium
+  sob demanda, sem worker tmux.
+- [x] Validar a coleta manual inicial com tela bloqueada: a execução
+  `34424475472`, job 42, passou em uma tentativa e publicou 1.176/1.176 itens,
+  zero duplicados. As tentativas 40 e 41 diagnosticaram a descoberta ADB e o
+  timeout `pageLoad` nativo e não contam para o aceite.
+- [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
+  dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
+  entre as coletas. Uma falha reinicia a janela.
 - [ ] Decidir depois do gate se a exigência de religar ADB Wi-Fi e reativar a
   porta por USB após reboot é aceitável; a operação normal bloqueada e sem cabo
   não depende do USB enquanto o aparelho não reiniciar.
