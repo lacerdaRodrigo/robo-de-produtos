@@ -37,7 +37,9 @@ ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
   depois do reboot, desbloquear uma vez e confirmar `pichau-android-status.sh`.
 - [ ] Validar uma coleta manual e nove execuções agendadas consecutivas em 72
   horas, com o aparelho dedicado, carregando, no Wi-Fi e com a tela bloqueada,
-  sem abrir o Termux entre as coletas. Uma falha reinicia a janela.
+  sem abrir o Termux entre as coletas. Uma falha reinicia a janela. As tentativas
+  40 e 41 diagnosticaram, respectivamente, a descoberta ADB e o timeout
+  `pageLoad` nativo; não iniciaram a janela de aceite.
 - [ ] Decidir depois do gate se a exigência de religar ADB Wi-Fi e reativar a
   porta por USB após reboot é aceitável; a operação normal bloqueada e sem cabo
   não depende do USB enquanto o aparelho não reiniciar.

@@ -358,6 +358,11 @@ aparelho. A porta não é publicada no roteador. Esta ROM desliga o transporte
 ADB Wi-Fi após reboot; nesse caso, a chave deve ser ligada novamente e a porta
 reativada por USB antes de devolver o telefone à operação bloqueada.
 
+Na recuperação do Chrome após reboot, a sessão Appium permanece em contexto
+nativo UiAutomator2. Esse contexto não implementa o timeout W3C `pageLoad`; o
+adaptador não envia esse comando e mantém os limites finitos na navegação CDP
+que realmente lê o catálogo.
+
 Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 `127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e
 filtro por host privado configurado somente no Termux. IP, porta, serial,

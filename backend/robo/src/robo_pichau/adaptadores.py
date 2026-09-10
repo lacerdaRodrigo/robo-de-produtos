@@ -1249,7 +1249,9 @@ class FontePichauAndroid:
                             "recriando Chrome pelo Appium local."
                         )
                         self._driver = self._abrir_driver()
-                        self._driver.set_page_load_timeout(self.timeout)
+                        # A sessão é nativa (UiAutomator2), não um contexto Web.
+                        # O driver atual rejeita o timeout W3C `pageLoad`; as
+                        # navegações seguintes usam o CDP e seus limites finitos.
                         self.cdp.abrir()
                         self.cdp.abrir_url(self.url_categoria)
                         self.cdp.aguardar_pagina()

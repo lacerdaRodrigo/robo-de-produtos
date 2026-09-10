@@ -465,11 +465,10 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
 
     class Driver:
         def __init__(self):
-            self.timeout = None
             self.fechado = False
 
-        def set_page_load_timeout(self, timeout):
-            self.timeout = timeout
+        def set_page_load_timeout(self, _timeout):
+            pytest.fail("sessao UiAutomator2 nativa nao aceita timeout pageLoad")
 
         def quit(self):
             self.fechado = True
@@ -488,7 +487,6 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
     assert devtools.urls_abertas == [fonte.url_categoria]
     assert devtools.aguardas == 1
     assert devtools.fechado is True
-    assert driver.timeout == fonte.timeout
     assert driver.fechado is True
 
 
