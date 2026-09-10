@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.66.9 (2026-09-10)
+
+### Bug Fixes
+
+- **pichau**: Serializa fallback DOM Android
+  ([`4940436`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/494043622828c869899f587eb5fa128b0bfa1fe4))
+
+### Documentation
+
+- Registra coleta Android com tela bloqueada
+  ([`755834e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/755834ee7eb29b9273495c6d6429c9eea8cbb963))
+
+- Registra recuperação do executor Android
+  ([`caf1f93`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/caf1f93326a4a0a6509e59ebe3efaf60544b5c33))
+
+
 ## v1.66.8 (2026-09-10)
 
 ### Bug Fixes
