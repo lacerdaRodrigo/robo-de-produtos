@@ -17,6 +17,29 @@ decisão e reativar o cenário.
 
 Leia o [`PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md) antes de propor qualquer mudança. Ele é a fonte da verdade: requisitos (RF), requisitos não-funcionais (RNF), restrições (C) e regras de negócio (RN) são todos numerados e referenciados entre si e sempre atualizar as docs , se mudar alguma regra , teste e etc.
 
+## Regra operacional — executor Android da Pichau
+
+O Samsung é um executor dedicado, não uma garantia de servidor autônomo após
+desligamento ou reboot. Diferencie sempre tela bloqueada (Android ligado e
+worker ativo) de aparelho desligado/reiniciado.
+
+- Em operação normal, mantenha-o carregando, no Wi‑Fi privado e sem cabo USB de
+  dados; após o primeiro desbloqueio pós-boot, a tela pode ficar bloqueada e o
+  worker pode operar sem abrir o Termux.
+- Worker foreground e watchdog 7301 recuperam processos enquanto o Android está
+  ligado, mas não religam de modo confiável a Depuração por Wi‑Fi que esta ROM
+  desativa após reboot.
+- Após reboot, o runbook é: ligar e desbloquear uma vez; ativar “Depuração por
+  Wi‑Fi” nas Opções do desenvolvedor; com computador autorizado via USB, rodar
+  `adb tcpip 5555`; verificar o status e retirar o cabo de dados. Não prometer
+  autonomia total sem repetir um teste real.
+- Se essa recuperação manual não for aceitável, registrar a decisão de mover o
+  controlador para Linux residencial sempre ligado; não presumir que um Android
+  sem root possa reativar sozinho uma função privilegiada.
+- O gate é de nove execuções agendadas consecutivas em 72 horas, com tela
+  bloqueada e sem abrir o Termux; falha reinicia a janela e execução manual não
+  substitui o aceite.
+
 ## Regra zero — execução automática
 
 Antes de qualquer alteração em código, documentação, workflow, teste, configuração ou até espaço/ponto-e-vírgula, o assistente deve:

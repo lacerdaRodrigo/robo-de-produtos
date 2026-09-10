@@ -87,6 +87,32 @@ arquivo, rota ou fluxo que não existe mais.
 - Administração continua protegida por autorização.
 - Não alterar backend, migração, workflow, produção ou publicação sem autorização explícita.
 
+## Operação do executor Android da Pichau
+
+O Samsung é um equipamento dedicado do robô, não um servidor autônomo
+garantido contra desligamento. “Tela bloqueada” significa Android ligado, com
+Termux/worker executando e Wi‑Fi disponível; “aparelho desligado ou reiniciado”
+é outro estado e exige recuperação conforme o comportamento real desta ROM.
+
+- Em operação normal, o telefone deve ficar carregando, no Wi‑Fi privado e sem
+  cabo USB de dados. Depois do primeiro desbloqueio após o boot, a tela pode
+  permanecer bloqueada e o worker pode executar sem abrir o Termux.
+- O worker foreground e o watchdog 7301 recuperam processos do Termux enquanto
+  o Android continua ligado. Eles não conseguem religar, sozinhos e de forma
+  confiável, a Depuração por Wi‑Fi desativada pelo Android após um reboot.
+- Nesta ROM Samsung Android 14 sem root, após desligamento/reboot o procedimento
+  documentado é: ligar e fazer o primeiro desbloqueio; ativar “Depuração por
+  Wi‑Fi” nas Opções do desenvolvedor; com um computador autorizado conectado por
+  USB, executar `adb tcpip 5555`; confirmar o status do executor e remover o cabo
+  de dados. Só então a tela deve voltar a ser bloqueada.
+- Não registrar nem prometer “autonomia após qualquer reboot” sem um novo teste
+  real. Se essa intervenção não for aceitável, a alternativa de arquitetura é
+  um controlador Linux residencial sempre ligado, documentado como decisão
+  separada — não transformar o celular sozinho em servidor privilegiado.
+- O aceite operacional continua sendo nove execuções agendadas consecutivas em
+  72 horas, com tela bloqueada e sem abrir o Termux. Uma falha reinicia a janela;
+  execução manual não substitui esse gate.
+
 ## Testes deste ciclo
 
 O objetivo é manter **o mínimo de testes necessário** durante o redesign.

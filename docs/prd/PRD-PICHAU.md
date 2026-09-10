@@ -287,6 +287,26 @@ reiniciar para liberar o receiver; depois desse desbloqueio a tela pode voltar a
 ficar bloqueada. Cabo USB/notebook ficam restritos à configuração inicial e à
 recuperação quando Wi-Fi ou depuração sem fio forem desligados.
 
+Tela bloqueada não significa aparelho desligado: enquanto o Android permanece
+ligado, o worker foreground e o watchdog 7301 recuperam o processo sem abrir o
+Termux. Nesta ROM Samsung Android 14 sem root, um desligamento ou reboot pode
+desativar a Depuração por Wi‑Fi e interromper o transporte fixo; o telefone não
+tem privilégio para religar essa função sozinho. O runbook de recuperação é:
+
+1. ligar o aparelho e fazer o primeiro desbloqueio;
+2. ativar “Depuração por Wi‑Fi” nas Opções do desenvolvedor;
+3. conectar temporariamente um computador autorizado por USB e executar
+   `adb tcpip 5555`;
+4. confirmar `pichau-android-status.sh` e retirar o cabo de dados antes de
+   bloquear novamente a tela.
+
+Enquanto essa limitação existir, a operação recorrente não deve depender do
+cabo USB, mas a recuperação pós-reboot depende dele. Não se considera provada
+autonomia total após desligamento sem novo teste real. Se a intervenção manual
+for inaceitável, a decisão correta é avaliar um controlador Linux residencial
+sempre ligado; isso é uma mudança de arquitetura separada, não uma promessa de
+que o Android sem root possa substituir o controlador.
+
 A prova de publicação foi feita com a `DATABASE_URL` operacional disponível no
 ambiente, sempre por SSL; isso não substitui a criação externa da role
 Postgres exclusiva para operação contínua. As execuções 22, 23 e 24
@@ -387,6 +407,14 @@ A coleta manual inicial `34424475472` passou em 2026-09-09 com a tela em
 segundos de runner. Depois da execução, Appium voltou ao estado ocioso e worker,
 watchdog, fila e ADB Wi-Fi permaneceram saudáveis. Essa prova inicia a
 observação, mas não substitui as nove execuções agendadas.
+
+Uma segunda execução manual, `34425228841` (job 43), foi disparada em
+2026-09-09 com o aparelho fora de alcance e sem cabo de dados disponível para
+intervenção. A fila passou novamente por `pendente → executando → sucesso`, com
+uma tentativa, e o workflow terminou verde. Esse resultado reforça que a
+operação normal bloqueada via Wi‑Fi não depende da presença física do notebook;
+continua sendo evidência manual e não substitui as nove execuções agendadas do
+gate de 72 horas.
 
 ## Jornada mobile V11 entregue
 

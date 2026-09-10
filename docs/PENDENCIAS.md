@@ -40,12 +40,21 @@ ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
   `34424475472`, job 42, passou em uma tentativa e publicou 1.176/1.176 itens,
   zero duplicados. As tentativas 40 e 41 diagnosticaram a descoberta ADB e o
   timeout `pageLoad` nativo e não contam para o aceite.
+- [x] Repetir a coleta sem o responsável próximo ao aparelho e sem cabo de
+  dados: `34425228841`, job 43, passou de `pendente` a `sucesso` em uma tentativa.
+  A evidência confirma a operação normal via Wi‑Fi, mas não conta como execução
+  agendada do gate de 72 horas.
 - [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
   dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
   entre as coletas. Uma falha reinicia a janela.
-- [ ] Decidir depois do gate se a exigência de religar ADB Wi-Fi e reativar a
-  porta por USB após reboot é aceitável; a operação normal bloqueada e sem cabo
-  não depende do USB enquanto o aparelho não reiniciar.
+- [ ] Decidir depois do gate se a exigência de recuperação manual após reboot é
+  aceitável: ligar e desbloquear uma vez, ativar “Depuração por Wi‑Fi”, executar
+  `adb tcpip 5555` por USB autorizado, conferir o status e retirar o cabo. A
+  operação normal bloqueada e sem cabo não depende do USB enquanto o aparelho
+  não reiniciar.
+- [ ] Se a recuperação manual não for aceitável, avaliar controlador Linux
+  residencial sempre ligado. O Android sem root não deve ser tratado como capaz
+  de reativar sozinho a Depuração por Wi‑Fi desativada pela ROM.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas

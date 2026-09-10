@@ -151,6 +151,23 @@ python -m robo_pichau.principal --diagnostico
   listas de suspensão. Após reboot, o primeiro desbloqueio continua obrigatório;
   depois dele a tela pode ficar bloqueada durante as coletas. A operação só será
   aceita após nove execuções agendadas consecutivas em 72 horas.
+
+  #### Recuperação após desligamento ou reboot
+
+  Tela bloqueada é um estado normal de operação; aparelho desligado ou reiniciado
+  é uma interrupção diferente. O worker e o watchdog recuperam processos
+  enquanto o Android continua ligado, mas esta ROM Samsung Android 14 sem root
+  pode desativar a Depuração por Wi‑Fi após reboot. Nesse caso, com o aparelho
+  ligado e após o primeiro desbloqueio:
+
+  1. ative “Depuração por Wi‑Fi” nas Opções do desenvolvedor;
+  2. conecte um computador autorizado por USB e execute `adb tcpip 5555`;
+  3. confirme `pichau-android-status.sh` e retire o cabo de dados;
+  4. bloqueie a tela novamente e deixe o telefone carregando no Wi‑Fi.
+
+  Não considerar provada a autonomia após qualquer reboot sem novo teste real.
+  Se esse procedimento manual não for aceitável, o controlador deve ser
+  reavaliado para uma máquina Linux residencial sempre ligada.
 - A migration `../../migracoes/022_pichau_android_fila.sql` cria a fila
   idempotente com lease, claim atômico e estados de sucesso/falha. O workflow
   identifica como `executor-offline` uma pendência sem claim após 20 minutos;
