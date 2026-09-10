@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.8 (2026-09-10)
+
+### Bug Fixes
+
+- Evita timeout Web no Appium nativo
+  ([`922de1f`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/922de1f46addfd22e3307d1e26824f703cae6c11))
+
+
 ## v1.66.7 (2026-09-10)
 
 ### Bug Fixes
