@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.66.6 (2026-09-10)
+
+### Bug Fixes
+
+- Estabiliza executor Android da Pichau
+  ([`c9af759`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c9af759b5f7de4d465dd03a3c4a9df8985b33aaf))
+
+### Documentation
+
+- **android**: Registrar coleta após retry do DevTools
+  ([`f3f2562`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f3f2562b6e25dd363d2c6948946c7d48dd584288))
+
+
 ## v1.66.5 (2026-09-09)
 
 ### Bug Fixes
