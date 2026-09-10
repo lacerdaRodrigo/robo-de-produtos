@@ -41,6 +41,7 @@ fi
 unset DATABASE_URL
 ADB_PORT="5037"
 WIFI_HOST=""
+WIFI_PORT=""
 WIFI_SERVICE="adb-tls-connect._tcp"
 if [[ -f "$CONFIG_FILE" ]]; then
     while IFS= read -r linha || [[ -n "$linha" ]]; do
@@ -51,6 +52,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
             DATABASE_URL) DATABASE_URL="$valor" ;;
             PICHAU_ANDROID_ADB_PORT) ADB_PORT="$valor" ;;
             PICHAU_ANDROID_WIFI_HOST) WIFI_HOST="$valor" ;;
+            PICHAU_ANDROID_WIFI_PORT) WIFI_PORT="$valor" ;;
             PICHAU_ANDROID_WIFI_SERVICE) WIFI_SERVICE="$valor" ;;
             *) ;;
         esac
@@ -98,6 +100,10 @@ if command -v adb >/dev/null 2>&1 \
         [[ -z "$adb_target" || "$adb_target" == "$endpoint" ]] || adb_ambiguo=1
         adb_target="$endpoint"
     done < <(adb -P "$ADB_PORT" devices 2>/dev/null | sed '1d')
+    if [[ -z "$adb_target" && "$WIFI_PORT" =~ ^[0-9]{1,5}$ ]] \
+        && ((10#$WIFI_PORT >= 1 && 10#$WIFI_PORT <= 65535)); then
+        adb_target="$WIFI_HOST:$WIFI_PORT"
+    fi
     if [[ -z "$adb_target" ]]; then
         while read -r servico endpoint _resto; do
             [[ "$servico" == "$WIFI_SERVICE" && "$endpoint" == "$WIFI_HOST:"* ]] || continue

@@ -351,6 +351,13 @@ link para o checkout em `PREFIX/opt/robo`, evitando divergência após `git pull
 Backups ficam fora de `.termux/boot`, porque todos os arquivos presentes nessa
 pasta são executados durante a inicialização.
 
+O `android-tools` instalado neste Samsung não implementa a consulta mDNS no
+servidor ADB local. O runner reutiliza conexões existentes e aceita uma porta
+Wi-Fi fixa privada como fallback, sempre combinada ao host validado do próprio
+aparelho. A porta não é publicada no roteador. Esta ROM desliga o transporte
+ADB Wi-Fi após reboot; nesse caso, a chave deve ser ligada novamente e a porta
+reativada por USB antes de devolver o telefone à operação bloqueada.
+
 Nenhum token GitHub é armazenado no Android. O Appium fica restrito a
 `127.0.0.1`; o executor usa Wireless Debugging pareado, com descoberta mDNS e
 filtro por host privado configurado somente no Termux. IP, porta, serial,

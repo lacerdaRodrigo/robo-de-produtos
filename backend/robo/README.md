@@ -67,8 +67,9 @@ python -m robo_pichau.principal --diagnostico
   `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
   `flock`, `termux-wake-lock` e um `.venv`. O transporte operacional é
   Wireless Debugging por Wi-Fi: `PICHAU_ANDROID_UDID=auto` reutiliza um endpoint
-  Wi-Fi já conectado pelo ADB e, quando necessário, descobre o serviço pareado
-  por mDNS; em ambos os casos filtra o host privado definido em
+  Wi-Fi já conectado pelo ADB. Quando disponível, descobre o serviço pareado
+  por mDNS; builds Termux sem suporte mDNS usam a porta fixa privada definida
+  em `PICHAU_ANDROID_WIFI_PORT`. Em todos os casos o destino é filtrado por
   `PICHAU_ANDROID_WIFI_HOST`. IP, porta, serial, código de pareamento e
   credenciais ficam somente no arquivo privado e nunca são escritos em logs,
   documentação ou saída do workflow.
@@ -79,8 +80,12 @@ python -m robo_pichau.principal --diagnostico
   PICHAU_ANDROID_TRANSPORTE=wifi
   PICHAU_ANDROID_UDID=auto
   PICHAU_ANDROID_WIFI_HOST=<IP_PRIVADO_DO_ANDROID>
+  PICHAU_ANDROID_WIFI_PORT=<PORTA_PRIVADA_ADB>
   PICHAU_ANDROID_WIFI_SERVICE=adb-tls-connect._tcp
   ```
+  A porta fixa é um fallback para o ADB local e não é publicada no roteador.
+  Nesta ROM Samsung ela precisa ser reativada por USB após cada reboot; sem
+  reboot, o aparelho continua autônomo com a tela bloqueada.
   A fronteira de segurança é local: Appium escuta somente em `127.0.0.1`, o
   CDP existe apenas na ponte ADB encaminhada localmente e nenhum desses
   serviços deve ser publicado no roteador ou por encaminhamento de portas. O

@@ -63,7 +63,7 @@ while IFS= read -r linha || [[ -n "$linha" ]]; do
         DATABASE_URL)
             DATABASE_URL="$valor"
             ;;
-        PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|PICHAU_ANDROID_TRANSPORTE|PICHAU_ANDROID_WIFI_HOST|PICHAU_ANDROID_WIFI_SERVICE|LOG_LEVEL)
+        PICHAU_MODO_NAVEGADOR|PICHAU_ESTRATEGIA_LEITURA|PICHAU_ANDROID_ORDENACAO|PICHAU_APPIUM_URL|PICHAU_ANDROID_DEVICE_NAME|PICHAU_ANDROID_UDID|PICHAU_ANDROID_ADB_PORT|PICHAU_ANDROID_TRANSPORTE|PICHAU_ANDROID_WIFI_HOST|PICHAU_ANDROID_WIFI_PORT|PICHAU_ANDROID_WIFI_SERVICE|LOG_LEVEL)
             export "$chave=$valor"
             ;;
         *)
@@ -95,6 +95,12 @@ TRANSPORTE="${PICHAU_ANDROID_TRANSPORTE:-wifi}"
 WIFI_HOST="${PICHAU_ANDROID_WIFI_HOST:-}"
 [[ -n "$WIFI_HOST" && "$WIFI_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || fail \
     "PICHAU_ANDROID_WIFI_HOST invalido" "$CODIGO_ADB_DESCOBERTA_WIFI"
+WIFI_PORT="${PICHAU_ANDROID_WIFI_PORT:-}"
+if [[ -n "$WIFI_PORT" ]]; then
+    [[ "$WIFI_PORT" =~ ^[0-9]{1,5}$ ]] \
+        && ((10#$WIFI_PORT >= 1 && 10#$WIFI_PORT <= 65535)) || fail \
+        "PICHAU_ANDROID_WIFI_PORT invalida" "$CODIGO_ADB_DESCOBERTA_WIFI"
+fi
 WIFI_SERVICE="${PICHAU_ANDROID_WIFI_SERVICE:-adb-tls-connect._tcp}"
 [[ "$WIFI_SERVICE" =~ ^[A-Za-z0-9._-]+$ ]] || fail \
     "PICHAU_ANDROID_WIFI_SERVICE invalido" "$CODIGO_ADB_DESCOBERTA_WIFI"
@@ -132,6 +138,13 @@ descobrir_endpoint_wifi() {
         if [[ "$status_conectado" == 2 ]]; then
             return 2
         fi
+    fi
+    # Algumas builds do android-tools para Termux não implementam a consulta
+    # mDNS. A porta fixa, quando configurada, continua restrita ao host privado
+    # validado acima e permite reconstruir a conexão após reiniciar o adb local.
+    if [[ -n "$WIFI_PORT" ]]; then
+        printf '%s:%s\n' "$WIFI_HOST" "$WIFI_PORT"
+        return 0
     fi
     for _tentativa in {1..30}; do
         servicos="$(adb -P "$ADB_PORT" mdns services 2>/dev/null || true)"

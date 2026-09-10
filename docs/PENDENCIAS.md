@@ -38,6 +38,9 @@ ciclo de vida está versionado e ainda depende do aceite operacional abaixo.
 - [ ] Validar uma coleta manual e nove execuções agendadas consecutivas em 72
   horas, com o aparelho dedicado, carregando, no Wi-Fi e com a tela bloqueada,
   sem abrir o Termux entre as coletas. Uma falha reinicia a janela.
+- [ ] Decidir depois do gate se a exigência de religar ADB Wi-Fi e reativar a
+  porta por USB após reboot é aceitável; a operação normal bloqueada e sem cabo
+  não depende do USB enquanto o aparelho não reiniciar.
 - [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas
