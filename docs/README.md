@@ -13,19 +13,13 @@ documentação antes de abrir arquivos isolados.
 | [`testes/`](testes/) | Catálogo técnico de casos de teste por módulo. | Ao alterar testes ou confirmar a cobertura esperada de uma regra. |
 | [`guias/`](guias/) | Orientações operacionais e de uso do ambiente. | Para tarefas de operação ou configuração descritas no guia correspondente. |
 
-## Planos em avaliação
-
-| Documento | Finalidade |
-|---|---|
-| [`planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md`](planos/PLANO-DISTRIBUICAO-APK-PRIVADA.md) | Plano para gerar, após a `main`, uma APK interna privada no Google Drive e avisar o destinatário por e-mail. |
-| [`planos/PLANO-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](planos/PLANO-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Plano da Central de Alertas, push, Ajuda, Reportar problema, privacidade e validação visual mobile V11 no Samsung. |
-
 ## Registros concluídos
 
 | Documento | Finalidade |
 |---|---|
+| [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato vigente da validação e distribuição privada de APK Android pelo GitHub Actions, Google Drive e e-mail. |
+| [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
 | [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro histórico da primeira validação do executor; o contrato vigente e o novo gate de disponibilidade estão no PRD Pichau. |
-| [`planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md`](planos/PLANO-VALIDACAO-ANDROID-CASHBACK-INTER-PICHAU.md) | Registro histórico da jornada Android e da coleta real sem cabo; não comprova disponibilidade contínua do worker. |
 
 ## PRDs de domínio
 
@@ -39,7 +33,6 @@ documentação antes de abrir arquivos isolados.
 |---|---|
 | [`PENDENCIAS.md`](PENDENCIAS.md) | Lista viva do que continua aberto; não registra trabalho concluído. |
 | [`AUDITORIA-COMPLETA-PROJETO.md`](AUDITORIA-COMPLETA-PROJETO.md) | Relatório de auditoria do projeto, com evidências e itens que exigem confirmação externa. |
-| [`VALIDACAO-CATEGORIAS-JSON-INTER-2026-09-04.md`](VALIDACAO-CATEGORIAS-JSON-INTER-2026-09-04.md) | Evidência pontual da execução que confirmou a origem das categorias externas do Shopping Inter. O contrato vigente está no PRD de categorias. |
 
 ## Ordem sugerida de leitura
 

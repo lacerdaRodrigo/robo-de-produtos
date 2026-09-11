@@ -779,20 +779,16 @@ void main() {
     await at.tap(find.byKey(const Key('abrir-alertas-gaveta')));
     await at.pumpAndSettle();
 
-    expect(find.text('Alertas'), findsOneWidget);
+    expect(find.text('Central de Alertas'), findsWidgets);
     expect(
-      find.text('Eventos importantes, fora do menu principal.'),
+      find.text('Nenhum alerta corresponde a este filtro.'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('Histórico, lidos e não lidos dependem'),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
+    expect(find.byKey(const Key('preferencias-alertas')), findsOneWidget);
 
-    await at.tap(find.byKey(const Key('fechar-folha-radar')));
+    await at.tap(find.byTooltip('Voltar'));
     await at.pumpAndSettle();
-    expect(find.text('Alertas'), findsNothing);
+    expect(find.text('Nenhum alerta corresponde a este filtro.'), findsNothing);
   });
 
   testWidgets('conta oferece administração fora das três áreas', (at) async {

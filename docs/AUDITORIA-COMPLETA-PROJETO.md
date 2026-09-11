@@ -6,6 +6,12 @@
 
 **Natureza:** análise estática, testes unitários/widgets autorizados, consultas HTTP somente leitura e consulta SQL explicitamente `READ ONLY`. Nenhum código, dado, migration, workflow ou ambiente foi alterado.
 
+**Nota de atualização:** este relatório é um retrato histórico de 29/08/2026.
+As conclusões sobre a Central de Alertas e ações de conta como placeholders
+precedem a implementação atual; o contrato vigente está em
+[`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md)
+e as pendências operacionais estão em [`PENDENCIAS.md`](PENDENCIAS.md).
+
 ## Como ler os resultados
 
 - `FEITO`: há evidência do fluxo necessário e os contratos encontrados fecham ponta a ponta.
@@ -75,7 +81,7 @@ A folha de alertas consulta somente `/api/resumo` e mostra contagens/estados agr
 
 ### Coleta e persistência — FEITO
 
-Fluxo: workflow `robo.yml` (09h/14h/20h Brasília ou manual) → `PaginaLiveloHttp` → `extrair_parceiros` → regras de alerta → `RepositorioPostgres.registrar` em transação → `execucao`, `parceiro_livelo` e `pontuacao` → API → Flutter.
+Fluxo: workflow `robo.yml` (09h10/14h10/20h10 Brasília ou manual) → `PaginaLiveloHttp` → `extrair_parceiros` → regras de alerta → `RepositorioPostgres.registrar` em transação → `execucao`, `parceiro_livelo` e `pontuacao` → API → Flutter.
 
 Há validação de IDs estáveis, deduplicação, sanitização de HTML legal, limiar mínimo de parceiros, catálogo atual, retrato histórico para todo parceiro e publicação atômica. Ausência de promoção não é confundida com falha de extração. A fonte HTTP, contudo, repete também erros HTTP permanentes; a política documentada fala em falhas transitórias (`PARCIAL`).
 

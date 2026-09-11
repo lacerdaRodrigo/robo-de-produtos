@@ -46,7 +46,7 @@ FUSO_BRASILIA = timezone(timedelta(hours=-3))
 
 
 def montar_catalogo(ambiente: dict[str, str], caminho: Path) -> CatalogoFavoritas:
-    """Escolhe de onde vem o catalogo (PRD V2, secao 7.1.1).
+    """Escolhe de onde vem o catalogo (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 7.1.1).
 
     Com `DATABASE_URL` no ambiente, o banco manda e o arquivo fica de
     reserva. Sem ela, o arquivo continua sendo a unica fonte — que e o
@@ -65,7 +65,7 @@ def montar_preferencias(ambiente: dict[str, str]) -> PreferenciasGlobais:
     """De onde vem a regua do alerta (RN28).
 
     Mesma logica do catalogo: banco quando ha `DATABASE_URL`, padroes do
-    PRD-V2 §6.1 quando nao — e tambem quando o banco nao responde, porque
+    PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1 quando nao — e tambem quando o banco nao responde, porque
     ficar sem preferencia nao justifica perder a execucao.
     """
     url = (ambiente.get("DATABASE_URL") or "").strip()

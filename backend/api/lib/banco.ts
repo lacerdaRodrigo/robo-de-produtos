@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
-// PRD-V2 9.0: a credencial do banco vive so no servidor. Nenhuma variavel
+// PRD-LIVELO-CATALOGO-ALERTAS-APP 9.0: a credencial do banco vive so no servidor. Nenhuma variavel
 // deste arquivo tem prefixo NEXT_PUBLIC_, entao nada disso chega ao navegador.
 function conectar() {
   const url = process.env.DATABASE_URL;
@@ -137,8 +137,11 @@ export async function buscarCatalogoLiveloPersistido(
   filtros: FiltrosCatalogoLiveloPersistido,
   pagina: number,
   porPagina: number,
+  usuarioId?: string,
 ): Promise<PaginaCatalogoLiveloPersistido> {
   const sql = conectar();
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
   const busca = filtros.busca;
   const paginaSolicitada = Math.max(1, Math.floor(pagina));
   const limite = Math.min(50, Math.max(1, Math.floor(porPagina)));
@@ -147,12 +150,18 @@ export async function buscarCatalogoLiveloPersistido(
       FROM parceiro_livelo parceiro
       LEFT JOIN loja
         ON loja.parceiro_livelo_id = parceiro.id
-       AND loja.acompanhada = TRUE
+      LEFT JOIN acompanhamento_usuario acompanhamento
+        ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+       AND acompanhamento.origem = 'livelo'
+       AND acompanhamento.entidade_id = parceiro.id
       LEFT JOIN pontuacao
         ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
        AND pontuacao.loja_id = loja.id
      WHERE parceiro.ativo = TRUE
-       AND (${filtros.aba === "todas"} OR loja.id IS NOT NULL)
+       AND (${filtros.aba === "todas"} OR (
+         (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
+         OR (${!usaAcompanhamentoPessoal} AND loja.id IS NOT NULL AND loja.acompanhada = TRUE)
+       ))
        AND (${filtros.aba !== "alertas"} OR COALESCE(pontuacao.alertou, FALSE))
        AND (
          ${filtros.busca === ""}
@@ -214,7 +223,9 @@ export async function buscarCatalogoLiveloPersistido(
            parceiro.prefixo_ate, parceiro.em_promocao, parceiro.campanha,
            parceiro.descricao_campanha, parceiro.inicio_promocao,
            parceiro.fim_promocao, parceiro.link,
-           (loja.id IS NOT NULL) AS acompanhada,
+           CASE WHEN ${usaAcompanhamentoPessoal}
+                THEN acompanhamento.id IS NOT NULL
+                ELSE (loja.id IS NOT NULL AND loja.acompanhada = TRUE) END AS acompanhada,
            COALESCE(loja.alerta_ativo, FALSE) AS alerta_ativo,
            COALESCE(pontuacao.alertou, FALSE) AS alerta,
            execucao.momento AS atualizado_em,
@@ -223,12 +234,18 @@ export async function buscarCatalogoLiveloPersistido(
       JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
       LEFT JOIN loja
         ON loja.parceiro_livelo_id = parceiro.id
-       AND loja.acompanhada = TRUE
+      LEFT JOIN acompanhamento_usuario acompanhamento
+        ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+       AND acompanhamento.origem = 'livelo'
+       AND acompanhamento.entidade_id = parceiro.id
       LEFT JOIN pontuacao
        ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
        AND pontuacao.loja_id = loja.id
      WHERE parceiro.ativo = TRUE
-       AND (${filtros.aba === "todas"} OR loja.id IS NOT NULL)
+       AND (${filtros.aba === "todas"} OR (
+         (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
+         OR (${!usaAcompanhamentoPessoal} AND loja.id IS NOT NULL AND loja.acompanhada = TRUE)
+       ))
        AND (${filtros.aba !== "alertas"} OR COALESCE(pontuacao.alertou, FALSE))
        AND (
          ${filtros.busca === ""}
@@ -288,13 +305,19 @@ export async function buscarCatalogoLiveloPersistido(
 }
 
 /** Agregados globais do catálogo, sem materializar seus parceiros no Node. */
-export async function resumoCatalogoLiveloPersistido(): Promise<ResumoCatalogoLiveloPersistido> {
+export async function resumoCatalogoLiveloPersistido(
+  usuarioId?: string,
+): Promise<ResumoCatalogoLiveloPersistido> {
   const sql = conectar();
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
   const linhas = (await sql`
     WITH catalogo AS (
       SELECT parceiro.id_externo, parceiro.nome, parceiro.categorias,
              parceiro.pontos_atuais, parceiro.moeda, parceiro.prefixo_ate,
-             (loja.id IS NOT NULL) AS acompanhada,
+             CASE WHEN ${usaAcompanhamentoPessoal}
+                  THEN acompanhamento.id IS NOT NULL
+                  ELSE (loja.id IS NOT NULL AND loja.acompanhada = TRUE) END AS acompanhada,
              COALESCE(loja.alerta_ativo, FALSE) AS alerta_ativo,
              COALESCE(pontuacao.alertou, FALSE) AS alerta,
              execucao.momento AS atualizado_em,
@@ -303,7 +326,10 @@ export async function resumoCatalogoLiveloPersistido(): Promise<ResumoCatalogoLi
         JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
         LEFT JOIN loja
           ON loja.parceiro_livelo_id = parceiro.id
-         AND loja.acompanhada = TRUE
+        LEFT JOIN acompanhamento_usuario acompanhamento
+          ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+         AND acompanhamento.origem = 'livelo'
+         AND acompanhamento.entidade_id = parceiro.id
         LEFT JOIN pontuacao
           ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
          AND pontuacao.loja_id = loja.id
@@ -669,7 +695,7 @@ export async function categorias(): Promise<string[]> {
   return linhas.map((l) => l.categoria);
 }
 
-// --- Limite de tentativas de login (PRD-V2 9.0, migracao 003) ---
+// --- Limite de tentativas de login (PRD-LIVELO-CATALOGO-ALERTAS-APP 9.0, migracao 003) ---
 
 const JANELA_MINUTOS = 15;
 const TENTATIVAS_MAXIMAS = 5;

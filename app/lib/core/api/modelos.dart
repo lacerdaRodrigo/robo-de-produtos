@@ -25,6 +25,7 @@ class ProdutoDireto {
     required this.lojaSlug,
     required this.lojaNome,
     required this.atualizadaEm,
+    this.acompanhado = false,
     this.ativo,
   });
 
@@ -52,6 +53,7 @@ class ProdutoDireto {
       lojaSlug: _texto(objeto['loja_slug']),
       lojaNome: _texto(objeto['loja_nome']),
       atualizadaEm: _texto(objeto['atualizada_em']),
+      acompanhado: _booleano(objeto['acompanhado']),
       ativo: objeto['ativo'] == null ? null : _booleano(objeto['ativo']),
     );
   }
@@ -81,9 +83,35 @@ class ProdutoDireto {
   final String lojaSlug;
   final String lojaNome;
   final String atualizadaEm;
+  final bool acompanhado;
 
   /// Presença no snapshot atual. Ausente nas buscas, explícito no histórico.
   final bool? ativo;
+
+  ProdutoDireto copiarCom({bool? acompanhado}) => ProdutoDireto(
+    idExterno: idExterno,
+    nome: nome,
+    marca: marca,
+    categoria: categoria,
+    caminho: caminho,
+    precoCheioTexto: precoCheioTexto,
+    precoCheioValor: precoCheioValor,
+    precoAtualTexto: precoAtualTexto,
+    precoAtualValor: precoAtualValor,
+    descontoTexto: descontoTexto,
+    descontoPercentualTexto: descontoPercentualTexto,
+    cashbackTexto: cashbackTexto,
+    cashbackPercentualTexto: cashbackPercentualTexto,
+    precoLiquidoTexto: precoLiquidoTexto,
+    parcelamento: parcelamento,
+    estoque: estoque,
+    etiquetas: etiquetas,
+    lojaSlug: lojaSlug,
+    lojaNome: lojaNome,
+    atualizadaEm: atualizadaEm,
+    acompanhado: acompanhado ?? this.acompanhado,
+    ativo: ativo,
+  );
 }
 
 /// Uma medição de preço do histórico de 30 dias de um produto direto.
@@ -1133,6 +1161,151 @@ class PaginaCatalogoLivelo {
   final int totalItens;
   final int totalPaginas;
   final bool temProxima;
+}
+
+enum TipoAlertaApp { preco, cashback, pontuacao }
+
+class AlertaApp {
+  const AlertaApp({
+    required this.id,
+    required this.origem,
+    required this.tipo,
+    required this.entidadeId,
+    required this.entidadeExterna,
+    required this.entidadeNome,
+    required this.coletaId,
+    required this.valorAnterior,
+    required this.valorAtual,
+    required this.unidade,
+    required this.direcao,
+    required this.lido,
+    required this.criadoEm,
+  });
+
+  factory AlertaApp.parse(Map<String, dynamic> objeto) => AlertaApp(
+    id: _texto(objeto['id']),
+    origem: _texto(objeto['origem']),
+    tipo: switch (_texto(objeto['tipo'])) {
+      'preco' => TipoAlertaApp.preco,
+      'cashback' => TipoAlertaApp.cashback,
+      _ => TipoAlertaApp.pontuacao,
+    },
+    entidadeId: _texto(objeto['entidade_id']),
+    entidadeExterna: _textoOpcional(objeto['entidade_externa']),
+    entidadeNome: _texto(objeto['entidade_nome']),
+    coletaId: _texto(objeto['coleta_id']),
+    valorAnterior: _textoOpcional(objeto['valor_anterior']),
+    valorAtual: _texto(objeto['valor_atual']),
+    unidade: _texto(objeto['unidade']),
+    direcao: _texto(objeto['direcao']) == 'reducao' ? 'reducao' : 'aumento',
+    lido: _booleano(objeto['lido']),
+    criadoEm: _texto(objeto['criado_em']),
+  );
+
+  final String id;
+  final String origem;
+  final TipoAlertaApp tipo;
+  final String entidadeId;
+  final String? entidadeExterna;
+  final String entidadeNome;
+  final String coletaId;
+  final String? valorAnterior;
+  final String valorAtual;
+  final String unidade;
+  final String direcao;
+  final bool lido;
+  final String criadoEm;
+
+  AlertaApp copiarCom({bool? lido}) => AlertaApp(
+    id: id,
+    origem: origem,
+    tipo: tipo,
+    entidadeId: entidadeId,
+    entidadeExterna: entidadeExterna,
+    entidadeNome: entidadeNome,
+    coletaId: coletaId,
+    valorAnterior: valorAnterior,
+    valorAtual: valorAtual,
+    unidade: unidade,
+    direcao: direcao,
+    lido: lido ?? this.lido,
+    criadoEm: criadoEm,
+  );
+}
+
+class PaginaAlertasApi {
+  const PaginaAlertasApi({
+    required this.itens,
+    required this.naoLidos,
+    required this.pagina,
+    required this.porPagina,
+    required this.totalItens,
+    required this.totalPaginas,
+    required this.temProxima,
+  });
+
+  factory PaginaAlertasApi.parse(Map<String, dynamic> objeto) =>
+      PaginaAlertasApi(
+        itens:
+            (objeto['itens'] as List<dynamic>?)
+                ?.map((item) => AlertaApp.parse(item as Map<String, dynamic>))
+                .toList(growable: false) ??
+            const <AlertaApp>[],
+        naoLidos: (objeto['nao_lidos'] as num?)?.toInt() ?? 0,
+        pagina: (objeto['pagina'] as num?)?.toInt() ?? 1,
+        porPagina: (objeto['por_pagina'] as num?)?.toInt() ?? 20,
+        totalItens: (objeto['total_itens'] as num?)?.toInt() ?? 0,
+        totalPaginas: (objeto['total_paginas'] as num?)?.toInt() ?? 1,
+        temProxima: _booleano(objeto['tem_proxima']),
+      );
+
+  final List<AlertaApp> itens;
+  final int naoLidos;
+  final int pagina;
+  final int porPagina;
+  final int totalItens;
+  final int totalPaginas;
+  final bool temProxima;
+}
+
+class PreferenciasAlertas {
+  const PreferenciasAlertas({
+    required this.pushGlobal,
+    required this.preco,
+    required this.cashback,
+    required this.pontuacao,
+  });
+
+  factory PreferenciasAlertas.parse(Map<String, dynamic> objeto) =>
+      PreferenciasAlertas(
+        pushGlobal: _booleano(objeto['push_global']),
+        preco: _booleano(objeto['preco']),
+        cashback: _booleano(objeto['cashback']),
+        pontuacao: _booleano(objeto['pontuacao']),
+      );
+
+  final bool pushGlobal;
+  final bool preco;
+  final bool cashback;
+  final bool pontuacao;
+
+  Map<String, Object> toJson() => <String, Object>{
+    'push_global': pushGlobal,
+    'preco': preco,
+    'cashback': cashback,
+    'pontuacao': pontuacao,
+  };
+  PreferenciasAlertas copiarCom({
+    bool? pushGlobal,
+    bool? preco,
+    bool? cashback,
+    bool? pontuacao,
+  }) => PreferenciasAlertas(
+    pushGlobal: pushGlobal ?? this.pushGlobal,
+    preco: preco ?? this.preco,
+    cashback: cashback ?? this.cashback,
+    pontuacao: pontuacao ?? this.pontuacao,
+  );
 }
 
 String _texto(Object? valor) => valor?.toString() ?? '';

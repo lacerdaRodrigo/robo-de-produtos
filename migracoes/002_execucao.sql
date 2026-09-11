@@ -1,4 +1,4 @@
--- Retrato de cada execucao (PRD V2, secao 7.1 e RF15).
+-- Retrato de cada execucao (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 7.1 e RF15).
 --
 -- Ate aqui o robo era stateless: cada rodada mostrava o que estava ativo e
 -- esquecia. O site da V2.3 precisa responder "quanto a Renner da hoje?" sem
@@ -6,7 +6,7 @@
 -- o retrato e o que transforma o robo em fonte do site.
 --
 -- Guarda apenas as lojas favoritas, nao os 254 parceiros: e o mesmo recorte
--- que a pagina publica exibe (PRD V2 9.3) e mantem o volume irrelevante
+-- que a pagina publica exibe (PRD-LIVELO-CATALOGO-ALERTAS-APP 9.3) e mantem o volume irrelevante
 -- diante do free tier do Neon (C08).
 
 CREATE TABLE IF NOT EXISTS execucao (

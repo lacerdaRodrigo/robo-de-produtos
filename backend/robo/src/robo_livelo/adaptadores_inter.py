@@ -170,6 +170,7 @@ class RepositorioInterPostgres:
            SET concluida_em = now(), estado = 'falha', codigo_falha = %s
          WHERE id = %s AND estado = 'iniciada'
     """
+    GERA_ALERTAS = "SELECT gerar_alertas_cashback_inter(%s)"
 
     def __init__(self, url: str) -> None:
         if not url.strip():
@@ -236,6 +237,8 @@ class RepositorioInterPostgres:
                         execucao_id,
                     ),
                 )
+                # Só compara retratos depois de a execução estar marcada como sucesso.
+                cursor.execute(self.GERA_ALERTAS, (execucao_id,))
         except psycopg.Error as erro:
             raise FalhaAoGuardarInter(
                 f"Falha ao guardar o retrato do Inter: {type(erro).__name__}.", codigo="banco"

@@ -69,6 +69,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   late final bool _controladorExterno = widget.controlador != null;
   final _campoBusca = TextEditingController();
   final _rolagem = ScrollController();
+  final _acompanhamentos = <String, bool>{};
 
   @override
   void initState() {
@@ -581,13 +582,51 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     bool mostrarLoja = true,
   }) {
     final link = linkSeguroShoppingInter(produto.caminho);
+    final chave = _chaveAcompanhamento(produto);
+    final produtoAtual = produto.copiarCom(
+      acompanhado: _acompanhamentos[chave] ?? produto.acompanhado,
+    );
     return CartaoProduto(
-      produto: produto,
+      produto: produtoAtual,
       compacto: compacto,
       mostrarLoja: mostrarLoja,
       aoAbrirHistorico: () => _abrirHistorico(produto),
       aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
+      aoAcompanhar: () => _alternarAcompanhamento(produto),
     );
+  }
+
+  String _chaveAcompanhamento(ProdutoDireto produto) =>
+      '${produto.lojaSlug}/${produto.idExterno}';
+
+  Future<void> _alternarAcompanhamento(ProdutoDireto produto) async {
+    final chave = _chaveAcompanhamento(produto);
+    final atual = _acompanhamentos[chave] ?? produto.acompanhado;
+    final novo = !atual;
+    setState(() => _acompanhamentos[chave] = novo);
+    try {
+      await widget.api.alterarAcompanhamentoProduto(
+        loja: produto.lojaSlug,
+        idExterno: produto.idExterno,
+        ativo: novo,
+      );
+      if (mounted) {
+        mostrarMensagemRadar(
+          context,
+          novo
+              ? 'Produto adicionado à Central de Alertas.'
+              : 'Produto removido da Central de Alertas.',
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _acompanhamentos[chave] = atual);
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível salvar o acompanhamento.',
+        sucesso: false,
+      );
+    }
   }
 
   Future<void> _abrirHistorico(ProdutoDireto produto) async {

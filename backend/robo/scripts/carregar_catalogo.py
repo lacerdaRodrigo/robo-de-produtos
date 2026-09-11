@@ -5,7 +5,7 @@ Uso:
 
 Le DATABASE_URL do .env. Idempotente: rodar duas vezes nao duplica nada.
 O TOML continua sendo a carga inicial; a fonte da verdade passa a ser o
-banco (PRD V2, secao 3.3).
+banco (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 3.3).
 """
 
 from __future__ import annotations

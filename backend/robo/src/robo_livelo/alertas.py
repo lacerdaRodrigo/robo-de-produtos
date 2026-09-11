@@ -1,4 +1,4 @@
-"""Nucleo puro: decide o que merece alerta. Ver PRD-V2 secao 6.1.
+"""Nucleo puro: decide o que merece alerta. Ver PRD-LIVELO-CATALOGO-ALERTAS-APP secao 6.1.
 
 Regras aplicadas aqui: RN27, RN28, RN29 e a supressao de RN23.
 
@@ -29,7 +29,7 @@ def pontuacao_efetiva(parceiro: Parceiro, *, assinante_clube: bool) -> Decimal:
     """Quanto o usuario ganha de fato.
 
     Assinante enxerga o tier do Clube quando ele existe; quem nao assina
-    enxerga a pontuacao aberta (PRD-V2 6.2).
+    enxerga a pontuacao aberta (PRD-LIVELO-CATALOGO-ALERTAS-APP 6.2).
     """
     if assinante_clube and parceiro.pontos_clube is not None:
         return parceiro.pontos_clube

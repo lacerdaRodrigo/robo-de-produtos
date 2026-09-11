@@ -165,7 +165,7 @@ class CatalogoArquivo:
 
 
 class CatalogoPostgres:
-    """Le as lojas favoritas do Postgres (PRD V2, secao 7.1.1).
+    """Le as lojas favoritas do Postgres (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 7.1.1).
 
     Mesma porta que CatalogoArquivo implementa. O nucleo nao sabe de onde
     o catalogo veio, entao trocar arquivo por banco nao toca uma linha de
@@ -346,6 +346,7 @@ class RepositorioPostgres:
         SELECT count(*) FROM loja WHERE acompanhada = TRUE AND parceiro_livelo_id IS NOT NULL
     """
     CONTA_PONTUACOES = "SELECT count(*) FROM pontuacao WHERE execucao_id = %s"
+    GERA_ALERTAS = "SELECT gerar_alertas_livelo(%s)"
 
     def __init__(self, url: str) -> None:
         if not url:
@@ -432,6 +433,8 @@ class RepositorioPostgres:
                         "Publicacao parcial das pontuacoes Livelo: "
                         f"esperadas {len(linhas_pontuacao)}, gravadas {pontuacoes_publicadas}."
                     )
+                # A Central pessoal só compara após a publicação completa.
+                cursor.execute(self.GERA_ALERTAS, (execucao_id,))
         except FalhaAoGuardar:
             raise
         except psycopg.Error as erro:
@@ -522,7 +525,7 @@ def _link_confiavel(link: str) -> bool:
 
 
 class PreferenciasPadrao:
-    """Os padroes do PRD-V2 §6.1, sem banco nenhum.
+    """Os padroes do PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1, sem banco nenhum.
 
     E o que roda em quem clonou o projeto e nao tem Neon, e a reserva de
     quem tem.
@@ -533,7 +536,7 @@ class PreferenciasPadrao:
 
 
 class PreferenciasPostgres:
-    """Le os padroes globais da tabela `preferencia` (PRD V2 §8.1)."""
+    """Le os padroes globais da tabela `preferencia` (PRD-LIVELO-CATALOGO-ALERTAS-APP §8.1)."""
 
     CONSULTA = "SELECT chave, valor FROM preferencia"
 

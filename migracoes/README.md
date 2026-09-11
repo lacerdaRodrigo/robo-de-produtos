@@ -30,18 +30,22 @@ cria o `001` e carrega o catálogo.
 | `020_categorias_inter_fonte_oficial.sql` | substitui a taxonomia Radar por categorias externas exatas do Inter | Inter produtos |
 | `021_pichau_pc_gamer.sql` | catálogo/histórico persistido de PCs Gamer | Pichau |
 | `022_pichau_android_fila.sql` | fila idempotente do executor Android | Pichau |
+| `023_alertas_suporte_privacidade.sql` | acompanhamentos pessoais, eventos, preferências, tokens FCM, outbox e relatos | Central de Alertas/app |
 | `024_pichau_android_diagnostico.sql` | diagnóstico JSONB seguro e limitado na fila Android | Pichau |
 
 ## Onde são usadas
 
 - Robôs: `001`–`009`, `013`–`022` e `024` (coleta Livelo/Inter/produtos, histórico, categorias e Pichau).
-- API do app: `010`–`020` (autenticação, disparos e catálogos).
+- API do app: `010`–`020` e `023` (autenticação, disparos, catálogos e Central de Alertas).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
-> feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de
-> rodar uma migração ainda não aplicada. O repositório não comprova o estado do
-> Neon: confira `docs/PENDENCIAS.md` e o ambiente alvo, especialmente antes da
-> `020`, que exige não haver seleção legada de categorias Radar.
+> feita por esta organização de pastas. Conforme confirmação operacional do
+> responsável, as migrations `001`–`024` foram aplicadas manualmente no banco
+> alvo. Este checkout não executa nem verifica migrations automaticamente.
+
+`023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
+nem produziu evidência independente; a confirmação operacional permanece
+externa ao repositório.
 
 `024` depende somente de `022` e não aplica nem exige a `023`. Em 2026-09-10,
 ela foi validada numa branch temporária derivada de `production`: coluna e

@@ -2,7 +2,7 @@
 
 # Agenda uma verificação de recuperação da fila. Este job não coleta por conta
 # própria: o worker só executa quando existe uma solicitação do GitHub Actions.
-# A coleta recorrente segue 09h/14h/20h pelo workflow Pichau.
+# A coleta recorrente segue 09h30/14h30/20h30 pelo workflow Pichau.
 set -Eeuo pipefail
 umask 077
 

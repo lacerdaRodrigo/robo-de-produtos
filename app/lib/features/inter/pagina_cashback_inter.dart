@@ -66,6 +66,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               ordenar: ordenar,
               pagina: pagina,
               porPagina: _itensPorPagina,
+              acompanhamentoPessoal: !widget.administrador,
             ),
         buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
             widget.api.painelCashbackInter(
@@ -74,6 +75,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               pagina: pagina,
               porPagina: _itensPorPagina,
               apenasAcompanhadas: true,
+              acompanhamentoPessoal: !widget.administrador,
             ),
       );
   late final bool _externo = widget.controlador != null;
@@ -116,7 +118,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
   }
 
   void _alternarAcompanhamento(CashbackInter loja) {
-    if (!widget.administrador || _alterandoAcompanhamento.contains(loja.id)) {
+    if (_alterandoAcompanhamento.contains(loja.id)) {
       return;
     }
     final tinhaAlteracao = _acompanhamentoAlterado.containsKey(loja.id);
@@ -142,7 +144,17 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     required bool? valorAnterior,
   }) async {
     try {
-      await widget.api.alterarFavoritaInter(id: loja.id, favorita: acompanhada);
+      if (widget.administrador) {
+        await widget.api.alterarFavoritaInter(
+          id: loja.id,
+          favorita: acompanhada,
+        );
+      } else {
+        await widget.api.alterarAcompanhamentoPessoalCashback(
+          id: loja.id,
+          ativo: acompanhada,
+        );
+      }
       if (!mounted) return;
       _controlador.sincronizarAcompanhamento(loja, acompanhada);
       mostrarMensagemRadar(

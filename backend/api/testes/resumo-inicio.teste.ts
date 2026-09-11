@@ -51,7 +51,7 @@ describe("resumo real do Início", () => {
     expect(resumo.estado_geral).toBe("atualizado");
     expect(resumo.gerado_em).toBe("2026-08-23T11:00:00.000Z");
     expect(resumo.livelo).toMatchObject({ estado: "atualizado", alertas_ultima_coleta: 2 });
-    expect(resumo.livelo.agendamento).toEqual({ estado: "prevista", referencia_em: "2026-08-23T12:00:00.000Z" });
+    expect(resumo.livelo.agendamento).toEqual({ estado: "prevista", referencia_em: "2026-08-23T12:10:00.000Z" });
     expect(resumo.cashback_inter).toMatchObject({
       estado: "atualizado",
       lojas_acompanhadas: 4,
@@ -159,7 +159,18 @@ describe("resumo real do Início", () => {
 
   it("marca a primeira janela não concluída como atraso real", async () => {
     const resumo = await carregarResumoInicio(dependencias(), new Date("2026-08-23T18:30:00.000Z"));
-    expect(resumo.livelo.agendamento).toEqual({ estado: "aguardando", referencia_em: "2026-08-23T12:00:00.000Z" });
+    expect(resumo.livelo.agendamento).toEqual({ estado: "aguardando", referencia_em: "2026-08-23T12:10:00.000Z" });
+  });
+
+  it("calcula a primeira janela do dia seguinte com os minutos da agenda", async () => {
+    const deps = dependencias();
+    deps.livelo = async () => ({
+      ...(await dependencias().livelo()),
+      ultima_tentativa_em: "2026-08-23T23:30:00.000Z",
+      ultimo_sucesso_em: "2026-08-23T23:30:00.000Z",
+    });
+    const resumo = await carregarResumoInicio(deps, new Date("2026-08-24T00:00:00.000Z"));
+    expect(resumo.livelo.agendamento).toEqual({ estado: "prevista", referencia_em: "2026-08-24T12:10:00.000Z" });
   });
 
   it("distingue ausência total de indisponibilidade total", async () => {

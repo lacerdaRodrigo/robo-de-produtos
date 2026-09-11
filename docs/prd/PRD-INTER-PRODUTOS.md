@@ -1,12 +1,12 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.1 em aceite progressivo
-**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. O estado de aplicação de migrations no Neon exige confirmação operacional; as categorias externas são regidas pelo `PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md`.
+**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do domínio foram aplicadas manualmente no banco alvo; as categorias externas são regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
 
-Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md), o [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md) e o [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md)**. Tudo que não for redefinido aqui continua valendo. “V4” é a versão de produto deste documento; o antigo nome “V4.6” do mockup de navegação é apenas um rótulo visual histórico e não tem relação com esta entrega.
+Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md), o [`PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](PRD-LIVELO-CATALOGO-ALERTAS-APP.md) e o [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md)**. Tudo que não for redefinido aqui continua valendo. “V4” é a versão de produto deste documento; o antigo nome “V4.6” do mockup de navegação é apenas um rótulo visual histórico e não tem relação com esta entrega.
 
 ---
 
@@ -112,7 +112,7 @@ Compartilhar infraestrutura genérica é permitido. Reutilizar `LojaInter`, `Ret
 - Sincronizar o catálogo público de vendedores da área Compre direto no Inter.
 - Selecionar e remover lojas sob a sessão administrativa existente.
 - Coletar todas as páginas disponibilizadas para cada loja selecionada.
-- Rodar três vezes ao dia, às 09h, 14h e 20h de Brasília.
+- Rodar três vezes ao dia, às 10h30, 15h30 e 21h30 de Brasília.
 - Criar tarefas independentes por loja, com no máximo duas simultâneas.
 - Persistir catálogo atual e 30 dias de medições.
 - Fazer busca local por nome de produto, limitada às lojas selecionadas.
@@ -689,7 +689,7 @@ A V4 só pode ser marcada implementada quando:
 | Seleção | Somente lojas escolhidas; sem limite funcional de quantidade |
 | Cobertura | Todas as páginas expostas até `isLastPage`, sem teto fixo |
 | Profundidade | Dados da listagem; nenhuma página individual por produto |
-| Frequência | 09h, 14h e 20h de Brasília |
+| Frequência | 10h30, 15h30 e 21h30 de Brasília |
 | Escala | Uma tarefa por loja, máximo duas simultâneas, páginas sequenciais |
 | Identidade | Loja por ID/slug; produto por loja + ID externo |
 | Pesquisa | Local no banco, termos completos normalizados, celular = smartphone |
@@ -709,6 +709,15 @@ A V4 só pode ser marcada implementada quando:
 | Primeira carga | Casas Bahia concluída; Ponto é o próximo gate antes de ampliar |
 
 Esses gates não reabrem o comportamento de produto. Eles definem como cumprir o volume com segurança.
+
+### 15.4. Acompanhamento pessoal e Central
+
+Além da seleção global administrativa de lojas, o app pode acompanhar um produto
+individual por `loja.slug + id_externo`. O PATCH autenticado grava a relação do
+usuário em `acompanhamento_usuario`; não altera seleção de loja nem inicia
+coleta. Alertas de preço/cashback só nascem após uma medição completa e válida,
+com o primeiro snapshot ignorado. O contrato compartilhado e retenções estão
+em [`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
 
 ### 15.3 Registro da especificação
 

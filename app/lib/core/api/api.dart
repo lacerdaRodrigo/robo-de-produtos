@@ -59,6 +59,7 @@ class Api {
     String ordenar = 'pontos',
     int pagina = 1,
     int? porPagina,
+    bool acompanhamentoPessoal = true,
   }) async {
     final corpo = await cliente.obter(
       '/api/livelo/catalogo',
@@ -69,6 +70,7 @@ class Api {
         'ordenar': ordenar,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (!acompanhamentoPessoal) 'escopo': 'global',
       },
     );
     return PaginaCatalogoLivelo.parse(corpo);
@@ -81,6 +83,16 @@ class Api {
     await cliente.alterar(
       '/api/livelo/catalogo/$idExterno/acompanhamento',
       corpo: <String, Object?>{'acompanhada': acompanhada},
+    );
+  }
+
+  Future<void> alterarAcompanhamentoPessoalLivelo({
+    required String idExterno,
+    required bool ativo,
+  }) async {
+    await cliente.alterar(
+      '/api/livelo/catalogo/$idExterno/acompanhamento-pessoal',
+      corpo: <String, Object?>{'ativo': ativo},
     );
   }
 
@@ -108,6 +120,7 @@ class Api {
     int pagina = 1,
     bool apenasAcompanhadas = false,
     int? porPagina,
+    bool acompanhamentoPessoal = true,
   }) async {
     final corpo = await cliente.obter(
       '/api/inter/cashback',
@@ -117,6 +130,7 @@ class Api {
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
         if (apenasAcompanhadas) 'acompanhadas': 'true',
+        if (!acompanhamentoPessoal) 'escopo': 'global',
       },
     );
     return Pagina.parse(corpo, CashbackInter.parse);
@@ -307,6 +321,136 @@ class Api {
     await cliente.alterar(
       '/api/inter/produtos/lojas',
       corpo: <String, Object?>{'id': id, 'selecionada': selecionada},
+    );
+  }
+
+  Future<PaginaAlertasApi> alertas({
+    String filtro = 'todos',
+    bool somenteNaoLidos = false,
+    String? coleta,
+    int pagina = 1,
+    int? porPagina,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/alertas',
+      consulta: <String, String>{
+        'pagina': '$pagina',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (filtro != 'todos' && filtro != 'nao_lidos') 'tipo': filtro,
+        if (filtro == 'nao_lidos' || somenteNaoLidos)
+          'somente_nao_lidos': 'true',
+        'coleta': ?coleta,
+      },
+    );
+    return PaginaAlertasApi.parse(corpo);
+  }
+
+  Future<void> marcarAlerta({required String id, required bool lido}) async {
+    await cliente.alterar(
+      '/api/alertas/$id/leitura',
+      corpo: <String, Object?>{'lido': lido},
+    );
+  }
+
+  Future<void> marcarAlertas({
+    required List<String> ids,
+    required bool lido,
+  }) async {
+    await cliente.alterar(
+      '/api/alertas',
+      corpo: <String, Object?>{'ids': ids, 'lido': lido},
+    );
+  }
+
+  Future<PreferenciasAlertas> preferenciasAlertas() async {
+    final corpo = await cliente.obter('/api/alertas/preferencias');
+    return PreferenciasAlertas.parse(corpo);
+  }
+
+  Future<PreferenciasAlertas> salvarPreferenciasAlertas(
+    PreferenciasAlertas preferencias,
+  ) async {
+    final corpo = await cliente.alterar(
+      '/api/alertas/preferencias',
+      corpo: preferencias.toJson(),
+    );
+    return PreferenciasAlertas.parse(corpo);
+  }
+
+  Future<void> registrarDispositivo({
+    required String token,
+    required String plataforma,
+    required String versaoApp,
+  }) async {
+    await cliente.criar(
+      '/api/notificacoes/dispositivos',
+      corpo: <String, Object?>{
+        'token': token,
+        'plataforma': plataforma,
+        'versao_app': versaoApp,
+      },
+    );
+  }
+
+  Future<void> removerDispositivo(String token) async {
+    await cliente.remover(
+      '/api/notificacoes/dispositivos',
+      corpo: <String, Object?>{'token': token},
+    );
+  }
+
+  Future<void> relatarProblema({
+    required String categoria,
+    required String mensagem,
+    required String tela,
+    required String versaoApp,
+    String? sistema,
+  }) async {
+    await cliente.criar(
+      '/api/relatos-problema',
+      corpo: <String, Object?>{
+        'categoria': categoria,
+        'mensagem': mensagem,
+        'tela': tela,
+        'versao_app': versaoApp,
+        'sistema': sistema,
+      },
+    );
+  }
+
+  Future<void> alterarAcompanhamentoPessoal({
+    required String origem,
+    required String entidadeId,
+    required bool ativo,
+  }) async {
+    await cliente.alterar(
+      '/api/alertas/acompanhamentos',
+      corpo: <String, Object?>{
+        'origem': origem,
+        'entidade_id': entidadeId,
+        'ativo': ativo,
+      },
+    );
+  }
+
+  Future<void> alterarAcompanhamentoProduto({
+    required String loja,
+    required String idExterno,
+    required bool ativo,
+  }) async {
+    await cliente.alterar(
+      '/api/inter/produtos/$loja/$idExterno/acompanhamento',
+      corpo: <String, Object?>{'ativo': ativo},
+    );
+  }
+
+  Future<void> alterarAcompanhamentoPessoalCashback({
+    required String id,
+    required bool ativo,
+  }) async {
+    await cliente.alterar(
+      '/api/inter/cashback/$id/acompanhamento',
+      corpo: <String, Object?>{'ativo': ativo},
     );
   }
 

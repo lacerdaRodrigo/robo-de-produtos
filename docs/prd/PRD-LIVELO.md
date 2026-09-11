@@ -34,7 +34,7 @@ Promoção de pontuação turbinada na Livelo é efêmera, não tem aviso prévi
 - Histórico entre execuções, comparação de execuções e gráfico de tendência.
   *(O robô é stateless: cada execução mostra tudo que está ativo naquele momento, mesmo que repita o e-mail do dia anterior. A arquitetura deixa um contrato de repositório no-op como ponto de extensão — ver Seção 4.)*
   **Continua fora do escopo como entrada de decisão.** A V2.3 passou a gravar o retrato de cada execução para o app (Flutter) e a API terem o que exibir, mas nenhuma regra lê esse histórico de volta — ver RNF04.
-- Data de validade da promoção. **A justificativa original desta exclusão era falsa** e está registrada em 11.2: acreditava-se que exigiria ~40 requisições extras, mas a página já traz `dateStart` e `dateEnd` no mesmo payload. Segue fora da V1.0 apenas porque a V1.0 já estava fechada quando isso foi descoberto.
+- Data de validade da promoção. **A justificativa original desta exclusão era falsa**; a página já traz `dateStart` e `dateEnd` no mesmo payload. A regra foi incorporada na evolução documentada em [`PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](PRD-LIVELO-CATALOGO-ALERTAS-APP.md).
 - Login na conta Livelo, compra automática ou clique automático. **O robô nunca autentica** — lê apenas página pública.
 - Multiusuário, cadastro ou preferências por usuário.
 - Outros programas de pontos (Esfera, Latam Pass etc.). Somente Livelo.
@@ -118,7 +118,7 @@ Limitações reais do ambiente escolhido. Não são negociáveis — o projeto c
 | ID | Restrição | Impacto |
 |---|---|---|
 | **C01** | O GitHub desabilita workflows agendados após 60 dias sem atividade no repositório | O robô para de rodar em silêncio; exige mitigação explícita no roadmap |
-| **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h/14h/20h são aproximados; atraso de minutos é comportamento normal |
+| **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h10/14h10/20h10 são aproximados; atraso de minutos é comportamento normal |
 | **C04** | A Livelo pode alterar o HTML ou adotar proteção anti-bot sem aviso | O extrator é frágil por natureza — é exatamente o que RF12 existe para detectar |
 
 ### 2.4 Parâmetros de configuração
@@ -196,7 +196,7 @@ Contratos definidos apenas onde a troca é realmente provável. Eram três na V1
 | `FonteDePagina` | Devolver o HTML cru da página de parceiros | Torna barata a troca prevista em C04: o Plano B com Playwright substitui só esta peça | `requests` |
 | `Notificador` | Entregar a mensagem montada | Isola o canal de saída da lógica que decide o conteúdo | SMTP via Gmail |
 | `CatalogoFavoritas` | Fornecer lojas favoritas, apelidos e categorias | Atende RNF09: a mudança mais frequente do projeto deixa de exigir edição de código | Arquivo TOML ou Postgres, com o arquivo de reserva |
-| `PreferenciasGlobais` | Fornecer multiplicador padrão, piso padrão e se o leitor assina o Clube | RN28 precisa de uma régua editável sem `git push`. Separada do catálogo porque responde outra pergunta — "com que régua", não "quais lojas" — e vem de outra tabela | Padrões do PRD-V2 §6.1 ou Postgres, com os padrões de reserva |
+| `PreferenciasGlobais` | Fornecer multiplicador padrão, piso padrão e se o leitor assina o Clube | RN28 precisa de uma régua editável sem `git push`. Separada do catálogo porque responde outra pergunta — "com que régua", não "quais lojas" — e vem de outra tabela | Padrões do PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1 ou Postgres, com os padrões de reserva |
 | `RepositorioDeExecucao` | Guardar o retrato de cada rodada | RF15: o app/API precisa da pontuação atual, que só existe durante a execução | Postgres, ou nenhum lugar quando não há banco |
 
 **O ponto de extensão previsto virou necessidade.** Este PRD registrava `RepositorioExecucao` como "documentado, não implementado", porque histórico estava fora do escopo da V1 (Seção 1.4) e criar interface no-op para funcionalidade inexistente seria construir o futuro. A V2.3 é a necessidade que ele esperava, e a previsão se confirmou: o caso de uso ganhou uma dependência a mais e **nenhuma regra de negócio mudou**.
@@ -263,7 +263,7 @@ robo/
 ├── app/                          # Flutter (Web, Android e iOS) — única interface
 ├── migracoes/                    # esquema do Postgres, em SQL versionado
 ├── docs/
-│   ├── prd/                      # PRD-LIVELO.md (fonte da verdade), PRD-V2..V5
+│   ├── prd/                      # PRD-LIVELO.md, evolução Livelo e PRDs dos domínios
 │   ├── guias/                    # ARQUITETURA (histórico), EMAIL, ROTEAMENTO_MODELOS
 │   ├── TESTES.md                 # catálogo de casos
 │   └── PENDENCIAS.md             # lista viva do que falta
@@ -688,15 +688,14 @@ O repositório é público por decisão do objetivo O4, o que expõe publicament
 |---|---|---|
 | **V1.0** ✔ | Fatia vertical completa: todo o escopo da Seção 2, rodando no GitHub Actions com o quality gate verde | MS2 verificado contra a página real (254 parceiros, 22 promoções). MS3 pendente até a primeira execução no Actions |
 | **V1.1** | Roteiro do smoke manual e regra de filtro no Gmail para os e-mails sem promoção (11.4) | MS1 e MS5 medidos ao longo de 30 dias |
-| **V2** | Planejada em documento próprio: [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md). Data de validade, site próprio com edição (Next.js na Vercel, Postgres no Neon) e e-mail condicional | Ver Seção 4 do PRD V2 |
+| **V2.0–V2.3** ✔ | Evolução implementada: payload JSON, validade, campanhas, alertas por régua, Postgres, API autenticada, catálogo paginado, histórico e cliente Flutter | [`PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](PRD-LIVELO-CATALOGO-ALERTAS-APP.md) |
 
 A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando, da requisição HTTP até o e-mail entregue. Não há versão anterior a ela porque qualquer recorte menor não produz valor — meio caminho não manda e-mail nenhum.
 
-### 11.2 Candidatos para V2
+### 11.2 Candidatos para evolução futura
 
 | Candidato | Gatilho | Observação |
 |---|---|---|
-| **Data de validade da promoção** | Alta prioridade | A página embute um payload JSON com `dateStart`, `dateEnd`, `parity`, `parityClub` e `parityBau` por parceiro. Na medição de 2026-08-09, **31 das 40 promoções terminavam naquele mesmo dia** — é a informação que transforma o e-mail em algo acionável. Custo real: zero requisição extra, apenas ler o payload em vez de raspar o card |
 | Playwright no lugar de `requests` | **Somente se C04 disparar** | A porta `FonteDePagina` já existe para isso (Seção 4.2). Não é para contornar bloqueio (10.1) |
 | Histórico de execuções | Vontade de comparar promoções entre dias | Exige a porta de persistência documentada em 4.2 |
 | Segundo canal de notificação | Cansaço do e-mail | A porta `Notificador` já existe |
@@ -707,9 +706,9 @@ A V1.0 é a fatia vertical no sentido estrito: um caminho fim a fim funcionando,
 
 Registrado para não voltar como ideia nova: banco de dados, multiusuário com cadastro, outros programas de pontos, compra ou clique automático, e qualquer técnica de evasão de bloqueio.
 
-> **Front-end saiu desta lista.** A V2 o traz de volta como site próprio (Next.js na Vercel, com edição sob autenticação), com a justificativa registrada na Seção 1 do [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md). O motivo do veto original — infraestrutura sob responsabilidade própria, contra O2 — deixou de valer porque a V2 assumiu esse custo deliberadamente, como registrado no §7.3 do PRD-V2.
+> **Front-end e banco já não estão fora do escopo vigente.** A evolução Livelo incorporou API autenticada, Postgres e cliente Flutter. O site histórico foi desativado; o contrato atual de consumo está no aplicativo e na API.
 >
-> **Banco de dados também saiu desta lista, e também voltou.** A tabela acima registrava "sem banco de dados" como decisão permanente; o PRD-V2 §3.3 revoga isso explicitamente — a configuração passa a viver em Postgres porque o site precisa escrevê-la.
+> **Banco de dados:** a configuração e os retratos vivem no Postgres; o TOML permanece somente como carga/reserva conforme o contrato da evolução.
 
 ### 11.4 Nota sobre volume de e-mail
 

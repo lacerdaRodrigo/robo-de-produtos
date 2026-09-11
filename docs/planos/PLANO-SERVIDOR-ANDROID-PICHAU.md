@@ -97,7 +97,8 @@ nesta etapa.
   e o `/usr/bin/env` do Linux não existe nesse ambiente;
 - `migracoes/022_pichau_android_fila.sql`, que cria a fila idempotente com
   estados, claim atômico, lease e índice operacional;
-- workflow `.github/workflows/pichau.yml`, que agenda 09h/14h/20h de Brasília,
+- workflow `.github/workflows/pichau.yml`, que agenda 09h30/14h30/20h30 de
+  Brasília, entre Livelo e Inter,
   enfileira e aguarda o resultado Android;
 - testes unitários do adaptador, do diagnóstico sem banco e da exigência de
   `DATABASE_URL` no modo normal.
@@ -252,9 +253,9 @@ continuam descritos abaixo:
 
 ### Fase 4 — workflow e fila Android — prova histórica, disponibilidade reaberta
 
-O disparo recorrente deve seguir os mesmos horários de Livelo e Inter:
-`09h`, `14h` e `20h` de Brasília, configurados no workflow como
-`0 12,17,23 * * *` UTC. O disparo manual usa exatamente o mesmo caminho.
+O disparo recorrente deve ocorrer depois da Livelo e antes do Inter:
+`09h30`, `14h30` e `20h30` de Brasília, configurados no workflow como
+`30 12,17,23 * * *` UTC. O disparo manual usa exatamente o mesmo caminho.
 
 O workflow não coleta no Ubuntu. Ele instala somente o pacote Python da fila,
 insere uma solicitação com `github_run_id` como chave idempotente e aguarda o

@@ -36,9 +36,9 @@ class ClienteApi {
     ).replace(queryParameters: consulta);
     final cabecalhos = await _cabecalhos(autenticado: autenticado);
 
-    final resposta = await _http
-        .get(uri, headers: cabecalhos)
-        .timeout(const Duration(seconds: 20));
+    final resposta = await _requisitar(
+      () => _http.get(uri, headers: cabecalhos),
+    );
 
     return _processar(resposta);
   }
@@ -55,9 +55,9 @@ class ClienteApi {
     final uri = Uri.parse('$baseUrl$caminho');
     final cabecalhos = await _cabecalhos();
     cabecalhos['content-type'] = 'application/json';
-    final resposta = await _http
-        .patch(uri, headers: cabecalhos, body: jsonEncode(corpo))
-        .timeout(const Duration(seconds: 20));
+    final resposta = await _requisitar(
+      () => _http.patch(uri, headers: cabecalhos, body: jsonEncode(corpo)),
+    );
     return _processar(resposta);
   }
 
@@ -74,20 +74,40 @@ class ClienteApi {
     final cabecalhos = await _cabecalhos();
     cabecalhos['content-type'] = 'application/json';
     cabecalhos.addAll(cabecalhosExtras ?? const <String, String>{});
-    final resposta = await _http
-        .post(uri, headers: cabecalhos, body: jsonEncode(corpo))
-        .timeout(const Duration(seconds: 20));
+    final resposta = await _requisitar(
+      () => _http.post(uri, headers: cabecalhos, body: jsonEncode(corpo)),
+    );
     return _processar(resposta);
   }
 
   /// Remove um recurso administrativo identificado pela própria API.
-  Future<Map<String, dynamic>> remover(String caminho) async {
+  Future<Map<String, dynamic>> remover(
+    String caminho, {
+    Map<String, Object?>? corpo,
+  }) async {
     final uri = Uri.parse('$baseUrl$caminho');
     final cabecalhos = await _cabecalhos();
-    final resposta = await _http
-        .delete(uri, headers: cabecalhos)
-        .timeout(const Duration(seconds: 20));
+    if (corpo != null) cabecalhos['content-type'] = 'application/json';
+    final resposta = await _requisitar(
+      () => _http.delete(
+        uri,
+        headers: cabecalhos,
+        body: corpo == null ? null : jsonEncode(corpo),
+      ),
+    );
     return _processar(resposta);
+  }
+
+  Future<http.Response> _requisitar(
+    Future<http.Response> Function() requisicao,
+  ) async {
+    try {
+      return await requisicao().timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw ErroDeRede('A conexão demorou demais.');
+    } on Object {
+      throw ErroDeRede('Sem conexão com a API.');
+    }
   }
 
   Future<Map<String, String>> _cabecalhos({bool autenticado = true}) async {

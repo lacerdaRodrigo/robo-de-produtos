@@ -79,6 +79,7 @@ export type ProdutoDireto = {
   loja_slug: string;
   loja_nome: string;
   atualizada_em: string;
+  acompanhado: boolean;
 };
 
 export type LojaDireta = {
@@ -214,7 +215,13 @@ const COLUNAS_PRODUTO = `
   m.desconto_texto, m.desconto_percentual_texto,
   m.cashback_texto, m.cashback_percentual_texto,
   m.preco_liquido_texto, m.parcelamento, m.estoque, m.etiquetas,
-  m.momento AS atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome`;
+  m.momento AS atualizada_em, l.slug AS loja_slug, l.nome AS loja_nome,
+  EXISTS (
+    SELECT 1 FROM acompanhamento_usuario acompanhamento
+     WHERE acompanhamento.usuario_app_id = $1::bigint
+       AND acompanhamento.origem = 'inter_produto'
+       AND acompanhamento.entidade_id = p.id
+  ) AS acompanhado`;
 
 /**
  * Busca paginada de produtos. A categoria funcional é o valor externo exato

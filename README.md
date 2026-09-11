@@ -10,8 +10,10 @@ cada fonte sem misturar suas regras.
 
 > **Ciclo atual:** o Flutter está em redesign **mobile-only**, governado por
 > [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
-> mas não é alvo nem gate deste ciclo. Central de Alertas, fechamento externo do
-> App Check e confirmação operacional das migrations 016/017 continuam pendentes.
+> mas não é alvo nem gate deste ciclo. A Central de Alertas está implementada;
+> configuração Firebase/FCM está preparada; o secret do cron e o aceite físico
+> continuam pendentes conforme
+> [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md).
 
 ## Estrutura do repositório
 
@@ -46,12 +48,13 @@ todas leem apenas fontes públicas.
 | Documento | Para quê |
 |---|---|
 | **[`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
-| [`docs/TESTES.md`](docs/TESTES.md) | Catálogo de casos de teste |
+| [`docs/testes/TESTES.md`](docs/testes/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
-| [`docs/prd/PRD-LIVELO-V2.md`](docs/prd/PRD-LIVELO-V2.md) | V2: data de validade, site próprio (desativado) e e-mail condicional |
+| [`docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md) | Livelo: catálogo, alertas e aplicativo |
+| [`docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Central de Alertas, suporte, privacidade, FCM e acompanhamento pessoal |
 | [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
 | [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
-| [`docs/prd/PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md`](docs/prd/PRD-CATEGORIAS-INTER-FONTE-OFICIAL.md) | Delta: categorias externas do Shopping Inter e limpeza da taxonomia Radar |
+| [`docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md) | Delta: categorias externas do Compre direto no Inter e limpeza da taxonomia Radar |
 | [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
 | [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
 | [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
@@ -102,8 +105,14 @@ robôs publicam seus retratos no banco e não possuem notificador SMTP ativo. Ve
 ## GitHub Actions
 
 Em **Settings → Secrets and variables → Actions**, crie os segredos usados pelos
-workflows. Os coletores rodam às 09h, 14h e 20h (produtos às 09h30/14h30/20h30).
+workflows. A sequência planejada é Livelo às 09h10/14h10/20h10, Pichau às
+09h30/14h30/20h30 e Inter às 10h30/15h30/21h30.
 Veja a lista completa em [`.github/README.md`](.github/README.md).
+
+Antes de ativar a outbox, cadastre `OUTBOX_CRON_SECRET` com o mesmo valor na
+Vercel (`Production`) e em GitHub Actions. O valor não deve ser enviado pelo
+chat nem versionado; não são usados `CRON_SECRET`, `DEBUG_AUTH` ou
+`ALLOWED_ORIGINS` para esse workflow.
 
 > **Nota sobre reativação:** com o pacote em `backend/robo/src/`, recolocar o CI
 > de coleta em pé exige rodar a partir de `backend/robo/` e ajustar o caminho de
