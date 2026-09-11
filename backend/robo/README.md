@@ -126,9 +126,9 @@ python -m robo_pichau.principal --diagnostico
   `scripts/pichau-android-appium.sh` aceita `start`, `stop` e `status`; o runner
   mantém a sessão tmux somente durante a coleta e a encerra ao sair. Ao sair, o
   adaptador encerra a sessão, confirma o `force-stop` do Chrome, limpa novamente
-  as tarefas recentes, volta à Home e remove a ponte CDP antes da publicação. O
-  trap do runner repete o fechamento em sucesso, falha ou sinal sem substituir
-  a causa original.
+  as tarefas recentes, volta à Home, bloqueia a tela com `KEYCODE_SLEEP` e remove
+  a ponte CDP antes da publicação. O trap do runner repete o fechamento e o
+  bloqueio em sucesso, falha ou sinal sem substituir a causa original.
   `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
   tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
   a vida do daemon. Ao reivindicar uma solicitação, ele exige checkout sem

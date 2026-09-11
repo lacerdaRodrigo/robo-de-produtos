@@ -257,6 +257,8 @@ limpar_runner() {
         adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
             am force-stop com.android.chrome >/dev/null 2>&1 || true
         limpar_tarefas_recentes >/dev/null 2>&1 || true
+        adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
+            input keyevent KEYCODE_SLEEP >/dev/null 2>&1 || true
         adb -P "$ADB_PORT" -s "$ADB_TARGET" forward \
             --remove tcp:9222 >/dev/null 2>&1 || true
     fi

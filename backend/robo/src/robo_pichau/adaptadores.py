@@ -552,6 +552,11 @@ class _ChromeDevTools:
             codigo="navegador",
         )
 
+    def bloquear_tela(self) -> None:
+        """Deixa a Home protegida pela tela bloqueada ao terminar."""
+
+        self._executar(["shell", "input", "keyevent", "KEYCODE_SLEEP"])
+
     def _listar_tarefas_recentes(self) -> tuple[int, ...]:
         resultado = self._executar(["shell", "dumpsys", "activity", "recents"])
         saida = resultado.stdout
@@ -1391,7 +1396,7 @@ class FontePichauAndroid:
             except FalhaPichau as erro:
                 falha_limpeza = erro
             try:
-                self._limpar_estado_android()
+                self._limpar_estado_android(bloquear=True)
             except FalhaPichau as erro:
                 falha_limpeza = falha_limpeza or erro
             finally:
@@ -1408,18 +1413,30 @@ class FontePichauAndroid:
                 return
             raise falha_limpeza
 
-    def _limpar_estado_android(self) -> None:
+    def _limpar_estado_android(self, *, bloquear: bool = False) -> None:
         if self.cdp is None:
             return
+        falha: FalhaPichau | None = None
         try:
-            self.cdp.forcar_parada()
+            try:
+                self.cdp.forcar_parada()
+            except FalhaPichau as erro:
+                _log.warning(
+                    "Pichau Android: force-stop inicial falhou; tentando remover tarefas; "
+                    "codigo=%s.",
+                    erro.codigo,
+                )
+            self.cdp.limpar_tarefas_recentes(confirmar=True)
+            self.cdp.forcar_parada(confirmar=True)
         except FalhaPichau as erro:
-            _log.warning(
-                "Pichau Android: force-stop inicial falhou; tentando remover tarefas; codigo=%s.",
-                erro.codigo,
-            )
-        self.cdp.limpar_tarefas_recentes(confirmar=True)
-        self.cdp.forcar_parada(confirmar=True)
+            falha = erro
+        if bloquear:
+            try:
+                self.cdp.bloquear_tela()
+            except FalhaPichau as erro:
+                falha = falha or erro
+        if falha is not None:
+            raise falha
 
     def pagina(self, pagina: int) -> str:
         if pagina < 1:

@@ -191,8 +191,9 @@ pública permitida diretamente por ADB e aguarda o DevTools. Appium/UiAutomator2
 só cria uma sessão nativa se essa inicialização direta falhar; as capacidades
 mantêm `noReset` e `forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o
 driver é encerrado, tarefas recentes são removidas novamente, o Chrome é
-forçado a parar com confirmação, a Home volta ao primeiro plano e a ponte CDP é
-removida. Sem outra exceção, falhar essa confirmação impede a publicação; com
+forçado a parar com confirmação, a Home volta ao primeiro plano, a tela é
+bloqueada com `KEYCODE_SLEEP` e a ponte CDP é removida. Sem outra exceção,
+falhar essa confirmação impede a publicação; com
 uma causa anterior, a limpeza é repetida sem mascará-la. O trap do runner também
 repete a limpeza em sucesso, falha ou sinal.
 
@@ -528,6 +529,15 @@ antes havia uma tarefa padrão e processo ativo; depois de `am stack remove`,
 restaram zero tarefas padrão, zero processo Chrome e a Home ficou em primeiro
 plano. A falha da fila 52 reinicia novamente o gate de 72 horas.
 
+A execução manual `34547029990` (fila 54) iniciou deliberadamente com duas
+tarefas recentes, Chrome ativo e tela bloqueada. Já no release `1.66.12`, ela
+passou em uma sessão e 2min53s: seis páginas, 1.178 itens declarados/lidos/únicos
+e execução de catálogo 42. Ao final havia zero tarefa padrão, Chrome ocioso e
+Appium ocioso. A prova também revelou que `KEYCODE_HOME` acordava esta ROM ao
+encerrar; o contrato foi completado com `KEYCODE_SLEEP` no adaptador e no trap.
+O próximo disparo deve provar simultaneamente o fast-forward automático a partir
+do checkout `ee17a16` e a restauração da tela bloqueada.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
@@ -545,10 +555,10 @@ plano. A falha da fila 52 reinicia novamente o gate de 72 horas.
 
 ## Estado operacional do executor Android
 
-O hardening anterior e a migration desta revisão estão implantados; a limpeza
-de tarefas recentes está validada localmente e no aparelho, mas ainda depende
-do envio à `main`, atualização do checkout do Samsung e coleta manual real antes
-da nova observação de 72 horas. O telefone precisa
+O hardening, a migration e a limpeza de tarefas recentes estão implantados. A
+coleta manual com estado residual passou, mas a restauração explícita da tela
+bloqueada e o alinhamento automático de checkout ainda aguardam a prova real do
+próximo disparo antes da nova observação de 72 horas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de

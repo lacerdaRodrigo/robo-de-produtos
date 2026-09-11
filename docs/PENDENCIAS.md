@@ -11,7 +11,8 @@ a disponibilidade contínua do executor Android continua aberta. A execução
 diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
 Depois do “Fechar tudo” manual, a `34545283501`, fila 53, passou em uma
 tentativa. A limpeza sem coordenada por `am stack remove` já foi provada no
-aparelho, mas a falha reiniciou novamente o gate operacional.
+aparelho. A `34547029990`, fila 54, passou começando com Chrome e duas tarefas
+recentes abertos; a falha anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
@@ -42,10 +43,10 @@ aparelho, mas a falha reiniciou novamente o gate operacional.
   confirmação, o responsável aplicou a migration em `production`; a
   verificação somente de leitura confirmou coluna, constraints, 47 linhas com
   `{}` e os mesmos grants.
-- [ ] Enviar à `main` o alinhamento automático de checkout por fast-forward,
-  atualizar o Samsung uma última vez para ativar esse protocolo e retirar o
-  cabo. A partir daí cada claim confirma que o HEAD contém o SHA do workflow e
-  falha como `pichau-checkout` antes da coleta quando houver divergência.
+- [ ] Validar no próximo disparo que o Samsung em `ee17a16` avança sozinho por
+  fast-forward, contém o SHA do workflow e restaura a tela bloqueada depois de
+  voltar à Home. O protocolo já está na `main`; divergência falha como
+  `pichau-checkout` antes da coleta.
 - [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
   metadados seguros do log local da falha de 10/09. Essa investigação foi
   adiada pelo responsável e não bloqueia a migration nem a implementação local.

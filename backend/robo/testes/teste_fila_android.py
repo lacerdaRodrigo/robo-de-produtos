@@ -324,6 +324,7 @@ def teste_runner_remove_tarefas_recentes_sem_coordenada_de_tela() -> None:
     assert "type=standard" in runner
     assert 'am stack remove "$tarefa_id"' in runner
     assert "input keyevent KEYCODE_HOME" in runner
+    assert "input keyevent KEYCODE_SLEEP" in runner
     assert runner.count("limpar_tarefas_recentes") >= 3
     assert "uiautomator" not in runner
 

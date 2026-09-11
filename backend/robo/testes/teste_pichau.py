@@ -66,6 +66,9 @@ class CicloDevToolsFalso:
     def limpar_tarefas_recentes(self, *, confirmar: bool = False) -> None:
         pass
 
+    def bloquear_tela(self) -> None:
+        pass
+
 
 def teste_url_de_log_remove_query_fragmento_e_credenciais() -> None:
     assert (
@@ -486,6 +489,21 @@ def teste_cdp_android_remove_tarefas_recentes_e_volta_para_home(monkeypatch) -> 
     ]
 
 
+def teste_cdp_android_bloqueia_tela_sem_coordenada(monkeypatch) -> None:
+    devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=10.0)
+    chamadas: list[tuple[list[str], bool]] = []
+
+    def executar(argumentos: list[str], *, check: bool = True):
+        chamadas.append((argumentos, check))
+        return SimpleNamespace(returncode=0, stdout=b"")
+
+    monkeypatch.setattr(devtools, "_executar", executar)
+
+    devtools.bloquear_tela()
+
+    assert chamadas == [(["shell", "input", "keyevent", "KEYCODE_SLEEP"], True)]
+
+
 def teste_cdp_android_aguarda_json_transitorio_do_devtools(monkeypatch) -> None:
     devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=2.0)
     respostas = iter(
@@ -568,6 +586,7 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
         def __init__(self) -> None:
             self.paradas: list[bool] = []
             self.confirmacoes = 0
+            self.bloqueios = 0
 
         def forcar_parada(self, *, confirmar: bool = False) -> None:
             self.paradas.append(confirmar)
@@ -582,6 +601,9 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
         def fechar(self) -> None:
             pass
 
+        def bloquear_tela(self) -> None:
+            self.bloqueios += 1
+
     devtools_falha = DevTools()
     with (
         pytest.raises(FalhaAoObterPichau, match="bloqueio original") as original,
@@ -589,6 +611,7 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
     ):
         raise FalhaAoObterPichau("bloqueio original", codigo="acesso")
     assert original.value.codigo == "acesso"
+    assert devtools_falha.bloqueios == 1
 
     devtools_sucesso = DevTools()
     with (
@@ -598,6 +621,7 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
         pass
     assert limpeza.value.codigo == "navegador"
     assert devtools_sucesso.paradas == [False, True, False, True]
+    assert devtools_sucesso.bloqueios == 1
 
 
 def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:
