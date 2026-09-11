@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.13 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Restaura bloqueio da tela ao encerrar
+  ([`9f71c8e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9f71c8e752bc4b62f1b5e75d8ab3569701efafc6))
+
+
 ## v1.66.12 (2026-09-11)
 
 ### Bug Fixes
