@@ -11,8 +11,8 @@ cada fonte sem misturar suas regras.
 > **Ciclo atual:** o Flutter está em redesign **mobile-only**, governado por
 > [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
 > mas não é alvo nem gate deste ciclo. A Central de Alertas está implementada;
-> configuração Firebase/FCM está preparada; o secret do cron e o aceite físico
-> continuam pendentes conforme
+> configuração Firebase/FCM e secret do cron estão ativos; o aceite físico e um
+> push provocado por evento real continuam pendentes conforme
 > [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md).
 
 ## Estrutura do repositório
@@ -109,10 +109,10 @@ workflows. A sequência planejada é Livelo às 09h10/14h10/20h10, Pichau às
 09h30/14h30/20h30 e Inter às 10h30/15h30/21h30.
 Veja a lista completa em [`.github/README.md`](.github/README.md).
 
-Antes de ativar a outbox, cadastre `OUTBOX_CRON_SECRET` com o mesmo valor na
-Vercel (`Production`) e em GitHub Actions. O valor não deve ser enviado pelo
-chat nem versionado; não são usados `CRON_SECRET`, `DEBUG_AUTH` ou
-`ALLOWED_ORIGINS` para esse workflow.
+O `OUTBOX_CRON_SECRET` está cadastrado com o mesmo valor na Vercel
+(`Production`) e em GitHub Actions. O valor não deve ser enviado pelo chat nem
+versionado; não são usados `CRON_SECRET`, `DEBUG_AUTH` ou `ALLOWED_ORIGINS` para
+esse workflow.
 
 > **Nota sobre reativação:** com o pacote em `backend/robo/src/`, recolocar o CI
 > de coleta em pé exige rodar a partir de `backend/robo/` e ajustar o caminho de
