@@ -1,9 +1,9 @@
 # PRD — Central de Alertas, suporte e privacidade
 
 Status: implementado no contrato e no código; a migration foi aplicada
-manualmente e o projeto Firebase `radarbeneficios`/Vercel já está configurado.
-Ainda dependem de operação o segredo compartilhado do cron e o aceite físico
-do Android.
+manualmente, o projeto Firebase `radarbeneficios`/Vercel está configurado e o
+secret compartilhado do cron está ativo. Ainda dependem de operação um evento
+real que gere push e o aceite físico do Android.
 
 ## Objetivo
 
@@ -87,11 +87,13 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 Conforme confirmação operacional do responsável, a migration 023 foi aplicada
 manualmente depois das migrations anteriores e o Firebase `radarbeneficios` está
 configurado para a API/Android. Este checkout não executou a SQL nem produziu
-evidência independente do banco. Antes do merge na `main`, é necessário
-cadastrar `OUTBOX_CRON_SECRET` com o mesmo valor na Vercel em `Production` e em
-GitHub Actions; o valor não é enviado pelo chat. Depois, ainda é necessário
-executar o workflow, confirmar FCM real, distribuir a APK privada e concluir o
-teste manual nos devices.
+evidência independente do banco. O merge, deploy, APK e secret do cron foram
+confirmados: o health-check de produção respondeu saudável, a rota interna
+respondeu 401 sem credencial e a execução manual `34554150530` passou com
+`processadas=0`, `enviadas=0`, `recuperadas=0`. Como não havia evento pendente,
+essa execução ainda não prova a entrega de um push FCM real. A APK foi gerada e
+distribuída pelo `app-robo` `34553635486`; falta instalar/conferir nos devices e
+executar o aceite manual completo.
 
 Este PRD incorpora o plano de implementação; o arquivo de plano histórico foi
 removido para não voltar a orientar trabalho já entregue.
