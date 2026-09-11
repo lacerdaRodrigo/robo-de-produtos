@@ -149,7 +149,8 @@ def teste_config_real_do_projeto_e_valida():
             assert por_nome[base] != por_nome[parecido]
 
 
-# --- CT-108 a CT-112: catalogo do banco e reserva em arquivo (PRD-LIVELO-CATALOGO-ALERTAS-APP 7.1.1) ---
+# --- CT-108 a CT-112: catalogo do banco e reserva em arquivo ---
+# (PRD-LIVELO-CATALOGO-ALERTAS-APP 7.1.1)
 
 
 class CatalogoFalho:
