@@ -2,6 +2,30 @@
 
 <!-- version list -->
 
+## v1.67.0 (2026-09-11)
+
+### Chores
+
+- Alinhar horarios dos coletores
+  ([`66f6955`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/66f695540db4182ed7408ed743b341a92cd08551))
+
+### Documentation
+
+- Registra migrations aplicadas e sincroniza branch
+  ([`a3108a6`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a3108a668d19d01f31b9daab73c73b71882b93ed))
+
+- Remove pending migration note from API
+  ([`69fe815`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/69fe81531651a156cd0412502f896bd05d797a51))
+
+- **pichau**: Registra estabilizacao Android
+  ([`c7dbb98`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c7dbb9800a850ed3244c56ad83e4130c79d7dadc))
+
+### Features
+
+- Processar outbox de alertas pelo cron
+  ([`83f4f27`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/83f4f27fde6ebe59d79753cc6a2c2732de8175b6))
+
+
 ## v1.66.13 (2026-09-11)
 
 ### Bug Fixes
