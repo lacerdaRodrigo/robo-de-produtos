@@ -262,8 +262,14 @@ void main() {
     await at.tap(find.text('Acompanhadas'));
     await at.pumpAndSettle();
     expect(requisicoes.last.url.queryParameters['aba'], 'acompanhadas');
-    expect(find.text('Pichau Gaming 7800X3D RTX 4070 Super'), findsOneWidget);
-    expect(find.text('Pichau Gaming Ryzen 5 RX 7600'), findsNothing);
+    expect(
+      find.text('Pichau Gaming 7800X3D RTX 4070 Super'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Pichau Gaming Ryzen 5 RX 7600'),
+      findsNothing,
+    );
     expect(find.text('1 oferta encontrada'), findsOneWidget);
 
     await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
