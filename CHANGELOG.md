@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.12 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Alinha checkout Android antes da coleta
+  ([`5831979`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5831979872e7d66ae3ddbccd0d117b4978f1d937))
+
+
 ## v1.66.11 (2026-09-11)
 
 ### Bug Fixes
