@@ -200,11 +200,27 @@ export async function registrarRelatoProblema(usuarioId: string, valor: { catego
 }
 
 type OutboxPendente = { id: string; usuario_app_id: string; origem: string; coleta_id: string };
+type ResultadoOutbox = { processadas: number; enviadas: number; recuperadas: number };
+
+function codigoErroMensageria(erro: unknown): string {
+  if (!erro || typeof erro !== "object") return "";
+  const valor = erro as { code?: unknown; errorInfo?: { code?: unknown } };
+  if (typeof valor.code === "string") return valor.code;
+  return typeof valor.errorInfo?.code === "string" ? valor.errorInfo.code : "";
+}
 
 /** Processa uma pequena janela da outbox. Pode ser chamado por um cron protegido. */
-export async function processarOutboxAlertas(limite = 20): Promise<{ processadas: number; enviadas: number }> {
+export async function processarOutboxAlertas(limite = 20): Promise<ResultadoOutbox> {
   const sql = conectar();
   await sql`SELECT expurgar_alertas_suporte()`;
+  const presas = (await sql`
+    UPDATE notificacao_outbox_alerta
+       SET estado = 'falha', proxima_tentativa_em = now(),
+           ultimo_erro = 'processamento interrompido', atualizado_em = now()
+     WHERE estado = 'enviando'
+       AND atualizado_em < now() - interval '15 minutes'
+     RETURNING id
+  `) as Array<{ id: string }>;
   let processadas = 0;
   let enviadas = 0;
   for (let indice = 0; indice < Math.min(50, Math.max(1, limite)); indice += 1) {
@@ -255,7 +271,7 @@ export async function processarOutboxAlertas(limite = 20): Promise<{ processadas
       for (const token of tokens as Array<{ id: string; token: string }>) {
         try { await mensageriaFirebase().send({ ...mensagem, token: token.token }); }
         catch (erro) {
-          const codigo = erro && typeof erro === "object" && "errorInfo" in erro ? String((erro as { errorInfo?: { code?: string } }).errorInfo?.code ?? "") : "";
+          const codigo = codigoErroMensageria(erro);
           if (codigo === "messaging/registration-token-not-registered" || codigo === "messaging/invalid-registration-token") invalidos.push(token.token);
           else falhaEnvio = true;
         }
@@ -271,5 +287,5 @@ export async function processarOutboxAlertas(limite = 20): Promise<{ processadas
       await sql`UPDATE notificacao_outbox_alerta SET estado = 'falha', proxima_tentativa_em = now() + make_interval(secs => LEAST(3600, 30 * tentativas)), ultimo_erro = 'falha de envio', atualizado_em = now() WHERE id = ${outbox.id}`;
     }
   }
-  return { processadas, enviadas };
+  return { processadas, enviadas, recuperadas: presas.length };
 }

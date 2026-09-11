@@ -18,7 +18,8 @@ anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
-- [ ] Configurar FCM no projeto Android/API e executar o cron da outbox; a permissão de push é opcional e o histórico deve continuar acessível quando recusada.
+- [ ] Criar `OUTBOX_CRON_SECRET` com o mesmo valor na Vercel em `Production` e em GitHub Actions antes do merge na `main`; o valor não deve ser enviado pelo chat nem versionado.
+- [ ] Executar o workflow `notificacoes-outbox.yml` e confirmar geração/processamento da outbox e entrega FCM real; a permissão de push é opcional e o histórico deve continuar acessível quando recusada.
 - [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi instalada no Moto e já confirmou abertura, navegação de Conta, Ajuda, Reportar problema, Privacidade, claro/escuro e estado de erro da Central; filtros, paginação, leitura, preferências e dados reais aguardam publicação/configuração da API e aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos e overflow. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
@@ -73,7 +74,7 @@ anterior ainda reinicia o gate operacional.
 
 ## Próxima fase — produto, operação e publicação
 
-- [ ] Integrar e configurar o Firebase usado pelo aplicativo, incluindo autenticação, App Check, FCM, Crashlytics e ambientes separados quando aplicável.
+- [ ] Validar em operação a configuração já preparada do Firebase `radarbeneficios`, incluindo autenticação, App Check e FCM; não declarar Crashlytics ou ambientes separados como concluídos sem evidência própria.
 - [ ] Definir um sistema centralizado de logs para app, API e robôs, com correlação por execução, níveis de severidade, retenção e sem registrar tokens, dados pessoais ou payloads sensíveis.
 - [ ] Completar o runbook operacional dos robôs Livelo, Inter Sites parceiros e Inter Compre direto: entradas, variáveis de ambiente, comandos, workflows, horários, tabelas escritas, códigos de saída, retries, reexecução manual e diagnóstico de falhas.
 - [ ] Reorganizar as telas Flutter e extrair componentes reutilizáveis para pastas `widgets/`, preservando a separação por domínio e sem quebrar os imports das jornadas existentes.

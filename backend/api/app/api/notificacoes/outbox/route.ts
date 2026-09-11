@@ -4,7 +4,7 @@ import { autenticarRequisicao } from "@/lib/autenticacao-api";
 import { corpoErro, STATUS } from "@/lib/api";
 import { processarOutboxAlertas } from "@/lib/banco-alertas";
 
-/** Endpoint interno para cron; nunca expõe token ou payload pessoal. */
+/** Endpoint administrativo; o cron usa a rota interna separada em /api/cron. */
 export async function POST(requisicao: Request) {
   const acesso = await autenticarRequisicao(requisicao, { operacao: "notificacoes.outbox.processar", papel: "admin", sensivel: true });
   if (!acesso.ok) return acesso.resposta;

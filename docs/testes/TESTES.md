@@ -710,11 +710,12 @@ O que conferir:
 | CT-179 | Preferências e push opcional | Flags serializam e recusa de permissão não impede histórico | Parser, API fake e `GerenciadorNotificacoes` |
 | CT-180 | Isolamento e autorização | Rotas exigem Firebase/App Check quando configurado, limite e `usuario_app_id`; acompanhamento não acessa outra conta | Testes direcionados da autenticação/validadores e revisão de SQL |
 | CT-181 | Snapshot válido e deduplicação | Primeiro, ausente, inválido, parcial e falho não geram evento; aumento/redução gera uma vez por coleta | Funções da migration e adaptadores após snapshot publicado |
-| CT-182 | Retenção e outbox | Expurgo respeita 90/180 dias; outbox é idempotente, faz retry e desativa token inválido | Consulta da migration e fake do mensageiro |
+| CT-182 | Retenção e outbox | Expurgo respeita 90/180 dias; outbox é idempotente, faz retry, recupera linha presa em `enviando`, respeita preferências e desativa token inválido | `backend/api/lib/banco-alertas.teste.ts`, consulta da migration e fake do mensageiro |
 | CT-183 | Relato sem segredo | Categoria/mensagem/versionamento são validados e logs usam apenas request ID | Validator `alertas-api` e rota autenticada |
 | CT-184 | Acompanhamento pessoal de produto | A ação por loja/id externo é isolada, idempotente e não altera seleção global | PATCH da rota e card de Produtos Inter |
 | CT-185 | Acompanhamento pessoal Livelo e cashback | Rotas resolvem a chave pública, isolam o usuário e preservam os endpoints administrativos | PATCH especializado + consultas `escopo=pessoal` |
 | CT-186 | Catálogos usam o escopo correto | Usuário vê somente seus acompanhamentos; administrador pode solicitar o catálogo global | Teste da rota e SQL parametrizado |
+| CT-187 | Cron da outbox protegido | Somente `Authorization: Bearer OUTBOX_CRON_SECRET` chama a rota interna; resposta tem contagens operacionais e falhas não expõem segredos | `backend/api/app/api/cron/notificacoes/outbox/route.teste.ts` |
 
 ## Totais
 

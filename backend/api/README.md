@@ -51,7 +51,8 @@ backend/api/
 | `alertas/preferencias` | GET/PATCH | Preferências de push e tipos | Firebase |
 | `alertas/acompanhamentos` | PATCH | Acompanhamento pessoal de uma entidade | Firebase |
 | `notificacoes/dispositivos` | POST/DELETE | Registro/remoção de token FCM | Firebase |
-| `notificacoes/outbox` | POST | Envio idempotente da outbox e expurgo | admin/cron |
+| `notificacoes/outbox` | POST | Envio idempotente da outbox e expurgo, acionado manualmente | admin |
+| `cron/notificacoes/outbox` | POST | Processamento interno da outbox pelo GitHub Actions | `Authorization: Bearer OUTBOX_CRON_SECRET` |
 | `relatos-problema` | POST | Relato autenticado sem dados sensíveis | Firebase |
 
 A raiz `/` devolve 404 vazio. Constraints e execução completa em
@@ -66,8 +67,8 @@ A raiz `/` devolve 404 vazio. Constraints e execução completa em
 
 Variáveis de ambiente (modelo em `examples/.env.example`): `DATABASE_URL`,
 `FIREBASE_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `SEGREDO_LIMITE_API`,
-`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS` e `GITHUB_TOKEN_DISPARO`. Não há variável
-SMTP/e-mail usada por esta API.
+`EXIGIR_APP_CHECK`, `ALLOWED_ORIGINS`, `GITHUB_TOKEN_DISPARO` e
+`OUTBOX_CRON_SECRET`. Não há variável SMTP/e-mail usada por esta API.
 
 ## Como rodar / testar
 
@@ -88,8 +89,13 @@ As rotas de alertas dependem de `migracoes/023_alertas_suporte_privacidade.sql`.
 As leituras de Livelo e cashback aceitam `escopo=pessoal` (padrão do app) e
 usam `acompanhamento_usuario`; somente administradores podem solicitar
 `escopo=global`. As rotas administrativas legadas continuam separadas.
-O cron protegido chama `POST /api/notificacoes/outbox`; ele expurga alertas de
-90 dias e relatos de 180 dias, processa retries e desativa tokens FCM inválidos.
-O banco não deve ser acessado pelo Flutter. A aplicação da migration foi
-confirmada operacionalmente pelo responsável; este checkout não executa a SQL
-nem produz validação independente do ambiente alvo.
+O administrador pode chamar `POST /api/notificacoes/outbox` com a autenticação
+Firebase e papel `admin`. O GitHub Actions chama somente
+`POST /api/cron/notificacoes/outbox` com `Authorization: Bearer
+OUTBOX_CRON_SECRET`; as rotas permanecem separadas. O processamento expurga
+alertas de 90 dias e relatos de 180 dias, processa retries, recupera linhas
+presas em `enviando` há pelo menos 15 minutos e desativa tokens FCM inválidos.
+A resposta contém apenas as contagens `processadas`, `enviadas` e
+`recuperadas`. O banco não deve ser acessado pelo Flutter. A aplicação da
+migration foi confirmada operacionalmente pelo responsável; este checkout não
+executa a SQL nem produz validação independente do ambiente alvo.
