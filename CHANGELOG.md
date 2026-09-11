@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.67.3 (2026-09-11)
+
+### Bug Fixes
+
+- Corrigir sinos e acompanhamento dos cards
+  ([`ee6bfcc`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/ee6bfccf8e5c50ba958b72234f1a35917c9fb4c5))
+
+
 ## v1.67.2 (2026-09-11)
 
 ### Bug Fixes
