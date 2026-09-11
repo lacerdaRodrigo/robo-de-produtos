@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v1.67.4 (2026-09-11)
+
+### Bug Fixes
+
+- Alinhar testes dos sinos
+  ([`a37e6a6`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a37e6a6b650d37df2cb46b2a051872f44bd22f24))
+
+### Chores
+
+- Diagnosticar formatacao Dart
+  ([`c2f45ee`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c2f45ee012986bd4c030877614482fafeec5a58c))
+
+### Code Style
+
+- Alinhar formatacao do teste Pichau
+  ([`04fce4e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/04fce4e3cc0c09123e8927f82026c6a3fbb169dc))
+
+- Formatar testes do Flutter
+  ([`34e06e9`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/34e06e97349c106da09445abe0f66126d3e8f661))
+
+
 ## v1.67.3 (2026-09-11)
 
 ### Bug Fixes
