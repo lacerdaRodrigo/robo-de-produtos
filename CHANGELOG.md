@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.67.2 (2026-09-11)
+
+### Bug Fixes
+
+- Corrigir qualidade da rodada nos alertas Inter
+  ([`dc6e555`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/dc6e5553eb393cb844cf2aaf4af3b64fbb3d8e4b))
+
+### Documentation
+
+- Registrar aceite inicial da outbox
+  ([`b30548d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b30548d105028d79044637e64257e76feb95af79))
+
+
 ## v1.67.1 (2026-09-11)
 
 ### Bug Fixes
