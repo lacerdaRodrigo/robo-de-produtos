@@ -39,9 +39,7 @@ jobs:
         run: flutter pub get
 
       - name: Formatacao
-        run: |
-          dart format lib test
-          git diff -- test/features/pichau/pagina_pichau_test.dart
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Analise
         run: flutter analyze

@@ -19,7 +19,7 @@ const _catalogo = {
       'categoria_externa': 'PC Gamer',
       'url_produto': 'https://www.pichau.com.br/produto/pg-7800',
       'presente_no_catalogo': true,
-      'acompanhada': true,
+      'acompanhada': false,
       'disponibilidade': 'disponivel',
       'preco_original_texto': 'R\$ 8.199,90',
       'preco_pix_texto': 'R\$ 7.499,90',
@@ -250,10 +250,7 @@ void main() {
       ..['total_itens'] = 1;
     await at.pumpWidget(
       _tela(
-        _api(
-          requisicoes: requisicoes,
-          catalogoAcompanhadas: acompanhadas,
-        ),
+        _api(requisicoes: requisicoes, catalogoAcompanhadas: acompanhadas),
         administrador: true,
       ),
     );

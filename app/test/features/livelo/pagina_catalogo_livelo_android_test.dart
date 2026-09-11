@@ -478,7 +478,7 @@ void main() {
     );
     expect(pontos, findsOneWidget);
     expect(
-      at.getTopRight(pontos).dx,
+      at.getTopRight(sino).dx,
       closeTo(at.getTopRight(cartao).dx - 14, 1),
     );
   });
