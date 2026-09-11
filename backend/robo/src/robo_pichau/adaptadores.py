@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import random
+import re
 import subprocess
 import time
 from collections.abc import Callable
@@ -447,6 +448,9 @@ class FontePichauSeleniumBase:
 class _ChromeDevTools:
     """Ponte efemera ADB/CDP para ler o DOM do Chrome Android."""
 
+    _TAREFA_RECENTE = re.compile(r"Task\{[^}\n]* #([1-9][0-9]*) type=standard\b")
+    _MAX_TAREFAS_RECENTES = 64
+
     def __init__(
         self,
         *,
@@ -524,6 +528,49 @@ class _ChromeDevTools:
         raise FalhaAoObterPichau(
             "O Chrome Android permaneceu ativo depois da coleta.", codigo="navegador"
         )
+
+    def limpar_tarefas_recentes(self, *, confirmar: bool = False) -> None:
+        """Remove tarefas recentes como o botão Samsung ``Fechar tudo``."""
+
+        for tentativa in range(1, 4):
+            tarefas = self._listar_tarefas_recentes()
+            for tarefa_id in tarefas:
+                self._executar(
+                    ["shell", "am", "stack", "remove", str(tarefa_id)],
+                    check=False,
+                )
+            self._executar(
+                ["shell", "input", "keyevent", "KEYCODE_HOME"],
+                check=False,
+            )
+            if not confirmar or not self._listar_tarefas_recentes():
+                return
+            if tentativa < 3:
+                time.sleep(0.5)
+        raise FalhaAoObterPichau(
+            "O Android manteve tarefas recentes depois da limpeza.",
+            codigo="navegador",
+        )
+
+    def bloquear_tela(self) -> None:
+        """Deixa a Home protegida pela tela bloqueada ao terminar."""
+
+        self._executar(["shell", "input", "keyevent", "KEYCODE_SLEEP"])
+
+    def _listar_tarefas_recentes(self) -> tuple[int, ...]:
+        resultado = self._executar(["shell", "dumpsys", "activity", "recents"])
+        saida = resultado.stdout
+        if isinstance(saida, bytes):
+            texto = saida.decode("utf-8", errors="replace")
+        else:
+            texto = str(saida or "")
+        tarefas = tuple(dict.fromkeys(int(item) for item in self._TAREFA_RECENTE.findall(texto)))
+        if len(tarefas) > self._MAX_TAREFAS_RECENTES:
+            raise FalhaAoObterPichau(
+                "O Android retornou tarefas recentes demais para limpar.",
+                codigo="navegador",
+            )
+        return tarefas
 
     def aguardar_pagina(self, tentativas: int = 15, intervalo: float = 1.0) -> None:
         """Aguarda a aba DevTools depois de relançar o Chrome pelo Appium."""
@@ -1288,7 +1335,7 @@ class FontePichauAndroid:
                     timeout=self.timeout,
                 )
             self._emitir_diagnostico(estado="iniciando", etapa="chrome_limpeza")
-            self.cdp.forcar_parada()
+            self._limpar_estado_android()
             try:
                 self._abrir_chrome_direto()
             except FalhaPichau as erro_direto:
@@ -1306,7 +1353,7 @@ class FontePichauAndroid:
                 )
                 try:
                     self.cdp.fechar()
-                    self.cdp.forcar_parada()
+                    self._limpar_estado_android()
                 except FalhaPichau as erro_limpeza:
                     _log.warning(
                         "Pichau Android: limpeza antes do fallback Appium falhou; codigo=%s.",
@@ -1349,7 +1396,7 @@ class FontePichauAndroid:
             except FalhaPichau as erro:
                 falha_limpeza = erro
             try:
-                self.cdp.forcar_parada(confirmar=True)
+                self._limpar_estado_android(bloquear=True)
             except FalhaPichau as erro:
                 falha_limpeza = falha_limpeza or erro
             finally:
@@ -1365,6 +1412,31 @@ class FontePichauAndroid:
                 )
                 return
             raise falha_limpeza
+
+    def _limpar_estado_android(self, *, bloquear: bool = False) -> None:
+        if self.cdp is None:
+            return
+        falha: FalhaPichau | None = None
+        try:
+            try:
+                self.cdp.forcar_parada()
+            except FalhaPichau as erro:
+                _log.warning(
+                    "Pichau Android: force-stop inicial falhou; tentando remover tarefas; "
+                    "codigo=%s.",
+                    erro.codigo,
+                )
+            self.cdp.limpar_tarefas_recentes(confirmar=True)
+            self.cdp.forcar_parada(confirmar=True)
+        except FalhaPichau as erro:
+            falha = erro
+        if bloquear:
+            try:
+                self.cdp.bloquear_tela()
+            except FalhaPichau as erro:
+                falha = falha or erro
+        if falha is not None:
+            raise falha
 
     def pagina(self, pagina: int) -> str:
         if pagina < 1:

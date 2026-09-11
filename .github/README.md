@@ -32,8 +32,11 @@ os itens que dependem de confirmação externa continuam em `docs/PENDENCIAS.md`
   necessário para criar tag e release).
 - Nenhum robô grava no repositório.
 - O workflow Pichau não acessa o telefone diretamente: grava uma solicitação
-  idempotente na fila Postgres e aguarda o worker Termux. O telefone não recebe
-  token do GitHub nem expõe porta pública.
+  idempotente com o commit disparador na fila Postgres e aguarda o worker
+  Termux. Antes da coleta, o worker atualiza o checkout por fast-forward e
+  confirma que contém aquele commit; divergência falha como `pichau-checkout`.
+  O telefone usa o remoto Git já configurado, não recebe token do workflow nem
+  expõe porta pública.
 - O robô Pichau usa somente páginas públicas autorizadas, limita-se a 300
   páginas por execução, preserva as validações de catálogo e não persiste
   imagens, HTML ou cookies.

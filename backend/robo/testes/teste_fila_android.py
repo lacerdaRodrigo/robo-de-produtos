@@ -66,6 +66,73 @@ def teste_fila_valida_url_chave_e_origem_sem_expor_segredo() -> None:
         fila_android.validar_origem("outro")
 
 
+def teste_checkout_avanca_main_e_confirma_commit_solicitante(tmp_path: Path) -> None:
+    commit = "a" * 40
+    chamadas: list[list[str]] = []
+    heads = iter(("b" * 40, commit))
+
+    def executar(argumentos: list[str], **_kwargs):
+        chamadas.append(argumentos)
+        if argumentos[-2:] == ["rev-parse", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout=next(heads))
+        return SimpleNamespace(returncode=0, stdout="")
+
+    fila_android.sincronizar_checkout(
+        f"github-123-{commit}", repositorio=tmp_path, executar=executar
+    )
+
+    prefixo = ["git", "-C", str(tmp_path)]
+    assert fila_android.commit_solicitado(f"github-123-{commit}") == commit
+    assert fila_android.commit_solicitado("github-123") is None
+    assert chamadas == [
+        [*prefixo, "status", "--porcelain", "--untracked-files=no"],
+        [*prefixo, "rev-parse", "HEAD"],
+        [
+            *prefixo,
+            "fetch",
+            "--quiet",
+            "--no-tags",
+            "origin",
+            "+refs/heads/main:refs/remotes/origin/main",
+        ],
+        [*prefixo, "merge", "--ff-only", "--quiet", "origin/main"],
+        [*prefixo, "merge-base", "--is-ancestor", commit, "HEAD"],
+        [*prefixo, "rev-parse", "HEAD"],
+        [
+            fila_android.sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--no-input",
+            "-e",
+            ".[pichau-android]",
+        ],
+    ]
+
+
+def teste_checkout_local_alterado_impede_atualizacao(tmp_path: Path) -> None:
+    chamadas = 0
+
+    def executar(*_args, **_kwargs):
+        nonlocal chamadas
+        chamadas += 1
+        return SimpleNamespace(returncode=0, stdout=" M arquivo.py\n")
+
+    with pytest.raises(fila_android.FalhaFilaAndroid, match="alteracoes locais"):
+        fila_android.sincronizar_checkout("github-123", repositorio=tmp_path, executar=executar)
+
+    assert chamadas == 1
+
+
+def teste_workflow_transporta_sha_na_chave_da_fila() -> None:
+    workflow = (
+        fila_android.CAMINHO_REPOSITORIO / ".github" / "workflows" / "pichau.yml"
+    ).read_text(encoding="utf-8")
+
+    assert '--chave "github-${{ github.run_id }}-${{ github.sha }}"' in workflow
+
+
 def teste_codigo_runner_expoe_somente_categoria_operacional() -> None:
     assert fila_android.codigo_falha_runner(32) == "adb-wifi-descoberta"
     assert fila_android.codigo_falha_runner(34) == "adb-wifi-estado"
@@ -180,11 +247,13 @@ def teste_executar_trabalho_finaliza_sucesso_ou_falha(monkeypatch, tmp_path: Pat
         "postgres://db?sslmode=require",
         runner=runner,
         executar=lambda *_args, **_kwargs: SimpleNamespace(returncode=0),
+        sincronizar=lambda _chave: None,
     )
     falha = fila_android.executar_trabalho(
         "postgres://db?sslmode=require",
         runner=runner,
         executar=lambda *_args, **_kwargs: SimpleNamespace(returncode=2),
+        sincronizar=lambda _chave: None,
     )
 
     assert sucesso is True
@@ -207,12 +276,57 @@ def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -
         return SimpleNamespace(returncode=0)
 
     fila_android.executar_trabalho(
-        "postgres://db?sslmode=require", runner=runner, executar=executar
+        "postgres://db?sslmode=require",
+        runner=runner,
+        executar=executar,
+        sincronizar=lambda _chave: None,
     )
 
     assert "DATABASE_URL" not in ambiente_recebido
     assert ambiente_recebido["PICHAU_WAKE_LOCK_OWNER"] == "worker"
     assert ambiente_recebido["PICHAU_ANDROID_FILA_ID"] == "7"
+
+
+def teste_checkout_incompativel_falha_sem_executar_coleta(monkeypatch, tmp_path: Path) -> None:
+    runner = tmp_path / "pichau-android-run.sh"
+    runner.touch()
+    finalizados: list[tuple[bool, str | None]] = []
+    monkeypatch.setattr(fila_android, "reivindicar", lambda _url: trabalho())
+    monkeypatch.setattr(fila_android, "obter", lambda *_args: trabalho())
+    monkeypatch.setattr(
+        fila_android,
+        "finalizar",
+        lambda _url, _id, *, sucesso, codigo_falha=None, **_kwargs: finalizados.append(
+            (sucesso, codigo_falha)
+        ),
+    )
+
+    def nao_executar(*_args, **_kwargs):
+        pytest.fail("coleta nao pode iniciar com checkout incompativel")
+
+    resultado = fila_android.executar_trabalho(
+        "postgres://db?sslmode=require",
+        runner=runner,
+        executar=nao_executar,
+        sincronizar=lambda _chave: (_ for _ in ()).throw(
+            fila_android.FalhaFilaAndroid("checkout incompativel")
+        ),
+    )
+
+    assert resultado is False
+    assert finalizados == [(False, "pichau-checkout")]
+
+
+def teste_runner_remove_tarefas_recentes_sem_coordenada_de_tela() -> None:
+    runner = fila_android.CAMINHO_RUNNER.read_text(encoding="utf-8")
+
+    assert "dumpsys activity recents" in runner
+    assert "type=standard" in runner
+    assert 'am stack remove "$tarefa_id"' in runner
+    assert "input keyevent KEYCODE_HOME" in runner
+    assert "input keyevent KEYCODE_SLEEP" in runner
+    assert runner.count("limpar_tarefas_recentes") >= 3
+    assert "uiautomator" not in runner
 
 
 def teste_health_faz_somente_sondagem_minima(monkeypatch) -> None:

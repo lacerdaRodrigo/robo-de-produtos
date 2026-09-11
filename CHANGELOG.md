@@ -2,6 +2,43 @@
 
 <!-- version list -->
 
+## v1.66.13 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Restaura bloqueio da tela ao encerrar
+  ([`9f71c8e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/9f71c8e752bc4b62f1b5e75d8ab3569701efafc6))
+
+
+## v1.66.12 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Alinha checkout Android antes da coleta
+  ([`5831979`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/5831979872e7d66ae3ddbccd0d117b4978f1d937))
+
+
+## v1.66.11 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Limpa tarefas recentes no Android
+  ([`4a3e91b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4a3e91be9da35f415cd27ed4cfddc2cb8798b8d0))
+
+
+## v1.66.10 (2026-09-10)
+
+### Bug Fixes
+
+- **pichau**: Estabiliza ciclo Android e diagnóstico da fila
+  ([`f4a94da`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/f4a94dacd79930c90a99091e7f1fdd6b66e9036f))
+
+### Documentation
+
+- **pichau**: Registra validacao Android
+  ([`1531979`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/1531979a27df0b35a7925bd4b87d4135cabf2ea0))
+
+
 ## v1.66.9 (2026-09-10)
 
 ### Bug Fixes

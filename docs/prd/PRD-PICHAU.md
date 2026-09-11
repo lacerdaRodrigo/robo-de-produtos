@@ -181,15 +181,21 @@ reconciliação por URL.
 Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
 
-Cada sessão Android começa sem estado de navegador: executa
-`am force-stop com.android.chrome`, abre a URL pública permitida diretamente por
-ADB e aguarda o DevTools. Appium/UiAutomator2 só cria uma sessão nativa se essa
-inicialização direta falhar; as capacidades mantêm `noReset` e
-`forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o driver é encerrado,
-o Chrome é forçado a parar com confirmação e a ponte CDP é removida. Sem outra
-exceção, falhar essa confirmação impede a publicação; com uma causa anterior,
-a limpeza é repetida sem mascará-la. O trap do runner também força o fechamento
-em sucesso, falha ou sinal.
+Cada sessão Android começa sem estado de aplicativo: enumera pelo `dumpsys`
+somente tarefas recentes `type=standard`, valida e limita seus IDs, remove cada
+uma com `am stack remove` e aciona `KEYCODE_HOME`. Esse é o equivalente sem
+coordenada ao botão Samsung “Fechar tudo”; tarefas Home/Recents não são alvo e o
+conteúdo do `dumpsys` não entra no log. Depois, executa
+`am force-stop com.android.chrome`, confirma a ausência do processo, abre a URL
+pública permitida diretamente por ADB e aguarda o DevTools. Appium/UiAutomator2
+só cria uma sessão nativa se essa inicialização direta falhar; as capacidades
+mantêm `noReset` e `forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o
+driver é encerrado, tarefas recentes são removidas novamente, o Chrome é
+forçado a parar com confirmação, a Home volta ao primeiro plano, a tela é
+bloqueada com `KEYCODE_SLEEP` e a ponte CDP é removida. Sem outra exceção,
+falhar essa confirmação impede a publicação; com
+uma causa anterior, a limpeza é repetida sem mascará-la. O trap do runner também
+repete a limpeza em sucesso, falha ou sinal.
 
 A execução real `34302348225` confirmou a operação completa depois da correção
 do arranque do Chrome sem aba DevTools: 1.173 produtos foram publicados com
@@ -199,8 +205,9 @@ aproximadamente 69s.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
-idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
-sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
+idempotente em `pichau_android_fila` cuja chave combina `github_run_id` e
+`github.sha`, aguarda o worker Termux e só termina com sucesso depois que o
+Android publica a coleta. O Ubuntu não executa fallback.
 O workflow usa `PICHAU_DISPATCH_DATABASE_URL`; o fallback para o secret amplo
 `DATABASE_URL` permanece somente para recuperação controlada. O telefone mantém
 a credencial privada do publicador no Termux. Em falhas de navegador, o robô
@@ -392,9 +399,10 @@ Livelo e Inter permanecem fora desta prova.
 
 O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
 horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
-usa a mesma fila. Cada execução usa `github_run_id` como chave idempotente,
-insere um trabalho `pendente` e aguarda até 20 minutos os estados `sucesso` ou
-`falha`.
+usa a mesma fila. Cada execução combina `github_run_id` e o `github.sha` de 40
+caracteres na chave idempotente, insere um trabalho `pendente` e aguarda até 20
+minutos os estados `sucesso` ou `falha`. O uso da chave existente dispensa nova
+coluna ou migration e mantém legíveis as linhas antigas sem SHA.
 
 O worker `pichau-android-worker.sh` é iniciado diretamente pelo Termux:Boot,
 sem ser destacado em tmux: o script de boot transfere o processo com `exec`, o
@@ -402,6 +410,18 @@ Termux mantém a tarefa foreground e o worker conserva wake/Wi-Fi lock durante
 toda a vida do daemon. Ele consulta a fila a cada 30 segundos e reivindica um
 trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos continua permitindo
 recuperar uma execução abandonada.
+
+Depois do claim e antes de abrir o Chrome, o executor exige que não existam
+alterações locais versionadas, busca somente `origin/main` sem prompt interativo
+e avança o checkout exclusivamente por fast-forward. Em seguida confirma por
+ancestralidade que o HEAD local contém o SHA que disparou o workflow. Isso
+aceita um release automático posterior ao disparo, como ocorreu entre
+`4a3e91b` e `e64a003`, mas não aceita branch divergente, checkout sujo, falha de
+rede ou commit ausente. Quando o HEAD muda, o mesmo Python do worker reinstala
+o projeto editável com o extra `pichau-android`, garantindo também o alinhamento
+das dependências. Falha de Git ou instalação termina a fila como
+`pichau-checkout` e a coleta nem inicia. Solicitações antigas sem SHA ainda
+atualizam até a `main`, preservando a compatibilidade operacional.
 
 O job 7301 chama `pichau-android-recover.sh` a cada 15 minutos com rede `any`,
 sem condições de bateria ou armazenamento. O recuperador tenta iniciar o mesmo
@@ -497,6 +517,35 @@ falha e deixa de ser comportamento aceito: o contrato vigente sempre começa e
 termina com Chrome parado. A `34519730452` reinicia o gate; a nova janela só
 começa depois da implantação no Samsung e da coleta manual real registrada.
 
+Em 2026-09-11, a execução `34544816986` (fila 52) falhou como
+`pichau-dados` em 5min29s. A fila terminou com `diagnostico={}` e sem
+`execucao_id`, provando que o Samsung ainda executava o checkout anterior e não
+a estabilização já enviada à `main`. Logo depois, o responsável abriu Recentes
+e acionou manualmente “Fechar tudo”; a execução `34545283501` (fila 53) passou
+em uma tentativa e 3min24s. A comparação não isola toda a causa interna do
+Chrome, mas comprova que a pilha recente é uma variável operacional relevante.
+No mesmo aparelho, a automação nova foi validada criando uma tarefa Chrome:
+antes havia uma tarefa padrão e processo ativo; depois de `am stack remove`,
+restaram zero tarefas padrão, zero processo Chrome e a Home ficou em primeiro
+plano. A falha da fila 52 reinicia novamente o gate de 72 horas.
+
+A execução manual `34547029990` (fila 54) iniciou deliberadamente com duas
+tarefas recentes, Chrome ativo e tela bloqueada. Já no release `1.66.12`, ela
+passou em uma sessão e 2min53s: seis páginas, 1.178 itens declarados/lidos/únicos
+e execução de catálogo 42. Ao final havia zero tarefa padrão, Chrome ocioso e
+Appium ocioso. A prova também revelou que `KEYCODE_HOME` acordava esta ROM ao
+encerrar; o contrato foi completado com `KEYCODE_SLEEP` no adaptador e no trap.
+Na execução seguinte, `34547539783` (fila 56), o telefone foi deixado
+propositalmente em `ee17a16`, enquanto o workflow partiu de `7487d87`; sem
+`git pull` manual, o claim fez o fast-forward, validou o SHA e realinhou o
+ambiente Python. A coleta passou em uma tentativa e 3min18s, com seis páginas e
+1.178 itens declarados/lidos/únicos na execução de catálogo 44. Ao final havia
+zero tarefa padrão, Chrome e Appium ociosos, keyguard ativo, tela desligada e
+estado de interação `SLEEP`. Isso fecha a prova funcional do alinhamento
+dinâmico e da restauração da tela. Como o cabo de dados ainda estava fisicamente
+conectado para a inspeção ADB, a execução manual sem cabo e o gate agendado
+continuam pendentes.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
@@ -514,9 +563,10 @@ começa depois da implantação no Samsung e da coleta manual real registrada.
 
 ## Estado operacional do executor Android
 
-O hardening anterior e a migration desta revisão estão implantados; a
-estabilização ainda depende da atualização do Samsung e da coleta manual real
-antes da nova observação de 72 horas. O telefone precisa
+O hardening, a migration, a limpeza de tarefas recentes, a restauração da tela
+bloqueada e o alinhamento automático de checkout estão implantados e passaram
+em coleta real. A execução manual sem cabo físico e a nova observação agendada
+de 72 horas continuam abertas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de

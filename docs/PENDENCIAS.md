@@ -7,10 +7,14 @@ Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados
 Web/integration/E2E fora do gate. A implementação backend Pichau desta tarefa
 foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
 a disponibilidade contínua do executor Android continua aberta. A execução
-`34519730452`, em 2026-09-10, falhou como `pichau-acesso`; uma coleta anterior
-passou no mesmo commit também com o Chrome aberto, portanto o estado residual é
-um risco removido pelo novo ciclo limpo, não uma causa isolada comprovada. Essa
-falha reiniciou o gate operacional.
+`34544816986`, fila 52, falhou em 2026-09-11 como `pichau-dados`; a fila sem
+diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
+Depois do “Fechar tudo” manual, a `34545283501`, fila 53, passou em uma
+tentativa. A limpeza sem coordenada por `am stack remove` já foi provada no
+aparelho. A `34547029990`, fila 54, passou começando com Chrome e duas tarefas
+recentes abertos. A `34547539783`, fila 56, também passou após atualizar sozinho
+o checkout e terminou com tela bloqueada, tarefas/Chrome/Appium ociosos; a falha
+anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
@@ -36,15 +40,15 @@ falha reiniciou o gate operacional.
   confirmação, o responsável aplicou a migration em `production`; a
   verificação somente de leitura confirmou coluna, constraints, 47 linhas com
   `{}` e os mesmos grants.
-- [ ] Atualizar o checkout do Samsung por USB autorizado, conferir
-  worker/watchdog/fila/ADB e retirar o cabo.
 - [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
   metadados seguros do log local da falha de 10/09. Essa investigação foi
   adiada pelo responsável e não bloqueia a migration nem a implementação local.
 - [ ] Executar uma coleta manual real com a tela bloqueada e somente Wi-Fi:
   exigir no máximo duas sessões, recuperação visível quando usada, catálogo e
   contagens completos, nenhuma publicação parcial, fila/sumário detalhados no
-  Actions e Chrome/Appium ociosos ao final. Registrar a run no PRD.
+  Actions e Chrome/Appium ociosos ao final. A `34547539783` comprovou tudo isso
+  com transporte interno Wi-Fi, mas o cabo de dados permaneceu conectado para a
+  inspeção ADB e por isso não encerra este aceite.
 - [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
   dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
   entre as coletas. A janela recomeça após a validação manual desta correção;
