@@ -90,6 +90,6 @@ usam `acompanhamento_usuario`; somente administradores podem solicitar
 `escopo=global`. As rotas administrativas legadas continuam separadas.
 O cron protegido chama `POST /api/notificacoes/outbox`; ele expurga alertas de
 90 dias e relatos de 180 dias, processa retries e desativa tokens FCM inválidos.
-O banco não deve ser acessado pelo Flutter. Aplicação e validação da migration
-no ambiente alvo ficam registradas em `docs/PENDENCIAS.md` até existir uma
-conexão Neon autorizada.
+O banco não deve ser acessado pelo Flutter. A aplicação da migration foi
+confirmada operacionalmente pelo responsável; este checkout não executa a SQL
+nem produz validação independente do ambiente alvo.
