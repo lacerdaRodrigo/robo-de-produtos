@@ -1,7 +1,8 @@
 # PRD — Central de Alertas, suporte e privacidade
 
-Status: implementado no contrato e no código; aplicação da migration, configuração
-de FCM e aceite físico do Android continuam pendentes de ambiente.
+Status: implementado no contrato e no código; a migration foi aplicada
+manualmente, enquanto configuração de FCM e aceite físico do Android continuam
+pendentes de ambiente.
 
 ## Objetivo
 
@@ -69,18 +70,18 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
    adaptadores de coleta passam.
 3. O protótipo V11 e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
-4. Migration 023 é aplicada e validada no banco alvo por operação autorizada.
+4. Migration 023 está aplicada no banco alvo por operação autorizada.
 5. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
    preferências, Ajuda, relato, privacidade, links externos e ausência de dados
    são conferidas no Moto G6 Play; o aceite Samsung permanece separado.
 
 ## Pendências externas
 
-Sem `DATABASE_URL`, credencial Neon ou `psql` disponíveis neste ciclo, a migration
-foi revisada no repositório, mas não executada. É necessário aplicar somente a
-023 após confirmar 001–022, validar tabelas/índices/constraints e registrar a
-evidência. Também faltam configurar FCM/Android, executar o cron da outbox,
-validar a política de privacidade e concluir o teste manual nos devices.
+Conforme confirmação operacional do responsável, a migration 023 foi aplicada
+manualmente depois das migrations anteriores. Este checkout não executou a SQL
+nem produziu evidência independente do banco. Ainda faltam configurar FCM/Android,
+executar o cron da outbox, validar a política de privacidade e concluir o teste
+manual nos devices.
 
 Este PRD incorpora o plano de implementação; o arquivo de plano histórico foi
 removido para não voltar a orientar trabalho já entregue.

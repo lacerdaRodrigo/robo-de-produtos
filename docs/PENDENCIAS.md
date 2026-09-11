@@ -18,9 +18,8 @@ anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
-- [ ] Aplicar e validar `migracoes/023_alertas_suporte_privacidade.sql` no banco alvo: não há `DATABASE_URL`, credencial Neon nem `psql` disponíveis neste checkout, portanto a execução não foi simulada nem declarada como feita. Registrar tabelas, índices, constraints e consultas de verificação após a aplicação autorizada.
 - [ ] Configurar FCM no projeto Android/API e executar o cron da outbox; a permissão de push é opcional e o histórico deve continuar acessível quando recusada.
-- [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi instalada no Moto e já confirmou abertura, navegação de Conta, Ajuda, Reportar problema, Privacidade, claro/escuro e estado de erro da Central; filtros, paginação, leitura, preferências e dados reais aguardam a migration/API 023. O aceite completo também cobre login/reautenticação, ausência, links externos e overflow. Isso não vira smoke automatizado neste ciclo.
+- [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi instalada no Moto e já confirmou abertura, navegação de Conta, Ajuda, Reportar problema, Privacidade, claro/escuro e estado de erro da Central; filtros, paginação, leitura, preferências e dados reais aguardam publicação/configuração da API e aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos e overflow. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
 - [ ] Publicar a evolução do contrato Pichau de acompanhamento antes de
@@ -65,8 +64,6 @@ anterior ainda reinicia o gate operacional.
 
 ## Ações operacionais externas
 
-- [ ] Confirmar operacionalmente a aplicação das migrations `016_preserva_historico_livelo.sql` e `017_qualidade_livelo.sql`. Elas são tratadas externamente; este repositório não registra confirmação de aplicação.
-- [ ] Validar a migration `020_categorias_inter_fonte_oficial.sql` em ambiente descartável e decidir sua aplicação somente com autorização explícita. Ela remove a taxonomia Radar obsoleta depois de confirmar que não há seleção legada de categorias.
 - [ ] Revisar periodicamente amostras reais dos recortes hierárquicos de navegação do catálogo Inter (incluindo os novos recortes de cozinhas, quarto/camas, beleza, saúde, limpeza/climatização e festas) e ampliar apenas folhas finais quando houver evidência. Os escopos atuais e “Outros / novas categorias” já são dinâmicos para qualquer quantidade de lojas ativas e selecionadas.
 - [ ] Publicar a API com os novos identificadores de escopo antes de distribuir o APK correspondente; app e API fora de versão retornam erro de validação e mantêm os cards anteriores como estado de falha.
 - [ ] Fechar o rollout externo do App Check antes de exigir enforcement. Não declarar Web/iOS observados nem enforcement ativo sem confirmação.

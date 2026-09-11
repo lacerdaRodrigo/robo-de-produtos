@@ -39,14 +39,13 @@ cria o `001` e carrega o catálogo.
 - API do app: `010`–`020` e `023` (autenticação, disparos, catálogos e Central de Alertas).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
-> feita por esta organização de pastas. Confira `docs/PENDENCIAS.md` antes de
-> rodar uma migração ainda não aplicada. O repositório não comprova o estado do
-> Neon: confira `docs/PENDENCIAS.md` e o ambiente alvo, especialmente antes da
-> `020`, que exige não haver seleção legada de categorias Radar.
+> feita por esta organização de pastas. Conforme confirmação operacional do
+> responsável, as migrations `001`–`024` foram aplicadas manualmente no banco
+> alvo. Este checkout não executa nem verifica migrations automaticamente.
 
-`023` ainda não foi executada neste checkout: não há conexão Neon autorizada.
-Depois da aplicação, validar as seis tabelas, índices, trigger, funções de
-geração/expurgo e as consultas de isolamento antes de liberar a API.
+`023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
+nem produziu evidência independente; a confirmação operacional permanece
+externa ao repositório.
 
 `024` depende somente de `022` e não aplica nem exige a `023`. Em 2026-09-10,
 ela foi validada numa branch temporária derivada de `production`: coluna e

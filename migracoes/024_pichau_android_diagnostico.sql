@@ -1,5 +1,5 @@
 -- Diagnostico operacional seguro da fila Android Pichau.
--- Esta migration depende somente da 022; a 023 pode continuar pendente.
+-- Esta migration depende somente da 022; sua aplicação não depende da 023.
 -- Aplicar por conexao direta e validar primeiro em branch temporaria de production.
 
 ALTER TABLE pichau_android_fila

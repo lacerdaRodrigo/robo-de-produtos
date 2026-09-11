@@ -11,8 +11,8 @@ cada fonte sem misturar suas regras.
 > **Ciclo atual:** o Flutter está em redesign **mobile-only**, governado por
 > [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
 > mas não é alvo nem gate deste ciclo. A Central de Alertas está implementada;
-> aplicação da migration 023, configuração FCM e aceite físico continuam
-> pendentes conforme [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md).
+> configuração FCM e aceite físico continuam pendentes conforme
+> [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md).
 
 ## Estrutura do repositório
 

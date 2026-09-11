@@ -1,8 +1,8 @@
 # PRD — Categorias externas do Compre direto no Inter
 
 **Status vigente em 2026-09-04:** regra implementada no robô, API e Flutter.
-A migration `020_categorias_inter_fonte_oficial.sql` permanece pendente de
-validação em ambiente descartável e de autorização explícita antes de aplicação.
+A migration `020_categorias_inter_fonte_oficial.sql` foi aplicada manualmente no
+banco alvo, conforme confirmação operacional do responsável.
 
 Este PRD detalha o contrato de categorias externas do Shopping Inter. Ele
 prevalece sobre qualquer descrição anterior de taxonomia interna de categorias

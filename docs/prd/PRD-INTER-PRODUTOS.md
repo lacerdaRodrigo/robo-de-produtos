@@ -1,7 +1,7 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.1 em aceite progressivo
-**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. O estado de aplicação de migrations no Neon exige confirmação operacional; as categorias externas são regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
+**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do domínio foram aplicadas manualmente no banco alvo; as categorias externas são regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
