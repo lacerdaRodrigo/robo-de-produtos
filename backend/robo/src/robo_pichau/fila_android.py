@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -21,6 +22,7 @@ INTERVALO_PADRAO_SEGUNDOS = 30
 PRAZO_PADRAO_SEGUNDOS = 20 * 60
 LEASE_PADRAO_SEGUNDOS = 30 * 60
 CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau-android-run.sh"
+CAMINHO_REPOSITORIO = Path(__file__).resolve().parents[4]
 CODIGOS_RUNNER = {
     1: "runner-inesperado",
     2: "runner-inesperado",
@@ -38,6 +40,7 @@ CODIGOS_RUNNER = {
     45: "pichau-parcial",
 }
 _CODIGO_FALHA_SEGURO = re.compile(r"^[a-z0-9][a-z0-9_-]{0,79}$")
+_CHAVE_COM_COMMIT = re.compile(r"^github-[0-9]+-([0-9a-f]{40})$")
 
 
 class FalhaFilaAndroid(RuntimeError):
@@ -97,6 +100,85 @@ def validar_origem(origem: str) -> str:
     if origem not in ORIGENS_VALIDAS:
         raise FalhaFilaAndroid("origem de disparo invalida.")
     return origem
+
+
+def commit_solicitado(chave_idempotencia: str) -> str | None:
+    """Extrai o commit do workflow novo, mantendo filas antigas compatíveis."""
+
+    correspondencia = _CHAVE_COM_COMMIT.fullmatch(chave_idempotencia)
+    return correspondencia.group(1) if correspondencia else None
+
+
+def sincronizar_checkout(
+    chave_idempotencia: str,
+    *,
+    repositorio: Path = CAMINHO_REPOSITORIO,
+    executar=subprocess.run,
+) -> None:
+    """Avança o Samsung até ``origin/main`` e confirma o commit solicitante."""
+
+    ambiente = os.environ.copy()
+    ambiente["GIT_TERMINAL_PROMPT"] = "0"
+
+    def git(*argumentos: str) -> subprocess.CompletedProcess[str]:
+        try:
+            resultado = executar(
+                ["git", "-C", str(repositorio), *argumentos],
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=120,
+                env=ambiente,
+            )
+        except (OSError, subprocess.TimeoutExpired) as erro:
+            raise FalhaFilaAndroid("checkout do executor Android indisponivel.") from erro
+        if resultado.returncode != 0:
+            raise FalhaFilaAndroid("checkout do executor Android nao pode ser atualizado.")
+        return resultado
+
+    estado = git("status", "--porcelain", "--untracked-files=no").stdout
+    if str(estado or "").strip():
+        raise FalhaFilaAndroid("checkout do executor Android possui alteracoes locais.")
+    head_anterior = str(git("rev-parse", "HEAD").stdout or "").strip()
+    git(
+        "fetch",
+        "--quiet",
+        "--no-tags",
+        "origin",
+        "+refs/heads/main:refs/remotes/origin/main",
+    )
+    git("merge", "--ff-only", "--quiet", "origin/main")
+
+    commit = commit_solicitado(chave_idempotencia)
+    if commit is not None:
+        git("merge-base", "--is-ancestor", commit, "HEAD")
+    head_atual = str(git("rev-parse", "HEAD").stdout or "").strip()
+
+    if head_atual != head_anterior:
+        try:
+            resultado = executar(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "--no-input",
+                    "-e",
+                    ".[pichau-android]",
+                ],
+                cwd=repositorio / "backend" / "robo",
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=300,
+                env=ambiente,
+            )
+        except (OSError, subprocess.TimeoutExpired) as erro:
+            raise FalhaFilaAndroid("dependencias do executor Android indisponiveis.") from erro
+        if resultado.returncode != 0:
+            raise FalhaFilaAndroid("dependencias do executor Android nao podem ser atualizadas.")
 
 
 def _conectar(database_url: str):
@@ -354,6 +436,7 @@ def executar_trabalho(
     *,
     runner: Path = CAMINHO_RUNNER,
     executar=subprocess.run,
+    sincronizar: Callable[[str], None] = sincronizar_checkout,
 ) -> bool | None:
     trabalho = reivindicar(database_url)
     if trabalho is None:
@@ -363,6 +446,11 @@ def executar_trabalho(
         flush=True,
     )
     try:
+        sincronizar(trabalho.chave_idempotencia)
+        print(
+            f"Pichau Android fila: id={trabalho.id} checkout=ok",
+            flush=True,
+        )
         # A credencial é necessária para a fila Python, mas não deve ser
         # herdada pelo Appium/ADB nem por processos filhos do navegador.
         ambiente = os.environ.copy()
@@ -376,6 +464,9 @@ def executar_trabalho(
         )
         sucesso = resultado.returncode == 0
         codigo = None if sucesso else codigo_falha_runner(resultado.returncode)
+    except FalhaFilaAndroid:
+        sucesso = False
+        codigo = "pichau-checkout"
     except OSError:
         sucesso = False
         codigo = "runner-indisponivel"

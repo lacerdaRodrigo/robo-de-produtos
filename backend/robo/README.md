@@ -131,8 +131,14 @@ python -m robo_pichau.principal --diagnostico
   a causa original.
   `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
   tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
-  a vida do daemon. O runner não libera esse lock quando foi iniciado pelo
-  worker. `pichau-android-schedule.sh` agenda o job 7301 a cada 15 minutos com
+  a vida do daemon. Ao reivindicar uma solicitação, ele exige checkout sem
+  alterações versionadas, busca `origin/main`, avança somente por fast-forward
+  e confirma que o `github.sha` do workflow está contido no HEAD local. Quando
+  o HEAD avança, reinstala o projeto e o extra Android no ambiente virtual antes
+  da coleta. Uma divergência termina a fila como `pichau-checkout` antes de abrir o navegador;
+  filas antigas sem SHA continuam compatíveis e recebem o mesmo fast-forward.
+  O runner não libera o wake lock quando foi iniciado pelo worker.
+  `pichau-android-schedule.sh` agenda o job 7301 a cada 15 minutos com
   rede `any` e sem condições de bateria/armazenamento; o job chama
   `pichau-android-recover.sh`, que só assume o daemon quando o `flock` está
   livre. `pichau-android-status.sh` verifica checkout, configuração, worker,

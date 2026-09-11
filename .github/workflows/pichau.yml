@@ -34,7 +34,7 @@ jobs:
           DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL || secrets.DATABASE_URL }}
         run: |
           python -m robo_pichau.fila_android enqueue \
-            --chave "github-${{ github.run_id }}" \
+            --chave "github-${{ github.run_id }}-${{ github.sha }}" \
             --origem "${{ github.event_name }}" \
             --github-run-id "${{ github.run_id }}" > "$RUNNER_TEMP/pichau-android-job-id"
           job_id="$(tr -d '[:space:]' < "$RUNNER_TEMP/pichau-android-job-id")"

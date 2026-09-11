@@ -204,8 +204,9 @@ aproximadamente 69s.
 
 O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
 14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
-idempotente em `pichau_android_fila`, aguarda o worker Termux e só termina com
-sucesso depois que o Android publica a coleta. O Ubuntu não executa fallback.
+idempotente em `pichau_android_fila` cuja chave combina `github_run_id` e
+`github.sha`, aguarda o worker Termux e só termina com sucesso depois que o
+Android publica a coleta. O Ubuntu não executa fallback.
 O workflow usa `PICHAU_DISPATCH_DATABASE_URL`; o fallback para o secret amplo
 `DATABASE_URL` permanece somente para recuperação controlada. O telefone mantém
 a credencial privada do publicador no Termux. Em falhas de navegador, o robô
@@ -397,9 +398,10 @@ Livelo e Inter permanecem fora desta prova.
 
 O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
 horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
-usa a mesma fila. Cada execução usa `github_run_id` como chave idempotente,
-insere um trabalho `pendente` e aguarda até 20 minutos os estados `sucesso` ou
-`falha`.
+usa a mesma fila. Cada execução combina `github_run_id` e o `github.sha` de 40
+caracteres na chave idempotente, insere um trabalho `pendente` e aguarda até 20
+minutos os estados `sucesso` ou `falha`. O uso da chave existente dispensa nova
+coluna ou migration e mantém legíveis as linhas antigas sem SHA.
 
 O worker `pichau-android-worker.sh` é iniciado diretamente pelo Termux:Boot,
 sem ser destacado em tmux: o script de boot transfere o processo com `exec`, o
@@ -407,6 +409,18 @@ Termux mantém a tarefa foreground e o worker conserva wake/Wi-Fi lock durante
 toda a vida do daemon. Ele consulta a fila a cada 30 segundos e reivindica um
 trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos continua permitindo
 recuperar uma execução abandonada.
+
+Depois do claim e antes de abrir o Chrome, o executor exige que não existam
+alterações locais versionadas, busca somente `origin/main` sem prompt interativo
+e avança o checkout exclusivamente por fast-forward. Em seguida confirma por
+ancestralidade que o HEAD local contém o SHA que disparou o workflow. Isso
+aceita um release automático posterior ao disparo, como ocorreu entre
+`4a3e91b` e `e64a003`, mas não aceita branch divergente, checkout sujo, falha de
+rede ou commit ausente. Quando o HEAD muda, o mesmo Python do worker reinstala
+o projeto editável com o extra `pichau-android`, garantindo também o alinhamento
+das dependências. Falha de Git ou instalação termina a fila como
+`pichau-checkout` e a coleta nem inicia. Solicitações antigas sem SHA ainda
+atualizam até a `main`, preservando a compatibilidade operacional.
 
 O job 7301 chama `pichau-android-recover.sh` a cada 15 minutos com rede `any`,
 sem condições de bateria ou armazenamento. O recuperador tenta iniciar o mesmo

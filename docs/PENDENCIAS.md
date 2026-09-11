@@ -42,9 +42,10 @@ aparelho, mas a falha reiniciou novamente o gate operacional.
   confirmação, o responsável aplicou a migration em `production`; a
   verificação somente de leitura confirmou coluna, constraints, 47 linhas com
   `{}` e os mesmos grants.
-- [ ] Enviar a limpeza automatizada de tarefas recentes à `main`, atualizar o
-  checkout do Samsung por USB autorizado, conferir worker/watchdog/fila/ADB e
-  retirar o cabo.
+- [ ] Enviar à `main` o alinhamento automático de checkout por fast-forward,
+  atualizar o Samsung uma última vez para ativar esse protocolo e retirar o
+  cabo. A partir daí cada claim confirma que o HEAD contém o SHA do workflow e
+  falha como `pichau-checkout` antes da coleta quando houver divergência.
 - [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
   metadados seguros do log local da falha de 10/09. Essa investigação foi
   adiada pelo responsável e não bloqueia a migration nem a implementação local.
