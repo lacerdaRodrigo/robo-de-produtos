@@ -477,10 +477,7 @@ void main() {
       matching: find.text('2,9 pontos por R\$ 1'),
     );
     expect(pontos, findsOneWidget);
-    expect(
-      at.getTopRight(sino).dx,
-      closeTo(at.getTopRight(cartao).dx - 14, 1),
-    );
+    expect(at.getTopRight(sino).dx, closeTo(at.getTopRight(cartao).dx - 14, 1));
   });
 
   testWidgets(
