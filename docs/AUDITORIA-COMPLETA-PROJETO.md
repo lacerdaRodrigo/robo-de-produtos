@@ -6,6 +6,12 @@
 
 **Natureza:** análise estática, testes unitários/widgets autorizados, consultas HTTP somente leitura e consulta SQL explicitamente `READ ONLY`. Nenhum código, dado, migration, workflow ou ambiente foi alterado.
 
+**Nota de atualização:** este relatório é um retrato histórico de 29/08/2026.
+As conclusões sobre a Central de Alertas e ações de conta como placeholders
+precedem a implementação atual; o contrato vigente está em
+[`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md)
+e as pendências operacionais estão em [`PENDENCIAS.md`](PENDENCIAS.md).
+
 ## Como ler os resultados
 
 - `FEITO`: há evidência do fluxo necessário e os contratos encontrados fecham ponta a ponta.

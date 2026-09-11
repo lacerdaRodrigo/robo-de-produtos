@@ -13,7 +13,7 @@ contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
 ```text
 backend/api/
 ├── app/            # rotas HTTP (Next.js App Router), uma pasta por endpoint
-│   └── api/        #  /status, /resumo, /perfil, /livelo, /inter, /pichau, /administracao
+│   └── api/        # /status, /resumo, /perfil, /livelo, /inter, /pichau, /alertas, /notificacoes, /relatos-problema
 ├── lib/            # lógica da API (banco, autenticação, formato, limpeza, disparos)
 ├── examples/       # .env.example (modelo de variáveis)
 └── package.json
@@ -30,19 +30,29 @@ backend/api/
 | `livelo/catalogo` | GET | Catálogo completo, filtros e resumo Livelo (`alertas_ativos` reflete os sinos ligados) | Firebase |
 | `livelo/catalogo/[id_externo]/historico` | GET | Últimas 30 medições salvas de qualquer parceiro do catálogo | Firebase |
 | `livelo/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhar/remover parceiro do catálogo | admin |
+| `livelo/catalogo/[id_externo]/acompanhamento-pessoal` | PATCH | Acompanhamento individual do usuário | Firebase |
 | `livelo/catalogo/[id_externo]/alerta` | PATCH | Ligar/desligar o sino de alerta de uma loja acompanhada | admin |
 | `livelo/preferencias` | GET/PATCH | Preferências Livelo | admin |
 | `livelo/lojas` | GET/POST | Catálogo/cadastro lojas | admin |
 | `livelo/lojas/[id]` | PATCH/DELETE | Regra/remoção loja | admin |
 | `inter/lojas` | GET/PATCH | Sites parceiros / favorita | admin |
 | `inter/cashback` | GET | Cashback paginado | Firebase |
+| `inter/cashback/[id]/acompanhamento` | PATCH | Acompanhamento individual de loja | Firebase |
 | `inter/produtos` | GET | Busca produtos paginada | Firebase |
 | `inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
 | `inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
+| `inter/produtos/[loja]/[id_externo]/acompanhamento` | PATCH | Acompanhamento pessoal de produto | Firebase |
 | `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU e paginação | Firebase |
 | `pichau/catalogo/[id_externo]/historico` | GET | Histórico Pichau limitado a 30 dias | Firebase |
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
+| `alertas` | GET/PATCH | Central paginada, filtros e leitura em massa | Firebase |
+| `alertas/[id]/leitura` | PATCH | Leitura individual | Firebase |
+| `alertas/preferencias` | GET/PATCH | Preferências de push e tipos | Firebase |
+| `alertas/acompanhamentos` | PATCH | Acompanhamento pessoal de uma entidade | Firebase |
+| `notificacoes/dispositivos` | POST/DELETE | Registro/remoção de token FCM | Firebase |
+| `notificacoes/outbox` | POST | Envio idempotente da outbox e expurgo | admin/cron |
+| `relatos-problema` | POST | Relato autenticado sem dados sensíveis | Firebase |
 
 A raiz `/` devolve 404 vazio. Constraints e execução completa em
 [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
@@ -50,7 +60,7 @@ A raiz `/` devolve 404 vazio. Constraints e execução completa em
 ## Dependências
 
 - `@neondatabase/serverless` (PostgresNeon)
-- `firebase-admin` (validação de ID token e App Check)
+- `firebase-admin` (validação de ID token/App Check e envio FCM)
 - `next` 16, `react`, `react-dom`
 - Override: `uuid` 11.1.1
 
@@ -71,3 +81,15 @@ npm run build    # next build
 As migrações que a API usa (auth, disparos, catálogo de produtos) estão em
 [`../../migracoes/`](../../migracoes/). O contrato completo com o Flutter está
 em [`../../app/lib/core/api/`](../../app/lib/core/api/).
+
+## Central de Alertas
+
+As rotas de alertas dependem de `migracoes/023_alertas_suporte_privacidade.sql`.
+As leituras de Livelo e cashback aceitam `escopo=pessoal` (padrão do app) e
+usam `acompanhamento_usuario`; somente administradores podem solicitar
+`escopo=global`. As rotas administrativas legadas continuam separadas.
+O cron protegido chama `POST /api/notificacoes/outbox`; ele expurga alertas de
+90 dias e relatos de 180 dias, processa retries e desativa tokens FCM inválidos.
+O banco não deve ser acessado pelo Flutter. Aplicação e validação da migration
+no ambiente alvo ficam registradas em `docs/PENDENCIAS.md` até existir uma
+conexão Neon autorizada.

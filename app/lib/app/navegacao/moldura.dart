@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
-import '../../core/api/modelos.dart';
 import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
+import '../../features/alertas/gerenciador_notificacoes.dart';
+import '../../features/alertas/pagina_alertas.dart';
+import '../../features/conta/paginas_conta.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
@@ -31,6 +35,7 @@ class MolduraRadar extends StatefulWidget {
     this.agora,
     this.aoSair,
     this.identificacaoConta,
+    this.notificacoesAtivas = false,
   });
 
   final Api api;
@@ -38,6 +43,7 @@ class MolduraRadar extends StatefulWidget {
   final DateTime Function()? agora;
   final Future<void> Function()? aoSair;
   final String? identificacaoConta;
+  final bool notificacoesAtivas;
 
   @override
   State<MolduraRadar> createState() => _EstadoMolduraRadar();
@@ -52,6 +58,25 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
   var _atualizandoResumoCabecalho = false;
+  GerenciadorNotificacoes? _notificacoes;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.notificacoesAtivas) {
+      _notificacoes = GerenciadorNotificacoes(
+        api: widget.api,
+        aoAbrirCentral: (coleta) => _abrirAlertas(coleta: coleta),
+      );
+      unawaited(_notificacoes!.iniciar());
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_notificacoes?.dispose() ?? Future<void>.value());
+    super.dispose();
+  }
 
   void _selecionar(Destino destino) {
     if (_selecionado == destino) return;
@@ -179,19 +204,24 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         : const SizedBox.shrink(),
   ];
 
-  Future<void> _abrirAlertas() => mostrarFolhaRadar<void>(
-    context,
-    alturaMaxima: 0.9,
-    builder: (contexto) => _FolhaAlertas(
-      api: widget.api,
-      aoAbrirLivelo: () {
-        Navigator.of(contexto).pop();
-        _selecionarCompacto(DestinoCompacto.livelo);
-      },
-      aoAbrirInter: () {
-        Navigator.of(contexto).pop();
-        _selecionarCompacto(DestinoCompacto.inter);
-      },
+  Future<void> _abrirAlertas({String? coleta}) =>
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PaginaAlertas(api: widget.api, coletaInicial: coleta),
+        ),
+      );
+
+  Future<void> _abrirAjuda() => Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(builder: (_) => PaginaAjuda(api: widget.api)),
+  );
+
+  Future<void> _abrirPrivacidade() => Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(builder: (_) => PaginaPrivacidade(api: widget.api)),
+  );
+
+  Future<void> _abrirProblema() => Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaRelatoProblema(api: widget.api),
     ),
   );
 
@@ -213,10 +243,27 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
               );
             }
           : null,
+      aoAbrirAlertas: () {
+        Navigator.of(contexto).pop();
+        unawaited(_abrirAlertas());
+      },
+      aoAbrirAjuda: () {
+        Navigator.of(contexto).pop();
+        unawaited(_abrirAjuda());
+      },
+      aoAbrirProblema: () {
+        Navigator.of(contexto).pop();
+        unawaited(_abrirProblema());
+      },
+      aoAbrirPrivacidade: () {
+        Navigator.of(contexto).pop();
+        unawaited(_abrirPrivacidade());
+      },
       aoSair: widget.aoSair == null
           ? null
           : () async {
               Navigator.of(contexto).pop();
+              await _notificacoes?.removerAtual();
               await widget.aoSair!();
             },
     ),
@@ -1155,115 +1202,15 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
   }
 }
 
-class _FolhaAlertas extends StatefulWidget {
-  const _FolhaAlertas({
-    required this.api,
-    required this.aoAbrirLivelo,
-    required this.aoAbrirInter,
-  });
-
-  final Api api;
-  final VoidCallback aoAbrirLivelo;
-  final VoidCallback aoAbrirInter;
-
-  @override
-  State<_FolhaAlertas> createState() => _EstadoFolhaAlertas();
-}
-
-class _EstadoFolhaAlertas extends State<_FolhaAlertas> {
-  late Future<ResumoInicio> _resumo;
-
-  @override
-  void initState() {
-    super.initState();
-    _resumo = widget.api.resumo();
-  }
-
-  void _tentarNovamente() => setState(() => _resumo = widget.api.resumo());
-
-  @override
-  Widget build(BuildContext context) {
-    return FolhaRadar(
-      titulo: 'Alertas',
-      descricao: 'Eventos importantes, fora do menu principal.',
-      child: Flexible(
-        child: FutureBuilder<ResumoInicio>(
-          future: _resumo,
-          builder: (context, estado) {
-            if (estado.connectionState != ConnectionState.done) {
-              return const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (!estado.hasData) {
-              return Column(
-                children: [
-                  const Text('Não foi possível consultar os estados agora.'),
-                  const SizedBox(height: 12),
-                  FilledButton.tonalIcon(
-                    onPressed: _tentarNovamente,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Tentar novamente'),
-                  ),
-                ],
-              );
-            }
-            final resumo = estado.data!;
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.62,
-              ),
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  CartaoRadar(
-                    aoTocar: widget.aoAbrirLivelo,
-                    padding: const EdgeInsets.all(12),
-                    child: _LinhaFolha(
-                      icone: Icons.card_giftcard_outlined,
-                      titulo: resumo.livelo.alertasUltimaColeta == 0
-                          ? 'Nenhum alerta na última coleta Livelo'
-                          : '${resumo.livelo.alertasUltimaColeta} alertas na última coleta Livelo',
-                      descricao:
-                          '${resumo.livelo.lojasAcompanhadas} lojas acompanhadas · ${_rotuloEstadoResumo(resumo.livelo.estado)}',
-                      mostrarSeta: false,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  CartaoRadar(
-                    aoTocar: widget.aoAbrirInter,
-                    padding: const EdgeInsets.all(12),
-                    child: _LinhaFolha(
-                      icone: Icons.account_balance_outlined,
-                      titulo: 'Banco Inter',
-                      descricao:
-                          'Cashback: ${_rotuloEstadoResumo(resumo.cashbackInter.estado)} · produtos: ${_rotuloEstadoResumo(resumo.produtos.estado)}',
-                      mostrarSeta: false,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Histórico, lidos e não lidos dependem de um endpoint próprio e ainda não são exibidos.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: CoresRadar.de(context).textoSuave,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
 class _FolhaConta extends StatelessWidget {
   const _FolhaConta({
     required this.administrador,
     required this.podeSair,
     required this.aoAdministrar,
+    required this.aoAbrirAlertas,
+    required this.aoAbrirAjuda,
+    required this.aoAbrirProblema,
+    required this.aoAbrirPrivacidade,
     required this.aoSair,
     this.identificacaoConta,
   });
@@ -1271,6 +1218,10 @@ class _FolhaConta extends StatelessWidget {
   final bool administrador;
   final bool podeSair;
   final VoidCallback? aoAdministrar;
+  final VoidCallback aoAbrirAlertas;
+  final VoidCallback aoAbrirAjuda;
+  final VoidCallback aoAbrirProblema;
+  final VoidCallback aoAbrirPrivacidade;
   final Future<void> Function()? aoSair;
   final String? identificacaoConta;
 
@@ -1306,6 +1257,50 @@ class _FolhaConta extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 10),
+              CartaoRadar(
+                aoTocar: aoAbrirAlertas,
+                padding: const EdgeInsets.all(12),
+                child: const _LinhaFolha(
+                  icone: Icons.notifications_outlined,
+                  titulo: 'Central de Alertas',
+                  descricao: 'Histórico, filtros e preferências de push',
+                  mostrarSeta: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              CartaoRadar(
+                aoTocar: aoAbrirAjuda,
+                padding: const EdgeInsets.all(12),
+                child: const _LinhaFolha(
+                  icone: Icons.help_outline,
+                  titulo: 'Ajuda',
+                  descricao: 'Estados de coleta e contato de suporte',
+                  mostrarSeta: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              CartaoRadar(
+                aoTocar: aoAbrirProblema,
+                padding: const EdgeInsets.all(12),
+                child: const _LinhaFolha(
+                  icone: Icons.chat_bubble_outline,
+                  titulo: 'Reportar problema',
+                  descricao: 'Envie um relato autenticado',
+                  mostrarSeta: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              CartaoRadar(
+                aoTocar: aoAbrirPrivacidade,
+                padding: const EdgeInsets.all(12),
+                child: const _LinhaFolha(
+                  icone: Icons.shield_outlined,
+                  titulo: 'Privacidade',
+                  descricao: 'Dados usados, retenção e direitos',
+                  mostrarSeta: true,
+                ),
+              ),
               const SizedBox(height: 10),
               const CartaoRadar(
                 padding: EdgeInsets.all(12),
@@ -1398,15 +1393,3 @@ class _LinhaFolha extends StatelessWidget {
     );
   }
 }
-
-String _rotuloEstadoResumo(EstadoResumo estado) => switch (estado) {
-  EstadoResumo.atualizado => 'atualizado',
-  EstadoResumo.atencao => 'atenção',
-  EstadoResumo.atrasado => 'atrasado',
-  EstadoResumo.atualizando => 'atualizando',
-  EstadoResumo.falhaRecente => 'falha recente',
-  EstadoResumo.parcial => 'parcial',
-  EstadoResumo.degradado => 'degradado',
-  EstadoResumo.semDados => 'sem dados',
-  EstadoResumo.indisponivel => 'indisponível',
-};

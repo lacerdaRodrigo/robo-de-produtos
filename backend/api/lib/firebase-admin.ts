@@ -1,5 +1,6 @@
 import { applicationDefault, cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getMessaging } from "firebase-admin/messaging";
 
 export type IdentidadeFirebase = {
   uid: string;
@@ -54,6 +55,11 @@ function aplicativoAdmin(): App {
   }
 
   return initializeApp({ credential: applicationDefault(), projectId });
+}
+
+/** Instância do Firebase Admin usada somente pelo worker de notificações. */
+export function mensageriaFirebase() {
+  return getMessaging(aplicativoAdmin());
 }
 
 /** Verifica assinatura, validade e revogacao do ID token. */

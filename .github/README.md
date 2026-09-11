@@ -22,6 +22,9 @@ porque o repositório é público: ela vai para uma pasta privada do Drive e o
 e-mail contém somente o link autorizado. Essa distribuição não é homologação;
 o app aponta para a API atual de produção.
 Os workflows de coleta permanecem separados do workflow de validação Flutter.
+O contrato vigente desse fluxo está em
+[`docs/prd/PRD-DISTRIBUICAO-ANDROID.md`](../docs/prd/PRD-DISTRIBUICAO-ANDROID.md);
+os itens que dependem de confirmação externa continuam em `docs/PENDENCIAS.md`.
 
 ## Permissões
 

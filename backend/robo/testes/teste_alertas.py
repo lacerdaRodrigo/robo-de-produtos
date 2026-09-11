@@ -1,7 +1,7 @@
 """CT-117 a CT-129 — RN27, RN28, RN29 e a supressao de RN23.
 
 Os exemplos numericos vem da medicao real de 2026-08-09 e 2026-08-11
-registrada no PRD-V2 §6.1: sao os casos que a V1 errava nos dois sentidos.
+registrada no PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1: sao os casos que a V1 errava nos dois sentidos.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from robo_livelo.alertas import (
 from robo_livelo.modelos import LojaFavorita, Preferencias
 from testes.conftest import faz_parceiro
 
-PADRAO = Preferencias()  # 2,0x e piso 4, os defaults do PRD-V2 6.1
+PADRAO = Preferencias()  # 2,0x e piso 4, os defaults do PRD-LIVELO-CATALOGO-ALERTAS-APP 6.1
 ASSINANTE = Preferencias(assinante_clube=True)
 
 

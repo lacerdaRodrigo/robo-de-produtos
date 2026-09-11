@@ -11,6 +11,7 @@ class CartaoProduto extends StatelessWidget {
     required this.produto,
     required this.aoAbrirHistorico,
     this.aoAbrirNoShopping,
+    this.aoAcompanhar,
     this.compacto = false,
     this.mostrarLoja = true,
   });
@@ -18,6 +19,7 @@ class CartaoProduto extends StatelessWidget {
   final ProdutoDireto produto;
   final VoidCallback aoAbrirHistorico;
   final VoidCallback? aoAbrirNoShopping;
+  final VoidCallback? aoAcompanhar;
   final bool compacto;
   final bool mostrarLoja;
 
@@ -140,6 +142,18 @@ class CartaoProduto extends StatelessWidget {
                       onPressed: aoAbrirNoShopping,
                       icon: const Icon(Icons.open_in_new),
                       label: const Text('Abrir no Shopping Inter'),
+                    ),
+                  if (aoAcompanhar != null)
+                    OutlinedButton.icon(
+                      onPressed: aoAcompanhar,
+                      icon: Icon(
+                        produto.acompanhado
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_none_outlined,
+                      ),
+                      label: Text(
+                        produto.acompanhado ? 'Acompanhando' : 'Acompanhar',
+                      ),
                     ),
                 ],
               ),
@@ -370,6 +384,19 @@ class CartaoProduto extends StatelessWidget {
                         onPressed: aoAbrirHistorico,
                         icon: const Icon(Icons.timeline_outlined, size: 18),
                       ),
+                      if (aoAcompanhar != null)
+                        IconButton(
+                          tooltip: produto.acompanhado
+                              ? 'Deixar de acompanhar'
+                              : 'Acompanhar produto',
+                          onPressed: aoAcompanhar,
+                          icon: Icon(
+                            produto.acompanhado
+                                ? Icons.notifications_active_outlined
+                                : Icons.notifications_none_outlined,
+                            size: 18,
+                          ),
+                        ),
                       if (aoAbrirNoShopping != null)
                         FilledButton.icon(
                           onPressed: aoAbrirNoShopping,

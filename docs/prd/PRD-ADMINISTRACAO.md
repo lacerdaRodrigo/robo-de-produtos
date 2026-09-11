@@ -5,7 +5,7 @@
 
 > A V5 adiciona uma operação administrativa destrutiva ao Radar de Benefícios. Ela não coleta uma nova fonte e não muda as regras dos robôs: permite apagar separadamente os dados da Livelo ou resetar todos os dados do Shopping Inter, sempre dentro da área autenticada.
 
-Este documento é um delta sobre PRD-LIVELO.md, PRD-LIVELO-V2.md, PRD-INTER-CASHBACK.md e PRD-INTER-PRODUTOS.md. Tudo que não for redefinido aqui continua valendo.
+Este documento é um delta sobre PRD-LIVELO.md, PRD-LIVELO-CATALOGO-ALERTAS-APP.md, PRD-INTER-CASHBACK.md e PRD-INTER-PRODUTOS.md. Tudo que não for redefinido aqui continua valendo.
 
 ---
 

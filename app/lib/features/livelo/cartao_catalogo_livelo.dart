@@ -12,6 +12,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     required this.parceiro,
     required this.pendente,
     required this.podeAdministrar,
+    this.podeAcompanhar = false,
     required this.aoAlternar,
     required this.aoDetalhes,
   });
@@ -19,6 +20,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
   final ParceiroCatalogoLivelo parceiro;
   final bool pendente;
   final bool podeAdministrar;
+  final bool podeAcompanhar;
   final VoidCallback aoAlternar;
   final VoidCallback aoDetalhes;
 
@@ -33,7 +35,9 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     final botaoAcompanhar = parceiro.acompanhada
         ? OutlinedButton.icon(
             key: Key('acompanhar-${parceiro.idExterno}'),
-            onPressed: podeAdministrar && !pendente ? aoAlternar : null,
+            onPressed: (podeAdministrar || podeAcompanhar) && !pendente
+                ? aoAlternar
+                : null,
             style: OutlinedButton.styleFrom(
               foregroundColor: CoresRadar.de(context).ganho,
               backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -53,7 +57,9 @@ class CartaoCatalogoLivelo extends StatelessWidget {
           )
         : FilledButton.tonalIcon(
             key: Key('acompanhar-${parceiro.idExterno}'),
-            onPressed: podeAdministrar && !pendente ? aoAlternar : null,
+            onPressed: (podeAdministrar || podeAcompanhar) && !pendente
+                ? aoAlternar
+                : null,
             style: FilledButton.styleFrom(
               foregroundColor: CoresRadar.de(context).acao,
               backgroundColor: Theme.of(context).brightness == Brightness.dark

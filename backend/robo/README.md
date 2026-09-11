@@ -208,7 +208,8 @@ python -m pytest --cov --cov-fail-under=90
 
 ## Referências
 
-- Requisitos e regras numeradas: [`../../docs/prd/PRD-LIVELO.md`](../../docs/prd/PRD-LIVELO.md) e deltas
-  `PRD-V2/V3/V4/V5.md`.
+- Requisitos e regras numeradas: [`../../docs/prd/PRD-LIVELO.md`](../../docs/prd/PRD-LIVELO.md),
+  [`../../docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](../../docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md)
+  e os PRDs dos domínios V3/V4/V5.
 - Reativação dos workflows de coleta: [`../../.github/README.md`](../../.github/README.md)
   e [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).

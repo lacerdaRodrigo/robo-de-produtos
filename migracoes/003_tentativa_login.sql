@@ -1,4 +1,4 @@
--- Limite de tentativas de login do site (PRD V2, secao 9.0).
+-- Limite de tentativas de login do site (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 9.0).
 --
 -- A autenticacao e por senha unica, e senha unica sem limite de tentativas
 -- cai por forca bruta. A contagem mora no banco, e nao em memoria, porque o

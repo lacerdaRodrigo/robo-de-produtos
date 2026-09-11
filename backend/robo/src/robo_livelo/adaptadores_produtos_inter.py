@@ -363,6 +363,7 @@ class RepositorioProdutosInterPostgres:
     EXPURGA_MEDICOES = (
         "DELETE FROM medicao_produto_direto_inter WHERE momento < now() - interval '30 days'"
     )
+    GERA_ALERTAS = "SELECT gerar_alertas_produtos_inter(%s)"
 
     def __init__(self, url: str) -> None:
         if not url.strip():
@@ -507,6 +508,9 @@ class RepositorioProdutosInterPostgres:
                     (execucao_id,),
                 )
                 cursor.execute(self.EXPURGA_MEDICOES)
+                if resumo.degradada is False:
+                    # Coleta degradada preserva o catálogo, mas não gera evento.
+                    cursor.execute(self.GERA_ALERTAS, (execucao_id,))
         except (psycopg.Error, RuntimeError, ValueError) as erro:
             raise FalhaAoGuardarProdutosInter(
                 f"Falha ao publicar catalogo de produtos: {type(erro).__name__}.", codigo="banco"

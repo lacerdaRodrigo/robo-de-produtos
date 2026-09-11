@@ -149,7 +149,7 @@ def teste_config_real_do_projeto_e_valida():
             assert por_nome[base] != por_nome[parecido]
 
 
-# --- CT-108 a CT-112: catalogo do banco e reserva em arquivo (PRD V2 7.1.1) ---
+# --- CT-108 a CT-112: catalogo do banco e reserva em arquivo (PRD-LIVELO-CATALOGO-ALERTAS-APP 7.1.1) ---
 
 
 class CatalogoFalho:
@@ -298,11 +298,11 @@ def teste_ct113_senha_da_url_nao_vaza_na_mensagem_de_erro(monkeypatch):
     assert erro.value.__cause__ is None
 
 
-# --- CT-130 a CT-133: preferencias globais (RN28, PRD V2 8.1) ---
+# --- CT-130 a CT-133: preferencias globais (RN28, PRD-LIVELO-CATALOGO-ALERTAS-APP 8.1) ---
 
 
 def teste_ct130_preferencias_padrao_sem_banco():
-    """Quem nao tem Neon roda com os padroes do PRD-V2 6.1."""
+    """Quem nao tem Neon roda com os padroes do PRD-LIVELO-CATALOGO-ALERTAS-APP 6.1."""
     padrao = PreferenciasPadrao().carregar()
     assert padrao.multiplicador_padrao == Decimal("2.0")
     assert padrao.piso_pontos_padrao == Decimal("4")

@@ -1,4 +1,4 @@
--- Esquema inicial do catalogo de lojas favoritas (PRD V2, secao 8.1).
+-- Esquema inicial do catalogo de lojas favoritas (PRD-LIVELO-CATALOGO-ALERTAS-APP, secao 8.1).
 --
 -- A garantia mora na camada mais baixa possivel: as regras que o codigo
 -- poderia violar por engano viram restricao do banco.

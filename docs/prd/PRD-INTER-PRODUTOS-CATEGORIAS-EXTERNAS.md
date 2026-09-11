@@ -1,4 +1,4 @@
-# PRD — Categorias do Shopping Inter como fonte oficial
+# PRD — Categorias externas do Compre direto no Inter
 
 **Status vigente em 2026-09-04:** regra implementada no robô, API e Flutter.
 A migration `020_categorias_inter_fonte_oficial.sql` permanece pendente de
@@ -35,9 +35,9 @@ origem, não é persistida no produto e não decide sua existência no catálogo
 
 ## 2. Evidência que motivou a mudança
 
-A fonte principal desta decisão é:
-
-- `docs/VALIDACAO-CATEGORIAS-JSON-INTER-2026-09-04.md`
+A decisão foi registrada a partir da execução operacional de setembro de 2026;
+o relatório bruto não está presente neste checkout. Os números abaixo são
+mantidos como contexto histórico, não como prova de uma nova execução.
 
 Na execução manual observada em produção:
 

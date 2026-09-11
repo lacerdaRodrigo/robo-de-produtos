@@ -710,7 +710,67 @@ Os nomes concretos podem seguir a convenção do projeto, mas anatomia, tokens, 
 - [ ] Movimento reduzido é respeitado.
 - [ ] Nenhuma navegação ou busca dispara robô automaticamente.
 
-## 24. Manutenção
+## 24. Central de Alertas, suporte e privacidade
+
+A Central é um destino de conta, acessado pela gaveta/perfil, e não adiciona
+um quarto item ao dock. Ela usa os mesmos cartões e tokens V11 nos quatro
+breakpoints de referência (320, 360, 390 e 430 px) e nos temas claro/escuro.
+
+### Central de Alertas
+
+- Cabeçalho: eyebrow **Conta**, título **Central de Alertas**, ação
+  **Preferências** e descrição de retenção de 90 dias.
+- Filtros horizontais: **Todos**, **Preço**, **Cashback**, **Pontuação** e
+  **Não lidos**. Alterar o filtro volta para a página 1, mantém a posição útil
+  ao retornar e nunca inicia coleta.
+- Cada evento informa origem, entidade, valor anterior/atual, direção,
+  momento e estado lido/não lido. A ação de leitura é individual ou em massa
+  para os itens visíveis.
+- Estados explícitos: carregando sem apagar o último conteúdo válido, vazio
+  contextual, erro recuperável, parcial/atrasado com o último snapshot válido e
+  offline. Ausência, falha e zero permanecem estados distintos.
+- A paginação é sempre do servidor; o cliente não recebe catálogo completo.
+  Push abre a Central já filtrada pela coleta (`coleta`), quando esse contexto
+  existir.
+
+### Preferências, push e acompanhamento
+
+A folha de preferências tem um controle global e um para cada tipo (preço,
+cashback e pontuação). Recusar ou desativar push não remove o histórico. O
+pedido de permissão acontece depois do primeiro login autorizado; tokens FCM
+são registrados apenas na API autenticada e removidos quando inválidos ou ao
+encerrar a sessão. Produtos Inter exigem acompanhamento pessoal explícito para
+gerar eventos.
+
+### Ajuda, Reportar problema e Privacidade
+
+O perfil oferece **Central de Alertas**, **Ajuda**, **Reportar problema**,
+**Privacidade**, aparência e saída. Ajuda explica primeiro snapshot, estados
+parcial/atrasado/falha, filtros e paginação e mostra o contato de suporte.
+Reportar problema exige categoria e mensagem, preenche versão/sistema no
+cliente, omite tokens/senhas/dados bancários e confirma o `request_id` da API.
+Privacidade descreve Firebase, e-mail/identificador técnico, preferências,
+acompanhamentos, eventos, token e relatos, com retenção de 90/180 dias,
+segurança, terceiros e direitos do titular. Não existe exclusão automática de
+conta nesta versão; o contato formal é `lacerdaa.rodrigo@gmail.com`.
+
+### Contrato de API da Central
+
+| Área | Endpoint | Uso |
+|---|---|---|
+| Alertas | `GET /api/alertas` | página, `tipo`, `somente_nao_lidos`, `coleta` |
+| Leitura | `PATCH /api/alertas/{id}/leitura` | estado individual |
+| Leitura em massa | `PATCH /api/alertas` | itens visíveis |
+| Preferências | `GET/PATCH /api/alertas/preferencias` | push global e tipos |
+| FCM | `POST/DELETE /api/notificacoes/dispositivos` | ciclo de vida do token |
+| Produto | `PATCH /api/inter/produtos/{loja}/{id_externo}/acompanhamento` | acompanhamento pessoal |
+| Suporte | `POST /api/relatos-problema` | relato autenticado limitado |
+
+Todos exigem Firebase Auth, respeitam App Check quando habilitado, isolamento
+por `usuario_app`, `request_id` e limite persistente. Valores NUMERIC chegam
+como texto; nenhum estado é recalculado com `double` no Flutter.
+
+## 25. Manutenção
 
 Ao adicionar um novo robô:
 

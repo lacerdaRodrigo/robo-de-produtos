@@ -8,6 +8,10 @@ Convenção: arquivos e funções de teste usam o prefixo `teste_` (em vez do pa
 
 A numeração tem lacunas propositais (009, 025–029, 039, 047–059) para deixar espaço de crescimento em cada bloco. **O total é a soma dos itens listados, nunca o intervalo.**
 
+O helper da distribuição privada do Android tem uma suíte unitária própria em
+`.github/scripts/`; ela é executada isoladamente pelo comando registrado ao
+final deste catálogo e não faz parte do `testes.yml` dos robôs/API.
+
 ---
 
 ## `backend/robo/testes/teste_categorias.py` — função `reconhecer()`
@@ -80,7 +84,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-112 | Catálogo do banco mapeia as colunas | O adaptador lê nome, categoria, apelidos, `multiplicador` e `piso_pontos` (RN28) | Fake de `psycopg` em `sys.modules`, checar mapeamento e as colunas na consulta |
 | CT-114 | Preferência do sino por loja | `alerta_ativo` vem do Postgres e controla se a régua pode gerar alerta | Fake de `psycopg` com a coluna booleana, checar `LojaFavorita.alerta_ativo` |
 | CT-113 | Senha da URL não vaza na mensagem de erro ⚠️ | PRD §9.1 — o log do Actions é público e a exceção original carrega a `DATABASE_URL` inteira | Fake que falha ao conectar, checar ausência da senha no texto e `__cause__` cortado |
-| CT-130 | Preferências padrão sem banco | Quem não tem Neon roda com 2,0x e piso 4 (PRD-V2 §6.1) | `PreferenciasPadrao().carregar()` |
+| CT-130 | Preferências padrão sem banco | Quem não tem Neon roda com 2,0x e piso 4 (PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1) | `PreferenciasPadrao().carregar()` |
 | CT-131 | Preferências vindas do banco | RN28 — a régua é editável sem `git push` | Fake de `psycopg` devolvendo as três chaves |
 | CT-132 | Preferência ilegível ou ausente cai no padrão | Escolha oposta à do catálogo: existe valor sensato para seguir, então a rodada continua — mas não em silêncio | Chave com texto no lugar de número, checar padrão e `WARNING` |
 | CT-133 | Preferências caem para o padrão quando o banco falha | Mesmo motivo de CT-108 | Principal que levanta `ConfiguracaoInvalida`, checar padrão e `WARNING` |
@@ -111,7 +115,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-096 | Termina hoje recebe destaque (RN22) | `fim_promocao` no mesmo dia do `agora` mostra "Termina hoje!" com destaque próprio | Parceiro com `fim` igual ao dia do `agora` do teste, checar HTML e texto |
 | CT-097 | Validade futura mostra data (RF18) | `fim_promocao` numa data futura mostra "Válido até DD/MM", sem o destaque de RN22 | Parceiro com `fim` alguns dias à frente |
 | CT-098 | Sem `fim_promocao`, sem texto de validade | Não pode gerar texto nem quebrar | Parceiro com `fim=None` |
-| CT-099 | Marca exclusivo Clube (RN23) | Base parada (`pontos_atuais == pontos_base`) com `pontos_clube` maior — o exemplo real do PRD-V2 (O Boticário) | Parceiro com `base` igual a `pontos_atuais` e `clube` maior |
+| CT-099 | Marca exclusivo Clube (RN23) | Base parada (`pontos_atuais == pontos_base`) com `pontos_clube` maior — o exemplo real do PRD-LIVELO-CATALOGO-ALERTAS-APP (O Boticário) | Parceiro com `base` igual a `pontos_atuais` e `clube` maior |
 | CT-100 | Base também turbinada não marca exclusivo | Contraprova de CT-099 — é bônus geral, não só do Clube | Parceiro com `base` menor que `pontos_atuais` e `clube` maior ainda |
 | CT-101 | Sem `pontos_clube`, sem marcação | Regressão de CT-033 | Parceiro sem `clube` |
 | CT-103 | `PROMOTION_CLUB` ganha rótulo próprio | RN23 — a base subiu também, então não é exclusivo: o não assinante aproveita, só não pelo número maior | Sephora real (base 1 → 6, Clube 10), checar "assinantes Clube ganham mais" e ausência de "exclusivo" |
@@ -143,7 +147,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-073 | Nenhum segredo no log ⚠️ | RNF05 — log do Actions é público | Capturar a saída de log da execução completa, checar ausência de senha e de e-mail |
 | CT-102 | `agora` chega ao extrator e ao e-mail, fim a fim | O mesmo `agora` passado a `verificar_promocoes` decide RN21 no extrator e RN22 no montador — uma promoção que termina hoje aparece destacada no e-mail final | Fluxo completo com fakes, checar "Termina hoje!" no resultado |
 | CT-114 | Sem `DATABASE_URL`, catálogo vem do arquivo | Quem clona o projeto e roda na própria máquina não tem Neon | `montar_catalogo({})`, checar `CatalogoArquivo` |
-| CT-115 | Com `DATABASE_URL`, o banco manda e o arquivo fica de reserva | PRD V2 §7.1.1 | `montar_catalogo` com a variável, checar `CatalogoComReserva` |
+| CT-115 | Com `DATABASE_URL`, o banco manda e o arquivo fica de reserva | PRD-LIVELO-CATALOGO-ALERTAS-APP §7.1.1 | `montar_catalogo` com a variável, checar `CatalogoComReserva` |
 | CT-116 | `DATABASE_URL` em branco conta como ausente | Secret não configurado no Actions chega como string vazia, não ausente — sem isto o robô tentaria conectar em `""` | `montar_catalogo` com espaços, checar `CatalogoArquivo` |
 | CT-134 | Sem `DATABASE_URL`, preferências são os padrões | Simétrico a CT-114 | `montar_preferencias({})` |
 | CT-135 | Com `DATABASE_URL`, preferências vêm do banco com reserva | Simétrico a CT-115 | `montar_preferencias` com a variável |
@@ -158,9 +162,9 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
 | CT-169 | Sino desligado suprime alerta | RN27 — a régua continua calculada, mas só uma loja marcada no sino gera alerta | Retrato com loja acompanhada e `alerta_ativo=False`, checar `alertou is False` |
 
-## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-V2 §6.1)
+## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1)
 
-> Bloco novo da V2.2. Os números dos casos vêm da medição real de 2026-08-09 e 2026-08-11 registrada no PRD-V2 — são exatamente os exemplos que a V1 errava.
+> Bloco novo da V2.2. Os números dos casos vêm da medição real de 2026-08-09 e 2026-08-11 registrada no PRD-LIVELO-CATALOGO-ALERTAS-APP — são exatamente os exemplos que a V1 errava.
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -180,7 +184,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 
 Sem ID: página que parou de trazer `parityBau` também levanta suspeita, página vazia não (aí quem falha é RN13), e o critério fechado sobre as preferências chega intacto ao `agrupar`.
 
-## `backend/robo/testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-V2 RF15)
+## `backend/robo/testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-LIVELO-CATALOGO-ALERTAS-APP RF15)
 
 > Bloco novo da V2.3. O robô passa a guardar o que viu, para o site ter o que mostrar.
 
@@ -692,6 +696,24 @@ O que conferir:
 
 ---
 
+## Central de Alertas, suporte e privacidade
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-174 | Parser preserva NUMERIC | Valores anterior/atual permanecem texto, sem `double` | `AlertaApp.parse` com decimais, comparar strings |
+| CT-175 | Filtro reinicia página | Trocar tipo ou não lidos volta à primeira página e mantém a query | `ControladorAlertas.mudarFiltro`, conferir fake da API |
+| CT-176 | Leitura otimista com rollback | Leitura individual e em massa atualizam a tela e desfazem em erro | Fake que responde sucesso e fake que lança |
+| CT-177 | Central vazia | Página exibe estado vazio quando a API não retorna eventos | Widget `PaginaAlertas` com página vazia |
+| CT-178 | Central com erro/parcial | Erro sem itens permite tentar novamente; falha após itens mantém o último resultado | Fakes de resposta/erro em `ControladorAlertas` |
+| CT-179 | Preferências e push opcional | Flags serializam e recusa de permissão não impede histórico | Parser, API fake e `GerenciadorNotificacoes` |
+| CT-180 | Isolamento e autorização | Rotas exigem Firebase/App Check quando configurado, limite e `usuario_app_id`; acompanhamento não acessa outra conta | Testes direcionados da autenticação/validadores e revisão de SQL |
+| CT-181 | Snapshot válido e deduplicação | Primeiro, ausente, inválido, parcial e falho não geram evento; aumento/redução gera uma vez por coleta | Funções da migration e adaptadores após snapshot publicado |
+| CT-182 | Retenção e outbox | Expurgo respeita 90/180 dias; outbox é idempotente, faz retry e desativa token inválido | Consulta da migration e fake do mensageiro |
+| CT-183 | Relato sem segredo | Categoria/mensagem/versionamento são validados e logs usam apenas request ID | Validator `alertas-api` e rota autenticada |
+| CT-184 | Acompanhamento pessoal de produto | A ação por loja/id externo é isolada, idempotente e não altera seleção global | PATCH da rota e card de Produtos Inter |
+| CT-185 | Acompanhamento pessoal Livelo e cashback | Rotas resolvem a chave pública, isolam o usuário e preservam os endpoints administrativos | PATCH especializado + consultas `escopo=pessoal` |
+| CT-186 | Catálogos usam o escopo correto | Usuário vê somente seus acompanhamentos; administrador pode solicitar o catálogo global | Teste da rota e SQL parametrizado |
+
 ## Totais
 
 Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. A V4 inicia a cobertura automatizada em `teste_produtos_inter.py`; os demais CT-200 a CT-244 continuam como roteiro de expansão e aceite real.
@@ -728,6 +750,21 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | **Total (Flutter)** | **CTs catalogados + apoio** | **178** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
+
+## Distribuição privada do Android
+
+### `.github/scripts/test_distribuir_apk_drive.py` — regras do helper sem rede
+
+| ID | Título | Descrição |
+|---|---|---|
+| CI-001 | ACL privada | Aceita somente proprietário e destinatário autorizado. |
+| CI-002 | Rejeição de link público | Rejeita permissões `anyone` e não deixa o upload inseguro. |
+| CI-003 | Rejeição de usuário desconhecido | Rejeita qualquer usuário fora da ACL esperada. |
+| CI-004 | Escape da consulta Drive | Preserva IDs com aspas na consulta ao Drive. |
+| CI-005 | Consulta de propriedade balanceada | Monta corretamente as consultas da pasta e das APKs marcadas. |
+| CI-006 | Retenção | Remove somente APKs marcadas mais antigas que o limite de 10. |
+
+Execução local: `python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v`.
 
 Manuais: CT-050 e CT-051.
 

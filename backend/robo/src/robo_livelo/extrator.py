@@ -1,7 +1,7 @@
 """Nucleo puro: transforma o payload JSON da pagina em objetos Parceiro.
 
 Nao toca a rede. Recebe uma string (a pagina inteira), devolve estrutura.
-Ver PRD secao 6 e PRD-V2 RF14. Regras aplicadas aqui: RN06, RN11, RN12,
+Ver PRD secao 6 e PRD-LIVELO-CATALOGO-ALERTAS-APP RF14. Regras aplicadas aqui: RN06, RN11, RN12,
 RN15, RN21.
 """
 

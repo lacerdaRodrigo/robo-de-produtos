@@ -1,4 +1,4 @@
-"""Nucleo puro: monta o retrato da execucao. Ver PRD-V2 RF15, RN24, RN30.
+"""Nucleo puro: monta o retrato da execucao. Ver PRD-LIVELO-CATALOGO-ALERTAS-APP RF15, RN24, RN30.
 
 Nao grava nada — quem grava e o adaptador por tras da porta
 `RepositorioDeExecucao`. Aqui so se decide *o que* vale registrar.

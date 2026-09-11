@@ -58,7 +58,7 @@ class LojaFavorita:
 class Preferencias:
     """Padroes globais de alerta (RN28) e o tier do leitor (RN23).
 
-    Os valores default sao os do PRD-V2 §6.1, calibrados contra a medicao de
+    Os valores default sao os do PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1, calibrados contra a medicao de
     2026-08-09: com 2,0 e piso 4, aquele dia produziria 12 alertas entre
     126 favoritas. Existem aqui para o projeto rodar sem banco.
     """

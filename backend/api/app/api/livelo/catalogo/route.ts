@@ -31,14 +31,16 @@ export async function GET(requisicao: Request) {
     const ordenar: OrdenacaoCatalogoLivelo = ordenarBruto === "nome" ? "nome" : "pontos";
     const q = url.searchParams.get("q") ?? "";
     const categoria = url.searchParams.get("categoria") ?? "";
+    const escopoGlobal =
+      url.searchParams.get("escopo") === "global" && acesso.usuario.papel === "admin";
     const filtrosCategorias = filtrosSqlCatalogoLivelo(q, categoria);
     const [resultado, resumo] = await Promise.all([
       buscarCatalogoLiveloPersistido({
         ...filtrosCategorias,
         aba,
         ordenar,
-      }, paginaSolicitada, porPagina),
-      resumoCatalogoLiveloPersistido(),
+      }, paginaSolicitada, porPagina, escopoGlobal ? undefined : String(acesso.usuario.id)),
+      resumoCatalogoLiveloPersistido(escopoGlobal ? undefined : String(acesso.usuario.id)),
     ]);
     const itens = resultado.itens.map(apresentarParceiroLivelo);
     const melhorOferta = resumo.melhor_oferta_id_externo === null

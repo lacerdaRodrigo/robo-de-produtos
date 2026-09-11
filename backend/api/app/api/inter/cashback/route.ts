@@ -29,6 +29,8 @@ export async function GET(requisicao: Request) {
   const q = url.searchParams.get("q") ?? "";
   const ordenarBruto = url.searchParams.get("ordenar") ?? "cashback";
   const apenasAcompanhadas = url.searchParams.get("acompanhadas") === "true";
+  const escopoGlobal =
+    url.searchParams.get("escopo") === "global" && acesso.usuario.papel === "admin";
   const pagina = paginaValida(url.searchParams.get("pagina"));
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
 
@@ -60,7 +62,7 @@ export async function GET(requisicao: Request) {
       apenasAcompanhadas,
       pagina,
       porPagina,
-    });
+    }, escopoGlobal ? undefined : String(acesso.usuario.id));
 
     return NextResponse.json({
       itens: resultado.itens,

@@ -6,7 +6,7 @@
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
 
-Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md) e o [`PRD-LIVELO-V2.md`](PRD-LIVELO-V2.md)**. Tudo que não for redefinido aqui continua valendo. A V3 não revoga regras da Livelo: quando a regra for exclusiva do Inter, isso estará escrito explicitamente.
+Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md) e o [`PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](PRD-LIVELO-CATALOGO-ALERTAS-APP.md)**. Tudo que não for redefinido aqui continua valendo. A V3 não revoga regras da Livelo: quando a regra for exclusiva do Inter, isso estará escrito explicitamente.
 
 ---
 
@@ -769,6 +769,18 @@ ordenação ao trocar a página e retornando suavemente ao início da lista.
 Em conflito com os trechos históricos de V3 que limitam `/inter` às favoritas,
 esta seção prevalece para o próximo contrato e para os protótipos. Esses trechos
 permanecem como registro fiel da implementação V3.0–V3.3.
+
+### 16.2. Central pessoal
+
+Sites parceiros continuam separados de Produtos Inter. A Central de Alertas
+usa a identidade de `loja_inter` apenas quando há acompanhamento pessoal e só
+compara snapshots de cashback válidos e completos; o primeiro snapshot e dados
+ausentes não geram evento. O contrato comum está em
+[`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
+
+O catálogo autenticado lê acompanhamentos pessoais por padrão. A ação do app
+usa `PATCH /api/inter/cashback/{id}/acompanhamento`; `inter/lojas` continua
+sendo a seleção administrativa global.
 
 ### 16.1. Condições completas no aplicativo mobile
 

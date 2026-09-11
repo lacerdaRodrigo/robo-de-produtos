@@ -429,7 +429,7 @@ class _CartaoCompacto extends StatelessWidget {
                 icon: const Icon(Icons.subject_outlined, size: 15),
                 label: const Text('Ver condições'),
               ),
-              if (podeAdministrar)
+              if (podeAdministrar || aoAcompanhar != null)
                 OutlinedButton.icon(
                   key: ValueKey('acompanhar-${loja.id}'),
                   onPressed: !alterando ? aoAcompanhar : null,

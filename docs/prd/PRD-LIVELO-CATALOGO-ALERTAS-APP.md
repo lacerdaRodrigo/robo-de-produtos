@@ -1,11 +1,11 @@
-# PRD — Livelo V2 (validade, catálogo e preferências)
+# PRD — Livelo: catálogo, alertas e aplicativo
 
 **Versão:** v2.x (documento vivo)
 **Status vigente em 2026-09-04:** V2.0 a V2.3 implementadas no robô, Postgres, API autenticada e Flutter. O ciclo de catálogo completo e a migration `013` estão publicados; a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável.
 
 > A V2 define o catálogo persistido, campanhas, preferências e o cliente Flutter autenticado. O aplicativo consome a API; não consulta a Livelo nem o Postgres diretamente.
 
-Este documento é o **delta sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**, que segue valendo como fonte da verdade de tudo que não for redefinido aqui. Onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
+Este documento é a **evolução sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**. O PRD base continua valendo para os contratos que não foram redefinidos aqui; onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
 
 ---
 
@@ -506,3 +506,16 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 | Free tier de Neon ou Vercel mudar (C08) | Uso medido é ~1% do limite. Se mudar, a configuração volta para arquivo — o contrato `CatalogoFavoritas` torna a volta barata |
 | Deixar de abrir a página e não perceber que o robô morreu | Limitação declarada em MS6. Se virar problema real, o candidato é um e-mail semanal de resumo, mesmo sem promoção |
 | A exposição pública dos dados atrair atenção da Livelo | 9.3: a página sai do ar na primeira manifestação |
+
+## 13. Central pessoal de alertas
+
+O catálogo Livelo continua sendo publicado como snapshot; a Central pessoal
+compara somente snapshots completos por parceiro acompanhado pelo usuário. O
+primeiro snapshot, valores ausentes/ inválidos e coletas parciais não geram
+evento. A implementação e o contrato compartilhado estão em
+[`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md)
+e na migration `023`.
+
+No aplicativo, a leitura do catálogo usa o acompanhamento pessoal do usuário
+por padrão e o PATCH `.../catalogo/{id_externo}/acompanhamento-pessoal`; a rota
+administrativa legada permanece separada e exige papel `admin`.

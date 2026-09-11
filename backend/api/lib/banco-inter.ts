@@ -133,8 +133,11 @@ export async function buscarCashbacksInter(
     pagina: number;
     porPagina: number;
   },
+  usuarioId?: string,
 ): Promise<PaginaCashbacksInter> {
   const sql = conectar();
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
   const busca = normalizarBuscaInter(opcoes.q);
   const limite = Math.min(50, Math.max(1, Math.floor(opcoes.porPagina)));
   const paginaSolicitada = Math.max(1, Math.floor(opcoes.pagina));
@@ -142,8 +145,15 @@ export async function buscarCashbacksInter(
     SELECT count(*)::int AS total
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN acompanhamento_usuario acompanhamento
+        ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+       AND acompanhamento.origem = 'inter_cashback'
+       AND acompanhamento.entidade_id = l.id
      WHERE l.ativa = TRUE
-       AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
+       AND (${!opcoes.apenasAcompanhadas} OR (
+         (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
+         OR (${!usaAcompanhamentoPessoal} AND f.loja_inter_id IS NOT NULL)
+       ))
        AND (
          ${busca === ""}
          OR strpos(
@@ -171,13 +181,22 @@ export async function buscarCashbacksInter(
            COALESCE(c.descricao_principal, l.descricao_principal) AS descricao_principal,
            COALESCE(c.descricao_secundaria, l.descricao_secundaria) AS descricao_secundaria,
            COALESCE(c.encontrada, TRUE) AS encontrada,
-           (f.loja_inter_id IS NOT NULL) AS favorita
+           CASE WHEN ${usaAcompanhamentoPessoal}
+                THEN acompanhamento.id IS NOT NULL
+                ELSE f.loja_inter_id IS NOT NULL END AS favorita
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN acompanhamento_usuario acompanhamento
+        ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+       AND acompanhamento.origem = 'inter_cashback'
+       AND acompanhamento.entidade_id = l.id
       LEFT JOIN cashback_inter c
         ON c.loja_inter_id = l.id AND c.execucao_inter_id = ${execucaoId}
      WHERE l.ativa = TRUE
-       AND (${!opcoes.apenasAcompanhadas} OR f.loja_inter_id IS NOT NULL)
+       AND (${!opcoes.apenasAcompanhadas} OR (
+         (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
+         OR (${!usaAcompanhamentoPessoal} AND f.loja_inter_id IS NOT NULL)
+       ))
        AND (
          ${busca === ""}
          OR strpos(
