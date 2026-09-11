@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.67.1 (2026-09-11)
+
+### Bug Fixes
+
+- Ajustar linhas do lint Python
+  ([`8623dee`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8623dee3b69561d26459e4fd800917bee266d1d0))
+
+
 ## v1.67.0 (2026-09-11)
 
 ### Chores
