@@ -325,7 +325,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 |---|---|---|
 | `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
 | `piso_pontos` | `Decimal \| None` | Idem |
-| `alerta_ativo` | `bool` | Preferência de alerta da loja; `false` não remove o acompanhamento. O cartão mobile V11 não exibe o controle do sino |
+| `alerta_ativo` | `bool` | Preferência administrativa de alerta da loja; `false` não remove o acompanhamento. O cartão mobile V11 exibe um sino no canto superior direito como atalho visual para a ação de acompanhamento pessoal, sem substituir esta preferência administrativa |
 
 ### 8.1 Esquema do banco
 

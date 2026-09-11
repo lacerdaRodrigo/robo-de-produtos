@@ -32,15 +32,16 @@ cria o `001` e carrega o catálogo.
 | `022_pichau_android_fila.sql` | fila idempotente do executor Android | Pichau |
 | `023_alertas_suporte_privacidade.sql` | acompanhamentos pessoais, eventos, preferências, tokens FCM, outbox e relatos | Central de Alertas/app |
 | `024_pichau_android_diagnostico.sql` | diagnóstico JSONB seguro e limitado na fila Android | Pichau |
+| `025_pichau_acompanhamento.sql` | seleção global de acompanhamento dos produtos Pichau | Pichau/API |
 
 ## Onde são usadas
 
 - Robôs: `001`–`009`, `013`–`022` e `024` (coleta Livelo/Inter/produtos, histórico, categorias e Pichau).
-- API do app: `010`–`020` e `023` (autenticação, disparos, catálogos e Central de Alertas).
+- API do app: `010`–`020`, `023` e `025` (autenticação, disparos, catálogos, acompanhamento e Central de Alertas).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Conforme confirmação operacional do
-> responsável, as migrations `001`–`024` foram aplicadas manualmente no banco
+> responsável, as migrations `001`–`025` foram aplicadas manualmente no banco
 > alvo. Este checkout não executa nem verifica migrations automaticamente.
 
 `023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
@@ -55,3 +56,8 @@ de `pichau_dispatcher` (`SELECT/INSERT`) e `pichau_publisher`
 `production`. Depois da confirmação do responsável, a migration foi aplicada
 em `production`; a verificação somente de leitura confirmou os mesmos
 resultados nas 47 linhas existentes.
+
+`025` adiciona a seleção global `pichau_produto.acompanhada`, usada pelo
+catálogo, resumo e PATCH administrativo da Pichau. A aplicação no banco alvo
+foi confirmada pelo responsável antes do merge; este checkout não executa nem
+verifica a SQL automaticamente.

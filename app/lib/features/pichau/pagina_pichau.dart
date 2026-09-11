@@ -399,6 +399,32 @@ class CartaoPichau extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _EtiquetaPichau(texto: 'Origem Pichau', neutra: true),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    key: Key('alerta-pichau-${produto.idExterno}'),
+                    tooltip: produto.acompanhada
+                        ? 'Deixar de acompanhar ${produto.nome}'
+                        : 'Acompanhar ${produto.nome}',
+                    onPressed: podeAdministrar && !alterando
+                        ? aoAlternarAcompanhamento
+                        : null,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 36,
+                      height: 36,
+                    ),
+                    icon: alterando
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            produto.acompanhada
+                                ? Icons.notifications_active_outlined
+                                : Icons.notifications_none_outlined,
+                          ),
+                  ),
                 ],
               ),
               const SizedBox(height: 7),

@@ -62,6 +62,12 @@ As leituras de Livelo e Sites parceiros do Inter usam acompanhamento pessoal
 por padrão; `escopo=global` só é aceito para administradores e mantém a seleção
 legada separada da Central.
 
+Nos cards de Livelo, cashback Inter e produtos Inter, o sino é apenas um atalho
+visual para a ação de acompanhamento do usuário e compartilha o mesmo estado
+de salvamento/rollback do botão textual. O sino de Pichau é uma seleção global
+administrativa, protegida pela autorização correspondente; nenhum desses
+controles deve ser interpretado como preferência de push por si só.
+
 ## Flutter V11
 
 `PaginaAlertas` substitui a folha placeholder e preserva filtro, página e coleta

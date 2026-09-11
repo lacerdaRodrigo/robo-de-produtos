@@ -40,6 +40,7 @@ function dependencias(): DependenciasResumoInicio {
       qualidade: "completa",
       produtos_ativos: 100,
       produtos_esgotados: 4,
+      acompanhadas: 2,
     }),
   };
 }
@@ -206,6 +207,7 @@ describe("resumo real do Início", () => {
         qualidade: null,
         produtos_ativos: 0,
         produtos_esgotados: 0,
+        acompanhadas: 0,
       }),
     };
     expect((await carregarResumoInicio(vazias, agora)).estado_geral).toBe("sem_dados");

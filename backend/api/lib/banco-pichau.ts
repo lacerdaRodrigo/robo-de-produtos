@@ -22,6 +22,7 @@ export type ResumoPichauPersistido = {
   qualidade: "completa" | "degradada" | null;
   produtos_ativos: number;
   produtos_esgotados: number;
+  acompanhadas: number;
 };
 
 export type ProdutoPichauPersistido = {
@@ -32,6 +33,7 @@ export type ProdutoPichauPersistido = {
   categoria_externa: string;
   url_produto: string;
   presente_no_catalogo: boolean;
+  acompanhada: boolean;
   disponibilidade: string;
   preco_original_texto: string | null;
   preco_pix_texto: string | null;
@@ -47,6 +49,12 @@ export type PaginaPichauPersistida = {
   itens: ProdutoPichauPersistido[];
   total: number;
   pagina: number;
+};
+
+export type OpcoesCatalogoPichau = {
+  aba: "todas" | "acompanhadas";
+  disponibilidade: "todas" | "disponiveis" | "esgotados";
+  ordenar: "nome" | "preco" | "desconto";
 };
 
 export type HistoricoPichauPersistido = {
@@ -83,7 +91,8 @@ export async function resumoPichauPersistido(): Promise<ResumoPichauPersistido> 
       (SELECT concluida_em FROM sucesso) AS ultimo_sucesso_em,
       (SELECT qualidade FROM sucesso) AS qualidade,
       count(*) FILTER (WHERE p.presente_no_catalogo)::int AS produtos_ativos,
-      count(*) FILTER (WHERE p.presente_no_catalogo AND p.disponibilidade = 'esgotado')::int AS produtos_esgotados
+      count(*) FILTER (WHERE p.presente_no_catalogo AND p.disponibilidade = 'esgotado')::int AS produtos_esgotados,
+      count(*) FILTER (WHERE p.acompanhada)::int AS acompanhadas
     FROM pichau_produto p
   `) as ResumoPichauPersistido[];
   return linhas[0] ?? {
@@ -93,6 +102,7 @@ export async function resumoPichauPersistido(): Promise<ResumoPichauPersistido> 
     qualidade: null,
     produtos_ativos: 0,
     produtos_esgotados: 0,
+    acompanhadas: 0,
   };
 }
 
@@ -102,6 +112,7 @@ function limiteSeguro(valor: number): number {
 
 export async function buscarCatalogoPichau(
   q: string,
+  opcoes: OpcoesCatalogoPichau,
   pagina: number,
   porPagina: number,
 ): Promise<PaginaPichauPersistida> {
@@ -112,7 +123,11 @@ export async function buscarCatalogoPichau(
   const totalLinhas = (await sql`
     SELECT count(*)::int AS total
       FROM pichau_produto p
-     WHERE p.presente_no_catalogo = TRUE
+     WHERE ((${opcoes.aba === "acompanhadas"} AND p.acompanhada = TRUE)
+        OR (${opcoes.aba !== "acompanhadas"} AND p.presente_no_catalogo = TRUE))
+       AND (${opcoes.disponibilidade === "todas"}
+         OR (${opcoes.disponibilidade === "disponiveis"} AND p.disponibilidade = 'disponivel')
+         OR (${opcoes.disponibilidade === "esgotados"} AND p.disponibilidade = 'esgotado'))
        AND (
          ${busca === ""}
          OR p.nome_busca LIKE ${`%${busca}%`}
@@ -127,7 +142,7 @@ export async function buscarCatalogoPichau(
   const deslocamento = (paginaFinal - 1) * limite;
   const itens = (await sql`
     SELECT p.id_externo, p.sku, p.nome, p.marca, p.categoria_externa, p.url_produto,
-           p.presente_no_catalogo, p.disponibilidade,
+           p.presente_no_catalogo, p.acompanhada, p.disponibilidade,
            m.preco_original_texto, m.preco_pix_texto, m.desconto_pix_texto,
            m.preco_cartao_texto, m.parcelamento, m.sem_juros, m.etiquetas,
            m.momento AS atualizado_em
@@ -140,7 +155,11 @@ export async function buscarCatalogoPichau(
          ORDER BY medicao.momento DESC, medicao.id DESC
          LIMIT 1
       ) m ON TRUE
-     WHERE p.presente_no_catalogo = TRUE
+     WHERE ((${opcoes.aba === "acompanhadas"} AND p.acompanhada = TRUE)
+        OR (${opcoes.aba !== "acompanhadas"} AND p.presente_no_catalogo = TRUE))
+       AND (${opcoes.disponibilidade === "todas"}
+         OR (${opcoes.disponibilidade === "disponiveis"} AND p.disponibilidade = 'disponivel')
+         OR (${opcoes.disponibilidade === "esgotados"} AND p.disponibilidade = 'esgotado'))
        AND (
          ${busca === ""}
          OR p.nome_busca LIKE ${`%${busca}%`}
@@ -148,10 +167,28 @@ export async function buscarCatalogoPichau(
            OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
        )
-     ORDER BY p.nome ASC, p.id_externo ASC
+     ORDER BY
+       CASE WHEN ${opcoes.ordenar === "preco"} THEN m.preco_pix END ASC NULLS LAST,
+       CASE WHEN ${opcoes.ordenar === "desconto"} THEN m.desconto_pix END DESC NULLS LAST,
+       p.nome ASC,
+       p.id_externo ASC
      LIMIT ${limite} OFFSET ${deslocamento}
   `) as ProdutoPichauPersistido[];
   return { itens, total, pagina: paginaFinal };
+}
+
+export async function alterarAcompanhamentoPichau(
+  idExterno: string,
+  acompanhada: boolean,
+): Promise<boolean> {
+  const sql = conectar();
+  const linhas = (await sql`
+    UPDATE pichau_produto
+       SET acompanhada = ${acompanhada}, atualizado_em = now()
+     WHERE id_externo = ${idExterno}
+     RETURNING id_externo
+  `) as Array<{ id_externo: string }>;
+  return linhas.length > 0;
 }
 
 export async function historicoPichau(
@@ -164,7 +201,7 @@ export async function historicoPichau(
   const paginaSolicitada = Math.max(1, Math.floor(pagina));
   const produtos = (await sql`
     SELECT p.id_externo, p.sku, p.nome, p.marca, p.categoria_externa, p.url_produto,
-           p.presente_no_catalogo, p.disponibilidade,
+           p.presente_no_catalogo, p.acompanhada, p.disponibilidade,
            m.preco_original_texto, m.preco_pix_texto, m.desconto_pix_texto,
            m.preco_cartao_texto, m.parcelamento, m.sem_juros, m.etiquetas,
            m.momento AS atualizado_em

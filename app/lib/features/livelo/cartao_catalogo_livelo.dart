@@ -82,7 +82,12 @@ class CartaoCatalogoLivelo extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TopoCartao(parceiro: parceiro),
+            _TopoCartao(
+              parceiro: parceiro,
+              podeInteragir: podeAdministrar || podeAcompanhar,
+              pendente: pendente,
+              aoAlternar: aoAlternar,
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 7,
@@ -162,9 +167,17 @@ class _DescricaoCampanha extends StatefulWidget {
 }
 
 class _TopoCartao extends StatelessWidget {
-  const _TopoCartao({required this.parceiro});
+  const _TopoCartao({
+    required this.parceiro,
+    required this.podeInteragir,
+    required this.pendente,
+    required this.aoAlternar,
+  });
 
   final ParceiroCatalogoLivelo parceiro;
+  final bool podeInteragir;
+  final bool pendente;
+  final VoidCallback aoAlternar;
 
   @override
   Widget build(BuildContext context) {
@@ -228,6 +241,30 @@ class _TopoCartao extends StatelessWidget {
                   const SizedBox(width: 7),
                   SizedBox(width: 76, child: beneficio),
                 ],
+                const SizedBox(width: 4),
+                IconButton(
+                  key: Key('alerta-${parceiro.idExterno}'),
+                  tooltip: parceiro.acompanhada
+                      ? 'Deixar de acompanhar ${parceiro.nome}'
+                      : 'Acompanhar ${parceiro.nome}',
+                  onPressed: podeInteragir && !pendente ? aoAlternar : null,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 36,
+                    height: 36,
+                  ),
+                  icon: pendente
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          parceiro.acompanhada
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_none_outlined,
+                        ),
+                ),
               ],
             ),
             if (estreito) ...[

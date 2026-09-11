@@ -286,6 +286,11 @@
     .result-card { overflow: hidden; padding: 0; border-radius: 21px 21px 21px 8px; text-align: left; }
     .result-card[hidden] { display: none; }
     .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 15px 15px 11px; }
+    .card-top-side { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+    .card-bell { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--radar-line); border-radius: 11px; background: var(--radar-paper); color: var(--radar-muted); }
+    .card-bell.active { border-color: color-mix(in srgb, var(--radar-positive) 32%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
+    .card-bell svg { width: 17px; height: 17px; }
+    .card-bell:focus-visible { outline: 3px solid color-mix(in srgb, var(--radar-action) 36%, transparent); outline-offset: 2px; }
     .store-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .store-monogram { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 14px 14px 14px 5px; background: var(--radar-plum-soft); color: var(--radar-plum); font-size: 11px; font-weight: 800; }
     .store-identity strong, .store-identity small { display: block; }
@@ -416,6 +421,7 @@
     .pichau-results-shell[hidden] { display: none; }
     .pichau-product-card { border-radius: 21px 21px 21px 8px; }
     .pichau-product-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 15px 15px 11px; }
+    .pichau-head-actions { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
     .pichau-product-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
     .pichau-product-tags span { padding: 4px 7px; border-radius: 7px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 8px; font-weight: 800; }
     .pichau-product-tags span:last-child { background: var(--radar-plum-soft); color: var(--radar-plum); }
@@ -635,20 +641,20 @@
           <div class="collection-bar"><span class="collection-copy"><strong id="livelo-count">3 lojas encontradas</strong><small id="livelo-context">Catálogo completo</small></span><button class="filter-trigger" id="livelo-filter-trigger" type="button" data-open-sheet="livelo-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filtrar e ordenar</span></button></div>
           <div class="result-list" id="livelo-results">
             <article class="result-card" data-name="casas bahia marketplace" data-category="marketplace" data-score="4" data-group="monitored" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace</small></span></span><span class="benefit-value">4 pts/R$</span></div>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Marketplace</small></span></span><span class="card-top-side"><span class="benefit-value">4 pts/R$</span><button class="card-bell active" type="button" aria-label="Deixar de acompanhar Casas Bahia" aria-pressed="true" data-bell-store><svg><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></span></div>
               <div class="card-facts"><span class="fact"><span>Campanha</span><strong>Promoção</strong></span><span class="fact"><span>Pontuação base</span><strong>2 pts/R$</strong></span></div>
-              <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-casas">Detalhes</button></div>
+              <div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-casas">Detalhes</button></div>
             </article>
             <article class="result-card" data-name="o boticario beleza clube" data-category="beleza" data-score="3" data-group="monitored" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza</small></span></span><span class="benefit-value">3 pts/R$</span></div>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">OB</span><span><strong>O Boticário</strong><small>Beleza</small></span></span><span class="card-top-side"><span class="benefit-value">3 pts/R$</span><button class="card-bell active" type="button" aria-label="Deixar de acompanhar O Boticário" aria-pressed="true" data-bell-store><svg><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></span></div>
               <div class="card-facts"><span class="fact"><span>Clube Livelo</span><strong>10 pts/R$</strong></span><span class="fact"><span>Campanha</span><strong>Exclusiva Clube</strong></span></div>
               <div class="campaign-panel"><strong>Condições da campanha</strong><p>Oferta exclusiva para assinantes do Clube Livelo.</p><a class="campaign-link" href="https://livelo.com.br/juntar-pontos/parceiros/o-boticario/BOT" target="_blank" rel="noopener noreferrer"><svg><path d="M14 3h7v7M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>Ver regras completas no site da Livelo</a></div>
-              <div class="card-foot"><button class="follow-button active" type="button" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-boticario">Detalhes</button></div>
+              <div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-store>Acompanhando</button><button class="details-button" type="button" data-open-sheet="livelo-boticario">Detalhes</button></div>
             </article>
             <article class="result-card" data-name="mercado livre marketplace" data-category="marketplace" data-score="1" data-group="" data-store-card>
-              <div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace</small></span></span><span class="benefit-value">1 pt/R$</span></div>
+              <div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Mercado Livre</strong><small>Marketplace</small></span></span><span class="card-top-side"><span class="benefit-value">1 pt/R$</span><button class="card-bell" type="button" aria-label="Acompanhar Mercado Livre" aria-pressed="false" data-bell-store><svg><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></span></div>
               <div class="card-facts"><span class="fact"><span>Pontuação atual</span><strong>1 pt/R$</strong></span><span class="fact"><span>Clube Livelo</span><strong>1 pt/R$</strong></span></div>
-              <div class="card-foot"><button class="follow-button" type="button" data-follow-store>Acompanhar</button><button class="details-button" type="button" data-open-sheet="livelo-mercado">Detalhes</button></div>
+              <div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-store>Acompanhar</button><button class="details-button" type="button" data-open-sheet="livelo-mercado">Detalhes</button></div>
             </article>
           </div>
           <p class="empty" id="livelo-empty">Nenhum item nesta amostra para o filtro escolhido.</p>
@@ -1120,6 +1126,66 @@
         document.getElementById('direct-selected-count').textContent = count;
         document.getElementById('direct-selected-tab-count').textContent = count;
       }
+      function syncCardBell(card, selector, active) {
+        const bell = card?.querySelector(selector);
+        if (!bell) return;
+        bell.classList.toggle('active', active);
+        bell.setAttribute('aria-pressed', String(active));
+      }
+      function makeCardBell(card, selector, active, label) {
+        if (card.querySelector(selector)) return card.querySelector(selector);
+        const bell = document.createElement('button');
+        bell.className = active ? 'card-bell active' : 'card-bell';
+        bell.type = 'button';
+        bell.setAttribute('aria-label', label);
+        bell.setAttribute('aria-pressed', String(active));
+        bell.innerHTML = icons.bell;
+        return bell;
+      }
+      function ensureCardBells() {
+        document.querySelectorAll('#livelo-results [data-store-card]').forEach(card => {
+          const follow = card.querySelector('[data-follow-store]');
+          const active = follow?.classList.contains('active') || false;
+          const bell = makeCardBell(card, '[data-bell-store]', active, active ? 'Deixar de acompanhar esta loja' : 'Acompanhar esta loja');
+          if (!bell.parentElement) {
+            const side = document.createElement('span'); side.className = 'card-top-side';
+            const benefit = card.querySelector('.benefit-value');
+            if (benefit) { benefit.replaceWith(side); side.append(benefit); } else card.querySelector('.card-top').append(side);
+            side.append(bell);
+          }
+        });
+        document.querySelectorAll('#inter-results [data-cashback-store]').forEach(card => {
+          const follow = card.querySelector('[data-follow-cashback]');
+          const active = follow?.classList.contains('active') || false;
+          const bell = makeCardBell(card, '[data-bell-cashback]', active, active ? 'Deixar de acompanhar esta loja' : 'Acompanhar esta loja');
+          if (!bell.parentElement) {
+            const side = document.createElement('span'); side.className = 'card-top-side';
+            const kicker = card.querySelector('.cashback-kicker');
+            if (kicker) { kicker.replaceWith(side); side.append(kicker); } else card.querySelector('.card-top').append(side);
+            side.append(bell);
+          }
+        });
+        document.querySelectorAll('#pichau-results [data-pichau-product]').forEach(card => {
+          const follow = card.querySelector('[data-follow-pichau]');
+          const active = follow?.classList.contains('active') || false;
+          const bell = makeCardBell(card, '[data-bell-pichau]', active, active ? 'Deixar de acompanhar este produto' : 'Acompanhar este produto');
+          if (!bell.parentElement) {
+            const origin = card.querySelector('.pichau-origin');
+            const actions = document.createElement('span'); actions.className = 'pichau-head-actions';
+            origin?.replaceWith(actions); if (origin) actions.append(origin); actions.append(bell);
+          }
+        });
+        document.querySelectorAll('#product-results [data-product]').forEach(card => {
+          const bell = makeCardBell(card, '[data-bell-product]', false, 'Acompanhar este produto');
+          if (!bell.parentElement) {
+            const badge = card.querySelector('.cashback-badge');
+            const side = document.createElement('span'); side.className = 'card-top-side';
+            if (badge) { badge.replaceWith(side); side.append(badge); } else card.querySelector('.product-card-main').append(side);
+            side.append(bell);
+          }
+        });
+      }
+      ensureCardBells();
       function filterDirectStores(group = 'all') {
         const input = document.getElementById('direct-search');
         const q = input.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -1195,20 +1261,31 @@
         const sheetGo = event.target.closest('[data-sheet-go]'); if (sheetGo) { closeSheet(); go(sheetGo.dataset.sheetGo); }
         if (event.target.closest('[data-theme-toggle]')) { root.dataset.theme = root.dataset.theme === 'dark' ? '' : 'dark'; openSheet('profile'); }
         if (event.target.closest('[data-logout]')) { closeSheet(); app.classList.add('hidden'); auth.classList.remove('hidden'); root.dataset.theme = ''; }
+        const storeBell = event.target.closest('[data-bell-store]');
+        if (storeBell) storeBell.closest('[data-store-card]')?.querySelector('[data-follow-store]')?.click();
+        const cashbackBell = event.target.closest('[data-bell-cashback]');
+        if (cashbackBell) cashbackBell.closest('[data-cashback-store]')?.querySelector('[data-follow-cashback]')?.click();
+        const pichauBell = event.target.closest('[data-bell-pichau]');
+        if (pichauBell) pichauBell.closest('[data-pichau-product]')?.querySelector('[data-follow-pichau]')?.click();
+        const productBell = event.target.closest('[data-bell-product]');
+        if (productBell) {
+          const active = productBell.classList.toggle('active');
+          productBell.setAttribute('aria-pressed', String(active));
+          showToast(active ? 'Produto adicionado às suas acompanhadas.' : 'Produto removido das suas acompanhadas.');
+        }
         const follow = event.target.closest('[data-follow-store]');
         if (follow) {
-          if (follow.classList.contains('active')) {
-            showToast('Esta loja já está sendo acompanhada.');
-          } else {
-            follow.classList.add('active');
-            follow.textContent = 'Acompanhando';
-            const card = follow.closest('[data-store-card]');
-            const groups = new Set((card.dataset.group || '').split(' ').filter(Boolean));
-            groups.add('monitored');
-            card.dataset.group = [...groups].join(' ');
-            updateFollowedCount();
-            showToast('Loja adicionada às suas acompanhadas.');
-          }
+          const card = follow.closest('[data-store-card]');
+          const active = !follow.classList.contains('active');
+          const groups = new Set((card.dataset.group || '').split(' ').filter(Boolean));
+          if (active) groups.add('monitored'); else groups.delete('monitored');
+          card.dataset.group = [...groups].join(' ');
+          follow.classList.toggle('active', active);
+          follow.setAttribute('aria-pressed', String(active));
+          follow.textContent = active ? 'Acompanhando' : 'Acompanhar';
+          syncCardBell(card, '[data-bell-store]', active);
+          updateFollowedCount();
+          showToast(active ? 'Loja adicionada às suas acompanhadas.' : 'Loja removida das suas acompanhadas.');
         }
         const cashbackFollow = event.target.closest('[data-follow-cashback]');
         if (cashbackFollow) {
@@ -1220,6 +1297,7 @@
           cashbackFollow.classList.toggle('active', !monitored);
           cashbackFollow.setAttribute('aria-pressed', String(!monitored));
           cashbackFollow.textContent = monitored ? 'Acompanhar' : 'Acompanhando';
+          syncCardBell(card, '[data-bell-cashback]', !monitored);
           updateInterFollowedCount();
           const active = document.querySelector('[data-filter-group="inter-cashback"] [data-filter].active');
           filterList(document.getElementById('inter-search'), 'inter-results', 'inter-empty', active?.dataset.filter || 'all');
@@ -1236,6 +1314,7 @@
           pichauFollow.classList.toggle('active', next);
           pichauFollow.setAttribute('aria-pressed', String(next));
           pichauFollow.textContent = next ? 'Acompanhando' : 'Acompanhar';
+          syncCardBell(card, '[data-bell-pichau]', next);
           updatePichauFollowedCount();
           searchPichau();
           showToast(next ? 'Produto adicionado às suas acompanhadas.' : 'Produto removido das suas acompanhadas.');

@@ -108,6 +108,7 @@ void main() {
     expect(find.text('Maior cashback'), findsOneWidget);
     expect(find.text('Nome A–Z'), findsOneWidget);
     expect(find.text('Magazine Luiza'), findsOneWidget);
+    expect(find.byKey(const Key('alerta-inter-magazine luiza')), findsOneWidget);
     expect(find.text('Até 12% de cashback'), findsOneWidget);
     expect(find.text('Para correntista'), findsOneWidget);
     expect(find.text('Para não-correntista'), findsOneWidget);

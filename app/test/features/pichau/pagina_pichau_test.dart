@@ -19,6 +19,7 @@ const _catalogo = {
       'categoria_externa': 'PC Gamer',
       'url_produto': 'https://www.pichau.com.br/produto/pg-7800',
       'presente_no_catalogo': true,
+      'acompanhada': true,
       'disponibilidade': 'disponivel',
       'preco_original_texto': 'R\$ 8.199,90',
       'preco_pix_texto': 'R\$ 7.499,90',
@@ -36,6 +37,7 @@ const _catalogo = {
       'categoria_externa': 'PC Gamer',
       'url_produto': 'https://www.pichau.com.br/produto/pg-7600',
       'presente_no_catalogo': true,
+      'acompanhada': false,
       'disponibilidade': 'esgotado',
       'preco_pix_texto': 'R\$ 4.699,90',
       'preco_cartao_texto': 'R\$ 4.899,90',
@@ -75,6 +77,7 @@ Api _api({
   bool falharCatalogo = false,
   bool falharAcompanhamento = false,
   Map<String, dynamic>? catalogo,
+  Map<String, dynamic>? catalogoAcompanhadas,
 }) => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
@@ -84,6 +87,10 @@ Api _api({
       requisicoes.add(requisicao);
       if (requisicao.url.path == '/api/pichau/catalogo') {
         if (falharCatalogo) return http.Response('{}', 500);
+        if (requisicao.url.queryParameters['aba'] == 'acompanhadas' &&
+            catalogoAcompanhadas != null) {
+          return http.Response(jsonEncode(catalogoAcompanhadas), 200);
+        }
         return http.Response(jsonEncode(catalogo ?? _catalogo), 200);
       }
       if (requisicao.url.path ==
@@ -238,14 +245,26 @@ void main() {
     at,
   ) async {
     final requisicoes = <http.Request>[];
+    final acompanhadas = Map<String, dynamic>.from(_catalogo)
+      ..['itens'] = <dynamic>[(_catalogo['itens'] as List<dynamic>).first]
+      ..['total_itens'] = 1;
     await at.pumpWidget(
-      _tela(_api(requisicoes: requisicoes), administrador: true),
+      _tela(
+        _api(
+          requisicoes: requisicoes,
+          catalogoAcompanhadas: acompanhadas,
+        ),
+        administrador: true,
+      ),
     );
     await at.pumpAndSettle();
 
     await at.tap(find.text('Acompanhadas'));
     await at.pumpAndSettle();
     expect(requisicoes.last.url.queryParameters['aba'], 'acompanhadas');
+    expect(find.text('Pichau Gaming 7800X3D RTX 4070 Super'), findsOneWidget);
+    expect(find.text('Pichau Gaming Ryzen 5 RX 7600'), findsNothing);
+    expect(find.text('1 oferta encontrada'), findsOneWidget);
 
     await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
     await at.pumpAndSettle();
@@ -263,7 +282,7 @@ void main() {
 
     await at.tap(find.text('Todas'));
     await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
+    await at.tap(find.byKey(const Key('alerta-pichau-PG-7800')));
     await at.pumpAndSettle();
     expect(requisicoes.last.method, 'PATCH');
     expect(jsonDecode(requisicoes.last.body)['acompanhada'], isTrue);

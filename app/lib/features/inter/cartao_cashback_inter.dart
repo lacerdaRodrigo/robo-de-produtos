@@ -125,6 +125,9 @@ class CartaoCashbackInter extends StatelessWidget {
             tema: tema,
             cores: cores,
             loja: loja,
+            acompanhada: acompanhada,
+            alterando: alterando,
+            aoAcompanhar: aoAcompanhar,
             aoAbrirParceiro: aoAbrirParceiro,
           );
     return Semantics(label: 'Loja ${loja.nome}', child: conteudo);
@@ -247,6 +250,32 @@ class _CartaoCompacto extends StatelessWidget {
                   ),
                 ),
               ),
+              if (aoAcompanhar != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  key: ValueKey('alerta-inter-${loja.id}'),
+                  tooltip: acompanhada
+                      ? 'Deixar de acompanhar ${loja.nome}'
+                      : 'Acompanhar ${loja.nome}',
+                  onPressed: !alterando ? aoAcompanhar : null,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 36,
+                    height: 36,
+                  ),
+                  icon: alterando
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          acompanhada
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_none_outlined,
+                        ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 11),
@@ -561,12 +590,18 @@ class _CartaoDetalhado extends StatelessWidget {
     required this.tema,
     required this.cores,
     required this.loja,
+    required this.acompanhada,
+    required this.alterando,
+    required this.aoAcompanhar,
     required this.aoAbrirParceiro,
   });
 
   final ThemeData tema;
   final CoresRadar cores;
   final CashbackInter loja;
+  final bool acompanhada;
+  final bool alterando;
+  final VoidCallback? aoAcompanhar;
   final VoidCallback? aoAbrirParceiro;
 
   @override
@@ -578,7 +613,28 @@ class _CartaoDetalhado extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(loja.nome, style: tema.textTheme.titleMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(loja.nome, style: tema.textTheme.titleMedium),
+                ),
+                if (aoAcompanhar != null)
+                  IconButton(
+                    key: ValueKey('alerta-inter-${loja.id}'),
+                    tooltip: acompanhada
+                        ? 'Deixar de acompanhar ${loja.nome}'
+                        : 'Acompanhar ${loja.nome}',
+                    onPressed: !alterando ? aoAcompanhar : null,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      acompanhada
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_none_outlined,
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 12),
             Text(
               loja.encontrada ? oferta : 'Não encontrada na última coleta',

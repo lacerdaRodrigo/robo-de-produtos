@@ -382,7 +382,8 @@ Anatomia:
 2. pontuação atual em destaque;
 3. pontuação base, Clube ou tipo de campanha;
 4. condição da campanha quando fornecida;
-5. acompanhar e detalhes.
+5. sino no canto superior direito, compartilhando o estado da ação de acompanhar;
+6. acompanhar e detalhes.
 
 Campos esperados do contrato incluem nome, categorias, pontos atuais, pontos base, pontos Clube, moeda, prefixo, promoção, campanha, descrição, início, fim, link e acompanhamento.
 
@@ -440,6 +441,10 @@ Anatomia:
 4. comparação entre correntista e não-correntista, quando ambos existirem;
 5. acompanhar/desacompanhar;
 6. detalhes das condições.
+
+O sino no canto superior direito é um atalho para a mesma ação de
+acompanhar/desacompanhar do rodapé. Ele usa o mesmo estado otimista, bloqueio
+durante o salvamento e rollback do botão textual.
 
 Regras de dado:
 
@@ -551,6 +556,9 @@ Anatomia:
 6. metadados como parcelamento e estoque;
 7. histórico e abertura no Inter.
 
+Quando o card permite acompanhamento, o sino fica no canto superior direito e
+compartilha a ação e o estado do botão textual.
+
 O card preserva a distinção entre preço observado, desconto, cashback e valor líquido. Não realiza nova consulta ao Inter durante a digitação.
 
 ## 16. Administração
@@ -611,8 +619,9 @@ O Flutter nunca acessa a fonte externa nem o banco diretamente.
 | Livelo | `GET /api/livelo/catalogo` | Busca, filtros, ordenação e paginação |
 | Acompanhar Livelo | `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento` | Acompanhar ou remover loja |
 | Histórico Livelo | `GET /api/livelo/catalogo/{id_externo}/historico` | Últimas medições salvas |
-| Catálogo Pichau (planejado) | `GET /api/pichau/catalogo?q=&pagina=&por_pagina=` | PCs Gamer persistidos, busca e paginação |
-| Histórico Pichau (planejado) | `GET /api/pichau/catalogo/{id_externo}/historico` | Medições Pix/cartão dos últimos 30 dias |
+| Catálogo Pichau | `GET /api/pichau/catalogo?q=&aba=&disponibilidade=&ordenar=&pagina=&por_pagina=` | PCs Gamer persistidos, filtros server-side e paginação |
+| Acompanhar Pichau | `PATCH /api/pichau/catalogo/{id_externo}/acompanhamento` | Seleção global administrativa do sino |
+| Histórico Pichau | `GET /api/pichau/catalogo/{id_externo}/historico` | Medições Pix/cartão dos últimos 30 dias |
 | Cashback Inter | `GET /api/inter/cashback` | Cashback, busca, ordem e paginação |
 | Cashback acompanhadas | `GET /api/inter/cashback?acompanhadas=true` | Lista das favoritas |
 | Favorita Inter | `PATCH /api/inter/lojas` | Alterar `favorita` por ID |
@@ -647,6 +656,8 @@ coleta parcial mantém o último retrato válido.
 ## 20. Acessibilidade
 
 - Todos os ícones acionáveis possuem `aria-label` ou texto visível.
+- Sinos de acompanhamento possuem rótulo contextual, refletem `aria-pressed`
+  quando aplicável e ficam bloqueados durante `Salvando`.
 - Abas usam `role=tab`, `aria-selected` e rótulo do conjunto.
 - Botões de acompanhamento usam `aria-pressed`.
 - Foco por teclado recebe contorno de 3 px.

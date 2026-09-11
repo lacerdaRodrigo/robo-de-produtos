@@ -42,7 +42,8 @@ backend/api/
 | `inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
 | `inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
 | `inter/produtos/[loja]/[id_externo]/acompanhamento` | PATCH | Acompanhamento pessoal de produto | Firebase |
-| `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU e paginação | Firebase |
+| `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU, abas, disponibilidade, ordenação e paginação | Firebase |
+| `pichau/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhar/remover produto Pichau e atualizar o sino | admin |
 | `pichau/catalogo/[id_externo]/historico` | GET | Histórico Pichau limitado a 30 dias | Firebase |
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
@@ -82,6 +83,10 @@ npm run build    # next build
 As migrações que a API usa (auth, disparos, catálogo de produtos) estão em
 [`../../migracoes/`](../../migracoes/). O contrato completo com o Flutter está
 em [`../../app/lib/core/api/`](../../app/lib/core/api/).
+
+O catálogo e o PATCH de acompanhamento da Pichau dependem de
+`migracoes/025_pichau_acompanhamento.sql`, aplicada manualmente pelo responsável
+antes do merge. O coletor preserva a coluna de seleção durante o upsert.
 
 ## Central de Alertas
 

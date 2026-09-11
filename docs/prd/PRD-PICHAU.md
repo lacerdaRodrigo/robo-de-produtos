@@ -9,7 +9,7 @@ passou no mesmo commit também deixando o Chrome aberto: o processo residual é
 um risco real agora eliminado, mas não ficou comprovado como causa isolada.
 Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-10
+**Última atualização:** 2026-09-11
 
 ## Objetivo
 
@@ -137,11 +137,13 @@ acompanhados que saírem do catálogo continuam retornáveis na aba
 `acompanhadas`, com `presente_no_catalogo=false`, estado **Fora do catálogo**
 e histórico preservado.
 
-O cliente Flutter para esse contrato está versionado nesta fase mobile. A
-rota PATCH, a persistência do acompanhamento e sua migration não foram
-alteradas neste ciclo, pois a regra operacional da branch restringe a entrega
-ao app; a publicação da API/migration é um gate externo antes de distribuir a
-APK com a ação habilitada.
+O cliente Flutter e a API para esse contrato estão versionados nesta fase. A
+rota PATCH, a persistência do acompanhamento e a migration
+`025_pichau_acompanhamento.sql` fazem parte da entrega; a aplicação da
+migration foi confirmada pelo responsável antes do merge. O coletor preserva a
+coluna de acompanhamento no `UPSERT`, para que uma nova coleta não apague a
+seleção manual. A aba **Acompanhadas** consulta o banco com filtro server-side,
+inclusive para produtos que saíram do catálogo atual.
 
 ### Resumo de Serviços
 

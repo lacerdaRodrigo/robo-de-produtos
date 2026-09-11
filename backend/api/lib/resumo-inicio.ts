@@ -63,7 +63,7 @@ export type AtividadeRecente = {
 
 export type DependenciasResumoInicio = {
   livelo: () => Promise<ResumoLiveloPersistido>;
-  cashbackInter: () => Promise<ResumoCashbackInterPersistido>;
+  cashbackInter: (usuarioId?: string) => Promise<ResumoCashbackInterPersistido>;
   produtos: () => Promise<ResumoProdutosPersistido>;
   pichau: () => Promise<ResumoPichauPersistido>;
 };
@@ -244,15 +244,17 @@ const pichauIndisponivel: ResumoInicio["pichau"] = {
   qualidade: null,
   produtos_ativos: 0,
   produtos_esgotados: 0,
+  acompanhadas: 0,
 };
 
 export async function carregarResumoInicio(
   deps: DependenciasResumoInicio = dependenciasPadrao,
   agora = new Date(),
+  usuarioId?: string,
 ): Promise<ResumoInicio> {
   const [liveloLido, cashbackLido, produtosLidos, pichauLido] = await Promise.allSettled([
     deps.livelo(),
-    deps.cashbackInter(),
+    deps.cashbackInter(usuarioId),
     deps.produtos(),
     deps.pichau(),
   ]);

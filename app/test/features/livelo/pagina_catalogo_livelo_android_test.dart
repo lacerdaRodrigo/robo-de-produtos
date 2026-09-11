@@ -447,10 +447,15 @@ void main() {
     },
   );
 
-  testWidgets('cartão Livelo não exibe sino e alinha pontos à direita', (
+  testWidgets('cartão Livelo exibe sino e compartilha o acompanhamento', (
     at,
   ) async {
-    final controlador = _controlador();
+    final chamadas = <bool>[];
+    final controlador = _controlador(
+      alterar: ({required idExterno, required acompanhada}) async {
+        chamadas.add(acompanhada);
+      },
+    );
     addTearDown(controlador.dispose);
     await _abrir(at, controlador);
     await at.drag(
@@ -459,7 +464,13 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.byKey(const Key('alerta-A')), findsNothing);
+    final sino = find.byKey(const Key('alerta-A'));
+    expect(sino, findsOneWidget);
+    expect(at.widget<IconButton>(sino).onPressed, isNotNull);
+    await at.tap(sino);
+    await at.pumpAndSettle();
+    expect(chamadas, [false]);
+
     final cartao = find.byKey(const Key('cartao-livelo-A'));
     final pontos = find.descendant(
       of: cartao,

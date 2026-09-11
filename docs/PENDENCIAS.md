@@ -22,12 +22,11 @@ anterior ainda reinicia o gate operacional.
 - [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi gerada e distribuída pelo `app-robo` `34553635486`; filtros, paginação, leitura, preferências, dados reais e push aguardam instalação/aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos e overflow. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
-- [ ] Publicar a evolução do contrato Pichau de acompanhamento antes de
-  distribuir a APK desta branch: a camada Flutter já envia `aba`,
-  `disponibilidade`, `ordenar`, `acompanhada` e o PATCH autenticado, mas a
-  rota `/api/pichau/catalogo/{id_externo}/acompanhamento`, a contagem no
-  resumo e a migration de persistência ficaram fora do ciclo mobile e ainda
-  precisam de validação/aplicação externa.
+- [x] Publicar a evolução do contrato Pichau de acompanhamento: a rota,
+  contagem no resumo, filtros server-side, sinos dos cards e migration
+  `025_pichau_acompanhamento.sql` estão versionados. O responsável confirmou a
+  aplicação da migration antes do merge; este checkout não acessa o banco para
+  produzir uma verificação independente.
 
 ## Pichau — evolução ainda aberta
 

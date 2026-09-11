@@ -186,13 +186,19 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   var _filtroDiretas = 'todas';
   late final ControladorCashbackInter _cashback = ControladorCashbackInter(
     buscar: ({required q, required ordenar, required pagina}) =>
-        widget.api.painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
+        widget.api.painelCashbackInter(
+          q: q,
+          ordenar: ordenar,
+          pagina: pagina,
+          acompanhamentoPessoal: !widget.administrador,
+        ),
     buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
         widget.api.painelCashbackInter(
           q: q,
           ordenar: ordenar,
           pagina: pagina,
           apenasAcompanhadas: true,
+          acompanhamentoPessoal: !widget.administrador,
         ),
   );
   late final ControladorCatalogoAdministracao<LojaDireto> _diretas =

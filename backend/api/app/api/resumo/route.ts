@@ -10,7 +10,10 @@ export async function GET(requisicao: Request) {
   if (!acesso.ok) return acesso.resposta;
 
   try {
-    const resumo = await carregarResumoInicio();
+    const usuarioId = acesso.usuario.papel === "admin"
+      ? undefined
+      : String(acesso.usuario.id);
+    const resumo = await carregarResumoInicio(undefined, undefined, usuarioId);
     return NextResponse.json(resumo, {
       headers: {
         "cache-control": "no-store, max-age=0",

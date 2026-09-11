@@ -563,6 +563,29 @@ void main() {
     );
   });
 
+  testWidgets('oferta compacta exibe sino quando o acompanhamento está ativo', (
+    at,
+  ) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CartaoProduto(
+            produto: _produto(),
+            compacto: true,
+            aoAcompanhar: () {},
+            aoAbrirHistorico: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('alerta-produto-casas-bahia-edge')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('oferta sem categoria não inventa metadado', (at) async {
     await at.pumpWidget(
       MaterialApp(

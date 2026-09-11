@@ -10,3 +10,13 @@ export function buscaPichau(q: string): string {
 export function idPichauValido(id: string): boolean {
   return ID_PICHAU_VALIDO.test(id);
 }
+
+export function validarAcompanhamentoPichau(
+  corpo: unknown,
+): { ok: true; acompanhada: boolean } | { ok: false } {
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+    return { ok: false };
+  }
+  const acompanhada = (corpo as Record<string, unknown>).acompanhada;
+  return typeof acompanhada === "boolean" ? { ok: true, acompanhada } : { ok: false };
+}

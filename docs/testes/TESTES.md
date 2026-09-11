@@ -406,7 +406,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-271 | Debounce da busca | Digitação só consulta após 350 ms sem nova entrada | Relógio de teste/fonte injetada |
 | CT-272 | Erro de página adicional | Itens anteriores ficam visíveis e retry tenta apenas a próxima página | Primeira resposta válida, segunda falha e terceira passa |
 | CT-273 | Estados do painel | Loading, falha/retry, sem coleta, catálogo vazio, busca vazia, atraso e loja ausente não se confundem | Testes de widget com controlador injetado |
-| CT-274 | Cartão e condições | Pontos, base, limiar, Clube, promoção, estado de alerta e condições expansíveis são renderizados com texto seguro; o cartão mobile não exibe o controle de sino | Widget com modelo completo |
+| CT-274 | Cartão, sino e condições | Pontos, base, limiar, Clube, promoção, estado de alerta, sino de acompanhamento e condições expansíveis são renderizados com texto seguro; sino e botão compartilham a mutação | Widget com modelo completo |
 | CT-275 | Filtros e fim da lista | Os três controles aparecem; página final informa que não há mais resultados | Tocar controles e carregar a última resposta |
 | CT-276 | Layout e navegação Livelo | Retrato, tela larga e toque em Livelo preservam a moldura e exibem o painel real | Widgets em viewports distintos |
 
@@ -418,6 +418,9 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-278 | Consulta do cashback | Cliente mobile envia `q`, `ordenar`, `pagina` e `por_pagina=10` ao endpoint autenticado | `MockClient` inspeciona URL e envelope |
 | CT-279 | Página visível Inter | Primeira página e página seguinte trocam os cards sem acumulá-los na rolagem | Fonte injetada com duas páginas |
 | CT-280 | Reset e resposta antiga | Busca/ordenação reiniciam a sequência, aguardam 350 ms e descartam a resposta anterior | `Completer` e fonte injetada |
+| CT-403 | Sino do cashback Inter | Card compacto e detalhado exibem o sino contextual quando a ação está disponível e delegam ao mesmo callback do acompanhamento | `pagina_cashback_inter_test.dart` |
+| CT-404 | Escopo pessoal do Inter | Usuário comum consulta e conta `acompanhamento_usuario`; `favorita_inter` permanece restrita ao escopo global administrativo | `banco-inter.teste.ts` e `pagina_cashback_inter_test.dart` |
+| CT-405 | Sino dos produtos Inter | Card compacto e card completo exibem o sino quando recebem a ação de acompanhamento | `pagina_produtos_test.dart` |
 | CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
 | CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
 | CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
@@ -569,6 +572,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-390 | Abas, disponibilidade e ordenação | Todas/Acompanhadas e os filtros do protótipo são enviados à API, sem trocar o recorte silenciosamente | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-391 | Acompanhamento autorizado | Usuário comum não muta; administrador usa PATCH idempotente e a falha restaura produto/contador | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-392 | Acompanhadas fora do catálogo | A remoção da aba Acompanhadas só ocorre após confirmação e estados esgotado/fora do catálogo continuam distintos | `controlador_catalogo_pichau_test.dart` e `modelos_pichau_test.dart` |
+| CT-406 | Sino da Pichau | O sino no topo do card compartilha a ação administrativa, pendência e rollback do botão textual | `pagina_pichau_test.dart` |
 
 ### Pichau — backend/API versionados
 
@@ -609,6 +613,8 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-386 | Workflow produtor Android | Cron 09h30/14h30/20h30, depois da Livelo e antes do Inter, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
+| CT-407 | Filtro server-side da Pichau | Aba acompanhadas, disponibilidade, busca, ordenação e paginação são aplicados antes do retorno; a seleção sobrevive fora do catálogo | `backend/api/lib/banco-pichau.teste.ts` |
+| CT-408 | PATCH do sino Pichau | A rota valida ID/corpo, exige admin, persiste de forma idempotente e informa produto ausente sem 500 genérico | `backend/api/app/api/pichau/catalogo/**` e `banco-pichau.teste.ts` |
 
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução e os totais da
