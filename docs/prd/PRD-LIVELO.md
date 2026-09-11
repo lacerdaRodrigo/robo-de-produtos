@@ -118,7 +118,7 @@ Limitações reais do ambiente escolhido. Não são negociáveis — o projeto c
 | ID | Restrição | Impacto |
 |---|---|---|
 | **C01** | O GitHub desabilita workflows agendados após 60 dias sem atividade no repositório | O robô para de rodar em silêncio; exige mitigação explícita no roadmap |
-| **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h/14h/20h são aproximados; atraso de minutos é comportamento normal |
+| **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h10/14h10/20h10 são aproximados; atraso de minutos é comportamento normal |
 | **C04** | A Livelo pode alterar o HTML ou adotar proteção anti-bot sem aviso | O extrator é frágil por natureza — é exatamente o que RF12 existe para detectar |
 
 ### 2.4 Parâmetros de configuração

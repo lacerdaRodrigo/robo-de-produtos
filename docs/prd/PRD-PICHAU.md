@@ -203,8 +203,9 @@ qualidade completa, sem publicação parcial. O workflow encerrou em
 aproximadamente 2m20s; o tempo de coleta observado na execução anterior foi de
 aproximadamente 69s.
 
-O workflow separado `.github/workflows/pichau.yml` está versionado para 09h,
-14h e 20h de Brasília, além do disparo manual. Ele cria uma solicitação
+O workflow separado `.github/workflows/pichau.yml` está versionado para
+09h30, 14h30 e 20h30 de Brasília, depois da Livelo e antes do Inter, além do
+disparo manual. Ele cria uma solicitação
 idempotente em `pichau_android_fila` cuja chave combina `github_run_id` e
 `github.sha`, aguarda o worker Termux e só termina com sucesso depois que o
 Android publica a coleta. O Ubuntu não executa fallback.
@@ -397,9 +398,9 @@ Livelo e Inter permanecem fora desta prova.
 
 ## Workflow GitHub Actions e fila Android — contrato versionado, aceite em observação
 
-O workflow Pichau é o disparador único da coleta. O cron segue os mesmos
-horários de Livelo e Inter (`09h`, `14h` e `20h` de Brasília), e o botão manual
-usa a mesma fila. Cada execução combina `github_run_id` e o `github.sha` de 40
+O workflow Pichau é o disparador único da coleta. O cron usa `09h30`, `14h30`
+e `20h30` de Brasília, entre Livelo e Inter, e o botão manual usa a mesma
+fila. Cada execução combina `github_run_id` e o `github.sha` de 40
 caracteres na chave idempotente, insere um trabalho `pendente` e aguarda até 20
 minutos os estados `sucesso` ou `falha`. O uso da chave existente dispensa nova
 coluna ou migration e mantém legíveis as linhas antigas sem SHA.

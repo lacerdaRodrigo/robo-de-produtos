@@ -50,8 +50,9 @@ anterior ainda reinicia o gate operacional.
   inspeção ADB e por isso não encerra este aceite.
 - [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
   dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
-  entre as coletas. A janela recomeça após a validação manual desta correção;
-  qualquer nova falha a reinicia novamente.
+  entre as coletas. A grade vigente é Livelo às `:10`, Pichau às `:30` e Inter
+  às `:30` da hora seguinte. A janela recomeça após a validação manual desta
+  correção; qualquer nova falha a reinicia novamente.
 - [ ] Decidir depois do gate se a exigência de recuperação manual após reboot é
   aceitável: ligar e desbloquear uma vez, ativar “Depuração por Wi‑Fi”, executar
   `adb tcpip 5555` por USB autorizado, conferir o status e retirar o cabo. A

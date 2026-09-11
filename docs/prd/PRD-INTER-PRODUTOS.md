@@ -112,7 +112,7 @@ Compartilhar infraestrutura genérica é permitido. Reutilizar `LojaInter`, `Ret
 - Sincronizar o catálogo público de vendedores da área Compre direto no Inter.
 - Selecionar e remover lojas sob a sessão administrativa existente.
 - Coletar todas as páginas disponibilizadas para cada loja selecionada.
-- Rodar três vezes ao dia, às 09h, 14h e 20h de Brasília.
+- Rodar três vezes ao dia, às 10h30, 15h30 e 21h30 de Brasília.
 - Criar tarefas independentes por loja, com no máximo duas simultâneas.
 - Persistir catálogo atual e 30 dias de medições.
 - Fazer busca local por nome de produto, limitada às lojas selecionadas.
@@ -689,7 +689,7 @@ A V4 só pode ser marcada implementada quando:
 | Seleção | Somente lojas escolhidas; sem limite funcional de quantidade |
 | Cobertura | Todas as páginas expostas até `isLastPage`, sem teto fixo |
 | Profundidade | Dados da listagem; nenhuma página individual por produto |
-| Frequência | 09h, 14h e 20h de Brasília |
+| Frequência | 10h30, 15h30 e 21h30 de Brasília |
 | Escala | Uma tarefa por loja, máximo duas simultâneas, páginas sequenciais |
 | Identidade | Loja por ID/slug; produto por loja + ID externo |
 | Pesquisa | Local no banco, termos completos normalizados, celular = smartphone |

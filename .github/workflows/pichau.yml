@@ -2,9 +2,9 @@ name: pichau-pc-gamer
 
 on:
   schedule:
-    # 09h, 14h e 20h em America/Sao_Paulo (UTC-3 sem horario de verao),
-    # alinhado aos workflows Livelo e Inter.
-    - cron: "0 12,17,23 * * *"
+    # 12h30/17h30/23h30 UTC = 09h30/14h30/20h30 em Brasilia (UTC-3),
+    # depois da Livelo e antes do Inter.
+    - cron: "30 12,17,23 * * *"
   workflow_dispatch:
 
 concurrency:

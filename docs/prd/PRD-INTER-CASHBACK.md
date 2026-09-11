@@ -148,7 +148,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RF27** | Usar em cada card a rota individual oficial `https://shopping.inter.co/site-parceiro/lojas/{slug}`, aberta somente por ação da pessoa |
 | **RF28** | Criar páginas próprias para consulta e cadastro do Inter e incluí-las na navegação sem mudar o comportamento das rotas da Livelo |
 | **RF29** | Registrar cada execução do Inter com momento, versão, total lido, total válido, favoritas encontradas e estado final |
-| **RF30** | Executar o robô do Inter em workflow próprio, nos horários 09h, 14h e 20h de Brasília e por disparo manual |
+| **RF30** | Executar o robô do Inter em workflow próprio, nos horários 10h30, 15h30 e 21h30 de Brasília e por disparo manual |
 | **RF31** | Mostrar falha, dado atrasado e loja ausente como estados distintos; nenhum deles pode aparecer como cashback zero |
 | **RF32** | Exibir a oferta para não-correntista em uma seção secundária identificada, recolhida por padrão, quando ela existir |
 | **RF33** | Consultar separadamente a última tentativa e a última execução válida, para mostrar falha recente sem substituir os cashbacks válidos anteriores |
@@ -344,7 +344,9 @@ Qualquer falha antes do passo 8 preserva a última execução válida e tenta ma
 
 ### 7.5 Workflow e disparo manual
 
-`inter.yml` usa o mesmo cron de Brasília do robô atual: `0 12,17,23 * * *`. Ele mantém `permissions: contents: read`, timeout próprio e somente os segredos de que precisa.
+`inter.yml` agenda o Inter por último, às 10h30, 15h30 e 21h30 de Brasília,
+com cron `30 0,13,18 * * *` em UTC. Ele mantém `permissions: contents: read`,
+timeout próprio e somente os segredos de que precisa.
 
 O botão “Atualizar Inter” dispara apenas `inter.yml`. O limite de cinco minutos é independente do botão da Livelo, por meio de `disparo_manual_inter`; um serviço não consome a janela do outro.
 
@@ -640,7 +642,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 |---|---|
 | Fonte | Endpoint fixo `https://marketplace-api.web.bancointer.com.br/site/affiliate/inter/v1/departments/ALL-STORES/stores?lang=pt-BR` |
 | Plano alternativo | Não há scraping do HTML nem Playwright automático. Mudança do endpoint interrompe a integração para revisão |
-| Frequência | 09h, 14h e 20h de Brasília, em `.github/workflows/inter.yml`, além de disparo manual |
+| Frequência | 10h30, 15h30 e 21h30 de Brasília, em `.github/workflows/inter.yml`, além de disparo manual |
 | Cortesia de rede | No máximo três tentativas por execução, timeout de 30 segundos cada e espera linear de 2 e 4 segundos; retry somente para erro de conexão/timeout, HTTP 408, 429 ou 5xx |
 | HTTP definitivo | HTTP 400–407 (exceto 408) e 409–499 (exceto 429) falham na primeira resposta; 401 e 403 nunca são repetidos |
 | Tamanho | Resposta acima de 5 MiB é rejeitada antes da decodificação |

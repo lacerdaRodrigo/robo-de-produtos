@@ -8,9 +8,9 @@ nunca em arquivo versionado.
 
 | Workflow | O que faz | Agenda | Segredos que usa |
 |---|---|---|---|
-| [`robo.yml`](workflows/robo.yml) | Coleta Livelo e publica catálogo/retrato | 09h/14h/20h + manual | `DATABASE_URL` |
-| [`inter.yml`](workflows/inter.yml) | Atualiza cashback, sincroniza as lojas e coleta os produtos selecionados do Shopping Inter | 09h/14h/20h + botão do app | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
-| [`pichau.yml`](workflows/pichau.yml) | Enfileira a coleta PC Gamer no executor Android e aguarda a publicação | 09h/14h/20h + manual | `PICHAU_DISPATCH_DATABASE_URL` ou `DATABASE_URL` |
+| [`robo.yml`](workflows/robo.yml) | Coleta Livelo e publica catálogo/retrato | 09h10/14h10/20h10 + manual | `DATABASE_URL` |
+| [`inter.yml`](workflows/inter.yml) | Atualiza cashback, sincroniza as lojas e coleta os produtos selecionados do Shopping Inter | 10h30/15h30/21h30 + botão do app | `DATABASE_URL`, `LIMIAR_LOJAS_INTER` |
+| [`pichau.yml`](workflows/pichau.yml) | Enfileira a coleta PC Gamer no executor Android e aguarda a publicação | 09h30/14h30/20h30 + manual | `PICHAU_DISPATCH_DATABASE_URL` ou `DATABASE_URL` |
 | [`testes.yml`](workflows/testes.yml) | CI de robôs/API: Ruff, Pytest, TypeScript, ESLint e Vitest | a cada push/PR | nenhum |
 | [`versao.yml`](workflows/versao.yml) | Semantic-release: bump, CHANGELOG, tag e Release | na `main` | `GITHUB_TOKEN` |
 | [`app-robo.yml`](workflows/app-robo.yml) | CI mobile; na `main` aprovada, gera APK debug e envia cópia privada ao Drive com aviso por e-mail | a cada push/PR; distribuição na `main` ou manual | `GOOGLE_DRIVE_OAUTH_CLIENT_JSON`, `GOOGLE_DRIVE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID`, `EMAIL_DESTINO`, `EMAIL_REMETENTE`, `SENHA_APP_GMAIL` |

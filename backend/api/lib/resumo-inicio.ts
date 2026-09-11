@@ -108,25 +108,41 @@ function estadoLivelo(dados: ResumoLiveloPersistido, agora: Date): EstadoLiveloR
     : "atualizado";
 }
 
-const HORARIOS_LIVELO = [9, 14, 20] as const;
+const HORARIOS_LIVELO = [
+  { hora: 9, minuto: 10 },
+  { hora: 14, minuto: 10 },
+  { hora: 20, minuto: 10 },
+] as const;
 function partesBrasilia(data: Date) {
-  const partes = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).formatToParts(data);
+  const partes = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(data);
   const valor = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? "0";
-  return { ano: Number(valor("year")), mes: Number(valor("month")), dia: Number(valor("day")), hora: Number(valor("hour")) };
+  return {
+    ano: Number(valor("year")),
+    mes: Number(valor("month")),
+    dia: Number(valor("day")),
+    hora: Number(valor("hour")),
+  };
 }
-function janelaBrasilia(ano: number, mes: number, dia: number, hora: number): Date {
-  return new Date(Date.UTC(ano, mes - 1, dia, hora + 3));
+function janelaBrasilia(ano: number, mes: number, dia: number, hora: number, minuto: number): Date {
+  return new Date(Date.UTC(ano, mes - 1, dia, hora + 3, minuto));
 }
 function agendamentoLivelo(dados: ResumoLiveloPersistido, agora: Date) {
   const brasilia = partesBrasilia(agora);
-  const janelas = HORARIOS_LIVELO.map((hora) => janelaBrasilia(brasilia.ano, brasilia.mes, brasilia.dia, hora));
+  const janelas = HORARIOS_LIVELO.map(({ hora, minuto }) => janelaBrasilia(brasilia.ano, brasilia.mes, brasilia.dia, hora, minuto));
   const sucesso = instante(dados.ultimo_sucesso_em);
   const pendente = janelas.find((janela) => janela <= agora && (sucesso === null || sucesso < janela.getTime()));
   if (pendente) return { estado: "aguardando" as const, referencia_em: pendente.toISOString() };
   const proxima = janelas.find((janela) => janela > agora);
   if (proxima) return { estado: "prevista" as const, referencia_em: proxima.toISOString() };
   const amanha = new Date(Date.UTC(brasilia.ano, brasilia.mes - 1, brasilia.dia + 1));
-  return { estado: "prevista" as const, referencia_em: janelaBrasilia(amanha.getUTCFullYear(), amanha.getUTCMonth() + 1, amanha.getUTCDate(), 9).toISOString() };
+  return { estado: "prevista" as const, referencia_em: janelaBrasilia(amanha.getUTCFullYear(), amanha.getUTCMonth() + 1, amanha.getUTCDate(), 9, 10).toISOString() };
 }
 
 function atividadeRecente(

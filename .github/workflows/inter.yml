@@ -2,8 +2,9 @@ name: shopping-inter
 
 on:
   schedule:
-    # 12h/17h/23h UTC = 09h/14h/20h de Brasilia (UTC-3).
-    - cron: "0 12,17,23 * * *"
+    # 13h30/18h30/00h30 UTC = 10h30/15h30/21h30 de Brasilia (UTC-3).
+    # O disparo fica por ultimo para reservar tempo para Pichau e Livelo.
+    - cron: "30 0,13,18 * * *"
   workflow_dispatch:
 
 # Cashback e Compre direto formam uma unica rodada do Banco Inter. Uma nova

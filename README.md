@@ -104,7 +104,8 @@ robôs publicam seus retratos no banco e não possuem notificador SMTP ativo. Ve
 ## GitHub Actions
 
 Em **Settings → Secrets and variables → Actions**, crie os segredos usados pelos
-workflows. Os coletores rodam às 09h, 14h e 20h (produtos às 09h30/14h30/20h30).
+workflows. A sequência planejada é Livelo às 09h10/14h10/20h10, Pichau às
+09h30/14h30/20h30 e Inter às 10h30/15h30/21h30.
 Veja a lista completa em [`.github/README.md`](.github/README.md).
 
 > **Nota sobre reativação:** com o pacote em `backend/robo/src/`, recolocar o CI
