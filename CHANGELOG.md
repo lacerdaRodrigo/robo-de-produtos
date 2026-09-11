@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.66.11 (2026-09-11)
+
+### Bug Fixes
+
+- **pichau**: Limpa tarefas recentes no Android
+  ([`4a3e91b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4a3e91be9da35f415cd27ed4cfddc2cb8798b8d0))
+
+
 ## v1.66.10 (2026-09-10)
 
 ### Bug Fixes
