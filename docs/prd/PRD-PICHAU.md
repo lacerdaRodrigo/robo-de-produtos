@@ -535,8 +535,16 @@ passou em uma sessão e 2min53s: seis páginas, 1.178 itens declarados/lidos/ún
 e execução de catálogo 42. Ao final havia zero tarefa padrão, Chrome ocioso e
 Appium ocioso. A prova também revelou que `KEYCODE_HOME` acordava esta ROM ao
 encerrar; o contrato foi completado com `KEYCODE_SLEEP` no adaptador e no trap.
-O próximo disparo deve provar simultaneamente o fast-forward automático a partir
-do checkout `ee17a16` e a restauração da tela bloqueada.
+Na execução seguinte, `34547539783` (fila 56), o telefone foi deixado
+propositalmente em `ee17a16`, enquanto o workflow partiu de `7487d87`; sem
+`git pull` manual, o claim fez o fast-forward, validou o SHA e realinhou o
+ambiente Python. A coleta passou em uma tentativa e 3min18s, com seis páginas e
+1.178 itens declarados/lidos/únicos na execução de catálogo 44. Ao final havia
+zero tarefa padrão, Chrome e Appium ociosos, keyguard ativo, tela desligada e
+estado de interação `SLEEP`. Isso fecha a prova funcional do alinhamento
+dinâmico e da restauração da tela. Como o cabo de dados ainda estava fisicamente
+conectado para a inspeção ADB, a execução manual sem cabo e o gate agendado
+continuam pendentes.
 
 ## Jornada mobile V11 entregue
 
@@ -555,10 +563,10 @@ do checkout `ee17a16` e a restauração da tela bloqueada.
 
 ## Estado operacional do executor Android
 
-O hardening, a migration e a limpeza de tarefas recentes estão implantados. A
-coleta manual com estado residual passou, mas a restauração explícita da tela
-bloqueada e o alinhamento automático de checkout ainda aguardam a prova real do
-próximo disparo antes da nova observação de 72 horas. O telefone precisa
+O hardening, a migration, a limpeza de tarefas recentes, a restauração da tela
+bloqueada e o alinhamento automático de checkout estão implantados e passaram
+em coleta real. A execução manual sem cabo físico e a nova observação agendada
+de 72 horas continuam abertas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de

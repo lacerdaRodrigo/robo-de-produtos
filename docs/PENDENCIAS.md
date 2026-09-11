@@ -12,7 +12,9 @@ diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
 Depois do “Fechar tudo” manual, a `34545283501`, fila 53, passou em uma
 tentativa. A limpeza sem coordenada por `am stack remove` já foi provada no
 aparelho. A `34547029990`, fila 54, passou começando com Chrome e duas tarefas
-recentes abertos; a falha anterior ainda reinicia o gate operacional.
+recentes abertos. A `34547539783`, fila 56, também passou após atualizar sozinho
+o checkout e terminou com tela bloqueada, tarefas/Chrome/Appium ociosos; a falha
+anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
@@ -43,17 +45,15 @@ recentes abertos; a falha anterior ainda reinicia o gate operacional.
   confirmação, o responsável aplicou a migration em `production`; a
   verificação somente de leitura confirmou coluna, constraints, 47 linhas com
   `{}` e os mesmos grants.
-- [ ] Validar no próximo disparo que o Samsung em `ee17a16` avança sozinho por
-  fast-forward, contém o SHA do workflow e restaura a tela bloqueada depois de
-  voltar à Home. O protocolo já está na `main`; divergência falha como
-  `pichau-checkout` antes da coleta.
 - [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
   metadados seguros do log local da falha de 10/09. Essa investigação foi
   adiada pelo responsável e não bloqueia a migration nem a implementação local.
 - [ ] Executar uma coleta manual real com a tela bloqueada e somente Wi-Fi:
   exigir no máximo duas sessões, recuperação visível quando usada, catálogo e
   contagens completos, nenhuma publicação parcial, fila/sumário detalhados no
-  Actions e Chrome/Appium ociosos ao final. Registrar a run no PRD.
+  Actions e Chrome/Appium ociosos ao final. A `34547539783` comprovou tudo isso
+  com transporte interno Wi-Fi, mas o cabo de dados permaneceu conectado para a
+  inspeção ADB e por isso não encerra este aceite.
 - [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
   dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
   entre as coletas. A janela recomeça após a validação manual desta correção;
