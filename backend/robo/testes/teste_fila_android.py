@@ -215,6 +215,17 @@ def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -
     assert ambiente_recebido["PICHAU_ANDROID_FILA_ID"] == "7"
 
 
+def teste_runner_remove_tarefas_recentes_sem_coordenada_de_tela() -> None:
+    runner = fila_android.CAMINHO_RUNNER.read_text(encoding="utf-8")
+
+    assert "dumpsys activity recents" in runner
+    assert "type=standard" in runner
+    assert 'am stack remove "$tarefa_id"' in runner
+    assert "input keyevent KEYCODE_HOME" in runner
+    assert runner.count("limpar_tarefas_recentes") >= 3
+    assert "uiautomator" not in runner
+
+
 def teste_health_faz_somente_sondagem_minima(monkeypatch) -> None:
     cursor = CursorFalso([])
     conexao = ConexaoFalsa(cursor)

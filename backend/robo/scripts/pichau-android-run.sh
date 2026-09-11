@@ -23,6 +23,7 @@ CODIGO_ADB_CONEXAO_WIFI=33
 CODIGO_ADB_ESTADO_WIFI=34
 CODIGO_APPIUM=35
 CODIGO_CONFIGURACAO=40
+CODIGO_NAVEGADOR=41
 
 agora_ms() {
     date +%s%3N
@@ -219,6 +220,33 @@ if [[ "${PICHAU_WAKE_LOCK_OWNER:-}" != "worker" || "$worker_lock_ativo" != 1 ]];
     wake_lock_proprio=1
 fi
 
+listar_tarefas_recentes() {
+    local saida_recentes
+    saida_recentes="$(adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
+        dumpsys activity recents 2>/dev/null)" || return 1
+    printf '%s\n' "$saida_recentes" | sed -n \
+        's/.*Task{[^}]* #\([1-9][0-9]*\) type=standard.*/\1/p'
+}
+
+limpar_tarefas_recentes() {
+    local tarefa_id saida_recentes saida_confirmacao
+    local -a tarefas=()
+    saida_recentes="$(listar_tarefas_recentes)" || return 1
+    if [[ -n "$saida_recentes" ]]; then
+        mapfile -t tarefas <<< "$saida_recentes"
+    fi
+    ((${#tarefas[@]} <= 64)) || return 1
+    for tarefa_id in "${tarefas[@]}"; do
+        [[ "$tarefa_id" =~ ^[1-9][0-9]*$ ]] || return 1
+        adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
+            am stack remove "$tarefa_id" >/dev/null 2>&1 || true
+    done
+    adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
+        input keyevent KEYCODE_HOME >/dev/null 2>&1 || return 1
+    saida_confirmacao="$(listar_tarefas_recentes)" || return 1
+    [[ -z "$saida_confirmacao" ]]
+}
+
 limpar_runner() {
     if [[ "$appium_gerenciado" == 1 ]]; then
         env -u DATABASE_URL -u PICHAU_ANDROID_FILA_ID \
@@ -228,6 +256,7 @@ limpar_runner() {
     if [[ -n "${ADB_TARGET:-}" ]]; then
         adb -P "$ADB_PORT" -s "$ADB_TARGET" shell \
             am force-stop com.android.chrome >/dev/null 2>&1 || true
+        limpar_tarefas_recentes >/dev/null 2>&1 || true
         adb -P "$ADB_PORT" -s "$ADB_TARGET" forward \
             --remove tcp:9222 >/dev/null 2>&1 || true
     fi
@@ -247,6 +276,10 @@ trap 'exit 129' HUP
     echo "$(date --iso-8601=seconds) executor ADB transporte=wifi"
     cd "$ROBO_ROOT"
     inicio_preparo_ms="$(agora_ms)"
+    if ! limpar_tarefas_recentes; then
+        fail "nao foi possivel limpar as tarefas recentes" "$CODIGO_NAVEGADOR"
+    fi
+    echo "$(date --iso-8601=seconds) estado Android limpo tarefas_recentes=0"
     # A credencial do publicador só entra no ambiente do processo Python que
     # publica. Appium, tmux, ADB e Chrome não precisam recebê-la.
     appium_gerenciado=1

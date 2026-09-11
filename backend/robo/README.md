@@ -95,8 +95,11 @@ python -m robo_pichau.principal --diagnostico
   somente com dispositivos confiáveis e em uma rede privada. O telefone deve
   ser dedicado ao robô, sem contas pessoais, senhas salvas ou tokens no perfil
   Chrome. Bloquear a tela ou usar modo headless não substitui essas medidas.
-  Cada execução começa com `am force-stop com.android.chrome`, abre diretamente
-  a URL pública permitida por ADB e aguarda o CDP local. Uma sessão
+  Cada execução remove por ID todas as tarefas recentes `type=standard`, volta
+  à Home, executa `am force-stop com.android.chrome`, abre diretamente a URL
+  pública permitida por ADB e aguarda o CDP local. A remoção usa
+  `am stack remove`, equivalente ao “Fechar tudo” desta ROM, sem coordenada de
+  tela e com confirmação de que não restou tarefa. Uma sessão
   Appium/UiAutomator2 só é criada quando essa inicialização direta falha; ela
   mantém `noReset`, `forceAppLaunch` e `shouldTerminateApp`.
   A extração devolve somente a grade principal e os campos comerciais mínimos;
@@ -122,9 +125,10 @@ python -m robo_pichau.principal --diagnostico
   sessão descarta integralmente a primeira; não há publicação parcial.
   `scripts/pichau-android-appium.sh` aceita `start`, `stop` e `status`; o runner
   mantém a sessão tmux somente durante a coleta e a encerra ao sair. Ao sair, o
-  adaptador encerra a sessão, confirma o `force-stop` do Chrome e remove a ponte
-  CDP antes da publicação. O trap do runner repete o fechamento em sucesso,
-  falha ou sinal sem substituir a causa original.
+  adaptador encerra a sessão, confirma o `force-stop` do Chrome, limpa novamente
+  as tarefas recentes, volta à Home e remove a ponte CDP antes da publicação. O
+  trap do runner repete o fechamento em sucesso, falha ou sinal sem substituir
+  a causa original.
   `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
   tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
   a vida do daemon. O runner não libera esse lock quando foi iniciado pelo

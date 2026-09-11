@@ -63,6 +63,9 @@ class CicloDevToolsFalso:
     def aguardar_pagina(self) -> None:
         pass
 
+    def limpar_tarefas_recentes(self, *, confirmar: bool = False) -> None:
+        pass
+
 
 def teste_url_de_log_remove_query_fragmento_e_credenciais() -> None:
     assert (
@@ -370,7 +373,7 @@ def teste_fonte_android_abre_chrome_le_catalogo_e_fecha_driver() -> None:
     assert devtools.urls == [fonte.url_categoria, fonte.url_categoria]
     assert devtools.aberturas == 2
     assert devtools.fechamentos == 2
-    assert devtools.paradas == [False, False, True]
+    assert devtools.paradas == [False, True, False, True, False, True]
 
 
 def teste_fonte_android_le_documento_pelo_cdp_e_fecha_ponte() -> None:
@@ -450,6 +453,39 @@ def teste_cdp_android_mantem_chrome_ativo_e_bloqueia_recursos_inuteis(monkeypatc
     assert "*google-analytics*" in chamadas[4][1]["urls"]
 
 
+def teste_cdp_android_remove_tarefas_recentes_e_volta_para_home(monkeypatch) -> None:
+    devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=10.0)
+    respostas_dumpsys = iter(
+        (
+            b"""
+              * Recent #0: Task{abc #105 type=standard A=10211:com.android.chrome}
+              * Recent #1: Task{def #88 type=standard A=10123:outro.app}
+              * Recent #2: Task{ghi #60 type=home I=com.sec.android.app.launcher/.Launcher}
+            """,
+            b"* Recent #0: Task{ghi #60 type=home I=com.sec.android.app.launcher/.Launcher}",
+        )
+    )
+    chamadas: list[tuple[list[str], bool]] = []
+
+    def executar(argumentos: list[str], *, check: bool = True):
+        chamadas.append((argumentos, check))
+        if argumentos[-3:] == ["dumpsys", "activity", "recents"]:
+            return SimpleNamespace(returncode=0, stdout=next(respostas_dumpsys))
+        return SimpleNamespace(returncode=0, stdout=b"")
+
+    monkeypatch.setattr(devtools, "_executar", executar)
+
+    devtools.limpar_tarefas_recentes(confirmar=True)
+
+    assert chamadas == [
+        (["shell", "dumpsys", "activity", "recents"], True),
+        (["shell", "am", "stack", "remove", "105"], False),
+        (["shell", "am", "stack", "remove", "88"], False),
+        (["shell", "input", "keyevent", "KEYCODE_HOME"], False),
+        (["shell", "dumpsys", "activity", "recents"], True),
+    ]
+
+
 def teste_cdp_android_aguarda_json_transitorio_do_devtools(monkeypatch) -> None:
     devtools = modulo_adaptadores._ChromeDevTools(udid="device", adb_port=None, timeout=2.0)
     respostas = iter(
@@ -522,7 +558,7 @@ def teste_fonte_android_recria_chrome_quando_devtools_nao_volta_do_reboot(
     assert devtools.aberturas == 2
     assert devtools.urls_abertas == [fonte.url_categoria, fonte.url_categoria]
     assert devtools.aguardas == 2
-    assert devtools.paradas == [False, False, True]
+    assert devtools.paradas == [False, True, False, True, False, True]
     assert devtools.fechado is True
     assert driver.fechado is True
 
@@ -531,11 +567,14 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
     class DevTools(CicloDevToolsFalso):
         def __init__(self) -> None:
             self.paradas: list[bool] = []
+            self.confirmacoes = 0
 
         def forcar_parada(self, *, confirmar: bool = False) -> None:
             self.paradas.append(confirmar)
             if confirmar:
-                raise FalhaAoObterPichau("limpeza falhou", codigo="navegador")
+                self.confirmacoes += 1
+                if self.confirmacoes > 1:
+                    raise FalhaAoObterPichau("limpeza falhou", codigo="navegador")
 
         def abrir(self) -> None:
             pass
@@ -558,7 +597,7 @@ def teste_fonte_android_limpeza_nao_mascara_falha_e_eh_obrigatoria_no_sucesso() 
     ):
         pass
     assert limpeza.value.codigo == "navegador"
-    assert devtools_sucesso.paradas == [False, True]
+    assert devtools_sucesso.paradas == [False, True, False, True]
 
 
 def teste_fonte_android_fetch_e_fallback_dom_por_pagina() -> None:

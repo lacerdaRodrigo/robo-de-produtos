@@ -181,15 +181,20 @@ reconciliação por URL.
 Quando o DOM não informa SKU, o publicador reconcilia a URL em lote com a
 identidade histórica e preserva o SKU já persistido.
 
-Cada sessão Android começa sem estado de navegador: executa
-`am force-stop com.android.chrome`, abre a URL pública permitida diretamente por
-ADB e aguarda o DevTools. Appium/UiAutomator2 só cria uma sessão nativa se essa
-inicialização direta falhar; as capacidades mantêm `noReset` e
-`forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o driver é encerrado,
-o Chrome é forçado a parar com confirmação e a ponte CDP é removida. Sem outra
-exceção, falhar essa confirmação impede a publicação; com uma causa anterior,
-a limpeza é repetida sem mascará-la. O trap do runner também força o fechamento
-em sucesso, falha ou sinal.
+Cada sessão Android começa sem estado de aplicativo: enumera pelo `dumpsys`
+somente tarefas recentes `type=standard`, valida e limita seus IDs, remove cada
+uma com `am stack remove` e aciona `KEYCODE_HOME`. Esse é o equivalente sem
+coordenada ao botão Samsung “Fechar tudo”; tarefas Home/Recents não são alvo e o
+conteúdo do `dumpsys` não entra no log. Depois, executa
+`am force-stop com.android.chrome`, confirma a ausência do processo, abre a URL
+pública permitida diretamente por ADB e aguarda o DevTools. Appium/UiAutomator2
+só cria uma sessão nativa se essa inicialização direta falhar; as capacidades
+mantêm `noReset` e `forceAppLaunch` e incluem `shouldTerminateApp`. Na saída, o
+driver é encerrado, tarefas recentes são removidas novamente, o Chrome é
+forçado a parar com confirmação, a Home volta ao primeiro plano e a ponte CDP é
+removida. Sem outra exceção, falhar essa confirmação impede a publicação; com
+uma causa anterior, a limpeza é repetida sem mascará-la. O trap do runner também
+repete a limpeza em sucesso, falha ou sinal.
 
 A execução real `34302348225` confirmou a operação completa depois da correção
 do arranque do Chrome sem aba DevTools: 1.173 produtos foram publicados com
@@ -497,6 +502,18 @@ falha e deixa de ser comportamento aceito: o contrato vigente sempre começa e
 termina com Chrome parado. A `34519730452` reinicia o gate; a nova janela só
 começa depois da implantação no Samsung e da coleta manual real registrada.
 
+Em 2026-09-11, a execução `34544816986` (fila 52) falhou como
+`pichau-dados` em 5min29s. A fila terminou com `diagnostico={}` e sem
+`execucao_id`, provando que o Samsung ainda executava o checkout anterior e não
+a estabilização já enviada à `main`. Logo depois, o responsável abriu Recentes
+e acionou manualmente “Fechar tudo”; a execução `34545283501` (fila 53) passou
+em uma tentativa e 3min24s. A comparação não isola toda a causa interna do
+Chrome, mas comprova que a pilha recente é uma variável operacional relevante.
+No mesmo aparelho, a automação nova foi validada criando uma tarefa Chrome:
+antes havia uma tarefa padrão e processo ativo; depois de `am stack remove`,
+restaram zero tarefas padrão, zero processo Chrome e a Home ficou em primeiro
+plano. A falha da fila 52 reinicia novamente o gate de 72 horas.
+
 ## Jornada mobile V11 entregue
 
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
@@ -514,9 +531,10 @@ começa depois da implantação no Samsung e da coleta manual real registrada.
 
 ## Estado operacional do executor Android
 
-O hardening anterior e a migration desta revisão estão implantados; a
-estabilização ainda depende da atualização do Samsung e da coleta manual real
-antes da nova observação de 72 horas. O telefone precisa
+O hardening anterior e a migration desta revisão estão implantados; a limpeza
+de tarefas recentes está validada localmente e no aparelho, mas ainda depende
+do envio à `main`, atualização do checkout do Samsung e coleta manual real antes
+da nova observação de 72 horas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de
