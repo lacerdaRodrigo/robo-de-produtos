@@ -716,6 +716,7 @@ O que conferir:
 | CT-185 | Acompanhamento pessoal Livelo e cashback | Rotas resolvem a chave pública, isolam o usuário e preservam os endpoints administrativos | PATCH especializado + consultas `escopo=pessoal` |
 | CT-186 | Catálogos usam o escopo correto | Usuário vê somente seus acompanhamentos; administrador pode solicitar o catálogo global | Teste da rota e SQL parametrizado |
 | CT-187 | Cron da outbox protegido | Somente `Authorization: Bearer OUTBOX_CRON_SECRET` chama a rota interna; resposta tem contagens operacionais e falhas não expõem segredos | `backend/api/app/api/cron/notificacoes/outbox/route.teste.ts` |
+| CT-188 | Alertas de produtos usam a qualidade correta | A função de produtos Inter consulta `qualidade` na execução da loja, sem referenciar coluna inexistente na rodada coordenadora | `backend/api/testes/migracao-alertas-produtos-inter.teste.ts` |
 
 ## Totais
 

@@ -27,6 +27,9 @@ A migration `migracoes/023_alertas_suporte_privacidade.sql` cria:
 As funções de geração são chamadas somente depois de uma publicação completa e
 válida. O primeiro snapshot não gera evento; ausência, valor inválido, falha ou
 coleta parcial não vira zero nem alerta. Comparações são deduplicadas por coleta.
+Para Produtos Inter, a qualidade da coleta é lida na execução da loja (`rodada_loja`),
+que é a tabela que persiste essa coluna; a rodada coordenadora fornece apenas o
+estado agregado.
 Alertas expiram após 90 dias e relatos após 180 dias.
 
 ## API

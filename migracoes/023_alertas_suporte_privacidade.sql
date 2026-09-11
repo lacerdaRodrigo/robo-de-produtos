@@ -206,7 +206,7 @@ BEGIN
         SELECT m.produto_direto_inter_id entidade_id, p.id_externo, p.nome,
                m.execucao_loja_produtos_inter_id coleta_execucao, m.momento,
                m.preco_atual, m.cashback_percentual,
-               loja.slug origem_loja, rodada.estado rodada_estado, rodada.qualidade
+               loja.slug origem_loja, rodada.estado rodada_estado
           FROM medicao_produto_direto_inter m
           JOIN produto_direto_inter p ON p.id = m.produto_direto_inter_id
           JOIN execucao_loja_produtos_inter rodada_loja
