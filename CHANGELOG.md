@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v1.67.5 (2026-09-13)
+
+### Bug Fixes
+
+- Liberar geracao segura de alertas Pichau
+  ([`b1f51cb`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b1f51cb147109a80024e4dc86fb2f3ad50d8c326))
+
+### Code Style
+
+- Ajustar linha do teste Livelo
+  ([`91b55cb`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/91b55cbe9e1e4ff386c32b256f11e15462f2f8e5))
+
+- Formatar teste de alertas Inter
+  ([`71026ae`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/71026aea311b9574e485b56c02005a8120e31bc3))
+
+### Testing
+
+- Ajustar lint da validação Inter
+  ([`b33b705`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b33b70559b9a307232cbf0ba122b9f8fbe9be658))
+
+
 ## v1.67.4 (2026-09-11)
 
 ### Bug Fixes
