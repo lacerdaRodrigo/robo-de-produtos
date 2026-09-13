@@ -6,7 +6,7 @@ de worker tmux/Appium no boot como runbook vigente. As falhas sem claim de
 atual, o worker foreground e o gate de 72 horas estão no
 [`PRD-PICHAU.md`](../prd/PRD-PICHAU.md).
 
-**Última atualização:** 2026-09-09
+**Última atualização:** 2026-09-13
 
 Este plano registrou a prova de um telefone Android como executor local do robô
 Pichau. Para a nova operação, o Samsung é dedicado, permanece carregando e usa
@@ -117,7 +117,9 @@ de credencial é versionado ou registrado em log.
 Para a geração de alertas pessoais, a migration `028_permissoes_alertas_pichau.sql`
 torna o gerador Pichau e o trigger da outbox `SECURITY DEFINER`, com
 `search_path` fechado. O publicador continua sem grants diretos nas tabelas da
-Central; a migration deve ser aplicada antes do próximo aceite de publicação.
+Central. A migration foi aplicada e confirmada em produção por leitura; a
+execução `34761933582` passou após a correção com 1.180 itens lidos/únicos,
+zero duplicados e publicação completa.
 
 ## 3. Banco e credencial
 

@@ -45,10 +45,11 @@ cria o `001` e carrega o catálogo.
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Conforme confirmação operacional do
-> responsável, as migrations `001`–`027` foram aplicadas manualmente no banco
-> alvo. A `028` corrige a permissão do publicador para alertas Pichau e precisa
-> ser aplicada antes da próxima coleta validada. Este checkout não executa nem
-> verifica migrations automaticamente.
+> responsável, as migrations `001`–`028` foram aplicadas manualmente no banco
+> alvo. A `028` corrige a permissão do publicador para alertas Pichau. Este
+> checkout não aplica migrations; a verificação somente de leitura de 2026-09-13
+> confirmou a definição segura das funções e a execução autorizada pelo
+> `pichau_publisher`.
 
 `023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
 nem produziu evidência independente; a confirmação operacional permanece
@@ -77,4 +78,7 @@ Livelo, 16 Pichau, 37 Produtos Inter, dois eventos Inter recuperados com
 gerar alertas sem receber acesso direto às tabelas pessoais da Central. A
 execução manual `34759635491` confirmou que, sem essa migration, a coleta chega
 à publicação e termina como `pichau-banco` por falta de privilégio nas tabelas
-de alertas.
+de alertas. Após a aplicação, a execução `34761933582` passou com a fila 70 e a
+execução 58 em qualidade completa, com 1.180 itens lidos/únicos e zero
+duplicados. Como não houve mudança de preço, não houve evento ou outbox novo;
+isso mantém pendente apenas a prova de um evento real e de sua entrega FCM.

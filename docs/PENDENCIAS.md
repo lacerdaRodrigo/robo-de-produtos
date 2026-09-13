@@ -18,7 +18,7 @@ anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
-- [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a execução manual `34554150530` passou com contagens `0/0/0`, sem evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
+- [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
 - [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi gerada e distribuída pelo `app-robo` `34553635486`; filtros, paginação, leitura, preferências, dados reais e push aguardam instalação/aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos, overflow e o alinhamento das ações do cartão Cashback Inter. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
@@ -26,11 +26,13 @@ anterior ainda reinicia o gate operacional.
 - [x] Aplicar e verificar as migrations `025`, `026` e `027`: a leitura do banco
   confirmou 10 acompanhamentos Livelo, 16 Pichau, 37 Produtos Inter, dois
   eventos Inter recuperados com push suprimido e nenhuma outbox pendente.
-- [ ] Aplicar a migration `028_permissoes_alertas_pichau.sql` e confirmar nova
-  coleta completa com evento real e entrega FCM. As execuções manuais
-  `34759635491` e `34760049617` chegaram a 1.180 itens, mas falharam na
-  publicação como `pichau-banco` porque o `pichau_publisher` ainda não podia
-  inserir na Central; o backfill histórico não envia push atrasado.
+- [x] Aplicar e verificar a migration `028_permissoes_alertas_pichau.sql`: a
+  leitura de produção confirmou as funções de alerta como `SECURITY DEFINER`,
+  `search_path` fechado e execução autorizada para `pichau_publisher`. A coleta
+  `34761933582` passou com a fila 70 e a execução 58 em qualidade completa:
+  1.180 itens lidos/únicos, zero duplicados e sem `pichau-banco`. As execuções
+  anteriores `34759635491` e `34760049617` ficam como histórico da falha
+  corrigida; o backfill histórico não envia push atrasado.
 
 ## Pichau — evolução ainda aberta
 

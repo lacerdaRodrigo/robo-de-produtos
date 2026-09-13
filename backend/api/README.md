@@ -107,5 +107,5 @@ alertas de 90 dias e relatos de 180 dias, processa retries, recupera linhas
 presas em `enviando` há pelo menos 15 minutos e desativa tokens FCM inválidos.
 A resposta contém apenas as contagens `processadas`, `enviadas` e
 `recuperadas`. O banco não deve ser acessado pelo Flutter. A aplicação da
-migration foi confirmada operacionalmente pelo responsável; este checkout não
-executa a SQL nem produz validação independente do ambiente alvo.
+migration foi confirmada operacionalmente pelo responsável e por uma leitura
+independente de produção em 2026-09-13; este checkout não executa a SQL.

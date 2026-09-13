@@ -1,9 +1,10 @@
 # PRD — Central de Alertas, suporte e privacidade
 
-Status: implementado no contrato e no código; as migrations `023`, `025`, `026`
-e `027` foram aplicadas manualmente. A migration `028` está versionada e aguarda
-aplicação operacional para liberar o publicador Pichau com privilégio mínimo.
-Ainda dependem de operação um evento real que gere push e o aceite físico do
+Status: implementado no contrato e no código; as migrations `023`, `025`, `026`,
+`027` e `028` foram aplicadas manualmente. A aplicação da `028` foi confirmada
+por leitura de produção: as funções estão como `SECURITY DEFINER`, com
+`search_path` fechado, e o `pichau_publisher` pode executá-las. Ainda dependem
+de operação um evento real que gere push, a entrega FCM e o aceite físico do
 Android.
 
 ## Objetivo
@@ -99,25 +100,24 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
    adaptadores de coleta passam.
 3. O protótipo V11 e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
-4. Migrations 023, 025, 026 e 027 estão aplicadas no banco alvo por operação
-   autorizada, com a validação de contagens e isolamento da conta; a 028 deve
-   ser aplicada antes do aceite operacional do publicador Pichau.
+4. Migrations 023, 025, 026, 027 e 028 estão aplicadas no banco alvo por
+   operação autorizada, com a validação de contagens, isolamento da conta e
+   permissões mínimas do publicador Pichau.
 5. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
    preferências, Ajuda, relato, privacidade, links externos e ausência de dados
    são conferidas no Moto G6 Play; o aceite Samsung permanece separado.
 
 ## Pendências externas
 
-Conforme confirmação operacional do responsável, a migration 023 foi aplicada
-manualmente depois das migrations anteriores e o Firebase `radarbeneficios` está
-configurado para a API/Android. Este checkout não executou a SQL nem produziu
-evidência independente do banco. O merge, deploy, APK e secret do cron foram
-confirmados: o health-check de produção respondeu saudável, a rota interna
-respondeu 401 sem credencial e a execução manual `34554150530` passou com
-`processadas=0`, `enviadas=0`, `recuperadas=0`. Como não havia evento pendente,
-essa execução ainda não prova a entrega de um push FCM real. A APK foi gerada e
-distribuída pelo `app-robo` `34553635486`; falta instalar/conferir nos devices e
-executar o aceite manual completo.
+Conforme confirmação operacional do responsável, as migrations 023 e seguintes
+foram aplicadas manualmente e o Firebase `radarbeneficios` está configurado para
+a API/Android. A verificação de produção em 2026-09-13 confirmou a `028` em
+modo somente leitura, incluindo `SECURITY DEFINER`, `search_path` fechado e
+execução para `pichau_publisher`. A coleta `34761933582` passou com qualidade
+completa, sem `pichau-banco`, mas não houve mudança de preço para gerar evento.
+O merge, deploy, APK e secret do cron foram confirmados; ainda falta produzir um
+evento real, observar sua entrega FCM e instalar/conferir a APK nos devices para
+o aceite manual completo.
 
 Este PRD incorpora o plano de implementação; o arquivo de plano histórico foi
 removido para não voltar a orientar trabalho já entregue.

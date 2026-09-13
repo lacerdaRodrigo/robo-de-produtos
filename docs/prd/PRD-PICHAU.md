@@ -154,9 +154,11 @@ atuais para a conta ativa sem enviar push atrasado. As migrations `025`, `026` e
 `027` foram validadas no banco em 2026-09-13. A migration
 `028_permissoes_alertas_pichau.sql` protege o gerador e o trigger da outbox como
 `SECURITY DEFINER`, pois o publicador não possui acesso direto às tabelas
-pessoais; ela ainda precisa ser aplicada antes da próxima coleta completa. A
-publicação do código atualizado e o evento FCM real dependem dessa aplicação e
-da próxima coleta. O coletor
+pessoais; ela foi aplicada e confirmada em produção por leitura. A coleta
+`34761933582` passou depois da correção com 1.180 itens lidos/únicos, zero
+duplicados e publicação completa, sem evento novo porque não houve mudança de
+preço. O evento FCM real ainda depende de uma mudança de preço acompanhada. O
+coletor
 preserva a coluna administrativa no `UPSERT`, para que uma nova coleta não
 apague a seleção manual. A aba **Acompanhadas** consulta o recorte pessoal com
 filtro server-side, inclusive para produtos que saíram do catálogo atual.
@@ -590,7 +592,9 @@ permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tel
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de
 Produtos continua sendo decisão separada; a evolução do acompanhamento desta
-jornada está versionada, com aplicação externa ainda pendente.
+jornada está versionada, com a aplicação da migration 028 confirmada em
+produção. Permanecem pendentes somente o evento/push real e o gate operacional
+de 72 horas.
 
 ## Critérios de aceite
 
@@ -602,7 +606,8 @@ não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
 Inter e o `BottomDock` continuam sem alteração semântica.
 
 A integração Pichau Android só volta ao estado pronto depois da coleta manual
-da correção e do gate de 72 horas. Catálogo,
+da correção e do gate de 72 horas. A coleta `34761933582` já comprovou o
+caminho corrigido até a publicação completa. Catálogo,
 persistência, API autenticada e Wireless Debugging anteriores continuam
 validados; ciclo de Chrome, diagnóstico no Actions e disponibilidade contínua
 aguardam a nova prova. Evoluções de produto/API e o aceite operacional
