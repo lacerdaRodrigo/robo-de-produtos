@@ -114,6 +114,11 @@ três tabelas Pichau, com uso das sequências. O secret
 foi instalada somente no arquivo privado do Termux, modo `600`; nenhum valor
 de credencial é versionado ou registrado em log.
 
+Para a geração de alertas pessoais, a migration `028_permissoes_alertas_pichau.sql`
+torna o gerador Pichau e o trigger da outbox `SECURITY DEFINER`, com
+`search_path` fechado. O publicador continua sem grants diretos nas tabelas da
+Central; a migration deve ser aplicada antes do próximo aceite de publicação.
+
 ## 3. Banco e credencial
 
 As tabelas `pichau_execucao`, `pichau_produto`, `pichau_medicao` e

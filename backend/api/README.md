@@ -93,7 +93,8 @@ antes do merge. O coletor preserva a coluna de seleção durante o upsert.
 ## Central de Alertas
 
 As rotas de alertas dependem de `migracoes/023_alertas_suporte_privacidade.sql`
-e, para Pichau, da `026_alertas_pichau_pessoal.sql`. As leituras de Livelo,
+e, para Pichau, das `026_alertas_pichau_pessoal.sql` e
+`028_permissoes_alertas_pichau.sql`. As leituras de Livelo,
 cashback e Pichau usam acompanhamento pessoal por padrão; Livelo e cashback
 aceitam `escopo=pessoal` (padrão do app) e
 usam `acompanhamento_usuario`; somente administradores podem solicitar

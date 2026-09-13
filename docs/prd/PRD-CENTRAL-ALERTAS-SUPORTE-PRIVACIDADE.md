@@ -1,9 +1,10 @@
 # PRD — Central de Alertas, suporte e privacidade
 
-Status: implementado no contrato e no código; a migration base foi aplicada
-manualmente, e as migrations de correção `026` e `027` estão versionadas, mas
-ainda dependem de aplicação operacional. Ainda dependem de operação um evento
-real que gere push e o aceite físico do Android.
+Status: implementado no contrato e no código; as migrations `023`, `025`, `026`
+e `027` foram aplicadas manualmente. A migration `028` está versionada e aguarda
+aplicação operacional para liberar o publicador Pichau com privilégio mínimo.
+Ainda dependem de operação um evento real que gere push e o aceite físico do
+Android.
 
 ## Objetivo
 
@@ -30,6 +31,9 @@ usuário começou a acompanhar e permite suprimir push em backfills. A migration
 `027_backfill_alertas_sem_push.sql` transforma, de forma protegida, as 10
 seleções Livelo e os 16 produtos Pichau atuais da única conta ativa em relações
 pessoais e recupera somente a janela Inter posterior ao último evento conhecido.
+A migration `028_permissoes_alertas_pichau.sql` protege o gerador Pichau e o
+trigger da outbox como `SECURITY DEFINER`, mantendo o publicador sem acesso direto
+às tabelas pessoais.
 
 As funções de geração são chamadas somente depois de uma publicação completa e
 válida. O primeiro snapshot pessoal não gera evento; ausência, valor inválido,
@@ -96,7 +100,8 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 3. O protótipo V11 e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
 4. Migrations 023, 025, 026 e 027 estão aplicadas no banco alvo por operação
-   autorizada, com a validação de contagens e isolamento da conta.
+   autorizada, com a validação de contagens e isolamento da conta; a 028 deve
+   ser aplicada antes do aceite operacional do publicador Pichau.
 5. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
    preferências, Ajuda, relato, privacidade, links externos e ausência de dados
    são conferidas no Moto G6 Play; o aceite Samsung permanece separado.

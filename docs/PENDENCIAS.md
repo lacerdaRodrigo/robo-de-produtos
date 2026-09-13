@@ -26,9 +26,11 @@ anterior ainda reinicia o gate operacional.
 - [x] Aplicar e verificar as migrations `025`, `026` e `027`: a leitura do banco
   confirmou 10 acompanhamentos Livelo, 16 Pichau, 37 Produtos Inter, dois
   eventos Inter recuperados com push suprimido e nenhuma outbox pendente.
-- [ ] Publicar o código atualizado da API/robôs e confirmar uma nova coleta
-  completa com evento real e entrega FCM; o backfill histórico não envia push
-  atrasado e não substitui essa validação.
+- [ ] Aplicar a migration `028_permissoes_alertas_pichau.sql` e confirmar nova
+  coleta completa com evento real e entrega FCM. As execuções manuais
+  `34759635491` e `34760049617` chegaram a 1.180 itens, mas falharam na
+  publicação como `pichau-banco` porque o `pichau_publisher` ainda não podia
+  inserir na Central; o backfill histórico não envia push atrasado.
 
 ## Pichau — evolução ainda aberta
 

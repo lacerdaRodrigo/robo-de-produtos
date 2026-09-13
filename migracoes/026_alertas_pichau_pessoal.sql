@@ -23,7 +23,8 @@ ALTER TABLE evento_alerta
     ADD COLUMN IF NOT EXISTS notificar_push BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE OR REPLACE FUNCTION criar_outbox_alerta()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp AS $$
 BEGIN
     IF NEW.notificar_push THEN
         INSERT INTO notificacao_outbox_alerta (usuario_app_id, origem, coleta_id)
@@ -188,7 +189,8 @@ CREATE OR REPLACE FUNCTION gerar_alertas_pichau_com_push(
     p_execucao_id BIGINT,
     p_notificar_push BOOLEAN
 )
-RETURNS INTEGER LANGUAGE plpgsql AS $$
+RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp AS $$
 DECLARE v_total INTEGER;
 BEGIN
     WITH atuais AS (
@@ -245,6 +247,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION gerar_alertas_pichau(p_execucao_id BIGINT)
-RETURNS INTEGER LANGUAGE sql AS $$
+RETURNS INTEGER LANGUAGE sql SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp AS $$
     SELECT gerar_alertas_pichau_com_push($1, TRUE);
 $$;

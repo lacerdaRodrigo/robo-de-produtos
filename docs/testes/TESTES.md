@@ -626,6 +626,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-403 | Acompanhamento Pichau sem teto artificial | A rota administrativa é idempotente, o catálogo retorna `acompanhada` e a aba Acompanhadas consulta 17 ou mais produtos sem truncar em 16 | `banco-pichau.teste.ts`, `catalogo-pichau-api.teste.ts` e `acompanhamento-pichau-api.teste.ts` |
 | CT-407 | Filtro server-side da Pichau | Aba acompanhadas, disponibilidade, busca, ordenação e paginação são aplicados antes do retorno; a seleção sobrevive fora do catálogo | `backend/api/lib/banco-pichau.teste.ts` |
 | CT-408 | PATCH do sino Pichau | A rota valida ID/corpo, exige admin, persiste de forma idempotente e informa produto ausente sem 500 genérico | `backend/api/app/api/pichau/catalogo/**` e `banco-pichau.teste.ts` |
+| CT-409 | Permissão do publicador Pichau | O publicador executa o gerador de alertas e o trigger da outbox sem grants diretos nas tabelas pessoais; a migration 028 fixa o `SECURITY DEFINER` e o `search_path` | `028_permissoes_alertas_pichau.sql` e validação operacional |
 
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução e os totais da

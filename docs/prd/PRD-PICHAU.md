@@ -150,9 +150,13 @@ O cliente Flutter usa acompanhamento pessoal por usuário em
 migration `026_alertas_pichau_pessoal.sql` libera a origem Pichau na Central e
 gera alertas de preço Pix após uma execução completa. A migration operacional
 `027_backfill_alertas_sem_push.sql` importa os 16 produtos administrativos
-atuais para a conta ativa sem enviar push atrasado. As migrations ainda precisam
-validados no banco em 2026-09-13; a publicação do código atualizado e o evento
-FCM real ainda dependem da pipeline e da próxima coleta completa. O coletor
+atuais para a conta ativa sem enviar push atrasado. As migrations `025`, `026` e
+`027` foram validadas no banco em 2026-09-13. A migration
+`028_permissoes_alertas_pichau.sql` protege o gerador e o trigger da outbox como
+`SECURITY DEFINER`, pois o publicador não possui acesso direto às tabelas
+pessoais; ela ainda precisa ser aplicada antes da próxima coleta completa. A
+publicação do código atualizado e o evento FCM real dependem dessa aplicação e
+da próxima coleta. O coletor
 preserva a coluna administrativa no `UPSERT`, para que uma nova coleta não
 apague a seleção manual. A aba **Acompanhadas** consulta o recorte pessoal com
 filtro server-side, inclusive para produtos que saíram do catálogo atual.

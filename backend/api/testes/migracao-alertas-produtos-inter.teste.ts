@@ -11,6 +11,10 @@ const correcao = readFileSync(
   resolve(process.cwd(), "../../migracoes/026_alertas_pichau_pessoal.sql"),
   "utf8",
 );
+const permissoesPichau = readFileSync(
+  resolve(process.cwd(), "../../migracoes/028_permissoes_alertas_pichau.sql"),
+  "utf8",
+);
 
 describe("geração de alertas dos produtos Inter", () => {
   it("usa qualidade da execução da loja, que é a coluna persistida", () => {
@@ -35,5 +39,16 @@ describe("geração de alertas dos produtos Inter", () => {
     expect(backfill).toContain("max(rodada.id)");
     expect(backfill).toContain("loja.acompanhada = TRUE");
     expect(backfill).toContain("produto.acompanhada = TRUE");
+  });
+
+  it("isola o publicador Pichau atrás de funções seguras", () => {
+    expect(permissoesPichau).toContain("gerar_alertas_pichau(BIGINT)");
+    expect(permissoesPichau).toContain("SECURITY DEFINER");
+    expect(permissoesPichau).toContain(
+      "SET search_path = pg_catalog, public, pg_temp",
+    );
+    expect(permissoesPichau).toContain(
+      "GRANT EXECUTE ON FUNCTION gerar_alertas_pichau(BIGINT) TO pichau_publisher",
+    );
   });
 });
