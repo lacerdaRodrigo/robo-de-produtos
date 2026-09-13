@@ -547,6 +547,8 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 |---|---|---|---|
 | CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
 | CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
+| CT-411 | Busca compacta do catálogo | Painel plum usa o título, placeholder e `CampoBuscaRadar` da composição aprovada; atalhos de Celulares, Informática, Casa, Beleza e Pet consultam o catálogo local pelo termo simples da categoria, mantendo o campo limpo com o placeholder visível | `pagina_produtos_test.dart` com controlador de busca injetado |
+| CT-412 | Resumo e card compacto V2 | Resumo exibe carimbo/total reais; card repete loja, categoria disponível, preços atual/líquido, cashback, histórico, acompanhamento e abertura da oferta sem overflow em 320 px com texto ampliado | `pagina_produtos_test.dart` e conferência manual no Android conectado |
 
 ### Redesign — Módulo 7, Produtos dentro do Banco Inter no mobile
 

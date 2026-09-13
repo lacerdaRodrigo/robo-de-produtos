@@ -24,6 +24,7 @@ class PaginaProdutos extends StatefulWidget {
     this.mostrarTituloInterno = true,
     this.experienciaCompacta = false,
     this.sliversAntes = const [],
+    this.totalLojasSelecionadas,
   });
 
   final Api api;
@@ -33,6 +34,7 @@ class PaginaProdutos extends StatefulWidget {
   final bool mostrarTituloInterno;
   final bool experienciaCompacta;
   final List<Widget> sliversAntes;
+  final int? totalLojasSelecionadas;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -294,6 +296,13 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
             ),
           ),
         ),
+        SliverToBoxAdapter(
+          child: _AtalhosBuscaCompactos(
+            consulta: _campoBusca.text,
+            aoSelecionar: _aplicarAtalhoBusca,
+            aoVerTodas: _abrirEscopoContextual,
+          ),
+        ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
           sliver: SliverToBoxAdapter(
@@ -322,15 +331,17 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         SliverToBoxAdapter(child: _filtrosCompactos()),
         if (_controlador.atualizadoEm != null)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 2),
             sliver: SliverToBoxAdapter(
-              child: Text(
-                'Atualização mais antiga destes resultados: '
-                '${dataHoraProduto(_controlador.atualizadoEm)}'
-                '${atrasado ? ' · dados atrasados' : ''}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: atrasado ? cores.atencao : cores.textoSuave,
-                ),
+              child: _ResumoCatalogoCompacto(
+                atualizadoEm: _controlador.atualizadoEm,
+                totalItens: _controlador.totalItens,
+                lojasNoResultado: _controlador.itens
+                    .map((produto) => produto.lojaSlug)
+                    .toSet()
+                    .length,
+                lojasSelecionadas: widget.totalLojasSelecionadas,
+                atrasado: atrasado,
               ),
             ),
           ),
@@ -484,20 +495,18 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     for (final produto in _controlador.itens) {
       grupos.putIfAbsent(produto.lojaNome, () => []).add(produto);
     }
+    final produtos = [for (final grupo in grupos.values) ...grupo];
     return [
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         sliver: SliverList.separated(
-          itemCount: grupos.length,
+          itemCount: produtos.length,
           separatorBuilder: (_, _) => const SizedBox(height: 17),
           itemBuilder: (context, indice) {
-            final entrada = grupos.entries.elementAt(indice);
-            return _GrupoProdutosCompacto(
-              key: ValueKey('grupo-produtos-${entrada.key}'),
-              loja: entrada.key,
-              produtos: entrada.value,
-              construirCartao: (produto) =>
-                  _cartao(produto, compacto: true, mostrarLoja: false),
+            return _cartao(
+              produtos[indice],
+              compacto: true,
+              destaque: indice == 0,
             );
           },
         ),
@@ -583,6 +592,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     ProdutoDireto produto, {
     bool compacto = false,
     bool mostrarLoja = true,
+    bool destaque = false,
   }) {
     final link = linkSeguroShoppingInter(produto.caminho);
     final chave = _chaveAcompanhamento(produto);
@@ -593,6 +603,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       produto: produtoAtual,
       compacto: compacto,
       mostrarLoja: mostrarLoja,
+      destaque: destaque,
       aoAbrirHistorico: () => _abrirHistorico(produto),
       aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
       aoAcompanhar: () => _alternarAcompanhamento(produto),
@@ -922,6 +933,11 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     );
   }
 
+  void _aplicarAtalhoBusca(String consulta) {
+    _campoBusca.clear();
+    _controlador.mudarTermo(consulta);
+  }
+
   Future<_OpcaoNavegacaoEscopo?> _escolherEscopoDeCasa() async {
     return _escolherSubgrupo(
       titulo: 'Casa e cozinha',
@@ -1141,6 +1157,194 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     if (escopo == null || escopo.isEmpty) return null;
     final texto = escopo.replaceAll('-', ' ');
     return '${texto[0].toUpperCase()}${texto.substring(1)}';
+  }
+}
+
+class _AtalhosBuscaCompactos extends StatelessWidget {
+  const _AtalhosBuscaCompactos({
+    required this.consulta,
+    required this.aoSelecionar,
+    required this.aoVerTodas,
+  });
+
+  final String consulta;
+  final ValueChanged<String> aoSelecionar;
+  final VoidCallback aoVerTodas;
+
+  static const _atalhos = [
+    _AtalhoBusca(
+      id: 'celulares',
+      rotulo: 'Celulares',
+      consulta: 'celular',
+      icone: Icons.smartphone_outlined,
+    ),
+    _AtalhoBusca(
+      id: 'informatica',
+      rotulo: 'Informática',
+      consulta: 'informatica',
+      icone: Icons.laptop_mac_outlined,
+    ),
+    _AtalhoBusca(
+      id: 'casa',
+      rotulo: 'Casa',
+      consulta: 'casa',
+      icone: Icons.home_outlined,
+    ),
+    _AtalhoBusca(
+      id: 'beleza',
+      rotulo: 'Beleza',
+      consulta: 'beleza',
+      icone: Icons.spa_outlined,
+    ),
+    _AtalhoBusca(
+      id: 'pet',
+      rotulo: 'Pet',
+      consulta: 'pet',
+      icone: Icons.pets_outlined,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Atalhos de busca',
+                  style: tema.textTheme.titleSmall?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: aoVerTodas,
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: cores.acao,
+                  textStyle: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                child: const Text('Ver todas'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Row(
+              children: [
+                for (var indice = 0; indice < _atalhos.length; indice++) ...[
+                  _CartaoAtalhoBusca(
+                    atalho: _atalhos[indice],
+                    ativo: consulta == _atalhos[indice].consulta,
+                    aoTocar: () => aoSelecionar(_atalhos[indice].consulta),
+                  ),
+                  if (indice != _atalhos.length - 1) const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AtalhoBusca {
+  const _AtalhoBusca({
+    required this.id,
+    required this.rotulo,
+    required this.consulta,
+    required this.icone,
+  });
+
+  final String id;
+  final String rotulo;
+  final String consulta;
+  final IconData icone;
+}
+
+class _CartaoAtalhoBusca extends StatelessWidget {
+  const _CartaoAtalhoBusca({
+    required this.atalho,
+    required this.ativo,
+    required this.aoTocar,
+  });
+
+  final _AtalhoBusca atalho;
+  final bool ativo;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final escuro = tema.brightness == Brightness.dark;
+    return Semantics(
+      button: true,
+      label: 'Buscar por ${atalho.rotulo}',
+      child: SizedBox(
+        key: ValueKey('atalho-busca-${atalho.id}'),
+        width: 76,
+        height: 67,
+        child: Material(
+          color: ativo
+              ? (escuro ? Tokens.cianoFundoEscuro : Tokens.plumSoft)
+              : tema.colorScheme.surface,
+          elevation: 1,
+          shadowColor: SombraRadar.para(tema.brightness).color,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: BorderSide(color: ativo ? cores.marca : cores.borda),
+          ),
+          child: InkWell(
+            onTap: aoTocar,
+            borderRadius: BorderRadius.circular(15),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: escuro ? Tokens.cianoFundoEscuro : Tokens.plumSoft,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: Icon(atalho.icone, size: 15, color: cores.marca),
+                  ),
+                  const Spacer(),
+                  Text(
+                    atalho.rotulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1469,107 +1673,6 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
   }
 }
 
-class _GrupoProdutosCompacto extends StatelessWidget {
-  const _GrupoProdutosCompacto({
-    super.key,
-    required this.loja,
-    required this.produtos,
-    required this.construirCartao,
-  });
-
-  final String loja;
-  final List<ProdutoDireto> produtos;
-  final Widget Function(ProdutoDireto produto) construirCartao;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final iniciais = loja
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((parte) => parte.isNotEmpty)
-        .take(2)
-        .map((parte) => parte[0].toUpperCase())
-        .join();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Tokens.superficieForteEscura
-                    : Tokens.plumSoft,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(11),
-                  topRight: Radius.circular(11),
-                  bottomRight: Radius.circular(11),
-                  bottomLeft: Radius.circular(4),
-                ),
-              ),
-              child: Text(
-                iniciais.isEmpty ? '?' : iniciais,
-                style: TextStyle(
-                  color: cores.marca,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loja,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    'Atualizado em ${dataHoraProduto(produtos.first.atualizadaEm)}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 8,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                borderRadius: BorderRadius.circular(RaioRadar.pilula),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                child: Text(
-                  '${produtos.length} ${produtos.length == 1 ? 'oferta' : 'ofertas'}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cores.textoSuave,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        for (var indice = 0; indice < produtos.length; indice++) ...[
-          construirCartao(produtos[indice]),
-          if (indice != produtos.length - 1) const SizedBox(height: 8),
-        ],
-      ],
-    );
-  }
-}
-
 class _FiltrosProdutosSheet extends StatefulWidget {
   const _FiltrosProdutosSheet({
     required this.api,
@@ -1818,46 +1921,203 @@ class _BuscaProdutosCompacta extends StatelessWidget {
   final ValueChanged<String> aoMudar;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Tokens.acaoFundoEscuro
-          : Tokens.acaoFundo,
-      borderRadius: BorderRadius.circular(23),
-      border: Border.all(color: CoresRadar.de(context).borda),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(17),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'O que você procura?',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Digitar aqui pesquisa o último catálogo salvo; não consulta o Inter ao vivo.',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 14),
-          CampoBuscaRadar(
-            controlador: controlador,
-            dica: 'Ex.: Motorola Edge 60 Pro',
-            aoMudar: aoMudar,
-            chaveCampo: const Key('busca-produtos'),
-            aoAcionar: () => aoMudar(controlador.text),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final escuro = tema.brightness == Brightness.dark;
+    final cores = CoresRadar.de(context);
+    final texto = escuro ? Tokens.textoEscuro : Colors.white;
+    final textoSuave = escuro
+        ? Tokens.textoSuaveEscuro
+        : Colors.white.withValues(alpha: .74);
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(23),
+        topRight: Radius.circular(23),
+        bottomRight: Radius.circular(23),
+        bottomLeft: Radius.circular(9),
       ),
-    ),
-  );
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: escuro ? Tokens.superficieForteEscura : Tokens.plum,
+          border: Border.all(color: cores.marca.withValues(alpha: .3)),
+        ),
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned(
+              right: -47,
+              top: -82,
+              child: Container(
+                width: 158,
+                height: 158,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: .1)),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 55,
+              bottom: -76,
+              child: Container(
+                width: 134,
+                height: 134,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: .1)),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(13, 13, 13, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ENCONTRE NO SEU CATÁLOGO',
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: textoSuave,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .55,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Busque, compare, economize.',
+                    style: tema.textTheme.titleLarge?.copyWith(
+                      color: texto,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  CampoBuscaRadar(
+                    controlador: controlador,
+                    dica: 'Marca, modelo ou categoria',
+                    aoMudar: aoMudar,
+                    chaveCampo: const Key('busca-produtos'),
+                    aoAcionar: () => aoMudar(controlador.text),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResumoCatalogoCompacto extends StatelessWidget {
+  const _ResumoCatalogoCompacto({
+    required this.atualizadoEm,
+    required this.totalItens,
+    required this.lojasNoResultado,
+    required this.lojasSelecionadas,
+    required this.atrasado,
+  });
+
+  final String? atualizadoEm;
+  final int totalItens;
+  final int lojasNoResultado;
+  final int? lojasSelecionadas;
+  final bool atrasado;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tema.colorScheme.surface,
+        border: Border.all(color: atrasado ? cores.atencao : cores.borda),
+        borderRadius: BorderRadius.circular(13),
+        boxShadow: [SombraRadar.para(tema.brightness)],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+        child: LayoutBuilder(
+          builder: (context, limites) {
+            final informacoes = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Atualizado ${dataHoraProduto(atualizadoEm)}',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  atrasado
+                      ? 'Retrato mais antigo disponível'
+                      : 'Último retrato válido',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: atrasado ? cores.atencao : cores.ganho,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            );
+            final total = Text(
+              '$totalItens produtos',
+              style: tema.textTheme.labelSmall?.copyWith(
+                color: cores.textoSuave,
+                fontSize: 8,
+              ),
+            );
+            final quantidadeLojas = lojasSelecionadas ?? lojasNoResultado;
+            final rotuloLojas = lojasSelecionadas == null
+                ? 'na página'
+                : 'selecionadas';
+            final lojas = quantidadeLojas == 0
+                ? null
+                : Text(
+                    '$quantidadeLojas ${quantidadeLojas == 1 ? 'loja' : 'lojas'} $rotuloLojas',
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                      fontSize: 8,
+                    ),
+                  );
+            final textoAmpliado =
+                MediaQuery.textScalerOf(context).scale(9) > 12;
+            if (limites.maxWidth < 330 || textoAmpliado) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: informacoes),
+                      total,
+                    ],
+                  ),
+                  if (lojas != null) ...[
+                    const SizedBox(height: 2),
+                    Align(alignment: Alignment.centerRight, child: lojas),
+                  ],
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: informacoes),
+                total,
+                if (lojas != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('|', style: TextStyle(color: cores.borda)),
+                  ),
+                  lojas,
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _ChipProduto extends StatelessWidget {

@@ -21,6 +21,12 @@ documentação antes de abrir arquivos isolados.
 | [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
 | [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro histórico da primeira validação do executor; o contrato vigente e o novo gate de disponibilidade estão no PRD Pichau. |
 
+## Artefatos visuais
+
+| Documento | Finalidade |
+|---|---|
+| [`design-app/produtos-compre-direto-melhoria.html`](../design-app/produtos-compre-direto-melhoria.html) | Referência visual standalone da tela mobile de Produtos do Compre direto; sua composição compacta de busca, atalhos, resumo e cards foi aplicada ao Flutter mobile, sem alterar o protótipo V11. |
+
 ## PRDs de domínio
 
 | Documento | Finalidade |

@@ -893,7 +893,24 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.text('O que você procura?'), findsOneWidget);
+    expect(find.text('Busque, compare, economize.'), findsOneWidget);
+    expect(find.text('Atalhos de busca'), findsOneWidget);
+    expect(find.text('Celulares'), findsOneWidget);
+    expect(find.text('Informática'), findsOneWidget);
+    expect(find.text('Casa'), findsOneWidget);
+    expect(find.text('Beleza'), findsOneWidget);
+    expect(find.text('Pet'), findsOneWidget);
+    expect(find.text('Ver todas'), findsOneWidget);
+    await at.tap(find.byKey(const Key('atalho-busca-celulares')));
+    await at.pumpAndSettle();
+    expect(controlador.termo, 'celular');
+    expect(
+      at
+          .widget<TextField>(find.byKey(const Key('busca-produtos')))
+          .controller!
+          .text,
+      isEmpty,
+    );
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
     expect(find.byIcon(Icons.category_outlined), findsOneWidget);
     expect(find.text('Escolha uma categoria para começar.'), findsOneWidget);
@@ -916,7 +933,19 @@ void main() {
     );
     expect(precoLiquido, findsOneWidget);
     expect(find.text('R\$ 3.356,89'), findsOneWidget);
-    expect(find.text('Ver no Inter'), findsOneWidget);
+    expect(find.text('Abrir oferta'), findsOneWidget);
+    for (final atalho in const {
+      'atalho-busca-informatica': 'informatica',
+      'atalho-busca-casa': 'casa',
+      'atalho-busca-beleza': 'beleza',
+      'atalho-busca-pet': 'pet',
+    }.entries) {
+      final atalhoFinder = find.byKey(Key(atalho.key));
+      await at.ensureVisible(atalhoFinder);
+      await at.tap(atalhoFinder);
+      await at.pumpAndSettle();
+      expect(controlador.termo, atalho.value);
+    }
   });
 
   testWidgets(

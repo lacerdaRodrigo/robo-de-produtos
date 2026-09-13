@@ -512,6 +512,7 @@ class _BancoInterCompacto extends StatelessWidget {
                   incorporada: true,
                   experienciaCompacta: true,
                   sliversAntes: cabecalho,
+                  totalLojasSelecionadas: totalSelecionadas,
                 ),
               ],
             )

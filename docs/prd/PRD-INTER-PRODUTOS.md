@@ -1,6 +1,6 @@
 # PRD — Inter Produtos (Compre direto)
 
-**Versão:** V4.5.1 em aceite progressivo
+**Versão:** V4.5.2 em aceite progressivo
 **Status vigente em 2026-09-13:** schema, coletor, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara preço e cashback
 de Produtos Inter conforme a seção 15.4 e o PRD compartilhado de alertas. A
@@ -467,6 +467,18 @@ A página inicia pela busca local; não despeja milhares de produtos sem consult
 
 O campo de produtos segue o `SearchBox` da V11: ícone de busca, superfície clara com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
 
+Na composição compacta aplicada em 2026-09-13, a busca recebe um painel plum com
+o título “Busque, compare, economize.” e o placeholder “Marca, modelo ou
+categoria”. Logo abaixo, “Atalhos de busca” oferece consultas prontas de
+Celulares, Informática, Casa, Beleza e Pet usando o termo simples da própria
+categoria; cada atalho dispara sua consulta no
+catálogo local, mas mantém o campo limpo para continuar exibindo o placeholder.
+Não há filtro de categoria implícito. “Ver todas” abre o seletor contextual
+completo. Após os filtros, um resumo compacto informa o carimbo real do último
+retrato válido, o total retornado e, quando disponível, a quantidade de lojas
+selecionadas. A interface não exibe um número estimado como se fosse a
+quantidade total de lojas selecionadas.
+
 Toda busca do aplicativo usa o componente visual `CampoBuscaRadar`; não há `TextField` de busca isolado com aparência própria em uma tela V11. O botão de avanço, quando aplicável, e a variante `search-only` preservam o mesmo campo, espaçamento, tipografia e foco.
 
 Os resultados de Produtos e os cartões de lojas do Compre direto pedem **10
@@ -513,18 +525,29 @@ exibidos e oferece nova tentativa quando uma página adicional falhar.
 
 A URL usa `?q=` para funcionar sem JavaScript e permitir compartilhar a busca.
 
-Cada grupo de loja mostra:
+O agrupamento lógico por loja continua preservado na ordem da lista, mas o
+cartão compacto repete sua origem para manter o contexto mesmo quando a pessoa
+percorre a lista sem um cabeçalho de grupo separado. O primeiro resultado da
+página pode receber o selo honesto “Menor preço atual”, pois a API já ordena os
+resultados por esse critério. Cada card compacto mostra:
 
 - nome da loja e horário do último sucesso;
-- quantidade de resultados;
+- sino de acompanhamento pessoal, quando a ação está disponível;
+- categoria e marca somente quando fornecidas pela origem;
+- preço atual e, quando informado, preço após cashback;
+- cashback, disponibilidade, etiqueta e parcelamento quando presentes;
+- botão “Abrir oferta” no Shopping Inter;
+- ação “Histórico” para a folha de medições;
 - cards ordenados por menor preço atual;
+
+No layout amplo, a versão detalhada continua mostrando também:
+
 - preço cheio riscado quando diferente do atual;
 - desconto absoluto e percentual;
 - preço atual;
 - cashback absoluto e percentual;
 - “Após cashback: R$ ...”;
 - parcelamento e disponibilidade;
-- botão “Abrir no Shopping Inter”;
 - link para histórico.
 
 Nenhum card contém imagem externa. Valores ausentes somem com rótulo honesto; nunca viram zero.

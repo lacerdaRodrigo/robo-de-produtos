@@ -14,6 +14,7 @@ class CartaoProduto extends StatelessWidget {
     this.aoAcompanhar,
     this.compacto = false,
     this.mostrarLoja = true,
+    this.destaque = false,
   });
 
   final ProdutoDireto produto;
@@ -22,6 +23,7 @@ class CartaoProduto extends StatelessWidget {
   final VoidCallback? aoAcompanhar;
   final bool compacto;
   final bool mostrarLoja;
+  final bool destaque;
 
   @override
   Widget build(BuildContext context) {
@@ -196,19 +198,20 @@ class CartaoProduto extends StatelessWidget {
   Widget _compacto(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
-    final detalhes = [
-      produto.cashbackPercentualTexto,
-      produto.parcelamento,
+    final brilhoEscuro = tema.brightness == Brightness.dark;
+    final cashback = produto.cashbackTexto;
+    final cashbackPercentual = produto.cashbackPercentualTexto;
+    final categoria = [
+      produto.categoria,
+      produto.marca,
     ].whereType<String>().where((texto) => texto.trim().isNotEmpty).join(' · ');
-    final precos = <Widget>[
-      _PrecoCompacto(rotulo: 'Preço atual', valor: produto.precoAtualTexto),
-      if (produto.precoLiquidoTexto != null)
-        _PrecoCompacto(
-          rotulo: 'Após cashback',
-          valor: produto.precoLiquidoTexto!,
-          liquido: true,
-        ),
-    ];
+    final detalhes = [
+      if (cashback != null && cashback.trim().isNotEmpty) '$cashback de volta',
+      if (produto.estoque != null)
+        produto.estoque! > 0 ? 'Em estoque' : 'Esgotado',
+      if (produto.etiquetas.isNotEmpty) produto.etiquetas.first,
+    ].join('   ·   ');
+    final parcelamento = _parcelamentoCompacto(produto.parcelamento);
     return Semantics(
       label:
           'Oferta ${produto.nome}, da loja ${produto.lojaNome}, '
@@ -218,258 +221,411 @@ class CartaoProduto extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (mostrarLoja)
-              DecoratedBox(
+            if (destaque)
+              Container(
+                margin: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                  color: cores.superficieAlternativa,
-                  border: Border(bottom: BorderSide(color: cores.borda)),
+                  color: brilhoEscuro
+                      ? Tokens.ganhoFundoEscuro
+                      : Tokens.positiveSoft,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 10,
+                child: Text(
+                  'MENOR PREÇO ATUAL',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    color: cores.ganho,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .2,
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.circle, size: 7, color: cores.ganho),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          produto.lojaNome,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: tema.textTheme.labelSmall?.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
+                ),
+              ),
+            if (mostrarLoja)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                child: Row(
+                  children: [
+                    _MonogramaLoja(nome: produto.lojaNome),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            produto.lojaNome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: tema.textTheme.labelMedium?.copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
+                          Text(
+                            'Atualizado ${dataHoraProduto(produto.atualizadaEm)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: tema.textTheme.labelSmall?.copyWith(
+                              color: cores.textoSuave,
+                              fontSize: 8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (aoAcompanhar != null) ...[
+                      const SizedBox(width: 8),
+                      IconButton(
+                        key: ValueKey(
+                          'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+                        ),
+                        tooltip: produto.acompanhado
+                            ? 'Deixar de acompanhar ${produto.nome}'
+                            : 'Acompanhar ${produto.nome}',
+                        onPressed: aoAcompanhar,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 36,
+                          height: 36,
+                        ),
+                        style: IconButton.styleFrom(
+                          foregroundColor: produto.acompanhado
+                              ? cores.acao
+                              : cores.textoSuave,
+                          backgroundColor: produto.acompanhado
+                              ? (brilhoEscuro
+                                    ? Tokens.acaoFundoEscuro
+                                    : Tokens.acaoFundo)
+                              : cores.superficieAlternativa,
+                          side: BorderSide(
+                            color: produto.acompanhado
+                                ? cores.acao
+                                : cores.borda,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: Icon(
+                          produto.acompanhado
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_none_outlined,
+                          size: 18,
                         ),
                       ),
-                      const SizedBox(width: 9),
-                      Text(
-                        dataHoraProduto(produto.atualizadaEm),
-                        style: tema.textTheme.labelSmall?.copyWith(
-                          color: cores.textoSuave,
-                          fontSize: 8,
-                        ),
-                      ),
-                      if (aoAcompanhar != null)
-                        IconButton(
-                          key: ValueKey(
-                            'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
-                          ),
-                          tooltip: produto.acompanhado
-                              ? 'Deixar de acompanhar ${produto.nome}'
-                              : 'Acompanhar ${produto.nome}',
-                          onPressed: aoAcompanhar,
-                          padding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 36,
-                            height: 36,
-                          ),
-                          icon: Icon(
-                            produto.acompanhado
-                                ? Icons.notifications_active_outlined
-                                : Icons.notifications_none_outlined,
-                            size: 18,
-                          ),
-                        ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(13, 13, 13, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (produto.marca != null || produto.categoria != null) ...[
-                    Wrap(
-                      spacing: 5,
-                      runSpacing: 5,
-                      children: [
-                        for (final tag in [produto.marca, produto.categoria])
-                          if (tag != null && tag.trim().isNotEmpty)
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: cores.superficieAlternativa,
-                                borderRadius: BorderRadius.circular(7),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: brilhoEscuro
+                              ? Tokens.acaoFundoEscuro
+                              : Tokens.acaoFundo,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(
+                            _iconeProduto(produto),
+                            size: 19,
+                            color: cores.acao,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (categoria.isNotEmpty)
+                              Text(
+                                categoria.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: tema.textTheme.labelSmall?.copyWith(
+                                  color: cores.acao,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .2,
+                                ),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 4,
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: tema.textTheme.labelSmall?.copyWith(
-                                    color: cores.textoSuave,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                            Text(
+                              produto.nome,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: tema.textTheme.titleSmall?.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                height: 1.2,
                               ),
                             ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                  ],
-                  if (produto.etiquetas.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.atencaoFundoEscuro
-                            : Tokens.atencaoFundo,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        produto.etiquetas.first.toUpperCase(),
-                        style: TextStyle(
-                          color: cores.atencao,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
+                            if (!mostrarLoja)
+                              Text(
+                                '${produto.lojaNome} · Banco Inter',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: tema.textTheme.labelSmall?.copyWith(
+                                  color: cores.textoSuave,
+                                  fontSize: 8,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                  Text(
-                    produto.nome,
-                    style: tema.textTheme.titleSmall?.copyWith(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Icon(Icons.circle, size: 5, color: cores.marca),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          '${produto.lojaNome} · Banco Inter',
-                          style: tema.textTheme.labelSmall?.copyWith(
-                            color: cores.textoSuave,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
+                      if (cashbackPercentual != null &&
+                          cashbackPercentual.trim().isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: brilhoEscuro
+                                ? Tokens.ganhoFundoEscuro
+                                : Tokens.positiveSoft,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 6,
+                            ),
+                            child: Text(
+                              cashbackPercentual,
+                              style: tema.textTheme.labelSmall?.copyWith(
+                                color: cores.ganho,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                  if (produto.cashbackPercentualTexto != null ||
-                      produto.cashbackTexto != null) ...[
+                  if (produto.precoLiquidoTexto != null) ...[
+                    const SizedBox(height: 13),
+                    _PainelPrecosCompacto(
+                      atual: produto.precoAtualTexto,
+                      liquido: produto.precoLiquidoTexto,
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 13),
+                    _PrecoCompacto(
+                      rotulo: 'Preço atual',
+                      valor: produto.precoAtualTexto,
+                    ),
+                  ],
+                  if (detalhes.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.ganhoFundoEscuro
-                            : Tokens.positiveSoft,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        child: Text(
-                          [
-                            produto.cashbackPercentualTexto,
-                            produto.cashbackTexto,
-                          ].whereType<String>().join(' · '),
-                          style: tema.textTheme.labelSmall?.copyWith(
-                            color: cores.ganho,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                    Text(
+                      detalhes,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: cores.textoSuave,
+                        fontSize: 8,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 11),
-                  LayoutBuilder(
-                    builder: (context, limites) {
-                      final empilhar =
-                          limites.maxWidth < 250 ||
-                          MediaQuery.textScalerOf(context).scale(15) > 19.5;
-                      if (empilhar) {
-                        return Column(
+                  if (parcelamento != null || aoAbrirNoShopping != null) ...[
+                    const SizedBox(height: 10),
+                    LayoutBuilder(
+                      builder: (context, limites) {
+                        final empilhar =
+                            limites.maxWidth < 330 ||
+                            MediaQuery.textScalerOf(context).scale(12) > 14;
+                        final acoes = Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            for (var i = 0; i < precos.length; i++) ...[
-                              precos[i],
-                              if (i != precos.length - 1)
-                                const SizedBox(height: 9),
+                            Tooltip(
+                              message: 'Ver histórico',
+                              child: OutlinedButton(
+                                onPressed: aoAbrirHistorico,
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 35),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  foregroundColor: cores.marca,
+                                  side: BorderSide(color: cores.borda),
+                                  textStyle: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text('Histórico'),
+                              ),
+                            ),
+                            if (aoAbrirNoShopping != null) ...[
+                              const SizedBox(width: 7),
+                              FilledButton(
+                                onPressed: aoAbrirNoShopping,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 35),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  backgroundColor: cores.acao,
+                                  foregroundColor: tema.colorScheme.onPrimary,
+                                  textStyle: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text('Abrir oferta'),
+                              ),
                             ],
                           ],
                         );
-                      }
-                      return Row(
-                        children: [
-                          for (var i = 0; i < precos.length; i++) ...[
-                            Expanded(child: precos[i]),
-                            if (i != precos.length - 1)
-                              const SizedBox(width: 9),
+                        final parcela = parcelamento == null
+                            ? const SizedBox.shrink()
+                            : Text(
+                                parcelamento,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: tema.textTheme.labelSmall?.copyWith(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              );
+                        if (empilhar) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (parcelamento != null) parcela,
+                              if (parcelamento != null)
+                                const SizedBox(height: 7),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: acoes,
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            if (parcelamento != null) Expanded(child: parcela),
+                            if (parcelamento != null) const SizedBox(width: 8),
+                            acoes,
                           ],
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          detalhes,
-                          style: tema.textTheme.labelSmall?.copyWith(
-                            color: cores.textoSuave,
-                            fontSize: 8,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Ver histórico',
-                        onPressed: aoAbrirHistorico,
-                        icon: const Icon(Icons.timeline_outlined, size: 18),
-                      ),
-                      if (aoAcompanhar != null)
-                        IconButton(
-                          tooltip: produto.acompanhado
-                              ? 'Deixar de acompanhar'
-                              : 'Acompanhar produto',
-                          onPressed: aoAcompanhar,
-                          icon: Icon(
-                            produto.acompanhado
-                                ? Icons.notifications_active_outlined
-                                : Icons.notifications_none_outlined,
-                            size: 18,
-                          ),
-                        ),
-                      if (aoAbrirNoShopping != null)
-                        FilledButton.icon(
-                          onPressed: aoAbrirNoShopping,
-                          icon: const Icon(Icons.open_in_new, size: 16),
-                          label: const Text('Ver no Inter'),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size(0, 36),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            textStyle: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(11),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String? _parcelamentoCompacto(String? valor) {
+  if (valor == null || valor.trim().isEmpty) return null;
+  return valor.startsWith('Em ') ? valor.substring(3) : valor;
+}
+
+IconData _iconeProduto(ProdutoDireto produto) {
+  final texto = '${produto.categoria ?? ''} ${produto.nome}'.toLowerCase();
+  if (texto.contains('celular') ||
+      texto.contains('smartphone') ||
+      texto.contains('iphone')) {
+    return Icons.smartphone_outlined;
+  }
+  if (texto.contains('notebook') ||
+      texto.contains('computador') ||
+      texto.contains('monitor')) {
+    return Icons.laptop_mac_outlined;
+  }
+  if (texto.contains('casa') || texto.contains('móvel')) {
+    return Icons.chair_outlined;
+  }
+  return Icons.category_outlined;
+}
+
+class _MonogramaLoja extends StatelessWidget {
+  const _MonogramaLoja({required this.nome});
+
+  final String nome;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final iniciais = nome
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((parte) => parte.isNotEmpty)
+        .take(2)
+        .map((parte) => parte.substring(0, 1).toUpperCase())
+        .join();
+    return Container(
+      width: 29,
+      height: 29,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Tokens.cianoFundoEscuro
+            : Tokens.plumSoft,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Text(
+        iniciais,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: cores.marca,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _PainelPrecosCompacto extends StatelessWidget {
+  const _PainelPrecosCompacto({required this.atual, required this.liquido});
+
+  final String atual;
+  final String? liquido;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final escuro = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(13),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: cores.borda),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _PrecoCompacto(rotulo: 'Preço atual', valor: atual),
+            ),
+            if (liquido != null)
+              Expanded(
+                child: _PrecoCompacto(
+                  rotulo: 'Após cashback',
+                  valor: liquido!,
+                  liquido: true,
+                  fundo: escuro ? Tokens.ganhoFundoEscuro : Tokens.ganhoFundo,
+                ),
+              ),
           ],
         ),
       ),
@@ -482,22 +638,26 @@ class _PrecoCompacto extends StatelessWidget {
     required this.rotulo,
     required this.valor,
     this.liquido = false,
+    this.fundo,
   });
 
   final String rotulo;
   final String valor;
   final bool liquido;
+  final Color? fundo;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: liquido
-            ? (Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.ganhoFundoEscuro
-                  : Tokens.ganhoFundo)
-            : cores.superficieAlternativa,
+        color:
+            fundo ??
+            (liquido
+                ? (Theme.of(context).brightness == Brightness.dark
+                      ? Tokens.ganhoFundoEscuro
+                      : Tokens.ganhoFundo)
+                : cores.superficieAlternativa),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Padding(
