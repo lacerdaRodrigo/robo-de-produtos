@@ -676,7 +676,11 @@ def teste_conclusao_da_rodada_gera_alertas_depois_do_estado_final(monkeypatch):
     indice_lista = comandos.index(repositorio.LISTA_LOJAS_ALERTAS)
     assert indice_conclusao < indice_lista
     assert comandos[indice_lista + 1:] == [repositorio.GERA_ALERTAS, repositorio.GERA_ALERTAS]
-    assert [parametros for comando, parametros in cursor.comandos if comando == repositorio.GERA_ALERTAS] == [
+    assert [
+        parametros
+        for comando, parametros in cursor.comandos
+        if comando == repositorio.GERA_ALERTAS
+    ] == [
         (71,),
         (72,),
     ]
