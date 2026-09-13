@@ -1,9 +1,22 @@
 # PRD — Livelo (Robô de Pontuação Turbinada)
 
-**Versão:** v2.3 — documento vivo
-**Status vigente em 2026-09-04:** robô Python, Postgres, API autenticada e Flutter implementados. A primeira coleta do catálogo completo gravou 252 parceiros ativos em 2026-08-28. O smoke físico Android permanece pendente pelo responsável.
+**Versão:** v2.3 — base histórica do coletor
+**Status em 2026-09-13:** robô Python, Postgres, API autenticada e Flutter
+implementados. A primeira coleta do catálogo completo gravou 252 parceiros
+ativos em 2026-08-28. Os requisitos de e-mail, SMTP e limiar abaixo são o
+registro da V1/V2 e não descrevem o canal atual de alertas pessoais.
 
-Este documento é a **fonte da verdade** do projeto. README e arquivo de contexto do agente apontam pra cá e não repetem seu conteúdo.
+Este documento é a fonte histórica do coletor Livelo e de seus contratos V1.
+Para catálogo atual, acompanhamento pessoal e notificações, consulte
+[`PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](PRD-LIVELO-CATALOGO-ALERTAS-APP.md) e,
+principalmente, [`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
+O aplicativo não consulta a Livelo nem o Postgres diretamente.
+
+> **Nota de leitura:** referências a e-mail, SMTP, `Notificador`, `RF10` e
+> `MS5` permanecem para explicar decisões históricas e testes antigos. Elas não
+> significam que uma mudança de pontos hoje enviará e-mail. O comportamento
+> vigente é: acompanhamento pessoal + snapshot Livelo completo + evento na
+> Central; o push depende da outbox, token e preferências.
 
 ---
 

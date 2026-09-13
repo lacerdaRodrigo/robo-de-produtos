@@ -45,6 +45,24 @@ coordenadora é finalizada primeiro e só então dispara os alertas das lojas
 válidas. Eventos de backfill ficam na Central, mas não criam outbox nem push.
 Alertas expiram após 90 dias e relatos após 180 dias.
 
+### Comportamento por origem
+
+| Origem acompanhada no app | Mudança que gera evento | Coleta mínima válida |
+|---|---|---|
+| Livelo | Mudança em `pontos_atuais` entre snapshots completos do parceiro | Execução Livelo publicada com sucesso e acompanhamento pessoal ativo |
+| Inter — Sites parceiros | Mudança em `cashback_principal_valor` da loja | Execução da loja válida e completa, com acompanhamento pessoal ativo |
+| Inter — Compre direto | Mudança em `preco_atual` ou `cashback_percentual` do produto | Execução da loja válida e completa, com acompanhamento pessoal ativo |
+| Pichau | Mudança em `preco_pix` do produto | Execução Pichau completa e acompanhamento pessoal ativo |
+
+Em todas as quatro origens, aumento e redução são mudanças válidas, mas o
+primeiro snapshot depois de começar a acompanhar serve apenas como baseline.
+Ausência de dado, valor inválido, falha ou coleta parcial não gera evento.
+O evento pode aparecer no histórico da Central mesmo quando o usuário recusou
+push; a notificação depende adicionalmente de preferência habilitada, token FCM
+válido e processamento da outbox. A régua `multiplicador`/`piso` da Livelo e
+as seleções administrativas globais são indicadores ou configurações legadas;
+não substituem o acompanhamento pessoal desta tabela.
+
 ## API
 
 Rotas autenticadas em `backend/api/app/api`:
@@ -76,11 +94,11 @@ As leituras de Livelo, Sites parceiros do Inter e Pichau usam acompanhamento pes
 por padrão; `escopo=global` só é aceito para administradores e mantém a seleção
 legada separada da Central.
 
-Nos cards de Livelo, cashback Inter e produtos Inter, o sino é apenas um atalho
-visual para a ação de acompanhamento do usuário e compartilha o mesmo estado
-de salvamento/rollback do botão textual. O sino de Pichau é uma seleção global
-administrativa, protegida pela autorização correspondente; nenhum desses
-controles deve ser interpretado como preferência de push por si só.
+Nos cards de Livelo, cashback Inter, produtos Inter e Pichau, o sino é apenas
+um atalho visual para a ação de acompanhamento do usuário e compartilha o mesmo
+estado de salvamento/rollback do botão textual. Nenhum desses controles deve ser
+interpretado como preferência de push por si só; as seleções administrativas
+globais continuam separadas e protegidas por autorização.
 
 ## Flutter V11
 

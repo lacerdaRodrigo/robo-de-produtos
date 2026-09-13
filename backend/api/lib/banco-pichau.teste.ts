@@ -3,18 +3,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const bancoFalso = vi.hoisted(() => ({
   consultas: [] as string[],
   respostas: [] as unknown[][],
+  falha: null as (Error & { code?: string }) | null,
 }));
 
 vi.mock("@neondatabase/serverless", () => ({
-  neon: vi.fn(() => async (partes: TemplateStringsArray, ...valores: unknown[]) => {
-    bancoFalso.consultas.push(
-      partes.reduce(
-        (consulta, parte, indice) =>
-          consulta + String(valores[indice - 1] ?? "") + parte,
-      ),
-    );
-    return bancoFalso.respostas.shift() ?? [];
-  }),
+  neon: vi.fn(
+    () =>
+      async (partes: TemplateStringsArray, ...valores: unknown[]) => {
+        bancoFalso.consultas.push(
+          partes.reduce(
+            (consulta, parte, indice) =>
+              consulta + String(valores[indice - 1] ?? "") + parte,
+          ),
+        );
+        if (bancoFalso.falha) {
+          const erro = bancoFalso.falha;
+          bancoFalso.falha = null;
+          throw erro;
+        }
+        return bancoFalso.respostas.shift() ?? [];
+      },
+  ),
 }));
 
 import {
@@ -47,33 +56,39 @@ describe("persistência do acompanhamento Pichau", () => {
   beforeEach(() => {
     bancoFalso.consultas.length = 0;
     bancoFalso.respostas.length = 0;
+    bancoFalso.falha = null;
     process.env.DATABASE_URL = "postgresql://teste:teste@localhost/teste";
   });
 
   it("expõe contagem global de catálogo e acompanhadas", async () => {
-    bancoFalso.respostas.push([{
-      ultima_tentativa_em: null,
-      ultima_tentativa_estado: null,
-      ultimo_sucesso_em: null,
-      qualidade: "completa",
-      total_catalogo: 1169,
-      acompanhadas: 17,
-      produtos_ativos: 1169,
-      produtos_esgotados: 12,
-    }]);
+    bancoFalso.respostas.push([
+      {
+        ultima_tentativa_em: null,
+        ultima_tentativa_estado: null,
+        ultimo_sucesso_em: null,
+        qualidade: "completa",
+        total_catalogo: 1169,
+        acompanhadas: 17,
+        produtos_ativos: 1169,
+        produtos_esgotados: 12,
+      },
+    ]);
 
     await expect(resumoPichauPersistido()).resolves.toMatchObject({
       total_catalogo: 1169,
       acompanhadas: 17,
       produtos_ativos: 1169,
     });
-    expect(bancoFalso.consultas[0]).toContain("ELSE p.acompanhada END");
+    expect(bancoFalso.consultas[0]).toContain("p.acompanhada");
   });
 
   it("consulta acompanhadas sem teto de 16 e preserva paginação", async () => {
     bancoFalso.respostas.push(
       [{ total: 17 }],
-      Array.from({ length: 17 }, (_, indice) => ({ ...produto, id_externo: `PG-${indice + 1}` })),
+      Array.from({ length: 17 }, (_, indice) => ({
+        ...produto,
+        id_externo: `PG-${indice + 1}`,
+      })),
     );
 
     const resultado = await buscarCatalogoPichau({
@@ -98,18 +113,87 @@ describe("persistência do acompanhamento Pichau", () => {
       [{ ...produto, acompanhada: true }],
     );
 
-    await buscarCatalogoPichau({
-      q: "",
-      aba: "acompanhadas",
-      disponibilidade: "todas",
-      ordenar: "nome",
-      pagina: 1,
-      porPagina: 20,
-    }, "42");
+    await buscarCatalogoPichau(
+      {
+        q: "",
+        aba: "acompanhadas",
+        disponibilidade: "todas",
+        ordenar: "nome",
+        pagina: 1,
+        porPagina: 20,
+      },
+      "42",
+    );
 
     expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
-    expect(bancoFalso.consultas[0]).toContain("acompanhamento.origem = 'pichau'");
+    expect(bancoFalso.consultas[0]).toContain(
+      "acompanhamento.origem = 'pichau'",
+    );
     expect(bancoFalso.consultas[1]).toContain("CASE WHEN true");
+  });
+
+  it("mantém o resumo disponível enquanto a tabela pessoal aguarda publicação", async () => {
+    bancoFalso.falha = Object.assign(
+      new Error('relation "acompanhamento_usuario" does not exist'),
+      { code: "42P01" },
+    );
+    bancoFalso.respostas.push([
+      {
+        ultima_tentativa_em: null,
+        ultima_tentativa_estado: null,
+        ultimo_sucesso_em: null,
+        qualidade: "completa",
+        total_catalogo: 1169,
+        acompanhadas: 17,
+        produtos_ativos: 1169,
+        produtos_esgotados: 12,
+      },
+    ]);
+
+    await expect(resumoPichauPersistido("42")).resolves.toMatchObject({
+      total_catalogo: 1169,
+      acompanhadas: 17,
+    });
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[1]).not.toContain("acompanhamento_usuario");
+  });
+
+  it("mantém o catálogo carregável quando a tabela pessoal está sem permissão", async () => {
+    bancoFalso.falha = Object.assign(
+      new Error("permission denied for table acompanhamento_usuario"),
+      { code: "42501" },
+    );
+    bancoFalso.respostas.push([{ total: 1 }], [produto]);
+
+    const resultado = await buscarCatalogoPichau(
+      {
+        q: "",
+        aba: "todas",
+        disponibilidade: "todas",
+        ordenar: "nome",
+        pagina: 1,
+        porPagina: 20,
+      },
+      "42",
+    );
+
+    expect(resultado.total).toBe(1);
+    expect(resultado.itens).toHaveLength(1);
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[1]).not.toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[2]).not.toContain("acompanhamento_usuario");
+  });
+
+  it("não mascara falhas que não pertencem ao acompanhamento pessoal", async () => {
+    bancoFalso.falha = Object.assign(
+      new Error('relation "pichau_produto" does not exist'),
+      { code: "42P01" },
+    );
+
+    await expect(resumoPichauPersistido("42")).rejects.toThrow(
+      "pichau_produto",
+    );
+    expect(bancoFalso.consultas).toHaveLength(1);
   });
 
   it("altera o estado por ID externo de forma idempotente", async () => {

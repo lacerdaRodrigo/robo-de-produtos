@@ -1,7 +1,12 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.1 em aceite progressivo
-**Status vigente em 2026-09-04:** schema, coletor, API autenticada e Flutter implementados. A carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do domínio foram aplicadas manualmente no banco alvo; as categorias externas são regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
+**Status vigente em 2026-09-13:** schema, coletor, API autenticada, Flutter e
+acompanhamento pessoal estão implementados. A Central compara preço e cashback
+de Produtos Inter conforme a seção 15.4 e o PRD compartilhado de alertas. A
+carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do
+domínio foram aplicadas manualmente no banco alvo; as categorias externas são
+regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
@@ -587,7 +592,8 @@ Busca pública não é registrada como perfil nem enviada à fonte. O robô cole
 
 ## 11. Testes
 
-Os casos CT-200 em diante ficam catalogados em [`TESTES.md`](TESTES.md) antes de qualquer código.
+Os casos CT-200 em diante ficam catalogados em
+[`docs/testes/TESTES.md`](../testes/TESTES.md) antes de qualquer código.
 
 ### 11.1 Extrator e paginação
 

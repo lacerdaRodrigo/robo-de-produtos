@@ -2,7 +2,8 @@
 
 Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o app e a API usam Flutter/TypeScript.
 
-A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do [`PRD-LIVELO.md`](PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
+A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do
+[`PRD-LIVELO.md`](../prd/PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
 
 Convenção: arquivos e funções de teste usam o prefixo `teste_` (em vez do padrão `test_` do pytest), configurado no `pyproject.toml`.
 
@@ -224,7 +225,8 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 ## Shopping Inter — V3
 
-> Casos da V3 definidos no [`PRD-INTER-CASHBACK.md`](PRD-INTER-CASHBACK.md). A suíte padrão usa a
+> Casos da V3 definidos no
+> [`PRD-INTER-CASHBACK.md`](../prd/PRD-INTER-CASHBACK.md). A suíte padrão usa a
 > fixture sanitizada `backend/robo/testes/fixtures/lojas_inter.json` e nunca toca a rede.
 
 ### `backend/robo/testes/teste_extrator_inter.py` — JSON público → `LojaInter`
@@ -291,7 +293,8 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 ## Produtos do Shopping Inter — V4
 
-> Casos definidos no [`PRD-INTER-PRODUTOS.md`](PRD-INTER-PRODUTOS.md). A primeira implementação usa
+> Casos definidos no
+> [`PRD-INTER-PRODUTOS.md`](../prd/PRD-INTER-PRODUTOS.md). A primeira implementação usa
 > `backend/robo/testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
 > e `backend/api/` (antes `site/testes/formato-produtos-inter.teste.ts`) para a busca local e a migração
 > `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia
@@ -627,6 +630,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-407 | Filtro server-side da Pichau | Aba acompanhadas, disponibilidade, busca, ordenação e paginação são aplicados antes do retorno; a seleção sobrevive fora do catálogo | `backend/api/lib/banco-pichau.teste.ts` |
 | CT-408 | PATCH do sino Pichau | A rota valida ID/corpo, exige admin, persiste de forma idempotente e informa produto ausente sem 500 genérico | `backend/api/app/api/pichau/catalogo/**` e `banco-pichau.teste.ts` |
 | CT-409 | Permissão do publicador Pichau | O publicador executa o gerador de alertas e o trigger da outbox sem grants diretos nas tabelas pessoais; a migration 028 fixa o `SECURITY DEFINER` e o `search_path`, confirmado em produção pela coleta completa `34761933582` | `028_permissoes_alertas_pichau.sql`, teste de migration e validação operacional |
+| CT-410 | Fallback de leitura pessoal Pichau | Ausência, coluna ausente ou permissão insuficiente em `acompanhamento_usuario` não derruba o catálogo: a API volta temporariamente ao acompanhamento administrativo legado; outros erros continuam falhando | `backend/api/lib/banco-pichau.teste.ts` |
 
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução e os totais da
@@ -727,7 +731,7 @@ O que conferir:
 | CT-178 | Central com erro/parcial | Erro sem itens permite tentar novamente; falha após itens mantém o último resultado | Fakes de resposta/erro em `ControladorAlertas` |
 | CT-179 | Preferências e push opcional | Flags serializam e recusa de permissão não impede histórico | Parser, API fake e `GerenciadorNotificacoes` |
 | CT-180 | Isolamento e autorização | Rotas exigem Firebase/App Check quando configurado, limite e `usuario_app_id`; acompanhamento não acessa outra conta | Testes direcionados da autenticação/validadores e revisão de SQL |
-| CT-181 | Snapshot válido e deduplicação | Primeiro, ausente, inválido, parcial e falho não geram evento; aumento/redução gera uma vez por coleta | Funções da migration e adaptadores após snapshot publicado |
+| CT-181 | Snapshot válido e deduplicação por origem | Livelo compara pontos; Inter Cashback compara cashback; Inter Produtos compara preço/cashback; Pichau compara preço Pix. Primeiro snapshot, ausente, inválido, parcial e falho não geram evento; aumento/redução gera uma vez por coleta | Funções das migrations e adaptadores após snapshot publicado |
 | CT-182 | Retenção e outbox | Expurgo respeita 90/180 dias; outbox é idempotente, faz retry, recupera linha presa em `enviando`, respeita preferências e desativa token inválido | `backend/api/lib/banco-alertas.teste.ts`, consulta da migration e fake do mensageiro |
 | CT-183 | Relato sem segredo | Categoria/mensagem/versionamento são validados e logs usam apenas request ID | Validator `alertas-api` e rota autenticada |
 | CT-184 | Acompanhamento pessoal de produto | A ação por loja/id externo é isolada, idempotente e não altera seleção global | PATCH da rota e card de Produtos Inter |

@@ -3,13 +3,16 @@
 **Status:** jornada mobile e coleta Android versionadas; a correção de ciclo
 limpo, autorrecuperação única e diagnóstico estruturado está implementada e
 validada, e a migration passou pela validação branch-first e foi aplicada em
-produção. A correção aguarda implantação no Samsung e aceite real. A execução
-`34519730452`, em 2026-09-10, falhou como `pichau-acesso`. Uma coleta anterior
+produção. A execução `34761933582`, em 2026-09-13, comprovou uma coleta completa
+até a publicação, sem `pichau-banco` e sem evento porque não houve mudança de
+preço. Permanecem pendentes a inspeção ADB, a execução manual sem cabo, um
+evento real com entrega FCM e o gate de nove execuções agendadas em 72 horas.
+A execução `34519730452`, em 2026-09-10, falhou como `pichau-acesso`. Uma coleta anterior
 passou no mesmo commit também deixando o Chrome aberto: o processo residual é
 um risco real agora eliminado, mas não ficou comprovado como causa isolada.
 Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-11
+**Última atualização:** 2026-09-13
 
 ## Objetivo
 
@@ -162,6 +165,14 @@ coletor
 preserva a coluna administrativa no `UPSERT`, para que uma nova coleta não
 apague a seleção manual. A aba **Acompanhadas** consulta o recorte pessoal com
 filtro server-side, inclusive para produtos que saíram do catálogo atual.
+
+Durante a publicação da camada pessoal, a leitura do catálogo e do resumo possui
+fallback temporário para a seleção administrativa legada quando a API recebe
+erro PostgreSQL de relação ausente, coluna ausente ou permissão na tabela
+`acompanhamento_usuario`. Outros erros de banco continuam sendo propagados como
+falha da API. Esse fallback mantém a leitura dos produtos disponível, mas não
+substitui a aplicação e a validação das migrations 023/026 no ambiente
+publicado.
 
 ### Resumo de Serviços
 

@@ -1,9 +1,17 @@
 # PRD — Livelo: catálogo, alertas e aplicativo
 
-**Versão:** v2.x (documento vivo)
-**Status vigente em 2026-09-04:** V2.0 a V2.3 implementadas no robô, Postgres, API autenticada e Flutter. O ciclo de catálogo completo e a migration `013` estão publicados; a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável.
+**Versão:** v2.x (contrato de catálogo e registro histórico)
+**Status vigente em 2026-09-13:** catálogo V2, Postgres, API autenticada e Flutter implementados. O indicador administrativo legado de oportunidade continua separado da Central pessoal de Alertas. O ciclo de catálogo completo e a migration `013` estão publicados; a primeira coleta gravou 252 parceiros. O smoke físico Android permanece pendente pelo responsável.
 
 > A V2 define o catálogo persistido, campanhas, preferências e o cliente Flutter autenticado. O aplicativo consome a API; não consulta a Livelo nem o Postgres diretamente.
+
+> **Contrato vigente de alertas:** este documento preserva as decisões do
+> catálogo V2 e do indicador `alertou`/`alertas`, mas os textos históricos de
+> limiar, e-mail e Clube não definem mais evento pessoal nem push. No aplicativo,
+> acompanhar uma loja cria uma relação pessoal; a Central gera evento quando
+> `pontos_atuais` muda entre snapshots Livelo completos, sem exigir o limiar
+> administrativo. O contrato comum está em
+> [`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
 
 Este documento é a **evolução sobre o [`PRD-LIVELO.md`](PRD-LIVELO.md)**. O PRD base continua valendo para os contratos que não foram redefinidos aqui; onde houver conflito, este documento vence — e cada conflito está marcado explicitamente.
 
@@ -87,8 +95,8 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 |---|---|
 | **RF14** | Extrair os dados dos parceiros a partir do payload JSON embutido na página, incluindo `parity`, `parityClub`, `parityBau`, `dateStart`, `dateEnd`, `activeCampaign` e `legalTerms` |
 | **RF15** | Servir um site com todas as lojas favoritas, suas pontuações atuais e as promoções em destaque |
-| **RF16** | Enviar e-mail **somente quando ao menos uma favorita cruzar o próprio limiar de alerta**. **Substitui RF10** |
-| **RF17** | Permitir, pelo site e sob autenticação, adicionar e remover lojas favoritas e editar multiplicador e piso, global e por loja. Uma tela por tarefa: `/avisos` para o padrão global e para editar o limiar de loja já cadastrada, `/lojas` para o cadastro — que também aceita, opcionalmente, o limiar próprio da loja no momento de criá-la (RN28: em branco usa o padrão global). **A tela usa linguagem comum** — "vezes acima do normal" e "mínimo de pontos" — e o termo técnico deste PRD aparece só no tooltip de ajuda |
+| **RF16** | Manter o indicador de oportunidade do catálogo para compatibilidade do robô V2. Ele não envia mais e-mail nem substitui os eventos pessoais da Central. |
+| **RF17** | Permitir, pela API autenticada e sob autorização administrativa, editar o indicador de multiplicador/piso e a seleção global da loja. O acompanhamento pessoal do app usa o contrato da Central e não altera essa configuração. |
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
 | **RF20** | Persistir todos os parceiros válidos de cada coleta Livelo, com identidade por ID externo, categorias e pontuação, para formar o histórico completo do catálogo |
@@ -128,7 +136,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN24** | A página exibe **todas** as favoritas, em promoção ou não. É o que permite consultar a pontuação base sem abrir a Livelo (O5) |
 | **RN25** | A página nunca carrega imagem, fonte ou script de domínio externo. Logotipo de parceiro não é hospedado nem apontado por link direto — ver 9.2 |
 | **RN26** | O carimbo de atualização é obrigatório e sempre visível. Sem ele a página não cumpre MS6 |
-| **RN27** | **Uma loja marcada no sino gera alerta quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** O sino é uma preferência independente do resultado histórico `pontuacao.alertou`; loja acompanhada sem sino não gera alerta. |
+| **RN27** | **O indicador administrativo de catálogo marca uma oportunidade quando `pontos_atuais >= base × multiplicador` E `pontos_atuais >= piso`.** Esse resultado pode alimentar `pontuacao.alertou`/`execucao.alertas`, mas não é o evento pessoal da Central e não gera push por si só. |
 | **RN28** | Multiplicador e piso têm valor padrão global, sobrescrevível por loja. Loja sem sobrescrita usa o padrão |
 | **RN29** | Silêncio de alerta acompanhado de página degenerada (quase todo parceiro com `parityBau` igual à pontuação atual) é registrado como suspeita — é o sintoma de C07. Ver 6.3 |
 | **RN30** | O site exibe, ao lado de cada loja, a pontuação atual, a base e o valor que dispararia o alerta. Sem isso o limiar desregula em silêncio |
@@ -147,9 +155,13 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN43** | A atividade do Início traz o último evento de Livelo, Cashback e Produtos, ordenado por momento real decrescente e com desempate estável por domínio. Navegar ou pesquisar não consulta Livelo/Inter; somente o botão administrativo idempotente solicita workflow. |
 | **RN44** | O histórico Livelo é somente leitura, pertence ao parceiro identificado pelo ID externo e retorna no máximo 30 medições em ordem decrescente de execução. Acompanhamento não limita a série; ausência de medições é estado vazio válido; abrir a tela não dispara robô. |
 
-### 6.1 O novo critério de alerta
+### 6.1 Indicador legado de oportunidade do catálogo
 
-A V1 alertava quando a Livelo pendurava a etiqueta "Promoção". Medido em 2026-08-09, esse critério **errava nos dois sentidos**:
+Este indicador histórico da V1 marcava uma oportunidade quando a Livelo
+pendurava a etiqueta "Promoção". Medido em 2026-08-09, esse critério **errava
+nos dois sentidos**. Ele continua documentado porque explica os campos de
+catálogo e as decisões administrativas, mas não é o gatilho de evento pessoal
+nem de push; a Central compara snapshots completos do que cada usuário segue.
 
 | Erro | Exemplo real |
 |---|---|
@@ -159,7 +171,7 @@ A V1 alertava quando a Livelo pendurava a etiqueta "Promoção". Medido em 2026-
 O critério passa a comparar com `parityBau`, a pontuação normal declarada pela própria Livelo. Dois botões:
 
 - **Multiplicador** — quanto acima do normal daquela loja. Padrão **2,0**
-- **Piso** — mínimo absoluto para valer um e-mail. Padrão **4 pontos**
+- **Piso** — mínimo absoluto para marcar a oportunidade no catálogo. Padrão **4 pontos**
 
 **Por que múltiplo e não número fixo.** Um limiar absoluto ignora a escala de cada loja. Simulado no catálogo real, a regra "avise acima de 8" perderia `Crocs` (2→7), `Avon` (2→6), `Osklen` (2→6), `Fast Shop` (2→5) e `Magalu` (2→4) — todas oportunidades legítimas.
 
@@ -188,16 +200,18 @@ A distinção importa porque o não assinante **aproveita** uma promoção `PROM
 
 Passa a existir a configuração `ASSINANTE_CLUBE`, padrão `false`:
 
-- Não assinante: promoção `CLUB` **não** dispara e-mail, mas continua visível na página, marcada como Clube. `PROMOTION_CLUB` dispara normalmente, pela pontuação que vale para ele.
-- Assinante: promoção do Clube conta normalmente, pelo valor do tier.
+- Não assinante: promoção `CLUB` continua visível no catálogo, marcada como Clube; ela não altera o baseline pessoal sozinha. `PROMOTION_CLUB` mostra a pontuação que vale para ele.
+- Assinante: a promoção do Clube continua disponível no catálogo pelo valor do tier; o evento pessoal ainda depende da mudança entre snapshots completos.
 
-> A **marcação** no e-mail é da V2.0. A **supressão** do alerta por não ser assinante entrou na V2.2: `CLUB` não dispara para quem não assina, `PROMOTION_CLUB` dispara normalmente, e para quem assina a pontuação que vale é a do tier.
+> A marcação de Clube e a régua são decisões históricas do catálogo V2. Elas
+> não suprimem nem criam evento da Central, que compara o campo persistido de
+> pontos do acompanhamento pessoal.
 
 ### 6.3 RN29 sem guardar estado
 
 A redação original de RN29 falava em "muitos dias seguidos", o que exigiria histórico — e o robô é stateless por decisão (PRD §1.4). A regra foi implementada sem contador de dias, porque **o sintoma de C07 é visível numa execução só**: se a Livelo passar a preencher `parityBau` com o próprio valor promocional, isso não acontece numa loja, acontece na página inteira de uma vez.
 
-A checagem dispara quando **nenhuma favorita cruzou o limiar** e ao menos 90% dos parceiros com base conhecida vieram com `pontos_atuais == pontos_base`. Uma loja parada é normal; a página parada não é. Há ainda o caso extremo do payload deixar de trazer `parityBau`: aí a suspeita é levantada sem conta nenhuma.
+A checagem do indicador dispara quando **nenhuma favorita cruzou o limiar** e ao menos 90% dos parceiros com base conhecida vieram com `pontos_atuais == pontos_base`. Uma loja parada é normal; a página parada não é. Há ainda o caso extremo do payload deixar de trazer `parityBau`: aí a suspeita é levantada sem conta nenhuma. Isso não impede que uma mudança válida em uma loja acompanhada gere evento pessoal na Central.
 
 ```
 WARNING RN29: nenhuma favorita cruzou o limiar e 251 de 254 parceiros
@@ -237,13 +251,13 @@ A regra de ouro não muda: núcleo puro, mundo por contrato. A V2 acrescenta **u
 | Peça | Tipo | Papel |
 |---|---|---|
 | `extrator.py` | Núcleo, **reescrito** | Passa a ler o payload JSON em vez do texto dos cards |
-| `alertas.py` | Núcleo, **novo** | Aplica RN27 e RN28: decide o que merece alerta. Função pura, sem I/O |
+| `alertas.py` | Núcleo, **novo** | Aplica RN27 e RN28: calcula o indicador administrativo de catálogo. Função pura, sem I/O |
 | `montador_email.py` | Núcleo, ajustado | Ganha validade e marcação de Clube |
 | `CatalogoFavoritas` | **Porta existente, nova implementação** | Passa a ler do Postgres em vez do TOML. **O contrato não muda** — é o dividendo da arquitetura da V1 |
 | `PreferenciasGlobais` | **Porta nova** (V2.2) | Entrega a régua de RN28. Separada do catálogo porque vem de outra tabela e responde outra pergunta |
 | `RepositorioDeExecucao` | **Porta nova** (V2.3) | Guarda o retrato de cada rodada. É o que dá dado ao site: a pontuação atual só existe durante a execução |
 | `retrato.py` | Núcleo, **novo** (V2.3) | Junta cada favorita com o que a página disse dela. RF15, RN24, RN30 |
-| `principal.py` | Orquestração, ajustada | Decide envio por RF16 |
+| `principal.py` | Orquestração, ajustada | Publica o catálogo; o evento pessoal é gerado pelo contrato da Central após snapshot válido |
 | Site | **Componente novo**, fora do robô | Next.js na Vercel: exibe e edita. Fala com o mesmo banco |
 
 ### 7.1.1 O que a arquitetura da V1 economiza aqui
@@ -325,7 +339,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 |---|---|---|
 | `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
 | `piso_pontos` | `Decimal \| None` | Idem |
-| `alerta_ativo` | `bool` | Preferência administrativa de alerta da loja; `false` não remove o acompanhamento. O cartão mobile V11 exibe um sino no canto superior direito como atalho visual para a ação de acompanhamento pessoal, sem substituir esta preferência administrativa |
+| `alerta_ativo` | `bool` | Preferência administrativa do indicador legado; `false` não remove a seleção global. O cartão mobile V11 usa acompanhamento pessoal separado, conforme o PRD da Central |
 
 ### 8.1 Esquema do banco
 
@@ -339,9 +353,15 @@ parceiro_livelo id, id_externo, nome, categorias[], pontos_*, campanha,
                  validade, link, ativo, atualizado_execucao_id       -- migração 013
 ```
 
-`execucao` e `pontuacao` entraram na V2.3 (`migracoes/002_execucao.sql`). `pontuacao` continua guardando somente as acompanhadas. `parceiro_livelo`, criado pela migração `013`, guarda a oferta atual de todos os parceiros válidos da última coleta, sem série histórica própria. A ligação opcional e única `loja.parceiro_livelo_id` separa seleção de catálogo.
+`execucao` e `pontuacao` entraram na V2.3 (`migracoes/002_execucao.sql`).
+`pontuacao` guarda o retrato da coleta para os parceiros publicados; a coluna
+`loja_id` só representa a seleção administrativa quando aplicável. O histórico
+pessoal da Central resolve o parceiro por `acompanhamento_usuario`. `parceiro_livelo`,
+criado pela migração `013`, guarda a oferta atual de todos os parceiros válidos
+da última coleta, sem série histórica própria. A ligação opcional e única
+`loja.parceiro_livelo_id` separa seleção de catálogo.
 
-**A reserva cobre indisponibilidade, não vontade.** Banco que responde com zero lojas devolve lista vazia, e isso chega ao caso de uso como resultado legítimo — não como falha. A distinção existe porque a primeira versão não a fazia: apagar o catálogo pelo site fazia o TOML ressuscitar as 132 lojas na execução seguinte, e o banco nunca era de fato a fonte da verdade. Catálogo vazio gera e-mail com assunto próprio ("nenhuma loja cadastrada"), que é diferente de "nenhuma promoção hoje" — dizer a mesma frase nos dois casos esconderia que o robô está rodando no vazio.
+**A reserva cobre indisponibilidade, não vontade.** Banco que responde com zero lojas devolve lista vazia, e isso chega ao caso de uso como resultado legítimo — não como falha. A distinção existe porque a primeira versão não a fazia: apagar o catálogo pelo site fazia o TOML ressuscitar as 132 lojas na execução seguinte, e o banco nunca era de fato a fonte da verdade. Catálogo vazio permanece um estado persistido e não cria e-mail ou evento pessoal; a Central só compara itens com acompanhamento pessoal e snapshot válido.
 
 **Publicar é crítico.** Sem outro caminho para alimentar API e Flutter, falha ou contagem parcial na gravação encerra a execução com erro. A transação reverte execução, catálogo, vínculos e pontuações juntos; a última coleta válida continua disponível.
 
@@ -464,9 +484,9 @@ Novos casos, seguindo o bloco CT-080 em diante. A estratégia da Seção 8 do PR
 | RF14 | Payload sem `dateEnd`, ou com data malformada, não derruba a extração |
 | RN21 | Promoção com `dateEnd` no passado não conta como promoção |
 | RN22 | Promoção que termina hoje recebe a marcação de destaque |
-| RN23 | Com `ASSINANTE_CLUBE=false`, promoção exclusiva do Clube não dispara e-mail mas aparece na página |
-| RN23 | Com `ASSINANTE_CLUBE=true`, a mesma promoção dispara e-mail |
-| RF16 | Sem promoção, o notificador **não** é chamado |
+| RN23 | Com `ASSINANTE_CLUBE=false`, promoção exclusiva do Clube continua marcada no catálogo, sem virar evento pessoal |
+| RN23 | Com `ASSINANTE_CLUBE=true`, a mesma promoção continua disponível no catálogo; o evento pessoal segue a mudança de pontos entre snapshots |
+| RF16 | Sem cruzar a régua administrativa, o indicador não é marcado; isso não impede evento pessoal quando o snapshot acompanhado muda |
 | RF16 | Sem promoção, a página **é** publicada mesmo assim |
 | RN24 | A página lista as 132, não só as em promoção |
 | RN25 | A página não contém nenhuma URL de domínio externo |
@@ -484,14 +504,16 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 
 | Fase | Entrega | Por que nesta ordem |
 |---|---|---|
-| **V2.0** | Extrator lendo o payload: base, validade e campanha. E-mail mostra validade e marca o que é só do Clube | Base de tudo. Sozinha já melhora o e-mail de hoje, sem site e sem banco |
+| **V2.0** | Extrator lendo o payload: base, validade e campanha. Registro histórico do e-mail e marcação de Clube | Base do catálogo; o e-mail não é canal vigente |
 | **V2.1** | Banco no Neon, `CatalogoFavoritas` lendo de lá, TOML como carga inicial | O núcleo não muda — só a implementação da porta. Fase de menor risco de todas |
-| **V2.2** | Regras de alerta RN27 e RN28, ainda com o e-mail diário | Permite calibrar multiplicador e piso **vendo o resultado** antes de depender deles |
+| **V2.2** | Regras do indicador administrativo RN27 e RN28 | Mantém compatibilidade do catálogo; não define alertas pessoais |
 | **V2.3** | Site na Vercel: consulta e edição, com senha | Precisa do banco da V2.1. Entrega O5 |
-| **V2.4** | E-mail condicional (RF16) | **Só depois da V2.3 no ar e verificada.** Antes disso, cortar o e-mail diário reabre o buraco do O3 |
+| **V2.4** | E-mail condicional (RF16) | Roadmap histórico; não é requisito do canal atual, que usa a Central e a outbox FCM |
 | **Catálogo Android** | Migração `013`, publicação completa, API autenticada e tela Android compacta | Migração e API publicadas; primeira coleta com 252 parceiros. Smoke físico Android pendente pelo responsável |
 
-> Duas ordens não são negociáveis. **V2.4 depois da V2.3**, senão fica sem sinal de vida nenhum. E **V2.2 antes da V2.4**, porque calibrar limiar recebendo e-mail todo dia é fácil; calibrar limiar quando o e-mail só chega se o limiar estiver certo é adivinhação.
+> As fases V2.0–V2.4 são um registro histórico do catálogo. O contrato atual de
+> acompanhamento e notificação está na Seção 13 e no PRD da Central; não reabrir
+> este roadmap para implementar o canal antigo de e-mail.
 
 ---
 
@@ -510,9 +532,10 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 ## 13. Central pessoal de alertas
 
 O catálogo Livelo continua sendo publicado como snapshot; a Central pessoal
-compara somente snapshots completos por parceiro acompanhado pelo usuário. O
-primeiro snapshot, valores ausentes/ inválidos e coletas parciais não geram
-evento. A implementação e o contrato compartilhado estão em
+compara somente snapshots completos por parceiro acompanhado pelo usuário.
+Qualquer mudança válida em `pontos_atuais`, para cima ou para baixo, gera evento
+após o baseline pessoal; o primeiro snapshot, valores ausentes/ inválidos e
+coletas parciais não geram evento. A implementação e o contrato compartilhado estão em
 [`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md)
 e na migration `023`.
 

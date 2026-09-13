@@ -25,7 +25,18 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
+| [`prd/PRD-LIVELO.md`](prd/PRD-LIVELO.md) | Base histórica do coletor Livelo e do catálogo V1; o contrato atual de alertas pessoais está no PRD da Central. |
+| [`prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md) | Catálogo Livelo, indicador administrativo legado e jornada mobile; não substitui o contrato pessoal da Central. |
+| [`prd/PRD-INTER-CASHBACK.md`](prd/PRD-INTER-CASHBACK.md) | Contrato de Sites parceiros do Inter, cashback e acompanhamento pessoal. |
+| [`prd/PRD-INTER-PRODUTOS.md`](prd/PRD-INTER-PRODUTOS.md) | Contrato de Produtos Inter, preço/cashback e acompanhamento pessoal por produto. |
+| [`prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md) | Contrato das categorias externas de Produtos Inter. |
+| [`prd/PRD-ADMINISTRACAO.md`](prd/PRD-ADMINISTRACAO.md) | Contrato de autorização e operações administrativas, incluindo seleções globais legadas. |
 | [`prd/PRD-PICHAU.md`](prd/PRD-PICHAU.md) | Contrato da jornada Pichau PC Gamer, coletor/API versionados e pendências de operação externa. |
+
+O comportamento comum de eventos, histórico, outbox e push está no PRD da
+Central. “Acompanhada” no aplicativo significa relação pessoal em
+`acompanhamento_usuario`; seleções globais/admin e o indicador legado de
+catálogo não são, sozinhos, garantia de alerta pessoal.
 
 ## Documentos na raiz
 

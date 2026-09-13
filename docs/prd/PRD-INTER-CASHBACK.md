@@ -1,7 +1,12 @@
 # PRD — Inter Cashback (Sites parceiros)
 
 **Versão:** V3.0–V3.3
-**Status vigente em 2026-09-04:** implementado no robô, Postgres, API autenticada e Flutter. A migration `006` foi registrada como aplicada no Neon; a primeira sincronização real cadastrou 381 lojas.
+**Status vigente em 2026-09-13:** coleta, Postgres, API autenticada, Flutter e
+acompanhamento pessoal estão implementados. A Central compara o cashback de
+Sites parceiros conforme a seção 16.2 e o PRD compartilhado de alertas. A
+migration `006` foi registrada como aplicada no Neon; a primeira sincronização
+real cadastrou 381 lojas. A entrega FCM de um evento real ainda depende de
+validação operacional.
 **Levantamento da fonte:** 14 de agosto de 2026
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
