@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.67.6 (2026-09-13)
+
+### Bug Fixes
+
+- Alinhar acompanhamento pessoal e documentacao de alertas
+  ([`8cb59be`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/8cb59beecf5a4b365bd7c4fa37a3d4b4afb123a3))
+
+### Documentation
+
+- Registrar validacao dos alertas Pichau
+  ([`55a8e0c`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/55a8e0c484fb8ffdb07f9c22005d0bbf3b0564df))
+
+
 ## v1.67.5 (2026-09-13)
 
 ### Bug Fixes
