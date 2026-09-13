@@ -2,6 +2,48 @@
 
 <!-- version list -->
 
+## v1.67.4 (2026-09-11)
+
+### Bug Fixes
+
+- Alinhar testes dos sinos
+  ([`a37e6a6`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/a37e6a6b650d37df2cb46b2a051872f44bd22f24))
+
+### Chores
+
+- Diagnosticar formatacao Dart
+  ([`c2f45ee`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c2f45ee012986bd4c030877614482fafeec5a58c))
+
+### Code Style
+
+- Alinhar formatacao do teste Pichau
+  ([`04fce4e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/04fce4e3cc0c09123e8927f82026c6a3fbb169dc))
+
+- Formatar testes do Flutter
+  ([`34e06e9`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/34e06e97349c106da09445abe0f66126d3e8f661))
+
+
+## v1.67.3 (2026-09-11)
+
+### Bug Fixes
+
+- Corrigir sinos e acompanhamento dos cards
+  ([`ee6bfcc`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/ee6bfccf8e5c50ba958b72234f1a35917c9fb4c5))
+
+
+## v1.67.2 (2026-09-11)
+
+### Bug Fixes
+
+- Corrigir qualidade da rodada nos alertas Inter
+  ([`dc6e555`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/dc6e5553eb393cb844cf2aaf4af3b64fbb3d8e4b))
+
+### Documentation
+
+- Registrar aceite inicial da outbox
+  ([`b30548d`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/b30548d105028d79044637e64257e76feb95af79))
+
+
 ## v1.67.1 (2026-09-11)
 
 ### Bug Fixes

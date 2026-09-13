@@ -746,6 +746,9 @@ Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, R
 - **Acompanhadas** passa a ser um filtro do catálogo completo. A ação de
   acompanhar/remover continua autenticada e conserva a seleção local atual;
   ela não inicia uma coleta.
+- Os cards exibem um sino no canto superior direito quando a ação está
+  disponível. O sino e o botão textual compartilham callback, estado pendente,
+  confirmação e rollback; o sino não cria uma preferência paralela.
 - A listagem padrão pode ser ordenada por maior `fullCashbackValue`, mantendo
   texto, condições e estados de valor ausente conforme as regras existentes.
 - O indicador **Melhor oferta** continua existindo, mas significa somente o
@@ -783,6 +786,11 @@ ausentes não geram evento. O contrato comum está em
 O catálogo autenticado lê acompanhamentos pessoais por padrão. A ação do app
 usa `PATCH /api/inter/cashback/{id}/acompanhamento`; `inter/lojas` continua
 sendo a seleção administrativa global.
+
+O contador e o filtro **Acompanhadas** usam `acompanhamento_usuario` quando a
+leitura é pessoal. A seleção `favorita_inter` permanece disponível somente no
+escopo administrativo/global, evitando que a tela do usuário mostre uma lista
+vazia apesar de haver acompanhamento pessoal.
 
 ### 16.1. Condições completas no aplicativo mobile
 

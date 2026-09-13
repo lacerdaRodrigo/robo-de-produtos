@@ -9,7 +9,8 @@ vi.mock("@neondatabase/serverless", () => ({
   neon: vi.fn(() => async (partes: TemplateStringsArray, ...valores: unknown[]) => {
     bancoFalso.consultas.push(
       partes.reduce(
-        (consulta, parte, indice) => consulta + String(valores[indice - 1] ?? "") + parte,
+        (consulta, parte, indice) =>
+          consulta + String(valores[indice - 1] ?? "") + parte,
       ),
     );
     return bancoFalso.respostas.shift() ?? [];
@@ -114,11 +115,39 @@ describe("persistência do acompanhamento Pichau", () => {
   it("altera o estado por ID externo de forma idempotente", async () => {
     bancoFalso.respostas.push([{ id_externo: "PG-1", acompanhada: true }]);
 
-    await expect(alterarAcompanhamentoPichau("PG-1", true)).resolves.toEqual({
-      id_externo: "PG-1",
-      acompanhada: true,
-    });
+    await expect(alterarAcompanhamentoPichau("PG-1", true)).resolves.toBe(true);
     expect(bancoFalso.consultas[0]).toContain("UPDATE pichau_produto");
     expect(bancoFalso.consultas[0]).toContain("SET acompanhada = true");
+  });
+
+  it("filtra acompanhadas e disponibilidade antes de paginar", async () => {
+    bancoFalso.respostas.push([{ total: 1 }], []);
+
+    await buscarCatalogoPichau({
+      q: "ryzen",
+      aba: "acompanhadas",
+      disponibilidade: "esgotados",
+      ordenar: "preco",
+      pagina: 1,
+      porPagina: 20,
+    });
+
+    expect(bancoFalso.consultas[0]).toContain("p.acompanhada = TRUE");
+    expect(bancoFalso.consultas[0]).toContain("p.disponibilidade = 'esgotado'");
+    expect(bancoFalso.consultas[0]).toContain("p.nome_busca LIKE");
+    expect(bancoFalso.consultas[1]).toContain("ORDER BY");
+    expect(bancoFalso.consultas[1]).toContain("m.preco_pix");
+    expect(bancoFalso.consultas[1]).toContain("LIMIT 20");
+  });
+
+  it("persiste a seleção administrativa com operação idempotente", async () => {
+    bancoFalso.respostas.push([{ id_externo: "PG-7800" }]);
+
+    await expect(alterarAcompanhamentoPichau("PG-7800", true)).resolves.toBe(
+      true,
+    );
+    expect(bancoFalso.consultas[0]).toContain("UPDATE pichau_produto");
+    expect(bancoFalso.consultas[0]).toContain("SET acompanhada = true");
+    expect(bancoFalso.consultas[0]).toContain("WHERE id_externo = PG-7800");
   });
 });

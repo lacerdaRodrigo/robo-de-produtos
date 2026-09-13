@@ -9,7 +9,7 @@ passou no mesmo commit também deixando o Chrome aberto: o processo residual é
 um risco real agora eliminado, mas não ficou comprovado como causa isolada.
 Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-10
+**Última atualização:** 2026-09-11
 
 ## Objetivo
 
@@ -151,8 +151,11 @@ migration `026_alertas_pichau_pessoal.sql` libera a origem Pichau na Central e
 gera alertas de preço Pix após uma execução completa. A migration operacional
 `027_backfill_alertas_sem_push.sql` importa os 16 produtos administrativos
 atuais para a conta ativa sem enviar push atrasado. As migrations ainda precisam
-ser validadas/aplicadas externamente antes de distribuir a APK com o contrato
-novo.
+validados no banco em 2026-09-13; a publicação do código atualizado e o evento
+FCM real ainda dependem da pipeline e da próxima coleta completa. O coletor
+preserva a coluna administrativa no `UPSERT`, para que uma nova coleta não
+apague a seleção manual. A aba **Acompanhadas** consulta o recorte pessoal com
+filtro server-side, inclusive para produtos que saíram do catálogo atual.
 
 ### Resumo de Serviços
 

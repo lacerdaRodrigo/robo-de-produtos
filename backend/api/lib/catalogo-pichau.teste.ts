@@ -18,12 +18,12 @@ describe("contrato puro do catalogo Pichau", () => {
     expect(idPichauValido("a".repeat(201))).toBe(false);
   });
 
-  it("aceita somente o booleano de acompanhamento", () => {
+  it("aceita somente o booleano do acompanhamento", () => {
     expect(validarAcompanhamentoPichau({ acompanhada: true })).toEqual({
       ok: true,
       acompanhada: true,
     });
-    expect(validarAcompanhamentoPichau({ acompanhada: true, nome: "hostil" }).ok).toBe(false);
     expect(validarAcompanhamentoPichau({ acompanhada: "true" }).ok).toBe(false);
+    expect(validarAcompanhamentoPichau({ acompanhada: false, extra: "x" }).ok).toBe(false);
   });
 });

@@ -39,10 +39,39 @@ class CartaoProduto extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(produto.nome, style: tema.textTheme.titleMedium),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(produto.lojaNome),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(produto.nome, style: tema.textTheme.titleMedium),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(produto.lojaNome),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (aoAcompanhar != null)
+                    IconButton(
+                      key: ValueKey(
+                        'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+                      ),
+                      tooltip: produto.acompanhado
+                          ? 'Deixar de acompanhar ${produto.nome}'
+                          : 'Acompanhar ${produto.nome}',
+                      onPressed: aoAcompanhar,
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        produto.acompanhado
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_none_outlined,
+                      ),
+                    ),
+                ],
               ),
               if (produto.marca != null || produto.categoria != null)
                 Padding(
@@ -223,6 +252,28 @@ class CartaoProduto extends StatelessWidget {
                           fontSize: 8,
                         ),
                       ),
+                      if (aoAcompanhar != null)
+                        IconButton(
+                          key: ValueKey(
+                            'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+                          ),
+                          tooltip: produto.acompanhado
+                              ? 'Deixar de acompanhar ${produto.nome}'
+                              : 'Acompanhar ${produto.nome}',
+                          onPressed: aoAcompanhar,
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 36,
+                            height: 36,
+                          ),
+                          icon: Icon(
+                            produto.acompanhado
+                                ? Icons.notifications_active_outlined
+                                : Icons.notifications_none_outlined,
+                            size: 18,
+                          ),
+                        ),
                     ],
                   ),
                 ),

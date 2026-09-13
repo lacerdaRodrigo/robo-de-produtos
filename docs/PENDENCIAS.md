@@ -23,15 +23,12 @@ anterior ainda reinicia o gate operacional.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
-- [ ] Validar e publicar externamente a evolução do contrato Pichau de
-  acompanhamento antes de distribuir a APK desta branch: a camada Flutter,
-  as rotas `/api/pichau/catalogo/{id_externo}/acompanhamento` e
-  `/acompanhamento-pessoal`, a contagem pessoal no resumo e as migrations
-  `025`, `026` e `027` estão versionadas, mas ainda não foram
-  aplicadas/verificadas no ambiente real.
-- [ ] Depois da aplicação de `026`/`027`, confirmar no banco as 10 lojas Livelo,
-  os 16 produtos Pichau, os eventos Inter recuperados sem outbox e um evento
-  novo com push real; não declarar a entrega FCM a partir de teste sintético.
+- [x] Aplicar e verificar as migrations `025`, `026` e `027`: a leitura do banco
+  confirmou 10 acompanhamentos Livelo, 16 Pichau, 37 Produtos Inter, dois
+  eventos Inter recuperados com push suprimido e nenhuma outbox pendente.
+- [ ] Publicar o código atualizado da API/robôs e confirmar uma nova coleta
+  completa com evento real e entrega FCM; o backfill histórico não envia push
+  atrasado e não substitui essa validação.
 
 ## Pichau — evolução ainda aberta
 

@@ -14,7 +14,9 @@ export function idPichauValido(id: string): boolean {
 export function validarAcompanhamentoPichau(
   corpo: unknown,
 ): { ok: true; acompanhada: boolean } | { ok: false } {
-  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) return { ok: false };
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+    return { ok: false };
+  }
   const objeto = corpo as Record<string, unknown>;
   if (Object.keys(objeto).length !== 1 || typeof objeto.acompanhada !== "boolean") {
     return { ok: false };

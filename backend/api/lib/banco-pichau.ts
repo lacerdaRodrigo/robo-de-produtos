@@ -43,6 +43,7 @@ export type ProdutoPichauPersistido = {
   categoria_externa: string;
   url_produto: string;
   presente_no_catalogo: boolean;
+  acompanhada: boolean;
   disponibilidade: string;
   preco_original_texto: string | null;
   preco_pix_texto: string | null;
@@ -52,7 +53,6 @@ export type ProdutoPichauPersistido = {
   sem_juros: boolean | null;
   etiquetas: string[];
   atualizado_em: string | null;
-  acompanhada: boolean;
 };
 
 export type AcompanhamentoPichauPersistido = {
@@ -240,15 +240,15 @@ export async function buscarCatalogoPichau(
 export async function alterarAcompanhamentoPichau(
   idExterno: string,
   acompanhada: boolean,
-): Promise<AcompanhamentoPichauPersistido | null> {
+): Promise<boolean> {
   const sql = conectar();
   const linhas = (await sql`
-    UPDATE pichau_produto
-       SET acompanhada = ${acompanhada}
+     UPDATE pichau_produto
+       SET acompanhada = ${acompanhada}, atualizado_em = now()
      WHERE id_externo = ${idExterno}
-     RETURNING id_externo, acompanhada
-  `) as AcompanhamentoPichauPersistido[];
-  return linhas[0] ?? null;
+     RETURNING id_externo
+  `) as Array<{ id_externo: string }>;
+  return linhas.length > 0;
 }
 
 export async function historicoPichau(

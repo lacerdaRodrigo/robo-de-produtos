@@ -59,13 +59,23 @@ export type ResumoCashbackInterPersistido = {
 };
 
 /** Última tentativa, último retrato válido e seleção atual em uma leitura. */
-export async function resumoCashbackInterPersistido(): Promise<ResumoCashbackInterPersistido> {
+export async function resumoCashbackInterPersistido(
+  usuarioId?: string,
+): Promise<ResumoCashbackInterPersistido> {
   const sql = conectar();
   const linhas = (await sql`
     SELECT tentativa.iniciada_em AS ultima_tentativa_em,
            tentativa.estado AS ultima_tentativa_estado,
            sucesso.concluida_em AS ultimo_sucesso_em,
-           (SELECT count(*)::int FROM favorita_inter) AS lojas_acompanhadas,
+           CASE WHEN ${usuarioId !== undefined}
+             THEN (
+               SELECT count(*)::int
+                 FROM acompanhamento_usuario
+                WHERE usuario_app_id = ${usuarioId ?? null}
+                  AND origem = 'inter_cashback'
+             )
+             ELSE (SELECT count(*)::int FROM favorita_inter)
+           END AS lojas_acompanhadas,
            COALESCE(sucesso.favoritas_encontradas, 0)::int
              AS lojas_encontradas_ultima_coleta
       FROM (SELECT 1) base

@@ -9,27 +9,29 @@ import {
 } from "@/lib/banco-pichau";
 
 export async function GET(requisicao: Request) {
-  const acesso = await autenticarRequisicao(requisicao, { operacao: "pichau.catalogo.ler" });
+    const acesso = await autenticarRequisicao(requisicao, { operacao: "pichau.catalogo.ler" });
   if (!acesso.ok) return acesso.resposta;
   try {
     const url = new URL(requisicao.url);
     const q = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
-    const pagina = paginaValida(url.searchParams.get("pagina"));
-    const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
     const abaBruta = url.searchParams.get("aba");
     const disponibilidadeBruta = url.searchParams.get("disponibilidade");
+    const disponibilidade: OpcoesCatalogoPichau["disponibilidade"] =
+      disponibilidadeBruta === "disponiveis" || disponibilidadeBruta === "esgotados"
+        ? disponibilidadeBruta
+        : "todas";
     const ordenarBruto = url.searchParams.get("ordenar");
+    const ordenar: OpcoesCatalogoPichau["ordenar"] =
+      ordenarBruto === "preco" || ordenarBruto === "desconto"
+        ? ordenarBruto
+        : "nome";
+    const pagina = paginaValida(url.searchParams.get("pagina"));
+    const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
     const opcoes: OpcoesCatalogoPichau = {
       q,
       aba: abaBruta === "acompanhadas" ? "acompanhadas" : "todas",
-      disponibilidade:
-        disponibilidadeBruta === "disponiveis" || disponibilidadeBruta === "esgotados"
-          ? disponibilidadeBruta
-          : "todas",
-      ordenar:
-        ordenarBruto === "preco" || ordenarBruto === "desconto"
-          ? ordenarBruto
-          : "nome",
+      disponibilidade,
+      ordenar,
       pagina,
       porPagina,
     };

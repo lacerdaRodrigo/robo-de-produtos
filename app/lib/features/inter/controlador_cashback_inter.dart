@@ -234,9 +234,12 @@ class ControladorCashbackInter extends ChangeNotifier {
     _porPagina = resposta.porPagina;
     _totalPaginas = resposta.totalPaginas;
     _temProxima = resposta.temProxima;
-    _atualizadoEm = resposta.atualizadoEm;
-    _ultimaTentativaEm = resposta.ultimaTentativaEm;
-    _ultimaTentativaEstado = resposta.ultimaTentativaEstado;
+    // Páginas adicionais podem retornar somente itens e paginação. Preserve o
+    // retrato já carregado para a tela não trocar cards por estado vazio.
+    _atualizadoEm = resposta.atualizadoEm ?? _atualizadoEm;
+    _ultimaTentativaEm = resposta.ultimaTentativaEm ?? _ultimaTentativaEm;
+    _ultimaTentativaEstado =
+        resposta.ultimaTentativaEstado ?? _ultimaTentativaEstado;
     _erroMais = null;
   }
 

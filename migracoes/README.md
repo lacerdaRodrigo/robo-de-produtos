@@ -40,10 +40,11 @@ cria o `001` e carrega o catálogo.
 
 - Robôs: `001`–`009`, `013`–`022`, `024` e `026` (coleta Livelo/Inter/produtos, histórico, categorias, Pichau e alertas).
 - API do app: `010`–`020`, `023`, `025` e `026` (autenticação, disparos, catálogos, acompanhamentos e Central de Alertas).
+- Operação: `027` (ponte inicial das seleções legadas e recuperação sem push).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Conforme confirmação operacional do
-> responsável, as migrations `001`–`024` foram aplicadas manualmente no banco
+> responsável, as migrations `001`–`027` foram aplicadas manualmente no banco
 > alvo. Este checkout não executa nem verifica migrations automaticamente.
 
 `023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
@@ -59,10 +60,11 @@ de `pichau_dispatcher` (`SELECT/INSERT`) e `pichau_publisher`
 em `production`; a verificação somente de leitura confirmou os mesmos
 resultados nas 47 linhas existentes.
 
-`025` depende de `021`, preserva todos os produtos existentes com
-`acompanhada = FALSE` e ainda aguarda validação/aplicação externa em branch
-isolada antes de produção.
-
-`026` depende de `023` e `025`; `027` depende de `026` e é uma operação única,
-protegida contra bases com mais de um usuário ativo. Nenhuma das duas é
-executada automaticamente pelo checkout.
+`025` depende de `021` e adiciona a seleção administrativa legada
+`pichau_produto.acompanhada`. `026` depende de `023` e `025`, libera a origem
+Pichau na Central, controla o push e gera alertas somente após coleta completa.
+`027` depende de `026`, exige uma única conta ativa e foi executada uma vez para
+criar os acompanhamentos Livelo/Pichau e recuperar o recorte Inter sem outbox.
+Em 2026-09-13, a verificação somente de leitura confirmou 10 acompanhamentos
+Livelo, 16 Pichau, 37 Produtos Inter, dois eventos Inter recuperados com
+`notificar_push = false` e nenhuma outbox pendente.

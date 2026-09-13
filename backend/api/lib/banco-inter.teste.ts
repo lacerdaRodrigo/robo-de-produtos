@@ -16,7 +16,10 @@ vi.mock("@neondatabase/serverless", () => ({
   }),
 }));
 
-import { buscarCashbacksInter } from "@/lib/banco-inter";
+import {
+  buscarCashbacksInter,
+  resumoCashbackInterPersistido,
+} from "@/lib/banco-inter";
 
 describe("catálogo paginado de cashback Inter", () => {
   beforeEach(() => {
@@ -110,5 +113,43 @@ describe("catálogo paginado de cashback Inter", () => {
     expect(consulta).toContain("cashback_principal_valor) END DESC");
     expect(consulta).toContain("LIMIT 2");
     expect(consulta).not.toMatch(/::(double precision|real)/i);
+  });
+
+  it("conta acompanhamentos do Inter por usuario no resumo", async () => {
+    bancoFalso.respostas.push([
+      {
+        ultima_tentativa_em: null,
+        ultima_tentativa_estado: null,
+        ultimo_sucesso_em: null,
+        lojas_acompanhadas: 2,
+        lojas_encontradas_ultima_coleta: 3,
+      },
+    ]);
+
+    await resumoCashbackInterPersistido("usuario-42");
+
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[0]).toContain("inter_cashback");
+    expect(bancoFalso.consultas[0]).toContain("usuario-42");
+  });
+
+  it("filtra acompanhadas pela tabela pessoal quando há usuario autenticado", async () => {
+    bancoFalso.respostas.push([{ total: 1 }], []);
+
+    await buscarCashbacksInter(
+      "execucao-42",
+      {
+        q: "",
+        ordenar: "nome",
+        apenasAcompanhadas: true,
+        pagina: 1,
+        porPagina: 10,
+      },
+      "usuario-42",
+    );
+
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[0]).toContain("usuario-42");
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento.id IS NOT NULL");
   });
 });

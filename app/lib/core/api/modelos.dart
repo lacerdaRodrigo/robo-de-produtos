@@ -725,6 +725,7 @@ class ResumoPichau {
     required this.qualidade,
     required this.produtosAtivos,
     required this.produtosEsgotados,
+    required this.acompanhadas,
   });
 
   factory ResumoPichau.parse(Map<String, dynamic> objeto) => ResumoPichau(
@@ -735,6 +736,7 @@ class ResumoPichau {
     qualidade: _textoOpcional(objeto['qualidade']),
     produtosAtivos: _inteiroNaoNegativo(objeto['produtos_ativos']),
     produtosEsgotados: _inteiroNaoNegativo(objeto['produtos_esgotados']),
+    acompanhadas: _inteiroNaoNegativo(objeto['acompanhadas']),
   );
 
   final EstadoResumo estado;
@@ -744,6 +746,7 @@ class ResumoPichau {
   final String? qualidade;
   final int produtosAtivos;
   final int produtosEsgotados;
+  final int acompanhadas;
 }
 
 class ResumoInicio {
