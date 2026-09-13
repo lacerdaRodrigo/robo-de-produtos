@@ -3,15 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_robo/features/pichau/controlador_catalogo_pichau.dart';
 import 'package:app_robo/features/pichau/modelos_pichau.dart';
 
-Map<String, dynamic> _produto({bool acompanhada = false}) => {
-  'id_externo': 'PG-1',
-  'nome': 'PC Gamer PG-1',
-  'url_produto': 'https://www.pichau.com.br/produto/pg-1',
-  'presente_no_catalogo': true,
-  'disponibilidade': 'disponivel',
-  'preco_pix_texto': 'R\$ 4.000,00',
-  'acompanhada': acompanhada,
-};
+Map<String, dynamic> _produto({bool acompanhada = false, String id = 'PG-1'}) =>
+    {
+      'id_externo': id,
+      'nome': 'PC Gamer $id',
+      'url_produto': 'https://www.pichau.com.br/produto/pg-1',
+      'presente_no_catalogo': true,
+      'disponibilidade': 'disponivel',
+      'preco_pix_texto': 'R\$ 4.000,00',
+      'acompanhada': acompanhada,
+    };
 
 PaginaCatalogoPichau _pagina({bool acompanhada = false}) =>
     PaginaCatalogoPichau.parse({
@@ -127,6 +128,49 @@ void main() {
     expect(controlador.itens, isEmpty);
     expect(controlador.totalItens, 0);
     expect(controlador.resumo?.acompanhadas, 0);
+  });
+
+  test('acompanha mais de 16 produtos sem teto local', () async {
+    final produtos = [
+      for (var indice = 1; indice <= 17; indice++) _produto(id: 'PG-$indice'),
+    ];
+    final retrato = PaginaCatalogoPichau.parse({
+      'itens': produtos,
+      'pagina': 1,
+      'por_pagina': 20,
+      'total_itens': 17,
+      'total_paginas': 1,
+      'tem_proxima': false,
+      'resumo': {'total_catalogo': 17, 'acompanhadas': 0},
+    });
+    var salvos = 0;
+    final controlador = ControladorCatalogoPichau(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required disponibilidade,
+            required ordenar,
+            required pagina,
+          }) async => retrato,
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {
+            if (acompanhada) salvos++;
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await controlador.carregarInicial();
+    for (final produto in List<PichauProduto>.from(controlador.itens)) {
+      expect(await controlador.alternarAcompanhamento(produto), isTrue);
+    }
+
+    expect(salvos, 17);
+    expect(
+      controlador.itens,
+      everyElement(predicate<PichauProduto>((item) => item.acompanhada)),
+    );
+    expect(controlador.resumo?.acompanhadas, 17);
   });
 
   test('preserva o último retrato quando uma nova tentativa falha', () async {

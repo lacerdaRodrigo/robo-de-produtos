@@ -46,6 +46,10 @@ const _lojasDiretasInter =
     '"pagina":1,"por_pagina":20,"total_itens":1,"total_paginas":1,'
     '"tem_proxima":false,"atualizado_em":null}';
 
+const _produtosInter =
+    '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,'
+    '"total_paginas":1,"tem_proxima":false}';
+
 const _resumo =
     '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"sem_dados",'
     '"livelo":{"estado":"sem_dados","ultimo_sucesso_em":null,'
@@ -75,6 +79,7 @@ Api _api({
   String cashback = _paginaVazia,
   String sitesParceiros = _paginaVazia,
   String lojasDiretas = _paginaVazia,
+  String produtos = _produtosInter,
   List<http.Request>? requisicoes,
 }) => Api(
   paginaPadrao: 20,
@@ -103,6 +108,10 @@ Api _api({
       if (requisicao.url.path == '/api/inter/produtos/lojas' &&
           requisicao.method == 'PATCH') {
         return http.Response('{}', 200);
+      }
+      if (requisicao.url.path == '/api/inter/produtos' &&
+          requisicao.method == 'GET') {
+        return http.Response(produtos, 200);
       }
       if (requisicao.url.path == '/api/livelo/preferencias') {
         return http.Response(
@@ -187,19 +196,32 @@ Future<void> _abrirGaveta(WidgetTester at) async {
   await at.pumpAndSettle();
 }
 
+Future<void> _esperarFinder(WidgetTester at, Finder finder) async {
+  for (var tentativa = 0; tentativa < 20; tentativa++) {
+    if (finder.evaluate().isNotEmpty) return;
+    await at.pump(const Duration(milliseconds: 100));
+  }
+  expect(finder, findsOneWidget);
+}
+
 Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
   final principal = destino.destinoDaBarra;
   await at.tap(find.byKey(Key('barra-${principal.name}')));
   await at.pumpAndSettle();
-  final rolagemProgramas = find
-      .descendant(
-        of: find.byKey(const Key('pagina-programas')),
-        matching: find.byType(Scrollable),
-      )
-      .first;
+  final paginaProgramas = find.byKey(const Key('pagina-programas'));
   if (destino == DestinoCompacto.livelo) {
     final programa = find.byKey(const Key('programa-livelo'));
-    await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
+    await at.drag(paginaProgramas, const Offset(0, 800));
+    await at.pumpAndSettle();
+    for (
+      var tentativa = 0;
+      tentativa < 8 && programa.evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(paginaProgramas, const Offset(0, -240));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, programa);
     await at.ensureVisible(programa);
     await at.pumpAndSettle();
     await at.tap(
@@ -208,7 +230,15 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
     await at.pumpAndSettle();
   } else if (destino == DestinoCompacto.inter) {
     final programa = find.byKey(const Key('programa-inter'));
-    await at.scrollUntilVisible(programa, 180, scrollable: rolagemProgramas);
+    for (
+      var tentativa = 0;
+      tentativa < 8 && programa.evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(paginaProgramas, const Offset(0, -240));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, programa);
     await at.ensureVisible(programa);
     await at.pumpAndSettle();
     await at.tap(
@@ -216,6 +246,20 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
     );
     await at.pumpAndSettle();
   }
+}
+
+Future<void> _irParaProdutosCompacto(WidgetTester at) async {
+  await _irParaCompacto(at, DestinoCompacto.inter);
+  await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
+  await at.pumpAndSettle();
+  final abaProdutos = find.descendant(
+    of: find.byKey(const Key('abas-compre-direto-inter')),
+    matching: find.byKey(const Key('aba-radar-2')),
+  );
+  await at.ensureVisible(abaProdutos);
+  await at.pumpAndSettle();
+  await at.tap(abaProdutos);
+  await at.pumpAndSettle();
 }
 
 Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
@@ -243,7 +287,7 @@ void main() {
     expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
     expect(find.text('Acesso padrão'), findsWidgets);
     expect(find.text('Livelo, Banco Inter e integrações'), findsOneWidget);
-    expect(find.text('Resultados das lojas escolhidas'), findsOneWidget);
+    expect(find.text('Resultados das lojas escolhidas'), findsNothing);
     expect(
       at.getSize(find.byKey(const Key('gaveta-principal'))).width,
       closeTo(343.2, 0.1),
@@ -256,7 +300,7 @@ void main() {
     expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
     await _abrirGaveta(at);
-    expect(find.byKey(const Key('destino-produtos')), findsOneWidget);
+    expect(find.byKey(const Key('destino-produtos')), findsNothing);
   });
 
   testWidgets('somente Android compacto usa o catálogo Livelo novo', (
@@ -382,6 +426,40 @@ void main() {
     expect(find.byKey(const Key('voltar-para-lojas')), findsOneWidget);
     expect(find.text('Shopping Inter'), findsWidgets);
   }, tags: 'web');
+
+  testWidgets('atalho compacto de produtos abre Produtos do Banco Inter', (
+    at,
+  ) async {
+    await _abrir(at);
+    final atalho = find.byKey(const Key('atalho-produtos'));
+    await at.scrollUntilVisible(
+      atalho,
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await at.ensureVisible(atalho);
+    await at.pumpAndSettle();
+    await at.tap(atalho);
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('produtos-inter-compacto')), findsOneWidget);
+    final abas = find.byKey(const Key('abas-compre-direto-inter'));
+    expect(abas, findsOneWidget);
+    expect(
+      find.descendant(of: abas, matching: find.text('Todas')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: abas, matching: find.text('Selecionadas')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: abas, matching: find.text('Produtos')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('barra-programas')), findsOneWidget);
+    expect(find.byKey(const Key('destino-produtos')), findsNothing);
+  });
 
   testWidgets('Lojas permanece íntegra na experiência ampla', (at) async {
     await _abrir(at, tamanho: const Size(1440, 900));
@@ -582,9 +660,31 @@ void main() {
     await at.pumpAndSettle();
     expect(find.text('Selecionada'), findsOneWidget);
     expect(find.text('Selecionada para coleta'), findsOneWidget);
-    await at.ensureVisible(find.text('Selecionadas'));
+    final abas = find.byKey(const Key('abas-compre-direto-inter'));
+    await at.scrollUntilVisible(
+      find.text('Selecionadas'),
+      180,
+      scrollable: rolagemCompreDireto,
+    );
     await at.pumpAndSettle();
-    await at.tap(find.text('Selecionadas'));
+    await at.tap(
+      find.descendant(of: abas, matching: find.text('Selecionadas')),
+    );
+    await at.pumpAndSettle();
+    final paginaCompreDireto = find.byKey(
+      const PageStorageKey('compre-direto-inter'),
+    );
+    final ultimoCatalogo = find.text('Último catálogo');
+    for (
+      var tentativa = 0;
+      tentativa < 8 && ultimoCatalogo.evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(paginaCompreDireto, const Offset(0, -300));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, ultimoCatalogo);
+    await at.ensureVisible(ultimoCatalogo);
     await at.pumpAndSettle();
     expect(find.text('Último catálogo'), findsOneWidget);
     expect(find.text('18 produtos'), findsOneWidget);
@@ -745,18 +845,16 @@ void main() {
     expect(find.text('Magazine Luiza'), findsOneWidget);
   });
 
-  testWidgets('Produtos é destino direto e preserva a busca entre áreas', (
-    at,
-  ) async {
+  testWidgets('Produtos preserva a busca entre áreas e subáreas', (at) async {
     await _abrir(at);
-    await _irParaCompacto(at, DestinoCompacto.produtos);
+    await _irParaProdutosCompacto(at);
 
     final busca = find.byKey(const Key('busca-produtos'));
     expect(busca, findsOneWidget);
     await at.enterText(busca, 'x');
 
     await _irParaCompacto(at, DestinoCompacto.livelo);
-    await _irParaCompacto(at, DestinoCompacto.produtos);
+    await _irParaProdutosCompacto(at);
 
     expect(at.widget<TextField>(busca).controller?.text, 'x');
   });
@@ -765,7 +863,7 @@ void main() {
     at,
   ) async {
     await _abrir(at, administrador: true);
-    await _irParaCompacto(at, DestinoCompacto.produtos);
+    await _irParaProdutosCompacto(at);
 
     expect(find.text('Escolher lojas'), findsNothing);
     expect(find.text('+ escolher lojas'), findsNothing);
@@ -834,6 +932,7 @@ void main() {
       await _irParaCompacto(at, destino);
       expect(at.takeException(), isNull, reason: destino.titulo);
     }
-    expect(find.byKey(const Key('produtos-compacto')), findsOneWidget);
+    await _irParaProdutosCompacto(at);
+    expect(find.byKey(const Key('abas-compre-direto-inter')), findsOneWidget);
   });
 }

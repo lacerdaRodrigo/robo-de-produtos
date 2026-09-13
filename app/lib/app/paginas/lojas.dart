@@ -101,11 +101,14 @@ class PaginaHubShoppingInter extends StatefulWidget {
   final bool abrirEmCompreDireto;
 
   @override
-  State<PaginaHubShoppingInter> createState() => _EstadoHubShoppingInter();
+  EstadoPaginaHubShoppingInter createState() => EstadoPaginaHubShoppingInter();
 }
 
-class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
+class EstadoPaginaHubShoppingInter extends State<PaginaHubShoppingInter> {
   final _navegador = GlobalKey<NavigatorState>();
+  final _conteudo = GlobalKey<_EstadoHubShoppingInterConteudo>();
+
+  void abrirProdutos() => _conteudo.currentState?.abrirProdutos();
 
   void _abrir(_ModalidadeInter modalidade) {
     final navegador = _navegador.currentState;
@@ -149,6 +152,7 @@ class _EstadoHubShoppingInter extends State<PaginaHubShoppingInter> {
           builder: (_) => _HubShoppingInter(
             api: widget.api,
             administrador: widget.administrador,
+            key: _conteudo,
             aoAbrir: _abrir,
             experienciaCompacta: widget.experienciaCompacta,
             abaInicial: widget.abrirEmCompreDireto ? 1 : 0,
@@ -163,6 +167,7 @@ enum _ModalidadeInter { sitesParceiros, compreDireto }
 
 class _HubShoppingInter extends StatefulWidget {
   const _HubShoppingInter({
+    super.key,
     required this.api,
     required this.administrador,
     required this.aoAbrir,
@@ -184,6 +189,8 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
   late Future<ResumoInicio> _resumo;
   var _ordenacaoDiretas = 'nome';
   var _filtroDiretas = 'todas';
+  var _abaCompreDireto = 0;
+  int? _totalTodasDiretas;
   late final ControladorCashbackInter _cashback = ControladorCashbackInter(
     buscar: ({required q, required ordenar, required pagina}) =>
         widget.api.painelCashbackInter(q: q, ordenar: ordenar, pagina: pagina),
@@ -244,6 +251,27 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
     _filtroDiretas = filtro;
   }
 
+  void abrirProdutos() {
+    if (_aba == 1 && _abaCompreDireto == 2) return;
+    setState(() {
+      _aba = 1;
+      _abaCompreDireto = 2;
+    });
+  }
+
+  void _selecionarAbaCompreDireto(int aba) {
+    setState(() {
+      _abaCompreDireto = aba;
+      if (aba == 0) _filtroDiretas = 'todas';
+      if (aba == 1) _filtroDiretas = 'acompanhadas';
+    });
+  }
+
+  void _mudarTotalTodasDiretas(int total) {
+    if (_totalTodasDiretas == total) return;
+    setState(() => _totalTodasDiretas = total);
+  }
+
   void _tentarNovamente() => unawaited(_atualizarResumo());
 
   void _variarAcompanhadas(int variacao) {
@@ -281,6 +309,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             controladorCashback: _cashback,
             controladorDiretas: _diretas,
             aba: _aba,
+            abaCompreDireto: _abaCompreDireto,
             resumo: estado.data,
             carregandoResumo: estado.connectionState != ConnectionState.done,
             erroResumo: estado.hasError,
@@ -292,6 +321,9 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
             filtroDiretas: _filtroDiretas,
             aoMudarConsultaDiretas: _mudarConsultaDiretas,
             aoSelecionarAba: (aba) => setState(() => _aba = aba),
+            aoSelecionarAbaCompreDireto: _selecionarAbaCompreDireto,
+            totalTodasDiretas: _totalTodasDiretas,
+            aoMudarTotalTodasDiretas: _mudarTotalTodasDiretas,
             aoVariarAcompanhadas: _variarAcompanhadas,
             aoVariarSelecionadas: _variarSelecionadas,
           );
@@ -400,6 +432,7 @@ class _BancoInterCompacto extends StatelessWidget {
     required this.controladorCashback,
     required this.controladorDiretas,
     required this.aba,
+    required this.abaCompreDireto,
     required this.resumo,
     required this.carregandoResumo,
     required this.erroResumo,
@@ -411,6 +444,9 @@ class _BancoInterCompacto extends StatelessWidget {
     required this.filtroDiretas,
     required this.aoMudarConsultaDiretas,
     required this.aoSelecionarAba,
+    required this.aoSelecionarAbaCompreDireto,
+    required this.totalTodasDiretas,
+    required this.aoMudarTotalTodasDiretas,
     required this.aoVariarAcompanhadas,
     required this.aoVariarSelecionadas,
   });
@@ -420,6 +456,7 @@ class _BancoInterCompacto extends StatelessWidget {
   final ControladorCashbackInter controladorCashback;
   final ControladorCatalogoAdministracao<LojaDireto> controladorDiretas;
   final int aba;
+  final int abaCompreDireto;
   final ResumoInicio? resumo;
   final bool carregandoResumo;
   final bool erroResumo;
@@ -432,6 +469,9 @@ class _BancoInterCompacto extends StatelessWidget {
   final void Function({required String ordenar, required String filtro})
   aoMudarConsultaDiretas;
   final ValueChanged<int> aoSelecionarAba;
+  final ValueChanged<int> aoSelecionarAbaCompreDireto;
+  final int? totalTodasDiretas;
+  final ValueChanged<int> aoMudarTotalTodasDiretas;
   final ValueChanged<int> aoVariarAcompanhadas;
   final ValueChanged<int> aoVariarSelecionadas;
 
@@ -440,18 +480,34 @@ class _BancoInterCompacto extends StatelessWidget {
     final cabecalho = _cabecalho();
     return SafeArea(
       child: aba == 1
-          ? PaginaCompreDiretoInter(
-              key: const Key('compre-direto-inter'),
-              api: api,
-              administrador: administrador,
-              controlador: controladorDiretas,
-              sliversAntes: cabecalho,
-              aoAtualizar: aoAtualizarResumo,
-              ordenacaoInicial: ordenacaoDiretas,
-              filtroInicial: filtroDiretas,
-              aoMudarConsulta: aoMudarConsultaDiretas,
-              totalSelecionadas: totalSelecionadas,
-              aoVariarSelecionadas: aoVariarSelecionadas,
+          ? IndexedStack(
+              index: abaCompreDireto == 2 ? 1 : 0,
+              children: [
+                PaginaCompreDiretoInter(
+                  key: const Key('compre-direto-inter'),
+                  api: api,
+                  administrador: administrador,
+                  controlador: controladorDiretas,
+                  sliversAntes: cabecalho,
+                  aoAtualizar: aoAtualizarResumo,
+                  ordenacaoInicial: ordenacaoDiretas,
+                  filtroInicial: filtroDiretas,
+                  filtroControlado: filtroDiretas,
+                  mostrarFiltrosInternos: false,
+                  aoMudarConsulta: aoMudarConsultaDiretas,
+                  aoMudarTotalTodas: aoMudarTotalTodasDiretas,
+                  totalSelecionadas: totalSelecionadas,
+                  aoVariarSelecionadas: aoVariarSelecionadas,
+                ),
+                PaginaProdutos(
+                  key: const Key('produtos-inter-compacto'),
+                  api: api,
+                  administrador: administrador,
+                  incorporada: true,
+                  experienciaCompacta: true,
+                  sliversAntes: cabecalho,
+                ),
+              ],
             )
           : PaginaCashbackInter(
               key: const Key('hub-shopping-inter'),
@@ -497,10 +553,44 @@ class _BancoInterCompacto extends StatelessWidget {
               aoSelecionar: aoSelecionarAba,
             ),
           ),
+          if (aba == 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+              child: _AbasCompreDireto(
+                selecionada: abaCompreDireto,
+                totalTodas: totalTodasDiretas,
+                totalSelecionadas: totalSelecionadas,
+                aoSelecionar: aoSelecionarAbaCompreDireto,
+              ),
+            ),
         ],
       ),
     ),
   ];
+}
+
+class _AbasCompreDireto extends StatelessWidget {
+  const _AbasCompreDireto({
+    required this.selecionada,
+    required this.totalTodas,
+    required this.totalSelecionadas,
+    required this.aoSelecionar,
+  });
+
+  final int selecionada;
+  final int? totalTodas;
+  final int? totalSelecionadas;
+  final ValueChanged<int> aoSelecionar;
+
+  @override
+  Widget build(BuildContext context) => AbasRadar(
+    key: const Key('abas-compre-direto-inter'),
+    rotulos: const ['Todas', 'Selecionadas', 'Produtos'],
+    contadores: <int?>[totalTodas, totalSelecionadas, null],
+    selecionada: selecionada,
+    aoSelecionar: aoSelecionar,
+    expandir: true,
+  );
 }
 
 class _AbasModoInter extends StatelessWidget {

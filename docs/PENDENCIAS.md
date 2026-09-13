@@ -19,15 +19,19 @@ anterior ainda reinicia o gate operacional.
 ## Ciclo mobile atual
 
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a execução manual `34554150530` passou com contagens `0/0/0`, sem evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
-- [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi gerada e distribuída pelo `app-robo` `34553635486`; filtros, paginação, leitura, preferências, dados reais e push aguardam instalação/aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos e overflow. Isso não vira smoke automatizado neste ciclo.
+- [ ] Fazer conferências manuais no Moto G6 Play e no Samsung quando uma entrega mobile exigir aceite físico. A APK debug foi gerada e distribuída pelo `app-robo` `34553635486`; filtros, paginação, leitura, preferências, dados reais e push aguardam instalação/aceite manual. O aceite completo também cobre login/reautenticação, ausência, links externos, overflow e o alinhamento das ações do cartão Cashback Inter. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
+- [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
-- [ ] Publicar a evolução do contrato Pichau de acompanhamento antes de
-  distribuir a APK desta branch: a camada Flutter já envia `aba`,
-  `disponibilidade`, `ordenar`, `acompanhada` e o PATCH autenticado, mas a
-  rota `/api/pichau/catalogo/{id_externo}/acompanhamento`, a contagem no
-  resumo e a migration de persistência ficaram fora do ciclo mobile e ainda
-  precisam de validação/aplicação externa.
+- [ ] Validar e publicar externamente a evolução do contrato Pichau de
+  acompanhamento antes de distribuir a APK desta branch: a camada Flutter,
+  as rotas `/api/pichau/catalogo/{id_externo}/acompanhamento` e
+  `/acompanhamento-pessoal`, a contagem pessoal no resumo e as migrations
+  `025`, `026` e `027` estão versionadas, mas ainda não foram
+  aplicadas/verificadas no ambiente real.
+- [ ] Depois da aplicação de `026`/`027`, confirmar no banco as 10 lojas Livelo,
+  os 16 produtos Pichau, os eventos Inter recuperados sem outbox e um evento
+  novo com push real; não declarar a entrega FCM a partir de teste sintético.
 
 ## Pichau — evolução ainda aberta
 
@@ -61,7 +65,6 @@ anterior ainda reinicia o gate operacional.
 - [ ] Se a recuperação manual não for aceitável, avaliar controlador Linux
   residencial sempre ligado. O Android sem root não deve ser tratado como capaz
   de reativar sozinho a Depuração por Wi‑Fi desativada pela ROM.
-- [ ] Decidir posteriormente se e quando a Pichau entra na busca global de Produtos; a v1 mobile mantém essa busca inalterada.
 
 ## Ações operacionais externas
 

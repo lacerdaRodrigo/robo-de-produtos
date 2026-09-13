@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buscaPichau, idPichauValido } from "./catalogo-pichau";
+import {
+  buscaPichau,
+  idPichauValido,
+  validarAcompanhamentoPichau,
+} from "./catalogo-pichau";
 
 describe("contrato puro do catalogo Pichau", () => {
   it("normaliza acentos e limita a busca", () => {
@@ -12,5 +16,14 @@ describe("contrato puro do catalogo Pichau", () => {
     expect(idPichauValido("PCM-Pichau-Gamer-67332")).toBe(true);
     expect(idPichauValido("../segredo")).toBe(false);
     expect(idPichauValido("a".repeat(201))).toBe(false);
+  });
+
+  it("aceita somente o booleano de acompanhamento", () => {
+    expect(validarAcompanhamentoPichau({ acompanhada: true })).toEqual({
+      ok: true,
+      acompanhada: true,
+    });
+    expect(validarAcompanhamentoPichau({ acompanhada: true, nome: "hostil" }).ok).toBe(false);
+    expect(validarAcompanhamentoPichau({ acompanhada: "true" }).ok).toBe(false);
   });
 });

@@ -7,10 +7,33 @@ const sql = readFileSync(
   resolve(process.cwd(), "../../migracoes/023_alertas_suporte_privacidade.sql"),
   "utf8",
 );
+const correcao = readFileSync(
+  resolve(process.cwd(), "../../migracoes/026_alertas_pichau_pessoal.sql"),
+  "utf8",
+);
 
 describe("geração de alertas dos produtos Inter", () => {
   it("usa qualidade da execução da loja, que é a coluna persistida", () => {
     expect(sql).toContain("rodada_loja.qualidade = 'completa'");
     expect(sql).not.toMatch(/\brodada\.qualidade\b/);
+  });
+
+  it("redefine a geração com push opcional e inclui Pichau", () => {
+    expect(correcao).toContain("evento_alerta_origem_check");
+    expect(correcao).toContain("'pichau'");
+    expect(correcao).toContain("notificar_push BOOLEAN NOT NULL DEFAULT TRUE");
+    expect(correcao).toContain("gerar_alertas_pichau_com_push");
+    expect(correcao).toContain("gerar_alertas_produtos_inter_com_push");
+  });
+
+  it("faz o backfill apenas para a janela posterior ao último evento Inter", () => {
+    const backfill = readFileSync(
+      resolve(process.cwd(), "../../migracoes/027_backfill_alertas_sem_push.sql"),
+      "utf8",
+    );
+    expect(backfill).toContain("gerar_alertas_produtos_inter_com_push(v_execucao_id, FALSE)");
+    expect(backfill).toContain("max(rodada.id)");
+    expect(backfill).toContain("loja.acompanhada = TRUE");
+    expect(backfill).toContain("produto.acompanhada = TRUE");
   });
 });

@@ -123,7 +123,7 @@ identidade do produto mesmo quando ele sair do catálogo. A resposta do
 histórico é usada pela folha V11 para mostrar as medições de Pix e cartão sem
 recalcular valores financeiros no app.
 
-### Acompanhamento
+### Acompanhamento administrativo legado
 
 `PATCH /api/pichau/catalogo/{id_externo}/acompanhamento`
 
@@ -137,11 +137,22 @@ acompanhados que saírem do catálogo continuam retornáveis na aba
 `acompanhadas`, com `presente_no_catalogo=false`, estado **Fora do catálogo**
 e histórico preservado.
 
-O cliente Flutter para esse contrato está versionado nesta fase mobile. A
-rota PATCH, a persistência do acompanhamento e sua migration não foram
-alteradas neste ciclo, pois a regra operacional da branch restringe a entrega
-ao app; a publicação da API/migration é um gate externo antes de distribuir a
-APK com a ação habilitada.
+O app usa também a rota pessoal:
+`PATCH /api/pichau/catalogo/{id_externo}/acompanhamento-pessoal`, com corpo
+`{ "ativo": true }`. Ela grava somente a relação do usuário autenticado em
+`acompanhamento_usuario`; a aba `acompanhadas`, o resumo e o histórico do app
+leem esse recorte pessoal. Cada mudança de `preco_pix` entre execuções
+completas gera um evento `pichau` de tipo `preco`, sem usar `double`.
+
+O cliente Flutter usa acompanhamento pessoal por usuário em
+`acompanhamento_usuario`; a seleção administrativa da migration
+`025_pichau_acompanhamento.sql` permanece somente para compatibilidade. A
+migration `026_alertas_pichau_pessoal.sql` libera a origem Pichau na Central e
+gera alertas de preço Pix após uma execução completa. A migration operacional
+`027_backfill_alertas_sem_push.sql` importa os 16 produtos administrativos
+atuais para a conta ativa sem enviar push atrasado. As migrations ainda precisam
+ser validadas/aplicadas externamente antes de distribuir a APK com o contrato
+novo.
 
 ### Resumo de Serviços
 
@@ -555,7 +566,7 @@ continuam pendentes.
   loading, vazio, erro, atraso/parcial, cards próprios e histórico em folha.
 - A jornada mobile também possui abas Todas/Acompanhadas, filtros de
   disponibilidade, ordenação por nome/preço Pix/desconto, acompanhamento
-  autorizado com rollback em erro e distinção visual entre esgotado e fora do
+  pessoal com rollback em erro e distinção visual entre esgotado e fora do
   catálogo.
 - `url_launcher` recebe apenas URLs validadas por
   `linkSeguroPichau`.
@@ -571,7 +582,8 @@ de 72 horas continuam abertas. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de
-Produtos e a evolução do acompanhamento são decisões de produto/API separadas.
+Produtos continua sendo decisão separada; a evolução do acompanhamento desta
+jornada está versionada, com aplicação externa ainda pendente.
 
 ## Critérios de aceite
 

@@ -518,4 +518,8 @@ e na migration `023`.
 
 No aplicativo, a leitura do catálogo usa o acompanhamento pessoal do usuário
 por padrão e o PATCH `.../catalogo/{id_externo}/acompanhamento-pessoal`; a rota
-administrativa legada permanece separada e exige papel `admin`.
+administrativa legada permanece separada e exige papel `admin`. As 10 lojas
+legadas atualmente marcadas em `loja.acompanhada` são vinculadas à conta ativa
+pela migration operacional `027`, sem alterar a seleção usada pelo robô. Como
+essas relações pessoais só passam a existir na migração, o primeiro snapshot
+posterior funciona como baseline e não cria alerta histórico artificial.

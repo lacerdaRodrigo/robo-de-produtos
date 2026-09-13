@@ -20,8 +20,19 @@ export type ResumoPichauPersistido = {
   ultima_tentativa_estado: EstadoTentativaPichau | null;
   ultimo_sucesso_em: string | null;
   qualidade: "completa" | "degradada" | null;
+  total_catalogo: number;
+  acompanhadas: number;
   produtos_ativos: number;
   produtos_esgotados: number;
+};
+
+export type OpcoesCatalogoPichau = {
+  q: string;
+  aba: "todas" | "acompanhadas";
+  disponibilidade: "todas" | "disponiveis" | "esgotados";
+  ordenar: "nome" | "preco" | "desconto";
+  pagina: number;
+  porPagina: number;
 };
 
 export type ProdutoPichauPersistido = {
@@ -41,6 +52,12 @@ export type ProdutoPichauPersistido = {
   sem_juros: boolean | null;
   etiquetas: string[];
   atualizado_em: string | null;
+  acompanhada: boolean;
+};
+
+export type AcompanhamentoPichauPersistido = {
+  id_externo: string;
+  acompanhada: boolean;
 };
 
 export type PaginaPichauPersistida = {
@@ -62,8 +79,10 @@ export type HistoricoPichauPersistido = {
   pagina: number;
 };
 
-export async function resumoPichauPersistido(): Promise<ResumoPichauPersistido> {
+export async function resumoPichauPersistido(usuarioId?: string): Promise<ResumoPichauPersistido> {
   const sql = conectar();
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
   const linhas = (await sql`
     WITH tentativa AS (
       SELECT iniciada_em, estado
@@ -82,6 +101,17 @@ export async function resumoPichauPersistido(): Promise<ResumoPichauPersistido> 
       (SELECT estado FROM tentativa) AS ultima_tentativa_estado,
       (SELECT concluida_em FROM sucesso) AS ultimo_sucesso_em,
       (SELECT qualidade FROM sucesso) AS qualidade,
+      count(*) FILTER (WHERE p.presente_no_catalogo)::int AS total_catalogo,
+      count(*) FILTER (WHERE
+        CASE WHEN ${usaAcompanhamentoPessoal}
+             THEN EXISTS (
+                    SELECT 1 FROM acompanhamento_usuario acompanhamento
+                     WHERE acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+                       AND acompanhamento.origem = 'pichau'
+                       AND acompanhamento.entidade_id = p.id
+                  )
+             ELSE p.acompanhada END
+      )::int AS acompanhadas,
       count(*) FILTER (WHERE p.presente_no_catalogo)::int AS produtos_ativos,
       count(*) FILTER (WHERE p.presente_no_catalogo AND p.disponibilidade = 'esgotado')::int AS produtos_esgotados
     FROM pichau_produto p
@@ -91,6 +121,8 @@ export async function resumoPichauPersistido(): Promise<ResumoPichauPersistido> 
     ultima_tentativa_estado: null,
     ultimo_sucesso_em: null,
     qualidade: null,
+    total_catalogo: 0,
+    acompanhadas: 0,
     produtos_ativos: 0,
     produtos_esgotados: 0,
   };
@@ -101,18 +133,42 @@ function limiteSeguro(valor: number): number {
 }
 
 export async function buscarCatalogoPichau(
-  q: string,
-  pagina: number,
-  porPagina: number,
+  opcoes: OpcoesCatalogoPichau,
+  usuarioId?: string,
 ): Promise<PaginaPichauPersistida> {
   const sql = conectar();
-  const busca = buscaPichau(q);
-  const limite = limiteSeguro(porPagina);
-  const paginaSolicitada = Math.max(1, Math.floor(pagina));
+  const busca = buscaPichau(opcoes.q);
+  const limite = limiteSeguro(opcoes.porPagina);
+  const paginaSolicitada = Math.max(1, Math.floor(opcoes.pagina));
+  const todas = opcoes.aba === "todas";
+  const acompanhadas = opcoes.aba === "acompanhadas";
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
+  const todasDisponibilidades = opcoes.disponibilidade === "todas";
+  const disponiveis = opcoes.disponibilidade === "disponiveis";
+  const esgotados = opcoes.disponibilidade === "esgotados";
+  const porPreco = opcoes.ordenar === "preco";
+  const porDesconto = opcoes.ordenar === "desconto";
   const totalLinhas = (await sql`
     SELECT count(*)::int AS total
       FROM pichau_produto p
-     WHERE p.presente_no_catalogo = TRUE
+     WHERE (
+         (${todas} AND p.presente_no_catalogo = TRUE)
+         OR (${acompanhadas} AND (
+           (${usaAcompanhamentoPessoal} AND EXISTS (
+              SELECT 1 FROM acompanhamento_usuario acompanhamento
+               WHERE acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+                 AND acompanhamento.origem = 'pichau'
+                 AND acompanhamento.entidade_id = p.id
+           ))
+           OR (${!usaAcompanhamentoPessoal} AND p.acompanhada = TRUE)
+         ))
+       )
+       AND (
+         ${todasDisponibilidades}
+         OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
+         OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+       )
        AND (
          ${busca === ""}
          OR p.nome_busca LIKE ${`%${busca}%`}
@@ -128,6 +184,14 @@ export async function buscarCatalogoPichau(
   const itens = (await sql`
     SELECT p.id_externo, p.sku, p.nome, p.marca, p.categoria_externa, p.url_produto,
            p.presente_no_catalogo, p.disponibilidade,
+           CASE WHEN ${usaAcompanhamentoPessoal}
+                THEN EXISTS (
+                       SELECT 1 FROM acompanhamento_usuario acompanhamento
+                        WHERE acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+                          AND acompanhamento.origem = 'pichau'
+                          AND acompanhamento.entidade_id = p.id
+                     )
+                ELSE p.acompanhada END AS acompanhada,
            m.preco_original_texto, m.preco_pix_texto, m.desconto_pix_texto,
            m.preco_cartao_texto, m.parcelamento, m.sem_juros, m.etiquetas,
            m.momento AS atualizado_em
@@ -140,7 +204,23 @@ export async function buscarCatalogoPichau(
          ORDER BY medicao.momento DESC, medicao.id DESC
          LIMIT 1
       ) m ON TRUE
-     WHERE p.presente_no_catalogo = TRUE
+     WHERE (
+         (${todas} AND p.presente_no_catalogo = TRUE)
+         OR (${acompanhadas} AND (
+           (${usaAcompanhamentoPessoal} AND EXISTS (
+              SELECT 1 FROM acompanhamento_usuario acompanhamento
+               WHERE acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+                 AND acompanhamento.origem = 'pichau'
+                 AND acompanhamento.entidade_id = p.id
+           ))
+           OR (${!usaAcompanhamentoPessoal} AND p.acompanhada = TRUE)
+         ))
+       )
+       AND (
+         ${todasDisponibilidades}
+         OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
+         OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+       )
        AND (
          ${busca === ""}
          OR p.nome_busca LIKE ${`%${busca}%`}
@@ -148,23 +228,51 @@ export async function buscarCatalogoPichau(
            OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
        )
-     ORDER BY p.nome ASC, p.id_externo ASC
+     ORDER BY
+       CASE WHEN ${porPreco} THEN m.preco_pix END ASC NULLS LAST,
+       CASE WHEN ${porDesconto} THEN m.desconto_pix END DESC NULLS LAST,
+       p.nome ASC, p.id_externo ASC
      LIMIT ${limite} OFFSET ${deslocamento}
   `) as ProdutoPichauPersistido[];
   return { itens, total, pagina: paginaFinal };
+}
+
+export async function alterarAcompanhamentoPichau(
+  idExterno: string,
+  acompanhada: boolean,
+): Promise<AcompanhamentoPichauPersistido | null> {
+  const sql = conectar();
+  const linhas = (await sql`
+    UPDATE pichau_produto
+       SET acompanhada = ${acompanhada}
+     WHERE id_externo = ${idExterno}
+     RETURNING id_externo, acompanhada
+  `) as AcompanhamentoPichauPersistido[];
+  return linhas[0] ?? null;
 }
 
 export async function historicoPichau(
   idExterno: string,
   pagina = 1,
   porPagina = PADRAO_HISTORICO_POR_PAGINA,
+  usuarioId?: string,
 ): Promise<HistoricoPichauPersistido | null> {
   const sql = conectar();
+  const acompanhamentoUsuario = usuarioId ?? null;
+  const usaAcompanhamentoPessoal = usuarioId !== undefined;
   const limite = Math.min(MAXIMO_HISTORICO_POR_PAGINA, Math.max(1, Math.floor(porPagina)));
   const paginaSolicitada = Math.max(1, Math.floor(pagina));
   const produtos = (await sql`
     SELECT p.id_externo, p.sku, p.nome, p.marca, p.categoria_externa, p.url_produto,
            p.presente_no_catalogo, p.disponibilidade,
+           CASE WHEN ${usaAcompanhamentoPessoal}
+                THEN EXISTS (
+                       SELECT 1 FROM acompanhamento_usuario acompanhamento
+                        WHERE acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
+                          AND acompanhamento.origem = 'pichau'
+                          AND acompanhamento.entidade_id = p.id
+                     )
+                ELSE p.acompanhada END AS acompanhada,
            m.preco_original_texto, m.preco_pix_texto, m.desconto_pix_texto,
            m.preco_cartao_texto, m.parcelamento, m.sem_juros, m.etiquetas,
            m.momento AS atualizado_em

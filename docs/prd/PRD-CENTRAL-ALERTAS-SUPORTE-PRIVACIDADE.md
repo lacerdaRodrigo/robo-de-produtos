@@ -1,8 +1,8 @@
 # PRD — Central de Alertas, suporte e privacidade
 
-Status: implementado no contrato e no código; a migration foi aplicada
-manualmente, o projeto Firebase `radarbeneficios`/Vercel está configurado e o
-secret compartilhado do cron está ativo. Ainda dependem de operação um evento
+Status: implementado no contrato e no código; a migration base foi aplicada
+manualmente, e as migrations de correção `026` e `027` estão versionadas, mas
+ainda dependem de aplicação operacional. Ainda dependem de operação um evento
 real que gere push e o aceite físico do Android.
 
 ## Objetivo
@@ -10,8 +10,8 @@ real que gere push e o aceite físico do Android.
 Oferecer no aplicativo Flutter V11 uma Central autenticada para mudanças válidas
 em itens acompanhados, com histórico de 90 dias, filtros, leitura individual ou
 em massa, preferências de push, Ajuda, Reportar problema e Privacidade. O cliente
-continua consumindo somente a API; Livelo, Cashback Inter e Produtos Inter
-mantêm snapshots e contratos separados.
+continua consumindo somente a API; Livelo, Cashback Inter, Produtos Inter e
+Pichau mantêm snapshots e contratos separados.
 
 ## Contrato de dados
 
@@ -24,12 +24,20 @@ A migration `migracoes/023_alertas_suporte_privacidade.sql` cria:
 - `notificacao_outbox_alerta`, idempotente por usuário/origem/coleta;
 - `relato_problema_app`, com retenção de 180 dias.
 
+A migration `migracoes/026_alertas_pichau_pessoal.sql` inclui `pichau` como
+origem válida, gera alertas Pichau por preço Pix, respeita o momento em que o
+usuário começou a acompanhar e permite suprimir push em backfills. A migration
+`027_backfill_alertas_sem_push.sql` transforma, de forma protegida, as 10
+seleções Livelo e os 16 produtos Pichau atuais da única conta ativa em relações
+pessoais e recupera somente a janela Inter posterior ao último evento conhecido.
+
 As funções de geração são chamadas somente depois de uma publicação completa e
-válida. O primeiro snapshot não gera evento; ausência, valor inválido, falha ou
-coleta parcial não vira zero nem alerta. Comparações são deduplicadas por coleta.
-Para Produtos Inter, a qualidade da coleta é lida na execução da loja (`rodada_loja`),
-que é a tabela que persiste essa coluna; a rodada coordenadora fornece apenas o
-estado agregado.
+válida. O primeiro snapshot pessoal não gera evento; ausência, valor inválido,
+falha ou coleta parcial não vira zero nem alerta. Comparações são deduplicadas
+por coleta. Para Produtos Inter, a qualidade da coleta é lida na execução da
+loja (`rodada_loja`), que é a tabela que persiste essa coluna; a rodada
+coordenadora é finalizada primeiro e só então dispara os alertas das lojas
+válidas. Eventos de backfill ficam na Central, mas não criam outbox nem push.
 Alertas expiram após 90 dias e relatos após 180 dias.
 
 ## API
@@ -46,6 +54,7 @@ Rotas autenticadas em `backend/api/app/api`:
 - `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento-pessoal`;
 - `PATCH /api/inter/cashback/{id}/acompanhamento`;
 - `PATCH /api/inter/produtos/{loja}/{id_externo}/acompanhamento`.
+- `PATCH /api/pichau/catalogo/{id_externo}/acompanhamento-pessoal`.
 
 As rotas de usuário e administrativas usam Firebase Auth, respeitam App Check
 quando o enforcement está ligado, isolam por `usuario_app_id`, paginam e
@@ -58,7 +67,7 @@ acorda a API a cada 15 minutos; o envio real continua no Firebase Cloud
 Messaging através do Firebase Admin SDK. Não há limite diário artificial de
 notificações.
 
-As leituras de Livelo e Sites parceiros do Inter usam acompanhamento pessoal
+As leituras de Livelo, Sites parceiros do Inter e Pichau usam acompanhamento pessoal
 por padrão; `escopo=global` só é aceito para administradores e mantém a seleção
 legada separada da Central.
 
@@ -80,7 +89,8 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
    adaptadores de coleta passam.
 3. O protótipo V11 e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
-4. Migration 023 está aplicada no banco alvo por operação autorizada.
+4. Migrations 023, 025, 026 e 027 estão aplicadas no banco alvo por operação
+   autorizada, com a validação de contagens e isolamento da conta.
 5. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
    preferências, Ajuda, relato, privacidade, links externos e ausência de dados
    são conferidas no Moto G6 Play; o aceite Samsung permanece separado.

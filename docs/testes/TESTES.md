@@ -423,6 +423,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
 | CT-283A | Folha de condições completas | Card compacto abre a folha V11 com descrição integral, múltiplas regras e quebras de linha, sem truncar o texto | Widget com descrição longa e condições secundárias |
 | CT-283B | Ausência de condições | Descrição principal e secundária ausentes exibem o texto neutro do contrato, sem inventar percentual ou regra | Widget com campos de descrição nulos |
+| CT-283C | Ações compactas alinhadas | Acompanhamento fica em linha própria; condições e abertura do Inter compartilham a linha seguinte sem recuo ou overflow | Widget com geometria do cartão em 390 px e teste estreito em 320 px |
 | CT-284 | Navegação e responsividade Inter | Tocar Inter abre o painel real e a moldura preserva abas, retrato/paisagem e tela larga | Widget da moldura em viewports distintos |
 
 ### Fase 4.4 — produtos no Flutter
@@ -488,13 +489,13 @@ restante do roteiro manual.
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-311 | Destinos fixos do redesign | A ordem principal é Início, Lojas, Produtos, Alertas e Mais, sem esconder jornadas existentes | Enum fechado e inspeção dos cinco itens |
+| CT-311 | Destinos fixos do redesign | No layout amplo, a ordem continua Início, Lojas, Produtos, Alertas e Mais; no compacto, somente Resumo e Serviços aparecem na barra, com Produtos dentro do Banco Inter | Enums, widget da moldura e inspeção dos breakpoints |
 | CT-312 | Gaveta e lateral adaptativas | Mobile/retrato/paisagem usa cabeçalho + gaveta; Web a partir de 920 px usa lateral com a mesma ordem | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
 | CT-313 | Hub transitório de Lojas | Livelo e Shopping Inter continuam alcançáveis sem consultar resumo nem exibir métricas fictícias | API falsa e ações do hub isolado |
 | CT-314 | Voltar na hierarquia interna | Voltar de Livelo/Inter retorna primeiro para Lojas em vez de sair do app | Navegador aninhado e `handlePopRoute` |
-| CT-315 | Estado preservado entre áreas | Trocar de Produtos para outra área e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
+| CT-315 | Estado preservado entre áreas | Trocar entre Produtos do Inter, Livelo e demais subáreas e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
 | CT-316 | Alertas e Administração preservados | Atalho do cabeçalho abre o estado honesto de Alertas; Mais mantém Administração para admin | Ações da moldura e API falsa fechada |
-| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, abrir/fechar e os cinco destinos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
+| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, abrir/fechar e os destinos compactos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
 | CT-318 | Moldura adaptativa | Gaveta Mobile e lateral Web permanecem alcançáveis e preservam a ordem dos destinos | Widgets nos dois breakpoints |
 
 O fechamento passou por formatação, análise, 137 testes, build Web e APK debug.
@@ -513,7 +514,7 @@ manual no Samsung Android com resultado aprovado.
 | CT-322 | Contrato Flutter | `/api/resumo` envia autenticação e converte estados, horários e contagens sem aceitar valores hostis | `MockClient` e modelos Dart manuais |
 | CT-323 | Métricas e recortes | Alertas Livelo, lojas de cashback e produtos ativos exibem o recorte real; indisponível usa `—` | Widget com respostas válidas, zero e indisponibilidade |
 | CT-324 | Retry sem apagar resumo | Falha na atualização mantém o último payload visível e oferece nova tentativa | Primeira resposta válida e segunda com erro |
-| CT-325 | Atalhos reais | Lojas, Livelo, Produtos e Cashback Inter abrem as jornadas existentes | Callbacks isolados e moldura completa |
+| CT-325 | Atalhos reais | Lojas, Livelo, Produtos e Cashback Inter abrem as jornadas existentes; no compacto, Produtos abre a aba do Banco Inter | Callbacks isolados e moldura completa |
 | CT-326 | Responsividade e acessibilidade | Web amplo, 320 × 640 e texto a 150% permanecem alcançáveis sem overflow | Viewports e `TextScaler` controlados |
 
 O fechamento local passou por TypeScript, ESLint, 83 testes Vitest e build do
@@ -541,6 +542,15 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
 | CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
 
+### Redesign — Módulo 7, Produtos dentro do Banco Inter no mobile
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| CT-404 | Abas do Compre direto | Banco Inter compacto reúne `Todas`, `Selecionadas` e `Produtos`; as duas primeiras mostram lojas e a terceira monta a experiência completa de Produtos | Widget da moldura em viewport compacto e teste da aba |
+| CT-405 | Atalho contextual de Produtos | `Buscar produtos` na Home abre Banco Inter → Compre direto → Produtos, sem criar item global no dock | Widget da moldura e callback da Home |
+| CT-406 | Origem e isolamento | Produtos Inter permanece separado de Livelo, Sites parceiros e Pichau; trocar de área preserva a busca e não altera APIs | Widget com `IndexedStack`, controlador e `MockClient` |
+| CT-407 | Abas responsivas | A terceira aba continua acessível em larguras estreitas, com tema claro/escuro e sem overflow | Widget em 320, 390 e 430 px com `TextScaler` |
+
 ### Migração mobile — Etapa 1, fundação visual e aparência
 
 | ID | Título | Descrição | Como fazer |
@@ -567,7 +577,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-367 | Larguras mobile aprovadas | A jornada continua alcançável em 320, 390 e 430 px | `pagina_pichau_test.dart` com viewports controlados |
 | CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V11 | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
 | CT-390 | Abas, disponibilidade e ordenação | Todas/Acompanhadas e os filtros do protótipo são enviados à API, sem trocar o recorte silenciosamente | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
-| CT-391 | Acompanhamento autorizado | Usuário comum não muta; administrador usa PATCH idempotente e a falha restaura produto/contador | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
+| CT-391 | Acompanhamento pessoal | Usuário autenticado acompanha e deixa de acompanhar o próprio produto; a falha restaura produto/contador; a rota administrativa legada continua separada | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-392 | Acompanhadas fora do catálogo | A remoção da aba Acompanhadas só ocorre após confirmação e estados esgotado/fora do catálogo continuam distintos | `controlador_catalogo_pichau_test.dart` e `modelos_pichau_test.dart` |
 
 ### Pichau — backend/API versionados
@@ -609,6 +619,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-386 | Workflow produtor Android | Cron 09h30/14h30/20h30, depois da Livelo e antes do Inter, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
+| CT-403 | Acompanhamento Pichau sem teto artificial | A rota administrativa é idempotente, o catálogo retorna `acompanhada` e a aba Acompanhadas consulta 17 ou mais produtos sem truncar em 16 | `banco-pichau.teste.ts`, `catalogo-pichau-api.teste.ts` e `acompanhamento-pichau-api.teste.ts` |
 
 Os testes foram escritos em `app/test/app/tema/aparencia_test.dart` e
 `app/test/app/componentes/fundacao_visual_test.dart`. A execução e os totais da
@@ -717,6 +728,9 @@ O que conferir:
 | CT-186 | Catálogos usam o escopo correto | Usuário vê somente seus acompanhamentos; administrador pode solicitar o catálogo global | Teste da rota e SQL parametrizado |
 | CT-187 | Cron da outbox protegido | Somente `Authorization: Bearer OUTBOX_CRON_SECRET` chama a rota interna; resposta tem contagens operacionais e falhas não expõem segredos | `backend/api/app/api/cron/notificacoes/outbox/route.teste.ts` |
 | CT-188 | Alertas de produtos usam a qualidade correta | A função de produtos Inter consulta `qualidade` na execução da loja, sem referenciar coluna inexistente na rodada coordenadora | `backend/api/testes/migracao-alertas-produtos-inter.teste.ts` |
+| CT-189 | Alertas Inter após rodada final | A rodada coordenadora muda de estado antes de gerar alertas para cada loja completa; falha/parcial degradada não cria falso evento | `backend/robo/testes/teste_produtos_inter.py` e migration `026` |
+| CT-190 | Alertas pessoais Pichau | Usuário acompanha pela chave externa, a aba/resumo/histórico usam seu recorte e o preço Pix gera evento somente após snapshot completo | `acompanhamento-pessoal-api.teste.ts`, `banco-pichau.teste.ts` e `teste_pichau.py` |
+| CT-191 | Backfill sem push | Seleções legadas Livelo/Pichau viram relações pessoais e a janela Inter recuperada entra na Central sem criar outbox | `migracao-alertas-produtos-inter.teste.ts` e migration `027` |
 
 ## Totais
 

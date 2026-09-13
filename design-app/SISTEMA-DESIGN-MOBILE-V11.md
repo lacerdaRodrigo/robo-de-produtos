@@ -33,13 +33,17 @@ Nenhum widget deve sugerir coleta ao vivo durante busca, navegação ou filtrage
 
 ## 3. Arquitetura de navegação
 
-A navegação principal possui três destinos fixos:
+A navegação principal compacta possui dois destinos fixos:
 
 | Destino | Responsabilidade |
 |---|---|
 | Resumo | Estado geral, situação de cada robô e atalhos principais |
 | Serviços | Catálogo pesquisável de fontes disponíveis |
-| Produtos | Busca no catálogo salvo das lojas selecionadas no Compre direto |
+
+Produtos não é um destino independente no mobile compacto. A busca do catálogo
+Inter fica em `Serviços → Banco Inter → Compre direto → Produtos`, preservando a
+origem dos dados. O layout amplo mantém seus destinos próprios fora deste
+fluxo mobile.
 
 Livelo e Banco Inter são páginas internas de Serviços. Administração é acessada pelo perfil e não ocupa espaço na navegação inferior.
 
@@ -216,12 +220,19 @@ A busca filtra o retrato já salvo e não solicita nova coleta.
 
 Classes: `.catalog-tabs`, `.catalog-tab`, `.active`.
 
-Cada aba possui rótulo e contador e sempre mantém `aria-selected=true` no estado ativo. O controle segmentado padrão usa `radar-plum` com conteúdo em `radar-on-plum`. Na página do Banco Inter, somente a troca de área usa a variante plana com indicador inferior; os filtros Todas/Acompanhadas continuam usando o mesmo controle segmentado compartilhado com a Livelo. É usado para:
+Cada aba possui rótulo e, quando houver um total aplicável, contador; sempre
+mantém `aria-selected=true` no estado ativo. O controle segmentado padrão usa
+`radar-plum` com conteúdo em `radar-on-plum`. Na página do Banco Inter, somente
+a troca de área usa a variante plana com indicador inferior; os filtros
+Todas/Acompanhadas continuam usando o mesmo controle segmentado compartilhado
+com a Livelo. A aba Produtos do Compre direto não exibe contador porque seu
+total pertence ao resultado paginado do catálogo. É usado para:
 
 - Todas/Acompanhando na Livelo;
 - Cashback/Compre direto no Banco Inter;
 - Todas/Acompanhadas no Cashback;
-- Todas/Selecionadas no Compre direto.
+- Todas/Selecionadas/Produtos no Compre direto do Banco Inter; a terceira aba
+  troca o corpo de seleção de lojas pela experiência completa de Produtos.
 
 ### `CollectionBar`
 
@@ -276,7 +287,10 @@ Classes: `.app-bar`, `.mini-brand`, `.sync-line`, `.sync-dot`, `.app-actions`.
 
 Classes: `.dock`, `.dock-button`, `.active`.
 
-Possui três destinos: Resumo, Serviços e Produtos. O item ativo recebe fundo `radar-plum`. Livelo, Banco Inter e Pichau mantêm Serviços selecionado porque pertencem a esse domínio de navegação. Pichau não cria um quarto item no dock.
+Possui dois destinos: Resumo e Serviços. O item ativo recebe fundo
+`radar-plum`. Livelo, Banco Inter, Pichau e a busca de Produtos do Inter mantêm
+Serviços selecionado porque pertencem a esse domínio de navegação. Pichau e
+Produtos não criam itens adicionais no dock.
 
 ## 10. Tela Resumo
 
@@ -441,6 +455,11 @@ Anatomia:
 5. acompanhar/desacompanhar;
 6. detalhes das condições.
 
+No cartão compacto, o acompanhamento ocupa uma linha própria. Abaixo, as
+condições e a abertura da loja ficam na mesma linha, com a abertura externa
+como ação primária. Essa composição segue o padrão de ações do cartão Pichau e
+não usa alinhamento final de um `Wrap` para posicionar uma linha quebrada.
+
 Regras de dado:
 
 - o título principal usa `cashback_principal_texto`;
@@ -464,6 +483,20 @@ Usa `aria-pressed` para refletir o estado `favorita`.
 Ao remover uma loja enquanto Acompanhadas está ativo, o card sai da lista e o contador diminui. Ao adicionar, o contador aumenta imediatamente após confirmação.
 
 ## 14. Banco Inter — Compre direto
+
+### Abas internas do mobile compacto
+
+Compre direto possui três áreas na mesma composição: `Todas`, `Selecionadas` e
+`Produtos`. `Todas` e `Selecionadas` exibem a administração autorizada das
+lojas, com busca local no catálogo de vendedores e seleção para a próxima
+coleta. `Produtos` substitui esse corpo pela experiência completa de Produtos,
+incluindo escopo contextual, busca, filtros, grupos de loja, histórico, links,
+paginação e estados reais.
+
+A aba `Produtos` não cria uma nova origem, rota visual ou item no dock. O
+atalho `Buscar produtos` da tela Resumo abre diretamente essa aba. Pichau
+continua como subárea independente de Serviços, sem compartilhar o catálogo
+do Inter nem a seleção de lojas.
 
 ### `DirectStoreCard`
 
@@ -703,6 +736,9 @@ Os nomes concretos podem seguir a convenção do projeto, mas anatomia, tokens, 
 - [ ] Correntista e não-correntista são distinguíveis.
 - [ ] Todas/Acompanhadas funciona no Cashback.
 - [ ] Acompanhar atualiza estado, contador e filtro.
+- [ ] Compre direto exibe as abas Todas, Selecionadas e Produtos na mesma área.
+- [ ] A aba Produtos mantém a experiência completa do catálogo Inter e não cria destino global no mobile.
+- [ ] O atalho Buscar produtos da Home abre Banco Inter → Compre direto → Produtos.
 - [ ] Compre direto seleciona lojas sem abrir Produtos automaticamente.
 - [ ] Produtos são agrupados pela loja de origem.
 - [ ] Ausência de dado nunca vira zero.

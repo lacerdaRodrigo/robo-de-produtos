@@ -21,7 +21,7 @@ export async function GET(requisicao: Request, contexto: Contexto) {
     const url = new URL(requisicao.url);
     const pagina = paginaValida(url.searchParams.get("pagina"));
     const porPagina = porPaginaValida(url.searchParams.get("por_pagina"), 30, 100);
-    const resultado = await historicoPichau(idExterno, pagina, porPagina);
+    const resultado = await historicoPichau(idExterno, pagina, porPagina, String(acesso.usuario.id));
     if (!resultado) {
       return NextResponse.json(corpoErro("nao_encontrado", "produto Pichau nao encontrado"), {
         status: STATUS.NAO_ACHEI,

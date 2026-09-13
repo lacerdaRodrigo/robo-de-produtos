@@ -87,7 +87,7 @@ Api _api({
         return http.Response(jsonEncode(catalogo ?? _catalogo), 200);
       }
       if (requisicao.url.path ==
-          '/api/pichau/catalogo/PG-7800/acompanhamento') {
+          '/api/pichau/catalogo/PG-7800/acompanhamento-pessoal') {
         if (falharAcompanhamento) return http.Response('{}', 500);
         return http.Response('{}', 200);
       }
@@ -266,39 +266,43 @@ void main() {
     await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
     await at.pumpAndSettle();
     expect(requisicoes.last.method, 'PATCH');
-    expect(jsonDecode(requisicoes.last.body)['acompanhada'], isTrue);
+    expect(
+      requisicoes.last.url.path,
+      '/api/pichau/catalogo/PG-7800/acompanhamento-pessoal',
+    );
+    expect(jsonDecode(requisicoes.last.body)['ativo'], isTrue);
     expect(find.text('Acompanhando'), findsOneWidget);
   });
 
-  testWidgets('acompanhamento exige administrador e reverte em erro', (
-    at,
-  ) async {
-    final requisicoes = <http.Request>[];
-    await at.pumpWidget(_tela(_api(requisicoes: requisicoes)));
-    await at.pumpAndSettle();
-    expect(
-      at
-          .widget<OutlinedButton>(
-            find.byKey(const Key('acompanhar-pichau-PG-7800')),
-          )
-          .onPressed,
-      isNull,
-    );
+  testWidgets(
+    'acompanhamento pessoal funciona para qualquer usuário e reverte em erro',
+    (at) async {
+      final requisicoes = <http.Request>[];
+      await at.pumpWidget(_tela(_api(requisicoes: requisicoes)));
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<OutlinedButton>(
+              find.byKey(const Key('acompanhar-pichau-PG-7800')),
+            )
+            .onPressed,
+        isNotNull,
+      );
 
-    final requisicoesComFalha = <http.Request>[];
-    await at.pumpWidget(
-      _tela(
-        _api(requisicoes: requisicoesComFalha, falharAcompanhamento: true),
-        administrador: true,
-      ),
-    );
-    await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
-    await at.pumpAndSettle();
-    expect(find.text('Acompanhar'), findsOneWidget);
-    expect(
-      find.text('Não foi possível salvar o acompanhamento.'),
-      findsOneWidget,
-    );
-  });
+      final requisicoesComFalha = <http.Request>[];
+      await at.pumpWidget(
+        _tela(
+          _api(requisicoes: requisicoesComFalha, falharAcompanhamento: true),
+        ),
+      );
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
+      await at.pumpAndSettle();
+      expect(find.text('Acompanhar'), findsOneWidget);
+      expect(
+        find.text('Não foi possível salvar o acompanhamento.'),
+        findsOneWidget,
+      );
+    },
+  );
 }

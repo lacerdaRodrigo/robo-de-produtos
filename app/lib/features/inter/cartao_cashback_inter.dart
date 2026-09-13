@@ -403,21 +403,27 @@ class _CartaoCompacto extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            alignment: WrapAlignment.end,
-            children: [
-              OutlinedButton.icon(
-                key: ValueKey('condicoes-${loja.id}'),
-                onPressed: () => _abrirCondicoesCashback(context, loja),
+          if (podeAdministrar || aoAcompanhar != null)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: ValueKey('acompanhar-${loja.id}'),
+                onPressed: !alterando ? aoAcompanhar : null,
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 40),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 11,
                     vertical: 8,
                   ),
-                  foregroundColor: cores.acao,
+                  foregroundColor: acompanhada ? cores.ganho : cores.acao,
+                  backgroundColor: acompanhada
+                      ? (Theme.of(context).brightness == Brightness.dark
+                            ? Tokens.ganhoFundoEscuro
+                            : Tokens.ganhoFundo)
+                      : Colors.transparent,
+                  side: BorderSide(
+                    color: acompanhada ? Colors.transparent : cores.acao,
+                  ),
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 10,
@@ -426,28 +432,42 @@ class _CartaoCompacto extends StatelessWidget {
                     borderRadius: BorderRadius.circular(11),
                   ),
                 ),
-                icon: const Icon(Icons.subject_outlined, size: 15),
-                label: const Text('Ver condições'),
+                icon: alterando
+                    ? const SizedBox.square(
+                        dimension: 13,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        acompanhada
+                            ? Icons.notifications_off_outlined
+                            : Icons.notifications_none_rounded,
+                        size: 15,
+                      ),
+                label: Text(
+                  alterando
+                      ? 'Salvando…'
+                      : acompanhada
+                      ? 'Deixar de acompanhar'
+                      : 'Acompanhar',
+                ),
               ),
-              if (podeAdministrar || aoAcompanhar != null)
-                OutlinedButton.icon(
-                  key: ValueKey('acompanhar-${loja.id}'),
-                  onPressed: !alterando ? aoAcompanhar : null,
+            ),
+          if (podeAdministrar || aoAcompanhar != null)
+            const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: OutlinedButton.icon(
+                  key: ValueKey('condicoes-${loja.id}'),
+                  onPressed: () => _abrirCondicoesCashback(context, loja),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(0, 40),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 11,
                       vertical: 8,
                     ),
-                    foregroundColor: acompanhada ? cores.ganho : cores.acao,
-                    backgroundColor: acompanhada
-                        ? (Theme.of(context).brightness == Brightness.dark
-                              ? Tokens.ganhoFundoEscuro
-                              : Tokens.ganhoFundo)
-                        : Colors.transparent,
-                    side: BorderSide(
-                      color: acompanhada ? Colors.transparent : cores.acao,
-                    ),
+                    foregroundColor: cores.acao,
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 10,
@@ -456,46 +476,35 @@ class _CartaoCompacto extends StatelessWidget {
                       borderRadius: BorderRadius.circular(11),
                     ),
                   ),
-                  icon: alterando
-                      ? const SizedBox.square(
-                          dimension: 13,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          acompanhada
-                              ? Icons.notifications_off_outlined
-                              : Icons.notifications_none_rounded,
-                          size: 15,
-                        ),
-                  label: Text(
-                    alterando
-                        ? 'Salvando…'
-                        : acompanhada
-                        ? 'Deixar de acompanhar'
-                        : 'Acompanhar',
-                  ),
+                  icon: const Icon(Icons.subject_outlined, size: 15),
+                  label: const Text('Ver condições'),
                 ),
-              FilledButton.icon(
-                key: ValueKey('ir-inter-${loja.id}'),
-                onPressed: aoAbrirParceiro,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 40),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 4,
+                child: FilledButton.icon(
+                  key: ValueKey('ir-inter-${loja.id}'),
+                  onPressed: aoAbrirParceiro,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    backgroundColor: cores.acao,
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
                   ),
-                  backgroundColor: cores.acao,
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                  label: const Text('Ir para o Inter'),
                 ),
-                icon: const Icon(Icons.open_in_new_rounded, size: 15),
-                label: const Text('Ir para o Inter'),
               ),
             ],
           ),

@@ -234,6 +234,10 @@ void main() {
   testWidgets('acompanhar sincroniza painel e aba antes e depois da API', (
     at,
   ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
     var acompanhada = false;
     var alteracoes = 0;
     final primeiraAlteracao = Completer<void>();
@@ -350,7 +354,9 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Acompanhar'));
+    final acompanhar = find.byKey(const ValueKey('acompanhar-cea'));
+    await at.ensureVisible(acompanhar);
+    await at.tap(acompanhar);
     await at.pump();
     expect(find.text('Salvando…'), findsOneWidget);
     expect(
@@ -358,7 +364,13 @@ void main() {
       findsOneWidget,
     );
 
-    await at.tap(find.text('Acompanhadas'));
+    final acompanhadas = find.text('Acompanhadas');
+    await Scrollable.ensureVisible(
+      at.element(acompanhadas),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
+    await at.tap(acompanhadas);
     await at.pump();
     expect(find.text('C&A'), findsOneWidget);
 
@@ -371,7 +383,8 @@ void main() {
       findsOneWidget,
     );
 
-    await at.tap(find.text('Deixar de acompanhar'));
+    await at.ensureVisible(acompanhar);
+    await at.tap(acompanhar);
     await at.pumpAndSettle();
     expect(
       find.descendant(of: metrica, matching: find.text('0')),
@@ -423,6 +436,52 @@ void main() {
     );
     await at.pump();
     expect(at.takeException(), isNull);
+  });
+
+  testWidgets('ações do card compacto seguem a composição do Pichau', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+
+    for (final largura in <double>[320, 390, 430]) {
+      at.view.physicalSize = Size(largura, 844);
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: CartaoCashbackInter(
+              compacto: true,
+              loja: _loja(favorita: true),
+              acompanhada: true,
+              aoAcompanhar: () {},
+              aoAbrirParceiro: () {},
+            ),
+          ),
+        ),
+      );
+      await at.pumpAndSettle();
+
+      final acompanhar = find.byKey(
+        const ValueKey('acompanhar-magazine luiza'),
+      );
+      final condicoes = find.byKey(const ValueKey('condicoes-magazine luiza'));
+      final irParaInter = find.byKey(const ValueKey('ir-inter-magazine luiza'));
+      final topoAcompanhar = at.getTopLeft(acompanhar);
+      final topoCondicoes = at.getTopLeft(condicoes);
+      final topoIrParaInter = at.getTopLeft(irParaInter);
+
+      expect(topoAcompanhar.dy, lessThan(topoCondicoes.dy));
+      expect(topoCondicoes.dy, closeTo(topoIrParaInter.dy, 0.1));
+      expect(topoAcompanhar.dx, closeTo(topoCondicoes.dx, 0.1));
+      expect(topoIrParaInter.dx, greaterThan(topoCondicoes.dx));
+      expect(
+        at.getSize(irParaInter).width,
+        greaterThan(at.getSize(condicoes).width),
+      );
+      expect(at.takeException(), isNull);
+    }
   });
 
   testWidgets('abre condições completas preservando regras e quebra de linha', (
@@ -565,6 +624,10 @@ void main() {
   testWidgets('Sites parceiros abre exatamente a URL real fornecida pela API', (
     at,
   ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
     Uri? aberta;
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async =>
@@ -590,7 +653,8 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Ir para o Inter'));
+    final abrirInter = find.byKey(const ValueKey('ir-inter-c&a'));
+    await at.tap(abrirInter);
     await at.pumpAndSettle();
     expect(
       aberta,
@@ -601,6 +665,10 @@ void main() {
   testWidgets('Sites parceiros informa quando o sistema não abre o destino', (
     at,
   ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
     final controlador = ControladorCashbackInter(
       buscar: ({required q, required ordenar, required pagina}) async =>
           _pagina([_loja(nome: 'C&A')]),
@@ -622,7 +690,8 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Ir para o Inter'));
+    final abrirInter = find.byKey(const ValueKey('ir-inter-c&a'));
+    await at.tap(abrirInter);
     await at.pump();
     expect(find.text('Não foi possível abrir o Banco Inter.'), findsOneWidget);
   });

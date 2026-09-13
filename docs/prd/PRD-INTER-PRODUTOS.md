@@ -445,6 +445,19 @@ Nenhum código de persistência deve começar enquanto esse gate estiver aberto.
 
 ### 9.2 Busca de produtos e filtros no Flutter
 
+No mobile compacto, Produtos não é um destino global separado. A jornada fica
+ancorada em `Serviços → Banco Inter → Compre direto`, com as abas `Todas`,
+`Selecionadas` e `Produtos` na mesma composição. As duas primeiras mantêm a
+seleção administrativa de lojas; `Produtos` exibe a experiência completa do
+catálogo salvo, com escopo contextual, busca, filtros, agrupamento, histórico,
+links, paginação e estados reais. O atalho `Buscar produtos` da Home abre
+diretamente essa aba. O catálogo Pichau continua em sua própria subárea de
+Serviços e não é misturado aos produtos do Inter.
+
+Essa reorganização é exclusivamente de navegação mobile e não altera rotas,
+contratos, paginação ou origem de dados: o Flutter continua consultando a API
+do Radar, e a busca continua lendo somente o catálogo persistido.
+
 A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V11, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
 
 O campo de produtos segue o `SearchBox` da V11: ícone de busca, superfície clara com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
@@ -716,7 +729,10 @@ Além da seleção global administrativa de lojas, o app pode acompanhar um prod
 individual por `loja.slug + id_externo`. O PATCH autenticado grava a relação do
 usuário em `acompanhamento_usuario`; não altera seleção de loja nem inicia
 coleta. Alertas de preço/cashback só nascem após uma medição completa e válida,
-com o primeiro snapshot ignorado. O contrato compartilhado e retenções estão
+com o primeiro snapshot pessoal ignorado. A rodada coordenadora só chama a
+geração depois de definir seu estado final; lojas concluídas como degradadas ou
+falhas não geram alerta. O contrato compartilhado, o backfill sem push e as
+retenções estão
 em [`PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
 
 ### 15.3 Registro da especificação

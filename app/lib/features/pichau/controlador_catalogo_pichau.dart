@@ -54,7 +54,7 @@ typedef AlterarAcompanhamentoPichau =
 /// Estado do catálogo Pichau sem perder busca, filtros ou posição de página.
 ///
 /// A mutação é otimista para manter a resposta da interface igual à de Livelo
-/// e Inter. Em falha, o produto e o contador global voltam ao retrato anterior.
+/// e Inter. Em falha, o produto e o contador pessoal voltam ao retrato anterior.
 class ControladorCatalogoPichau extends ChangeNotifier {
   ControladorCatalogoPichau({
     required this.buscar,

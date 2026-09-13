@@ -360,6 +360,14 @@ class RepositorioProdutosInterPostgres:
                lojas_sucesso = %s, lojas_falha = %s, codigo_falha = %s
          WHERE id = %s AND estado = 'iniciada'
     """
+    LISTA_LOJAS_ALERTAS = """
+        SELECT id
+          FROM execucao_loja_produtos_inter
+         WHERE execucao_produtos_inter_id = %s
+           AND estado = 'sucesso'
+           AND qualidade = 'completa'
+         ORDER BY id
+    """
     EXPURGA_MEDICOES = (
         "DELETE FROM medicao_produto_direto_inter WHERE momento < now() - interval '30 days'"
     )
@@ -508,9 +516,6 @@ class RepositorioProdutosInterPostgres:
                     (execucao_id,),
                 )
                 cursor.execute(self.EXPURGA_MEDICOES)
-                if resumo.degradada is False:
-                    # Coleta degradada preserva o catálogo, mas não gera evento.
-                    cursor.execute(self.GERA_ALERTAS, (execucao_id,))
         except (psycopg.Error, RuntimeError, ValueError) as erro:
             raise FalhaAoGuardarProdutosInter(
                 f"Falha ao publicar catalogo de produtos: {type(erro).__name__}.", codigo="banco"
@@ -551,6 +556,10 @@ class RepositorioProdutosInterPostgres:
                 )
                 if cursor.rowcount != 1:
                     raise RuntimeError("Rodada nao estava iniciada")
+                if estado in {"sucesso", "parcial"}:
+                    cursor.execute(self.LISTA_LOJAS_ALERTAS, (rodada_id,))
+                    for (execucao_loja_id,) in cursor.fetchall():
+                        cursor.execute(self.GERA_ALERTAS, (int(execucao_loja_id),))
                 return estado
         except (psycopg.Error, RuntimeError) as erro:
             raise FalhaAoGuardarProdutosInter(

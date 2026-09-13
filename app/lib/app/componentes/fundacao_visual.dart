@@ -368,7 +368,7 @@ class AbasRadar extends StatelessWidget {
   final int selecionada;
   final ValueChanged<int> aoSelecionar;
   final Widget? acao;
-  final List<int>? contadores;
+  final List<int?>? contadores;
   final bool expandir;
 
   @override

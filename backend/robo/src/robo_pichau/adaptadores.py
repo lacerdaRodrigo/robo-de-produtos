@@ -2080,6 +2080,8 @@ class RepositorioPichauPostgres:
                         execucao_id,
                     ),
                 )
+                if resumo.degradada is False:
+                    cursor.execute("SELECT gerar_alertas_pichau(%s)", (execucao_id,))
                 cursor.execute(
                     "DELETE FROM pichau_medicao WHERE momento < %s",
                     (concluida - timedelta(days=30),),

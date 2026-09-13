@@ -255,6 +255,8 @@
     .chip { flex: 0 0 auto; min-height: 38px; padding: 0 13px; border: 1px solid var(--radar-line); border-radius: 999px; background: var(--radar-paper); color: var(--radar-muted); font-size: 11px; font-weight: 700; }
     .chip.active { border-color: var(--radar-plum); background: var(--radar-plum); color: #fff; }
     .catalog-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid var(--radar-line); border-radius: 18px; background: var(--radar-paper-soft); }
+    .direct-content-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .direct-content-tabs .catalog-tab { min-width: 0; padding-right: 7px; padding-left: 7px; }
     .catalog-tab { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 14px; background: transparent; color: var(--radar-muted); font-size: 11px; font-weight: 750; }
     .catalog-tab small { display: grid; place-items: center; min-width: 21px; height: 21px; padding: 0 6px; border-radius: 99px; background: var(--radar-paper); color: var(--radar-muted); font-size: 9px; }
     .catalog-tab.active { background: var(--radar-plum); color: var(--radar-on-plum); box-shadow: 0 8px 18px color-mix(in srgb, var(--radar-plum) 22%, transparent); }
@@ -323,6 +325,13 @@
     .cashback-line + .cashback-line { border-top: 1px solid var(--radar-line); }
     .cashback-line span { color: var(--radar-muted); font-size: 9px; font-weight: 700; }
     .cashback-line strong { color: var(--radar-positive); font-size: 12px; text-align: right; }
+    .cashback-card .card-foot { display: block; padding: 0; }
+    .cashback-follow-row { padding: 11px 15px 10px; }
+    .cashback-follow-button { width: 100%; min-height: 41px; padding: 0 13px; border: 1px solid color-mix(in srgb, var(--radar-action) 32%, var(--radar-line)); border-radius: 13px; background: var(--radar-action-soft); color: var(--radar-action-strong); font-size: 10px; font-weight: 800; }
+    .cashback-follow-button.active { border-color: color-mix(in srgb, var(--radar-positive) 30%, var(--radar-line)); background: var(--radar-positive-soft); color: var(--radar-positive); }
+    .cashback-actions { display: grid; grid-template-columns: .85fr 1.15fr; gap: 8px; padding: 0 15px 15px; }
+    .cashback-actions button { min-height: 41px; border-radius: 13px; font-size: 10px; }
+    .cashback-actions .details-button { min-height: 41px; padding: 0 10px; font-size: 10px; }
     .status-label { display: inline-flex; align-items: center; gap: 6px; color: var(--radar-positive); font-size: 10px; font-weight: 700; }
     .status-label::before { width: 7px; height: 7px; border-radius: 50%; background: currentColor; content: ""; }
     .details-label { color: var(--radar-action-strong); font-size: 11px; font-weight: 750; }
@@ -591,7 +600,7 @@
             </button>
           </div>
 
-          <div class="home-quick-actions"><button type="button" data-go="products">Buscar produtos</button><button type="button" data-go="services">Todos os serviços</button></div>
+          <div class="home-quick-actions"><button type="button" data-open-inter-products>Buscar produtos</button><button type="button" data-go="services">Todos os serviços</button></div>
           <p class="home-note">Os números desta demonstração vêm dos estados de teste já existentes. No aplicativo, o resumo é carregado pela conta autenticada.</p>
         </section>
 
@@ -669,28 +678,66 @@
             </div>
             <div class="collection-bar"><span class="collection-copy"><strong id="inter-count">4 lojas encontradas</strong><small id="inter-context">Catálogo completo de cashback</small></span><span class="status-label">Página 1</span></div>
             <div class="result-list" id="inter-results">
-              <article class="result-card cashback-card" data-name="magazine luiza magalu" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Magazine Luiza</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 20% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 20%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 14%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-magalu">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="riachuelo moda" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">RI</span><span><strong>Riachuelo</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>15% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>15%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>10,5%</strong></div></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-riachuelo">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="c&a ca moda" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">C&A</span><span><strong>C&A</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 12% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 12%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 8,4%</strong></div></div><div class="card-foot"><button class="follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button><button class="details-button" type="button" data-open-sheet="inter-ca">Ver condições</button></div></article>
-              <article class="result-card cashback-card" data-name="amazon ofertas" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Oferta disponível</span></div><div class="cashback-highlight neutral"><span>Cashback</span><strong>Percentual não informado</strong></div><div class="card-foot"><button class="follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button><button class="details-button" type="button" data-open-sheet="inter-amazon">Ver detalhes</button></div></article>
+              <article class="result-card cashback-card" data-name="magazine luiza magalu" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">ML</span><span><strong>Magazine Luiza</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 20% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 20%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 14%</strong></div></div><div class="card-foot"><div class="cashback-follow-row"><button class="cashback-follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button></div><div class="cashback-actions"><button class="details-button" type="button" data-open-sheet="inter-magalu">Ver condições</button><button class="primary" type="button" data-toast="Demonstração: o link seguro abriria esta loja no Shopping Inter.">Ir para o Inter</button></div></div></article>
+              <article class="result-card cashback-card" data-name="riachuelo moda" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">RI</span><span><strong>Riachuelo</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>15% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>15%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>10,5%</strong></div></div><div class="card-foot"><div class="cashback-follow-row"><button class="cashback-follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button></div><div class="cashback-actions"><button class="details-button" type="button" data-open-sheet="inter-riachuelo">Ver condições</button><button class="primary" type="button" data-toast="Demonstração: o link seguro abriria esta loja no Shopping Inter.">Ir para o Inter</button></div></div></article>
+              <article class="result-card cashback-card" data-name="c&a ca moda" data-group="monitored" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">C&A</span><span><strong>C&A</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Melhor cashback</span></div><div class="cashback-highlight"><span>Para correntista</span><strong>Até 12% de cashback</strong></div><div class="cashback-breakdown"><div class="cashback-line"><span>Para correntista</span><strong>Até 12%</strong></div><div class="cashback-line"><span>Para não-correntista</span><strong>Até 8,4%</strong></div></div><div class="card-foot"><div class="cashback-follow-row"><button class="cashback-follow-button active" type="button" aria-pressed="true" data-follow-cashback>Acompanhando</button></div><div class="cashback-actions"><button class="details-button" type="button" data-open-sheet="inter-ca">Ver condições</button><button class="primary" type="button" data-toast="Demonstração: o link seguro abriria esta loja no Shopping Inter.">Ir para o Inter</button></div></div></article>
+              <article class="result-card cashback-card" data-name="amazon ofertas" data-group="" data-cashback-store><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Site parceiro</small></span></span><span class="cashback-kicker">Oferta disponível</span></div><div class="cashback-highlight neutral"><span>Cashback</span><strong>Percentual não informado</strong></div><div class="card-foot"><div class="cashback-follow-row"><button class="cashback-follow-button" type="button" aria-pressed="false" data-follow-cashback>Acompanhar</button></div><div class="cashback-actions"><button class="details-button" type="button" data-open-sheet="inter-amazon">Ver detalhes</button><button class="primary" type="button" data-toast="Demonstração: o link seguro abriria esta loja no Shopping Inter.">Ir para o Inter</button></div></div></article>
             </div>
             <p class="empty" id="inter-empty">Nenhuma loja encontrada.</p>
             <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Próxima página seria solicitada à API.">2</button><button type="button" data-toast="Próxima página seria solicitada à API." aria-label="Próxima página">›</button></div>
           </div>
 
           <div class="hidden" id="inter-direct-view">
-            <div class="toolbar">
-              <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar loja do Compre direto</span><input id="direct-search" type="search" placeholder="Buscar loja no Compre direto"></label>
-              <div class="catalog-tabs" data-filter-group="direct" role="tablist" aria-label="Seleção de lojas do Compre direto"><button class="catalog-tab active" type="button" role="tab" aria-selected="true" data-filter="all"><span>Todas</span><small>3</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-filter="selected"><span>Selecionadas</span><small id="direct-selected-tab-count">1</small></button></div>
+            <div class="catalog-tabs direct-content-tabs" role="tablist" aria-label="Áreas do Compre direto"><button class="catalog-tab active" type="button" role="tab" aria-selected="true" data-direct-view="all"><span>Todas</span><small>3</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-direct-view="selected"><span>Selecionadas</span><small id="direct-selected-tab-count">1</small></button><button class="catalog-tab" type="button" role="tab" aria-selected="false" data-direct-view="products"><span>Produtos</span></button></div>
+            <div id="inter-direct-stores-view">
+              <div class="toolbar">
+                <label class="search-box search-only"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar loja do Compre direto</span><input id="direct-search" type="search" placeholder="Buscar loja no Compre direto"></label>
+              </div>
+              <div class="collection-bar"><span class="collection-copy"><strong id="direct-count">3 lojas encontradas</strong><small id="direct-context">Disponíveis para seleção</small></span><button class="update-products" type="button" data-toast="Atualização solicitada. Depois da coleta, os resultados ficam disponíveis em Produtos."><svg><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span>Atualizar produtos</span></button></div>
+              <div class="result-list" id="direct-results">
+                <article class="result-card" data-direct-store data-name="amazon marketplace" data-selected="true"><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Compre direto</small></span></span><span class="benefit-value">até 6%</span></div><div class="direct-summary"><span>Último catálogo<strong>18 produtos</strong></span><span>Seleção<strong data-direct-selection-label>Selecionada</strong></span></div><div class="card-foot"><button class="select-direct active" type="button" data-select-direct>Selecionada para coleta</button></div></article>
+                <article class="result-card" data-direct-store data-name="casas bahia marketplace" data-selected="false"><div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Compre direto</small></span></span><span class="benefit-value">Disponível</span></div><div class="direct-summary"><span>Produtos<strong>Após a primeira coleta</strong></span><span>Seleção<strong data-direct-selection-label>Não selecionada</strong></span></div><div class="card-foot"><button class="select-direct" type="button" data-select-direct>Selecionar loja</button></div></article>
+                <article class="result-card" data-direct-store data-name="ponto pontofrio marketplace" data-selected="false"><div class="card-top"><span class="store-identity"><span class="store-monogram">PO</span><span><strong>Ponto</strong><small>Compre direto</small></span></span><span class="benefit-value">Disponível</span></div><div class="direct-summary"><span>Produtos<strong>Após a primeira coleta</strong></span><span>Seleção<strong data-direct-selection-label>Não selecionada</strong></span></div><div class="card-foot"><button class="select-direct" type="button" data-select-direct>Selecionar loja</button></div></article>
+              </div>
+              <p class="empty" id="direct-empty">Nenhuma loja encontrada.</p>
+              <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Mais lojas seriam carregadas pela API.">2</button><button type="button" data-toast="Mais lojas seriam carregadas pela API." aria-label="Próxima página">›</button></div>
             </div>
-            <div class="collection-bar"><span class="collection-copy"><strong id="direct-count">3 lojas encontradas</strong><small id="direct-context">Disponíveis para seleção</small></span><button class="update-products" type="button" data-toast="Atualização solicitada. Depois da coleta, os resultados ficam disponíveis em Produtos."><svg><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span>Atualizar produtos</span></button></div>
-            <div class="result-list" id="direct-results">
-              <article class="result-card" data-direct-store data-name="amazon marketplace" data-selected="true"><div class="card-top"><span class="store-identity"><span class="store-monogram">AM</span><span><strong>Amazon</strong><small>Compre direto</small></span></span><span class="benefit-value">até 6%</span></div><div class="direct-summary"><span>Último catálogo<strong>18 produtos</strong></span><span>Seleção<strong data-direct-selection-label>Selecionada</strong></span></div><div class="card-foot"><button class="select-direct active" type="button" data-select-direct>Selecionada para coleta</button></div></article>
-              <article class="result-card" data-direct-store data-name="casas bahia marketplace" data-selected="false"><div class="card-top"><span class="store-identity"><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Compre direto</small></span></span><span class="benefit-value">Disponível</span></div><div class="direct-summary"><span>Produtos<strong>Após a primeira coleta</strong></span><span>Seleção<strong data-direct-selection-label>Não selecionada</strong></span></div><div class="card-foot"><button class="select-direct" type="button" data-select-direct>Selecionar loja</button></div></article>
-              <article class="result-card" data-direct-store data-name="ponto pontofrio marketplace" data-selected="false"><div class="card-top"><span class="store-identity"><span class="store-monogram">PO</span><span><strong>Ponto</strong><small>Compre direto</small></span></span><span class="benefit-value">Disponível</span></div><div class="direct-summary"><span>Produtos<strong>Após a primeira coleta</strong></span><span>Seleção<strong data-direct-selection-label>Não selecionada</strong></span></div><div class="card-foot"><button class="select-direct" type="button" data-select-direct>Selecionar loja</button></div></article>
+            <div class="hidden" id="inter-direct-products-view">
+              <div class="page-heading"><p class="eyebrow">Compre direto</p><h1 class="page-title">Produtos</h1><p class="page-lead">Compare preços e cashback nos catálogos das lojas que você selecionou.</p></div>
+              <section class="category-entry" aria-labelledby="category-entry-title">
+                <div class="category-entry-head"><span><strong id="category-entry-title">Comece por uma área</strong><small>Depois descreva marca, modelo ou característica para buscar no catálogo salvo.</small></span><button class="quiet" type="button" data-clear-product-scope>Buscar em todo catálogo</button></div>
+                <div class="category-grid" aria-label="Áreas para buscar produtos">
+                  <button class="category-entry-button" type="button" data-open-product-category="eletronicos"><strong>Eletrônicos</strong><small>Celulares, TV, computadores e áudio</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="casa"><strong>Casa e cozinha</strong><small>Eletrodomésticos, móveis e utilidades</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="beleza"><strong>Beleza e cuidados</strong><small>Maquiagem, cabelos e perfumaria</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="mercado"><strong>Mercado</strong><small>Alimentos, bebidas e suplementos</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="saude"><strong>Saúde e bem-estar</strong><small>Cuidados de saúde e primeiros socorros</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="infantil"><strong>Bebês e brinquedos</strong><small>Itens infantis e diversão</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="pet"><strong>Pet</strong><small>Alimentação, higiene e acessórios</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="esporte"><strong>Esporte e lazer</strong><small>Fitness, bikes e lazer</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="ferramentas"><strong>Ferramentas</strong><small>Construção e casa</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="auto"><strong>Auto</strong><small>Pneus e acessórios</small></button>
+                  <button class="category-entry-button" type="button" data-open-product-category="moda"><strong>Moda</strong><small>Roupas, calçados e acessórios</small></button>
+                </div>
+              </section>
+              <div class="toolbar">
+                <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar produtos</span><input id="product-search" type="search" value="Motorola Edge 60 Pro" placeholder="Ex.: Samsung Galaxy"><button type="button" id="product-submit" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
+              </div>
+              <div class="scope-bar" id="product-scope"><span><strong id="product-scope-title"></strong><small id="product-scope-description"></small></span><button type="button" data-clear-product-scope>Alterar</button></div>
+              <div class="collection-bar"><span class="collection-copy"><strong id="product-count">2 ofertas encontradas</strong><small>Menor preço primeiro</small></span><button class="filter-trigger" id="product-filter-trigger" type="button" data-open-sheet="product-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filtrar resultados</span></button></div>
+              <div class="catalog-notice"><svg><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/></svg><span>Uma atualização foi parcial. Você continua vendo o último catálogo válido de cada loja.</span></div>
+              <div class="result-list" id="product-results">
+                <section class="product-store-group" data-product-group>
+                  <div class="product-store-head"><span><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Atualizado em 22 ago · 09h</small></span></span><span class="store-offer-count">1 oferta</span></div>
+                  <article class="result-card product-card" data-product="motorola edge 60 pro casas bahia celular" data-scope="celulares" data-brand="motorola" data-category="celular" data-store="casas-bahia" data-price="3688.89"><div class="product-card-main"><div><p class="product-tags"><span>Motorola</span><span>Celular</span></p><h2 class="product-name">Motorola Edge 60 Pro</h2></div><span class="cashback-badge">9% cashback</span></div><div class="product-price-row"><div class="product-price"><span>Preço atual</span><strong>R$ 3.688,89</strong><small>De R$ 4.000,00 · 8% off</small></div><div class="product-price net"><span>Após cashback</span><strong>R$ 3.356,89</strong><small>R$ 332,00 de volta</small></div></div><div class="product-meta"><span>10x sem juros</span><span>Em estoque</span><span>Oferta</span></div><div class="product-actions"><button class="secondary" type="button" data-open-sheet="product-history">Histórico</button><button class="primary" type="button" data-toast="O link seguro abriria este produto no Shopping Inter.">Abrir no Inter</button></div></article>
+                </section>
+                <section class="product-store-group" data-product-group>
+                  <div class="product-store-head"><span><span class="store-monogram">PO</span><span><strong>Ponto</strong><small>Atualizado em 22 ago · 09h</small></span></span><span class="store-offer-count">1 oferta</span></div>
+                  <article class="result-card product-card" data-product="motorola edge 60 pro ponto celular" data-scope="celulares" data-brand="motorola" data-category="celular" data-store="ponto" data-price="3688.89"><div class="product-card-main"><div><p class="product-tags"><span>Motorola</span><span>Celular</span></p><h2 class="product-name">Motorola Edge 60 Pro</h2></div><span class="cashback-badge">9% cashback</span></div><div class="product-price-row"><div class="product-price"><span>Preço atual</span><strong>R$ 3.688,89</strong><small>De R$ 4.000,00 · 8% off</small></div><div class="product-price net"><span>Após cashback</span><strong>R$ 3.356,89</strong><small>R$ 332,00 de volta</small></div></div><div class="product-meta"><span>10x sem juros</span><span>Em estoque</span><span>Oferta</span></div><div class="product-actions"><button class="secondary" type="button" data-toast="O histórico de 30 dias deste produto na Ponto seria aberto.">Histórico</button><button class="primary" type="button" data-toast="O link seguro abriria este produto no Shopping Inter.">Abrir no Inter</button></div></article>
+                </section>
+              </div>
+              <p class="empty" id="product-empty">Nenhum produto encontrado. Digite pelo menos 2 caracteres ou ajuste os filtros.</p>
             </div>
-            <p class="empty" id="direct-empty">Nenhuma loja encontrada.</p>
-            <div class="pagination"><button class="active" type="button">1</button><button type="button" data-toast="Mais lojas seriam carregadas pela API.">2</button><button type="button" data-toast="Mais lojas seriam carregadas pela API." aria-label="Próxima página">›</button></div>
           </div>
         </section>
 
@@ -764,43 +811,6 @@
           <p class="pichau-external-note">O histórico de preços fica no backend e não é exibido nesta primeira tela. Imagens não são armazenadas pelo Radar.</p>
         </section>
 
-        <section class="page" data-page="products">
-          <div class="page-heading"><p class="eyebrow">Compre direto</p><h1 class="page-title">Produtos</h1><p class="page-lead">Compare preços e cashback nos catálogos das lojas que você selecionou.</p></div>
-          <section class="category-entry" aria-labelledby="category-entry-title">
-            <div class="category-entry-head"><span><strong id="category-entry-title">Comece por uma área</strong><small>Depois descreva marca, modelo ou característica para buscar no catálogo salvo.</small></span><button class="quiet" type="button" data-clear-product-scope>Buscar em todo catálogo</button></div>
-            <div class="category-grid" aria-label="Áreas para buscar produtos">
-              <button class="category-entry-button" type="button" data-open-product-category="eletronicos"><strong>Eletrônicos</strong><small>Celulares, TV, computadores e áudio</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="casa"><strong>Casa e cozinha</strong><small>Eletrodomésticos, móveis e utilidades</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="beleza"><strong>Beleza e cuidados</strong><small>Maquiagem, cabelos e perfumaria</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="mercado"><strong>Mercado</strong><small>Alimentos, bebidas e suplementos</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="saude"><strong>Saúde e bem-estar</strong><small>Cuidados de saúde e primeiros socorros</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="infantil"><strong>Bebês e brinquedos</strong><small>Itens infantis e diversão</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="pet"><strong>Pet</strong><small>Alimentação, higiene e acessórios</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="esporte"><strong>Esporte e lazer</strong><small>Fitness, bikes e lazer</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="ferramentas"><strong>Ferramentas</strong><small>Construção e casa</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="auto"><strong>Auto</strong><small>Pneus e acessórios</small></button>
-              <button class="category-entry-button" type="button" data-open-product-category="moda"><strong>Moda</strong><small>Roupas, calçados e acessórios</small></button>
-            </div>
-          </section>
-          <div class="toolbar">
-            <label class="search-box"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="sr-only">Buscar produtos</span><input id="product-search" type="search" value="Motorola Edge 60 Pro" placeholder="Ex.: Samsung Galaxy"><button type="button" id="product-submit" aria-label="Buscar"><svg><path d="m8 5 7 7-7 7"/></svg></button></label>
-          </div>
-          <div class="scope-bar" id="product-scope"><span><strong id="product-scope-title"></strong><small id="product-scope-description"></small></span><button type="button" data-clear-product-scope>Alterar</button></div>
-          <div class="collection-bar"><span class="collection-copy"><strong id="product-count">2 ofertas encontradas</strong><small>Menor preço primeiro</small></span><button class="filter-trigger" id="product-filter-trigger" type="button" data-open-sheet="product-filters"><svg><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Filtrar resultados</span></button></div>
-          <div class="catalog-notice"><svg><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 17h.01"/></svg><span>Uma atualização foi parcial. Você continua vendo o último catálogo válido de cada loja.</span></div>
-          <div class="result-list" id="product-results">
-            <section class="product-store-group" data-product-group>
-              <div class="product-store-head"><span><span class="store-monogram">CB</span><span><strong>Casas Bahia</strong><small>Atualizado em 22 ago · 09h</small></span></span><span class="store-offer-count">1 oferta</span></div>
-              <article class="result-card product-card" data-product="motorola edge 60 pro casas bahia celular" data-scope="celulares" data-brand="motorola" data-category="celular" data-store="casas-bahia" data-price="3688.89"><div class="product-card-main"><div><p class="product-tags"><span>Motorola</span><span>Celular</span></p><h2 class="product-name">Motorola Edge 60 Pro</h2></div><span class="cashback-badge">9% cashback</span></div><div class="product-price-row"><div class="product-price"><span>Preço atual</span><strong>R$ 3.688,89</strong><small>De R$ 4.000,00 · 8% off</small></div><div class="product-price net"><span>Após cashback</span><strong>R$ 3.356,89</strong><small>R$ 332,00 de volta</small></div></div><div class="product-meta"><span>10x sem juros</span><span>Em estoque</span><span>Oferta</span></div><div class="product-actions"><button class="secondary" type="button" data-open-sheet="product-history">Histórico</button><button class="primary" type="button" data-toast="O link seguro abriria este produto no Shopping Inter.">Abrir no Inter</button></div></article>
-            </section>
-            <section class="product-store-group" data-product-group>
-              <div class="product-store-head"><span><span class="store-monogram">PO</span><span><strong>Ponto</strong><small>Atualizado em 22 ago · 09h</small></span></span><span class="store-offer-count">1 oferta</span></div>
-              <article class="result-card product-card" data-product="motorola edge 60 pro ponto celular" data-scope="celulares" data-brand="motorola" data-category="celular" data-store="ponto" data-price="3688.89"><div class="product-card-main"><div><p class="product-tags"><span>Motorola</span><span>Celular</span></p><h2 class="product-name">Motorola Edge 60 Pro</h2></div><span class="cashback-badge">9% cashback</span></div><div class="product-price-row"><div class="product-price"><span>Preço atual</span><strong>R$ 3.688,89</strong><small>De R$ 4.000,00 · 8% off</small></div><div class="product-price net"><span>Após cashback</span><strong>R$ 3.356,89</strong><small>R$ 332,00 de volta</small></div></div><div class="product-meta"><span>10x sem juros</span><span>Em estoque</span><span>Oferta</span></div><div class="product-actions"><button class="secondary" type="button" data-toast="O histórico de 30 dias deste produto na Ponto seria aberto.">Histórico</button><button class="primary" type="button" data-toast="O link seguro abriria este produto no Shopping Inter.">Abrir no Inter</button></div></article>
-            </section>
-          </div>
-          <p class="empty" id="product-empty">Nenhum produto encontrado. Digite pelo menos 2 caracteres ou ajuste os filtros.</p>
-        </section>
-
         <section class="page" data-page="admin">
           <button class="back-button" type="button" data-go="home"><svg><path d="m15 18-6-6 6-6"/></svg>Voltar ao resumo</button>
           <div class="page-heading"><p class="eyebrow">Acesso autorizado</p><h1 class="page-title">Administração</h1><p class="page-lead">Somente operações com rota, autorização e persistência comprovadas.</p></div>
@@ -834,7 +844,6 @@
       <nav class="dock" aria-label="Navegação principal">
         <button class="dock-button active" type="button" data-go="home"><svg><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Resumo</span></button>
         <button class="dock-button" type="button" data-go="services"><svg><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v5H4zM14 15h6v5h-6z"/></svg><span>Serviços</span></button>
-        <button class="dock-button" type="button" data-go="products"><svg><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Produtos</span></button>
       </nav>
     </section>
   </div>
@@ -1092,6 +1101,21 @@
         document.getElementById('inter-cashback-view').classList.toggle('hidden', direct);
         document.getElementById('inter-direct-view').classList.toggle('hidden', !direct);
       }
+      let directSubmode = 'all';
+      function setDirectSubmode(mode) {
+        if (!['all', 'selected', 'products'].includes(mode)) return;
+        directSubmode = mode;
+        document.querySelectorAll('[data-direct-view]').forEach(button => {
+          const active = button.dataset.directView === mode;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-selected', String(active));
+        });
+        const products = mode === 'products';
+        document.getElementById('inter-direct-stores-view').classList.toggle('hidden', products);
+        document.getElementById('inter-direct-products-view').classList.toggle('hidden', !products);
+        if (products) searchProducts();
+        else filterDirectStores(mode);
+      }
       function sortLiveloCards() {
         const list = document.getElementById('livelo-results');
         const cards = [...list.querySelectorAll('[data-store-card]')];
@@ -1183,7 +1207,10 @@
         const pichauState = event.target.closest('[data-pichau-state]'); if (pichauState) setPichauState(pichauState.dataset.pichauState);
         const interMode = event.target.closest('[data-inter-mode]');
         if (interMode) setInterMode(interMode.dataset.interMode);
-        if (event.target.closest('[data-open-direct-stores]')) { go('inter'); setInterMode('direct'); }
+        if (event.target.closest('[data-open-direct-stores]')) { go('inter'); setInterMode('direct'); setDirectSubmode('all'); }
+        const directView = event.target.closest('[data-direct-view]');
+        if (directView) setDirectSubmode(directView.dataset.directView);
+        if (event.target.closest('[data-open-inter-products]')) { go('inter'); setInterMode('direct'); setDirectSubmode('products'); }
         const close = event.target.closest('.sheet-close'); if (close) closeSheet();
         const back = event.target.closest('[data-sheet-back]');
         if (back) {
@@ -1249,8 +1276,7 @@
           directSelect.textContent = selected ? 'Selecionada para coleta' : 'Selecionar loja';
           card.querySelector('[data-direct-selection-label]').textContent = selected ? 'Selecionada' : 'Não selecionada';
           updateDirectSelectedCount();
-          const active = document.querySelector('[data-filter-group="direct"] [data-filter].active');
-          filterDirectStores(active?.dataset.filter || 'all');
+          filterDirectStores(directSubmode);
           showToast(selected ? 'Loja selecionada para a próxima coleta.' : 'Loja removida da próxima coleta.');
         }
         const applyLiveloFilters = event.target.closest('[data-apply-livelo-filters]');
@@ -1317,10 +1343,6 @@
             document.getElementById('inter-empty').textContent = showingAll ? 'Nenhuma loja encontrada.' : 'Você ainda não acompanha nenhuma loja do Inter nesta busca.';
             filterList(document.getElementById('inter-search'), 'inter-results', 'inter-empty', chip.dataset.filter);
           }
-          if (groupEl.dataset.filterGroup === 'direct') {
-            document.getElementById('direct-context').textContent = chip.dataset.filter === 'all' ? 'Disponíveis para seleção' : 'Selecionadas para a próxima coleta';
-            filterDirectStores(chip.dataset.filter);
-          }
           if (groupEl.dataset.filterGroup === 'pichau') {
             pichauFilterGroup = chip.dataset.filter;
             searchPichau();
@@ -1331,7 +1353,7 @@
       document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSheet(); });
       document.getElementById('livelo-search').addEventListener('input', event => { const active = document.querySelector('[data-filter-group="livelo"] [data-filter].active'); filterList(event.target, 'livelo-results', 'livelo-empty', active?.dataset.filter || 'all'); });
       document.getElementById('inter-search').addEventListener('input', event => { const active = document.querySelector('[data-filter-group="inter-cashback"] [data-filter].active'); filterList(event.target, 'inter-results', 'inter-empty', active?.dataset.filter || 'all'); });
-      document.getElementById('direct-search').addEventListener('input', () => { const active = document.querySelector('[data-filter-group="direct"] [data-filter].active'); filterDirectStores(active?.dataset.filter || 'all'); });
+      document.getElementById('direct-search').addEventListener('input', () => { filterDirectStores(directSubmode); });
       const serviceSearch = document.getElementById('service-search');
       serviceSearch.addEventListener('input', () => {
         const q = serviceSearch.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -1448,6 +1470,7 @@
       updateDirectSelectedCount();
       sortLiveloCards();
       searchProducts();
+      setDirectSubmode('all');
       setPichauState('updated');
       content.addEventListener('click', () => {});
     })();

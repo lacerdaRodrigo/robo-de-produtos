@@ -65,7 +65,7 @@ export type DependenciasResumoInicio = {
   livelo: () => Promise<ResumoLiveloPersistido>;
   cashbackInter: () => Promise<ResumoCashbackInterPersistido>;
   produtos: () => Promise<ResumoProdutosPersistido>;
-  pichau: () => Promise<ResumoPichauPersistido>;
+  pichau: (usuarioId?: string) => Promise<ResumoPichauPersistido>;
 };
 
 const dependenciasPadrao: DependenciasResumoInicio = {
@@ -242,6 +242,8 @@ const pichauIndisponivel: ResumoInicio["pichau"] = {
   ultima_tentativa_estado: null,
   ultimo_sucesso_em: null,
   qualidade: null,
+  total_catalogo: 0,
+  acompanhadas: 0,
   produtos_ativos: 0,
   produtos_esgotados: 0,
 };
@@ -249,12 +251,13 @@ const pichauIndisponivel: ResumoInicio["pichau"] = {
 export async function carregarResumoInicio(
   deps: DependenciasResumoInicio = dependenciasPadrao,
   agora = new Date(),
+  usuarioId?: string,
 ): Promise<ResumoInicio> {
   const [liveloLido, cashbackLido, produtosLidos, pichauLido] = await Promise.allSettled([
     deps.livelo(),
     deps.cashbackInter(),
     deps.produtos(),
-    deps.pichau(),
+    deps.pichau(usuarioId),
   ]);
 
   const livelo: ResumoInicio["livelo"] =

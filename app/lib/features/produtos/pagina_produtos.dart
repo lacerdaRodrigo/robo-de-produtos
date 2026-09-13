@@ -23,6 +23,7 @@ class PaginaProdutos extends StatefulWidget {
     this.incorporada = false,
     this.mostrarTituloInterno = true,
     this.experienciaCompacta = false,
+    this.sliversAntes = const [],
   });
 
   final Api api;
@@ -31,6 +32,7 @@ class PaginaProdutos extends StatefulWidget {
   final bool incorporada;
   final bool mostrarTituloInterno;
   final bool experienciaCompacta;
+  final List<Widget> sliversAntes;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -264,6 +266,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       key: const Key('produtos-compacto'),
       controller: _rolagem,
       slivers: [
+        ...widget.sliversAntes,
         if (widget.mostrarTituloInterno)
           const SliverPadding(
             padding: EdgeInsets.fromLTRB(18, 22, 18, 20),

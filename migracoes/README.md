@@ -32,11 +32,14 @@ cria o `001` e carrega o catálogo.
 | `022_pichau_android_fila.sql` | fila idempotente do executor Android | Pichau |
 | `023_alertas_suporte_privacidade.sql` | acompanhamentos pessoais, eventos, preferências, tokens FCM, outbox e relatos | Central de Alertas/app |
 | `024_pichau_android_diagnostico.sql` | diagnóstico JSONB seguro e limitado na fila Android | Pichau |
+| `025_pichau_acompanhamento.sql` | seleção administrativa idempotente de produtos acompanhados | Pichau/API |
+| `026_alertas_pichau_pessoal.sql` | origem Pichau na Central, push controlado e geração após coleta completa | Alertas/Pichau |
+| `027_backfill_alertas_sem_push.sql` | ponte das seleções legadas para a conta pessoal e recuperação Inter | Operação/Alertas |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009`, `013`–`022` e `024` (coleta Livelo/Inter/produtos, histórico, categorias e Pichau).
-- API do app: `010`–`020` e `023` (autenticação, disparos, catálogos e Central de Alertas).
+- Robôs: `001`–`009`, `013`–`022`, `024` e `026` (coleta Livelo/Inter/produtos, histórico, categorias, Pichau e alertas).
+- API do app: `010`–`020`, `023`, `025` e `026` (autenticação, disparos, catálogos, acompanhamentos e Central de Alertas).
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
 > feita por esta organização de pastas. Conforme confirmação operacional do
@@ -55,3 +58,11 @@ de `pichau_dispatcher` (`SELECT/INSERT`) e `pichau_publisher`
 `production`. Depois da confirmação do responsável, a migration foi aplicada
 em `production`; a verificação somente de leitura confirmou os mesmos
 resultados nas 47 linhas existentes.
+
+`025` depende de `021`, preserva todos os produtos existentes com
+`acompanhada = FALSE` e ainda aguarda validação/aplicação externa em branch
+isolada antes de produção.
+
+`026` depende de `023` e `025`; `027` depende de `026` e é uma operação única,
+protegida contra bases com mais de um usuário ativo. Nenhuma das duas é
+executada automaticamente pelo checkout.

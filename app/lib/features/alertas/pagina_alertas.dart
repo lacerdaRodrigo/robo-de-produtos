@@ -340,7 +340,7 @@ class _CartaoAlerta extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '${alerta.origem} · ${alerta.criadoEm}',
+                  '${_rotuloOrigem(alerta.origem)} · ${alerta.criadoEm}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: cores.textoSuave,
                     fontSize: 9,
@@ -467,4 +467,12 @@ String _rotuloTipo(TipoAlertaApp tipo) => switch (tipo) {
   TipoAlertaApp.preco => 'Preço mudou',
   TipoAlertaApp.cashback => 'Cashback mudou',
   TipoAlertaApp.pontuacao => 'Pontuação mudou',
+};
+
+String _rotuloOrigem(String origem) => switch (origem) {
+  'livelo' => 'Livelo',
+  'inter_cashback' => 'Inter Sites parceiros',
+  'inter_produto' => 'Inter Compre direto',
+  'pichau' => 'Pichau',
+  _ => origem,
 };

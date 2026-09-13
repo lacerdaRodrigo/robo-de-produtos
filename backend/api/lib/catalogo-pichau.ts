@@ -10,3 +10,14 @@ export function buscaPichau(q: string): string {
 export function idPichauValido(id: string): boolean {
   return ID_PICHAU_VALIDO.test(id);
 }
+
+export function validarAcompanhamentoPichau(
+  corpo: unknown,
+): { ok: true; acompanhada: boolean } | { ok: false } {
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) return { ok: false };
+  const objeto = corpo as Record<string, unknown>;
+  if (Object.keys(objeto).length !== 1 || typeof objeto.acompanhada !== "boolean") {
+    return { ok: false };
+  }
+  return { ok: true, acompanhada: objeto.acompanhada };
+}

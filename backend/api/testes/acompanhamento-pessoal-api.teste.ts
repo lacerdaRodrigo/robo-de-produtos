@@ -16,6 +16,7 @@ vi.mock("@/lib/banco-alertas", () => ({
 }));
 
 import { PATCH as acompanharLivelo } from "@/app/api/livelo/catalogo/[id_externo]/acompanhamento-pessoal/route";
+import { PATCH as acompanharPichau } from "@/app/api/pichau/catalogo/[id_externo]/acompanhamento-pessoal/route";
 import { PATCH as acompanharCashback } from "@/app/api/inter/cashback/[id]/acompanhamento/route";
 
 describe("acompanhamento pessoal da Central", () => {
@@ -56,5 +57,19 @@ describe("acompanhamento pessoal da Central", () => {
     expect(resposta.status).toBe(400);
     expect(dependencias.resolver).not.toHaveBeenCalled();
     expect(dependencias.alterar).not.toHaveBeenCalled();
+  });
+
+  it("resolve o produto Pichau pela chave externa e grava no usuário autenticado", async () => {
+    const resposta = await acompanharPichau(
+      new Request("http://localhost/api/pichau/catalogo/PG-1/acompanhamento-pessoal", {
+        method: "PATCH",
+        body: JSON.stringify({ ativo: true }),
+      }),
+      { params: Promise.resolve({ id_externo: "PG-1" }) },
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.resolver).toHaveBeenCalledWith("pichau", "PG-1");
+    expect(dependencias.alterar).toHaveBeenCalledWith("42", "pichau", "17", true);
   });
 });

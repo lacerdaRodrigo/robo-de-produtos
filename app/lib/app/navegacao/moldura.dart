@@ -54,6 +54,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   final _scaffold = GlobalKey<ScaffoldState>();
   final _lojas = GlobalKey<EstadoPaginaLojas>();
+  final _inter = GlobalKey<EstadoPaginaHubShoppingInter>();
   final Set<DestinoCompacto> _visitadosCompactos = {DestinoCompacto.inicio};
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
@@ -137,7 +138,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       aoAbrirProgramas: () => _selecionarCompacto(DestinoCompacto.programas),
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
-      aoAbrirProdutos: () => _selecionarCompacto(DestinoCompacto.produtos),
+      aoAbrirProdutos: _abrirProdutosNoInter,
     ),
     _visitadosCompactos.contains(DestinoCompacto.programas)
         ? PaginaProgramas(
@@ -173,7 +174,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             chaveVoltar: const Key('voltar-programas-inter'),
             aoVoltar: () => _selecionarCompacto(DestinoCompacto.programas),
             child: PaginaHubShoppingInter(
-              key: const PageStorageKey('inter-compacto'),
+              key: _inter,
               api: widget.api,
               administrador: widget.administrador,
               experienciaCompacta: true,
@@ -193,16 +194,14 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             ),
           )
         : const SizedBox.shrink(),
-    _visitadosCompactos.contains(DestinoCompacto.produtos)
-        ? PaginaProdutos(
-            key: const PageStorageKey('produtos-compacto'),
-            api: widget.api,
-            administrador: widget.administrador,
-            incorporada: true,
-            experienciaCompacta: true,
-          )
-        : const SizedBox.shrink(),
   ];
+
+  void _abrirProdutosNoInter() {
+    _selecionarCompacto(DestinoCompacto.inter);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _inter.currentState?.abrirProdutos();
+    });
+  }
 
   Future<void> _abrirAlertas({String? coleta}) =>
       Navigator.of(context).push<void>(
@@ -447,7 +446,6 @@ class _BarraInferiorRadar extends StatelessWidget {
   static const _destinos = <DestinoCompacto>[
     DestinoCompacto.inicio,
     DestinoCompacto.programas,
-    DestinoCompacto.produtos,
   ];
 
   @override

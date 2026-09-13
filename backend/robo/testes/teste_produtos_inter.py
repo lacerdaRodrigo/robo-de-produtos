@@ -620,3 +620,63 @@ def teste_execucao_abandonada_e_reconciliada_antes_da_nova_rodada(monkeypatch):
     assert "loja.estado = 'iniciada'" in reconciliacao
     assert "UPDATE produto_direto_inter" not in reconciliacao
     assert "DELETE FROM" not in reconciliacao
+
+
+def teste_conclusao_da_rodada_gera_alertas_depois_do_estado_final(monkeypatch):
+    class CursorFake:
+        def __init__(self):
+            self.comandos = []
+            self.ultima_consulta = ""
+            self.rowcount = 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def execute(self, comando, parametros=None):
+            self.comandos.append((comando, parametros))
+            self.ultima_consulta = comando
+            self.rowcount = 1
+
+        def fetchone(self):
+            return (2, 2)
+
+        def fetchall(self):
+            if self.ultima_consulta == RepositorioProdutosInterPostgres.LISTA_LOJAS_ALERTAS:
+                return [(71,), (72,)]
+            return []
+
+    class ConexaoFake:
+        def __init__(self, cursor):
+            self._cursor = cursor
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, tipo, valor, traceback):
+            return False
+
+        def cursor(self):
+            return self._cursor
+
+    cursor = CursorFake()
+    psycopg_fake = types.SimpleNamespace(
+        connect=lambda url: ConexaoFake(cursor),
+        Error=RuntimeError,
+    )
+    monkeypatch.setitem(sys.modules, "psycopg", psycopg_fake)
+    repositorio = RepositorioProdutosInterPostgres("postgresql://teste")
+
+    assert repositorio.concluir_rodada(91, AGORA) == "sucesso"
+
+    comandos = [comando for comando, _ in cursor.comandos]
+    indice_conclusao = comandos.index(repositorio.CONCLUI_RODADA)
+    indice_lista = comandos.index(repositorio.LISTA_LOJAS_ALERTAS)
+    assert indice_conclusao < indice_lista
+    assert comandos[indice_lista + 1:] == [repositorio.GERA_ALERTAS, repositorio.GERA_ALERTAS]
+    assert [parametros for comando, parametros in cursor.comandos if comando == repositorio.GERA_ALERTAS] == [
+        (71,),
+        (72,),
+    ]

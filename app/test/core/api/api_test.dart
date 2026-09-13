@@ -409,6 +409,30 @@ void main() {
     expect(requisicoes[2].body, '{"ativo":true}');
   });
 
+  test('acompanhamento Pichau usa a rota pessoal e o campo ativo', () async {
+    late http.Request requisicao;
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((entrada) async {
+          requisicao = entrada;
+          return http.Response('{}', 200);
+        }),
+      ),
+    );
+
+    await api.alterarAcompanhamentoPichau(idExterno: 'PG-1', acompanhada: true);
+
+    expect(requisicao.method, 'PATCH');
+    expect(
+      requisicao.url.path,
+      '/api/pichau/catalogo/PG-1/acompanhamento-pessoal',
+    );
+    expect(requisicao.body, '{"ativo":true}');
+  });
+
   test('painelCashbackInter preserva a oferta textual e a paginação', () async {
     Uri? consulta;
     final api = Api(

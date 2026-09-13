@@ -179,7 +179,6 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
             for (final produto in itens) ...[
               CartaoPichau(
                 produto: produto,
-                podeAdministrar: widget.administrador,
                 alterando: _controlador.mutacoesPendentes.contains(
                   produto.idExterno,
                 ),
@@ -346,7 +345,6 @@ class CartaoPichau extends StatelessWidget {
     super.key,
     required this.produto,
     required this.aoAbrirHistorico,
-    this.podeAdministrar = false,
     this.alterando = false,
     this.aoAlternarAcompanhamento,
     this.aoAbrirNoSite,
@@ -354,7 +352,6 @@ class CartaoPichau extends StatelessWidget {
 
   final PichauProduto produto;
   final VoidCallback aoAbrirHistorico;
-  final bool podeAdministrar;
   final bool alterando;
   final VoidCallback? aoAlternarAcompanhamento;
   final VoidCallback? aoAbrirNoSite;
@@ -467,9 +464,7 @@ class CartaoPichau extends StatelessWidget {
               const SizedBox(height: 11),
               OutlinedButton(
                 key: Key('acompanhar-pichau-${produto.idExterno}'),
-                onPressed: podeAdministrar && !alterando
-                    ? aoAlternarAcompanhamento
-                    : null,
+                onPressed: !alterando ? aoAlternarAcompanhamento : null,
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(41),
                   foregroundColor: produto.acompanhada
@@ -494,17 +489,6 @@ class CartaoPichau extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
               ),
-              if (!podeAdministrar)
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: Text(
-                    'Acompanhamento exige autorização administrativa.',
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
               const SizedBox(height: 10),
               Row(
                 children: [

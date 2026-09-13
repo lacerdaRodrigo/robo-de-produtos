@@ -11,7 +11,7 @@ function conectar() {
 
 export type AlertaApp = {
   id: string;
-  origem: "livelo" | "inter_cashback" | "inter_produto";
+  origem: "livelo" | "inter_cashback" | "inter_produto" | "pichau";
   tipo: TipoAlerta;
   entidade_id: string;
   entidade_externa: string | null;
@@ -129,7 +129,7 @@ export async function removerDispositivo(usuarioId: string, token: string): Prom
 
 export async function alterarAcompanhamentoPessoal(
   usuarioId: string,
-  origem: "livelo" | "inter_cashback" | "inter_produto",
+  origem: "livelo" | "inter_cashback" | "inter_produto" | "pichau",
   entidadeId: string,
   ativo: boolean,
 ): Promise<boolean> {
@@ -152,7 +152,7 @@ export async function alterarAcompanhamentoPessoal(
 }
 
 export async function entidadeAcompanhavelExiste(
-  origem: "livelo" | "inter_cashback" | "inter_produto",
+  origem: "livelo" | "inter_cashback" | "inter_produto" | "pichau",
   entidadeId: string,
 ): Promise<boolean> {
   const sql = conectar();
@@ -161,15 +161,16 @@ export async function entidadeAcompanhavelExiste(
       WHEN ${origem} = 'livelo' THEN EXISTS (SELECT 1 FROM parceiro_livelo WHERE id = ${entidadeId} AND ativo = TRUE)
       WHEN ${origem} = 'inter_cashback' THEN EXISTS (SELECT 1 FROM loja_inter WHERE id = ${entidadeId} AND ativa = TRUE)
       WHEN ${origem} = 'inter_produto' THEN EXISTS (SELECT 1 FROM produto_direto_inter WHERE id = ${entidadeId})
+      WHEN ${origem} = 'pichau' THEN EXISTS (SELECT 1 FROM pichau_produto WHERE id = ${entidadeId})
       ELSE FALSE
     END AS existe
   ` as Array<{ existe: boolean }>;
   return linhas[0]?.existe === true;
 }
 
-/** Resolve chaves públicas de Livelo/Inter para o ID interno da camada pessoal. */
+/** Resolve chaves públicas de Livelo/Inter/Pichau para o ID interno da camada pessoal. */
 export async function entidadeAcompanhavelIdPorChave(
-  origem: "livelo" | "inter_cashback",
+  origem: "livelo" | "inter_cashback" | "pichau",
   chave: string,
 ): Promise<string | null> {
   const sql = conectar();
@@ -180,10 +181,17 @@ export async function entidadeAcompanhavelIdPorChave(
          WHERE id_externo = ${chave} AND ativo = TRUE
          LIMIT 1
       `
-    : await sql`
+    : origem === "inter_cashback"
+    ? await sql`
         SELECT id::text
           FROM loja_inter
          WHERE id::text = ${chave} AND ativa = TRUE
+         LIMIT 1
+      `
+    : await sql`
+        SELECT id::text
+          FROM pichau_produto
+         WHERE id_externo = ${chave}
          LIMIT 1
       `;
   return (linhas as Array<{ id: string }>)[0]?.id ?? null;

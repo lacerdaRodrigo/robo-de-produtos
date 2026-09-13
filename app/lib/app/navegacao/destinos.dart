@@ -16,9 +16,9 @@ enum Destino {
 
 /// Destinos preservados no `IndexedStack` compacto.
 ///
-/// Somente Início, Programas e Produtos aparecem na barra inferior. Livelo,
-/// Inter e Pichau são subáreas de Programas, mas continuam como destinos
-/// próprios para preservar busca, filtros, página e rolagem ao alternar de área.
+/// Somente Início e Serviços aparecem na barra inferior. Livelo, Inter e
+/// Pichau são subáreas de Serviços, e Produtos agora é uma subárea do Banco
+/// Inter para preservar a origem do catálogo no mobile.
 enum DestinoCompacto {
   inicio(Icons.home_outlined, 'Resumo', 'Visão geral do seu radar'),
   programas(
@@ -32,8 +32,7 @@ enum DestinoCompacto {
     'Banco Inter',
     'Escolha lojas e veja cashback',
   ),
-  pichau(Icons.computer_outlined, 'Pichau', 'Catálogo de PCs Gamer'),
-  produtos(Icons.search, 'Produtos', 'Resultados das lojas escolhidas');
+  pichau(Icons.computer_outlined, 'Pichau', 'Catálogo de PCs Gamer');
 
   const DestinoCompacto(this.icone, this.titulo, this.descricao);
 
@@ -41,7 +40,7 @@ enum DestinoCompacto {
   final String titulo;
   final String descricao;
 
-  bool get principal => this == inicio || this == programas || this == produtos;
+  bool get principal => this == inicio || this == programas;
 
   DestinoCompacto get destinoDaBarra => switch (this) {
     livelo || inter || pichau => programas,

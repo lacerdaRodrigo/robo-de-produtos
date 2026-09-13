@@ -1325,6 +1325,7 @@ def teste_repositorio_publica_em_transacao_e_preserva_codigo_parcial() -> None:
     consultas = "\n".join(consulta for consulta, _ in conexao.cursor_obj.chamadas)
     assert "presente_no_catalogo=FALSE" in consultas
     assert "estado=CASE WHEN" in consultas
+    assert "SELECT gerar_alertas_pichau" in consultas
 
 
 def teste_publicador_persiste_diagnostico_somente_na_propria_linha_em_execucao() -> None:

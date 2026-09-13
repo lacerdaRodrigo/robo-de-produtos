@@ -195,17 +195,17 @@ class Api {
     return PaginaCatalogoPichau.parse(corpo);
   }
 
-  /// Atualiza a seleção global de acompanhamento da Pichau.
+  /// Atualiza o acompanhamento pessoal de um produto Pichau.
   ///
-  /// A API valida o papel administrativo e trata a operação como idempotente;
-  /// o Flutter não acessa banco nem inicia coleta.
+  /// A API vincula o estado somente ao usuário autenticado; o Flutter não
+  /// acessa banco nem inicia coleta.
   Future<void> alterarAcompanhamentoPichau({
     required String idExterno,
     required bool acompanhada,
   }) async {
     await cliente.alterar(
-      '/api/pichau/catalogo/$idExterno/acompanhamento',
-      corpo: <String, Object?>{'acompanhada': acompanhada},
+      '/api/pichau/catalogo/$idExterno/acompanhamento-pessoal',
+      corpo: <String, Object?>{'ativo': acompanhada},
     );
   }
 

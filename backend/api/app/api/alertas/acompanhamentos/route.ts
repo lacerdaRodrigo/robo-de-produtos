@@ -5,9 +5,9 @@ import { corpoErro, STATUS } from "@/lib/api";
 import { alterarAcompanhamentoPessoal, entidadeAcompanhavelExiste } from "@/lib/banco-alertas";
 import { idNumerico } from "@/lib/alertas-api";
 
-type Origem = "livelo" | "inter_cashback" | "inter_produto";
+type Origem = "livelo" | "inter_cashback" | "inter_produto" | "pichau";
 function origem(valor: unknown): Origem | null {
-  return valor === "livelo" || valor === "inter_cashback" || valor === "inter_produto" ? valor : null;
+  return valor === "livelo" || valor === "inter_cashback" || valor === "inter_produto" || valor === "pichau" ? valor : null;
 }
 
 export async function PATCH(requisicao: Request) {

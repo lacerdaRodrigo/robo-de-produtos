@@ -44,6 +44,8 @@ backend/api/
 | `inter/produtos/[loja]/[id_externo]/acompanhamento` | PATCH | Acompanhamento pessoal de produto | Firebase |
 | `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU e paginação | Firebase |
 | `pichau/catalogo/[id_externo]/historico` | GET | Histórico Pichau limitado a 30 dias | Firebase |
+| `pichau/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhamento administrativo idempotente de produto | admin |
+| `pichau/catalogo/[id_externo]/acompanhamento-pessoal` | PATCH | Acompanhamento individual do usuário | Firebase |
 | `administracao/disparos` | GET/POST | Estado/cooldown + solicita coleta | admin |
 | `administracao/limpeza/[dominio]` | GET/POST | Resumo + executa limpeza | admin |
 | `alertas` | GET/PATCH | Central paginada, filtros e leitura em massa | Firebase |
@@ -85,8 +87,10 @@ em [`../../app/lib/core/api/`](../../app/lib/core/api/).
 
 ## Central de Alertas
 
-As rotas de alertas dependem de `migracoes/023_alertas_suporte_privacidade.sql`.
-As leituras de Livelo e cashback aceitam `escopo=pessoal` (padrão do app) e
+As rotas de alertas dependem de `migracoes/023_alertas_suporte_privacidade.sql`
+e, para Pichau, da `026_alertas_pichau_pessoal.sql`. As leituras de Livelo,
+cashback e Pichau usam acompanhamento pessoal por padrão; Livelo e cashback
+aceitam `escopo=pessoal` (padrão do app) e
 usam `acompanhamento_usuario`; somente administradores podem solicitar
 `escopo=global`. As rotas administrativas legadas continuam separadas.
 O administrador pode chamar `POST /api/notificacoes/outbox` com a autenticação

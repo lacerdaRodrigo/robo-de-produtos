@@ -29,6 +29,9 @@ class PaginaCompreDiretoInter extends StatefulWidget {
     this.totalSelecionadas,
     this.aoVariarSelecionadas,
     this.aoSalvarCategoriasAcompanhadas,
+    this.mostrarFiltrosInternos = true,
+    this.filtroControlado,
+    this.aoMudarTotalTodas,
   });
 
   final Api api;
@@ -44,6 +47,9 @@ class PaginaCompreDiretoInter extends StatefulWidget {
   final int? totalSelecionadas;
   final ValueChanged<int>? aoVariarSelecionadas;
   final Future<void> Function(bool salvo)? aoSalvarCategoriasAcompanhadas;
+  final bool mostrarFiltrosInternos;
+  final String? filtroControlado;
+  final ValueChanged<int>? aoMudarTotalTodas;
 
   @override
   State<PaginaCompreDiretoInter> createState() =>
@@ -83,11 +89,14 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       ? _FiltroCompreDireto.acompanhadas
       : _FiltroCompreDireto.todas;
   var _totalTodasConhecido = 0;
+  int? _totalTodasComunicado;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _controlador.addListener(_informarTotalTodas);
+    _filtro = _filtroDeTexto(widget.filtroControlado ?? widget.filtroInicial);
     if (widget.administrador) {
       if (_controlador.itens.isEmpty) _controlador.carregarPrimeira();
       _controladorCategorias.carregarAcompanhadas();
@@ -97,6 +106,7 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controlador.removeListener(_informarTotalTodas);
     _busca.dispose();
     _rolagem.dispose();
     if (!_controladorExterno) _controlador.dispose();
@@ -104,6 +114,15 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       _controladorCategorias.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant PaginaCompreDiretoInter antigo) {
+    super.didUpdateWidget(antigo);
+    final filtro = widget.filtroControlado;
+    if (filtro != null && filtro != antigo.filtroControlado) {
+      unawaited(_selecionarFiltro(_filtroDeTexto(filtro)));
+    }
   }
 
   @override
@@ -261,14 +280,15 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: _FiltrosCompreDireto(
-                selecionado: _filtro,
-                totalTodas: _totalTodas,
-                totalSelecionadas: _totalSelecionadas,
-                aoSelecionar: _selecionarFiltro,
+            if (widget.mostrarFiltrosInternos)
+              SliverToBoxAdapter(
+                child: _FiltrosCompreDireto(
+                  selecionado: _filtro,
+                  totalTodas: _totalTodas,
+                  totalSelecionadas: _totalSelecionadas,
+                  aoSelecionar: _selecionarFiltro,
+                ),
               ),
-            ),
             if (!_controlador.carregandoInicial &&
                 _controlador.erroInicial == null)
               SliverPadding(
@@ -299,6 +319,22 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
       (_filtro == _FiltroCompreDireto.acompanhadas
           ? _controlador.total
           : _controlador.itens.where((loja) => loja.selecionada).length);
+
+  _FiltroCompreDireto _filtroDeTexto(String filtro) => filtro == 'acompanhadas'
+      ? _FiltroCompreDireto.acompanhadas
+      : _FiltroCompreDireto.todas;
+
+  void _informarTotalTodas() {
+    if (_filtro != _FiltroCompreDireto.todas ||
+        _controlador.carregandoInicial ||
+        _controlador.erroInicial != null) {
+      return;
+    }
+    final total = _controlador.total;
+    if (_totalTodasComunicado == total) return;
+    _totalTodasComunicado = total;
+    widget.aoMudarTotalTodas?.call(total);
+  }
 
   List<Widget> _corpo() {
     if (_controlador.carregandoInicial && _controlador.itens.isEmpty) {

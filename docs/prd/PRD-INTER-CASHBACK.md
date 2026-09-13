@@ -797,3 +797,8 @@ quebras de linha e múltiplas faixas retornadas em `redirectWarning`.
 - A interface exibe o texto recebido pela API como texto seguro; não interpreta
   HTML nem reconstrói regras a partir do percentual numérico.
 - A melhoria não altera o contrato da API, o schema do banco ou a paginação.
+
+No cartão compacto, a ação de acompanhamento fica em uma linha própria. A
+linha seguinte reúne **Ver condições** e **Ir para o Inter**, mantendo a
+abertura externa como ação primária e evitando o desalinhamento causado por
+ações quebradas em um `Wrap` alinhado ao fim.
