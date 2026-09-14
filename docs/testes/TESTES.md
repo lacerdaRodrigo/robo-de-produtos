@@ -559,6 +559,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-405 | Atalho contextual de Produtos | `Buscar produtos` na Home abre Banco Inter → Compre direto → Produtos, sem criar item global no dock | Widget da moldura e callback da Home |
 | CT-406 | Origem e isolamento | Produtos Inter permanece separado de Livelo, Sites parceiros e Pichau; trocar de área preserva a busca e não altera APIs | Widget com `IndexedStack`, controlador e `MockClient` |
 | CT-407 | Abas responsivas | A terceira aba continua acessível em larguras estreitas, com tema claro/escuro e sem overflow | Widget em 320, 390 e 430 px com `TextScaler` |
+| CT-414 | Compre direto sem cartão redundante | As abas `Todas` e `Selecionadas` exibem busca e lista de lojas diretamente, sem o cartão `Categorias acompanhadas` ou sua ação `Configurar` | `pagina_compre_direto_inter_test.dart` |
 
 ### Migração mobile — Etapa 1, fundação visual e aparência
 

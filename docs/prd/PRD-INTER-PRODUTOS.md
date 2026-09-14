@@ -1,7 +1,7 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.2 em aceite progressivo
-**Status vigente em 2026-09-13:** schema, coletor, API autenticada, Flutter e
+**Status vigente em 2026-09-14:** schema, coletor, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara preço e cashback
 de Produtos Inter conforme a seção 15.4 e o PRD compartilhado de alertas. A
 carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do
@@ -464,6 +464,14 @@ contratos, paginação ou origem de dados: o Flutter continua consultando a API
 do Radar, e a busca continua lendo somente o catálogo persistido.
 
 A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V11, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
+
+Nas abas administrativas `Todas` e `Selecionadas` do Compre direto, a composição
+começa pela busca de lojas e pela lista correspondente. O cartão intermediário
+`Categorias acompanhadas` e sua ação `Configurar` não fazem parte desta tela
+compacta: a decisão evita duplicar contexto e libera espaço para os resultados.
+Isso remove somente a entrada visual desta jornada; o contrato/API de categorias
+externas e seus controladores compartilhados permanecem preservados até uma
+decisão específica sobre um fluxo separado de configuração.
 
 O campo de produtos segue o `SearchBox` da V11: ícone de busca, superfície clara com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
 

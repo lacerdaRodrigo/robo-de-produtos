@@ -1,6 +1,6 @@
 # PRD — Categorias externas do Compre direto no Inter
 
-**Status vigente em 2026-09-04:** regra implementada no robô, API e Flutter.
+**Status vigente em 2026-09-14:** regra implementada no robô, API e Flutter.
 A migration `020_categorias_inter_fonte_oficial.sql` foi aplicada manualmente no
 banco alvo, conforme confirmação operacional do responsável.
 
@@ -482,6 +482,16 @@ Antes de implementar:
 - [ ] registrar estratégia de transição antes de remover dados antigos.
 
 Se a funcionalidade de acompanhar categorias deixar de fazer sentido com a nova decisão, sua remoção deve ser uma decisão explícita separada — não assumir neste plano.
+
+### Decisão explícita de 2026-09-14 — entrada visual removida do Compre direto
+
+O cartão `Categorias acompanhadas` e o botão `Configurar` foram removidos da
+composição mobile compacta de `Todas` e `Selecionadas`. A decisão atende à
+necessidade de reduzir informação repetida na tela e não exclui preferências,
+rotas, contratos ou dados persistidos: o controlador e a API continuam
+disponíveis para um futuro fluxo separado, caso a configuração volte a ser
+necessária. Nenhuma preferência antiga é convertida ou apagada por esta
+alteração.
 
 ### Fase 6 — adaptar o app Flutter
 

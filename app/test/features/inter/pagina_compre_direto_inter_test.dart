@@ -11,7 +11,6 @@ import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
 import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/administracao/controlador_catalogo_administracao.dart';
-import 'package:app_robo/features/inter/controlador_categorias_acompanhadas.dart';
 import 'package:app_robo/features/inter/pagina_compre_direto_inter.dart';
 
 Api _api() => Api(
@@ -53,24 +52,6 @@ Pagina<LojaDireto> _pagina() => Pagina(
   totalPaginas: 1,
   temProxima: false,
 );
-
-CatalogoCategoriasInterUsuario _categorias({bool selecionada = false}) =>
-    CatalogoCategoriasInterUsuario(
-      configurada: selecionada,
-      itens: [
-        CategoriaInter(
-          valor: 'Eletrônicos',
-          nome: 'Eletrônicos',
-          selecionada: selecionada,
-        ),
-        const CategoriaInter(valor: 'Cabos', nome: 'Cabos', selecionada: false),
-        const CategoriaInter(
-          valor: null,
-          nome: 'Sem categoria',
-          selecionada: false,
-        ),
-      ],
-    );
 
 void main() {
   testWidgets('duas abas mostram o último catálogo e a seleção nos cards', (
@@ -117,6 +98,11 @@ void main() {
     expect(find.text('Seleção'), findsOneWidget);
     expect(find.text('Selecionada'), findsOneWidget);
     expect(find.text('Selecionada para coleta'), findsOneWidget);
+    expect(find.text('Categorias acompanhadas'), findsNothing);
+    expect(
+      find.byKey(const Key('configurar-categorias-acompanhadas')),
+      findsNothing,
+    );
     expect(find.text('Produtos encontrados'), findsNothing);
     expect(find.text('Último snapshot válido'), findsNothing);
     await at.ensureVisible(find.text('Selecionadas'));
@@ -128,6 +114,11 @@ void main() {
     expect(find.text('18 produtos'), findsOneWidget);
     expect(find.text('Selecionada para coleta'), findsOneWidget);
     expect(find.text('até 6%'), findsOneWidget);
+    expect(find.text('Categorias acompanhadas'), findsNothing);
+    expect(
+      find.byKey(const Key('configurar-categorias-acompanhadas')),
+      findsNothing,
+    );
     expect(at.takeException(), isNull);
   });
 
@@ -280,93 +271,5 @@ void main() {
     await at.pumpAndSettle();
     expect(consultas, 3);
     expect(atualizacoesResumo, 2);
-  });
-
-  testWidgets('configura categorias sem alterar a seleção de lojas', (
-    at,
-  ) async {
-    Set<String?>? salvas;
-    final categorias = ControladorCategoriasAcompanhadas(
-      carregar: () async => _categorias(),
-      salvar: (valores, {required semCategoria}) async {
-        salvas = <String?>{...valores, if (semCategoria) null};
-        return _categorias(selecionada: true);
-      },
-    );
-    final lojas = ControladorCatalogoAdministracao<LojaDireto>(
-      buscar: ({required q, required pagina}) async => _pagina(),
-      identificar: (loja) => loja.id,
-    );
-    addTearDown(categorias.dispose);
-    addTearDown(lojas.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: Scaffold(
-          body: PaginaCompreDiretoInter(
-            api: _api(),
-            administrador: true,
-            sliversAntes: const [],
-            controlador: lojas,
-            controladorCategorias: categorias,
-          ),
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-
-    expect(find.text('Categorias acompanhadas'), findsOneWidget);
-    await at.tap(find.byKey(const Key('configurar-categorias-acompanhadas')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrônicos').last);
-    await at.tap(find.byKey(const Key('confirmar-acompanhar')));
-    await at.pumpAndSettle();
-
-    expect(salvas, {'Eletrônicos'});
-    expect(lojas.itens.single.selecionada, isTrue);
-  });
-
-  testWidgets('cancelar categorias não persiste seleção transitória', (
-    at,
-  ) async {
-    var salvamentos = 0;
-    final categorias = ControladorCategoriasAcompanhadas(
-      carregar: () async => _categorias(),
-      salvar: (_, {required semCategoria}) async {
-        salvamentos++;
-        return _categorias();
-      },
-    );
-    final lojas = ControladorCatalogoAdministracao<LojaDireto>(
-      buscar: ({required q, required pagina}) async => _pagina(),
-      identificar: (loja) => loja.id,
-    );
-    addTearDown(categorias.dispose);
-    addTearDown(lojas.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: Scaffold(
-          body: PaginaCompreDiretoInter(
-            api: _api(),
-            administrador: true,
-            sliversAntes: const [],
-            controlador: lojas,
-            controladorCategorias: categorias,
-          ),
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('configurar-categorias-acompanhadas')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrônicos').last);
-    await at.tap(find.text('Cancelar'));
-    await at.pumpAndSettle();
-
-    expect(salvamentos, 0);
-    expect(categorias.valoresSelecionados, isEmpty);
   });
 }

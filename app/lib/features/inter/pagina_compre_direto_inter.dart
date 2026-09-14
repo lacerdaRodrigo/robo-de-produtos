@@ -10,8 +10,6 @@ import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import '../administracao/botao_disparo.dart';
 import '../administracao/controlador_catalogo_administracao.dart';
-import '../produtos/seletor_categorias_inter.dart';
-import 'controlador_categorias_acompanhadas.dart';
 
 /// Catálogo mobile do Compre direto com busca e paginação fornecidas pela API.
 class PaginaCompreDiretoInter extends StatefulWidget {
@@ -21,14 +19,12 @@ class PaginaCompreDiretoInter extends StatefulWidget {
     required this.administrador,
     required this.sliversAntes,
     this.controlador,
-    this.controladorCategorias,
     this.aoAtualizar,
     this.ordenacaoInicial = 'nome',
     this.filtroInicial = 'todas',
     this.aoMudarConsulta,
     this.totalSelecionadas,
     this.aoVariarSelecionadas,
-    this.aoSalvarCategoriasAcompanhadas,
     this.mostrarFiltrosInternos = true,
     this.filtroControlado,
     this.aoMudarTotalTodas,
@@ -38,7 +34,6 @@ class PaginaCompreDiretoInter extends StatefulWidget {
   final bool administrador;
   final List<Widget> sliversAntes;
   final ControladorCatalogoAdministracao<LojaDireto>? controlador;
-  final ControladorCategoriasAcompanhadas? controladorCategorias;
   final Future<void> Function()? aoAtualizar;
   final String ordenacaoInicial;
   final String filtroInicial;
@@ -46,7 +41,6 @@ class PaginaCompreDiretoInter extends StatefulWidget {
   aoMudarConsulta;
   final int? totalSelecionadas;
   final ValueChanged<int>? aoVariarSelecionadas;
-  final Future<void> Function(bool salvo)? aoSalvarCategoriasAcompanhadas;
   final bool mostrarFiltrosInternos;
   final String? filtroControlado;
   final ValueChanged<int>? aoMudarTotalTodas;
@@ -74,13 +68,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
         ),
         identificar: (loja) => loja.id,
       );
-  late final ControladorCategoriasAcompanhadas _controladorCategorias =
-      widget.controladorCategorias ??
-      ControladorCategoriasAcompanhadas(
-        carregar: widget.api.categoriasInter,
-        salvar: (categorias, {required semCategoria}) => widget.api
-            .salvarCategoriasInter(categorias, semCategoria: semCategoria),
-      );
   late final bool _controladorExterno = widget.controlador != null;
   late final _busca = TextEditingController(text: _controlador.busca);
   final _alterando = <String>{};
@@ -99,7 +86,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     _filtro = _filtroDeTexto(widget.filtroControlado ?? widget.filtroInicial);
     if (widget.administrador) {
       if (_controlador.itens.isEmpty) _controlador.carregarPrimeira();
-      _controladorCategorias.carregarAcompanhadas();
     }
   }
 
@@ -110,9 +96,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     _busca.dispose();
     _rolagem.dispose();
     if (!_controladorExterno) _controlador.dispose();
-    if (widget.controladorCategorias == null) {
-      _controladorCategorias.dispose();
-    }
     super.dispose();
   }
 
@@ -136,7 +119,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     final tarefas = <Future<void>>[];
     if (widget.administrador) {
       tarefas.add(_controlador.reiniciarConsulta());
-      tarefas.add(_controladorCategorias.carregarAcompanhadas());
     }
     final atualizarResumo = widget.aoAtualizar;
     if (atualizarResumo != null) tarefas.add(atualizarResumo());
@@ -147,34 +129,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
     await _controlador.irParaPagina(pagina);
     if (!mounted || _controlador.pagina != pagina) return;
     await rolarParaInicioPaginaRadar(_rolagem);
-  }
-
-  Future<void> _configurarCategorias() async {
-    final catalogo = _controladorCategorias.catalogo;
-    if (catalogo == null || _controladorCategorias.salvando) return;
-    final selecionadas = await mostrarSeletorCategoriasAcompanhadas(
-      context,
-      categorias: catalogo.itens,
-      selecionadasIniciais: _controladorCategorias.valoresSelecionados,
-    );
-    if (selecionadas == null || !mounted) return;
-    final salvo = await _controladorCategorias.salvarSelecao(selecionadas);
-    if (!mounted) return;
-    if (salvo) {
-      mostrarMensagemRadar(
-        context,
-        'Categorias acompanhadas salvas para as lojas selecionadas.',
-      );
-    } else {
-      mostrarMensagemRadar(
-        context,
-        'Não foi possível salvar as categorias. '
-        'A seleção anterior foi preservada. Tente novamente.',
-        sucesso: false,
-      );
-    }
-    final avisar = widget.aoSalvarCategoriasAcompanhadas;
-    if (avisar != null) await avisar(salvo);
   }
 
   Future<void> _alternar(LojaDireto loja) async {
@@ -256,18 +210,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
               ),
             )
           else ...[
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
-              sliver: SliverToBoxAdapter(
-                child: AnimatedBuilder(
-                  animation: _controladorCategorias,
-                  builder: (context, _) => _CartaoCategoriasAcompanhadas(
-                    controlador: _controladorCategorias,
-                    aoConfigurar: _configurarCategorias,
-                  ),
-                ),
-              ),
-            ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
               sliver: SliverToBoxAdapter(
@@ -400,132 +342,6 @@ class _EstadoPaginaCompreDiretoInter extends State<PaginaCompreDiretoInter>
 }
 
 enum _FiltroCompreDireto { todas, acompanhadas }
-
-class _CartaoCategoriasAcompanhadas extends StatelessWidget {
-  const _CartaoCategoriasAcompanhadas({
-    required this.controlador,
-    required this.aoConfigurar,
-  });
-
-  final ControladorCategoriasAcompanhadas controlador;
-  final VoidCallback aoConfigurar;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final escuro = tema.brightness == Brightness.dark;
-    final carregando = controlador.carregando && controlador.catalogo == null;
-    final comErro = controlador.erro != null && controlador.catalogo == null;
-    final subtitulo = carregando
-        ? 'Carregando as categorias acompanhadas…'
-        : comErro
-        ? 'Não foi possível carregar as categorias.'
-        : controlador.resumo;
-    return CartaoRadar(
-      padding: const EdgeInsets.fromLTRB(13, 12, 11, 12),
-      child: LayoutBuilder(
-        builder: (context, limites) {
-          final icone = Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: escuro ? Tokens.superficieForteEscura : Tokens.plumSoft,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-                bottomRight: Radius.circular(14),
-                bottomLeft: Radius.circular(5),
-              ),
-            ),
-            child: Icon(Icons.topic_outlined, size: 21, color: cores.marca),
-          );
-          final texto = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Categorias acompanhadas',
-                style: tema.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                subtitulo,
-                style: tema.textTheme.labelSmall?.copyWith(
-                  color: cores.textoSuave,
-                  fontSize: 9,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          );
-          final botao = _botao(
-            context,
-            carregando: carregando,
-            comErro: comErro,
-          );
-          final empilhar =
-              limites.maxWidth < 340 ||
-              MediaQuery.textScalerOf(context).scale(10) > 12;
-          if (empilhar) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    icone,
-                    const SizedBox(width: 11),
-                    Expanded(child: texto),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Align(alignment: Alignment.centerRight, child: botao),
-              ],
-            );
-          }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              icone,
-              const SizedBox(width: 11),
-              Expanded(child: texto),
-              const SizedBox(width: 8),
-              botao,
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _botao(
-    BuildContext context, {
-    required bool carregando,
-    required bool comErro,
-  }) {
-    if (controlador.salvando || carregando) {
-      return const SizedBox.square(
-        dimension: 18,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    if (comErro) {
-      return OutlinedButton(
-        key: const Key('recarregar-categorias-acompanhadas'),
-        onPressed: controlador.carregarAcompanhadas,
-        child: const Text('Tentar novamente'),
-      );
-    }
-    return OutlinedButton(
-      key: const Key('configurar-categorias-acompanhadas'),
-      onPressed: controlador.catalogo == null ? null : aoConfigurar,
-      child: const Text('Configurar'),
-    );
-  }
-}
 
 class _FiltrosCompreDireto extends StatelessWidget {
   const _FiltrosCompreDireto({
