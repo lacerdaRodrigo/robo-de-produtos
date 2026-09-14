@@ -15,10 +15,16 @@ Map<String, Object?> resumo({
   String livelo = 'atualizado',
   String cashback = 'atualizado',
   String produtos = 'atualizado',
+  String pichau = 'atualizado',
 }) => {
   'gerado_em': '2026-08-23T12:00:00.000Z',
   'estado_geral':
-      [livelo, cashback, produtos].every((estado) => estado == 'atualizado')
+      [
+        livelo,
+        cashback,
+        produtos,
+        pichau,
+      ].every((estado) => estado == 'atualizado')
       ? 'atualizado'
       : 'atencao',
   'livelo': {
@@ -48,6 +54,16 @@ Map<String, Object?> resumo({
     'lojas_sem_coleta': produtos == 'parcial' ? 1 : 0,
     'produtos_ativos': 3310,
   },
+  'pichau': {
+    'estado': pichau,
+    'ultima_tentativa_em': '2026-08-23T07:00:00.000Z',
+    'ultima_tentativa_estado': 'sucesso',
+    'ultimo_sucesso_em': '2026-08-23T07:00:00.000Z',
+    'qualidade': pichau == 'degradado' ? 'degradada' : 'completa',
+    'produtos_ativos': 100,
+    'produtos_esgotados': 4,
+    'acompanhadas': 17,
+  },
 };
 
 Api apiQueResponde(Future<http.Response> Function(http.Request) responder) =>
@@ -68,6 +84,7 @@ Future<void> abrir(
   VoidCallback? aoAbrirLivelo,
   VoidCallback? aoAbrirProdutos,
   VoidCallback? aoAbrirCashback,
+  VoidCallback? aoAbrirPichau,
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool compacto = false,
@@ -89,6 +106,7 @@ Future<void> abrir(
           aoAbrirLivelo: aoAbrirLivelo,
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
+          aoAbrirPichau: aoAbrirPichau,
           agora: () => DateTime(2026, 8, 23),
           experienciaCompacta: compacto,
         ),
@@ -126,7 +144,7 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Seu radar hoje'), findsOneWidget);
-    expect(find.text('Os três domínios estão atualizados.'), findsOneWidget);
+    expect(find.text('Os quatro domínios estão atualizados.'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('4'), findsOneWidget);
     expect(find.text('3.310'), findsOneWidget);
@@ -252,6 +270,7 @@ void main() {
     expect(find.text('Seus serviços'), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-inter')), findsOneWidget);
+    expect(find.byKey(const Key('resumo-servico-pichau')), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const Key('resumo-servico-livelo')),
@@ -259,10 +278,38 @@ void main() {
       ),
       findsNWidgets(3),
     );
-    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
+    expect(find.text('Atividade recente'), findsNothing);
     expect(find.text('126'), findsOneWidget);
     expect(find.text('4 acompanhadas'), findsOneWidget);
+    expect(find.text('100 disponíveis'), findsOneWidget);
+    expect(find.text('17 produtos'), findsOneWidget);
     expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
+  });
+
+  testWidgets('card Pichau abre sua subárea de Serviços', (at) async {
+    var abriu = false;
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(at, api, compacto: true, aoAbrirPichau: () => abriu = true);
+    await at.pumpAndSettle();
+    await at.scrollUntilVisible(
+      find.byKey(const Key('resumo-servico-pichau')),
+      300,
+    );
+    await at.drag(
+      find.byKey(const Key('resumo-inicio')),
+      const Offset(0, -180),
+    );
+    await at.pumpAndSettle();
+    await at.tap(
+      find.ancestor(
+        of: find.byKey(const Key('resumo-servico-pichau')),
+        matching: find.byType(InkWell),
+      ),
+    );
+
+    expect(abriu, isTrue);
   });
 
   testWidgets('Resumo não inventa coleta em andamento no Banco Inter', (
@@ -294,7 +341,10 @@ void main() {
     );
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
-    await at.scrollUntilVisible(find.text('Atividade recente'), 300);
+    await at.scrollUntilVisible(
+      find.byKey(const Key('resumo-servico-pichau')),
+      300,
+    );
     expect(at.takeException(), isNull);
   });
 

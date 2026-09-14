@@ -20,6 +20,7 @@ class PaginaInicio extends StatefulWidget {
     this.aoAbrirLivelo,
     this.aoAbrirProdutos,
     this.aoAbrirCashback,
+    this.aoAbrirPichau,
     this.agora,
     this.experienciaCompacta = false,
     this.ativa = true,
@@ -31,6 +32,7 @@ class PaginaInicio extends StatefulWidget {
   final VoidCallback? aoAbrirLivelo;
   final VoidCallback? aoAbrirProdutos;
   final VoidCallback? aoAbrirCashback;
+  final VoidCallback? aoAbrirPichau;
   final DateTime Function()? agora;
   final bool experienciaCompacta;
   final bool ativa;
@@ -170,16 +172,12 @@ class _PaginaInicioState extends State<PaginaInicio>
                       resumo: resumo,
                       aoAbrirLivelo: widget.aoAbrirLivelo,
                       aoAbrirInter: widget.aoAbrirCashback,
+                      aoAbrirPichau: widget.aoAbrirPichau,
                     ),
                     const SizedBox(height: 12),
                     _AcoesRapidasResumo(
                       aoAbrirProdutos: widget.aoAbrirProdutos,
                       aoAbrirServicos: widget.aoAbrirProgramas,
-                    ),
-                    const SizedBox(height: 25),
-                    _AtividadeRecenteCompacta(
-                      resumo: resumo,
-                      agora: (widget.agora ?? DateTime.now)(),
                     ),
                   ] else ...[
                     const SizedBox(height: 20),
@@ -331,153 +329,6 @@ class _AvisoFalhaAtualizacao extends StatelessWidget {
       ),
     );
   }
-}
-
-class _AtividadeRecenteCompacta extends StatelessWidget {
-  const _AtividadeRecenteCompacta({required this.resumo, required this.agora});
-  final ResumoInicio resumo;
-  final DateTime agora;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const _TituloSecao(
-        titulo: 'Atividade recente',
-        complemento: 'Pedido não é conclusão',
-        compactoMobile: true,
-      ),
-      const SizedBox(height: 12),
-      CartaoRadar(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            for (
-              var indice = 0;
-              indice < resumo.atividadeRecente.length;
-              indice++
-            ) ...[
-              _AtividadeLinha(
-                icone: _iconeAtividade(resumo.atividadeRecente[indice].dominio),
-                cor: _corAtividade(
-                  context,
-                  resumo.atividadeRecente[indice].dominio,
-                ),
-                titulo: _tituloAtividade(
-                  resumo.atividadeRecente[indice].dominio,
-                  resumo.atividadeRecente[indice].estado,
-                ),
-                detalhe: _detalheAtividade(
-                  resumo.atividadeRecente[indice].dominio,
-                  resumo,
-                ),
-                quando: _tempoDesde(
-                  resumo.atividadeRecente[indice].momento ?? resumo.geradoEm,
-                  agora,
-                ),
-              ),
-              if (indice != resumo.atividadeRecente.length - 1)
-                Divider(
-                  height: 1,
-                  indent: 16,
-                  endIndent: 16,
-                  color: CoresRadar.de(context).borda,
-                ),
-            ],
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-IconData _iconeAtividade(String dominio) => switch (dominio) {
-  'livelo' => Icons.card_giftcard_outlined,
-  'cashback_inter' => Icons.account_balance_outlined,
-  _ => Icons.inventory_2_outlined,
-};
-
-Color _corAtividade(BuildContext context, String dominio) => dominio == 'livelo'
-    ? CoresRadar.de(context).acao
-    : CoresRadar.de(context).integracaoInter;
-
-String _tituloAtividade(String dominio, String estado) => switch (dominio) {
-  'livelo' => estado == 'atualizado' ? 'Livelo concluída' : 'Livelo: $estado',
-  'cashback_inter' => 'Cashback: $estado',
-  _ =>
-    estado == 'atualizando' ? 'Produtos em atualização' : 'Produtos: $estado',
-};
-
-String _detalheAtividade(
-  String dominio,
-  ResumoInicio resumo,
-) => switch (dominio) {
-  'livelo' => '${_inteiro(resumo.livelo.lojasAcompanhadas)} lojas acompanhadas',
-  'cashback_inter' =>
-    '${_inteiro(resumo.cashbackInter.lojasAcompanhadas)} lojas acompanhadas',
-  _ =>
-    resumo.produtos.estado == EstadoResumo.semDados
-        ? 'Catálogo ainda sem coleta'
-        : 'Catálogo local mantido',
-};
-
-class _AtividadeLinha extends StatelessWidget {
-  const _AtividadeLinha({
-    required this.icone,
-    required this.cor,
-    required this.titulo,
-    required this.detalhe,
-    required this.quando,
-  });
-  final IconData icone;
-  final Color cor;
-  final String titulo;
-  final String detalhe;
-  final String quando;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(14),
-    child: Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: cor.withValues(alpha: 0.13),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: SizedBox.square(
-            dimension: 34,
-            child: Icon(icone, color: cor, size: 19),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titulo,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              Text(
-                detalhe,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: CoresRadar.de(context).textoSuave,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          quando,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _DestaqueEstado extends StatelessWidget {
@@ -647,11 +498,13 @@ class _ServicosResumoCompacto extends StatelessWidget {
     required this.resumo,
     required this.aoAbrirLivelo,
     required this.aoAbrirInter,
+    required this.aoAbrirPichau,
   });
 
   final ResumoInicio resumo;
   final VoidCallback? aoAbrirLivelo;
   final VoidCallback? aoAbrirInter;
+  final VoidCallback? aoAbrirPichau;
 
   @override
   Widget build(BuildContext context) {
@@ -720,6 +573,38 @@ class _ServicosResumoCompacto extends StatelessWidget {
               : _descricaoEstado(estadoInter),
           acao: 'Abrir Banco Inter',
           aoTocar: aoAbrirInter,
+        ),
+        const SizedBox(height: 11),
+        _CartaoDominioResumo(
+          chave: const Key('resumo-servico-pichau'),
+          iniciais: 'PI',
+          titulo: 'Pichau',
+          descricao: 'PC Gamer e disponibilidade',
+          estado: resumo.pichau.estado,
+          metricas: [
+            (
+              'Produtos ativos',
+              _valorResumo(
+                resumo.pichau.estado,
+                resumo.pichau.produtosAtivos,
+                sufixo: ' disponíveis',
+              ),
+            ),
+            (
+              'Acompanhados',
+              _valorResumo(
+                resumo.pichau.estado,
+                resumo.pichau.acompanhadas,
+                sufixo: ' produtos',
+              ),
+            ),
+            ('Último sucesso', _dataHora(resumo.pichau.ultimoSucessoEm)),
+          ],
+          aviso: resumo.pichau.estado == EstadoResumo.atualizado
+              ? null
+              : _descricaoEstado(resumo.pichau.estado),
+          acao: 'Abrir Pichau',
+          aoTocar: aoAbrirPichau,
         ),
       ],
     );
@@ -1336,6 +1221,7 @@ class _Pill extends StatelessWidget {
     ('Livelo', resumo.livelo.estado),
     ('Cashback Inter', resumo.cashbackInter.estado),
     ('Produtos', resumo.produtos.estado),
+    ('Pichau', resumo.pichau.estado),
   ];
   const ordem = <EstadoResumo>[
     EstadoResumo.indisponivel,
@@ -1359,7 +1245,7 @@ class _Pill extends StatelessWidget {
     }
   }
   return (
-    titulo: 'Os três domínios estão atualizados.',
+    titulo: 'Os quatro domínios estão atualizados.',
     descricao:
         'Cada cartão respeita o relógio e o último retrato válido da sua própria fonte.',
   );
@@ -1434,17 +1320,6 @@ EstadoResumo _estadoInter(ResumoInicio resumo) {
   ];
   final estados = {resumo.cashbackInter.estado, resumo.produtos.estado};
   return prioridade.firstWhere(estados.contains);
-}
-
-String _tempoDesde(String iso, DateTime agora) {
-  final data = DateTime.tryParse(iso)?.toLocal();
-  if (data == null) return '—';
-  final minutos = agora.toLocal().difference(data).inMinutes;
-  if (minutos <= 1) return 'agora';
-  if (minutos < 60) return '$minutos min';
-  final horas = minutos ~/ 60;
-  if (horas < 24) return '${horas}h';
-  return '${horas ~/ 24}d';
 }
 
 String _dataHora(String? iso) {

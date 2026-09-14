@@ -138,6 +138,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       aoAbrirProgramas: () => _selecionarCompacto(DestinoCompacto.programas),
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
+      aoAbrirPichau: () => _selecionarCompacto(DestinoCompacto.pichau),
       aoAbrirProdutos: _abrirProdutosNoInter,
     ),
     _visitadosCompactos.contains(DestinoCompacto.programas)

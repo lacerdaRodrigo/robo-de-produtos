@@ -534,6 +534,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-328 | Resumos isolados no hub | Livelo, Cashback e Produtos exibem contagens e estados próprios; falha recente e parcial não viram zero nem contaminam outra fonte | Fixture de `/api/resumo` com estados distintos e teste de widget da moldura |
+| CT-413 | Resumo compacto com Pichau | Home compacta remove `Atividade recente`, exibe cards independentes de Livelo, Banco Inter e Pichau com contagens reais e abre a subárea Pichau pelo próprio card, sem overflow em 320 px com texto ampliado | `inicio_test.dart` |
 
 ### Redesign — Módulo 5, hub do Shopping Inter
 

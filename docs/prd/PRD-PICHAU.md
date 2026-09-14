@@ -12,7 +12,7 @@ passou no mesmo commit também deixando o Chrome aberto: o processo residual é
 um risco real agora eliminado, mas não ficou comprovado como causa isolada.
 Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-13
+**Última atualização:** 2026-09-14
 
 ## Objetivo
 
@@ -580,6 +580,12 @@ continuam pendentes.
 
 ## Jornada mobile V11 entregue
 
+- Na Home compacta, a seção **Visão geral** exibe cards independentes de
+  Livelo, Banco Inter e Pichau; o card Pichau usa o retrato real de produtos
+  ativos, acompanhamentos e último sucesso, e abre sua subárea dentro de
+  Serviços.
+- A Home compacta não exibe mais a seção **Atividade recente**; o histórico de
+  coleta continua pertencendo aos estados e jornadas de cada serviço.
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
 - `DestinoCompacto.pichau` é uma subárea e não aparece no `BottomDock`.
 - `PaginaPichau` usa a fundação visual V11, busca server-side, paginação,
@@ -614,7 +620,8 @@ dentro de Serviços, o catálogo é paginado, busca/aba/filtros preservam o
 recorte solicitado, os preços Pix e cartão permanecem separados, o histórico
 abre pelo componente existente, os estados não se confundem, URLs inválidas
 não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
-Inter e o `BottomDock` continuam sem alteração semântica.
+Inter e o `BottomDock` continuam sem alteração semântica. Na Home compacta,
+também deve haver um card Pichau acionável e nenhuma seção `Atividade recente`.
 
 A integração Pichau Android só volta ao estado pronto depois da coleta manual
 da correção e do gate de 72 horas. A coleta `34761933582` já comprovou o
