@@ -56,8 +56,8 @@ void main() {
                   ),
                   const SizedBox(height: 12),
                   const FolhaRadar(
-                    titulo: 'Conta e sistema',
-                    descricao: 'Utilidades fora da navegação principal.',
+                    titulo: 'Conta e aparência',
+                    descricao: 'Utilidades que funcionam no aplicativo.',
                     child: Text('Administração'),
                   ),
                 ],

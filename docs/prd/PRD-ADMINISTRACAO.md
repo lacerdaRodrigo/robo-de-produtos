@@ -119,6 +119,12 @@ A validação é repetida no endpoint autenticado da API. A frase não vem de ca
 - Visitante sem sessão é redirecionado para /entrar.
 - Domínio desconhecido retorna 404.
 
+No mobile compacto V11, o acesso Administração pelo perfil exibe somente a
+Zona de perigo e suas confirmações. As telas, controladores e rotas dos
+catálogos administrativos continuam preservados para os fluxos amplos e para
+compatibilidade do projeto; esta redução é apenas de composição da jornada
+mobile.
+
 ## 6. Segurança e consistência
 
 | Regra | Decisão |

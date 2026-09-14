@@ -916,7 +916,7 @@ Future<T?> mostrarFolhaRadar<T>(
   );
 }
 
-/// Controle único de aparência usado no cabeçalho e na gaveta mobile.
+/// Controle único de aparência usado no cabeçalho e no perfil mobile.
 class ControleAparenciaRadar extends StatelessWidget {
   const ControleAparenciaRadar.icone({super.key, this.cor}) : emLinha = false;
 
@@ -959,7 +959,7 @@ class ControleAparenciaRadar extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: Semantics(
-        key: const Key('alternar-tema-gaveta'),
+        key: const Key('alternar-tema-conta'),
         button: true,
         toggled: escuro,
         label: rotulo,

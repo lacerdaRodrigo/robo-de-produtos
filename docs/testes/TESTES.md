@@ -496,13 +496,13 @@ restante do roteiro manual.
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-311 | Destinos fixos do redesign | No layout amplo, a ordem continua Início, Lojas, Produtos, Alertas e Mais; no compacto, somente Resumo e Serviços aparecem na barra, com Produtos dentro do Banco Inter | Enums, widget da moldura e inspeção dos breakpoints |
-| CT-312 | Gaveta e lateral adaptativas | Mobile/retrato/paisagem usa cabeçalho + gaveta; Web a partir de 920 px usa lateral com a mesma ordem | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
+| CT-312 | Perfil e lateral adaptativos | Mobile/retrato/paisagem usa cabeçalho + perfil e barra inferior; Web a partir de 920 px usa lateral preservada | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
 | CT-313 | Hub transitório de Lojas | Livelo e Shopping Inter continuam alcançáveis sem consultar resumo nem exibir métricas fictícias | API falsa e ações do hub isolado |
 | CT-314 | Voltar na hierarquia interna | Voltar de Livelo/Inter retorna primeiro para Lojas em vez de sair do app | Navegador aninhado e `handlePopRoute` |
 | CT-315 | Estado preservado entre áreas | Trocar entre Produtos do Inter, Livelo e demais subáreas e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
-| CT-316 | Alertas e Administração preservados | Atalho do cabeçalho abre o estado honesto de Alertas; Mais mantém Administração para admin | Ações da moldura e API falsa fechada |
-| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, abrir/fechar e os destinos compactos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
-| CT-318 | Moldura adaptativa | Gaveta Mobile e lateral Web permanecem alcançáveis e preservam a ordem dos destinos | Widgets nos dois breakpoints |
+| CT-316 | Alertas e Administração preservados | Perfil abre a Central para qualquer conta e Administração somente para admin; no mobile, a Administração expõe apenas a Zona de perigo | Ações do perfil, variante móvel da Administração e API falsa fechada |
+| CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, perfil e destinos compactos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
+| CT-318 | Moldura adaptativa | Perfil Mobile e lateral Web permanecem alcançáveis; Resumo e Serviços continuam na ordem definida | Widgets nos dois breakpoints |
 
 O fechamento passou por formatação, análise, 137 testes, build Web e APK debug.
 A cobertura global ficou em 2529/2805 linhas (90,16%); `moldura.dart` atingiu
@@ -568,7 +568,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-333 | Aparência persiste localmente | Claro/escuro muda imediatamente e a escolha reaparece em outro controlador | Repositório de preferência em memória compartilhado |
 | CT-334 | Persistência não bloqueia nem volta no tempo | Falha ao salvar mantém a escolha da sessão; leitura atrasada não sobrescreve toque mais recente | Exceção e `Completer` injetados no armazenamento |
 | CT-335 | Escopo mobile preserva o Web | Android/iOS compacto aceita escuro; layout amplo continua claro e sem controle novo | Viewports 390 × 844 e 1440 × 900 com modo escuro injetado |
-| CT-336 | Controle acessível de aparência | Cabeçalho e gaveta informam ação/estado e alternam sem reiniciar a sessão | Widget completo, chave, tooltip, semântica e controlador falso |
+| CT-336 | Controle acessível de aparência | Cabeçalho e perfil informam ação/estado e alternam sem reiniciar a sessão | Widget completo, chave, tooltip, semântica e controlador falso |
 | CT-337 | Fundação funciona nos dois temas | Cabeçalho, cartão, estado, busca V11 com ação de avanço ou variante `search-only`, abas e folha usam tokens sem perder interação | Testes de widget parametrizados em claro/escuro |
 | CT-338 | Folha e busca V11 são únicas | Filtros, seletores, detalhes e folhas de conta usam `FolhaRadar` com fundo desfocado, cabeçalho V11 e retorno preservado; todas as buscas usam `CampoBuscaRadar` | Testes de widget dos fluxos Livelo, Produtos, categorias e fundação |
 | CT-338A | Paginação V11 de cartões | Produtos, Livelo, Sites parceiros e Compre direto solicitam 10 itens; com 9/10 não há paginação e com 11 há acesso à página 2 sem acumular cards | Widget da fundação, controladores e `MockClient` das telas afetadas |

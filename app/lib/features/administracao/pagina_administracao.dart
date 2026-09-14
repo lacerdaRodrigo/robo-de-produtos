@@ -19,11 +19,13 @@ class PaginaAdministracao extends StatefulWidget {
     required this.api,
     this.administrador = true,
     this.incorporada = false,
+    this.somenteZonaDePerigo = false,
   });
 
   final Api api;
   final bool administrador;
   final bool incorporada;
+  final bool somenteZonaDePerigo;
 
   @override
   State<PaginaAdministracao> createState() => _EstadoPaginaAdministracao();
@@ -47,7 +49,7 @@ class _EstadoPaginaAdministracao extends State<PaginaAdministracao> {
   @override
   void initState() {
     super.initState();
-    if (!widget.administrador) return;
+    if (!widget.administrador || widget.somenteZonaDePerigo) return;
     _catalogoParceiros.carregarPrimeira();
     _catalogoDiretas.carregarPrimeira();
   }
@@ -109,6 +111,16 @@ class _EstadoPaginaAdministracao extends State<PaginaAdministracao> {
         mensagem: 'Seu acesso não permite administrar catálogos.',
       );
       return widget.incorporada ? corpo : const Scaffold(body: corpo);
+    }
+    if (widget.somenteZonaDePerigo) {
+      final corpo = ZonaPerigoAdministrativa(api: widget.api);
+      if (!widget.incorporada) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Administração')),
+          body: corpo,
+        );
+      }
+      return corpo;
     }
     return DefaultTabController(
       length: 4,

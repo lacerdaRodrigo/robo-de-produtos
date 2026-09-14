@@ -112,7 +112,7 @@ void main() {
     expect(controlador.modo, ThemeMode.dark);
   });
 
-  testWidgets('controle da gaveta alterna o mobile claro e escuro', (at) async {
+  testWidgets('controle do perfil alterna o mobile claro e escuro', (at) async {
     at.view.devicePixelRatio = 1;
     at.view.physicalSize = const Size(390, 844);
     addTearDown(at.view.resetDevicePixelRatio);
@@ -137,9 +137,14 @@ void main() {
       Brightness.light,
     );
     expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
-    await at.tap(find.byKey(const Key('abrir-menu-principal')));
+    await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
     await at.pumpAndSettle();
-    final linhaAparencia = find.byKey(const Key('alternar-tema-gaveta'));
+    final linhaAparencia = find.byKey(const Key('alternar-tema-conta'));
+    await at.scrollUntilVisible(
+      linhaAparencia,
+      240,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(linhaAparencia, findsOneWidget);
     await at.tap(linhaAparencia);
     await at.pumpAndSettle();

@@ -191,8 +191,8 @@ Future<void> _abrir(
   await at.pumpAndSettle();
 }
 
-Future<void> _abrirGaveta(WidgetTester at) async {
-  await at.tap(find.byKey(const Key('abrir-menu-principal')));
+Future<void> _abrirConta(WidgetTester at) async {
+  await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
   await at.pumpAndSettle();
 }
 
@@ -268,39 +268,29 @@ Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho, barra inferior e gaveta V11', (at) async {
+  testWidgets('celular usa cabeçalho, barra inferior e perfil V11', (at) async {
     await _abrir(at);
 
-    expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
-    await _abrirGaveta(at);
+    expect(find.byKey(const Key('gaveta-principal')), findsNothing);
+    await _abrirConta(at);
 
-    for (final destino in DestinoCompacto.values.where(
-      (destino) => destino.principal,
-    )) {
-      expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
-      expect(find.text(destino.titulo), findsWidgets);
-    }
-    expect(find.byKey(const Key('destino-alertas')), findsNothing);
-    expect(find.byKey(const Key('destino-mais')), findsNothing);
-    expect(find.byKey(const Key('abrir-alertas-gaveta')), findsOneWidget);
-    expect(find.byKey(const Key('abrir-sistema-gaveta')), findsOneWidget);
-    expect(find.text('Acesso padrão'), findsWidgets);
-    expect(find.text('Livelo, Banco Inter e integrações'), findsOneWidget);
-    expect(find.text('Resultados das lojas escolhidas'), findsNothing);
-    expect(
-      at.getSize(find.byKey(const Key('gaveta-principal'))).width,
-      closeTo(343.2, 0.1),
-    );
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+    expect(find.text('Central de Alertas'), findsOneWidget);
+    expect(find.byKey(const Key('alternar-tema-conta')), findsOneWidget);
+    expect(find.text('Segurança e acesso'), findsNothing);
+    expect(find.text('Integrações'), findsNothing);
   });
 
-  testWidgets('celular em paisagem continua com a gaveta', (at) async {
+  testWidgets('celular em paisagem continua com o perfil', (at) async {
     await _abrir(at, tamanho: const Size(844, 390));
 
-    expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
-    await _abrirGaveta(at);
-    expect(find.byKey(const Key('destino-produtos')), findsNothing);
+    expect(find.byKey(const Key('gaveta-principal')), findsNothing);
+    await _abrirConta(at);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
   });
 
   testWidgets('somente Android compacto usa o catálogo Livelo novo', (
@@ -337,7 +327,7 @@ void main() {
     await _abrir(at, tamanho: const Size(1440, 900));
 
     expect(find.byType(BarraLateral), findsOneWidget);
-    expect(find.byKey(const Key('abrir-menu-principal')), findsNothing);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsNothing);
     for (final destino in Destino.values) {
       expect(
         find.byKey(Key('destino-lateral-${destino.name}')),
@@ -869,12 +859,12 @@ void main() {
     expect(find.text('+ escolher lojas'), findsNothing);
   });
 
-  testWidgets('Alertas existentes continuam acessíveis pela gaveta', (
+  testWidgets('Alertas existentes continuam acessíveis pelo perfil', (
     at,
   ) async {
     await _abrir(at);
-    await _abrirGaveta(at);
-    await at.tap(find.byKey(const Key('abrir-alertas-gaveta')));
+    await _abrirConta(at);
+    await at.tap(find.text('Central de Alertas'));
     await at.pumpAndSettle();
 
     expect(find.text('Central de Alertas'), findsWidgets);
@@ -895,32 +885,47 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Administração'), findsOneWidget);
-    expect(find.text('Conta e sistema'), findsOneWidget);
+    expect(find.text('Conta e aparência'), findsOneWidget);
     expect(find.text('Acesso administrador'), findsOneWidget);
+  });
+
+  testWidgets('administração mobile mostra somente a zona de perigo', (
+    at,
+  ) async {
+    await _abrir(at, administrador: true);
+    await _abrirConta(at);
+    await at.tap(find.text('Administração'));
+    await at.pumpAndSettle();
+
+    expect(find.text('Zona de perigo'), findsOneWidget);
+    expect(find.text('Sites parceiros'), findsNothing);
+    expect(find.text('Compre direto'), findsNothing);
+    expect(find.text('Preferências Livelo'), findsNothing);
   });
 
   testWidgets('conta padrão não oferece administração', (at) async {
     await _abrir(at, tamanho: const Size(320, 640), escalaTexto: 1.5);
-    await _abrirGaveta(at);
-    await at.tap(find.byKey(const Key('abrir-conta-gaveta')));
-    await at.pumpAndSettle();
+    await _abrirConta(at);
 
     expect(at.takeException(), isNull);
-    expect(find.text('Conta e sistema'), findsOneWidget);
+    expect(find.text('Conta e aparência'), findsOneWidget);
     expect(find.text('Acesso padrão'), findsOneWidget);
     expect(find.text('Administração'), findsNothing);
   });
 
-  testWidgets('gaveta aceita texto ampliado sem perder destinos', (at) async {
+  testWidgets('perfil aceita texto ampliado sem overflow', (at) async {
     await _abrir(at, tamanho: const Size(320, 640), escalaTexto: 1.5);
-    await _abrirGaveta(at);
+    await _abrirConta(at);
 
     expect(at.takeException(), isNull);
-    for (final destino in DestinoCompacto.values.where(
-      (destino) => destino.principal,
-    )) {
-      expect(find.byKey(Key('destino-${destino.name}')), findsOneWidget);
-    }
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+    final linhaAparencia = find.byKey(const Key('alternar-tema-conta'));
+    await at.scrollUntilVisible(
+      linhaAparencia,
+      240,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(linhaAparencia, findsOneWidget);
   });
 
   testWidgets('áreas e subáreas continuam alcançáveis com texto ampliado', (

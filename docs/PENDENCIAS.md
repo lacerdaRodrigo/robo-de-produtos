@@ -25,6 +25,7 @@ anterior ainda reinicia o gate operacional.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
 - [ ] Conferir manualmente no Samsung a combinação, remoção individual e limpeza dos recortes contextuais de Produtos; em especial, confirmar que `Outros / novas categorias` continua exclusivo e que a resposta troca os cards sem perder a busca em curso.
+- [ ] Conferir manualmente no Samsung o novo acesso pelo perfil: aparência, Central de Alertas, suporte, privacidade e Administração exibindo somente a Zona de perigo, sem a antiga gaveta.
 - [x] Aplicar e verificar as migrations `025`, `026` e `027`: a leitura do banco
   confirmou 10 acompanhamentos Livelo, 16 Pichau, 37 Produtos Inter, dois
   eventos Inter recuperados com push suprimido e nenhuma outbox pendente.

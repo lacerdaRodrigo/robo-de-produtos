@@ -24,7 +24,7 @@ import 'destinos.dart';
 
 /// Moldura adaptativa do Radar.
 ///
-/// Janelas compactas usam cabeçalho + gaveta e janelas a partir de 920 px usam
+/// Janelas compactas usam cabeçalho + perfil e janelas a partir de 920 px usam
 /// a lateral fixa preservada. Cada modo mantém seu [IndexedStack] para conservar
 /// buscas, filtros, rotas internas e posição útil entre seus destinos.
 class MolduraRadar extends StatefulWidget {
@@ -52,7 +52,6 @@ class MolduraRadar extends StatefulWidget {
 class _EstadoMolduraRadar extends State<MolduraRadar> {
   static const _larguraLayoutAmplo = 920.0;
 
-  final _scaffold = GlobalKey<ScaffoldState>();
   final _lojas = GlobalKey<EstadoPaginaLojas>();
   final _inter = GlobalKey<EstadoPaginaHubShoppingInter>();
   final Set<DestinoCompacto> _visitadosCompactos = {DestinoCompacto.inicio};
@@ -237,8 +236,11 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
               Navigator.of(contexto).pop();
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) =>
-                      PaginaAdministracao(api: widget.api, administrador: true),
+                  builder: (_) => PaginaAdministracao(
+                    api: widget.api,
+                    administrador: true,
+                    somenteZonaDePerigo: true,
+                  ),
                 ),
               );
             }
@@ -321,22 +323,10 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         );
 
         return Scaffold(
-          key: _scaffold,
           appBar: _CabecalhoCompacto(
-            aoAbrirMenu: () => _scaffold.currentState?.openDrawer(),
             aoAbrirConta: _abrirConta,
-            aoAtualizarResumo: _selecionadoCompacto == DestinoCompacto.inter
-                ? _atualizarResumoCabecalho
-                : null,
+            aoAtualizarResumo: _atualizarResumoCabecalho,
             atualizandoResumo: _atualizandoResumoCabecalho,
-          ),
-          drawer: GavetaRadar(
-            selecionado: _selecionadoCompacto,
-            administrador: widget.administrador,
-            aoSelecionar: _selecionarCompacto,
-            aoAbrirAlertas: _abrirAlertas,
-            aoAbrirConta: _abrirConta,
-            identificacaoConta: widget.identificacaoConta,
           ),
           body: conteudo,
           bottomNavigationBar: _BarraInferiorRadar(
@@ -352,15 +342,13 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 class _CabecalhoCompacto extends StatelessWidget
     implements PreferredSizeWidget {
   const _CabecalhoCompacto({
-    required this.aoAbrirMenu,
     required this.aoAbrirConta,
     required this.aoAtualizarResumo,
     required this.atualizandoResumo,
   });
 
-  final VoidCallback aoAbrirMenu;
   final VoidCallback aoAbrirConta;
-  final VoidCallback? aoAtualizarResumo;
+  final VoidCallback aoAtualizarResumo;
   final bool atualizandoResumo;
 
   @override
@@ -384,17 +372,9 @@ class _CabecalhoCompacto extends StatelessWidget
       centerTitle: false,
       actions: [
         IconButton(
-          key: Key(
-            aoAtualizarResumo == null
-                ? 'abrir-menu-principal'
-                : 'atualizar-resumo-cabecalho',
-          ),
-          tooltip: aoAtualizarResumo == null
-              ? 'Abrir menu principal'
-              : 'Atualizar resumo',
-          onPressed: atualizandoResumo
-              ? null
-              : aoAtualizarResumo ?? aoAbrirMenu,
+          key: const Key('atualizar-resumo-cabecalho'),
+          tooltip: 'Atualizar resumo',
+          onPressed: atualizandoResumo ? null : aoAtualizarResumo,
           style: IconButton.styleFrom(
             minimumSize: const Size.square(42),
             maximumSize: const Size.square(42),
@@ -410,7 +390,7 @@ class _CabecalhoCompacto extends StatelessWidget
                   dimension: 19,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Icon(aoAtualizarResumo == null ? Icons.menu : Icons.refresh),
+              : const Icon(Icons.refresh),
         ),
         const SizedBox(width: 7),
         IconButton(
@@ -1227,8 +1207,8 @@ class _FolhaConta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FolhaRadar(
-      titulo: 'Conta e sistema',
-      descricao: 'Utilidades não ocupam um tema principal.',
+      titulo: 'Conta e aparência',
+      descricao: 'Utilidades que funcionam no aplicativo.',
       child: Flexible(
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -1237,13 +1217,11 @@ class _FolhaConta extends StatelessWidget {
           child: ListView(
             shrinkWrap: true,
             children: [
-              Text(
-                administrador ? 'Acesso administrador' : 'Acesso padrão',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: CoresRadar.de(context).textoSuave,
-                ),
+              _PerfilConta(
+                identificacao: identificacaoConta,
+                administrador: administrador,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               if (aoAdministrar != null) ...[
                 CartaoRadar(
                   aoTocar: aoAdministrar,
@@ -1301,23 +1279,11 @@ class _FolhaConta extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              const CartaoRadar(
-                padding: EdgeInsets.all(12),
-                child: _LinhaFolha(
-                  icone: Icons.shield_outlined,
-                  titulo: 'Segurança e acesso',
-                  descricao: 'Sessão, convite e permissões',
+              if (!kIsWeb)
+                const CartaoRadar(
+                  padding: EdgeInsets.zero,
+                  child: ControleAparenciaRadar.linha(),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const CartaoRadar(
-                padding: EdgeInsets.all(12),
-                child: _LinhaFolha(
-                  icone: Icons.add,
-                  titulo: 'Integrações',
-                  descricao: 'Pronto para novos bancos e programas',
-                ),
-              ),
               if (podeSair) ...[
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
@@ -1329,6 +1295,68 @@ class _FolhaConta extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PerfilConta extends StatelessWidget {
+  const _PerfilConta({
+    required this.identificacao,
+    required this.administrador,
+  });
+
+  final String? identificacao;
+  final bool administrador;
+
+  @override
+  Widget build(BuildContext context) {
+    final nome = identificacao ?? 'Conta do Radar';
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final escuro = tema.brightness == Brightness.dark;
+    return DecoratedBox(
+      key: const Key('perfil-conta'),
+      decoration: BoxDecoration(
+        color: cores.superficieAlternativa,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 23,
+              backgroundColor: escuro
+                  ? Tokens.superficieForteEscura
+                  : Tokens.superficieForte,
+              foregroundColor: escuro ? Tokens.textoEscuro : Tokens.texto,
+              child: Text(
+                _iniciaisConta(nome),
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    administrador ? 'Acesso administrador' : 'Acesso padrão',
+                    style: TextStyle(color: cores.textoSuave, fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

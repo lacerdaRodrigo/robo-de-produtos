@@ -144,7 +144,7 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
   });
 
   testWidgets('sessão sem convite mostra acesso negado e permite sair', (

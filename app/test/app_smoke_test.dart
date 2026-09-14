@@ -34,7 +34,7 @@ void main() {
 
     await at.pumpWidget(RadarApp.semAutenticacaoParaTeste(api: api));
 
-    expect(find.byKey(const Key('abrir-menu-principal')), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
     expect(find.byKey(const Key('abrir-conta-cabecalho')), findsOneWidget);
   });
 }

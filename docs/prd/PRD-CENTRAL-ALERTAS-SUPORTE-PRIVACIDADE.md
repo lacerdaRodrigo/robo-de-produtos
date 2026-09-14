@@ -104,9 +104,11 @@ globais continuam separadas e protegidas por autorização.
 
 `PaginaAlertas` substitui a folha placeholder e preserva filtro, página e coleta
 recebida por deep link de push. A tela cobre loading, vazio, erro, parcial,
-offline, lidos/não lidos, paginação e preferências. O menu Conta oferece
-Central, Ajuda, Reportar problema e Privacidade. Produtos Inter exibe a ação
-pessoal `Acompanhar`, sem alterar a seleção global de lojas.
+offline, lidos/não lidos, paginação e preferências. No mobile compacto, o
+perfil substitui a antiga gaveta: oferece Central, Ajuda, Reportar problema,
+Privacidade, aparência, Administração e saída. Resumo e Serviços continuam
+exclusivos da barra inferior. Produtos Inter exibe a ação pessoal `Acompanhar`,
+sem alterar a seleção global de lojas.
 
 Após o primeiro login, FCM solicita permissão. Recusar ou indisponibilidade do
 Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
