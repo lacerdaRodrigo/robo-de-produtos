@@ -8,7 +8,7 @@ Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Ne
 guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) mostra
 cada fonte sem misturar suas regras.
 
-> **Ciclo atual:** o Flutter está em redesign **mobile-only**, governado por
+> **Ciclo atual:** o Flutter está em redesign **mobile-only V12 Delta**, governado por
 > [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
 > mas não é alvo nem gate deste ciclo. A Central de Alertas está implementada;
 > configuração Firebase/FCM e secret do cron estão ativos; o aceite físico e um
@@ -25,7 +25,7 @@ robo/
 │   └── api/        # API autenticada consumida pelo Flutter
 ├── docs/           # PRDs e documentação
 ├── migracoes/      # schema versionado do Postgres; aplicação é operação externa
-├── design-app/     # protótipo mobile atual e referências preservadas
+├── design-app/     # protótipo mobile V12 Delta e referências preservadas
 ├── .github/        # workflows do GitHub Actions
 ├── AGENTS.md       # contrato operacional da branch re-design
 └── CLAUDE.md       # contexto histórico complementar

@@ -55,7 +55,7 @@ Proxy, rotação de IP e qualquer técnica fora do termo continuam proibidos.
   etiquetas e disponibilidade.
 - **Ver na Pichau** abre somente uma URL `http` ou `https` fornecida pela API,
   usando o navegador externo.
-- O card oferece **Histórico** em uma folha/modal baseada no componente V11 já
+- O card oferece **Histórico** em uma folha/modal baseada no componente Delta já
   existente. A tela inicial não expõe o histórico inteiro; ele aparece sob
   demanda e é somente leitura.
 - Nenhuma imagem de produto é armazenada ou necessária para o card.
@@ -86,7 +86,7 @@ diretamente.
 
 `GET /api/pichau/catalogo?q=&aba=todas|acompanhadas&disponibilidade=todas|disponiveis|esgotados&ordenar=nome|preco|desconto&pagina=&por_pagina=`.
 
-Na jornada mobile V11, `aba`, `disponibilidade` e `ordenar` são filtros do
+Na jornada mobile V12 Delta, `aba`, `disponibilidade` e `ordenar` são filtros do
 retrato persistido e continuam server-side; a digitação não consulta a fonte
 externa. Cada item também informa `acompanhada: boolean`. O Flutter preserva
 o filtro, a busca e a página durante as ações e usa estado otimista somente
@@ -123,7 +123,7 @@ acompanhada
 
 O backend implementado limita as medições aos últimos 30 dias e preserva a
 identidade do produto mesmo quando ele sair do catálogo. A resposta do
-histórico é usada pela folha V11 para mostrar as medições de Pix e cartão sem
+histórico é usada pela folha Delta para mostrar as medições de Pix e cartão sem
 recalcular valores financeiros no app.
 
 ### Acompanhamento administrativo legado
@@ -578,7 +578,7 @@ dinâmico e da restauração da tela. Como o cabo de dados ainda estava fisicame
 conectado para a inspeção ADB, a execução manual sem cabo e o gate agendado
 continuam pendentes.
 
-## Jornada mobile V11 entregue
+## Jornada mobile V12 Delta entregue
 
 - Na Home compacta, a seção **Visão geral** exibe cards independentes de
   Livelo, Banco Inter e Pichau; o card Pichau usa o retrato real de produtos
@@ -588,7 +588,7 @@ continuam pendentes.
   coleta continua pertencendo aos estados e jornadas de cada serviço.
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
 - `DestinoCompacto.pichau` é uma subárea e não aparece no `BottomDock`.
-- `PaginaPichau` usa a fundação visual V11, busca server-side, paginação,
+- `PaginaPichau` usa a fundação visual Delta, busca server-side, paginação,
   loading, vazio, erro, atraso/parcial, cards próprios e histórico em folha.
 - A jornada mobile também possui abas Todas/Acompanhadas, filtros de
   disponibilidade, ordenação por nome/preço Pix/desconto, acompanhamento

@@ -26,6 +26,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final clube = rotuloClube(parceiro.campanha);
     final botaoDetalhes = OutlinedButton(
       key: Key('detalhes-${parceiro.idExterno}'),
@@ -78,6 +79,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
         key: Key('cartao-livelo-${parceiro.idExterno}'),
+        corDestaque: cores.livelo,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,6 +357,7 @@ class _Iniciais extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
     final partes = nome
         .trim()
         .split(RegExp(r'\s+'))
@@ -369,24 +372,13 @@ class _Iniciais extends StatelessWidget {
       height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            Theme.of(context).brightness == Brightness.dark
-                ? Tokens.acaoFundoEscuro
-                : Tokens.acaoFundo,
-            Theme.of(context).brightness == Brightness.dark
-                ? Tokens.cianoFundoEscuro
-                : Tokens.cianoFundo,
-          ],
-        ),
+        color: cores.livelo.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Text(
         iniciais.isEmpty ? '•' : iniciais,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: CoresRadar.de(context).acao,
+          color: cores.livelo,
           fontWeight: FontWeight.w900,
         ),
       ),

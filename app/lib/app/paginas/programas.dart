@@ -82,6 +82,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Livelo',
         descricao: 'Pontos, lojas acompanhadas e histórico',
         tipo: 'Pontos',
+        corFonte: CoresRadar.de(context).livelo,
         capacidades: const ['Catálogo', 'Pontuação', 'Histórico'],
         termos: 'livelo pontos lojas historico campanhas',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.livelo.estado),
@@ -95,6 +96,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Banco Inter',
         descricao: 'Cashback, Sites parceiros e Compre direto',
         tipo: 'Cashback + produtos',
+        corFonte: CoresRadar.de(context).cashback,
         capacidades: const ['Sites parceiros', 'Cashback', 'Compre direto'],
         termos: 'banco inter cashback sites parceiros compre direto produtos',
         estado: _resumo == null
@@ -110,6 +112,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Pichau',
         descricao: 'Catálogo de PCs Gamer com preços e disponibilidade',
         tipo: 'PC Gamer',
+        corFonte: CoresRadar.de(context).pichau,
         capacidades: const ['Catálogo PC Gamer', 'Pix + cartão', 'Estoque'],
         termos: 'pichau pc gamer computadores catalogo preços disponibilidade',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.pichau.estado),
@@ -142,6 +145,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
             controlador: _busca,
             dica: 'Pesquisar serviço',
             aoMudar: (_) => setState(() {}),
+            somenteBusca: true,
           ),
           if (_carregando) ...[
             const SizedBox(height: 12),
@@ -195,6 +199,7 @@ class _ProgramaRadar {
     required this.titulo,
     required this.descricao,
     required this.tipo,
+    required this.corFonte,
     required this.capacidades,
     required this.termos,
     required this.estado,
@@ -206,6 +211,7 @@ class _ProgramaRadar {
   final String titulo;
   final String descricao;
   final String tipo;
+  final Color corFonte;
   final List<String> capacidades;
   final String termos;
   final String? estado;
@@ -221,12 +227,13 @@ class _CartaoPrograma extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return CartaoRadar(
       aoTocar: programa.aoTocar,
       padding: EdgeInsets.zero,
       child: Padding(
         key: programa.chave,
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(tokens.spacing.five),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -238,9 +245,7 @@ class _CartaoPrograma extends StatelessWidget {
                   height: 48,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Tokens.superficieForteEscura
-                        : Tokens.plumSoft,
+                    color: programa.corFonte,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(14),
                       topRight: Radius.circular(14),
@@ -255,7 +260,7 @@ class _CartaoPrograma extends StatelessWidget {
                         ? 'PI'
                         : 'BI',
                     style: TextStyle(
-                      color: cores.marca,
+                      color: cores.marcaTexto,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                     ),
@@ -266,8 +271,8 @@ class _CartaoPrograma extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Tokens.acaoFundoEscuro
-                          : Tokens.actionSoft,
+                          ? programa.corFonte.withValues(alpha: 0.18)
+                          : programa.corFonte.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(RaioRadar.pilula),
                     ),
                     child: Padding(
@@ -281,7 +286,7 @@ class _CartaoPrograma extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.acao,
+                          color: programa.corFonte,
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
                         ),

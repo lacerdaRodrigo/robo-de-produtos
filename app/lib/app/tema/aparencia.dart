@@ -86,10 +86,15 @@ class ControladorAparencia extends ChangeNotifier {
 
   /// Alterna entre claro e escuro e informa se a escolha pôde ser persistida.
   Future<bool> alternar(Brightness brilhoAtual) async {
-    _houveEscolhaLocal = true;
     final proximo = brilhoAtual == Brightness.dark
         ? ThemeMode.light
         : ThemeMode.dark;
+    return definir(proximo);
+  }
+
+  /// Define a preferência completa, incluindo o retorno ao tema do sistema.
+  Future<bool> definir(ThemeMode proximo) async {
+    _houveEscolhaLocal = true;
     if (_modo != proximo) {
       _modo = proximo;
       notifyListeners();

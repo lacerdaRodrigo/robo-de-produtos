@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-14T00:00:00Z",
+  "title": "Design System: Radar de Benefícios Mobile V12 — Console de sintonia",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {"role": "neutral", "displayName": "Grafite / papel frio", "canonical": "#101315", "tonalRamp": ["#101315", "#171B1E", "#20262A", "#3A4548", "#AAB5B3", "#EEF1F0", "#FAFBFA"]},
+      "brand": {"role": "primary", "displayName": "Açafrão de sintonia", "canonical": "#F2C14E", "tonalRamp": ["#5E4304", "#8B5A00", "#A56E00", "#D09D2D", "#F2C14E", "#FFE9A4"]},
+      "inter": {"role": "secondary", "displayName": "Azul-gelo Inter", "canonical": "#9BD7E5", "tonalRamp": ["#123F49", "#176B7A", "#4FA3B4", "#9BD7E5", "#DDF5F8"]},
+      "positive": {"role": "secondary", "displayName": "Verde disponibilidade", "canonical": "#A9D77A", "tonalRamp": ["#264916", "#3D6F24", "#6EAA4B", "#A9D77A", "#E2F5CF"]},
+      "danger": {"role": "tertiary", "displayName": "Vermelho de falha", "canonical": "#F06C5C", "tonalRamp": ["#5A211B", "#A43E32", "#D95647", "#F06C5C", "#FFD0CA"]}
+    },
+    "typographyMeta": {
+      "display": {"displayName": "Barlow Condensed", "purpose": "Entrada de tela e domínio."},
+      "body": {"displayName": "Atkinson Hyperlegible", "purpose": "Leitura, regras e controles."},
+      "label": {"displayName": "Barlow Condensed labels", "purpose": "Origem, estado, ação e índice."}
+    },
+    "shadows": [
+      {"name": "device-frame", "value": "0 8px 14px rgba(16,23,25,0.16)", "purpose": "Moldura do mockup, fora do app."},
+      {"name": "focused-sheet", "value": "0 8px 22px rgba(0,0,0,0.22)", "purpose": "Folha nativa em foco; nenhuma sombra em listas."}
+    ],
+    "motion": [
+      {"name": "channel-update", "value": "240ms ease-out", "purpose": "Trecho do trilho percorre durante atualização."},
+      {"name": "route-cut", "value": "180ms ease-out", "purpose": "Corte curto entre contextos."},
+      {"name": "follow-confirm", "value": "180ms ease-out", "purpose": "Conexão fecha e ação muda de texto."}
+    ],
+    "breakpoints": [
+      {"name": "android-compact", "value": "320–430px"},
+      {"name": "wide-preservation", "value": ">=920px, fora do alvo visual deste ciclo"}
+    ]
+  },
+  "components": [
+    {"name": "Channel Row", "kind": "list", "description": "Faixa full-width com origem, estado, leitura e ação.", "html": "<button class=channel-row><span class=channel-rail></span><span>Livelo</span><span>Atualizado</span></button>", "css": ".channel-row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;min-height:80px;border:0;border-bottom:1px solid #3A4548;background:transparent;color:#F4F6F3;text-align:left}.channel-rail{width:4px;height:48px;background:#A9D77A}"},
+    {"name": "Source Mark", "kind": "marker", "description": "Marca retangular pequena de origem, sem container arredondado.", "html": "<i class=source-mark></i>", "css": ".source-mark{width:8px;height:8px;background:#F2C14E}"},
+    {"name": "Query Field", "kind": "input", "description": "Busca contextual da API.", "html": "<input class=query-box type=search placeholder='Buscar loja'>", "css": ".query-box{height:52px;border:1px solid #3A4548;border-radius:2px;background:#171B1E;color:#F4F6F3}"},
+    {"name": "Product Row", "kind": "list", "description": "Produto editorial com imagem real ou ausência explícita, preço, benefício e ação.", "html": "<article class=product-row><div class=product-image>Imagem fornecida pela API</div><div><strong>Produto</strong><b>R$ —</b></div></article>", "css": ".product-row{display:grid;grid-template-columns:80px minmax(0,1fr);gap:14px;padding:18px 0;border-bottom:1px solid #3A4548}"},
+    {"name": "Query Rail", "kind": "navigation", "description": "Abas e paginação reais, com seleção por linha.", "html": "<div class=query-tools><button class=query-tab aria-selected=true>Lojas</button></div>", "css": ".query-tab[aria-selected=true]{border:0;border-bottom:3px solid #F2C14E;background:transparent;color:#F4F6F3}"},
+    {"name": "Bottom Rail", "kind": "navigation", "description": "Somente Resumo e Serviços no alcance do polegar.", "html": "<nav class=bottom-nav><button>Resumo</button><button>Serviços</button></nav>", "css": ".bottom-nav{display:flex;min-height:68px;border-top:1px solid #3A4548;background:#101315}"}
+  ],
+  "narrative": {
+    "northStar": "Console de sintonia",
+    "overview": "O Radar é uma bancada de canais monitorados. Linhas, divisores e tipografia mostram fonte, qualidade e próxima ação sem pilha de cards, dashboard financeiro ou decoração literal de radar.",
+    "keyCharacteristics": ["Grafite primeiro e papel frio no claro.", "Açafrão reconhecível com papéis de origem e estado disciplinados.", "Listas editoriais full-width em vez de card stack.", "Trilho de estado sempre acompanhado por texto."],
+    "rules": [
+      {"name": "Semantic Channel Rule", "body": "Cor e trilho aceleram a leitura, mas texto e semântica sempre dizem o estado.", "section": "colors"},
+      {"name": "Line Before Container Rule", "body": "Use divisor e tipografia antes de criar um card; container só existe quando representa uma decisão ou detalhe real.", "section": "layout"},
+      {"name": "Honest Absence Rule", "body": "Imagem, preço, benefício, estoque e métrica ausentes permanecem ausentes.", "section": "content"}
+    ],
+    "dos": ["Do preservar API, modelos, paginação, busca, posição e autorização.", "Do dar alvo mínimo de 48dp e foco visível.", "Do separar Livelo, Sites parceiros, Compre direto e Pichau.", "Do respeitar claro, escuro e movimento reduzido."],
+    "donts": ["Don't usar gradientes, glass, glow, bento ou card stack.", "Don't inventar imagem, produto, preço, cashback, pontos, estoque ou benefício.", "Don't usar cor como único estado.", "Don't implementar Flutter antes da aprovação visual desta proposta."]
+  }
+}

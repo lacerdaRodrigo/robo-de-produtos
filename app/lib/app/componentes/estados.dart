@@ -11,6 +11,7 @@ class Carregando extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Semantics(
       liveRegion: true,
       label: mensagem,
@@ -20,7 +21,7 @@ class Carregando extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(),
-            const SizedBox(height: 12),
+            SizedBox(height: tokens.spacing.three),
             Text(mensagem),
           ],
         ),
@@ -37,6 +38,7 @@ class EstadoVazio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return Semantics(
       liveRegion: true,
       label: mensagem,
@@ -48,12 +50,12 @@ class EstadoVazio extends StatelessWidget {
           decoration: BoxDecoration(
             color: cores.superficieAlternativa,
             border: Border.all(color: cores.borda),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.inbox_outlined, size: 40, color: cores.textoSuave),
+              Icon(Icons.inbox_outlined, size: 40, color: cores.teal),
               const SizedBox(height: 12),
               Text(
                 mensagem,
@@ -76,7 +78,9 @@ class EstadoFalha extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final corErro = Theme.of(context).colorScheme.error;
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    final corErro = cores.perigo;
     return Semantics(
       liveRegion: true,
       label: mensagem,
@@ -85,9 +89,9 @@ class EstadoFalha extends StatelessWidget {
           margin: const EdgeInsets.all(18),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
+            color: cores.perigoFundo,
             border: Border.all(color: corErro.withValues(alpha: 0.35)),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

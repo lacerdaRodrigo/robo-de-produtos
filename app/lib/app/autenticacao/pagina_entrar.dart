@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/autenticacao/autenticador.dart';
+import 'pagina_recuperar.dart';
 import '../identidade/logo_radar.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
@@ -24,16 +25,12 @@ class PaginaEntrar extends StatefulWidget {
 
 class _EstadoPaginaEntrar extends State<PaginaEntrar> {
   static const _larguraLayoutAmplo = 920.0;
-  static const _mensagemRecuperacao =
-      'Se o e-mail estiver cadastrado, você receberá as instruções.';
-
   final _formulario = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _senha = TextEditingController();
   bool _ocupado = false;
   bool _ocultarSenha = true;
   String? _erro;
-  String? _aviso;
 
   @override
   void dispose() {
@@ -47,7 +44,6 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
     setState(() {
       _ocupado = true;
       _erro = null;
-      _aviso = null;
     });
     try {
       await widget.autenticador.entrar(
@@ -59,37 +55,6 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
     } catch (_) {
       if (mounted) {
         setState(() => _erro = 'Não foi possível entrar. Tente novamente.');
-      }
-    } finally {
-      if (mounted) setState(() => _ocupado = false);
-    }
-  }
-
-  Future<void> _redefinirSenha() async {
-    if (_ocupado) return;
-    final email = _email.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      setState(() {
-        _erro = 'Digite seu e-mail antes de recuperar a senha.';
-        _aviso = null;
-      });
-      return;
-    }
-    setState(() {
-      _ocupado = true;
-      _erro = null;
-      _aviso = null;
-    });
-    try {
-      await widget.autenticador.redefinirSenha(email);
-      if (mounted) setState(() => _aviso = _mensagemRecuperacao);
-    } on FalhaDeAutenticacao {
-      // A recuperação nunca confirma se uma conta existe. Até mensagens do
-      // provedor são substituídas pela mesma resposta neutra.
-      if (mounted) setState(() => _aviso = _mensagemRecuperacao);
-    } catch (_) {
-      if (mounted) {
-        setState(() => _erro = 'Não foi possível pedir uma nova senha.');
       }
     } finally {
       if (mounted) setState(() => _ocupado = false);
@@ -111,11 +76,17 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
             ocupado: _ocupado,
             ocultarSenha: _ocultarSenha,
             erro: _erro,
-            aviso: _aviso,
             aoAlternarSenha: () =>
                 setState(() => _ocultarSenha = !_ocultarSenha),
             aoEntrar: _entrar,
-            aoRecuperar: _redefinirSenha,
+            aoAbrirRecuperacao: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => PaginaRecuperarAcesso(
+                  autenticador: widget.autenticador,
+                  emailInicial: _email.text,
+                ),
+              ),
+            ),
           );
 
           if (!amplo) return formulario;
@@ -409,10 +380,9 @@ class _AreaFormulario extends StatelessWidget {
     required this.ocupado,
     required this.ocultarSenha,
     required this.erro,
-    required this.aviso,
     required this.aoAlternarSenha,
     required this.aoEntrar,
-    required this.aoRecuperar,
+    required this.aoAbrirRecuperacao,
   });
 
   final bool compacto;
@@ -422,10 +392,9 @@ class _AreaFormulario extends StatelessWidget {
   final bool ocupado;
   final bool ocultarSenha;
   final String? erro;
-  final String? aviso;
   final VoidCallback aoAlternarSenha;
   final VoidCallback aoEntrar;
-  final VoidCallback aoRecuperar;
+  final VoidCallback aoAbrirRecuperacao;
 
   @override
   Widget build(BuildContext context) {
@@ -466,7 +435,7 @@ class _AreaFormulario extends StatelessWidget {
                             ],
                             Text(
                               compacto
-                                  ? 'Benefícios claros. Sem ruído.'
+                                  ? 'Continue de onde mudou.'
                                   : 'Que bom ter você aqui',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
@@ -482,7 +451,7 @@ class _AreaFormulario extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               compacto
-                                  ? 'Entre para consultar os retratos salvos pela API autenticada.'
+                                  ? 'Abra acompanhamentos, comparações e alertas da sua conta.'
                                   : 'Entre com seu acesso para ver as oportunidades acompanhadas.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
@@ -543,13 +512,6 @@ class _AreaFormulario extends StatelessWidget {
                                 chave: const Key('login-erro'),
                               ),
                             ],
-                            if (aviso != null) ...[
-                              const SizedBox(height: 16),
-                              _MensagemLogin(
-                                texto: aviso!,
-                                chave: const Key('login-aviso'),
-                              ),
-                            ],
                             const SizedBox(height: 20),
                             SizedBox(
                               height: 52,
@@ -570,8 +532,8 @@ class _AreaFormulario extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             TextButton(
-                              onPressed: ocupado ? null : aoRecuperar,
-                              child: const Text('Esqueci minha senha'),
+                              onPressed: ocupado ? null : aoAbrirRecuperacao,
+                              child: const Text('Recuperar acesso'),
                             ),
                             const SizedBox(height: 16),
                             const _AvisoSeguranca(),

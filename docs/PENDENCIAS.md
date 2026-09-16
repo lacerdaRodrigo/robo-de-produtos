@@ -2,10 +2,10 @@
 
 Lista viva somente do que continua aberto. Histórico concluído permanece no Git e nos PRDs; não deve voltar a governar o ciclo atual.
 
-O contrato operacional padrão da branch `re-design` é o [`AGENTS.md`](../AGENTS.md):
-Flutter mobile, protótipo mobile como fonte visual, unitários/widgets afetados e
-Web/integration/E2E fora do gate. A implementação backend Pichau desta tarefa
-foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
+O contrato operacional padrão do ciclo mobile V12 Delta é o
+[`AGENTS.md`](../AGENTS.md): Flutter mobile, protótipo Delta como fonte visual,
+unitários/widgets afetados e Web/integration/E2E fora do gate. A implementação
+backend Pichau desta tarefa foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
 a disponibilidade contínua do executor Android continua aberta. A execução
 `34544816986`, fila 52, falhou em 2026-09-11 como `pichau-dados`; a fila sem
 diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.

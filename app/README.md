@@ -7,8 +7,9 @@ o mesmo código, consumindo somente a API autenticada em `../backend/api/`.
 > já foi publicada. Autenticação, painéis de leitura e administração usam a API
 > (sem prefixo de versão, por domínio).
 > O design atual é exclusivamente mobile. A fonte visual clicável e o contrato completo estão em
-> [`../design-app/prototipo-mobile-redesign-novo-11.html`](../design-app/prototipo-mobile-redesign-novo-11.html) e
-> [`../design-app/SISTEMA-DESIGN-MOBILE-V11.md`](../design-app/SISTEMA-DESIGN-MOBILE-V11.md).
+> [`../design-app/prototipos/mobile-v12/index.html`](../design-app/prototipos/mobile-v12/index.html),
+> [`../docs/guias/design-v12.md`](../docs/guias/design-v12.md) e
+> [`../docs/guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md`](../docs/guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md).
 > Web e testes visuais/automatizados fora de unitários e widgets permanecem
 > preservados, mas não são gate desta branch.
 

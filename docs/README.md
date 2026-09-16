@@ -9,7 +9,7 @@ documentação antes de abrir arquivos isolados.
 | Caminho | Conteúdo | Quando consultar |
 |---|---|---|
 | [`prd/`](prd/) | Requisitos de produto, regras de negócio, contratos, arquitetura e critérios de aceite por domínio. | Antes de implementar ou alterar comportamento de Livelo, Shopping Inter, categorias ou administração. |
-| [`planos/`](planos/) | Trabalho futuro que ainda não foi incorporado ao produto. | Ao avaliar ou executar uma evolução que ainda está pendente. |
+| [`planos/`](planos/) | Planos e registros de evolução, incluindo o plano V12 já executado e seus gates pendentes. | Ao revisar decisões de implementação ou evoluções ainda abertas. |
 | [`testes/`](testes/) | Catálogo técnico de casos de teste por módulo. | Ao alterar testes ou confirmar a cobertura esperada de uma regra. |
 | [`guias/`](guias/) | Orientações operacionais e de uso do ambiente. | Para tarefas de operação ou configuração descritas no guia correspondente. |
 
@@ -25,7 +25,11 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`design-app/produtos-compre-direto-melhoria.html`](../design-app/produtos-compre-direto-melhoria.html) | Referência visual standalone da tela mobile de Produtos do Compre direto; sua composição compacta de busca, atalhos, resumo e cards foi aplicada ao Flutter mobile, sem alterar o protótipo V11. |
+| [`../design-app/prototipos/mobile-v12/index.html`](../design-app/prototipos/mobile-v12/index.html) | Fonte visual e comportamental vigente do aplicativo mobile V12 Delta. |
+| [`guias/design-v12.md`](guias/design-v12.md) | Prompt mestre, direção visual, inventário de superfícies e gates do V12. |
+| [`guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md`](guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md) | Contrato de tokens, componentes, estados, responsividade e acessibilidade do V12. |
+| [`guias/MATRIZ-TELAS-MOBILE-V12.md`](guias/MATRIZ-TELAS-MOBILE-V12.md) | Mapa vigente de rotas e cobertura principal do protótipo V12. |
+| [`guias/RELATORIO-VALIDACAO-PROTOTIPO-MOBILE-V12.md`](guias/RELATORIO-VALIDACAO-PROTOTIPO-MOBILE-V12.md) | Evidências e pendências da validação do protótipo V12. |
 
 ## PRDs de domínio
 
@@ -56,4 +60,5 @@ catálogo não são, sozinhos, garantia de alerta pessoal.
 1. Abra o PRD do domínio em [`prd/`](prd/).
 2. Consulte [`PENDENCIAS.md`](PENDENCIAS.md) para não tratar pendência operacional como concluída.
 3. Consulte o catálogo em [`testes/`](testes/) somente quando a mudança afetar comportamento coberto.
-4. Use [`planos/`](planos/) apenas para trabalho que ainda não entrou no produto.
+4. Use [`planos/`](planos/) para decisões de evolução, distinguindo registros
+   já executados de pendências ainda abertas.

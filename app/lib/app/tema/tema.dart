@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-/// Temas do Radar com a mesma identidade e sem misturar ação com ganho.
+/// Temas do Radar com a direção visual Delta compartilhada entre as telas.
 abstract final class TemaRadar {
-  /// O login compacto usa o mesmo contrato V11 do restante do aplicativo.
+  /// Mantém o nome usado pela jornada de autenticação e pelos testes.
   static ThemeData loginLegado() => claro();
 
-  /// Tema congelado de jornadas que não fazem parte do ciclo mobile.
+  /// Tema congelado das jornadas amplas que não fazem parte do ciclo mobile.
   static ThemeData legadoClaro() {
     final base = ThemeData(
       useMaterial3: true,
@@ -37,238 +37,228 @@ abstract final class TemaRadar {
     );
   }
 
-  /// Tema amplo anterior com as cores semânticas usadas pelos widgets novos.
+  /// Paleta legada usada apenas pelo modo amplo preservado fora do mobile.
   static ThemeData legadoClaroComCores() => legadoClaro().copyWith(
     extensions: const <ThemeExtension<dynamic>>[CoresRadar.legadas()],
   );
 
   static ThemeData claro() {
+    final cores = const CoresRadar.claras();
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'Aptos',
-      fontFamilyFallback: const ['Segoe UI Variable', 'Segoe UI', 'sans-serif'],
+      fontFamily: 'Segoe UI',
+      fontFamilyFallback: const ['Trebuchet MS', 'Arial', 'sans-serif'],
     );
     final esquema =
         ColorScheme.fromSeed(
-          seedColor: Tokens.plum,
+          seedColor: cores.teal,
           brightness: Brightness.light,
-          primary: Tokens.action,
-          onPrimary: Colors.white,
-          secondary: Tokens.plum,
-          onSecondary: Colors.white,
-          surface: Tokens.paper,
-          onSurface: Tokens.ink,
-          outline: Tokens.line,
-          error: Tokens.danger,
+          primary: cores.acao,
+          onPrimary: Tokens.actionInk,
+          secondary: cores.marca,
+          onSecondary: cores.marcaTexto,
+          surface: cores.superficie,
+          onSurface: cores.texto,
+          outline: cores.borda,
+          error: cores.perigo,
         ).copyWith(
-          surfaceContainerLowest: Tokens.paper,
-          surfaceContainerLow: Tokens.paper,
-          surfaceContainer: Tokens.paperSoft,
-          surfaceContainerHigh: Tokens.plumSoft,
-          surfaceContainerHighest: Tokens.plumSoft,
+          surfaceContainerLowest: cores.superficie,
+          surfaceContainerLow: cores.superficie,
+          surfaceContainer: cores.superficieAlternativa,
+          surfaceContainerHigh: cores.superficieAlternativa,
+          surfaceContainerHighest: cores.superficieAlternativa,
+          onSurfaceVariant: cores.textoSuave,
+          outlineVariant: cores.borda,
+          inverseSurface: cores.marca,
+          onInverseSurface: cores.marcaTexto,
+          inversePrimary: cores.acao,
         );
-    return base.copyWith(
-      colorScheme: esquema,
-      scaffoldBackgroundColor: Tokens.canvas,
-      cardColor: Tokens.paper,
-      dividerColor: Tokens.line,
-      extensions: const <ThemeExtension<dynamic>>[CoresRadar.claras()],
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Tokens.canvas,
-        foregroundColor: Tokens.ink,
-        surfaceTintColor: Colors.transparent,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Tokens.paper,
-        indicatorColor: Tokens.plum,
-        iconTheme: WidgetStateProperty.resolveWith((estados) {
-          return IconThemeData(
-            color: estados.contains(WidgetState.selected)
-                ? Colors.white
-                : Tokens.muted,
-          );
-        }),
-      ),
-      inputDecorationTheme: _campos(
-        paper: Tokens.paper,
-        ink: Tokens.ink,
-        muted: Tokens.muted,
-        line: Tokens.line,
-        action: Tokens.action,
-      ),
-      cardTheme: CardThemeData(
-        color: Tokens.paper,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RaioRadar.grande),
-          side: const BorderSide(color: Tokens.line),
-        ),
-      ),
-      filledButtonTheme: _botaoPreenchido(Tokens.action, Colors.white),
-      outlinedButtonTheme: _botaoContornado(Tokens.ink, Tokens.line),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: Tokens.actionStrong,
-          minimumSize: const Size(38, 38),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RaioRadar.medio),
-          ),
-        ),
-      ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Tokens.paper,
-        surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: Tokens.paper,
-        modalBarrierColor: Color(0x7A1B121B),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(27)),
-        ),
-      ),
-      chipTheme: base.chipTheme.copyWith(
-        backgroundColor: Tokens.paper,
-        selectedColor: Tokens.plum,
-        side: const BorderSide(color: Tokens.line),
-        shape: const StadiumBorder(),
-      ),
-      textTheme: base.textTheme.apply(
-        bodyColor: Tokens.ink,
-        displayColor: Tokens.ink,
-      ),
+    return _baseComum(
+      base,
+      esquema,
+      cores,
+      preenchido: _botaoPreenchido(cores.acao, Tokens.actionInk),
+      contornado: _botaoContornado(cores.texto, cores.borda),
     );
   }
 
   static ThemeData escuro() {
+    final cores = const CoresRadar.escuras();
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: 'Aptos',
-      fontFamilyFallback: const ['Segoe UI Variable', 'Segoe UI', 'sans-serif'],
+      fontFamily: 'Segoe UI',
+      fontFamilyFallback: const ['Trebuchet MS', 'Arial', 'sans-serif'],
     );
     final esquema =
         ColorScheme.fromSeed(
-          seedColor: Tokens.marcaEscura,
+          seedColor: cores.teal,
           brightness: Brightness.dark,
-          primary: Tokens.acaoEscura,
-          onPrimary: const Color(0xFF291A2F),
-          secondary: Tokens.marcaEscura,
-          onSecondary: const Color(0xFF291A2F),
-          surface: Tokens.superficieEscura,
-          error: Tokens.perigoEscuro,
-          onSurface: Tokens.textoEscuro,
-          outline: Tokens.bordaEscura,
+          primary: cores.acao,
+          onPrimary: Tokens.actionInk,
+          secondary: cores.marca,
+          onSecondary: cores.marcaTexto,
+          surface: cores.superficie,
+          onSurface: cores.texto,
+          outline: cores.borda,
+          error: cores.perigo,
         ).copyWith(
-          surfaceContainerLowest: Tokens.superficieEscura,
-          surfaceContainerLow: Tokens.superficieEscura,
-          surfaceContainer: Tokens.superficieAlternativaEscura,
-          surfaceContainerHigh: Tokens.superficieForteEscura,
-          surfaceContainerHighest: Tokens.superficieForteEscura,
+          surfaceContainerLowest: cores.canvas,
+          surfaceContainerLow: cores.superficie,
+          surfaceContainer: cores.superficieAlternativa,
+          surfaceContainerHigh: cores.superficieAlternativa,
+          surfaceContainerHighest: cores.superficieAlternativa,
+          onSurfaceVariant: cores.textoSuave,
+          outlineVariant: cores.borda,
+          inverseSurface: cores.texto,
+          onInverseSurface: cores.canvas,
+          inversePrimary: cores.acao,
         );
+    return _baseComum(
+      base,
+      esquema,
+      cores,
+      preenchido: _botaoPreenchido(cores.acao, Tokens.actionInk),
+      contornado: _botaoContornado(cores.texto, cores.borda),
+    );
+  }
+
+  static ThemeData _baseComum(
+    ThemeData base,
+    ColorScheme esquema,
+    CoresRadar cores, {
+    required FilledButtonThemeData preenchido,
+    required OutlinedButtonThemeData contornado,
+  }) {
+    final texto = base.textTheme.apply(
+      bodyColor: cores.texto,
+      displayColor: cores.texto,
+    );
+    final textoDelta = texto.copyWith(
+      displayLarge: texto.displayLarge?.copyWith(
+        fontFamily: 'Trebuchet MS',
+        fontWeight: FontWeight.w900,
+        letterSpacing: -2.4,
+      ),
+      displayMedium: texto.displayMedium?.copyWith(
+        fontFamily: 'Trebuchet MS',
+        fontWeight: FontWeight.w900,
+        letterSpacing: -1.8,
+      ),
+      headlineLarge: texto.headlineLarge?.copyWith(
+        fontFamily: 'Trebuchet MS',
+        fontWeight: FontWeight.w900,
+        letterSpacing: -1.2,
+      ),
+      headlineMedium: texto.headlineMedium?.copyWith(
+        fontFamily: 'Trebuchet MS',
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.9,
+      ),
+      titleLarge: texto.titleLarge?.copyWith(
+        fontFamily: 'Trebuchet MS',
+        fontWeight: FontWeight.w900,
+        letterSpacing: -0.4,
+      ),
+      titleMedium: texto.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+      labelLarge: texto.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+    );
     return base.copyWith(
       colorScheme: esquema,
-      scaffoldBackgroundColor: Tokens.fundoEscuro,
-      cardColor: Tokens.superficieEscura,
-      dividerColor: Tokens.bordaEscura,
-      extensions: const <ThemeExtension<dynamic>>[CoresRadar.escuras()],
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Tokens.fundoEscuro,
-        foregroundColor: Tokens.textoEscuro,
+      scaffoldBackgroundColor: cores.canvas,
+      canvasColor: cores.canvas,
+      cardColor: cores.superficie,
+      dividerColor: cores.borda,
+      extensions: <ThemeExtension<dynamic>>[
+        AppTokens(
+          colors: cores,
+          spacing: const AppSpacing.delta(),
+          radii: const AppRadii.delta(),
+          motion: const AppMotion.delta(),
+        ),
+        cores,
+      ],
+      appBarTheme: AppBarTheme(
+        backgroundColor: cores.canvas,
+        foregroundColor: cores.texto,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Tokens.superficieEscura,
-        indicatorColor: Tokens.marcaEscura,
+        backgroundColor: cores.marca,
+        indicatorColor: Tokens.mark,
         iconTheme: WidgetStateProperty.resolveWith((estados) {
           return IconThemeData(
             color: estados.contains(WidgetState.selected)
-                ? const Color(0xFF291A2F)
-                : Tokens.textoSuaveEscuro,
+                ? Tokens.markInk
+                : cores.textoSuave,
           );
         }),
       ),
-      drawerTheme: const DrawerThemeData(
-        backgroundColor: Tokens.fundoEscuro,
-        surfaceTintColor: Colors.transparent,
-      ),
-      inputDecorationTheme: _campos(
-        paper: Tokens.superficieEscura,
-        ink: Tokens.textoEscuro,
-        muted: Tokens.textoSuaveEscuro,
-        line: Tokens.bordaEscura,
-        action: Tokens.acaoEscura,
-      ),
+      inputDecorationTheme: _campos(cores),
       cardTheme: CardThemeData(
-        color: Tokens.superficieEscura,
+        color: cores.superficie,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(RaioRadar.grande),
-          side: const BorderSide(color: Tokens.bordaEscura),
+          side: BorderSide(color: cores.borda),
         ),
       ),
-      filledButtonTheme: _botaoPreenchido(
-        Tokens.acaoEscura,
-        const Color(0xFF291A2F),
-      ),
-      outlinedButtonTheme: _botaoContornado(
-        Tokens.textoEscuro,
-        Tokens.bordaEscura,
-      ),
+      filledButtonTheme: preenchido,
+      outlinedButtonTheme: contornado,
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: Tokens.acaoForteEscura,
-          minimumSize: const Size(38, 38),
+          foregroundColor: cores.teal,
+          minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RaioRadar.medio),
+            borderRadius: BorderRadius.circular(RaioRadar.pequeno),
           ),
         ),
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Tokens.superficieEscura,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: cores.superficie,
         surfaceTintColor: Colors.transparent,
-        modalBackgroundColor: Tokens.superficieEscura,
-        modalBarrierColor: Color(0x991B121B),
+        modalBackgroundColor: cores.superficie,
+        modalBarrierColor: cores.marca.withValues(alpha: 0.72),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(27)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(RaioRadar.destaque),
+          ),
         ),
       ),
       chipTheme: base.chipTheme.copyWith(
-        backgroundColor: Tokens.superficieEscura,
-        selectedColor: Tokens.marcaEscura,
-        side: const BorderSide(color: Tokens.bordaEscura),
+        backgroundColor: cores.superficie,
+        selectedColor: cores.teal.withValues(alpha: 0.16),
+        side: BorderSide(color: cores.borda),
         shape: const StadiumBorder(),
+        labelStyle: TextStyle(color: cores.texto, fontWeight: FontWeight.w700),
       ),
-      textTheme: base.textTheme.apply(
-        bodyColor: Tokens.textoEscuro,
-        displayColor: Tokens.textoEscuro,
-      ),
+      textTheme: textoDelta,
     );
   }
 
-  static InputDecorationTheme _campos({
-    required Color paper,
-    required Color ink,
-    required Color muted,
-    required Color line,
-    required Color action,
-  }) {
+  static InputDecorationTheme _campos(CoresRadar cores) {
     final borda = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(17),
-      borderSide: BorderSide(color: line),
+      borderRadius: BorderRadius.circular(RaioRadar.pequeno),
+      borderSide: BorderSide(color: cores.borda),
     );
     return InputDecorationTheme(
       filled: true,
-      fillColor: paper,
-      hintStyle: TextStyle(color: muted),
-      labelStyle: TextStyle(color: ink, fontWeight: FontWeight.w700),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+      fillColor: cores.superficie,
+      hintStyle: TextStyle(color: cores.textoSuave),
+      labelStyle: TextStyle(color: cores.texto, fontWeight: FontWeight.w700),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: const AppSpacing.delta().four,
+        vertical: const AppSpacing.delta().three,
+      ),
       border: borda,
       enabledBorder: borda,
       focusedBorder: borda.copyWith(
-        borderSide: BorderSide(color: action, width: 1.7),
+        borderSide: BorderSide(color: cores.teal, width: 2),
       ),
     );
   }
@@ -276,34 +266,33 @@ abstract final class TemaRadar {
   static FilledButtonThemeData _botaoPreenchido(
     Color fundo,
     Color primeiroPlano,
-  ) {
-    return FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: fundo,
-        foregroundColor: primeiroPlano,
-        minimumSize: const Size(46, 46),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RaioRadar.medio),
-        ),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+  ) => FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      backgroundColor: fundo,
+      foregroundColor: primeiroPlano,
+      minimumSize: const Size(48, 50),
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(RaioRadar.pequeno),
       ),
-    );
-  }
+      elevation: 0,
+      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+    ),
+  );
 
   static OutlinedButtonThemeData _botaoContornado(
     Color primeiroPlano,
     Color linha,
-  ) {
-    return OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: primeiroPlano,
-        minimumSize: const Size(46, 46),
-        side: BorderSide(color: linha),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RaioRadar.medio),
-        ),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+  ) => OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: primeiroPlano,
+      minimumSize: const Size(48, 50),
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
+      side: BorderSide(color: linha),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(RaioRadar.pequeno),
       ),
-    );
-  }
+      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+    ),
+  );
 }

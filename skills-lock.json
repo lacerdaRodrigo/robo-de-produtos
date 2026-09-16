@@ -1,6 +1,24 @@
 {
   "version": 1,
   "skills": {
+    "design-anti-slop": {
+      "source": "prathameshagrawal/design-anti-slop",
+      "sourceType": "github",
+      "skillPath": "skills/design-anti-slop/SKILL.md",
+      "computedHash": "fba68ada511edb26065d747ae3ddedebcaf4ecfb95c3cd5815acf881a31040ec"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "89496d5dd00f4810205f351759594fc2742bf8eea85a2f2b2d1de59f4bd91576"
+    },
+    "imagegen-frontend-mobile": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/imagegen-frontend-mobile/SKILL.md",
+      "computedHash": "9ab7f4f6ce66a3cff02bbf5894e5bd5af50bf5d6ef0adffdc88e8fab772fe44f"
+    },
     "neon": {
       "source": "neondatabase/agent-skills",
       "sourceType": "github",
@@ -12,6 +30,72 @@
       "sourceType": "github",
       "skillPath": "skills/neon-postgres/SKILL.md",
       "computedHash": "58b7ffd550cc8a17c86250999cbdd0020bcb839d2389d423227272743c8d2fb8"
+    },
+    "redesign-existing-projects": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/redesign-skill/SKILL.md",
+      "computedHash": "b405eee0e0e80fc243f731d9aa368bca307e356db7e6157d27101d369dac6726"
+    },
+    "gpt-taste": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-tasteskill/SKILL.md",
+      "computedHash": "2e64c269953f2656c21bf5a0fa6b4568e82fe0c72b36e8f84758e090349966a5"
+    },
+    "mobile-design": {
+      "source": "ulugbekeshnazarov409/mobile-design",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "e2a7c0e16b4fe905a8d3984c341f48a3d8d64b64812a6318ba981d0e1ff3f383"
+    },
+    "flutter-build-responsive-layout": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-build-responsive-layout/SKILL.md",
+      "computedHash": "c7a5d18071c625137cad2def9b13f3579d9bdf0aae29621a1825f12b560394c0"
+    },
+    "flutter-add-widget-preview": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-add-widget-preview/SKILL.md",
+      "computedHash": "88cfeb7084e798714f5ac59cff62e5441759bcbe096c0fdc37abd21111b20212"
+    },
+    "flutter-fix-layout-issues": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-fix-layout-issues/SKILL.md",
+      "computedHash": "e82c82b4245ef502bd93bc543d4f5968f4ee8043fa7556ffebcb34f30651fc9b"
+    },
+    "flutter-add-widget-test": {
+      "source": "flutter/agent-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/flutter-add-widget-test/SKILL.md",
+      "computedHash": "6c449ebd844e331e661b12630b6ad2a218e84d1bd8ea8377ba9dbd62ffe2798a"
+    },
+    "design-tokens": {
+      "source": "draz26648/flutter_craft_skills",
+      "sourceType": "github",
+      "skillPath": "plugins/flutter-design-fidelity/skills/design-tokens/SKILL.md",
+      "computedHash": "df79c643f295727698af430d8662b701611b65e85ed544743dda8d81322b0a3f"
+    },
+    "codebase-conventions": {
+      "source": "draz26648/flutter_craft_skills",
+      "sourceType": "github",
+      "skillPath": "plugins/flutter-code-quality/skills/codebase-conventions/SKILL.md",
+      "computedHash": "8b924317773d6d55e8a3f1fe9db374de083c233ff9b2c53635e29ac661f3eb10"
+    },
+    "responsive-adaptive": {
+      "source": "draz26648/flutter_craft_skills",
+      "sourceType": "github",
+      "skillPath": "plugins/flutter-code-quality/skills/responsive-adaptive/SKILL.md",
+      "computedHash": "8f01a15636d5fcf9990d613f9e70bef41e5cd8ae74c9928c57fe448d9aea6345"
+    },
+    "a11y-and-rtl": {
+      "source": "draz26648/flutter_craft_skills",
+      "sourceType": "github",
+      "skillPath": "plugins/flutter-code-quality/skills/a11y-and-rtl/SKILL.md",
+      "computedHash": "f0e09a592d766bcdd295c46d95f3826b4033bd34f410c5aa72bc16f4fdf0fa2e"
     }
   }
 }

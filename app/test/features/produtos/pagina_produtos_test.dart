@@ -256,6 +256,10 @@ void main() {
   });
 
   testWidgets('acrescenta, remove e limpa recortes contextuais', (at) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
     final escopos = <String?>[];
     final controlador = ControladorBuscaProdutos(
       debounce: Duration.zero,
@@ -298,7 +302,18 @@ void main() {
     await at.tap(find.text('TVs'));
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Adicionar área'));
+    final adicionarArea = find.text('Adicionar área');
+    await at.drag(
+      find.byKey(const Key('produtos-compacto')),
+      const Offset(0, -240),
+    );
+    await at.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      at.element(adicionarArea),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
+    await at.tap(adicionarArea);
     await at.pumpAndSettle();
     await at.tap(find.text('Casa e cozinha'));
     await at.pumpAndSettle();

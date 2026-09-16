@@ -139,7 +139,9 @@ void main() {
     expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
     await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
     await at.pumpAndSettle();
-    final linhaAparencia = find.byKey(const Key('alternar-tema-conta'));
+    await at.tap(find.text('Aparência'));
+    await at.pumpAndSettle();
+    final linhaAparencia = find.byKey(const Key('aparencia-opcao-dark'));
     await at.scrollUntilVisible(
       linhaAparencia,
       240,
@@ -149,22 +151,11 @@ void main() {
     await at.tap(linhaAparencia);
     await at.pumpAndSettle();
 
-    expect(
-      Theme.of(at.element(find.byKey(const Key('resumo-inicio')))).brightness,
-      Brightness.dark,
-    );
+    expect(Theme.of(at.element(linhaAparencia)).brightness, Brightness.dark);
     expect(preferencias.salvo, ThemeMode.dark);
 
-    final chaveAparencia = find.descendant(
-      of: linhaAparencia,
-      matching: find.byType(Switch),
-    );
     expect(linhaAparencia, findsOneWidget);
-    expect(at.widget<Switch>(chaveAparencia).value, isTrue);
-    expect(
-      at.getSemantics(linhaAparencia).label,
-      contains('Ativar tema claro'),
-    );
+    expect(at.getSemantics(linhaAparencia).label, contains('Escuro'));
   });
 
   testWidgets('layout amplo preserva o tema claro', (at) async {

@@ -35,161 +35,160 @@ class CartaoProduto extends StatelessWidget {
         produto.precoCheioTexto != produto.precoAtualTexto;
     return Semantics(
       label: 'Produto ${produto.nome}, da loja ${produto.lojaNome}',
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(produto.nome, style: tema.textTheme.titleMedium),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(produto.lojaNome),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (aoAcompanhar != null)
-                    IconButton(
-                      key: ValueKey(
-                        'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+      child: CartaoRadar(
+        corDestaque: cores.produtos,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(produto.nome, style: tema.textTheme.titleMedium),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(produto.lojaNome),
                       ),
-                      tooltip: produto.acompanhado
-                          ? 'Deixar de acompanhar ${produto.nome}'
-                          : 'Acompanhar ${produto.nome}',
-                      onPressed: aoAcompanhar,
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(
-                        produto.acompanhado
-                            ? Icons.notifications_active_outlined
-                            : Icons.notifications_none_outlined,
-                      ),
-                    ),
-                ],
-              ),
-              if (produto.marca != null || produto.categoria != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    [
-                      produto.marca,
-                      produto.categoria,
-                    ].whereType<String>().join(' · '),
+                    ],
                   ),
                 ),
-              if (precoCheioDiferente)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    produto.precoCheioTexto!,
-                    style: tema.textTheme.bodyMedium?.copyWith(
-                      decoration: TextDecoration.lineThrough,
+                if (aoAcompanhar != null)
+                  IconButton(
+                    key: ValueKey(
+                      'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+                    ),
+                    tooltip: produto.acompanhado
+                        ? 'Deixar de acompanhar ${produto.nome}'
+                        : 'Acompanhar ${produto.nome}',
+                    onPressed: aoAcompanhar,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      produto.acompanhado
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_none_outlined,
                     ),
                   ),
-                ),
-              _ValorComercial(
-                rotulo: 'Preço atual',
-                valor: produto.precoAtualTexto,
-                estilo: tema.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              ],
+            ),
+            if (produto.marca != null || produto.categoria != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  [
+                    produto.marca,
+                    produto.categoria,
+                  ].whereType<String>().join(' · '),
                 ),
               ),
-              if (produto.descontoTexto != null ||
-                  produto.descontoPercentualTexto != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    [
-                      produto.descontoTexto,
-                      produto.descontoPercentualTexto,
-                    ].whereType<String>().join(' · '),
+            if (precoCheioDiferente)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  produto.precoCheioTexto!,
+                  style: tema.textTheme.bodyMedium?.copyWith(
+                    decoration: TextDecoration.lineThrough,
                   ),
                 ),
-              if (produto.cashbackTexto != null ||
-                  produto.cashbackPercentualTexto != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    [
-                      produto.cashbackTexto,
-                      produto.cashbackPercentualTexto,
-                    ].whereType<String>().join(' · '),
-                    style: tema.textTheme.titleSmall?.copyWith(
-                      color: cores.ganho,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              ),
+            _ValorComercial(
+              rotulo: 'Preço atual',
+              valor: produto.precoAtualTexto,
+              estilo: tema.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (produto.descontoTexto != null ||
+                produto.descontoPercentualTexto != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  [
+                    produto.descontoTexto,
+                    produto.descontoPercentualTexto,
+                  ].whereType<String>().join(' · '),
                 ),
-              if (produto.precoLiquidoTexto != null)
-                _ValorComercial(
-                  rotulo: 'Após cashback',
-                  valor: produto.precoLiquidoTexto!,
-                  estilo: tema.textTheme.headlineSmall?.copyWith(
+              ),
+            if (produto.cashbackTexto != null ||
+                produto.cashbackPercentualTexto != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  [
+                    produto.cashbackTexto,
+                    produto.cashbackPercentualTexto,
+                  ].whereType<String>().join(' · '),
+                  style: tema.textTheme.titleSmall?.copyWith(
                     color: cores.ganho,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              if (produto.parcelamento != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(produto.parcelamento!),
-                ),
-              if (produto.estoque != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text('Estoque informado: ${produto.estoque}'),
-                ),
-              if (produto.etiquetas.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final etiqueta in produto.etiquetas)
-                        Chip(label: Text(etiqueta)),
-                    ],
-                  ),
-                ),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                children: [
-                  TextButton.icon(
-                    onPressed: aoAbrirHistorico,
-                    icon: const Icon(Icons.timeline_outlined),
-                    label: const Text('Ver histórico'),
-                  ),
-                  if (aoAbrirNoShopping != null)
-                    FilledButton.tonalIcon(
-                      onPressed: aoAbrirNoShopping,
-                      icon: const Icon(Icons.open_in_new),
-                      label: const Text('Abrir no Shopping Inter'),
-                    ),
-                  if (aoAcompanhar != null)
-                    OutlinedButton.icon(
-                      onPressed: aoAcompanhar,
-                      icon: Icon(
-                        produto.acompanhado
-                            ? Icons.notifications_active_outlined
-                            : Icons.notifications_none_outlined,
-                      ),
-                      label: Text(
-                        produto.acompanhado ? 'Acompanhando' : 'Acompanhar',
-                      ),
-                    ),
-                ],
               ),
-            ],
-          ),
+            if (produto.precoLiquidoTexto != null)
+              _ValorComercial(
+                rotulo: 'Após cashback',
+                valor: produto.precoLiquidoTexto!,
+                estilo: tema.textTheme.headlineSmall?.copyWith(
+                  color: cores.ganho,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            if (produto.parcelamento != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(produto.parcelamento!),
+              ),
+            if (produto.estoque != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('Estoque informado: ${produto.estoque}'),
+              ),
+            if (produto.etiquetas.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final etiqueta in produto.etiquetas)
+                      Chip(label: Text(etiqueta)),
+                  ],
+                ),
+              ),
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              children: [
+                TextButton.icon(
+                  onPressed: aoAbrirHistorico,
+                  icon: const Icon(Icons.timeline_outlined),
+                  label: const Text('Ver histórico'),
+                ),
+                if (aoAbrirNoShopping != null)
+                  FilledButton.tonalIcon(
+                    onPressed: aoAbrirNoShopping,
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Abrir no Shopping Inter'),
+                  ),
+                if (aoAcompanhar != null)
+                  OutlinedButton.icon(
+                    onPressed: aoAcompanhar,
+                    icon: Icon(
+                      produto.acompanhado
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_none_outlined,
+                    ),
+                    label: Text(
+                      produto.acompanhado ? 'Acompanhando' : 'Acompanhar',
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -218,6 +217,7 @@ class CartaoProduto extends StatelessWidget {
           'no Banco Inter',
       child: CartaoRadar(
         padding: EdgeInsets.zero,
+        corDestaque: cores.produtos,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -327,9 +327,7 @@ class CartaoProduto extends StatelessWidget {
                     children: [
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          color: brilhoEscuro
-                              ? Tokens.acaoFundoEscuro
-                              : Tokens.acaoFundo,
+                          color: cores.produtos.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
@@ -337,7 +335,7 @@ class CartaoProduto extends StatelessWidget {
                           child: Icon(
                             _iconeProduto(produto),
                             size: 19,
-                            color: cores.acao,
+                            color: cores.produtos,
                           ),
                         ),
                       ),
@@ -352,7 +350,7 @@ class CartaoProduto extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: tema.textTheme.labelSmall?.copyWith(
-                                  color: cores.acao,
+                                  color: cores.produtos,
                                   fontSize: 8,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: .2,
@@ -578,15 +576,13 @@ class _MonogramaLoja extends StatelessWidget {
       height: 29,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Tokens.cianoFundoEscuro
-            : Tokens.plumSoft,
+        color: cores.produtos.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text(
         iniciais,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: cores.marca,
+          color: cores.produtos,
           fontSize: 9,
           fontWeight: FontWeight.w900,
         ),

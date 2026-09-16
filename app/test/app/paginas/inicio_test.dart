@@ -255,7 +255,7 @@ void main() {
     expect(chamadas, 2);
   });
 
-  testWidgets('Resumo compacto reproduz a hierarquia V11 com dados reais', (
+  testWidgets('Resumo compacto reproduz a hierarquia Delta com dados reais', (
     at,
   ) async {
     final api = apiQueResponde(
@@ -264,7 +264,7 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Visão geral'), findsOneWidget);
+    expect(find.text('Última diferença encontrada'), findsOneWidget);
     expect(find.text('Tudo atualizado'), findsNothing);
     expect(find.text('Atualizado com avisos'), findsNothing);
     expect(find.text('Seus serviços'), findsOneWidget);
