@@ -81,7 +81,7 @@ void main() {
 
     expect(find.byKey(const Key('login-marca-compacta')), findsOneWidget);
     expect(find.byKey(const Key('login-painel-marca')), findsNothing);
-    expect(find.text('Benefícios claros. Sem ruído.'), findsOneWidget);
+    expect(find.text('Continue de onde mudou.'), findsOneWidget);
     expect(find.text('E-mail'), findsOneWidget);
     expect(find.text('Senha'), findsOneWidget);
     expect(find.text('Entrar'), findsOneWidget);
@@ -114,7 +114,7 @@ void main() {
     expect(find.byKey(const Key('login-email')), findsOneWidget);
     expect(find.byKey(const Key('login-senha')), findsOneWidget);
     expect(find.byKey(const Key('login-entrar')), findsOneWidget);
-    expect(find.text('Esqueci minha senha'), findsOneWidget);
+    expect(find.text('Recuperar acesso'), findsOneWidget);
   });
 
   testWidgets('envia credenciais, remove espaços do e-mail e mantém a senha', (
@@ -227,11 +227,13 @@ void main() {
         find.byKey(const Key('login-email')),
         'piloto@example.com',
       );
-      await at.tap(find.text('Esqueci minha senha'));
+      await at.tap(find.text('Recuperar acesso'));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('recuperar-enviar')));
       await at.pump();
 
       expect(autenticador.recuperacaoRecebida, 'piloto@example.com');
-      expect(find.byKey(const Key('login-aviso')), findsOneWidget);
+      expect(find.byKey(const Key('recuperar-aviso')), findsOneWidget);
       expect(
         find.text(
           'Se o e-mail estiver cadastrado, você receberá as instruções.',

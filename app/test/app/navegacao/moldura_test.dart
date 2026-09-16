@@ -268,7 +268,9 @@ Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho, barra inferior e perfil V11', (at) async {
+  testWidgets('celular usa cabeçalho, barra inferior e perfil Delta', (
+    at,
+  ) async {
     await _abrir(at);
 
     expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
@@ -277,8 +279,9 @@ void main() {
     await _abrirConta(at);
 
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+    expect(find.text('Perfil'), findsOneWidget);
     expect(find.text('Central de Alertas'), findsOneWidget);
-    expect(find.byKey(const Key('alternar-tema-conta')), findsOneWidget);
+    expect(find.text('Aparência'), findsOneWidget);
     expect(find.text('Segurança e acesso'), findsNothing);
     expect(find.text('Integrações'), findsNothing);
   });
@@ -341,7 +344,7 @@ void main() {
   ) async {
     await _abrir(at);
 
-    expect(find.text('Visão geral'), findsOneWidget);
+    expect(find.text('Última diferença encontrada'), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
   });
 
@@ -754,7 +757,7 @@ void main() {
     );
   });
 
-  testWidgets('Banco Inter compacto segue as ações de atualização da V11', (
+  testWidgets('Banco Inter compacto segue as ações de atualização Delta', (
     at,
   ) async {
     final requisicoes = <http.Request>[];
@@ -885,7 +888,7 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Administração'), findsOneWidget);
-    expect(find.text('Conta e aparência'), findsOneWidget);
+    expect(find.text('Perfil'), findsOneWidget);
     expect(find.text('Acesso administrador'), findsOneWidget);
   });
 
@@ -894,7 +897,10 @@ void main() {
   ) async {
     await _abrir(at, administrador: true);
     await _abrirConta(at);
-    await at.tap(find.text('Administração'));
+    final listaPerfil = find.byType(ListView).last;
+    await at.drag(listaPerfil, const Offset(0, -700));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('perfil-administracao')));
     await at.pumpAndSettle();
 
     expect(find.text('Zona de perigo'), findsOneWidget);
@@ -908,7 +914,7 @@ void main() {
     await _abrirConta(at);
 
     expect(at.takeException(), isNull);
-    expect(find.text('Conta e aparência'), findsOneWidget);
+    expect(find.text('Perfil'), findsOneWidget);
     expect(find.text('Acesso padrão'), findsOneWidget);
     expect(find.text('Administração'), findsNothing);
   });
@@ -919,7 +925,7 @@ void main() {
 
     expect(at.takeException(), isNull);
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
-    final linhaAparencia = find.byKey(const Key('alternar-tema-conta'));
+    final linhaAparencia = find.byKey(const Key('perfil-aparencia'));
     await at.scrollUntilVisible(
       linhaAparencia,
       240,

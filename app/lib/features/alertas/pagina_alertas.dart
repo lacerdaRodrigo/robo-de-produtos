@@ -9,6 +9,7 @@ import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import 'controlador_alertas.dart';
+import 'pagina_permissao_notificacoes.dart';
 
 class PaginaAlertas extends StatefulWidget {
   const PaginaAlertas({super.key, required this.api, this.coletaInicial});
@@ -70,6 +71,16 @@ class _EstadoPaginaAlertas extends State<PaginaAlertas> {
         onPressed: () => Navigator.of(context).maybePop(),
       ),
       actions: [
+        IconButton(
+          key: const Key('permissao-notificacoes-alertas'),
+          tooltip: 'Permissão de notificações',
+          icon: const Icon(Icons.notifications_active_outlined),
+          onPressed: () => Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (_) => PaginaPermissaoNotificacoes(api: widget.api),
+            ),
+          ),
+        ),
         IconButton(
           key: const Key('preferencias-alertas'),
           tooltip: 'Preferências',

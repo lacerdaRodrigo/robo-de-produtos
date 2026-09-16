@@ -475,6 +475,7 @@ class _CartaoLojaDireta extends StatelessWidget {
       opacity: loja.ativa ? 1 : 0.7,
       child: CartaoRadar(
         padding: EdgeInsets.zero,
+        corDestaque: cores.produtos,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -488,9 +489,7 @@ class _CartaoLojaDireta extends StatelessWidget {
                     height: 42,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: escuro
-                          ? Tokens.superficieForteEscura
-                          : Tokens.plumSoft,
+                      color: cores.produtos.withValues(alpha: 0.16),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(14),
                         topRight: Radius.circular(14),
@@ -501,7 +500,7 @@ class _CartaoLojaDireta extends StatelessWidget {
                     child: Text(
                       _iniciais(loja.nome),
                       style: TextStyle(
-                        color: cores.marca,
+                        color: cores.produtos,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       ),

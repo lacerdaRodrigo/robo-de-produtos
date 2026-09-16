@@ -161,7 +161,7 @@ class _CartaoCompacto extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: CartaoRadar(
-      corDestaque: cores.ganho,
+      corDestaque: cores.cashback,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,24 +174,13 @@ class _CartaoCompacto extends StatelessWidget {
                 height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: <Color>[
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Tokens.acaoFundoEscuro
-                          : Tokens.acaoFundo,
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Tokens.cianoFundoEscuro
-                          : Tokens.cianoFundo,
-                    ],
-                  ),
+                  color: cores.cashback.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
                   _iniciais(loja.nome),
                   style: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFDFF8FF)
-                        : Tokens.marca,
+                    color: cores.cashback,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),

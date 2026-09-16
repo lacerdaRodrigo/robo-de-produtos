@@ -1,0 +1,158 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  text-rendering: optimizeLegibility;
+  transition: background var(--motion-standard), color var(--motion-standard);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 8px;
+  left: 8px;
+  transform: translateY(-150%);
+  padding: 10px 14px;
+  background: var(--color-surface-inverse);
+  color: var(--color-canvas);
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page {
+  width: min(100%, var(--content-max));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: var(--space-4) var(--gutter) calc(104px + env(safe-area-inset-bottom));
+}
+
+.page--auth,
+.page--splash {
+  display: grid;
+  min-height: 100vh;
+  align-items: center;
+  padding-bottom: var(--space-8);
+}
+
+.page__content {
+  width: min(100%, 760px);
+  margin-inline: auto;
+}
+
+.page__content--wide {
+  width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.stack > * + * {
+  margin-top: var(--space-4);
+}
+
+.stack--tight > * + * {
+  margin-top: var(--space-2);
+}
+
+.stack--loose > * + * {
+  margin-top: var(--space-7);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+@media (min-width: 840px) {
+  .page {
+    padding-top: var(--space-7);
+    padding-bottom: var(--space-8);
+  }
+
+  .page--auth {
+    align-items: stretch;
+  }
+}

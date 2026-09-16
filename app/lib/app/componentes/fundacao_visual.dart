@@ -16,6 +16,7 @@ void mostrarMensagemRadar(
   bool sucesso = true,
 }) {
   final cores = CoresRadar.de(context);
+  final tokens = context.tokens;
   final cor = sucesso ? cores.ganho : cores.perigo;
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -23,7 +24,7 @@ void mostrarMensagemRadar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: Theme.of(context).cardColor,
-        elevation: 8,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           side: BorderSide(color: cor.withValues(alpha: 0.35)),
           borderRadius: BorderRadius.circular(14),
@@ -34,7 +35,7 @@ void mostrarMensagemRadar(
               sucesso ? Icons.check_circle_outline : Icons.error_outline,
               color: cor,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: tokens.spacing.three),
             Expanded(
               child: Text(
                 mensagem,
@@ -77,6 +78,7 @@ class CabecalhoSecaoRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -84,15 +86,13 @@ class CabecalhoSecaoRadar extends StatelessWidget {
           Text(
             sobrelinha!.toUpperCase(),
             style: tema.textTheme.labelSmall?.copyWith(
-              color: tema.brightness == Brightness.dark
-                  ? Tokens.acaoForteEscura
-                  : Tokens.actionStrong,
+              color: cores.teal,
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: tokens.spacing.two),
         ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,15 +111,15 @@ class CabecalhoSecaoRadar extends StatelessWidget {
                 ),
               ),
             ),
-            if (acao != null) ...[const SizedBox(width: 12), acao!],
+            if (acao != null) ...[SizedBox(width: tokens.spacing.three), acao!],
           ],
         ),
-        const SizedBox(height: 7),
+        SizedBox(height: tokens.spacing.two),
         Text(
           descricao,
           style: tema.textTheme.bodyMedium?.copyWith(
             color: cores.textoSuave,
-            fontSize: 13,
+            fontSize: 14,
             height: 1.5,
           ),
         ),
@@ -149,10 +149,10 @@ class CartaoRadar extends StatelessWidget {
     final cores = CoresRadar.de(context);
     final forma = RoundedRectangleBorder(
       borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(22),
-        topRight: Radius.circular(22),
-        bottomRight: Radius.circular(22),
-        bottomLeft: Radius.circular(8),
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+        bottomRight: Radius.circular(20),
+        bottomLeft: Radius.circular(7),
       ),
       side: BorderSide(color: cores.borda),
     );
@@ -234,7 +234,7 @@ class IndicadorEstadoRadar extends StatelessWidget {
 
 /// Campo de busca do novo mobile, sem acoplar debounce ou consulta ao visual.
 ///
-/// Por padrão, reproduz o `SearchBox` da V11 com ação coral de avanço. Use
+/// Por padrão, reproduz o campo de busca Delta com ação coral de avanço. Use
 /// [somenteBusca] nos catálogos que filtram enquanto a pessoa digita e não
 /// possuem uma ação separada no campo.
 class CampoBuscaRadar extends StatelessWidget {
@@ -264,6 +264,7 @@ class CampoBuscaRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     final brilho = Theme.of(context).brightness;
     final sufixo = acao != null
         ? Padding(
@@ -271,7 +272,7 @@ class CampoBuscaRadar extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: cores.superficieAlternativa,
-                borderRadius: BorderRadius.circular(11),
+                borderRadius: BorderRadius.circular(tokens.radii.md),
               ),
               child: acao,
             ),
@@ -288,9 +289,9 @@ class CampoBuscaRadar extends StatelessWidget {
               constraints: const BoxConstraints.tightFor(width: 38, height: 38),
               style: IconButton.styleFrom(
                 backgroundColor: cores.acao,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(tokens.radii.md),
                 ),
               ),
             ),
@@ -298,7 +299,7 @@ class CampoBuscaRadar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(tokens.radii.lg),
         boxShadow: [SombraRadar.para(brilho)],
       ),
       child: TextField(
@@ -335,15 +336,15 @@ class CampoBuscaRadar extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 52),
           contentPadding: const EdgeInsets.only(right: 8),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
             borderSide: BorderSide(color: cores.borda),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
             borderSide: BorderSide(color: cores.borda),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(tokens.radii.lg),
             borderSide: BorderSide(color: cores.acao, width: 1.5),
           ),
         ),
@@ -441,10 +442,10 @@ class _AbaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     return Material(
-      color: selecionada ? cores.marca : Colors.transparent,
-      borderRadius: BorderRadius.circular(14),
+      color: selecionada ? cores.superficie : Colors.transparent,
+      borderRadius: BorderRadius.circular(13),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(13),
         onTap: aoTocar,
         child: Semantics(
           selected: selecionada,
@@ -471,7 +472,7 @@ class _AbaRadar extends StatelessWidget {
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: selecionada
-                                  ? Theme.of(context).colorScheme.onSecondary
+                                  ? cores.texto
                                   : cores.textoSuave,
                               fontWeight: FontWeight.w800,
                             ),
@@ -482,9 +483,7 @@ class _AbaRadar extends StatelessWidget {
                       rotulo,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: selecionada
-                            ? Theme.of(context).colorScheme.onSecondary
-                            : cores.textoSuave,
+                        color: selecionada ? cores.texto : cores.textoSuave,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -499,18 +498,14 @@ class _AbaRadar extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: selecionada
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.onSecondary.withValues(alpha: 0.16)
+                            ? cores.teal.withValues(alpha: 0.14)
                             : Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         '$contador',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: selecionada
-                              ? Theme.of(context).colorScheme.onSecondary
-                              : cores.textoSuave,
+                          color: selecionada ? cores.texto : cores.textoSuave,
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
                         ),
@@ -547,6 +542,7 @@ class FolhaRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
     return SafeArea(
       top: false,
       child: Padding(
@@ -560,7 +556,7 @@ class FolhaRadar extends StatelessWidget {
                 width: 42,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: CoresRadar.de(context).borda,
+                  color: cores.borda,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -644,7 +640,7 @@ class FolhaRadar extends StatelessWidget {
   }
 }
 
-/// Navegação paginada V11 para catálogos de cards.
+/// Navegação paginada Delta para catálogos de cards.
 ///
 /// Os controles só aparecem quando há mais itens do que a página comporta;
 /// portanto, 9 ou 10 resultados não exibem uma paginação vazia.
@@ -826,7 +822,7 @@ Future<void> rolarParaInicioPaginaRadar(ScrollController rolagem) async {
   );
 }
 
-/// Abre uma folha inferior mobile V11 com fundo bloqueado e desfocado.
+/// Abre uma folha inferior mobile Delta com fundo bloqueado e desfocado.
 ///
 /// O conteúdo deve usar [FolhaRadar] para compartilhar o cabeçalho, o
 /// puxador, a tipografia e as ações. O retorno tem a mesma semântica de um
@@ -842,7 +838,10 @@ Future<T?> mostrarFolhaRadar<T>(
     barrierDismissible: true,
     barrierLabel: localizations.modalBarrierDismissLabel,
     barrierColor: Colors.transparent,
-    transitionDuration: const Duration(milliseconds: 240),
+    transitionDuration: AppTokens.de(context).motion.forReducedMotion(
+      AppTokens.de(context).motion.standard,
+      MediaQuery.disableAnimationsOf(context),
+    ),
     pageBuilder: (context, _, _) {
       final cores = CoresRadar.de(context);
       return Stack(
@@ -854,7 +853,7 @@ Future<T?> mostrarFolhaRadar<T>(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
                 child: ColoredBox(
-                  color: const Color(0x7A1B121B),
+                  color: CoresRadar.de(context).marca.withValues(alpha: 0.72),
                   child: Semantics(
                     label: localizations.modalBarrierDismissLabel,
                     child: const SizedBox.expand(),
@@ -879,14 +878,16 @@ Future<T?> mostrarFolhaRadar<T>(
                   elevation: 20,
                   shadowColor: Colors.black.withValues(alpha: 0.22),
                   clipBehavior: Clip.antiAlias,
-                  shape: const RoundedRectangleBorder(
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(27),
+                      top: Radius.circular(AppTokens.de(context).radii.xl),
                     ),
                   ),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: cores.borda)),
+                      border: Border(
+                        top: BorderSide(color: cores.acao, width: 3),
+                      ),
                     ),
                     child: builder(context),
                   ),

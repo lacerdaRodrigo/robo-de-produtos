@@ -9,6 +9,9 @@ import '../../features/administracao/pagina_administracao.dart';
 import '../../features/alertas/gerenciador_notificacoes.dart';
 import '../../features/alertas/pagina_alertas.dart';
 import '../../features/conta/paginas_conta.dart';
+import '../../features/conta/pagina_aparencia.dart';
+import '../../features/conta/pagina_laboratorio.dart';
+import '../../features/conta/pagina_perfil.dart';
 import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
@@ -138,6 +141,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
       aoAbrirPichau: () => _selecionarCompacto(DestinoCompacto.pichau),
+      aoAbrirAlertas: () => unawaited(_abrirAlertas()),
       aoAbrirProdutos: _abrirProdutosNoInter,
     ),
     _visitadosCompactos.contains(DestinoCompacto.programas)
@@ -224,17 +228,23 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirConta() => mostrarFolhaRadar<void>(
-    context,
-    alturaMaxima: 0.9,
-    builder: (contexto) => _FolhaConta(
-      administrador: widget.administrador,
-      identificacaoConta: widget.identificacaoConta,
-      podeSair: widget.aoSair != null,
-      aoAdministrar: widget.administrador
-          ? () {
-              Navigator.of(contexto).pop();
-              Navigator.of(context).push(
+  Future<void> _abrirConta() => Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaPerfil(
+        administrador: widget.administrador,
+        identificacao: widget.identificacaoConta,
+        aoAbrirAlertas: () => unawaited(_abrirAlertas()),
+        aoAbrirAparencia: () => Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const PaginaAparencia()),
+        ),
+        aoAbrirAjuda: () => unawaited(_abrirAjuda()),
+        aoAbrirProblema: () => unawaited(_abrirProblema()),
+        aoAbrirPrivacidade: () => unawaited(_abrirPrivacidade()),
+        aoAbrirLaboratorio: () => Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const PaginaLaboratorio()),
+        ),
+        aoAdministrar: widget.administrador
+            ? () => Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
                   builder: (_) => PaginaAdministracao(
                     api: widget.api,
@@ -242,32 +252,15 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
                     somenteZonaDePerigo: true,
                   ),
                 ),
-              );
-            }
-          : null,
-      aoAbrirAlertas: () {
-        Navigator.of(contexto).pop();
-        unawaited(_abrirAlertas());
-      },
-      aoAbrirAjuda: () {
-        Navigator.of(contexto).pop();
-        unawaited(_abrirAjuda());
-      },
-      aoAbrirProblema: () {
-        Navigator.of(contexto).pop();
-        unawaited(_abrirProblema());
-      },
-      aoAbrirPrivacidade: () {
-        Navigator.of(contexto).pop();
-        unawaited(_abrirPrivacidade());
-      },
-      aoSair: widget.aoSair == null
-          ? null
-          : () async {
-              Navigator.of(contexto).pop();
-              await _notificacoes?.removerAtual();
-              await widget.aoSair!();
-            },
+              )
+            : null,
+        aoSair: widget.aoSair == null
+            ? null
+            : () async {
+                await _notificacoes?.removerAtual();
+                await widget.aoSair!();
+              },
+      ),
     ),
   );
 
@@ -358,6 +351,7 @@ class _CabecalhoCompacto extends StatelessWidget
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return AppBar(
       toolbarHeight: 70,
       backgroundColor: tema.scaffoldBackgroundColor,
@@ -365,7 +359,7 @@ class _CabecalhoCompacto extends StatelessWidget
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      shape: const Border(),
+      shape: Border(bottom: BorderSide(color: cores.borda)),
       automaticallyImplyLeading: false,
       title: const _AssinaturaCompacta(),
       titleSpacing: 18,
@@ -376,13 +370,13 @@ class _CabecalhoCompacto extends StatelessWidget
           tooltip: 'Atualizar resumo',
           onPressed: atualizandoResumo ? null : aoAtualizarResumo,
           style: IconButton.styleFrom(
-            minimumSize: const Size.square(42),
-            maximumSize: const Size.square(42),
+            minimumSize: const Size.square(48),
+            maximumSize: const Size.square(48),
             padding: EdgeInsets.zero,
             backgroundColor: tema.cardColor,
             side: BorderSide(color: cores.borda),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(tokens.radii.md),
             ),
           ),
           icon: atualizandoResumo
@@ -392,24 +386,24 @@ class _CabecalhoCompacto extends StatelessWidget
                 )
               : const Icon(Icons.refresh),
         ),
-        const SizedBox(width: 7),
+        SizedBox(width: tokens.spacing.two),
         IconButton(
           key: const Key('abrir-conta-cabecalho'),
           tooltip: 'Abrir perfil',
           onPressed: aoAbrirConta,
           style: IconButton.styleFrom(
-            minimumSize: const Size.square(42),
-            maximumSize: const Size.square(42),
+            minimumSize: const Size.square(48),
+            maximumSize: const Size.square(48),
             padding: EdgeInsets.zero,
             backgroundColor: tema.cardColor,
             side: BorderSide(color: cores.borda),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(tokens.radii.md),
             ),
           ),
           icon: const Icon(Icons.person_outline),
         ),
-        const SizedBox(width: 15),
+        SizedBox(width: tokens.spacing.four),
       ],
     );
   }
@@ -432,19 +426,24 @@ class _BarraInferiorRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     final tema = Theme.of(context);
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      minimum: EdgeInsets.fromLTRB(
+        tokens.spacing.four,
+        0,
+        tokens.spacing.four,
+        tokens.spacing.four,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: tema.cardColor,
-          border: Border.all(color: cores.borda),
-          borderRadius: BorderRadius.circular(22),
+          color: cores.marca,
+          borderRadius: BorderRadius.circular(24),
           boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
         ),
         child: SizedBox(
-          height: 68,
+          height: 70,
           child: Row(
             children: [
               for (final destino in _destinos)
@@ -477,22 +476,22 @@ class _DestinoBarraInferior extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final onBrand = Theme.of(context).colorScheme.onSecondary;
+    final tokens = context.tokens;
     return Semantics(
       selected: selecionado,
       button: true,
       label: destino.titulo,
       child: InkWell(
         key: Key('barra-${destino.name}'),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: aoTocar,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          margin: const EdgeInsets.all(4),
-          padding: const EdgeInsets.symmetric(vertical: 7),
+          margin: EdgeInsets.all(tokens.spacing.one),
+          padding: EdgeInsets.symmetric(vertical: tokens.spacing.two),
           decoration: BoxDecoration(
-            color: selecionado ? cores.marca : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
+            color: selecionado ? Tokens.mark : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -500,14 +499,14 @@ class _DestinoBarraInferior extends StatelessWidget {
               Icon(
                 destino.icone,
                 size: 21,
-                color: selecionado ? onBrand : cores.textoSuave,
+                color: selecionado ? Tokens.markInk : cores.textoSuave,
               ),
               const SizedBox(height: 3),
               Text(
                 destino.titulo,
                 maxLines: 1,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selecionado ? onBrand : cores.textoSuave,
+                  color: selecionado ? Tokens.markInk : cores.textoSuave,
                   fontSize: 9,
                   fontWeight: FontWeight.w800,
                 ),
@@ -537,7 +536,12 @@ class _PaginaProgramaInterna extends StatelessWidget {
       Align(
         alignment: Alignment.centerLeft,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+          padding: EdgeInsets.fromLTRB(
+            context.tokens.spacing.two,
+            context.tokens.spacing.one,
+            context.tokens.spacing.two,
+            0,
+          ),
           child: TextButton.icon(
             key: chaveVoltar,
             onPressed: aoVoltar,
@@ -557,6 +561,7 @@ class _AssinaturaCompacta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return Semantics(
       label: 'Radar de Benefícios',
       header: true,
@@ -569,17 +574,17 @@ class _AssinaturaCompacta extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: cores.marca,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(11),
-                topRight: Radius.circular(11),
-                bottomRight: Radius.circular(11),
-                bottomLeft: Radius.circular(4),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(tokens.radii.md),
+                topRight: Radius.circular(tokens.radii.md),
+                bottomRight: Radius.circular(tokens.radii.md),
+                bottomLeft: Radius.circular(tokens.spacing.one),
               ),
             ),
             child: Text(
               'R',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSecondary,
+                color: cores.marcaTexto,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
@@ -1177,246 +1182,6 @@ class _ItemNavegacaoCompacto extends StatelessWidget {
           onTap: aoTocar,
         ),
       ),
-    );
-  }
-}
-
-class _FolhaConta extends StatelessWidget {
-  const _FolhaConta({
-    required this.administrador,
-    required this.podeSair,
-    required this.aoAdministrar,
-    required this.aoAbrirAlertas,
-    required this.aoAbrirAjuda,
-    required this.aoAbrirProblema,
-    required this.aoAbrirPrivacidade,
-    required this.aoSair,
-    this.identificacaoConta,
-  });
-
-  final bool administrador;
-  final bool podeSair;
-  final VoidCallback? aoAdministrar;
-  final VoidCallback aoAbrirAlertas;
-  final VoidCallback aoAbrirAjuda;
-  final VoidCallback aoAbrirProblema;
-  final VoidCallback aoAbrirPrivacidade;
-  final Future<void> Function()? aoSair;
-  final String? identificacaoConta;
-
-  @override
-  Widget build(BuildContext context) {
-    return FolhaRadar(
-      titulo: 'Conta e aparência',
-      descricao: 'Utilidades que funcionam no aplicativo.',
-      child: Flexible(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.62,
-          ),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              _PerfilConta(
-                identificacao: identificacaoConta,
-                administrador: administrador,
-              ),
-              const SizedBox(height: 14),
-              if (aoAdministrar != null) ...[
-                CartaoRadar(
-                  aoTocar: aoAdministrar,
-                  padding: const EdgeInsets.all(12),
-                  child: const _LinhaFolha(
-                    icone: Icons.settings_outlined,
-                    titulo: 'Administração',
-                    descricao: 'Preferências, disparos e fontes selecionadas',
-                    mostrarSeta: true,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              CartaoRadar(
-                aoTocar: aoAbrirAlertas,
-                padding: const EdgeInsets.all(12),
-                child: const _LinhaFolha(
-                  icone: Icons.notifications_outlined,
-                  titulo: 'Central de Alertas',
-                  descricao: 'Histórico, filtros e preferências de push',
-                  mostrarSeta: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              CartaoRadar(
-                aoTocar: aoAbrirAjuda,
-                padding: const EdgeInsets.all(12),
-                child: const _LinhaFolha(
-                  icone: Icons.help_outline,
-                  titulo: 'Ajuda',
-                  descricao: 'Estados de coleta e contato de suporte',
-                  mostrarSeta: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              CartaoRadar(
-                aoTocar: aoAbrirProblema,
-                padding: const EdgeInsets.all(12),
-                child: const _LinhaFolha(
-                  icone: Icons.chat_bubble_outline,
-                  titulo: 'Reportar problema',
-                  descricao: 'Envie um relato autenticado',
-                  mostrarSeta: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              CartaoRadar(
-                aoTocar: aoAbrirPrivacidade,
-                padding: const EdgeInsets.all(12),
-                child: const _LinhaFolha(
-                  icone: Icons.shield_outlined,
-                  titulo: 'Privacidade',
-                  descricao: 'Dados usados, retenção e direitos',
-                  mostrarSeta: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (!kIsWeb)
-                const CartaoRadar(
-                  padding: EdgeInsets.zero,
-                  child: ControleAparenciaRadar.linha(),
-                ),
-              if (podeSair) ...[
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  key: const Key('sair-conta'),
-                  onPressed: aoSair,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Sair da conta'),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PerfilConta extends StatelessWidget {
-  const _PerfilConta({
-    required this.identificacao,
-    required this.administrador,
-  });
-
-  final String? identificacao;
-  final bool administrador;
-
-  @override
-  Widget build(BuildContext context) {
-    final nome = identificacao ?? 'Conta do Radar';
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final escuro = tema.brightness == Brightness.dark;
-    return DecoratedBox(
-      key: const Key('perfil-conta'),
-      decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 23,
-              backgroundColor: escuro
-                  ? Tokens.superficieForteEscura
-                  : Tokens.superficieForte,
-              foregroundColor: escuro ? Tokens.textoEscuro : Tokens.texto,
-              child: Text(
-                _iniciaisConta(nome),
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    nome,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    administrador ? 'Acesso administrador' : 'Acesso padrão',
-                    style: TextStyle(color: cores.textoSuave, fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LinhaFolha extends StatelessWidget {
-  const _LinhaFolha({
-    required this.icone,
-    required this.titulo,
-    required this.descricao,
-    this.mostrarSeta = true,
-  });
-
-  final IconData icone;
-  final String titulo;
-  final String descricao;
-  final bool mostrarSeta;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: cores.superficieAlternativa,
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: SizedBox.square(
-            dimension: 40,
-            child: Icon(icone, color: cores.acao),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titulo,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                descricao,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
-              ),
-            ],
-          ),
-        ),
-        if (mostrarSeta) ...[
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right),
-        ],
-      ],
     );
   }
 }

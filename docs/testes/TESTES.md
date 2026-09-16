@@ -404,7 +404,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-266 | Validade e atraso | Data no fuso de Brasília e coleta acima de 12 h usam relógio explícito | Fixar `agora` no teste |
 | CT-267 | Consulta do painel | Cliente mobile envia `q`, `ordenar`, `pagina` e `por_pagina=10` | `MockClient` inspeciona URL e resposta |
 | CT-268 | Primeira página | Controlador expõe itens, total, carimbo e próxima página | Fonte injetada responde envelope válido |
-| CT-269 | Paginação visível Livelo | Próximas páginas chegam pelos controles V11 e substituem os cartões visíveis | Duas respostas, com troca explícita para a página 2 |
+| CT-269 | Paginação visível Livelo | Próximas páginas chegam pelos controles Delta e substituem os cartões visíveis | Duas respostas, com troca explícita para a página 2 |
 | CT-270 | Concorrência, reset e resposta antiga | Não há duas chamadas de paginação; busca/ordenação limpam a sequência e descartam resposta antiga | `Completer` controla a ordem das respostas |
 | CT-271 | Debounce da busca | Digitação só consulta após 350 ms sem nova entrada | Relógio de teste/fonte injetada |
 | CT-272 | Erro de página adicional | Itens anteriores ficam visíveis e retry tenta apenas a próxima página | Primeira resposta válida, segunda falha e terceira passa |
@@ -427,7 +427,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
 | CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
 | CT-283 | Card e condições completas | Oferta principal, etiqueta, condição neutra e seção não-correntista são renderizadas como texto | Widget com payload completo e sem descrição |
-| CT-283A | Folha de condições completas | Card compacto abre a folha V11 com descrição integral, múltiplas regras e quebras de linha, sem truncar o texto | Widget com descrição longa e condições secundárias |
+| CT-283A | Folha de condições completas | Card compacto abre a folha Delta com descrição integral, múltiplas regras e quebras de linha, sem truncar o texto | Widget com descrição longa e condições secundárias |
 | CT-283B | Ausência de condições | Descrição principal e secundária ausentes exibem o texto neutro do contrato, sem inventar percentual ou regra | Widget com campos de descrição nulos |
 | CT-283C | Ações compactas alinhadas | Acompanhamento fica em linha própria; condições e abertura do Inter compartilham a linha seguinte sem recuo ou overflow | Widget com geometria do cartão em 390 px e teste estreito em 320 px |
 | CT-284 | Navegação e responsividade Inter | Tocar Inter abre o painel real e a moldura preserva abas, retrato/paisagem e tela larga | Widget da moldura em viewports distintos |
@@ -444,7 +444,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-290 | Estados e cards de produto | Termo mínimo, vazio, falha/retry, qualidade degradada, preço, cashback, líquido e grupos de loja são distintos | Widgets com controlador injetado |
 | CT-291 | Filtros de Produtos por lojas selecionadas | A folha de meia tela não exibe Marca, Categoria nem “Loja (slug)”. Conta administrativa recebe todas as páginas de lojas `acompanhadas`, informa a quantidade selecionada para coleta e oferece “Todas as lojas” mais uma escolha por nome/slug retornado. Mínimo e máximo são os únicos campos editáveis; o recorte de categoria é iniciado somente pela busca contextual por área. Aplicar envia somente a loja exata e a faixa, preserva termo e recorte ativo e reinicia a paginação local. Durante a consulta, os cards anteriores permanecem montados e na mesma posição | `pagina_produtos_test.dart` com `MockClient` para duas lojas selecionadas; tocar Loja, preencher mínimo/máximo, inspecionar os argumentos do controlador, conferir que o modal não contém opções de categoria nem supera metade da altura compacta e completar uma resposta atrasada verificando a permanência do card |
 | CT-292 | Inter abre Produtos | O atalho interno na aba Inter abre a busca sem descartar o painel de cashback | Teste de widget da navegação interna |
-| CT-293 | Histórico de 30 dias | Folha de histórico segue o padrão V11, mostra datas, preços, cashback e preço após cashback reais, mínimo, máximo, paginação, falha e retry sem converter valores em `double` nem usar exemplos fixos do protótipo | Mock autenticado da API e widget |
+| CT-293 | Histórico de 30 dias | Folha de histórico segue o padrão Delta, mostra datas, preços, cashback e preço após cashback reais, mínimo, máximo, paginação, falha e retry sem converter valores em `double` nem usar exemplos fixos do protótipo | Mock autenticado da API e widget |
 | CT-293A | Escopo contextual de Produtos | Sem recorte, `Escolher categoria` oferece alvo contornado de largura total e 44 px. O app percorre área → subárea → recorte final (inclusive Casa → Eletrodomésticos → Refrigeração e lavanderia → Geladeiras/Freezers/Lavadoras, além de cozinhas, quarto/camas, limpeza/climatização, beleza, saúde e festas), exibe seta de voltar sem aplicar filtro e permite adicionar várias folhas. O cartão informa a quantidade, nunca mostra o slug técnico e usa nomes humanos nos chips; cada chip remove uma folha e `Limpar áreas` remove todas. O app serializa somente identificadores aprovados, únicos e ordenados. A API resolve sua união em categorias externas exatas, mantém paginação, rejeita escopo desconhecido/repetido e não combina escopo com categoria externa ou `Sem categoria`; `Outros / novas categorias` é exclusivo. Se app e API estiverem fora de versão, o erro preserva os cards anteriores e informa que eles podem não pertencer ao recorte atual | Vitest da rota e repositório; widget do seletor contextual |
 
 ### Fase 5 — administração compartilhada no Flutter/API
@@ -570,11 +570,13 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-334 | Persistência não bloqueia nem volta no tempo | Falha ao salvar mantém a escolha da sessão; leitura atrasada não sobrescreve toque mais recente | Exceção e `Completer` injetados no armazenamento |
 | CT-335 | Escopo mobile preserva o Web | Android/iOS compacto aceita escuro; layout amplo continua claro e sem controle novo | Viewports 390 × 844 e 1440 × 900 com modo escuro injetado |
 | CT-336 | Controle acessível de aparência | Cabeçalho e perfil informam ação/estado e alternam sem reiniciar a sessão | Widget completo, chave, tooltip, semântica e controlador falso |
-| CT-337 | Fundação funciona nos dois temas | Cabeçalho, cartão, estado, busca V11 com ação de avanço ou variante `search-only`, abas e folha usam tokens sem perder interação | Testes de widget parametrizados em claro/escuro |
-| CT-338 | Folha e busca V11 são únicas | Filtros, seletores, detalhes e folhas de conta usam `FolhaRadar` com fundo desfocado, cabeçalho V11 e retorno preservado; todas as buscas usam `CampoBuscaRadar` | Testes de widget dos fluxos Livelo, Produtos, categorias e fundação |
-| CT-338A | Paginação V11 de cartões | Produtos, Livelo, Sites parceiros e Compre direto solicitam 10 itens; com 9/10 não há paginação e com 11 há acesso à página 2 sem acumular cards | Widget da fundação, controladores e `MockClient` das telas afetadas |
+| CT-336A | Recuperação dedicada e neutra | Login abre a tela própria de recuperação, envia pela porta existente e não revela se o e-mail está cadastrado | `pagina_entrar_test.dart` e widget da recuperação |
+| CT-336B | Permissão de notificações adiável | A tela explica o uso do push, permite adiar sem bloquear o histórico e mostra o resultado do pedido quando o sistema responde | `pagina_permissao_notificacoes_test.dart` |
+| CT-337 | Fundação funciona nos dois temas | Cabeçalho, cartão, estado, busca Delta com ação de avanço ou variante `search-only`, abas e folha usam tokens sem perder interação | Testes de widget parametrizados em claro/escuro |
+| CT-338 | Folha e busca Delta são únicas | Filtros, seletores, detalhes e folhas de conta usam `FolhaRadar` com fundo desfocado, cabeçalho Delta e retorno preservado; todas as buscas usam `CampoBuscaRadar` | Testes de widget dos fluxos Livelo, Produtos, categorias e fundação |
+| CT-338A | Paginação Delta de cartões | Produtos, Livelo, Sites parceiros e Compre direto solicitam 10 itens; com 9/10 não há paginação e com 11 há acesso à página 2 sem acumular cards | Widget da fundação, controladores e `MockClient` das telas afetadas |
 
-### Pichau — jornada mobile V11
+### Pichau — jornada mobile V12 Delta
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -582,10 +584,10 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-362 | Contrato comercial sem zeros inventados | Pix, cartão, parcelamento e opcionais ausentes permanecem textuais/opcionais; esgotado e fora do catálogo são estados diferentes | `modelos_pichau_test.dart` |
 | CT-363 | Catálogo paginado e busca server-side | A tela envia `pagina`, `por_pagina` e `q` à API protegida, preservando o catálogo como consulta do backend | `pagina_pichau_test.dart` e cliente `Api` |
 | CT-364 | Card Pichau e link externo | Card próprio exibe origem, preços separados, disponibilidade e etiquetas; somente URL `http`/`https` válida habilita a ação externa | `pagina_pichau_test.dart` e `link_pichau_test.dart` |
-| CT-365 | Histórico em folha V11 | A ação Histórico abre o componente de folha existente e mostra medições somente leitura sem misturar o produto | `pagina_pichau_test.dart` |
+| CT-365 | Histórico em folha Delta | A ação Histórico abre o componente de folha existente e mostra medições somente leitura sem misturar o produto | `pagina_pichau_test.dart` |
 | CT-366 | Estados de coleta | Loading, catálogo vazio, falha sem retrato e aviso de parcial/atrasado permanecem distintos e não fabricam preço zero | `pagina_pichau_test.dart` |
 | CT-367 | Larguras mobile aprovadas | A jornada continua alcançável em 320, 390 e 430 px | `pagina_pichau_test.dart` com viewports controlados |
-| CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V11 | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
+| CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V12 Delta | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
 | CT-390 | Abas, disponibilidade e ordenação | Todas/Acompanhadas e os filtros do protótipo são enviados à API, sem trocar o recorte silenciosamente | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-391 | Acompanhamento pessoal | Usuário autenticado acompanha e deixa de acompanhar o próprio produto; a falha restaura produto/contador; a rota administrativa legada continua separada | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-392 | Acompanhadas fora do catálogo | A remoção da aba Acompanhadas só ocorre após confirmação e estados esgotado/fora do catálogo continuam distintos | `controlador_catalogo_pichau_test.dart` e `modelos_pichau_test.dart` |

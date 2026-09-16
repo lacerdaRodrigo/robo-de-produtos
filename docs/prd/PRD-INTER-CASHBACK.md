@@ -770,7 +770,7 @@ Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, R
   Produtos continua limitado a **Compre direto** até que exista decisão e
   contrato específicos para a nova fonte.
 
-No aplicativo mobile V11, as abas de Sites parceiros consultam 10 cartões por
+No aplicativo mobile V12 Delta, as abas de Sites parceiros consultam 10 cartões por
 página. `PaginacaoRadar` troca a página exibida sem carregar e acumular cards
 pela rolagem; não é mostrada com até 10 resultados e a página 2 só aparece a
 partir de 11. A aba Acompanhadas segue a mesma regra, preservando filtro e
@@ -801,7 +801,7 @@ vazia apesar de haver acompanhamento pessoal.
 
 **Implementado em 7 de setembro de 2026.** O catálogo compacto do aplicativo
 mantém uma prévia curta no card e oferece a ação **Ver condições**. A ação abre
-uma folha V11 rolável com o texto integral de `descricao_principal`, preservando
+uma folha Delta rolável com o texto integral de `descricao_principal`, preservando
 quebras de linha e múltiplas faixas retornadas em `redirectWarning`.
 
 - A descrição vazia continua usando exatamente “O Inter não informou condições

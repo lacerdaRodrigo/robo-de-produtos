@@ -20,12 +20,7 @@ class GerenciadorNotificacoes {
     if (kIsWeb) return;
     try {
       final messaging = FirebaseMessaging.instance;
-      final permissao = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
+      final permissao = await _pedirPermissao(messaging);
       if (permissao.authorizationStatus == AuthorizationStatus.denied) return;
       final token = await messaging.getToken();
       if (token != null) await _registrar(token);
@@ -37,6 +32,27 @@ class GerenciadorNotificacoes {
       // Firebase/FCM indisponível não impede o acesso ao histórico.
     }
   }
+
+  /// Solicita somente a decisão do sistema para a tela explícita de permissão.
+  /// Retorna nulo quando a plataforma ou o plugin não está disponível.
+  Future<AuthorizationStatus?> solicitarPermissao() async {
+    if (kIsWeb) return null;
+    try {
+      return (await _pedirPermissao(
+        FirebaseMessaging.instance,
+      )).authorizationStatus;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<NotificationSettings> _pedirPermissao(FirebaseMessaging messaging) =>
+      messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
   Future<void> _registrar(String token) async {
     if (token == _ultimoToken) return;

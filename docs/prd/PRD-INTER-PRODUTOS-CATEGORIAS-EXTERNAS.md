@@ -258,7 +258,7 @@ aparece em **Outros / novas categorias**. Quando uma oferta deixa de vir numa
 coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
 regras já existentes de histórico e publicação.
 
-No Flutter mobile V11, a entrada **Comece por uma área** permanece uma ação de
+No Flutter mobile V12 Delta, a entrada **Comece por uma área** permanece uma ação de
 descoberta contextual. Ela usa cartão com ícone, texto de apoio e CTA
 contornado `Escolher categoria`, com largura total e alvo de toque de 44 px; quando
 um recorte está ativo, o mesmo controle
@@ -636,7 +636,8 @@ A decisão deste plano entra em conflito com partes da documentação criada par
 Após aprovação e durante a implementação, revisar somente os trechos afetados em:
 
 - `docs/planos/PLANO-MODIFICACAO-PRODUTOS.md`;
-- `docs/planos/PLANO-ACAO-TEMPORARIO-PRODUTOS-CATEGORIAS-V11.md`;
+- planos temporários de categorias da etapa anterior, já incorporados a este
+  PRD e sem documento vigente separado;
 - documentação/PRD que declare `categoria_radar` como fonte funcional dos produtos;
 - protótipo experimental de categorias, apenas se ele representar hierarquia própria Radar que não existirá mais.
 

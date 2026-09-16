@@ -463,7 +463,7 @@ Essa reorganização é exclusivamente de navegação mobile e não altera rotas
 contratos, paginação ou origem de dados: o Flutter continua consultando a API
 do Radar, e a busca continua lendo somente o catálogo persistido.
 
-A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V11, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
+A página inicia pela busca local; não despeja milhares de produtos sem consulta. No mobile V12 Delta, a área de Produtos não repete a administração da coleta: não há cartão de origem com botão “Escolher lojas” nem chip “+ escolher lojas”. Alterar quais vendedores o robô coleta continua sendo uma operação administrativa própria, fora da busca de ofertas.
 
 Nas abas administrativas `Todas` e `Selecionadas` do Compre direto, a composição
 começa pela busca de lojas e pela lista correspondente. O cartão intermediário
@@ -473,7 +473,7 @@ Isso remove somente a entrada visual desta jornada; o contrato/API de categorias
 externas e seus controladores compartilhados permanecem preservados até uma
 decisão específica sobre um fluxo separado de configuração.
 
-O campo de produtos segue o `SearchBox` da V11: ícone de busca, superfície clara com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
+O campo de produtos segue o campo de busca Delta: ícone de busca, superfície mineral com borda e sombra suave, texto de exemplo e botão coral de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
 
 Na composição compacta aplicada em 2026-09-13, a busca recebe um painel plum com
 o título “Busque, compare, economize.” e o placeholder “Marca, modelo ou
@@ -487,7 +487,7 @@ retrato válido, o total retornado e, quando disponível, a quantidade de lojas
 selecionadas. A interface não exibe um número estimado como se fosse a
 quantidade total de lojas selecionadas.
 
-Toda busca do aplicativo usa o componente visual `CampoBuscaRadar`; não há `TextField` de busca isolado com aparência própria em uma tela V11. O botão de avanço, quando aplicável, e a variante `search-only` preservam o mesmo campo, espaçamento, tipografia e foco.
+Toda busca do aplicativo usa o componente visual `CampoBuscaRadar`; não há `TextField` de busca isolado com aparência própria em uma tela V12 Delta. O botão de avanço, quando aplicável, e a variante `search-only` preservam o mesmo campo, espaçamento, tipografia e foco.
 
 Os resultados de Produtos e os cartões de lojas do Compre direto pedem **10
 itens por página** à API. A navegação visual compartilhada `PaginacaoRadar`
@@ -496,7 +496,7 @@ fica oculta quando o total for 9 ou 10; com 11 resultados, passa a exibir a
 segunda página. Busca, filtro e categoria continuam reiniciando na página 1.
 Após a troca, a lista retorna ao início com uma animação suave.
 
-O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V11. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
+O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas Delta. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
 
 ### 9.3 Histórico de preço
 

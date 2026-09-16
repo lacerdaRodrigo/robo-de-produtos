@@ -9,7 +9,7 @@ Android.
 
 ## Objetivo
 
-Oferecer no aplicativo Flutter V11 uma Central autenticada para mudanças válidas
+Oferecer no aplicativo Flutter mobile V12 Delta uma Central autenticada para mudanças válidas
 em itens acompanhados, com histórico de 90 dias, filtros, leitura individual ou
 em massa, preferências de push, Ajuda, Reportar problema e Privacidade. O cliente
 continua consumindo somente a API; Livelo, Cashback Inter, Produtos Inter e
@@ -100,7 +100,7 @@ estado de salvamento/rollback do botão textual. Nenhum desses controles deve se
 interpretado como preferência de push por si só; as seleções administrativas
 globais continuam separadas e protegidas por autorização.
 
-## Flutter V11
+## Flutter mobile V12 Delta
 
 `PaginaAlertas` substitui a folha placeholder e preserva filtro, página e coleta
 recebida por deep link de push. A tela cobre loading, vazio, erro, parcial,
@@ -118,7 +118,7 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 1. `dart format`, `flutter analyze` e testes unitários/widgets afetados passam.
 2. `npm run checar`, testes Vitest direcionados e workflow da outbox passam; testes Python dos
    adaptadores de coleta passam.
-3. O protótipo V11 e a tela Flutter mantêm estados e hierarquia nas larguras
+3. O protótipo Delta e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
 4. Migrations 023, 025, 026, 027 e 028 estão aplicadas no banco alvo por
    operação autorizada, com a validação de contagens, isolamento da conta e

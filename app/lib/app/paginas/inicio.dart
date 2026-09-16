@@ -21,6 +21,7 @@ class PaginaInicio extends StatefulWidget {
     this.aoAbrirProdutos,
     this.aoAbrirCashback,
     this.aoAbrirPichau,
+    this.aoAbrirAlertas,
     this.agora,
     this.experienciaCompacta = false,
     this.ativa = true,
@@ -33,6 +34,7 @@ class PaginaInicio extends StatefulWidget {
   final VoidCallback? aoAbrirProdutos;
   final VoidCallback? aoAbrirCashback;
   final VoidCallback? aoAbrirPichau;
+  final VoidCallback? aoAbrirAlertas;
   final DateTime Function()? agora;
   final bool experienciaCompacta;
   final bool ativa;
@@ -142,7 +144,11 @@ class _PaginaInicioState extends State<PaginaInicio>
               sliver: SliverList.list(
                 children: [
                   if (widget.experienciaCompacta)
-                    const _CabecalhoResumoCompacto()
+                    _HeroResumoCompacto(
+                      resumo: resumo,
+                      aoAbrirProdutos: widget.aoAbrirProdutos,
+                      aoAbrirAlertas: widget.aoAbrirAlertas,
+                    )
                   else
                     _CabecalhoResumo(
                       resumo: resumo,
@@ -280,22 +286,139 @@ class _CabecalhoResumo extends StatelessWidget {
   }
 }
 
-class _CabecalhoResumoCompacto extends StatelessWidget {
-  const _CabecalhoResumoCompacto();
+class _HeroResumoCompacto extends StatelessWidget {
+  const _HeroResumoCompacto({
+    required this.resumo,
+    required this.aoAbrirProdutos,
+    required this.aoAbrirAlertas,
+  });
+
+  final ResumoInicio resumo;
+  final VoidCallback? aoAbrirProdutos;
+  final VoidCallback? aoAbrirAlertas;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const CabecalhoSecaoRadar(
-          sobrelinha: 'Hoje',
-          titulo: 'Visão geral',
-          descricao: 'Cada serviço mostra seus próprios números e avisos.',
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    final atividade = resumo.atividadeRecente.isEmpty
+        ? null
+        : resumo.atividadeRecente.first;
+    final origem = atividade == null
+        ? 'Retrato das fontes'
+        : _nomeDominio(atividade.dominio);
+    final leitura = atividade == null
+        ? 'Ainda não há uma diferença recente registrada pela API.'
+        : 'Estado ${atividade.estado} · ${_dataHora(atividade.momento)}';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cores.texto,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(tokens.radii.xl),
+          topRight: Radius.circular(tokens.radii.xl),
+          bottomRight: Radius.circular(tokens.radii.xl),
+          bottomLeft: Radius.circular(tokens.spacing.two),
         ),
-      ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(tokens.spacing.five),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Última diferença encontrada',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: cores.canvas,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.two),
+            Text(
+              origem,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: cores.canvas,
+                fontWeight: FontWeight.w900,
+                height: 0.96,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.two),
+            Text(
+              leitura,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: cores.canvas.withValues(alpha: 0.82),
+                height: 1.4,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.four),
+            Wrap(
+              spacing: tokens.spacing.two,
+              runSpacing: tokens.spacing.two,
+              children: [
+                _SinalResumo(
+                  texto: atividade == null
+                      ? 'Sem alteração nova'
+                      : 'Diferença confirmada',
+                  cor: cores.marcaTexto,
+                ),
+                Text(
+                  _dataHora(resumo.geradoEm),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: cores.canvas.withValues(alpha: 0.72),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: tokens.spacing.seven),
+            Text(
+              'Próxima leitura',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: cores.canvas.withValues(alpha: 0.72),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.one),
+            Text(
+              'Escolha onde comparar.',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: cores.canvas,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.three),
+            _AcoesRapidasResumo(
+              aoAbrirProdutos: aoAbrirProdutos,
+              aoAbrirAlertas: aoAbrirAlertas,
+              aoAbrirServicos: null,
+              escuro: true,
+            ),
+          ],
+        ),
+      ),
     );
   }
+}
+
+class _SinalResumo extends StatelessWidget {
+  const _SinalResumo({required this.texto, required this.cor});
+
+  final String texto;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: cor.withValues(alpha: 0.16),
+      borderRadius: BorderRadius.circular(context.tokens.radii.md),
+    ),
+    child: Text(
+      texto,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: cor,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
 }
 
 class _AvisoFalhaAtualizacao extends StatelessWidget {
@@ -802,20 +925,28 @@ class _AcoesRapidasResumo extends StatelessWidget {
   const _AcoesRapidasResumo({
     required this.aoAbrirProdutos,
     required this.aoAbrirServicos,
+    this.aoAbrirAlertas,
+    this.escuro = false,
   });
 
   final VoidCallback? aoAbrirProdutos;
   final VoidCallback? aoAbrirServicos;
+  final VoidCallback? aoAbrirAlertas;
+  final bool escuro;
 
   @override
   Widget build(BuildContext context) {
-    final produtos = FilledButton(
+    final produtos = FilledButton.icon(
       key: const Key('atalho-produtos'),
       onPressed: aoAbrirProdutos,
-      style: FilledButton.styleFrom(
-        backgroundColor: CoresRadar.de(context).marca,
-      ),
-      child: const Text('Buscar produtos'),
+      icon: const Icon(Icons.search),
+      label: const Text('Comparar produtos'),
+    );
+    final alertas = OutlinedButton.icon(
+      key: const Key('atalho-alertas'),
+      onPressed: aoAbrirAlertas,
+      icon: const Icon(Icons.notifications_none_outlined),
+      label: const Text('Ver alertas'),
     );
     final servicos = OutlinedButton(
       key: const Key('atalho-programas'),
@@ -830,14 +961,18 @@ class _AcoesRapidasResumo extends StatelessWidget {
         if (empilhar) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [produtos, const SizedBox(height: 8), servicos],
+            children: [
+              produtos,
+              SizedBox(height: context.tokens.spacing.two),
+              escuro ? alertas : servicos,
+            ],
           );
         }
         return Row(
           children: [
             Expanded(child: produtos),
-            const SizedBox(width: 9),
-            Expanded(child: servicos),
+            SizedBox(width: context.tokens.spacing.two),
+            Expanded(child: escuro ? alertas : servicos),
           ],
         );
       },
@@ -1267,6 +1402,14 @@ String _descricaoEstado(EstadoResumo estado) => switch (estado) {
   EstadoResumo.semDados =>
     'Ainda não existe uma coleta válida para este recorte.',
   _ => 'Os dados estão dentro do intervalo esperado.',
+};
+
+String _nomeDominio(String dominio) => switch (dominio) {
+  'livelo' => 'Livelo',
+  'cashback' || 'cashback_inter' => 'Cashback Inter',
+  'produtos' || 'produtos_inter' => 'Produtos Inter',
+  'pichau' => 'Pichau',
+  _ => 'Uma fonte acompanhada',
 };
 
 String _rotuloEstado(EstadoResumo estado) => switch (estado) {

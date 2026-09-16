@@ -359,7 +359,11 @@ void main() {
     await at.pumpAndSettle();
 
     final acompanhar = find.byKey(const ValueKey('acompanhar-cea'));
-    await at.ensureVisible(acompanhar);
+    await Scrollable.ensureVisible(
+      at.element(acompanhar),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
     await at.tap(acompanhar);
     await at.pump();
     expect(find.text('Salvando…'), findsOneWidget);
@@ -387,7 +391,16 @@ void main() {
       findsOneWidget,
     );
 
-    await at.ensureVisible(acompanhar);
+    await at.drag(
+      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      const Offset(0, -220),
+    );
+    await at.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      at.element(acompanhar),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
     await at.tap(acompanhar);
     await at.pumpAndSettle();
     expect(

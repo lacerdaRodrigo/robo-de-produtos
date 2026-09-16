@@ -174,7 +174,7 @@ void main() {
     expect(find.text('R\$ 0,00'), findsNothing);
   });
 
-  testWidgets('catálogo permanece alcançável nas larguras mobile V11', (
+  testWidgets('catálogo permanece alcançável nas larguras mobile Delta', (
     at,
   ) async {
     addTearDown(at.view.reset);

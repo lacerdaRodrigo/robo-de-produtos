@@ -375,7 +375,7 @@ class CartaoPichau extends StatelessWidget {
         padding: EdgeInsets.zero,
         corDestaque: produto.foraDoCatalogo || produto.esgotado
             ? cores.atencao
-            : null,
+            : cores.pichau,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
           child: Column(
@@ -577,16 +577,14 @@ class _EtiquetaPichau extends StatelessWidget {
     final fundo = neutra
         ? cores.superficieAlternativa
         : plum
-        ? (Theme.of(context).brightness == Brightness.dark
-              ? Tokens.superficieForteEscura
-              : Tokens.plumSoft)
+        ? cores.pichau.withValues(alpha: 0.16)
         : (Theme.of(context).brightness == Brightness.dark
               ? Tokens.acaoFundoEscuro
               : Tokens.actionSoft);
     final textoCor = neutra
         ? cores.textoSuave
         : plum
-        ? cores.marca
+        ? cores.pichau
         : cores.acao;
     return DecoratedBox(
       decoration: BoxDecoration(
