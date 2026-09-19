@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/app.dart';
+import 'package:app_robo/app/autenticacao/portao.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/autenticacao/autenticador.dart';
@@ -185,5 +186,41 @@ void main() {
     await at.tap(find.text('Sair'));
     await at.pump();
     expect(autenticador.saiu, isTrue);
+  });
+
+  testWidgets('validação offline termina em falha recuperável após timeout', (
+    at,
+  ) async {
+    final autenticador = AutenticadorFalso(
+      const ContaAutenticada(id: 'uid-offline', email: 'piloto@example.com'),
+    );
+    addTearDown(autenticador.fechar);
+    final resposta = Completer<http.Response>();
+    final api = apiCom(
+      http_testing.MockClient((requisicao) {
+        if (requisicao.url.path == '/api/perfil') return resposta.future;
+        return Future.value(http.Response(_resumoVazio, 200));
+      }),
+      autenticador,
+    );
+
+    await at.pumpWidget(
+      MaterialApp(
+        home: PortaoAutenticacao(
+          autenticador: autenticador,
+          api: api,
+          tempoMaximoValidacao: const Duration(seconds: 1),
+        ),
+      ),
+    );
+    await at.pump(const Duration(seconds: 1));
+
+    expect(
+      find.text('Não foi possível validar seu acesso agora.'),
+      findsOneWidget,
+    );
+    expect(find.text('Tentar novamente'), findsOneWidget);
+
+    resposta.complete(http.Response('{}', 503));
   });
 }

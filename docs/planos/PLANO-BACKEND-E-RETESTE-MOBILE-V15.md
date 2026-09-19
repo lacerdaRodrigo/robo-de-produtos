@@ -7,7 +7,7 @@ completo no Samsung SM-M135M, buscando o resultado final de 42 testes verdes,
 sem alterar o Web e sem alterar o executor Android da Pichau.
 
 Estado inicial: branch `codex/design-mobile-v15-definitivo`, commit `909dd88`.
-Branch de execução: `codex/backend-mobile-v15-fechamento`.
+Branch de execução: `main`.
 
 ## Execução local registrada — 2026-09-19
 
@@ -17,17 +17,23 @@ Branch de execução: `codex/backend-mobile-v15-fechamento`.
   direcionado (`15` testes aprovados).
 - ✅ Flutter: `dart format`, `flutter analyze` e testes unitários/widgets
   diretamente afetados (`56` aprovados).
+- ✅ Reteste direcionado pós-instalação: `95` testes unitários/widgets
+  relacionados às jornadas físicas, todos aprovados; `flutter analyze` sem
+  issues e `dart format` sem alterações.
 - ✅ `flutter build apk --debug` gerou
   `app/build/app/outputs/flutter-apk/app-debug.apk`.
 - ✅ Fixture guardada criada em
   `backend/api/scripts/qa-mobile-v15.mjs`; só escreve com ambiente `test`,
   conexão direta, `QA_RUN_ID`, `QA_ACCOUNT_ID`, backup fora do repositório e
   confirmação literal. O preflight sem variáveis foi bloqueado, como esperado.
-- 🟡 Migration ainda não aplicada. Checksum de
-  `migracoes/029_indices_mobile_v15.sql`:
+- ✅ Migration `migracoes/029_indices_mobile_v15.sql` aplicada e confirmada pelo
+  responsável; checksum:
   `ec0394b66618b9606373a3a34dcdb97f183813e059f53d87abf41ff78d179a89`.
-- ⬜ Publicação, APK e os 42 cenários físicos continuam para depois da
-  confirmação operacional. Nenhum cenário físico novo foi marcado como verde.
+- ✅ APK build `27503` compilada, instalada no Samsung SM-M135M e aberta contra
+  a API publicada. O relatório físico reclassificou os casos executados e
+  confirmou falha/retry recuperável quando o Wi‑Fi é desligado.
+- 🟡 Distribuição privada por Drive continua bloqueada por credencial OAuth
+  externa expirada/revogada; isso não bloqueou o reteste local por ADB.
 
 ## Registro e ciclo do plano
 
@@ -36,12 +42,12 @@ Branch de execução: `codex/backend-mobile-v15-fechamento`.
 2. A implementação pode alterar somente backend/API necessário ao Mobile V15,
    Flutter, migrations, testes unitários/widgets diretamente afetados e a
    documentação dos domínios envolvidos.
-3. A migration não será aplicada pelo Codex nesta primeira etapa. Após a
-   implementação, o responsável receberá o arquivo, checksum e comando para
-   aplicar a migration em conexão direta. O trabalho ficará pausado até a
-   confirmação da aplicação.
-4. Depois da confirmação, o Codex publica a API no ambiente atual, compila o
-   APK, instala no Samsung e executa o roteiro manual dos 42 testes.
+3. A migration não foi aplicada pelo Codex: o arquivo, checksum e comando
+   foram entregues ao responsável, que confirmou a aplicação em conexão
+   direta antes do reteste.
+4. Depois da confirmação, a API foi validada no ambiente atual, o APK foi
+   compilado, instalado no Samsung e o roteiro manual físico foi iniciado; os
+   resultados atuais estão no relatório de device.
 5. Durante a execução, este arquivo funciona como checklist. No fechamento,
    seus contratos serão incorporados aos PRDs e o conteúdo será convertido em
    relatório final, sem deixar instrução obsoleta ativa.
@@ -267,29 +273,35 @@ externo; não improvisar credenciais nem trocar de provedor.
 
 ## Matriz de reteste
 
-Reexecutar os 19 testes que já estavam verdes:
+### Resultado da execução atual — 2026-09-19
 
-`D-001–D-005`, `D-007–D-009`, `D-012–D-014`, `D-026`, `D-030–D-031`,
-`D-033–D-034`, `D-036` e `D-041–D-042`.
+- ✅ `29` cenários verdes.
+- 🟡 `11` cenários parcialmente cobertos ou dependentes de ambiente/conta.
+- ⬜ `2` cenários ainda não executados.
+- ❌ `0` falhas persistentes após três tentativas.
 
-Fechar os 23 restantes:
+Detalhes por ID, evidência, tentativa e divergência estão em
+`docs/planos/RELATORIO-TESTE-DEVICE-MOBILE-V15.md`. O aceite final de 42/42
+continua aberto até concluir os cenários amarelos e pendentes.
+
+Reexecutar os 29 testes verdes já cobertos:
+
+`D-001–D-005`, `D-007–D-010`, `D-012–D-014`, `D-016–D-017`, `D-020`,
+`D-021–D-022`, `D-024`, `D-026`, `D-029–D-034`, `D-036–D-037` e
+`D-041–D-042`.
+
+Fechar os 13 restantes:
 
 - `D-006`: recuperação real, validação e feedback;
-- `D-010–D-011`: Home com resumo, destaque, ausência, parcial, erro, offline e retry;
-- `D-015–D-017`: Inter parceiros, busca, filtros, ordenação, paginação,
-  acompanhar, rollback, condições e URL;
+- `D-011`: Home com ausência, parcial, erro, offline e retry;
+- `D-015`: Inter parceiros, ordenação e paginação física;
 - `D-018–D-019`: Inter direto, abas, lojas, categorias, filtros, acompanhamento
   e histórico;
-- `D-020–D-022`: Livelo, catálogo, filtros, condições, campanhas, validade,
-  acompanhamento, paginação e histórico;
-- `D-023–D-025`: Pichau, disponibilidade, preço Pix/cartão, detalhe,
-  histórico, acompanhamento, paginação e estados parciais;
+- `D-023`: Pichau, disponibilidade em todos os estados;
+- `D-025`: Pichau, estados parciais adicionais;
 - `D-027`: Meu Radar cheio/vazio, explorar, alertas, atualização e remoção;
-- `D-028–D-029`: lista de alertas, vazio, filtros, paginação e leitura
-  individual/coletiva;
-- `D-032`: movimento reduzido e persistência;
 - `D-035`: acesso administrativo e ausência para usuário comum;
-- `D-037–D-038`: retrato, paisagem, teclado, texto em 200% e toque;
+- `D-038`: texto em 200% em todas as rotas e alvos de toque;
 - `D-039`: offline, atraso, falha, retry e sessão expirada;
 - `D-040`: comparação manual final com o protótipo V15 em claro e escuro.
 

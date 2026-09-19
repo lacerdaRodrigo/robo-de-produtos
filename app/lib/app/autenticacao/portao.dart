@@ -16,11 +16,13 @@ class PortaoAutenticacao extends StatelessWidget {
     required this.autenticador,
     required this.api,
     this.construirValidacao,
+    this.tempoMaximoValidacao = const Duration(seconds: 10),
   });
 
   final Autenticador autenticador;
   final Api api;
   final ConstrutorValidacaoAcesso? construirValidacao;
+  final Duration tempoMaximoValidacao;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class PortaoAutenticacao extends StatelessWidget {
           api: api,
           autenticador: autenticador,
           construirValidacao: construirValidacao,
+          tempoMaximoValidacao: tempoMaximoValidacao,
         );
       },
     );
@@ -47,11 +50,13 @@ class _ValidacaoDoConvite extends StatefulWidget {
     required this.api,
     required this.autenticador,
     this.construirValidacao,
+    required this.tempoMaximoValidacao,
   });
 
   final Api api;
   final Autenticador autenticador;
   final ConstrutorValidacaoAcesso? construirValidacao;
+  final Duration tempoMaximoValidacao;
 
   @override
   State<_ValidacaoDoConvite> createState() => _EstadoValidacaoDoConvite();
@@ -63,10 +68,13 @@ class _EstadoValidacaoDoConvite extends State<_ValidacaoDoConvite> {
   @override
   void initState() {
     super.initState();
-    _perfil = widget.api.perfil();
+    _perfil = _carregarPerfil();
   }
 
-  void _tentarNovamente() => setState(() => _perfil = widget.api.perfil());
+  Future<PerfilUsuario> _carregarPerfil() =>
+      widget.api.perfil().timeout(widget.tempoMaximoValidacao);
+
+  void _tentarNovamente() => setState(() => _perfil = _carregarPerfil());
 
   @override
   Widget build(BuildContext context) {

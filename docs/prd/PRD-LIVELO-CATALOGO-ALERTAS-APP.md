@@ -395,6 +395,13 @@ Flutter apresenta o estado de configuração pendente. No Android e iOS, o
 provider é ativado somente quando `ATIVAR_APP_CHECK=true` foi recebido por
 `--dart-define`.
 
+Na abertura autenticada, a validação inicial do perfil tem limite de 10
+segundos. Se a rede ou a API não responder nesse intervalo, o Flutter mostra o
+estado reutilizável de falha com a ação `Tentar novamente`; não permanece
+indefinidamente em `Validando seu acesso ao piloto…`. O retry cria uma nova
+leitura do perfil e não repete mutações. A sessão Firebase só é considerada
+válida para abrir a moldura depois que essa leitura termina com sucesso.
+
 #### Controles independentes
 
 | Camada | Controle | Efeito de `false`/ausente | Efeito de `true` |

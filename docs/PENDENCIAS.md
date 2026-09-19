@@ -9,9 +9,11 @@ gate. Esta branch fecha o backend necessário ao V15 localmente; migration,
 publicação e reteste físico ficam no checkpoint documentado em
 [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md).
 Coletor e transporte Wi-Fi foram validados, mas
-Esta branch fecha localmente o contrato de backend do Mobile V15; a execução
-da migration 029, publicação e reteste físico continuam abertos. A
-disponibilidade contínua do executor Android continua aberta. A execução
+Esta branch fecha localmente o contrato de backend do Mobile V15; a migration
+029 foi aplicada e confirmada. A publicação privada e o reteste físico
+completo continuam abertos, embora o Samsung já tenha sido revalidado
+parcialmente no relatório de device. A disponibilidade contínua do executor
+Android continua aberta. A execução
 `34544816986`, fila 52, falhou em 2026-09-11 como `pichau-dados`; a fila sem
 diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
 Depois do “Fechar tudo” manual, a `34545283501`, fila 53, passou em uma
@@ -25,13 +27,15 @@ anterior ainda reinicia o gate operacional.
 
 - [x] Definir e implementar o contrato paginado de lista consolidada do `Meu
   radar`, o bloco pessoal `radar` de `/api/resumo` e a integração Flutter. A
-  migration 029 ainda aguarda aplicação externa antes da publicação.
+  migration 029 foi aplicada e confirmada; a distribuição privada ainda
+  depende da publicação/autorização externa.
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
-- [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. Em 2026-09-13, a APK debug desta entrega foi instalada no Moto G6 Play e a jornada Produtos foi conferida com catálogo real, busca digitada e pelos atalhos de Celulares, Informática, Casa, Beleza e Pet, resumo compacto, cards, histórico visual e abertura da oferta; filtros, paginação, leitura, preferências, dados reais completos, push, login/reautenticação, ausência, links externos, overflow geral e o alinhamento do cartão Cashback Inter ainda aguardam aceite. O Samsung continua pendente. Isso não vira smoke automatizado neste ciclo.
+- [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. No Samsung, o APK build `27503` foi instalado e o relatório atual registra `29` cenários verdes, `11` amarelos, `2` pendentes e nenhum vermelho; o estado offline inicial agora apresenta falha/retry recuperável. Ainda faltam sessão expirada controlada, usuário comum, paginação completa, alguns estados e comparação visual formal. No Moto G6 Play, permanecem as lacunas já registradas. Isso não vira smoke automatizado neste ciclo.
 - [x] Conferir manualmente no Samsung a nova composição da Home compacta: rail Livelo, Banco Inter e Pichau, sem a seção `Atividade recente`; claro/escuro e bloqueio/retomada foram observados. A Home agora usa `radar.destaque` quando há evento real e mantém estado honesto quando não há.
-- [ ] Aplicar e verificar `migracoes/029_indices_mobile_v15.sql` em conexão
-  direta/unpooled no ambiente de teste; somente depois publicar a API e
-  instalar o APK correspondente.
+- [x] Aplicar e verificar `migracoes/029_indices_mobile_v15.sql` em conexão
+  direta/unpooled no ambiente de teste. O responsável confirmou as duas
+  instruções `CREATE`; o APK correspondente foi instalado e retestado no
+  Samsung.
 - [ ] Publicar e validar a correção de compatibilidade da leitura do catálogo Pichau após a mudança para acompanhamento pessoal; enquanto o fallback não for observado no ambiente publicado, não declarar o catálogo recuperado no APK real.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
@@ -88,6 +92,10 @@ anterior ainda reinicia o gate operacional.
 - [ ] Publicar a API com os novos identificadores de escopo antes de distribuir o APK correspondente; app e API fora de versão retornam erro de validação e mantêm os cards anteriores como estado de falha.
 - [ ] Fechar o rollout externo do App Check antes de exigir enforcement. Não declarar Web/iOS observados nem enforcement ativo sem confirmação.
 - [ ] Concluir a publicação em `Production` do cliente OAuth usado pela distribuição privada do APK; enquanto estiver em `Testing`, o refresh token do Drive pode exigir renovação após o prazo do Google.
+- [ ] Corrigir a credencial OAuth da distribuição privada: o CI `35471530166`
+  falhou com `invalid_grant` (`Token has been expired or revoked`). Renovar o
+  `GOOGLE_DRIVE_REFRESH_TOKEN` ou concluir a publicação do cliente OAuth em
+  `Production` antes de repetir o aceite externo da distribuição.
 - [ ] Fazer o aceite externo da distribuição privada do APK: instalar a build no Samsung, confirmar acesso com `EMAIL_DESTINO`, negar acesso a uma conta não autorizada, observar mais de 10 builds para validar a retenção e confirmar um push na `main`. A implementação e a primeira execução estão documentadas em [`PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md).
 
 ## Próxima fase — produto, operação e publicação
