@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.72.1 (2026-09-19)
+
+### Bug Fixes
+
+- **mobile-v15**: Recover offline profile validation
+  ([`7ddda67`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/7ddda677c8f2e3d5b1b5818daccee9fdf1419ecb))
+
+
 ## v1.72.0 (2026-09-19)
 
 
