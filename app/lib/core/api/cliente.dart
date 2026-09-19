@@ -18,12 +18,19 @@ class ClienteApi {
     required http.Client cliente,
     this.provedorToken,
     this.provedorAppCheck,
+    this.aoSessaoExpirada,
   }) : _http = cliente;
 
   final String baseUrl;
   final http.Client _http;
   final ProvedorToken? provedorToken;
   final ProvedorToken? provedorAppCheck;
+
+  /// Notifica a moldura autenticada quando a API rejeita a sessão.
+  ///
+  /// A camada HTTP não decide como reautenticar; a interface fornece essa
+  /// reação. Rejeições de App Check não entram neste sinal.
+  void Function()? aoSessaoExpirada;
 
   /// Valor monetário e demais campos chegam como string (PRD 5.4).
   Future<Map<String, dynamic>> obter(
@@ -155,7 +162,7 @@ class ClienteApi {
       corpo = _decodificar(resposta);
     } on ErroDeRede {
       if (resposta.statusCode < 400) rethrow;
-      throw ErroDeApi(
+      final erroApi = ErroDeApi(
         resposta.statusCode,
         resposta.statusCode >= 500 ? 'inesperado' : 'resposta-invalida',
         resposta.statusCode >= 500
@@ -163,6 +170,8 @@ class ClienteApi {
             : 'A API devolveu uma resposta inválida.',
         retryAfterSeconds: _inteiroPositivo(resposta.headers['retry-after']),
       );
+      _sinalizarSessaoExpirada(erroApi);
+      throw erroApi;
     }
 
     if (resposta.statusCode < 400) return corpo;
@@ -177,7 +186,7 @@ class ClienteApi {
     final retryAfter = _inteiroPositivo(
       erro is Map ? erro['retry_after_seconds'] : null,
     );
-    throw ErroDeApi(
+    final erroApi = ErroDeApi(
       resposta.statusCode,
       codigo,
       mensagem,
@@ -186,6 +195,17 @@ class ClienteApi {
           _inteiroPositivo(corpo['retry_after_seconds']) ??
           _inteiroPositivo(resposta.headers['retry-after']),
     );
+    _sinalizarSessaoExpirada(erroApi);
+    throw erroApi;
+  }
+
+  void _sinalizarSessaoExpirada(ErroDeApi erro) {
+    if (erro.status != 401 || erro.codigo == 'app-check') return;
+    try {
+      aoSessaoExpirada?.call();
+    } on Object {
+      // A notificação não pode substituir o erro original da API.
+    }
   }
 
   int? _inteiroPositivo(Object? valor) {

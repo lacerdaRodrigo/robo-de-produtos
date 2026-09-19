@@ -55,22 +55,62 @@ Api _api() => Api(
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
     provedorToken: () async => 'token-teste',
-    cliente: http_testing.MockClient(
-      (_) async => http.Response(jsonEncode(_resumo), 200),
-    ),
+    cliente: http_testing.MockClient((requisicao) async {
+      if (requisicao.url.path == '/api/alertas/acompanhamentos') {
+        return http.Response(
+          jsonEncode({
+            'itens': [
+              for (final item in [
+                ['livelo', 'Loja Livelo'],
+                ['inter_cashback', 'Loja Inter'],
+                ['inter_produto', 'Produto Inter'],
+                ['pichau', 'PC Pichau'],
+                ['livelo', 'Outra Livelo'],
+                ['pichau', 'Outro Pichau'],
+              ])
+                {
+                  'id': item[1],
+                  'origem': item[0],
+                  'tipo_entidade': 'produto',
+                  'entidade_id': item[1],
+                  'nome': item[1],
+                  'estado': 'atualizado',
+                  'valor_texto': 'Dados reais',
+                  'criado_em': '2026-08-23T12:00:00Z',
+                  'atualizado_em': '2026-08-23T12:00:00Z',
+                },
+            ],
+            'pagina': 1,
+            'por_pagina': 20,
+            'total_itens': 6,
+            'total_paginas': 1,
+            'tem_proxima': false,
+            'totais_por_origem': {
+              'livelo': 2,
+              'inter_cashback': 1,
+              'inter_produto': 1,
+              'pichau': 2,
+            },
+          }),
+          200,
+        );
+      }
+      return http.Response(jsonEncode(_resumo), 200);
+    }),
   ),
 );
 
 void main() {
   testWidgets('Meu radar mostra contagens reais por fonte', (at) async {
-    var explorou = false;
     await at.pumpWidget(
       MaterialApp(
         theme: TemaRadar.claro(),
-        home: PaginaMeuRadar(
-          api: _api(),
-          aoExplorar: () => explorou = true,
-          aoAbrirAlertas: () {},
+        home: Scaffold(
+          body: PaginaMeuRadar(
+            api: _api(),
+            aoExplorar: () {},
+            aoAbrirAlertas: () {},
+          ),
         ),
       ),
     );
@@ -78,11 +118,26 @@ void main() {
 
     expect(find.byKey(const Key('pagina-meu-radar')), findsOneWidget);
     expect(find.text('6'), findsOneWidget);
-    expect(find.text('Livelo'), findsOneWidget);
-    expect(find.text('Banco Inter'), findsOneWidget);
-    expect(find.text('Pichau'), findsOneWidget);
-
-    await at.tap(find.text('Livelo'));
-    expect(explorou, isTrue);
+    expect(find.text('Loja Livelo'), findsOneWidget);
+    expect(find.text('Loja Inter'), findsOneWidget);
+    final lista = find.byKey(const Key('pagina-meu-radar'));
+    for (
+      var tentativa = 0;
+      tentativa < 6 && find.text('Produto Inter').evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(lista, const Offset(0, -300));
+      await at.pumpAndSettle();
+    }
+    expect(find.text('Produto Inter'), findsOneWidget);
+    for (
+      var tentativa = 0;
+      tentativa < 6 && find.text('PC Pichau').evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(lista, const Offset(0, -300));
+      await at.pumpAndSettle();
+    }
+    expect(find.text('PC Pichau'), findsOneWidget);
   });
 }

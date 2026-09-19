@@ -36,6 +36,7 @@ cria o `001` e carrega o catálogo.
 | `026_alertas_pichau_pessoal.sql` | origem Pichau na Central, push controlado e geração após coleta completa | Alertas/Pichau |
 | `027_backfill_alertas_sem_push.sql` | ponte das seleções legadas para a conta pessoal e recuperação Inter | Operação/Alertas |
 | `028_permissoes_alertas_pichau.sql` | função segura para o publicador Pichau gravar alertas sem grants pessoais amplos | Operação/Alertas |
+| `029_indices_mobile_v15.sql` | índices para lista consolidada de acompanhamentos e destaque não lido | Mobile V15/Alertas |
 
 ## Onde são usadas
 
@@ -82,3 +83,7 @@ de alertas. Após a aplicação, a execução `34761933582` passou com a fila 70
 execução 58 em qualidade completa, com 1.180 itens lidos/únicos e zero
 duplicados. Como não houve mudança de preço, não houve evento ou outbox novo;
 isso mantém pendente apenas a prova de um evento real e de sua entrega FCM.
+
+`029` depende de `023` e `026`, usa somente índices concorrentes aditivos para o
+Mobile V15 e deve ser aplicada em conexão direta, fora de transação. A aplicação
+e a verificação ainda são um checkpoint operacional deste plano.

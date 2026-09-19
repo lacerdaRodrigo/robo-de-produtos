@@ -8,6 +8,10 @@ import {
 } from "./banco-produtos-inter";
 import { resumoLiveloPersistido, type ResumoLiveloPersistido } from "./banco";
 import { resumoPichauPersistido, type ResumoPichauPersistido } from "./banco-pichau";
+import {
+  resumoRadarPessoal,
+  type ResumoRadarPessoal,
+} from "./banco-alertas";
 
 export type EstadoGeralResumo = "atualizado" | "atencao" | "sem_dados" | "indisponivel";
 export type EstadoLiveloResumo =
@@ -52,6 +56,7 @@ export type ResumoInicio = {
   cashback_inter: ResumoCashbackInterPersistido & { estado: EstadoCashbackResumo };
   produtos: ResumoProdutosPersistido & { estado: EstadoProdutosResumo };
   pichau: ResumoPichauPersistido & { estado: EstadoPichauResumo };
+  radar: ResumoRadarPessoal;
   atividade_recente: AtividadeRecente[];
 };
 
@@ -66,6 +71,7 @@ export type DependenciasResumoInicio = {
   cashbackInter: (usuarioId?: string) => Promise<ResumoCashbackInterPersistido>;
   produtos: () => Promise<ResumoProdutosPersistido>;
   pichau: (usuarioId?: string) => Promise<ResumoPichauPersistido>;
+  radar?: (usuarioId: string) => Promise<ResumoRadarPessoal>;
 };
 
 const dependenciasPadrao: DependenciasResumoInicio = {
@@ -73,6 +79,7 @@ const dependenciasPadrao: DependenciasResumoInicio = {
   cashbackInter: resumoCashbackInterPersistido,
   produtos: resumoProdutosPersistido,
   pichau: resumoPichauPersistido,
+  radar: resumoRadarPessoal,
 };
 
 const LIMITE_LIVELO_MS = 12 * 60 * 60 * 1000;
@@ -248,16 +255,34 @@ const pichauIndisponivel: ResumoInicio["pichau"] = {
   produtos_esgotados: 0,
 };
 
+const radarIndisponivel: ResumoRadarPessoal = {
+  estado: "indisponivel",
+  total_acompanhamentos: null,
+  por_origem: {
+    livelo: null,
+    inter_cashback: null,
+    inter_produto: null,
+    pichau: null,
+  },
+  alertas_nao_lidos: null,
+  destaque: null,
+};
+
 export async function carregarResumoInicio(
   deps: DependenciasResumoInicio = dependenciasPadrao,
   agora = new Date(),
   usuarioId?: string,
+  radarUsuarioId?: string,
 ): Promise<ResumoInicio> {
-  const [liveloLido, cashbackLido, produtosLidos, pichauLido] = await Promise.allSettled([
+  const radar = radarUsuarioId && deps.radar
+    ? deps.radar(radarUsuarioId)
+    : Promise.resolve(radarIndisponivel);
+  const [liveloLido, cashbackLido, produtosLidos, pichauLido, radarLido] = await Promise.allSettled([
     deps.livelo(),
     deps.cashbackInter(usuarioId),
     deps.produtos(),
     deps.pichau(usuarioId),
+    radar,
   ]);
 
   const livelo: ResumoInicio["livelo"] =
@@ -276,6 +301,7 @@ export async function carregarResumoInicio(
     pichauLido.status === "fulfilled"
       ? { ...pichauLido.value, estado: estadoPichau(pichauLido.value, agora) }
       : pichauIndisponivel;
+  const radarResumo = radarLido.status === "fulfilled" ? radarLido.value : radarIndisponivel;
 
   const estados = [livelo.estado, cashback.estado, produtos.estado, pichau.estado];
   const estadoGeral: EstadoGeralResumo = estados.every((estado) => estado === "atualizado")
@@ -293,6 +319,7 @@ export async function carregarResumoInicio(
     cashback_inter: cashback,
     produtos,
     pichau,
+    radar: radarResumo,
     atividade_recente: atividadeRecente(livelo, cashback, produtos),
   };
 }

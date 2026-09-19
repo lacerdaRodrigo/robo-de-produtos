@@ -19,6 +19,7 @@ const _resumoVazio =
 
 class _PreferenciasMemoria implements PreferenciasAparencia {
   ThemeMode? salvo;
+  bool? movimento;
   bool falharAoSalvar = false;
 
   @override
@@ -28,6 +29,15 @@ class _PreferenciasMemoria implements PreferenciasAparencia {
   Future<void> salvar(ThemeMode modo) async {
     if (falharAoSalvar) throw StateError('falha controlada');
     salvo = modo;
+  }
+
+  @override
+  Future<bool?> carregarReduzirMovimento() async => movimento;
+
+  @override
+  Future<void> salvarReduzirMovimento(bool valor) async {
+    if (falharAoSalvar) throw StateError('falha controlada');
+    movimento = valor;
   }
 }
 
@@ -112,6 +122,19 @@ void main() {
     expect(controlador.modo, ThemeMode.dark);
   });
 
+  test('preferência de movimento reduzido é persistida e restaurada', () async {
+    final preferencias = _PreferenciasMemoria()..movimento = true;
+    final controlador = ControladorAparencia(preferencias: preferencias);
+    addTearDown(controlador.dispose);
+
+    await controlador.carregar();
+    expect(controlador.reduzirMovimento, isTrue);
+
+    expect(await controlador.definirReduzirMovimento(false), isTrue);
+    expect(controlador.reduzirMovimento, isFalse);
+    expect(preferencias.movimento, isFalse);
+  });
+
   testWidgets('controle do perfil alterna o mobile claro e escuro', (at) async {
     at.view.devicePixelRatio = 1;
     at.view.physicalSize = const Size(390, 844);
@@ -137,7 +160,7 @@ void main() {
       Brightness.light,
     );
     expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
-    await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
+    await at.tap(find.byKey(const Key('barra-perfil')));
     await at.pumpAndSettle();
     await at.tap(find.text('Aparência'));
     await at.pumpAndSettle();

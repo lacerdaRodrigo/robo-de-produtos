@@ -2,8 +2,9 @@
 
 ## Identificação
 
-- Branch: `codex/design-mobile-v15-definitivo`
-- Commit-base: `f266f4f` — `feat(app): migrate mobile experience to V15`
+- Branch histórica do device: `codex/design-mobile-v15-definitivo`
+- Branch de fechamento local: `codex/backend-mobile-v15-fechamento`
+- Commit-base: `e4abb46` — plano de backend e reteste Mobile V15
 - Device principal: Samsung SM-M135M, Android 14, conectado por ADB USB
 - Application ID: `br.com.radarbeneficios.app`
 - APK: `app/build/app/outputs/flutter-apk/app-debug.apk`, instalado com sucesso
@@ -23,9 +24,9 @@
 
 Cada correção pode ter no máximo três tentativas. Uma tentativa inclui
 reprodução, correção, `dart format`, `flutter analyze`, unitário/widget
-afetados, novo APK, instalação e repetição no aparelho. O backend não será
-alterado nesta branch; dependências serão registradas em
-`DEPENDENCIAS-BACKEND-MOBILE-V15.md`.
+afetados, novo APK, instalação e repetição no aparelho. O backend necessário
+ao V15 foi implementado localmente; migration, publicação e reteste físico
+continuam separados no plano e não consomem tentativa enquanto bloqueados.
 
 ## Inventário de testes
 
@@ -40,7 +41,7 @@ alterado nesta branch; dependências serão registradas em
 | D-007 | Sessão | Fechar/reabrir app com sessão persistida | ✅ | 1 | `d060-after-unlock.png`, `d071-reopen-after-wait.png`; sessão retomada após reinício da Activity. |
 | D-008 | Sessão | Logout e retorno ao acesso | ✅ | 1 | `d068-logout.png`, `d069-login-reentry-final.png`; logout retornou ao acesso e novo login funcionou. |
 | D-009 | Moldura | Início, Explorar, Meu radar e Perfil | ✅ | 1 | `d020-explorar.png`, `d040-meu-radar.png`, `d050-perfil.png`; quatro destinos acessíveis. |
-| D-010 | Início | Resumo real, carregamento e atualização | 🟡 | 1 | `d052-home-light-fixed-2.png`, `d053-home-dark-fixed.png`; estados reais renderizam, mas o `/api/resumo` não entrega o produto/preço ilustrativo do protótipo. Lacuna registrada no documento de dependências. |
+| D-010 | Início | Resumo real, carregamento e atualização | 🟡 | 1 | `d052-home-light-fixed-2.png`, `d053-home-dark-fixed.png`; a API agora possui `radar.destaque` real, mas migration/deploy e nova conferência física ainda estão pendentes. |
 | D-011 | Início | Erro, parcial, ausência e retry | ⬜ | — | — |
 | D-012 | Início | Cards Livelo, Inter e Pichau | ✅ | 1 | `d052-home-light-fixed-2.png`; rail horizontal exibiu contagens reais das três origens. |
 | D-013 | Explorar | Cards, busca e abertura das subáreas | ✅ | 1 | `d020-explorar.png`, `d023-explorar-pichau.png`, `d021-livelo.png`, `d024-pichau.png`. |
@@ -56,8 +57,8 @@ alterado nesta branch; dependências serão registradas em
 | D-023 | Pichau | Catálogo, busca, filtros e disponibilidade | 🟡 | 1 | `d024-pichau.png`; catálogo real aberto. Busca/filtros/disponibilidade em todos os estados continuam pendentes. |
 | D-024 | Pichau | Preço Pix/cartão, detalhe e histórico | ⬜ | — | — |
 | D-025 | Pichau | Acompanhamento, paginação e estados parciais | ⬜ | — | — |
-| D-026 | Meu radar | Contagens reais por origem | ✅ | 1 | `d040-meu-radar.png`; contagens reais do resumo exibidas sem inventar lista consolidada. |
-| D-027 | Meu radar | Vazio, explorar, alertas e atualização | 🟡 | 1 | `d040-meu-radar.png`, `d041-alertas.png`; explorar/alertas acessíveis, mas vazio e atualização completa dependem de dados controlados. |
+| D-026 | Meu radar | Contagens reais por origem | ✅ | 1 | `d040-meu-radar.png`; evidência física histórica das contagens reais. A lista consolidada nova está coberta por widget/API e aguarda device após deploy. |
+| D-027 | Meu radar | Vazio, explorar, alertas e atualização | 🟡 | 1 | `d040-meu-radar.png`, `d041-alertas.png`; explorar/alertas acessíveis; fixture QA e nova lista paginada aguardam migration/deploy. |
 | D-028 | Alertas | Lista, vazio, filtros e paginação | 🟡 | 1 | `d072-alertas-formatado.png`, `d076-alertas-filtro-preco.png`; lista e filtro Preço aprovados; vazio/paginação físicos continuam pendentes. |
 | D-029 | Alertas | Leitura individual e coletiva | ⬜ | — | — |
 | D-030 | Alertas | Preferências e push opcional | ✅ | 1 | `d073-alertas-preferencias.png`, `d074-permissao-notificacoes.png`, `d075-permissao-recusada.png`; preferências abertas e recusa preservou o histórico. |
@@ -90,9 +91,9 @@ alterado nesta branch; dependências serão registradas em
 
 ## Bloqueios externos
 
-- A Home não recebe pela API de resumo o produto/preço ilustrativo exibido no
-  protótipo. Não foi criado dado fictício no Flutter; a necessidade de campos
-  reais está em `DEPENDENCIAS-BACKEND-MOBILE-V15.md`.
+- A nova resposta real (`radar.destaque`) ainda não foi publicada no ambiente
+  usado pelo APK histórico. Não foi criado dado fictício no Flutter; o
+  checkpoint está em `PLANO-BACKEND-E-RETESTE-MOBILE-V15.md`.
 - Os cenários offline, sessão expirada, vazio controlado, usuário comum,
   paginação física completa e links externos dependem de ambiente/contas ou de
   um roteiro manual adicional; permanecem amarelos ou pendentes, nunca foram
@@ -105,5 +106,19 @@ alterado nesta branch; dependências serão registradas em
 - Testes 🟡: 10
 - Testes ⬜: 13
 - Última validação estática: `flutter analyze` — `No issues found!`
-- Unitários/widgets diretamente afetados: 47 — todos passaram
+- Unitários/widgets diretamente afetados nesta implementação local: 56 — todos passaram
 - Último APK instalado: `app/build/app/outputs/flutter-apk/app-debug.apk` — sucesso
+
+## Estado do fechamento local — 2026-09-19
+
+- ✅ Backend: `npm run checar`, `npm run lint` (sem erros), `npm run build` e
+  Vitest direcionado: 15 testes aprovados.
+- ✅ Flutter: `dart format`, `flutter analyze` e o conjunto direcionado deste
+  ciclo: 56 testes aprovados.
+- 🟡 Migration: `migracoes/029_indices_mobile_v15.sql` ainda não aplicada;
+  checksum `ec0394b66618b9606373a3a34dcdb97f183813e059f53d87abf41ff78d179a89`.
+- 🟡 Deploy/APK/device: aguardam confirmação da aplicação da migration. Não
+  houve publicação nem nova marcação verde por inferência.
+- ⬜ Os 42 cenários físicos não foram reclassificados nesta etapa; as linhas
+  acima preservam a evidência histórica e o próximo reteste deve atualizar
+  cada ID com check verde ou vermelho, sem deixar falha persistente.

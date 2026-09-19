@@ -73,6 +73,7 @@ Rotas autenticadas em `backend/api/app/api`:
 - `POST /api/notificacoes/outbox` (admin, acionamento manual);
 - `POST /api/cron/notificacoes/outbox` (GitHub Actions, `Authorization: Bearer OUTBOX_CRON_SECRET`);
 - `POST /api/relatos-problema`;
+- `GET /api/alertas/acompanhamentos`;
 - `PATCH /api/alertas/acompanhamentos`;
 - `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento-pessoal`;
 - `PATCH /api/inter/cashback/{id}/acompanhamento`;
@@ -93,6 +94,21 @@ notificações.
 As leituras de Livelo, Sites parceiros do Inter e Pichau usam acompanhamento pessoal
 por padrão; `escopo=global` só é aceito para administradores e mantém a seleção
 legada separada da Central.
+
+### Lista consolidada do Meu radar
+
+`GET /api/alertas/acompanhamentos` é autenticado e nunca recebe o usuário no
+query string. Aceita `q`, `origem`, `ordenar`, `pagina` e `por_pagina` (máximo
+50), consulta somente os retratos persistidos e retorna item, estado, valor
+textual, URL validada, paginação e contagem das quatro origens. Livelo, Inter
+Sites parceiros, Inter Compre direto e Pichau continuam em joins e contratos
+separados. Ausência de retrato não é convertida em zero ou item fictício.
+
+`GET /api/resumo` acrescenta o bloco pessoal `radar`, com total, recorte por
+origem, alertas não lidos e o destaque mais recente. O destaque usa o mesmo
+contrato textual de valores e URL segura; `atividade_recente` permanece apenas
+para clientes antigos. A migration `029_indices_mobile_v15.sql` é aditiva e
+deve ser aplicada fora de transação em conexão direta.
 
 Nos cards de Livelo, cashback Inter, produtos Inter e Pichau, o sino é apenas
 um atalho visual para a ação de acompanhamento do usuário e compartilha o mesmo
@@ -124,7 +140,8 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 4. Migrations 023, 025, 026, 027 e 028 estão aplicadas no banco alvo por
    operação autorizada, com a validação de contagens, isolamento da conta e
    permissões mínimas do publicador Pichau.
-5. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
+5. A migration 029 está aplicada e verificada no banco alvo.
+6. APK debug é instalada e as jornadas de login, Central, filtros, leitura,
    preferências, Ajuda, relato, privacidade, links externos e ausência de dados
    são conferidas no Moto G6 Play; o aceite Samsung permanece separado.
 
@@ -140,5 +157,6 @@ O merge, deploy, APK e secret do cron foram confirmados; ainda falta produzir um
 evento real, observar sua entrega FCM e instalar/conferir a APK nos devices para
 o aceite manual completo.
 
-Este PRD incorpora o plano de implementação; o arquivo de plano histórico foi
-removido para não voltar a orientar trabalho já entregue.
+Este PRD incorpora os contratos implementados. O plano em
+`docs/planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md` permanece somente como
+registro do checkpoint operacional de migration, publicação e reteste físico.

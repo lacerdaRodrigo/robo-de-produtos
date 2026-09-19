@@ -172,6 +172,9 @@ Somente contratos de produto, não referências visuais:
 - [Central, suporte e privacidade](../prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md).
 - [Administração](../prd/PRD-ADMINISTRACAO.md).
 
-Esta entrega não altera contratos, rotas de API, schemas ou autorização.
-As pendências de integração, hardware e publicação estão discriminadas no
-[relatório de validação](../../design-app/mobile-v15/review/VALIDACAO.md).
+O fechamento do backend mobile V15 adiciona somente a leitura autenticada dos
+acompanhamentos pessoais, o bloco `radar` do resumo e índices aditivos. Não há
+acesso do Flutter ao banco, remoção de schema ou mudança da autorização.
+Migration, publicação, hardware e aceite físico continuam discriminados no
+[plano de backend e reteste](../planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md)
+e no [relatório de validação](../../design-app/mobile-v15/review/VALIDACAO.md).

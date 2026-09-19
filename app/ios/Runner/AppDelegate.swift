@@ -15,6 +15,8 @@ private final class AparenciaRadarPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "carregar":
       result(preferencias.string(forKey: "radar_tema"))
+    case "carregar_movimento":
+      result(preferencias.object(forKey: "radar_reduzir_movimento") as? Bool)
     case "salvar":
       let argumentos = call.arguments as? [String: Any]
       if let modo = argumentos?["modo"] as? String {
@@ -22,6 +24,10 @@ private final class AparenciaRadarPlugin: NSObject, FlutterPlugin {
       } else {
         preferencias.removeObject(forKey: "radar_tema")
       }
+      result(nil)
+    case "salvar_movimento":
+      let argumentos = call.arguments as? [String: Any]
+      preferencias.set(argumentos?["valor"] as? Bool ?? false, forKey: "radar_reduzir_movimento")
       result(nil)
     default:
       result(FlutterMethodNotImplemented)

@@ -47,6 +47,26 @@ function dependencias(): DependenciasResumoInicio {
 }
 
 describe("resumo real do Início", () => {
+  it("inclui o retrato pessoal do radar sem confundir ausência com falha", async () => {
+    const deps = dependencias();
+    deps.radar = async () => ({
+      estado: "atualizado",
+      total_acompanhamentos: 3,
+      por_origem: { livelo: 1, inter_cashback: 1, inter_produto: 1, pichau: 0 },
+      alertas_nao_lidos: 1,
+      destaque: null,
+    });
+
+    const resumo = await carregarResumoInicio(deps, agora, undefined, "42");
+
+    expect(resumo.radar).toMatchObject({
+      estado: "atualizado",
+      total_acompanhamentos: 3,
+      alertas_nao_lidos: 1,
+    });
+    expect(resumo.radar.por_origem.inter_produto).toBe(1);
+  });
+
   it("mantém os três domínios e seus recortes independentes", async () => {
     const resumo = await carregarResumoInicio(dependencias(), agora);
 

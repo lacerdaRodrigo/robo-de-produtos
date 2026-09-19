@@ -12,6 +12,7 @@ class PaginaAparencia extends StatelessWidget {
     final tokens = context.tokens;
     final controlador = AparenciaRadar.talvezDe(context);
     final modo = controlador?.modo ?? ThemeMode.system;
+    final reduzirMovimento = controlador?.reduzirMovimento ?? false;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Aparência'),
@@ -78,6 +79,76 @@ class PaginaAparencia extends StatelessWidget {
                 ),
               ),
             ),
+            SizedBox(height: tokens.spacing.three),
+            _OpcaoMovimento(
+              reduzirMovimento: reduzirMovimento,
+              aoMudar: controlador == null
+                  ? null
+                  : (valor) => controlador.definirReduzirMovimento(valor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OpcaoMovimento extends StatelessWidget {
+  const _OpcaoMovimento({
+    required this.reduzirMovimento,
+    required this.aoMudar,
+  });
+
+  final bool reduzirMovimento;
+  final ValueChanged<bool>? aoMudar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    return Semantics(
+      container: true,
+      label: 'Reduzir movimento${reduzirMovimento ? ', ativo' : ''}',
+      child: CartaoRadar(
+        key: const Key('aparencia-reduzir-movimento'),
+        padding: EdgeInsets.all(tokens.spacing.four),
+        child: Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: cores.superficieAlternativa,
+                borderRadius: BorderRadius.circular(tokens.radii.md),
+              ),
+              child: SizedBox.square(
+                dimension: tokens.spacing.nine,
+                child: Icon(
+                  Icons.motion_photos_off_outlined,
+                  color: cores.acao,
+                ),
+              ),
+            ),
+            SizedBox(width: tokens.spacing.three),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Reduzir movimento',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: tokens.spacing.one),
+                  Text(
+                    'Desativa transições decorativas e mantém o feedback funcional.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+                  ),
+                ],
+              ),
+            ),
+            Switch(value: reduzirMovimento, onChanged: aoMudar),
           ],
         ),
       ),

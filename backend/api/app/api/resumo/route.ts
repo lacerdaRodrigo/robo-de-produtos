@@ -13,7 +13,12 @@ export async function GET(requisicao: Request) {
     const usuarioId = acesso.usuario.papel === "admin"
       ? undefined
       : String(acesso.usuario.id);
-    const resumo = await carregarResumoInicio(undefined, undefined, usuarioId);
+    const resumo = await carregarResumoInicio(
+      undefined,
+      undefined,
+      usuarioId,
+      String(acesso.usuario.id),
+    );
     return NextResponse.json(resumo, {
       headers: {
         "cache-control": "no-store, max-age=0",

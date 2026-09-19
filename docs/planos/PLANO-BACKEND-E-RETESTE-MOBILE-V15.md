@@ -9,6 +9,26 @@ sem alterar o Web e sem alterar o executor Android da Pichau.
 Estado inicial: branch `codex/design-mobile-v15-definitivo`, commit `909dd88`.
 Branch de execução: `codex/backend-mobile-v15-fechamento`.
 
+## Execução local registrada — 2026-09-19
+
+- ✅ Rota consolidada, resumo pessoal, modelos Flutter, Meu radar, Home,
+  movimento reduzido e sessão expirada implementados.
+- ✅ Backend: `npm run checar`, `npm run lint`, `npm run build` e Vitest
+  direcionado (`15` testes aprovados).
+- ✅ Flutter: `dart format`, `flutter analyze` e testes unitários/widgets
+  diretamente afetados (`56` aprovados).
+- ✅ `flutter build apk --debug` gerou
+  `app/build/app/outputs/flutter-apk/app-debug.apk`.
+- ✅ Fixture guardada criada em
+  `backend/api/scripts/qa-mobile-v15.mjs`; só escreve com ambiente `test`,
+  conexão direta, `QA_RUN_ID`, `QA_ACCOUNT_ID`, backup fora do repositório e
+  confirmação literal. O preflight sem variáveis foi bloqueado, como esperado.
+- 🟡 Migration ainda não aplicada. Checksum de
+  `migracoes/029_indices_mobile_v15.sql`:
+  `ec0394b66618b9606373a3a34dcdb97f183813e059f53d87abf41ff78d179a89`.
+- ⬜ Publicação, APK e os 42 cenários físicos continuam para depois da
+  confirmação operacional. Nenhum cenário físico novo foi marcado como verde.
+
 ## Registro e ciclo do plano
 
 1. O plano deve ser salvo nesta pasta antes de qualquer alteração de código,
@@ -175,9 +195,23 @@ insets direcionais, semântica, alvos de toque de 48dp e suporte a texto em
 
 ## QA controlado
 
-Criar ferramenta guardada para o ciclo de QA, executada somente com conexão
-direta, `QA_RUN_ID`, confirmação explícita do ambiente e identificação da
-conta por variável de ambiente.
+A ferramenta guardada foi criada em
+`backend/api/scripts/qa-mobile-v15.mjs`. Executar somente após o checkpoint:
+
+```bash
+QA_ENVIRONMENT=test QA_RUN_ID=... QA_ACCOUNT_ID=... \
+node scripts/qa-mobile-v15.mjs --preflight
+QA_ENVIRONMENT=test QA_RUN_ID=... QA_ACCOUNT_ID=... \
+QA_CONFIRM=I_UNDERSTAND_QA_FIXTURE node scripts/qa-mobile-v15.mjs --prepare
+QA_ENVIRONMENT=test QA_RUN_ID=... QA_ACCOUNT_ID=... \
+QA_CONFIRM=I_UNDERSTAND_QA_FIXTURE node scripts/qa-mobile-v15.mjs --restore
+```
+
+O `DATABASE_URL` deve ser direta/unpooled e o `QA_BACKUP_PATH`, quando usado,
+deve ficar fora do repositório. A ferramenta não registra e-mail, token ou
+senha e falha antes de qualquer escrita quando uma trava não é satisfeita.
+Para D-039, a revogação do token Firebase continua sendo ação explícita do
+executor autenticado; não deve ser simulada por uma mutação no banco.
 
 Ela deverá:
 

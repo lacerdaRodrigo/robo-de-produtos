@@ -114,17 +114,27 @@ class _EstadoRadarApp extends State<RadarApp> {
         theme: TemaRadar.claro(),
         darkTheme: TemaRadar.escuro(),
         themeMode: kIsWeb ? ThemeMode.light : _aparencia.modo,
-        builder: (context, child) => AparenciaRadar(
-          controlador: _aparencia,
-          child: LayoutBuilder(
-            builder: (context, limites) {
-              final preservarClaro =
-                  kIsWeb || limites.maxWidth >= _larguraLayoutAmplo;
-              if (!preservarClaro) return child!;
-              return Theme(data: TemaRadar.claro(), child: child!);
-            },
-          ),
-        ),
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          final mediaComMovimento = media.copyWith(
+            disableAnimations:
+                media.disableAnimations || _aparencia.reduzirMovimento,
+          );
+          return MediaQuery(
+            data: mediaComMovimento,
+            child: AparenciaRadar(
+              controlador: _aparencia,
+              child: LayoutBuilder(
+                builder: (context, limites) {
+                  final preservarClaro =
+                      kIsWeb || limites.maxWidth >= _larguraLayoutAmplo;
+                  if (!preservarClaro) return child!;
+                  return Theme(data: TemaRadar.claro(), child: child!);
+                },
+              ),
+            ),
+          );
+        },
         home: widget.inicializador != null
             ? PaginaAbertura(
                 inicializar: widget.inicializador!,

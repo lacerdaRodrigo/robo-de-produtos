@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
+import '../../core/autenticacao/autenticador.dart';
 import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
 import '../../features/alertas/gerenciador_notificacoes.dart';
@@ -16,6 +17,7 @@ import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';
+import '../autenticacao/pagina_entrar.dart';
 import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
@@ -37,6 +39,8 @@ class MolduraRadar extends StatefulWidget {
     this.administrador = true,
     this.agora,
     this.aoSair,
+    this.aoSessaoExpirada,
+    this.autenticador,
     this.identificacaoConta,
     this.notificacoesAtivas = false,
   });
@@ -45,6 +49,8 @@ class MolduraRadar extends StatefulWidget {
   final bool administrador;
   final DateTime Function()? agora;
   final Future<void> Function()? aoSair;
+  final Future<void> Function()? aoSessaoExpirada;
+  final Autenticador? autenticador;
   final String? identificacaoConta;
   final bool notificacoesAtivas;
 
@@ -61,10 +67,12 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
   GerenciadorNotificacoes? _notificacoes;
+  bool _dialogSessaoAberto = false;
 
   @override
   void initState() {
     super.initState();
+    widget.api.cliente.aoSessaoExpirada = _sinalizarSessaoExpirada;
     if (widget.notificacoesAtivas) {
       _notificacoes = GerenciadorNotificacoes(
         api: widget.api,
@@ -76,8 +84,58 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   @override
   void dispose() {
+    widget.api.cliente.aoSessaoExpirada = null;
     unawaited(_notificacoes?.dispose() ?? Future<void>.value());
     super.dispose();
+  }
+
+  void _sinalizarSessaoExpirada() {
+    if (!mounted || _dialogSessaoAberto) return;
+    _dialogSessaoAberto = true;
+    unawaited(
+      showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          final autenticador = widget.autenticador;
+          if (autenticador != null) {
+            return Dialog(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 520,
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+                ),
+                child: PaginaEntrar(
+                  autenticador: autenticador,
+                  aoConcluir: () => Navigator.of(context).pop(true),
+                ),
+              ),
+            );
+          }
+          return AlertDialog(
+            title: const Text('Sessão expirada'),
+            content: const Text(
+              'Entre novamente para continuar acompanhando suas ofertas.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Agora não'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Entrar novamente'),
+              ),
+            ],
+          );
+        },
+      ).then((reautenticar) async {
+        _dialogSessaoAberto = false;
+        if (reautenticar == true && widget.autenticador == null) {
+          await widget.aoSessaoExpirada?.call();
+        }
+      }),
+    );
   }
 
   void _selecionar(Destino destino) {

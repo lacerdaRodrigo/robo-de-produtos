@@ -1,58 +1,46 @@
-# Dependências de backend para o mobile V15
+# Fechamento das dependências de backend do Mobile V15
 
-## Registro desta branch
+Status: contrato implementado localmente na branch
+`codex/backend-mobile-v15-fechamento`. A lista consolidada do Meu radar e o
+bloco pessoal da Home já têm rota, modelo, testes e integração Flutter. Este
+arquivo deixou de ser uma especificação de trabalho pendente; o plano de
+execução e o checkpoint operacional permanecem em
+[`PLANO-BACKEND-E-RETESTE-MOBILE-V15.md`](PLANO-BACKEND-E-RETESTE-MOBILE-V15.md).
 
-Esta branch altera somente o cliente Flutter e sua documentação. Nenhum
-arquivo do backend, migration, workflow, ambiente ou publicação foi alterado.
+## Contratos fechados
 
-## Lacuna encontrada — lista consolidada de acompanhamentos
+- `GET /api/alertas/acompanhamentos` lê somente `usuario_app_id` autenticado,
+  pagina no banco, filtra por nome/origem, ordena por atualização/nome e
+  devolve as quatro origens sempre presentes em `totais_por_origem`.
+- `PATCH /api/alertas/acompanhamentos` continua compatível e mantém a mutação
+  pessoal isolada da seleção administrativa/global.
+- `GET /api/resumo` acrescenta `radar`, com total pessoal, contagens por origem,
+  não lidos e o alerta não lido mais recente. O campo antigo
+  `atividade_recente` permanece para compatibilidade.
+- Valores monetários e de pontuação continuam texto decimal; URLs externas são
+  normalizadas e aceitas somente com `http` ou `https`.
+- A migration aditiva `migracoes/029_indices_mobile_v15.sql` cria somente os
+  índices necessários para a lista e o destaque não lido.
 
-O novo destino `Meu radar` precisa, quando o contrato estiver disponível, de
-uma leitura autenticada, paginada e consolidada dos acompanhamentos pessoais
-do usuário. A resposta deve distinguir pelo menos:
+## Trabalho concluído no código
 
-- origem: Livelo, Inter Sites parceiros, Inter Compre direto ou Pichau;
-- identificador e nome exibível da entidade;
-- tipo de entidade, estado/atividade e link de continuação quando aplicável;
-- paginação, total e estado de ausência, parcialidade ou falha.
+- Backend: rota, consultas separadas por domínio, resumo pessoal e testes Vitest.
+- Flutter: modelos, cliente API, Home real, Meu radar paginado, filtros,
+  remoção otimista/desfazer/rollback, movimento reduzido e sessão expirada.
+- Documentação: PRD da Central, catálogo técnico, pendências e README de
+  migrations atualizados.
 
-Hoje a API fornece contagens agregadas em `/api/resumo`, eventos em
-`/api/alertas` e mutações por origem em endpoints especializados. Esses
-contratos não permitem montar uma lista única sem inventar dados ou consultar
-fontes externas no cliente. O Flutter, portanto, mostra apenas as contagens
-reais que já chegam no resumo e encaminha a pessoa para Explorar/Alertas.
+## Checkpoint externo ainda aberto
 
-## Lacuna encontrada — detalhe ilustrativo da Home
+A migration 029 ainda não foi aplicada pelo Codex. O responsável deve aplicá-la
+em conexão direta/unpooled no ambiente de teste, usando o arquivo versionado e
+as consultas de verificação do plano. Depois da confirmação, o próximo ciclo
+é publicar a API, instalar o APK e executar o reteste físico autorizado. Não
+há segredo, credencial, backup ou URL privada neste documento.
 
-O protótipo V15 apresenta na Home uma composição de produto, preço anterior e
-preço atual. A resposta atual de `/api/resumo` entrega atividade recente e
-contagens por origem, mas não entrega um item/preço real suficiente para
-preencher essa composição. O Flutter mantém a hierarquia visual, usa a
-atividade real quando disponível e não promove o produto/preço do protótipo a
-dado de produção.
+## Lacuna de dados ilustrativos
 
-Para fechar a paridade visual com dados reais, a API deverá definir um campo de
-atividade recente com origem, nome exibível, identificador, valor anterior,
-valor atual, unidade, direção, estado de qualidade e instante da coleta. O
-contrato deve manter valores financeiros como texto decimal exato; o cliente
-não deve recalcular dinheiro com `double`.
-
-## Trabalho necessário fora desta tarefa
-
-1. Definir o contrato no PRD aplicável da Central de Alertas e dos domínios,
-   incluindo autorização, ordenação, filtros e paginação.
-2. Implementar e testar a rota agregada na API, sem unir Livelo, Inter Sites
-   parceiros, Inter Compre direto e Pichau em uma única regra de domínio.
-3. Só então acrescentar o modelo Dart e substituir o resumo por uma lista
-   paginada no `Meu radar`.
-
-Essa decisão exige alteração de backend e permanece pendente; não foi criada
-uma rota fictícia nesta migração.
-
-## Gates externos ainda pendentes
-
-- comparação manual das telas Flutter com `design-app/mobile-v15/index.html`;
-- validação em Android físico, incluindo texto em 200%, claro/escuro e
-  estados de erro/offline;
-- ícone, splash nativo e aceite operacional do aparelho dedicado quando a
-  entrega for distribuída.
+O protótipo ainda pode mostrar composições visuais que exigem um item recente;
+o Flutter usa somente `radar.destaque` quando o backend possui esse evento e
+mantém estado indisponível/sem dados quando não possui. Nenhum dado ilustrativo
+é promovido a dado de produção.

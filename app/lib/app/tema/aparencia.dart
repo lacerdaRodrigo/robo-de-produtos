@@ -7,6 +7,10 @@ abstract interface class PreferenciasAparencia {
   Future<ThemeMode?> carregar();
 
   Future<void> salvar(ThemeMode modo);
+
+  Future<bool?> carregarReduzirMovimento();
+
+  Future<void> salvarReduzirMovimento(bool valor);
 }
 
 /// Usa as preferências nativas do Android/iOS sem levar essa decisão ao Web.
@@ -41,6 +45,21 @@ class PreferenciasAparenciaNativas implements PreferenciasAparencia {
     };
     await _canal.invokeMethod<void>('salvar', <String, Object?>{'modo': valor});
   }
+
+  @override
+  Future<bool?> carregarReduzirMovimento() async {
+    if (!_disponivel) return null;
+    final valor = await _canal.invokeMethod<bool>('carregar_movimento');
+    return valor;
+  }
+
+  @override
+  Future<void> salvarReduzirMovimento(bool valor) async {
+    if (!_disponivel) return;
+    await _canal.invokeMethod<void>('salvar_movimento', <String, Object?>{
+      'valor': valor,
+    });
+  }
 }
 
 /// Estado de aparência do app nativo compacto.
@@ -56,25 +75,38 @@ class ControladorAparencia extends ChangeNotifier {
 
   final PreferenciasAparencia _preferencias;
   ThemeMode _modo;
+  bool _reduzirMovimento = false;
   Future<void>? _carregamento;
   bool _descartado = false;
   bool _houveEscolhaLocal = false;
+  bool _houveEscolhaMovimento = false;
 
   ThemeMode get modo => _modo;
+  bool get reduzirMovimento => _reduzirMovimento;
 
   Future<void> carregar() => _carregamento ??= _carregar();
 
   Future<void> _carregar() async {
     try {
-      final salvo = await _preferencias.carregar();
-      if (_descartado ||
-          _houveEscolhaLocal ||
-          salvo == null ||
-          salvo == _modo) {
-        return;
+      final resultados = await Future.wait<Object?>([
+        _preferencias.carregar(),
+        _preferencias.carregarReduzirMovimento(),
+      ]);
+      if (_descartado) return;
+      var alterou = false;
+      final salvo = resultados[0] as ThemeMode?;
+      if (!_houveEscolhaLocal && salvo != null && salvo != _modo) {
+        _modo = salvo;
+        alterou = true;
       }
-      _modo = salvo;
-      notifyListeners();
+      final movimento = resultados[1] as bool?;
+      if (!_houveEscolhaMovimento &&
+          movimento != null &&
+          movimento != _reduzirMovimento) {
+        _reduzirMovimento = movimento;
+        alterou = true;
+      }
+      if (alterou) notifyListeners();
     } on MissingPluginException {
       // Testes e plataformas não suportadas continuam com o tema do sistema.
     } on PlatformException {
@@ -101,6 +133,24 @@ class ControladorAparencia extends ChangeNotifier {
     }
     try {
       await _preferencias.salvar(proximo);
+      return true;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<bool> definirReduzirMovimento(bool valor) async {
+    _houveEscolhaMovimento = true;
+    if (_reduzirMovimento != valor) {
+      _reduzirMovimento = valor;
+      notifyListeners();
+    }
+    try {
+      await _preferencias.salvarReduzirMovimento(valor);
       return true;
     } on MissingPluginException {
       return false;

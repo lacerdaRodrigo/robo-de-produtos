@@ -749,6 +749,217 @@ class ResumoPichau {
   final int acompanhadas;
 }
 
+class DestaqueRadar {
+  const DestaqueRadar({
+    required this.alertaId,
+    required this.origem,
+    required this.tipo,
+    required this.entidadeId,
+    required this.entidadeExterna,
+    required this.nome,
+    required this.valorAnterior,
+    required this.valorAtual,
+    required this.unidade,
+    required this.direcao,
+    required this.criadoEm,
+    required this.urlExterna,
+  });
+
+  factory DestaqueRadar.parse(Map<String, dynamic> objeto) => DestaqueRadar(
+    alertaId: _texto(objeto['alerta_id']),
+    origem: _texto(objeto['origem']),
+    tipo: _texto(objeto['tipo']),
+    entidadeId: _texto(objeto['entidade_id']),
+    entidadeExterna: _textoOpcional(objeto['entidade_externa']),
+    nome: _texto(objeto['nome']),
+    valorAnterior: _textoOpcional(objeto['valor_anterior']),
+    valorAtual: _texto(objeto['valor_atual']),
+    unidade: _texto(objeto['unidade']),
+    direcao: _texto(objeto['direcao']),
+    criadoEm: _texto(objeto['criado_em']),
+    urlExterna: _textoOpcional(objeto['url_externa']),
+  );
+
+  final String alertaId;
+  final String origem;
+  final String tipo;
+  final String entidadeId;
+  final String? entidadeExterna;
+  final String nome;
+  final String? valorAnterior;
+  final String valorAtual;
+  final String unidade;
+  final String direcao;
+  final String criadoEm;
+  final String? urlExterna;
+}
+
+class ResumoRadar {
+  const ResumoRadar({
+    required this.estado,
+    required this.totalAcompanhamentos,
+    required this.porOrigem,
+    required this.alertasNaoLidos,
+    required this.destaque,
+  });
+
+  const ResumoRadar.indisponivel()
+    : estado = EstadoResumo.indisponivel,
+      totalAcompanhamentos = null,
+      porOrigem = const <String, int?>{
+        'livelo': null,
+        'inter_cashback': null,
+        'inter_produto': null,
+        'pichau': null,
+      },
+      alertasNaoLidos = null,
+      destaque = null;
+
+  factory ResumoRadar.parse(Map<String, dynamic> objeto) {
+    final origens = _mapa(objeto['por_origem']);
+    final destaque = objeto['destaque'];
+    return ResumoRadar(
+      estado: EstadoResumo.parse(objeto['estado']),
+      totalAcompanhamentos: _inteiroOpcional(objeto['total_acompanhamentos']),
+      porOrigem: <String, int?>{
+        for (final origem in const [
+          'livelo',
+          'inter_cashback',
+          'inter_produto',
+          'pichau',
+        ])
+          origem: _inteiroOpcional(origens[origem]),
+      },
+      alertasNaoLidos: _inteiroOpcional(objeto['alertas_nao_lidos']),
+      destaque: destaque is Map<String, dynamic>
+          ? DestaqueRadar.parse(destaque)
+          : null,
+    );
+  }
+
+  final EstadoResumo estado;
+  final int? totalAcompanhamentos;
+  final Map<String, int?> porOrigem;
+  final int? alertasNaoLidos;
+  final DestaqueRadar? destaque;
+
+  int? totalDaOrigem(String origem) => porOrigem[origem];
+}
+
+class AcompanhamentoPessoal {
+  const AcompanhamentoPessoal({
+    required this.id,
+    required this.origem,
+    required this.tipoEntidade,
+    required this.entidadeId,
+    required this.entidadeExterna,
+    required this.nome,
+    required this.estado,
+    required this.valorAtual,
+    required this.valorTexto,
+    required this.unidade,
+    required this.urlExterna,
+    required this.criadoEm,
+    required this.atualizadoEm,
+  });
+
+  factory AcompanhamentoPessoal.parse(Map<String, dynamic> objeto) =>
+      AcompanhamentoPessoal(
+        id: _texto(objeto['id']),
+        origem: _texto(objeto['origem']),
+        tipoEntidade: _texto(objeto['tipo_entidade']),
+        entidadeId: _texto(objeto['entidade_id']),
+        entidadeExterna: _textoOpcional(objeto['entidade_externa']),
+        nome: _texto(objeto['nome']),
+        estado: EstadoResumo.parse(objeto['estado']),
+        valorAtual: _textoOpcional(objeto['valor_atual']),
+        valorTexto: _textoOpcional(objeto['valor_texto']),
+        unidade: _textoOpcional(objeto['unidade']),
+        urlExterna: _textoOpcional(objeto['url_externa']),
+        criadoEm: _texto(objeto['criado_em']),
+        atualizadoEm: _texto(objeto['atualizado_em']),
+      );
+
+  final String id;
+  final String origem;
+  final String tipoEntidade;
+  final String entidadeId;
+  final String? entidadeExterna;
+  final String nome;
+  final EstadoResumo estado;
+  final String? valorAtual;
+  final String? valorTexto;
+  final String? unidade;
+  final String? urlExterna;
+  final String criadoEm;
+  final String atualizadoEm;
+}
+
+class PaginaAcompanhamentosPessoais {
+  const PaginaAcompanhamentosPessoais({
+    required this.itens,
+    required this.pagina,
+    required this.porPagina,
+    required this.totalItens,
+    required this.totalPaginas,
+    required this.temProxima,
+    required this.totaisPorOrigem,
+  });
+
+  factory PaginaAcompanhamentosPessoais.parse(Map<String, dynamic> objeto) {
+    final itens =
+        (objeto['itens'] as List<dynamic>?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(AcompanhamentoPessoal.parse)
+            .toList(growable: false) ??
+        const <AcompanhamentoPessoal>[];
+    final paginacao = _mapa(objeto['paginacao']);
+    final totalItens = _inteiroNaoNegativo(
+      objeto['total_itens'] ?? paginacao['total'],
+    );
+    final totalPaginas = _inteiroNaoNegativo(
+      objeto['total_paginas'] ?? paginacao['total_paginas'],
+    );
+    final pagina = _inteiroNaoNegativo(objeto['pagina'] ?? paginacao['pagina']);
+    final porPagina = _inteiroNaoNegativo(
+      objeto['por_pagina'] ?? paginacao['por_pagina'],
+    );
+    final totais = _mapa(objeto['totais_por_origem']);
+    return PaginaAcompanhamentosPessoais(
+      itens: itens,
+      pagina: pagina == 0 ? 1 : pagina,
+      porPagina: porPagina == 0 ? 20 : porPagina,
+      totalItens: totalItens,
+      totalPaginas: totalPaginas == 0 ? 1 : totalPaginas,
+      temProxima:
+          _booleano(objeto['tem_proxima']) ||
+          (_inteiroNaoNegativo(objeto['pagina'] ?? paginacao['pagina']) <
+              _inteiroNaoNegativo(
+                objeto['total_paginas'] ?? paginacao['total_paginas'],
+              )),
+      totaisPorOrigem: <String, int>{
+        for (final origem in const [
+          'livelo',
+          'inter_cashback',
+          'inter_produto',
+          'pichau',
+        ])
+          origem: _inteiroNaoNegativo(totais[origem]),
+      },
+    );
+  }
+
+  final List<AcompanhamentoPessoal> itens;
+  final int pagina;
+  final int porPagina;
+  final int totalItens;
+  final int totalPaginas;
+  final bool temProxima;
+  final Map<String, int> totaisPorOrigem;
+
+  bool get vazia => itens.isEmpty;
+}
+
 class ResumoInicio {
   const ResumoInicio({
     required this.geradoEm,
@@ -757,6 +968,7 @@ class ResumoInicio {
     required this.cashbackInter,
     required this.produtos,
     required this.pichau,
+    this.radar = const ResumoRadar.indisponivel(),
     this.atividadeRecente = const [],
   });
 
@@ -767,6 +979,7 @@ class ResumoInicio {
     cashbackInter: ResumoCashbackInter.parse(_mapa(objeto['cashback_inter'])),
     produtos: ResumoProdutos.parse(_mapa(objeto['produtos'])),
     pichau: ResumoPichau.parse(_mapa(objeto['pichau'])),
+    radar: ResumoRadar.parse(_mapa(objeto['radar'])),
     atividadeRecente:
         (objeto['atividade_recente'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
@@ -781,6 +994,7 @@ class ResumoInicio {
   final ResumoCashbackInter cashbackInter;
   final ResumoProdutos produtos;
   final ResumoPichau pichau;
+  final ResumoRadar radar;
   final List<AtividadeRecente> atividadeRecente;
 }
 
@@ -1331,6 +1545,14 @@ int _inteiroNaoNegativo(Object? valor) {
       ? valor.toInt()
       : int.tryParse(valor?.toString() ?? '') ?? 0;
   return convertido < 0 ? 0 : convertido;
+}
+
+int? _inteiroOpcional(Object? valor) {
+  if (valor == null) return null;
+  final convertido = valor is num
+      ? valor.toInt()
+      : int.tryParse(valor.toString());
+  return convertido == null || convertido < 0 ? null : convertido;
 }
 
 Map<String, dynamic> _mapa(Object? valor) =>

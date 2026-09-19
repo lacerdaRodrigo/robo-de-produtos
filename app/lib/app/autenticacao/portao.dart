@@ -89,6 +89,8 @@ class _EstadoValidacaoDoConvite extends State<_ValidacaoDoConvite> {
             identificacaoConta: estado.data!.email,
             notificacoesAtivas: true,
             aoSair: widget.autenticador.sair,
+            aoSessaoExpirada: widget.autenticador.sair,
+            autenticador: widget.autenticador,
           );
         }
 

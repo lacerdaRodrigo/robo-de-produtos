@@ -313,14 +313,14 @@ class _HeroResumoCompacto extends StatelessWidget {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final tema = Theme.of(context);
-    final atividade = resumo.atividadeRecente.isEmpty
-        ? null
-        : resumo.atividadeRecente.first;
-    final origem = atividade == null ? null : _nomeDominio(atividade.dominio);
-    final leitura = atividade == null
-        ? 'Nenhuma atividade recente foi fornecida pela API.'
-        : 'Estado ${atividade.estado} · ${_dataHora(atividade.momento)}';
-    final acaoPrincipal = atividade?.dominio == 'produtos'
+    final destaque = resumo.radar.destaque;
+    final origem = destaque == null ? null : _nomeDominio(destaque.origem);
+    final leitura = destaque == null
+        ? resumo.radar.estado == EstadoResumo.indisponivel
+              ? 'O sinal pessoal está indisponível. Tente atualizar novamente.'
+              : 'Nenhum alerta não lido por enquanto.'
+        : '${destaque.valorAnterior ?? '—'} → ${destaque.valorAtual} · ${_dataHora(destaque.criadoEm)}';
+    final acaoPrincipal = destaque?.origem == 'inter_produto'
         ? aoAbrirProdutos
         : aoAbrirAlertas;
     final cartao = DecoratedBox(
@@ -336,7 +336,7 @@ class _HeroResumoCompacto extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              atividade == null ? 'SEU RADAR, SEU RITMO' : 'SINAL DO SEU RADAR',
+              destaque == null ? 'SEU RADAR, SEU RITMO' : 'SINAL DO SEU RADAR',
               style: tema.textTheme.labelSmall?.copyWith(
                 color: tema.brightness == Brightness.dark
                     ? cores.acao
@@ -367,10 +367,10 @@ class _HeroResumoCompacto extends StatelessWidget {
               runSpacing: tokens.spacing.two,
               children: [
                 _SinalResumo(
-                  texto: atividade == null
-                      ? 'Tudo lido por enquanto'
-                      : _rotuloEstado(EstadoResumo.parse(atividade.estado)),
-                  cor: atividade == null ? cores.ganho : cores.acao,
+                  texto: destaque == null
+                      ? _rotuloEstado(resumo.radar.estado)
+                      : 'Não lido',
+                  cor: destaque == null ? cores.ganho : cores.acao,
                 ),
                 Text(
                   _dataHora(resumo.geradoEm),
@@ -387,12 +387,12 @@ class _HeroResumoCompacto extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: acaoPrincipal,
                   icon: Icon(
-                    atividade?.dominio == 'produtos'
+                    destaque?.origem == 'inter_produto'
                         ? Icons.search
                         : Icons.notifications_none,
                   ),
                   label: Text(
-                    atividade?.dominio == 'produtos'
+                    destaque?.origem == 'inter_produto'
                         ? 'Comparar produtos'
                         : 'Ver alertas',
                   ),
@@ -423,13 +423,16 @@ class _HeroResumoCompacto extends StatelessWidget {
         ),
         SizedBox(height: tokens.spacing.one),
         Text(
-          resumo.estadoGeral == EstadoResumo.atualizando ||
+          resumo.radar.estado == EstadoResumo.atualizando ||
+                  resumo.radar.estado == EstadoResumo.parcial ||
                   resumo.produtos.estado == EstadoResumo.atualizando ||
                   resumo.cashbackInter.estado == EstadoResumo.atualizando
               ? 'Atualizando'
-              : resumo.atividadeRecente.isEmpty
+              : resumo.radar.alertasNaoLidos == null
+              ? 'Sinal pessoal indisponível'
+              : resumo.radar.alertasNaoLidos == 0
               ? 'Tudo lido por enquanto'
-              : '${resumo.atividadeRecente.length} mudanças para conferir',
+              : '${resumo.radar.alertasNaoLidos} alertas para conferir',
           style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
         ),
         SizedBox(height: tokens.spacing.five),
@@ -440,9 +443,10 @@ class _HeroResumoCompacto extends StatelessWidget {
 }
 
 int _totalAcompanhamentos(ResumoInicio resumo) =>
-    resumo.livelo.lojasAcompanhadas +
-    resumo.cashbackInter.lojasAcompanhadas +
-    resumo.pichau.acompanhadas;
+    resumo.radar.totalAcompanhamentos ??
+    (resumo.livelo.lojasAcompanhadas +
+        resumo.cashbackInter.lojasAcompanhadas +
+        resumo.pichau.acompanhadas);
 
 class _TrilhoOrigensCompacto extends StatelessWidget {
   const _TrilhoOrigensCompacto({

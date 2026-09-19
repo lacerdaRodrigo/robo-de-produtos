@@ -95,6 +95,24 @@ void main() {
     );
   });
 
+  test('sinaliza a sessão somente para 401 que não seja App Check', () async {
+    var expirou = 0;
+    final api = ClienteApi(
+      baseUrl: baseUrl,
+      cliente: http_testing.MockClient(
+        (_) async => http.Response(
+          '{"erro":{"codigo":"sessao-expirada","mensagem":"entre novamente"}}',
+          401,
+        ),
+      ),
+      provedorToken: () async => 'id-token',
+      aoSessaoExpirada: () => expirou++,
+    );
+
+    await expectLater(api.obter('/api/perfil'), throwsA(isA<ErroDeApi>()));
+    expect(expirou, 1);
+  });
+
   test('normaliza falha do provider sem expor o erro nativo', () async {
     var chamouRede = false;
     final api = ClienteApi(

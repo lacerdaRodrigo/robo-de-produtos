@@ -433,6 +433,26 @@ class Api {
     );
   }
 
+  Future<PaginaAcompanhamentosPessoais> acompanhamentosPessoais({
+    String q = '',
+    String origem = 'todas',
+    String ordenar = 'recentes',
+    int pagina = 1,
+    int? porPagina,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/alertas/acompanhamentos',
+      consulta: <String, String>{
+        'q': q,
+        'origem': origem,
+        'ordenar': ordenar,
+        'pagina': '$pagina',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
+      },
+    );
+    return PaginaAcompanhamentosPessoais.parse(corpo);
+  }
+
   Future<void> alterarAcompanhamentoProduto({
     required String loja,
     required String idExterno,

@@ -5,11 +5,13 @@ Lista viva somente do que continua aberto. Histórico concluído permanece no Gi
 O contrato operacional padrão do ciclo mobile V15 é o
 [`AGENTS.md`](../AGENTS.md): Flutter mobile, `design-app/mobile-v15/index.html`
 como fonte visual, unitários/widgets afetados e Web/integration/E2E fora do
-gate. Esta branch não altera backend; a lacuna de contrato encontrada no
-`Meu radar` está registrada em
+gate. Esta branch fecha o backend necessário ao V15 localmente; migration,
+publicação e reteste físico ficam no checkpoint documentado em
 [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md).
 Coletor e transporte Wi-Fi foram validados, mas
-a disponibilidade contínua do executor Android continua aberta. A execução
+Esta branch fecha localmente o contrato de backend do Mobile V15; a execução
+da migration 029, publicação e reteste físico continuam abertos. A
+disponibilidade contínua do executor Android continua aberta. A execução
 `34544816986`, fila 52, falhou em 2026-09-11 como `pichau-dados`; a fila sem
 diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
 Depois do “Fechar tudo” manual, a `34545283501`, fila 53, passou em uma
@@ -21,12 +23,15 @@ anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
-- [ ] Definir e implementar, em tarefa separada de backend, o contrato paginado
-  de lista consolidada do `Meu radar`; a tela V15 usa somente as contagens
-  reais de `/api/resumo` até essa decisão.
+- [x] Definir e implementar o contrato paginado de lista consolidada do `Meu
+  radar`, o bloco pessoal `radar` de `/api/resumo` e a integração Flutter. A
+  migration 029 ainda aguarda aplicação externa antes da publicação.
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
 - [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. Em 2026-09-13, a APK debug desta entrega foi instalada no Moto G6 Play e a jornada Produtos foi conferida com catálogo real, busca digitada e pelos atalhos de Celulares, Informática, Casa, Beleza e Pet, resumo compacto, cards, histórico visual e abertura da oferta; filtros, paginação, leitura, preferências, dados reais completos, push, login/reautenticação, ausência, links externos, overflow geral e o alinhamento do cartão Cashback Inter ainda aguardam aceite. O Samsung continua pendente. Isso não vira smoke automatizado neste ciclo.
-- [x] Conferir manualmente no Samsung a nova composição da Home compacta: rail Livelo, Banco Inter e Pichau, sem a seção `Atividade recente`; claro/escuro e bloqueio/retomada foram observados. A ausência de produto/preço ilustrativo por falta de campo real em `/api/resumo` está registrada em [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md).
+- [x] Conferir manualmente no Samsung a nova composição da Home compacta: rail Livelo, Banco Inter e Pichau, sem a seção `Atividade recente`; claro/escuro e bloqueio/retomada foram observados. A Home agora usa `radar.destaque` quando há evento real e mantém estado honesto quando não há.
+- [ ] Aplicar e verificar `migracoes/029_indices_mobile_v15.sql` em conexão
+  direta/unpooled no ambiente de teste; somente depois publicar a API e
+  instalar o APK correspondente.
 - [ ] Publicar e validar a correção de compatibilidade da leitura do catálogo Pichau após a mudança para acompanhamento pessoal; enquanto o fallback não for observado no ambiente publicado, não declarar o catálogo recuperado no APK real.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
 - [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Compre direto → Produtos`: abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.

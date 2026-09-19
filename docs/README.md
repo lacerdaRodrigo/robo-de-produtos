@@ -34,7 +34,7 @@ documentação antes de abrir arquivos isolados.
 | Documento | Finalidade |
 |---|---|
 | [`planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md`](planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md) | Prompt mestre para substituir integralmente a experiência visual mobile Flutter pela V15 sem regredir regras, API ou autorização. |
-| [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md) | Lacunas de contrato registradas sem alterar backend, especialmente a lista consolidada do Meu radar. |
+| [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md) | Registro dos contratos de backend do Mobile V15 já fechados e do checkpoint externo de migration/publicação. |
 | [`planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md`](planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md) | Plano ativo para fechar os contratos de backend do Mobile V15 e retestar os 42 cenários no device. |
 | [`planos/RELATORIO-TESTE-DEVICE-MOBILE-V15.md`](planos/RELATORIO-TESTE-DEVICE-MOBILE-V15.md) | Registro dos testes manuais no Android, correções, evidências e bloqueios externos da validação V15. |
 

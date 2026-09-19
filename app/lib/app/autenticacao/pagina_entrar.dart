@@ -14,9 +14,10 @@ abstract final class _TokensLogin {
 }
 
 class PaginaEntrar extends StatefulWidget {
-  const PaginaEntrar({super.key, required this.autenticador});
+  const PaginaEntrar({super.key, required this.autenticador, this.aoConcluir});
 
   final Autenticador autenticador;
+  final VoidCallback? aoConcluir;
 
   @override
   State<PaginaEntrar> createState() => _EstadoPaginaEntrar();
@@ -49,6 +50,7 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
         email: _email.text.trim(),
         senha: _senha.text,
       );
+      widget.aoConcluir?.call();
     } on FalhaDeAutenticacao catch (erro) {
       if (mounted) setState(() => _erro = erro.mensagem);
     } catch (_) {
