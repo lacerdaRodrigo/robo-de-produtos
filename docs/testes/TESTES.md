@@ -766,6 +766,7 @@ integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-010 | Resumo pessoal da Home | O resumo usa destaque não lido real, contagens pessoais e estados indisponíveis sem fabricar zero | `backend/api/testes/resumo-inicio.teste.ts`, `app/test/app/paginas/inicio_test.dart` |
 | V15-011 | Preferência de movimento | A preferência local combina com `MediaQuery.disableAnimations`, persiste e não interfere no tema | `app/test/app/tema/aparencia_test.dart` |
 | V15-012 | Sessão expirada | 401 comum sinaliza reautenticação única; App Check, 403 e rede permanecem erros distintos | `app/test/core/api/cliente_test.dart` |
+| V15-013 | Ações responsivas do Inter | O card compacto empilha as ações em telas estreitas e mantém a composição em linha quando há espaço | `app/test/features/inter/pagina_cashback_inter_test.dart` |
 | V15-006 | Estados e fundação visual | Estados vazio/falha, componentes reutilizáveis, tema e folha continuam acessíveis | `app/test/app/componentes/estados_test.dart`, `app/test/app/componentes/fundacao_visual_test.dart` |
 | V15-007 | Home real | Hierarquia da Home compacta, estados independentes, atualização e callbacks dos catálogos | `app/test/app/paginas/inicio_test.dart` |
 | V15-008 | Valores da Central | Preços vindos como texto decimal são exibidos em moeda local com agrupamento e arredondamento textual, sem converter para `double` | `app/test/features/alertas/formatacao_alertas_test.dart` |

@@ -82,10 +82,15 @@ void main() {
       RadarApp.comAutenticacao(api: api, autenticador: autenticador),
     );
 
-    expect(find.text('Continue de onde mudou.'), findsOneWidget);
-    await at.enterText(find.byType(EditableText).at(0), 'piloto@example.com');
-    await at.enterText(find.byType(EditableText).at(1), 'senha-segura');
-    await at.tap(find.text('Entrar'));
+    expect(find.byKey(const Key('login-marca-compacta')), findsOneWidget);
+    await at.enterText(
+      find.byKey(const Key('login-email')),
+      'piloto@example.com',
+    );
+    await at.enterText(find.byKey(const Key('login-senha')), 'senha-segura');
+    final entrar = find.byKey(const Key('login-entrar'));
+    await at.ensureVisible(entrar);
+    await at.tap(entrar);
     await at.pump();
 
     expect(autenticador.emailRecebido, 'piloto@example.com');
@@ -146,7 +151,9 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
+    expect(find.byKey(const Key('resumo-inicio')), findsOneWidget);
+    expect(find.byKey(const Key('abrir-alertas-cabecalho')), findsOneWidget);
+    expect(find.byKey(const Key('barra-inicio')), findsOneWidget);
   });
 
   testWidgets('sessão sem convite mostra acesso negado e permite sair', (

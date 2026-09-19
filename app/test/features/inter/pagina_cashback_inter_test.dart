@@ -490,13 +490,22 @@ void main() {
       final topoIrParaInter = at.getTopLeft(irParaInter);
 
       expect(topoAcompanhar.dy, lessThan(topoCondicoes.dy));
-      expect(topoCondicoes.dy, closeTo(topoIrParaInter.dy, 0.1));
       expect(topoAcompanhar.dx, closeTo(topoCondicoes.dx, 0.1));
-      expect(topoIrParaInter.dx, greaterThan(topoCondicoes.dx));
-      expect(
-        at.getSize(irParaInter).width,
-        greaterThan(at.getSize(condicoes).width),
-      );
+      if (largura < 340) {
+        expect(topoCondicoes.dy, lessThan(topoIrParaInter.dy));
+        expect(topoIrParaInter.dx, closeTo(topoCondicoes.dx, 0.1));
+        expect(
+          at.getSize(irParaInter).width,
+          closeTo(at.getSize(condicoes).width, 0.1),
+        );
+      } else {
+        expect(topoCondicoes.dy, closeTo(topoIrParaInter.dy, 0.1));
+        expect(topoIrParaInter.dx, greaterThan(topoCondicoes.dx));
+        expect(
+          at.getSize(irParaInter).width,
+          greaterThan(at.getSize(condicoes).width),
+        );
+      }
       expect(at.takeException(), isNull);
     }
   });
