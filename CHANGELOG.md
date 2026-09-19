@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.71.0 (2026-09-16)
+
+### Features
+
+- **app**: Implement mobile v12 delta
+  ([`42f303e`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/42f303ee6aae4debbfd0eacc4b865ca66cfdf5a4))
+
+### Testing
+
+- **app**: Update token contract for delta
+  ([`3edc38f`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3edc38fef2ab41e35e0db29a784f32eb15a4faca))
+
+
 ## v1.70.0 (2026-09-14)
 
 
