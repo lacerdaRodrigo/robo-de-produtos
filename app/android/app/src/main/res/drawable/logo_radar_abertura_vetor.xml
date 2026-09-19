@@ -1,32 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="144dp"
-    android:height="144dp"
-    android:viewportWidth="896"
-    android:viewportHeight="896">
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
     <group
         android:name="marca_radar"
-        android:pivotX="256"
-        android:pivotY="256"
-        android:translateX="192"
-        android:translateY="192">
+        android:translateX="27"
+        android:translateY="27"
+        android:scaleX="0.84"
+        android:scaleY="0.84">
         <path
-            android:pathData="M367,113a180,180 0,1 0,61 181"
-            android:fillColor="@android:color/transparent"
-            android:strokeColor="#C6E1F4"
-            android:strokeWidth="44"
-            android:strokeLineCap="round" />
-        <group
             android:name="feixe_radar"
-            android:pivotX="256"
-            android:pivotY="256">
-            <path
-                android:pathData="M256,256 L348,91 Q354,80 378,84 L455,132 Q467,140 454,165 Z"
-                android:fillColor="#55C9E7" />
-        </group>
+            android:pathData="M9,17a8,8 0,0 1,8 -8h19a8,8 0,0 1,5.66 2.34L57,26.68a7.5,7.5 0,0 1,0 10.6L37.28,57a7.5,7.5 0,0 1,-10.6 0L11.34,41.66A8,8 0,0 1,9 36V17Zm14,1a5,5 0,1 0,0 10a5,5 0,0 0,0 -10Z"
+            android:fillColor="#fff7ef"
+            android:fillType="evenOdd" />
         <path
             android:name="oportunidade_radar"
-            android:pathData="M428,50 Q434,90 474,96 Q434,102 428,142 Q422,102 382,96 Q422,90 428,50 Z"
-            android:fillColor="#3BCB68" />
+            android:pathData="M47,8l4,-4M55,19l5,-1M38,5l1,-3"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#fff7ef"
+            android:strokeWidth="4"
+            android:strokeLineCap="round" />
     </group>
 </vector>

@@ -60,7 +60,8 @@ const _resumo =
     '"produtos":{"estado":"sem_dados","ultima_tentativa_em":null,'
     '"ultima_tentativa_estado":null,"dados_mais_antigos_em":null,'
     '"dados_mais_recentes_em":null,"qualidade":null,"lojas_selecionadas":0,'
-    '"lojas_sem_coleta":0,"produtos_ativos":0}}';
+    '"lojas_sem_coleta":0,"produtos_ativos":0},'
+    '"pichau":{"estado":"sem_dados"}}';
 
 const _resumoComEstadosIndependentes =
     '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"atencao",'
@@ -167,7 +168,7 @@ Future<void> _abrir(
       theme: escuro
           ? TemaRadar.escuro()
           : tamanho.width >= 920
-          ? TemaRadar.legadoClaroComCores()
+          ? TemaRadar.claro()
           : TemaRadar.claro(),
       home: MolduraRadar(
         api: _api(
@@ -250,8 +251,20 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
 
 Future<void> _irParaProdutosCompacto(WidgetTester at) async {
   await _irParaCompacto(at, DestinoCompacto.inter);
-  await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
+  final modoCompreDireto = find.byKey(const Key('modo-inter-compre-direto'));
+  await at.ensureVisible(modoCompreDireto);
   await at.pumpAndSettle();
+  await at.tap(modoCompreDireto);
+  await at.pumpAndSettle();
+  final compreDireto = find.byKey(const PageStorageKey('compre-direto-inter'));
+  for (
+    var tentativa = 0;
+    tentativa < 6 && find.byKey(const Key('aba-radar-2')).evaluate().isEmpty;
+    tentativa++
+  ) {
+    await at.drag(compreDireto, const Offset(0, -400));
+    await at.pumpAndSettle();
+  }
   final abaProdutos = find.descendant(
     of: find.byKey(const Key('abas-compre-direto-inter')),
     matching: find.byKey(const Key('aba-radar-2')),
@@ -260,6 +273,15 @@ Future<void> _irParaProdutosCompacto(WidgetTester at) async {
   await at.pumpAndSettle();
   await at.tap(abaProdutos);
   await at.pumpAndSettle();
+  final produtos = find.byKey(const Key('produtos-compacto'));
+  for (
+    var tentativa = 0;
+    tentativa < 8 && find.byKey(const Key('busca-produtos')).evaluate().isEmpty;
+    tentativa++
+  ) {
+    await at.drag(produtos, const Offset(0, -500));
+    await at.pumpAndSettle();
+  }
 }
 
 Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
@@ -268,14 +290,28 @@ Future<void> _irParaAmplo(WidgetTester at, Destino destino) async {
 }
 
 void main() {
-  testWidgets('celular usa cabeçalho, barra inferior e perfil Delta', (
-    at,
-  ) async {
+  testWidgets('celular usa cabeçalho, barra inferior e perfil V15', (at) async {
     await _abrir(at);
 
     expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
     expect(find.byKey(const Key('gaveta-principal')), findsNothing);
+    for (final destino in const [
+      DestinoCompacto.inicio,
+      DestinoCompacto.explorar,
+      DestinoCompacto.radar,
+      DestinoCompacto.perfil,
+    ]) {
+      expect(find.byKey(Key('barra-${destino.name}')), findsOneWidget);
+    }
+    await at.tap(find.byKey(const Key('barra-radar')));
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('pagina-meu-radar')), findsOneWidget);
+    await at.tap(find.byKey(const Key('barra-perfil')));
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+    await at.tap(find.byKey(const Key('barra-inicio')));
+    await at.pumpAndSettle();
     await _abrirConta(at);
 
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
@@ -344,11 +380,14 @@ void main() {
   ) async {
     await _abrir(at);
 
-    expect(find.text('Última diferença encontrada'), findsOneWidget);
-    expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
+    expect(find.text('Último sinal do seu radar'), findsOneWidget);
+    expect(
+      find.byKey(const Key('resumo-servico-livelo'), skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('Serviços agrega Livelo, Inter e Pichau com busca local', (
+  testWidgets('Explorar agrega Livelo, Inter e Pichau com busca local', (
     at,
   ) async {
     await _abrir(at, tamanho: const Size(390, 1200));
@@ -365,7 +404,7 @@ void main() {
   });
 
   testWidgets(
-    'Pichau abre como subárea de Serviços sem novo destino na barra',
+    'Pichau abre como subárea de Explorar sem novo destino na barra',
     (at) async {
       await _abrir(at, tamanho: const Size(390, 1200));
       await _irParaCompacto(at, DestinoCompacto.programas);
@@ -387,7 +426,7 @@ void main() {
 
       expect(find.byKey(const Key('voltar-programas-pichau')), findsOneWidget);
       expect(find.byKey(const Key('pagina-pichau')), findsOneWidget);
-      expect(find.byKey(const Key('barra-programas')), findsOneWidget);
+      expect(find.byKey(const Key('barra-explorar')), findsOneWidget);
       expect(find.byKey(const Key('barra-pichau')), findsNothing);
     },
   );
@@ -450,7 +489,7 @@ void main() {
       find.descendant(of: abas, matching: find.text('Produtos')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('barra-programas')), findsOneWidget);
+    expect(find.byKey(const Key('barra-explorar')), findsOneWidget);
     expect(find.byKey(const Key('destino-produtos')), findsNothing);
   });
 
@@ -606,12 +645,26 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
+    final modoCompreDireto = find.byKey(const Key('modo-inter-compre-direto'));
+    await at.ensureVisible(modoCompreDireto);
+    await at.pumpAndSettle();
+    await at.tap(modoCompreDireto);
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('compre-direto-inter')), findsOneWidget);
     expect(find.text('Escolha as lojas da próxima coleta'), findsNothing);
-    expect(find.text('Atualizar produtos'), findsOneWidget);
+    final compreDireto = find.byKey(
+      const PageStorageKey('compre-direto-inter'),
+    );
+    for (
+      var tentativa = 0;
+      tentativa < 8 && find.text('Atualizar produtos').evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(compreDireto, const Offset(0, -400));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, find.text('Atualizar produtos'));
     await at.drag(
       find.byKey(const PageStorageKey('compre-direto-inter')),
       const Offset(0, -700),
@@ -712,7 +765,10 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    await at.tap(find.text('Cashback'));
+    final modoSitesParceiros = find.byKey(const Key('modo-inter-cashback'));
+    await at.ensureVisible(modoSitesParceiros);
+    await at.pumpAndSettle();
+    await at.tap(modoSitesParceiros);
     await at.pumpAndSettle();
 
     expect(
@@ -742,7 +798,10 @@ void main() {
       requisicoes: requisicoes,
     );
     await _irParaCompacto(at, DestinoCompacto.inter);
-    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
+    final modoCompreDireto = find.byKey(const Key('modo-inter-compre-direto'));
+    await at.ensureVisible(modoCompreDireto);
+    await at.pumpAndSettle();
+    await at.tap(modoCompreDireto);
     await at.pumpAndSettle();
 
     expect(
@@ -757,7 +816,7 @@ void main() {
     );
   });
 
-  testWidgets('Banco Inter compacto segue as ações de atualização Delta', (
+  testWidgets('Banco Inter compacto segue as ações de atualização V15', (
     at,
   ) async {
     final requisicoes = <http.Request>[];
@@ -795,7 +854,10 @@ void main() {
       isEmpty,
     );
 
-    await at.tap(find.byKey(const Key('modo-inter-compre-direto')));
+    final modoCompreDireto = find.byKey(const Key('modo-inter-compre-direto'));
+    await at.ensureVisible(modoCompreDireto);
+    await at.pumpAndSettle();
+    await at.tap(modoCompreDireto);
     await at.pumpAndSettle();
     expect(find.text('Atualizar produtos'), findsOneWidget);
     final dominiosConsultados = requisicoes
@@ -829,11 +891,20 @@ void main() {
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
 
-    await at.drag(
-      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
-      const Offset(0, -500),
+    final rolagemCashback = find.byKey(
+      const PageStorageKey('rolagem-cashback-inter'),
     );
-    await at.pump();
+    for (
+      var tentativa = 0;
+      tentativa < 6 && find.text('Magazine Luiza').evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(rolagemCashback, const Offset(0, -500));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, find.text('Magazine Luiza'));
+    await at.ensureVisible(find.text('Magazine Luiza'));
+    await at.pumpAndSettle();
     expect(at.takeException(), isNull);
     expect(find.text('Magazine Luiza'), findsOneWidget);
   });
@@ -944,6 +1015,6 @@ void main() {
       expect(at.takeException(), isNull, reason: destino.titulo);
     }
     await _irParaProdutosCompacto(at);
-    expect(find.byKey(const Key('abas-compre-direto-inter')), findsOneWidget);
+    expect(find.byKey(const Key('produtos-compacto')), findsOneWidget);
   });
 }

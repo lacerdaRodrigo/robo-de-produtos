@@ -1,14 +1,14 @@
-# Instruções para o Codex — design mobile V12 Delta
+# Instruções para o Codex — design mobile V15
 
 ## Escopo do design mobile
 
-Este ciclo existe para **implementar somente o aplicativo mobile Flutter** conforme o design V12 Delta aprovado, com o menor gasto de contexto possível.
+Este ciclo existe para **implementar somente o aplicativo mobile Flutter** conforme o design V15 aprovado, com o menor gasto de contexto possível.
 
 ### Fora do escopo
 
 Durante este ciclo, **não trabalhar no Web**:
 
-- não investigar protótipos ou documentação visual fora da V12 Delta;
+- não investigar protótipos ou documentação visual fora da V15;
 - não redesenhar Flutter Web;
 - não investigar CSS/site/Next.js/Vercel;
 - não atualizar documentação Web;
@@ -16,14 +16,14 @@ Durante este ciclo, **não trabalhar no Web**:
 
 Código compartilhado pode continuar existindo, mas só deve ser inspecionado quando for necessário para compilar ou para não quebrar a jornada mobile tocada. Não faça refatoração preventiva do Web.
 
-Para tarefas do design mobile V12, esta regra de escopo substitui instruções históricas que mandem atualizar ou comparar Web e Mobile juntos.
+Para tarefas do design mobile V15, esta regra de escopo substitui instruções históricas que mandem atualizar ou comparar Web e Mobile juntos.
 
 ## Leitura obrigatória mínima
 
 Antes de alterar uma tela mobile, leia apenas:
 
-1. `design-app/prototipos/mobile-v12/index.html` — fonte visual de verdade e referência clicável;
-2. `docs/guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md` — contrato de cores, componentes, estados, montagem e gates;
+1. `design-app/mobile-v15/index.html` — fonte visual de verdade e referência clicável;
+2. `docs/guias/design-v15.md` — contrato de cores, componentes, estados, montagem e gates;
 3. arquivos Flutter e testes unitários/widgets diretamente relacionados à fase atual;
 4. PRD específico do domínio somente quando precisar confirmar regra, dado ou contrato de API.
 
@@ -31,11 +31,11 @@ Antes de alterar uma tela mobile, leia apenas:
 
 ## Regra visual inegociável
 
-`design-app/prototipos/mobile-v12/index.html` é a fonte visual de verdade do design mobile.
+`design-app/mobile-v15/index.html` é a fonte visual de verdade do design mobile.
 
 Não invente UI. Não substitua o protótipo por uma interpretação Material genérica. Reproduza estrutura, hierarquia, espaçamento, cores, estados, navegação e destaque visual definidos no HTML.
 
-Se algo não estiver definido no HTML nem no `SISTEMA-DESIGN-MOBILE-V12-NOVO.md`, não improvise: registre a lacuna e peça decisão.
+Se algo não estiver definido no HTML nem no `design-v15.md`, não improvise: registre a lacuna e peça decisão.
 
 Dados ilustrativos do HTML não viram dados reais. Backend, regras e contratos continuam vindo da API/PRDs existentes.
 
@@ -85,7 +85,7 @@ arquivo, rota ou fluxo que não existe mais.
 - Falha, parcial, atrasado, ausência de dado e zero continuam estados diferentes.
 - Busca, página e posição útil devem ser preservadas nas ações já cobertas pelo produto.
 - Administração continua protegida por autorização.
-- Backend/API podem ser alterados somente quando forem necessários para a jornada V12 e estiverem dentro da autorização explícita da tarefa; migrations, workflow, produção e publicação continuam fora do escopo sem autorização específica.
+- Backend/API podem ser alterados somente quando forem necessários para a jornada V15 e estiverem dentro da autorização explícita da tarefa; migrations, workflow, produção e publicação continuam fora do escopo sem autorização específica.
 
 ## Operação do executor Android da Pichau
 

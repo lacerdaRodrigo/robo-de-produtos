@@ -9,7 +9,7 @@ documentação antes de abrir arquivos isolados.
 | Caminho | Conteúdo | Quando consultar |
 |---|---|---|
 | [`prd/`](prd/) | Requisitos de produto, regras de negócio, contratos, arquitetura e critérios de aceite por domínio. | Antes de implementar ou alterar comportamento de Livelo, Shopping Inter, categorias ou administração. |
-| [`planos/`](planos/) | Planos e registros de evolução, incluindo o plano V12 já executado e seus gates pendentes. | Ao revisar decisões de implementação ou evoluções ainda abertas. |
+| [`planos/`](planos/) | Planos e registros de evolução do aplicativo. | Ao revisar decisões de implementação ou evoluções ainda abertas. |
 | [`testes/`](testes/) | Catálogo técnico de casos de teste por módulo. | Ao alterar testes ou confirmar a cobertura esperada de uma regra. |
 | [`guias/`](guias/) | Orientações operacionais e de uso do ambiente. | Para tarefas de operação ou configuração descritas no guia correspondente. |
 
@@ -25,11 +25,16 @@ documentação antes de abrir arquivos isolados.
 
 | Documento | Finalidade |
 |---|---|
-| [`../design-app/prototipos/mobile-v12/index.html`](../design-app/prototipos/mobile-v12/index.html) | Fonte visual e comportamental vigente do aplicativo mobile V12 Delta. |
-| [`guias/design-v12.md`](guias/design-v12.md) | Prompt mestre, direção visual, inventário de superfícies e gates do V12. |
-| [`guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md`](guias/SISTEMA-DESIGN-MOBILE-V12-NOVO.md) | Contrato de tokens, componentes, estados, responsividade e acessibilidade do V12. |
-| [`guias/MATRIZ-TELAS-MOBILE-V12.md`](guias/MATRIZ-TELAS-MOBILE-V12.md) | Mapa vigente de rotas e cobertura principal do protótipo V12. |
-| [`guias/RELATORIO-VALIDACAO-PROTOTIPO-MOBILE-V12.md`](guias/RELATORIO-VALIDACAO-PROTOTIPO-MOBILE-V12.md) | Evidências e pendências da validação do protótipo V12. |
+| [`../design-app/mobile-v15/index.html`](../design-app/mobile-v15/index.html) | Fonte visual navegável da identidade mobile V15, com temas, assets, estados, jornadas e movimento. |
+| [`../design-app/mobile-v15/identidade.html`](../design-app/mobile-v15/identidade.html) | Galeria da marca, ícones, ilustrações e animações oficiais da V15. |
+| [`guias/design-v15.md`](guias/design-v15.md) | Contrato visual, componentes, acessibilidade, movimento e cobertura funcional da V15. |
+
+## Execução da V15
+
+| Documento | Finalidade |
+|---|---|
+| [`planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md`](planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md) | Prompt mestre para substituir integralmente a experiência visual mobile Flutter pela V15 sem regredir regras, API ou autorização. |
+| [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md) | Lacunas de contrato registradas sem alterar backend, especialmente a lista consolidada do Meu radar. |
 
 ## PRDs de domínio
 

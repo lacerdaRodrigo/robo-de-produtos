@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/autenticacao/autenticador.dart';
 import 'pagina_recuperar.dart';
 import '../identidade/logo_radar.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
 abstract final class _TokensLogin {
-  static const marcaProfunda = Tokens.ink;
-  static const marca = Tokens.plum;
+  static const marca = Tokens.ink;
   static const marcaClara = Tokens.action;
-  static const ganho = Tokens.positive;
+  static const ganho = Tokens.teal;
   static const perigo = Tokens.danger;
 }
 
@@ -99,11 +98,7 @@ class _EstadoPaginaEntrar extends State<PaginaEntrar> {
         },
       ),
     );
-    if (MediaQuery.sizeOf(context).width < _larguraLayoutAmplo) {
-      return Theme(data: TemaRadar.loginLegado(), child: pagina);
-    }
-    if (Theme.of(context).brightness == Brightness.light) return pagina;
-    return Theme(data: TemaRadar.legadoClaro(), child: pagina);
+    return pagina;
   }
 }
 
@@ -117,14 +112,7 @@ class _PainelDaMarca extends StatelessWidget {
       container: true,
       label: 'Apresentação do Radar de Benefícios',
       child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF123D62), _TokensLogin.marcaProfunda],
-            stops: [0, 0.58],
-          ),
-        ),
+        decoration: const BoxDecoration(color: Tokens.ink),
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
@@ -163,7 +151,7 @@ class _PainelDaMarca extends StatelessWidget {
                         const Text(
                           'Projeto independente, sem afiliação com Livelo ou Banco Inter.',
                           style: TextStyle(
-                            color: Color(0xFF93AABD),
+                            color: Tokens.textoSuaveEscuro,
                             fontSize: 12,
                           ),
                         ),
@@ -198,9 +186,9 @@ class _AneisDecorativos extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(
-                      0xFF25B8D8,
-                    ).withValues(alpha: tamanho == 620 ? 0.18 : 0.1),
+                    color: Tokens.acaoEscura.withValues(
+                      alpha: tamanho == 620 ? 0.18 : 0.1,
+                    ),
                   ),
                 ),
               ),
@@ -218,56 +206,45 @@ class _AssinaturaMarca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = compacta ? _TokensLogin.marca : Colors.white;
+    final cor = compacta ? _TokensLogin.marca : Tokens.actionInk;
+    final escuro = Theme.of(context).brightness == Brightness.dark;
     return Row(
       key: compacta ? const Key('login-marca-compacta') : null,
       mainAxisSize: compacta ? MainAxisSize.max : MainAxisSize.min,
       children: [
-        if (compacta)
-          Container(
+        if (compacta && !escuro)
+          SvgPicture.asset(
+            'assets/brand/wordmark.svg',
+            width: 150,
+            height: 38,
+            semanticsLabel: 'radar.',
+          )
+        else if (compacta)
+          SvgPicture.asset(
+            'assets/brand/symbol-dark.svg',
             width: 42,
             height: 42,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Tokens.plum,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-                bottomRight: Radius.circular(14),
-                bottomLeft: Radius.circular(5),
-              ),
-            ),
-            child: const Text(
-              'R',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+            semanticsLabel: 'Radar',
           )
         else
-          Container(
-            width: 48,
-            height: 48,
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const LogoRadar(tamanho: 42),
+          const LogoRadar(
+            tamanho: 48,
+            sobreFundoEscuro: true,
+            rotuloSemantico: 'Radar',
           ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            'Radar de Benefícios',
-            style: TextStyle(
-              color: cor,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+        if (!compacta || escuro) ...[
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              'radar.',
+              style: TextStyle(
+                color: cor,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -291,14 +268,16 @@ class _ChamadaDaMarca extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              color: Tokens.actionInk.withValues(alpha: 0.08),
+              border: Border.all(
+                color: Tokens.actionInk.withValues(alpha: 0.2),
+              ),
               borderRadius: BorderRadius.circular(999),
             ),
             child: const Text(
               'SEU RADAR DE OPORTUNIDADES',
               style: TextStyle(
-                color: Color(0xFFD9F8FF),
+                color: Tokens.acaoEscura,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.2,
@@ -309,7 +288,7 @@ class _ChamadaDaMarca extends StatelessWidget {
           Text(
             'Seu próximo benefício não passa despercebido.',
             style: TextStyle(
-              color: Colors.white,
+              color: Tokens.actionInk,
               fontSize: tamanhoTitulo,
               height: 0.98,
               letterSpacing: -2.2,
@@ -322,7 +301,7 @@ class _ChamadaDaMarca extends StatelessWidget {
             child: const Text(
               'Pontos, cashback e preços reunidos em um só radar.',
               style: TextStyle(
-                color: Color(0xFFC6D7E7),
+                color: Tokens.textoSuaveEscuro,
                 fontSize: 19,
                 height: 1.45,
               ),
@@ -356,7 +335,7 @@ class _BeneficioMarca extends StatelessWidget {
       children: [
         const DecoratedBox(
           decoration: BoxDecoration(
-            color: Color(0xFF25B8D8),
+            color: Tokens.acaoEscura,
             shape: BoxShape.circle,
           ),
           child: SizedBox.square(dimension: 8),
@@ -364,7 +343,7 @@ class _BeneficioMarca extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           texto,
-          style: const TextStyle(color: Color(0xFFEAF6FF), fontSize: 14),
+          style: const TextStyle(color: Tokens.textoSuaveEscuro, fontSize: 14),
         ),
       ],
     );
@@ -431,11 +410,22 @@ class _AreaFormulario extends StatelessWidget {
                           children: [
                             if (compacto) ...[
                               const _AssinaturaMarca(compacta: true),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 20),
+                              const Image(
+                                image: AssetImage(
+                                  'assets/illustrations/descoberta.png',
+                                ),
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                semanticLabel:
+                                    'Composição de descoberta de preços',
+                              ),
+                              const SizedBox(height: 20),
                             ],
                             Text(
                               compacto
-                                  ? 'Continue de onde mudou.'
+                                  ? 'Bom te ver por aqui.'
                                   : 'Que bom ter você aqui',
                               style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
@@ -451,7 +441,7 @@ class _AreaFormulario extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               compacto
-                                  ? 'Abra acompanhamentos, comparações e alertas da sua conta.'
+                                  ? 'Entre e acompanhe suas próximas escolhas.'
                                   : 'Entre com seu acesso para ver as oportunidades acompanhadas.',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
@@ -523,7 +513,7 @@ class _AreaFormulario extends StatelessWidget {
                                         dimension: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.white,
+                                          color: Tokens.actionInk,
                                         ),
                                       )
                                     : const Icon(Icons.lock_outline, size: 20),
@@ -585,7 +575,7 @@ class _CampoRotulado extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final borda = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(context.tokens.radii.md),
       borderSide: BorderSide(color: cores.borda),
     );
     return Column(
@@ -618,14 +608,14 @@ class _CampoRotulado extends StatelessWidget {
             fillColor: habilitado
                 ? Theme.of(context).cardColor
                 : cores.superficieAlternativa,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 17,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: context.tokens.spacing.four,
+              vertical: context.tokens.spacing.four,
             ),
             border: borda,
             enabledBorder: borda,
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(context.tokens.radii.md),
               borderSide: const BorderSide(color: Tokens.action, width: 2),
             ),
           ),
@@ -689,16 +679,12 @@ class _AvisoSeguranca extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(context.tokens.radii.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.lock_outline,
-            color: _TokensLogin.marcaClara,
-            size: 20,
-          ),
+          const Icon(Icons.lock_outline, color: Tokens.action, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -1,0 +1,78 @@
+{
+  "passed": 18,
+  "total": 18,
+  "results": [
+    {
+      "name": "Abertura anima até login e respeita movimento reduzido",
+      "ok": true
+    },
+    {
+      "name": "Acesso: validação, senha visível, duplo envio e sessão sem senha gravada",
+      "ok": true
+    },
+    {
+      "name": "Recuperação preserva email, registra simulação e cancela retorno tardio",
+      "ok": true
+    },
+    {
+      "name": "Inter: escolha real, condições completas, foco e link oficial",
+      "ok": true
+    },
+    {
+      "name": "Paginação troca recorte sem acumular; acompanhadas mostra lista completa",
+      "ok": true
+    },
+    {
+      "name": "Acompanhar: pendência, desfazer, persistência e rollback offline",
+      "ok": true
+    },
+    {
+      "name": "Compre direto: busca por variante, faixa válida, loja e paginação isoladas",
+      "ok": true
+    },
+    {
+      "name": "Livelo: pontuação comum separada do Clube; condições e histórico paginados",
+      "ok": true
+    },
+    {
+      "name": "Pichau: esgotado, ausência, histórico vazio e destino desabilitado",
+      "ok": true
+    },
+    {
+      "name": "Navegação preserva busca, página e posição entre abas e botão voltar",
+      "ok": true
+    },
+    {
+      "name": "Central: ler muda destaque inicial, filtros e marcar todos",
+      "ok": true
+    },
+    {
+      "name": "Preferências, permissão opcional, tema e movimento reduzido persistem",
+      "ok": true
+    },
+    {
+      "name": "Suporte: validação, texto preservado offline, protocolo e escape HTML",
+      "ok": true
+    },
+    {
+      "name": "Sessão expirada retoma o catálogo e logout remove sessão, não acompanhamentos",
+      "ok": true
+    },
+    {
+      "name": "Admin: restrição, frase exata e reset isolado de cada domínio",
+      "ok": true
+    },
+    {
+      "name": "Todas as telas: claro/escuro e texto 200% em 320 px sem overflow horizontal",
+      "ok": true
+    },
+    {
+      "name": "Estados do catálogo, folhas, foco preso, RTL e viewport mobile",
+      "ok": true
+    },
+    {
+      "name": "Sem exceções, avisos ou recursos locais quebrados nas jornadas",
+      "ok": true
+    }
+  ]
+}

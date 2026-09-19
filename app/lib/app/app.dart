@@ -121,10 +121,7 @@ class _EstadoRadarApp extends State<RadarApp> {
               final preservarClaro =
                   kIsWeb || limites.maxWidth >= _larguraLayoutAmplo;
               if (!preservarClaro) return child!;
-              return Theme(
-                data: TemaRadar.legadoClaroComCores(),
-                child: child!,
-              );
+              return Theme(data: TemaRadar.claro(), child: child!);
             },
           ),
         ),

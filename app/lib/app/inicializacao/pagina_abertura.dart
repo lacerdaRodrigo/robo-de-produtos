@@ -150,7 +150,7 @@ class TelaAberturaRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Tokens.marcaProfunda,
+      backgroundColor: Tokens.canvas,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -165,19 +165,19 @@ class TelaAberturaRadar extends StatelessWidget {
                     const MarcaAbertura(),
                     const SizedBox(height: 24),
                     Text(
-                      'Radar',
+                      'radar.',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
-                            color: Colors.white,
+                            color: Tokens.ink,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -1,
                           ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Pontos, cashback e preços reunidos em um só radar.',
+                      'Boas escolhas à vista.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFFC6D7E7)),
+                      style: TextStyle(color: Tokens.muted),
                     ),
                     const SizedBox(height: 28),
                     if (erro == null)
@@ -189,22 +189,22 @@ class TelaAberturaRadar extends StatelessWidget {
                       const Icon(
                         Icons.error_outline,
                         key: Key('abertura-erro'),
-                        color: Color(0xFFFFB4AB),
+                        color: Tokens.danger,
                         size: 32,
                       ),
                       const SizedBox(height: 10),
                       Text(
                         erro!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Tokens.ink),
                       ),
                       const SizedBox(height: 18),
                       FilledButton.icon(
                         key: const Key('abertura-tentar-novamente'),
                         onPressed: tentarNovamente,
                         style: FilledButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Tokens.marca,
+                          backgroundColor: Tokens.action,
+                          foregroundColor: Tokens.actionInk,
                           minimumSize: const Size(190, 48),
                         ),
                         icon: const Icon(Icons.refresh),
@@ -240,7 +240,7 @@ class _EstadoPreparacao extends StatelessWidget {
               dimension: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF55D5ED),
+                color: Tokens.action,
               ),
             ),
             const SizedBox(width: 10),
@@ -249,7 +249,7 @@ class _EstadoPreparacao extends StatelessWidget {
                 mensagem,
                 key: const Key('abertura-status'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Tokens.ink),
               ),
             ),
           ],
@@ -259,7 +259,7 @@ class _EstadoPreparacao extends StatelessWidget {
           Text(
             explicacao!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFC6D7E7), fontSize: 13),
+            style: const TextStyle(color: Tokens.muted, fontSize: 13),
           ),
         ],
       ],
@@ -284,7 +284,7 @@ class _EstadoMarcaAbertura extends State<MarcaAbertura>
     super.initState();
     _controle = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const AppMotion.v15().splash,
     );
   }
 
@@ -336,7 +336,7 @@ class _EstadoMarcaAbertura extends State<MarcaAbertura>
                     scale: respiracao,
                     child: LogoRadar(
                       tamanho: 112,
-                      sobreFundoEscuro: true,
+                      sobreFundoEscuro: false,
                       progresso: valor,
                     ),
                   ),
@@ -366,7 +366,7 @@ class _PulsoRadar extends StatelessWidget {
           height: tamanho,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF55D5ED), width: 2),
+            border: Border.all(color: Tokens.action, width: 2),
           ),
         ),
       ),

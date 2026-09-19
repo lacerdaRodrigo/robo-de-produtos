@@ -2,10 +2,13 @@
 
 Lista viva somente do que continua aberto. Histórico concluído permanece no Git e nos PRDs; não deve voltar a governar o ciclo atual.
 
-O contrato operacional padrão do ciclo mobile V12 Delta é o
-[`AGENTS.md`](../AGENTS.md): Flutter mobile, protótipo Delta como fonte visual,
-unitários/widgets afetados e Web/integration/E2E fora do gate. A implementação
-backend Pichau desta tarefa foi autorizada explicitamente. Coletor e transporte Wi-Fi foram validados, mas
+O contrato operacional padrão do ciclo mobile V15 é o
+[`AGENTS.md`](../AGENTS.md): Flutter mobile, `design-app/mobile-v15/index.html`
+como fonte visual, unitários/widgets afetados e Web/integration/E2E fora do
+gate. Esta branch não altera backend; a lacuna de contrato encontrada no
+`Meu radar` está registrada em
+[`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md).
+Coletor e transporte Wi-Fi foram validados, mas
 a disponibilidade contínua do executor Android continua aberta. A execução
 `34544816986`, fila 52, falhou em 2026-09-11 como `pichau-dados`; a fila sem
 diagnóstico/execução confirmou que o Samsung ainda usava o checkout anterior.
@@ -18,6 +21,9 @@ anterior ainda reinicia o gate operacional.
 
 ## Ciclo mobile atual
 
+- [ ] Definir e implementar, em tarefa separada de backend, o contrato paginado
+  de lista consolidada do `Meu radar`; a tela V15 usa somente as contagens
+  reais de `/api/resumo` até essa decisão.
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
 - [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. Em 2026-09-13, a APK debug desta entrega foi instalada no Moto G6 Play e a jornada Produtos foi conferida com catálogo real, busca digitada e pelos atalhos de Celulares, Informática, Casa, Beleza e Pet, resumo compacto, cards, histórico visual e abertura da oferta; filtros, paginação, leitura, preferências, dados reais completos, push, login/reautenticação, ausência, links externos, overflow geral e o alinhamento do cartão Cashback Inter ainda aguardam aceite. O Samsung continua pendente. Isso não vira smoke automatizado neste ciclo.
 - [ ] Conferir manualmente a nova composição da Home compacta: cards Livelo, Banco Inter e Pichau, sem a seção `Atividade recente`; este aceite visual fica com o responsável pelo projeto e não vira smoke automatizado neste ciclo.
@@ -84,7 +90,11 @@ anterior ainda reinicia o gate operacional.
 - [ ] Decidir e validar separadamente Crashlytics e ambientes Firebase adicionais; a configuração de autenticação, App Check e FCM do projeto `radarbeneficios` já foi usada pela API/Android desta entrega.
 - [ ] Definir um sistema centralizado de logs para app, API e robôs, com correlação por execução, níveis de severidade, retenção e sem registrar tokens, dados pessoais ou payloads sensíveis.
 - [ ] Completar o runbook operacional dos robôs Livelo, Inter Sites parceiros e Inter Compre direto: entradas, variáveis de ambiente, comandos, workflows, horários, tabelas escritas, códigos de saída, retries, reexecução manual e diagnóstico de falhas.
-- [ ] Reorganizar as telas Flutter e extrair componentes reutilizáveis para pastas `widgets/`, preservando a separação por domínio e sem quebrar os imports das jornadas existentes.
+- [ ] Concluir, em ciclo futuro e fora da composição compacta V15 entregue nesta
+  branch, a extração dos trechos restantes do layout amplo para widgets em
+  pastas `widgets/`, preservando a separação por domínio e sem quebrar imports.
+  A jornada compacta V15 já usa a fundação visual compartilhada e os tokens do
+  design, e não deve reabrir a antiga gaveta como referência visual.
 - [ ] Preparar a publicação na Google Play: nome, ícone, screenshots, classificação etária, política de privacidade, ficha de segurança de dados, versão e pacote de produção.
 - [ ] Configurar assinatura do Android e guardar keystore, senhas e credenciais somente nos secrets protegidos do ambiente de release.
 - [ ] Criar deploy automático via GitHub Actions para API e aplicativo, com ambientes de validação e produção, aprovação antes da publicação e possibilidade de rollback.

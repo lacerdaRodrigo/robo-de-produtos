@@ -41,6 +41,7 @@ dependencies:
   firebase_messaging: ^16.1.2
   url_launcher: ^6.3.2
   package_info_plus: ^10.2.1
+  flutter_svg: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +64,15 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/brand/
+    - assets/illustrations/
+
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/manrope.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

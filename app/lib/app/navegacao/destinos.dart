@@ -14,17 +14,25 @@ enum Destino {
   final String titulo;
 }
 
-/// Destinos preservados no `IndexedStack` compacto.
+/// Destinos do `IndexedStack` compacto.
 ///
-/// Somente Início e Serviços aparecem na barra inferior. Livelo, Inter e
-/// Pichau são subáreas de Serviços, e Produtos agora é uma subárea do Banco
-/// Inter para preservar a origem do catálogo no mobile.
+/// Os quatro primeiros destinos são a navegação principal da V15. Os demais
+/// permanecem nomeados para que as rotas internas dos catálogos possam manter
+/// sua posição e seus controladores ao entrar e sair de Explorar.
 enum DestinoCompacto {
-  inicio(Icons.home_outlined, 'Resumo', 'Visão geral do seu radar'),
+  inicio(Icons.home_outlined, 'Início', 'Visão geral do seu radar'),
+  explorar(
+    Icons.explore_outlined,
+    'Explorar',
+    'Encontre lojas, pontos e cashback',
+  ),
+  radar(Icons.bookmark_border, 'Meu radar', 'Itens que você acompanha'),
+  perfil(Icons.person_outline, 'Perfil', 'Conta, aparência e privacidade'),
+  // Alias histórico de entrada em Explorar. Nunca aparece na barra.
   programas(
     Icons.space_dashboard_outlined,
-    'Serviços',
-    'Livelo, Banco Inter e integrações',
+    'Explorar',
+    'Lojas, pontos e cashback',
   ),
   livelo(Icons.card_giftcard_outlined, 'Livelo', 'Lojas, pontos e alertas'),
   inter(
@@ -40,10 +48,13 @@ enum DestinoCompacto {
   final String titulo;
   final String descricao;
 
-  bool get principal => this == inicio || this == programas;
+  bool get principal => switch (this) {
+    inicio || explorar || radar || perfil => true,
+    _ => false,
+  };
 
   DestinoCompacto get destinoDaBarra => switch (this) {
-    livelo || inter || pichau => programas,
+    programas || livelo || inter || pichau => explorar,
     _ => this,
   };
 }

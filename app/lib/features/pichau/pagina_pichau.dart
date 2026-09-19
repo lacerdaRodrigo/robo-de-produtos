@@ -9,7 +9,7 @@ import 'controlador_catalogo_pichau.dart';
 import 'link_pichau.dart';
 import 'modelos_pichau.dart';
 
-/// Catálogo interno da Pichau, subordinado a Serviços.
+/// Catálogo interno da Pichau, acessível pela área Explorar.
 ///
 /// A tela só renderiza o retrato entregue pela API. Busca e paginação pedem
 /// outro recorte desse retrato e nunca iniciam coleta na fonte externa.
@@ -110,16 +110,15 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
           const CabecalhoSecaoRadar(
-            sobrelinha: 'PC Gamer',
-            titulo: 'Pichau',
-            descricao:
-                'Veja o catálogo salvo de PCs Gamer e abra o produto no site da Pichau.',
+            sobrelinha: 'Tecnologia',
+            titulo: 'PCs gamer',
+            descricao: 'PCs gamer com preço Pix e cartão.',
           ),
           const SizedBox(height: 22),
           CampoBuscaRadar(
             chaveCampo: const Key('busca-pichau'),
             controlador: _busca,
-            dica: 'Buscar por nome, marca ou SKU',
+            dica: 'Nome, processador ou SKU',
             somenteBusca: true,
             aoMudar: _controlador.mudarBusca,
           ),
@@ -375,7 +374,7 @@ class CartaoPichau extends StatelessWidget {
         padding: EdgeInsets.zero,
         corDestaque: produto.foraDoCatalogo || produto.esgotado
             ? cores.atencao
-            : cores.pichau,
+            : cores.acao,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
           child: Column(
@@ -390,7 +389,7 @@ class CartaoPichau extends StatelessWidget {
                       runSpacing: 5,
                       children: [
                         _EtiquetaPichau(texto: produto.categoria ?? 'PC Gamer'),
-                        const _EtiquetaPichau(texto: 'Pichau', plum: true),
+                        const _EtiquetaPichau(texto: 'Pichau', destaque: true),
                       ],
                     ),
                   ),
@@ -563,12 +562,12 @@ class CartaoPichau extends StatelessWidget {
 class _EtiquetaPichau extends StatelessWidget {
   const _EtiquetaPichau({
     required this.texto,
-    this.plum = false,
+    this.destaque = false,
     this.neutra = false,
   });
 
   final String texto;
-  final bool plum;
+  final bool destaque;
   final bool neutra;
 
   @override
@@ -576,15 +575,15 @@ class _EtiquetaPichau extends StatelessWidget {
     final cores = CoresRadar.de(context);
     final fundo = neutra
         ? cores.superficieAlternativa
-        : plum
-        ? cores.pichau.withValues(alpha: 0.16)
+        : destaque
+        ? cores.acao.withValues(alpha: 0.16)
         : (Theme.of(context).brightness == Brightness.dark
               ? Tokens.acaoFundoEscuro
               : Tokens.actionSoft);
     final textoCor = neutra
         ? cores.textoSuave
-        : plum
-        ? cores.pichau
+        : destaque
+        ? cores.acao
         : cores.acao;
     return DecoratedBox(
       decoration: BoxDecoration(

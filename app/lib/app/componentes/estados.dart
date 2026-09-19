@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../tema/tokens.dart';
 
@@ -45,8 +46,11 @@ class EstadoVazio extends StatelessWidget {
       excludeSemantics: true,
       child: Center(
         child: Container(
-          margin: const EdgeInsets.all(18),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+          margin: EdgeInsets.all(tokens.spacing.four),
+          padding: EdgeInsets.symmetric(
+            horizontal: tokens.spacing.four,
+            vertical: tokens.spacing.five,
+          ),
           decoration: BoxDecoration(
             color: cores.superficieAlternativa,
             border: Border.all(color: cores.borda),
@@ -55,12 +59,19 @@ class EstadoVazio extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.inbox_outlined, size: 40, color: cores.teal),
-              const SizedBox(height: 12),
+              SvgPicture.asset(
+                'assets/illustrations/no-results.svg',
+                width: tokens.sizes.illustrationWidth,
+                height: tokens.sizes.illustrationHeight,
+                semanticsLabel: 'Nenhum resultado',
+              ),
+              SizedBox(height: tokens.spacing.three),
               Text(
                 mensagem,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: cores.textoSuave),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
               ),
             ],
           ),
@@ -86,8 +97,8 @@ class EstadoFalha extends StatelessWidget {
       label: mensagem,
       child: Center(
         child: Container(
-          margin: const EdgeInsets.all(18),
-          padding: const EdgeInsets.all(20),
+          margin: EdgeInsets.all(tokens.spacing.four),
+          padding: EdgeInsets.all(tokens.spacing.five),
           decoration: BoxDecoration(
             color: cores.perigoFundo,
             border: Border.all(color: corErro.withValues(alpha: 0.35)),
@@ -96,11 +107,16 @@ class EstadoFalha extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, color: corErro, size: 40),
-              const SizedBox(height: 12),
+              SvgPicture.asset(
+                'assets/illustrations/offline.svg',
+                width: tokens.sizes.illustrationWidth,
+                height: tokens.sizes.illustrationHeight,
+                semanticsLabel: 'Falha de conexão',
+              ),
+              SizedBox(height: tokens.spacing.three),
               Text(mensagem, textAlign: TextAlign.center),
               if (voltar != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: tokens.spacing.four),
                 FilledButton.tonal(
                   onPressed: voltar,
                   child: const Text('Tentar novamente'),

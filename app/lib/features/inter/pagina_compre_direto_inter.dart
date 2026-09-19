@@ -468,14 +468,14 @@ class _CartaoLojaDireta extends StatelessWidget {
     final escuro = tema.brightness == Brightness.dark;
     final corAcao = escuro ? Tokens.acaoForteEscura : Tokens.actionStrong;
     final fundoAcao = escuro ? Tokens.acaoFundoEscuro : Tokens.actionSoft;
-    final fundoGanho = escuro ? Tokens.ganhoFundoEscuro : Tokens.positiveSoft;
+    final fundoGanho = escuro ? Tokens.ganhoFundoEscuro : Tokens.successSoft;
     final selecionada = loja.selecionada;
     final aviso = _avisoColeta(loja);
     return Opacity(
       opacity: loja.ativa ? 1 : 0.7,
       child: CartaoRadar(
         padding: EdgeInsets.zero,
-        corDestaque: cores.produtos,
+        corDestaque: cores.acao,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -489,7 +489,7 @@ class _CartaoLojaDireta extends StatelessWidget {
                     height: 42,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: cores.produtos.withValues(alpha: 0.16),
+                      color: cores.acao.withValues(alpha: 0.16),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(14),
                         topRight: Radius.circular(14),
@@ -500,7 +500,7 @@ class _CartaoLojaDireta extends StatelessWidget {
                     child: Text(
                       _iniciais(loja.nome),
                       style: TextStyle(
-                        color: cores.produtos,
+                        color: cores.acao,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                       ),

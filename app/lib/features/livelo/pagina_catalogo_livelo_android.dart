@@ -167,10 +167,9 @@ class _EstadoPaginaCatalogoLiveloAndroid
           padding: const EdgeInsets.fromLTRB(18, 22, 18, 20),
           sliver: SliverToBoxAdapter(
             child: CabecalhoSecaoRadar(
-              sobrelinha: 'Programa de pontos',
-              titulo: 'Livelo',
-              descricao:
-                  'Tudo da Livelo fica aqui: catálogo, acompanhadas e campanhas.',
+              sobrelinha: 'Catálogo',
+              titulo: 'Lojas e pontos',
+              descricao: 'Lojas parceiras e pontos por real gasto.',
               acao: BotaoDisparo(
                 api: widget.api,
                 dominio: 'livelo',
@@ -187,7 +186,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
           sliver: SliverToBoxAdapter(
             child: CampoBuscaRadar(
               controlador: _busca,
-              dica: 'Buscar loja',
+              dica: 'Qual loja você procura?',
               aoMudar: _controlador.mudarBusca,
               somenteBusca: true,
             ),

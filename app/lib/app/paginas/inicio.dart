@@ -163,14 +163,14 @@ class _PaginaInicioState extends State<PaginaInicio>
                   if (widget.experienciaCompacta) ...[
                     const SizedBox(height: 25),
                     _TituloSecao(
-                      titulo: 'Seus serviços',
-                      complemento: 'Estados independentes',
+                      titulo: 'Explore as origens',
+                      complemento: 'Preços e benefícios por fonte',
                       compactoMobile: true,
                       acao: widget.aoAbrirProgramas == null
                           ? null
                           : TextButton(
                               onPressed: widget.aoAbrirProgramas,
-                              child: const Text('Ver todos'),
+                              child: const Text('Ver todas'),
                             ),
                     ),
                     const SizedBox(height: 12),
@@ -301,6 +301,7 @@ class _HeroResumoCompacto extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
+    final tema = Theme.of(context);
     final atividade = resumo.atividadeRecente.isEmpty
         ? null
         : resumo.atividadeRecente.first;
@@ -310,15 +311,12 @@ class _HeroResumoCompacto extends StatelessWidget {
     final leitura = atividade == null
         ? 'Ainda não há uma diferença recente registrada pela API.'
         : 'Estado ${atividade.estado} · ${_dataHora(atividade.momento)}';
-    return DecoratedBox(
+    final cartao = DecoratedBox(
       decoration: BoxDecoration(
-        color: cores.texto,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(tokens.radii.xl),
-          topRight: Radius.circular(tokens.radii.xl),
-          bottomRight: Radius.circular(tokens.radii.xl),
-          bottomLeft: Radius.circular(tokens.spacing.two),
-        ),
+        color: tema.brightness == Brightness.dark
+            ? Tokens.acaoFundoEscuro
+            : Tokens.actionSoft,
+        borderRadius: BorderRadius.circular(tokens.radii.xl),
       ),
       child: Padding(
         padding: EdgeInsets.all(tokens.spacing.five),
@@ -326,26 +324,26 @@ class _HeroResumoCompacto extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Última diferença encontrada',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: cores.canvas,
+              'SEU RADAR, SEU RITMO',
+              style: tema.textTheme.labelSmall?.copyWith(
+                color: cores.acao,
                 fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
               ),
             ),
             SizedBox(height: tokens.spacing.two),
             Text(
-              origem,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: cores.canvas,
+              'Último sinal do seu radar',
+              style: tema.textTheme.titleLarge?.copyWith(
+                color: cores.texto,
                 fontWeight: FontWeight.w900,
-                height: 0.96,
               ),
             ),
             SizedBox(height: tokens.spacing.two),
             Text(
-              leitura,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: cores.canvas.withValues(alpha: 0.82),
+              '$origem · $leitura',
+              style: tema.textTheme.bodyMedium?.copyWith(
+                color: cores.textoSuave,
                 height: 1.4,
               ),
             ),
@@ -358,31 +356,15 @@ class _HeroResumoCompacto extends StatelessWidget {
                   texto: atividade == null
                       ? 'Sem alteração nova'
                       : 'Diferença confirmada',
-                  cor: cores.marcaTexto,
+                  cor: cores.acao,
                 ),
                 Text(
                   _dataHora(resumo.geradoEm),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: cores.canvas.withValues(alpha: 0.72),
+                  style: tema.textTheme.labelMedium?.copyWith(
+                    color: cores.textoSuave,
                   ),
                 ),
               ],
-            ),
-            SizedBox(height: tokens.spacing.seven),
-            Text(
-              'Próxima leitura',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: cores.canvas.withValues(alpha: 0.72),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            SizedBox(height: tokens.spacing.one),
-            Text(
-              'Escolha onde comparar.',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: cores.canvas,
-                fontWeight: FontWeight.w900,
-              ),
             ),
             SizedBox(height: tokens.spacing.three),
             _AcoesRapidasResumo(
@@ -394,6 +376,25 @@ class _HeroResumoCompacto extends StatelessWidget {
           ],
         ),
       ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Boas escolhas começam aqui.',
+          style: tema.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
+        SizedBox(height: tokens.spacing.one),
+        Text(
+          'Preços, cashback e pontos em um só radar.',
+          style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
+        ),
+        SizedBox(height: tokens.spacing.five),
+        cartao,
+      ],
     );
   }
 }
@@ -462,12 +463,14 @@ class _DestaqueEstado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final atencao = _prioridade(resumo);
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return Container(
       decoration: BoxDecoration(
-        color: Tokens.marcaProfunda,
-        borderRadius: BorderRadius.circular(24),
+        color: Tokens.ink,
+        borderRadius: BorderRadius.circular(tokens.radii.xl),
       ),
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(tokens.spacing.five),
       child: Row(
         children: [
           Expanded(
@@ -477,7 +480,7 @@ class _DestaqueEstado extends StatelessWidget {
                 Text(
                   'ESTADO DOS DADOS',
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF8EC5F4),
+                    color: cores.acao,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.1,
                   ),
@@ -486,7 +489,7 @@ class _DestaqueEstado extends StatelessWidget {
                 Text(
                   atencao.titulo,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
+                    color: cores.marcaTexto,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -494,7 +497,7 @@ class _DestaqueEstado extends StatelessWidget {
                 Text(
                   atencao.descricao,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFD7E3ED),
+                    color: cores.marcaTexto.withValues(alpha: 0.82),
                     height: 1.4,
                   ),
                 ),
@@ -543,7 +546,7 @@ class _GradeMetricas extends StatelessWidget {
         ),
         _Metrica(
           icone: Icons.inventory_2_outlined,
-          cor: cores.integracaoInter,
+          cor: cores.acao,
           valor: resumo.produtos.estado == EstadoResumo.indisponivel
               ? '—'
               : _inteiro(resumo.produtos.produtosAtivos),
@@ -762,10 +765,10 @@ class _CartaoDominioResumo extends StatelessWidget {
     final cores = CoresRadar.de(context);
     final corEstado = _corEstado(context, estado);
     return CartaoRadar(
+      key: chave,
       aoTocar: aoTocar,
       padding: EdgeInsets.zero,
       child: Padding(
-        key: chave,
         padding: const EdgeInsets.all(15),
         child: Column(
           children: [
@@ -778,7 +781,7 @@ class _CartaoDominioResumo extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Tokens.superficieForteEscura
-                        : Tokens.plumSoft,
+                        : Tokens.paperSoft,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(14),
                       topRight: Radius.circular(14),
@@ -840,7 +843,7 @@ class _CartaoDominioResumo extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Tokens.atencaoFundoEscuro
-                      : Tokens.warningSoft,
+                      : Tokens.atencaoFundo,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Row(
@@ -951,7 +954,7 @@ class _AcoesRapidasResumo extends StatelessWidget {
     final servicos = OutlinedButton(
       key: const Key('atalho-programas'),
       onPressed: aoAbrirServicos,
-      child: const Text('Todos os serviços'),
+      child: const Text('Todas as fontes'),
     );
     return LayoutBuilder(
       builder: (context, limites) {

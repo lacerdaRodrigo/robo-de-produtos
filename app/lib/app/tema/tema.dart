@@ -2,167 +2,82 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-/// Temas do Radar com a direção visual Delta compartilhada entre as telas.
+/// Material 3 da identidade Radar V15.
 abstract final class TemaRadar {
-  /// Mantém o nome usado pela jornada de autenticação e pelos testes.
-  static ThemeData loginLegado() => claro();
+  static ThemeData claro() =>
+      _criar(brilho: Brightness.light, cores: const CoresRadar.claras());
 
-  /// Tema congelado das jornadas amplas que não fazem parte do ciclo mobile.
-  static ThemeData legadoClaro() {
+  static ThemeData escuro() =>
+      _criar(brilho: Brightness.dark, cores: const CoresRadar.escuras());
+
+  static ThemeData _criar({
+    required Brightness brilho,
+    required CoresRadar cores,
+  }) {
     final base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      fontFamily: 'Roboto',
-    );
-    return base.copyWith(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF1788B8),
-        brightness: Brightness.light,
-        primary: const Color(0xFF1788B8),
-        surface: Colors.white,
-        error: const Color(0xFFD44747),
-        onSurface: const Color(0xFF18212A),
-        outline: const Color(0xFFC4D2DE),
-      ),
-      scaffoldBackgroundColor: const Color(0xFFEAF0F5),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF18212A),
-        surfaceTintColor: Colors.transparent,
-      ),
-      textTheme: base.textTheme.apply(
-        bodyColor: const Color(0xFF18212A),
-        displayColor: const Color(0xFF18212A),
-      ),
-    );
-  }
-
-  /// Paleta legada usada apenas pelo modo amplo preservado fora do mobile.
-  static ThemeData legadoClaroComCores() => legadoClaro().copyWith(
-    extensions: const <ThemeExtension<dynamic>>[CoresRadar.legadas()],
-  );
-
-  static ThemeData claro() {
-    final cores = const CoresRadar.claras();
-    final base = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      fontFamily: 'Segoe UI',
-      fontFamilyFallback: const ['Trebuchet MS', 'Arial', 'sans-serif'],
+      brightness: brilho,
+      fontFamily: 'Manrope',
+      fontFamilyFallback: const ['Arial', 'sans-serif'],
     );
     final esquema =
         ColorScheme.fromSeed(
-          seedColor: cores.teal,
-          brightness: Brightness.light,
+          seedColor: cores.acao,
+          brightness: brilho,
           primary: cores.acao,
-          onPrimary: Tokens.actionInk,
-          secondary: cores.marca,
-          onSecondary: cores.marcaTexto,
+          onPrimary: cores.marcaTexto,
+          secondary: cores.ganho,
+          onSecondary: brilho == Brightness.dark
+              ? Tokens.ink
+              : Tokens.actionInk,
           surface: cores.superficie,
           onSurface: cores.texto,
-          outline: cores.borda,
-          error: cores.perigo,
-        ).copyWith(
-          surfaceContainerLowest: cores.superficie,
-          surfaceContainerLow: cores.superficie,
-          surfaceContainer: cores.superficieAlternativa,
-          surfaceContainerHigh: cores.superficieAlternativa,
-          surfaceContainerHighest: cores.superficieAlternativa,
-          onSurfaceVariant: cores.textoSuave,
-          outlineVariant: cores.borda,
-          inverseSurface: cores.marca,
-          onInverseSurface: cores.marcaTexto,
-          inversePrimary: cores.acao,
-        );
-    return _baseComum(
-      base,
-      esquema,
-      cores,
-      preenchido: _botaoPreenchido(cores.acao, Tokens.actionInk),
-      contornado: _botaoContornado(cores.texto, cores.borda),
-    );
-  }
-
-  static ThemeData escuro() {
-    final cores = const CoresRadar.escuras();
-    final base = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      fontFamily: 'Segoe UI',
-      fontFamilyFallback: const ['Trebuchet MS', 'Arial', 'sans-serif'],
-    );
-    final esquema =
-        ColorScheme.fromSeed(
-          seedColor: cores.teal,
-          brightness: Brightness.dark,
-          primary: cores.acao,
-          onPrimary: Tokens.actionInk,
-          secondary: cores.marca,
-          onSecondary: cores.marcaTexto,
-          surface: cores.superficie,
-          onSurface: cores.texto,
-          outline: cores.borda,
+          outline: Tokens.outline,
           error: cores.perigo,
         ).copyWith(
           surfaceContainerLowest: cores.canvas,
           surfaceContainerLow: cores.superficie,
           surfaceContainer: cores.superficieAlternativa,
           surfaceContainerHigh: cores.superficieAlternativa,
-          surfaceContainerHighest: cores.superficieAlternativa,
+          surfaceContainerHighest: Tokens.paperStrong,
           onSurfaceVariant: cores.textoSuave,
           outlineVariant: cores.borda,
+          primaryContainer: cores.acao.withValues(alpha: 0.14),
+          onPrimaryContainer: cores.acao,
+          secondaryContainer: cores.ganho.withValues(alpha: 0.14),
+          onSecondaryContainer: cores.ganho,
+          errorContainer: cores.perigoFundo,
+          onErrorContainer: cores.perigo,
           inverseSurface: cores.texto,
           onInverseSurface: cores.canvas,
           inversePrimary: cores.acao,
         );
-    return _baseComum(
-      base,
-      esquema,
-      cores,
-      preenchido: _botaoPreenchido(cores.acao, Tokens.actionInk),
-      contornado: _botaoContornado(cores.texto, cores.borda),
-    );
-  }
-
-  static ThemeData _baseComum(
-    ThemeData base,
-    ColorScheme esquema,
-    CoresRadar cores, {
-    required FilledButtonThemeData preenchido,
-    required OutlinedButtonThemeData contornado,
-  }) {
     final texto = base.textTheme.apply(
       bodyColor: cores.texto,
       displayColor: cores.texto,
+      fontFamily: 'Manrope',
     );
-    final textoDelta = texto.copyWith(
+    final tipografia = texto.copyWith(
       displayLarge: texto.displayLarge?.copyWith(
-        fontFamily: 'Trebuchet MS',
-        fontWeight: FontWeight.w900,
-        letterSpacing: -2.4,
-      ),
-      displayMedium: texto.displayMedium?.copyWith(
-        fontFamily: 'Trebuchet MS',
-        fontWeight: FontWeight.w900,
-        letterSpacing: -1.8,
-      ),
-      headlineLarge: texto.headlineLarge?.copyWith(
-        fontFamily: 'Trebuchet MS',
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w800,
         letterSpacing: -1.2,
       ),
+      displayMedium: texto.displayMedium?.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: -1,
+      ),
+      headlineLarge: texto.headlineLarge?.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.8,
+      ),
       headlineMedium: texto.headlineMedium?.copyWith(
-        fontFamily: 'Trebuchet MS',
-        fontWeight: FontWeight.w900,
-        letterSpacing: -0.9,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
       ),
-      titleLarge: texto.titleLarge?.copyWith(
-        fontFamily: 'Trebuchet MS',
-        fontWeight: FontWeight.w900,
-        letterSpacing: -0.4,
-      ),
-      titleMedium: texto.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-      labelLarge: texto.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+      titleLarge: texto.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+      titleMedium: texto.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+      labelLarge: texto.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      bodyMedium: texto.bodyMedium?.copyWith(height: 1.4),
     );
     return base.copyWith(
       colorScheme: esquema,
@@ -173,9 +88,10 @@ abstract final class TemaRadar {
       extensions: <ThemeExtension<dynamic>>[
         AppTokens(
           colors: cores,
-          spacing: const AppSpacing.delta(),
-          radii: const AppRadii.delta(),
-          motion: const AppMotion.delta(),
+          spacing: const AppSpacing.v15(),
+          radii: const AppRadii.v15(),
+          sizes: const AppSizes.v15(),
+          motion: const AppMotion.v15(),
         ),
         cores,
       ],
@@ -185,15 +101,17 @@ abstract final class TemaRadar {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        titleTextStyle: tipografia.titleLarge,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: cores.marca,
-        indicatorColor: Tokens.mark,
+        backgroundColor: cores.superficie,
+        indicatorColor: cores.acao.withValues(alpha: 0.14),
+        elevation: 0,
+        labelTextStyle: WidgetStatePropertyAll(tipografia.labelMedium),
         iconTheme: WidgetStateProperty.resolveWith((estados) {
+          final selecionado = estados.contains(WidgetState.selected);
           return IconThemeData(
-            color: estados.contains(WidgetState.selected)
-                ? Tokens.markInk
-                : cores.textoSuave,
+            color: selecionado ? cores.acao : cores.textoSuave,
           );
         }),
       ),
@@ -204,15 +122,15 @@ abstract final class TemaRadar {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RaioRadar.grande),
+          borderRadius: BorderRadius.circular(RaioRadar.medio),
           side: BorderSide(color: cores.borda),
         ),
       ),
-      filledButtonTheme: preenchido,
-      outlinedButtonTheme: contornado,
+      filledButtonTheme: _botaoPreenchido(cores.acao, cores.marcaTexto),
+      outlinedButtonTheme: _botaoContornado(cores.texto, cores.borda),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: cores.teal,
+          foregroundColor: cores.acao,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(RaioRadar.pequeno),
@@ -223,21 +141,22 @@ abstract final class TemaRadar {
         backgroundColor: cores.superficie,
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: cores.superficie,
-        modalBarrierColor: cores.marca.withValues(alpha: 0.72),
+        modalBarrierColor: Colors.black.withValues(alpha: 0.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(RaioRadar.destaque),
           ),
         ),
+        showDragHandle: true,
       ),
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: cores.superficie,
-        selectedColor: cores.teal.withValues(alpha: 0.16),
+        selectedColor: cores.acao.withValues(alpha: 0.14),
         side: BorderSide(color: cores.borda),
         shape: const StadiumBorder(),
         labelStyle: TextStyle(color: cores.texto, fontWeight: FontWeight.w700),
       ),
-      textTheme: textoDelta,
+      textTheme: tipografia,
     );
   }
 
@@ -250,15 +169,12 @@ abstract final class TemaRadar {
       filled: true,
       fillColor: cores.superficie,
       hintStyle: TextStyle(color: cores.textoSuave),
-      labelStyle: TextStyle(color: cores.texto, fontWeight: FontWeight.w700),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: const AppSpacing.delta().four,
-        vertical: const AppSpacing.delta().three,
-      ),
+      labelStyle: TextStyle(color: cores.texto, fontWeight: FontWeight.w600),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: borda,
       enabledBorder: borda,
       focusedBorder: borda.copyWith(
-        borderSide: BorderSide(color: cores.teal, width: 2),
+        borderSide: BorderSide(color: cores.acao, width: 2),
       ),
     );
   }
@@ -270,13 +186,13 @@ abstract final class TemaRadar {
     style: FilledButton.styleFrom(
       backgroundColor: fundo,
       foregroundColor: primeiroPlano,
-      minimumSize: const Size(48, 50),
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
+      minimumSize: const Size(48, 48),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(RaioRadar.pequeno),
       ),
       elevation: 0,
-      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+      textStyle: const TextStyle(fontWeight: FontWeight.w700),
     ),
   );
 
@@ -286,13 +202,13 @@ abstract final class TemaRadar {
   ) => OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       foregroundColor: primeiroPlano,
-      minimumSize: const Size(48, 50),
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
+      minimumSize: const Size(48, 48),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       side: BorderSide(color: linha),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(RaioRadar.pequeno),
       ),
-      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+      textStyle: const TextStyle(fontWeight: FontWeight.w700),
     ),
   );
 }

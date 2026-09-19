@@ -107,12 +107,9 @@ void main() {
       _aplicativo(inicializar: () => resposta.future, reduzirMovimento: true),
     );
 
-    expect(find.text('Radar'), findsOneWidget);
+    expect(find.text('radar.'), findsOneWidget);
     expect(find.text('Preparando seu radar…'), findsOneWidget);
-    expect(
-      find.text('Pontos, cashback e preços reunidos em um só radar.'),
-      findsOneWidget,
-    );
+    expect(find.text('Boas escolhas à vista.'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     resposta.complete(const InicializacaoFirebase.pendente('falha controlada'));
@@ -137,7 +134,7 @@ void main() {
     expect(find.text('Preparando seu radar…'), findsOneWidget);
     await at.pump(const Duration(milliseconds: 1));
 
-    expect(find.text('Continue de onde mudou.'), findsOneWidget);
+    expect(find.text('Bom te ver por aqui.'), findsOneWidget);
     expect(find.text('Preparando seu radar…'), findsNothing);
   });
 
@@ -157,7 +154,7 @@ void main() {
     await at.pump();
     await at.pump();
 
-    expect(find.text('Continue de onde mudou.'), findsOneWidget);
+    expect(find.text('Bom te ver por aqui.'), findsOneWidget);
   });
 
   testWidgets('mantém a abertura animada durante a validação do convite', (
@@ -194,7 +191,7 @@ void main() {
     await at.pump();
     await at.pump();
 
-    expect(find.text('Radar'), findsOneWidget);
+    expect(find.text('radar.'), findsOneWidget);
     expect(find.text('Validando seu acesso ao piloto…'), findsOneWidget);
 
     perfil.complete(
@@ -224,7 +221,7 @@ void main() {
       find.text('A validação segura está levando um pouco mais de tempo…'),
       findsOneWidget,
     );
-    expect(find.text('Radar'), findsOneWidget);
+    expect(find.text('radar.'), findsOneWidget);
 
     resposta.complete(const InicializacaoFirebase.pendente('falha controlada'));
     await at.pump();
@@ -262,7 +259,7 @@ void main() {
     segunda.complete(InicializacaoFirebase.pronta(autenticador));
     await at.pump();
     await at.pump();
-    expect(find.text('Continue de onde mudou.'), findsOneWidget);
+    expect(find.text('Bom te ver por aqui.'), findsOneWidget);
   });
 
   testWidgets('exceção não expõe detalhes técnicos na abertura', (at) async {
@@ -326,7 +323,7 @@ void main() {
 
     await at.pump(const Duration(milliseconds: 1825));
     final logo = at.widget<LogoRadar>(find.byType(LogoRadar));
-    expect(logo.progresso, closeTo(425 / 1400, 0.02));
+    expect(logo.progresso, closeTo(225 / 1600, 0.02));
 
     resposta.complete(const InicializacaoFirebase.pendente('falha controlada'));
     await at.pump();

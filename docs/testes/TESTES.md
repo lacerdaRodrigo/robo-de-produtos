@@ -495,14 +495,14 @@ restante do roteiro manual.
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-311 | Destinos fixos do redesign | No layout amplo, a ordem continua Início, Lojas, Produtos, Alertas e Mais; no compacto, somente Resumo e Serviços aparecem na barra, com Produtos dentro do Banco Inter | Enums, widget da moldura e inspeção dos breakpoints |
+| CT-311 | Destinos fixos do redesign | No layout amplo, a ordem histórica continua preservada; no compacto V15, a barra mantém Início, Explorar, Meu radar e Perfil, com Livelo, Banco Inter, Pichau e Produtos dentro de Explorar | Enums, widget da moldura e inspeção dos breakpoints |
 | CT-312 | Perfil e lateral adaptativos | Mobile/retrato/paisagem usa cabeçalho + perfil e barra inferior; Web a partir de 920 px usa lateral preservada | Viewports 390 × 844, 844 × 390 e 1440 × 900 |
 | CT-313 | Hub transitório de Lojas | Livelo e Shopping Inter continuam alcançáveis sem consultar resumo nem exibir métricas fictícias | API falsa e ações do hub isolado |
 | CT-314 | Voltar na hierarquia interna | Voltar de Livelo/Inter retorna primeiro para Lojas em vez de sair do app | Navegador aninhado e `handlePopRoute` |
 | CT-315 | Estado preservado entre áreas | Trocar entre Produtos do Inter, Livelo e demais subáreas e retornar não apaga a busca digitada | `IndexedStack` e controlador do campo |
 | CT-316 | Alertas e Administração preservados | Perfil abre a Central para qualquer conta e Administração somente para admin; no mobile, a Administração expõe apenas a Zona de perigo | Ações do perfil, variante móvel da Administração e API falsa fechada |
 | CT-317 | Navegação com texto ampliado | Em 320 × 640 e texto a 150%, perfil e destinos compactos continuam alcançáveis sem overflow | `TextScaler` e viewport controlados |
-| CT-318 | Moldura adaptativa | Perfil Mobile e lateral Web permanecem alcançáveis; Resumo e Serviços continuam na ordem definida | Widgets nos dois breakpoints |
+| CT-318 | Moldura adaptativa | Perfil mobile e lateral ampla permanecem alcançáveis; os quatro destinos V15 continuam na ordem definida no compacto | Widgets nos dois breakpoints |
 
 O fechamento passou por formatação, análise, 137 testes, build Web e APK debug.
 A cobertura global ficou em 2529/2805 linhas (90,16%); `moldura.dart` atingiu
@@ -548,7 +548,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 |---|---|---|---|
 | CT-330 | Link comercial seguro | Caminho relativo é reconstruído sob HTTPS de `shopping.inter.co`; URL, autoridade e navegação hostis não originam botão externo | Teste unitário do construtor de URI segura |
 | CT-331 | Histórico resiliente | Falha ao carregar uma página adicional mantém medições e resumos já exibidos, oferecendo retry da mesma página | Teste de widget com falha injetada na segunda página |
-| CT-411 | Busca compacta do catálogo | Painel plum usa o título, placeholder e `CampoBuscaRadar` da composição aprovada; atalhos de Celulares, Informática, Casa, Beleza e Pet consultam o catálogo local pelo termo simples da categoria, mantendo o campo limpo com o placeholder visível | `pagina_produtos_test.dart` com controlador de busca injetado |
+| CT-411 | Busca compacta do catálogo | Painel de papel V15 usa o título, placeholder e `CampoBuscaRadar` da composição aprovada; atalhos de Celulares, Informática, Casa, Beleza e Pet consultam o catálogo local pelo termo simples da categoria, mantendo o campo limpo com o placeholder visível | `pagina_produtos_test.dart` com controlador de busca injetado |
 | CT-412 | Resumo e card compacto V2 | Resumo exibe carimbo/total reais; card repete loja, categoria disponível, preços atual/líquido, cashback, histórico, acompanhamento e abertura da oferta sem overflow em 320 px com texto ampliado | `pagina_produtos_test.dart` e conferência manual no Android conectado |
 
 ### Redesign — Módulo 7, Produtos dentro do Banco Inter no mobile
@@ -576,7 +576,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-338 | Folha e busca Delta são únicas | Filtros, seletores, detalhes e folhas de conta usam `FolhaRadar` com fundo desfocado, cabeçalho Delta e retorno preservado; todas as buscas usam `CampoBuscaRadar` | Testes de widget dos fluxos Livelo, Produtos, categorias e fundação |
 | CT-338A | Paginação Delta de cartões | Produtos, Livelo, Sites parceiros e Compre direto solicitam 10 itens; com 9/10 não há paginação e com 11 há acesso à página 2 sem acumular cards | Widget da fundação, controladores e `MockClient` das telas afetadas |
 
-### Pichau — jornada mobile V12 Delta
+### Pichau — jornada mobile V15
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -587,7 +587,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-365 | Histórico em folha Delta | A ação Histórico abre o componente de folha existente e mostra medições somente leitura sem misturar o produto | `pagina_pichau_test.dart` |
 | CT-366 | Estados de coleta | Loading, catálogo vazio, falha sem retrato e aviso de parcial/atrasado permanecem distintos e não fabricam preço zero | `pagina_pichau_test.dart` |
 | CT-367 | Larguras mobile aprovadas | A jornada continua alcançável em 320, 390 e 430 px | `pagina_pichau_test.dart` com viewports controlados |
-| CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V12 Delta | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
+| CT-368 | Tema escuro preservado | Cards, estados, preços, busca e ações permanecem legíveis no tema escuro V15 | `pagina_pichau_test.dart` com `TemaRadar.escuro()` |
 | CT-390 | Abas, disponibilidade e ordenação | Todas/Acompanhadas e os filtros do protótipo são enviados à API, sem trocar o recorte silenciosamente | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-391 | Acompanhamento pessoal | Usuário autenticado acompanha e deixa de acompanhar o próprio produto; a falha restaura produto/contador; a rota administrativa legada continua separada | `controlador_catalogo_pichau_test.dart` e `pagina_pichau_test.dart` |
 | CT-392 | Acompanhadas fora do catálogo | A remoção da aba Acompanhadas só ocorre após confirmação e estados esgotado/fora do catálogo continuam distintos | `controlador_catalogo_pichau_test.dart` e `modelos_pichau_test.dart` |
@@ -749,6 +749,22 @@ O que conferir:
 | CT-190 | Alertas pessoais Pichau | Usuário acompanha pela chave externa, a aba/resumo/histórico usam seu recorte e o preço Pix gera evento somente após snapshot completo | `acompanhamento-pessoal-api.teste.ts`, `banco-pichau.teste.ts` e `teste_pichau.py` |
 | CT-191 | Backfill sem push | Seleções legadas Livelo/Pichau viram relações pessoais e a janela Inter recuperada entra na Central sem criar outbox | `migracao-alertas-produtos-inter.teste.ts` e migration `027` |
 
+## Ciclo mobile V15 — cobertura diretamente afetada
+
+Esta seção complementa o catálogo histórico. O gate desta branch executa
+somente os unitários/widgets Flutter diretamente afetados; não inclui Web,
+integração, E2E, smoke, performance ou regressão visual automatizada.
+
+| ID | Título | Cobertura | Arquivo |
+|---|---|---|---|
+| V15-001 | Tokens da identidade | Paleta papel/grafite, ação brasa/damasco, tema escuro e escala 4–48/raios 10/18/26 | `app/test/app/tema/tokens_test.dart` |
+| V15-002 | Marca e abertura | Símbolo vetorial, variante escura, redução de movimento e bootstrap honesto | `app/test/app/identidade/logo_radar_test.dart`, `app/test/app/inicializacao/pagina_abertura_test.dart` |
+| V15-003 | Acesso mobile | Ilustração oficial, formulário, senha, erro, retry e recuperação preservam o contrato de autenticação | `app/test/app/autenticacao/pagina_entrar_test.dart` |
+| V15-004 | Moldura de quatro destinos | Início, Explorar, Meu radar e Perfil permanecem navegáveis; aliases internos não criam destinos extras | `app/test/app/navegacao/moldura_test.dart` |
+| V15-005 | Meu radar sem dado inventado | Contagens do resumo são exibidas por fonte e a ação encaminha para Explorar/Alertas | `app/test/app/paginas/meu_radar_test.dart` |
+| V15-006 | Estados e fundação visual | Estados vazio/falha, componentes reutilizáveis, tema e folha continuam acessíveis | `app/test/app/componentes/estados_test.dart`, `app/test/app/componentes/fundacao_visual_test.dart` |
+| V15-007 | Home real | Hierarquia da Home compacta, estados independentes, atualização e callbacks dos catálogos | `app/test/app/paginas/inicio_test.dart` |
+
 ## Totais
 
 Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. A V4 inicia a cobertura automatizada em `teste_produtos_inter.py`; os demais CT-200 a CT-244 continuam como roteiro de expansão e aceite real.
@@ -781,8 +797,8 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
 | `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
 | **Total (site)** | **CTs catalogados + apoio** | **83** |
-| `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação | 178 confirmados nesta entrega |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **178** |
+| `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação + V15-001–V15-007 | Catálogo histórico e cobertura V15 diretamente afetada |
+| **Total (Flutter)** | **CTs catalogados + apoio** | **Catálogo histórico + cobertura V15 diretamente afetada** |
 
 `teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
 

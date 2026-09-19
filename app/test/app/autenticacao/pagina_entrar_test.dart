@@ -60,7 +60,7 @@ Future<void> _abrir(
   addTearDown(autenticador.fechar);
   await at.pumpWidget(
     MaterialApp(
-      theme: TemaRadar.legadoClaro(),
+      theme: TemaRadar.claro(),
       home: PaginaEntrar(autenticador: autenticador),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
@@ -81,7 +81,7 @@ void main() {
 
     expect(find.byKey(const Key('login-marca-compacta')), findsOneWidget);
     expect(find.byKey(const Key('login-painel-marca')), findsNothing);
-    expect(find.text('Continue de onde mudou.'), findsOneWidget);
+    expect(find.text('Bom te ver por aqui.'), findsOneWidget);
     expect(find.text('E-mail'), findsOneWidget);
     expect(find.text('Senha'), findsOneWidget);
     expect(find.text('Entrar'), findsOneWidget);

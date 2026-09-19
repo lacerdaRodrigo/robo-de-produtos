@@ -82,7 +82,6 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Livelo',
         descricao: 'Pontos, lojas acompanhadas e histórico',
         tipo: 'Pontos',
-        corFonte: CoresRadar.de(context).livelo,
         capacidades: const ['Catálogo', 'Pontuação', 'Histórico'],
         termos: 'livelo pontos lojas historico campanhas',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.livelo.estado),
@@ -96,7 +95,6 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Banco Inter',
         descricao: 'Cashback, Sites parceiros e Compre direto',
         tipo: 'Cashback + produtos',
-        corFonte: CoresRadar.de(context).cashback,
         capacidades: const ['Sites parceiros', 'Cashback', 'Compre direto'],
         termos: 'banco inter cashback sites parceiros compre direto produtos',
         estado: _resumo == null
@@ -112,7 +110,6 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         titulo: 'Pichau',
         descricao: 'Catálogo de PCs Gamer com preços e disponibilidade',
         tipo: 'PC Gamer',
-        corFonte: CoresRadar.de(context).pichau,
         capacidades: const ['Catálogo PC Gamer', 'Pix + cartão', 'Estoque'],
         termos: 'pichau pc gamer computadores catalogo preços disponibilidade',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.pichau.estado),
@@ -134,16 +131,16 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
           const CabecalhoSecaoRadar(
-            sobrelinha: 'Catálogo do aplicativo',
-            titulo: 'Serviços',
+            sobrelinha: 'Descubra novas possibilidades',
+            titulo: 'Uma compra. Mais possibilidades.',
             descricao:
-                'Pesquise um serviço e entre para encontrar as lojas disponíveis nele.',
+                'Explore fontes, encontre oportunidades e escolha onde continuar.',
           ),
           const SizedBox(height: 22),
           CampoBuscaRadar(
             chaveCampo: const Key('busca-programas'),
             controlador: _busca,
-            dica: 'Pesquisar serviço',
+            dica: 'Pesquisar fonte',
             aoMudar: (_) => setState(() {}),
             somenteBusca: true,
           ),
@@ -155,7 +152,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
             const SizedBox(height: 14),
             EstadoFalha(
               mensagem:
-                  'Não foi possível carregar os resumos. Os programas continuam disponíveis.',
+                  'Não foi possível carregar os resumos. As fontes continuam disponíveis.',
               voltar: _carregar,
             ),
           ],
@@ -164,7 +161,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
             children: [
               Expanded(
                 child: Text(
-                  'Serviços disponíveis',
+                  'Fontes disponíveis',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -181,7 +178,7 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
           ),
           const SizedBox(height: 12),
           if (visiveis.isEmpty)
-            const EstadoVazio(mensagem: 'Nenhum serviço encontrado.')
+            const EstadoVazio(mensagem: 'Nenhuma fonte encontrada.')
           else
             for (var indice = 0; indice < visiveis.length; indice++) ...[
               _CartaoPrograma(programa: visiveis[indice]),
@@ -199,7 +196,6 @@ class _ProgramaRadar {
     required this.titulo,
     required this.descricao,
     required this.tipo,
-    required this.corFonte,
     required this.capacidades,
     required this.termos,
     required this.estado,
@@ -211,7 +207,6 @@ class _ProgramaRadar {
   final String titulo;
   final String descricao;
   final String tipo;
-  final Color corFonte;
   final List<String> capacidades;
   final String termos;
   final String? estado;
@@ -228,112 +223,81 @@ class _CartaoPrograma extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
+    final icone = switch (programa.titulo) {
+      'Livelo' => Icons.auto_awesome_outlined,
+      'Pichau' => Icons.desktop_windows_outlined,
+      _ => Icons.storefront_outlined,
+    };
     return CartaoRadar(
       aoTocar: programa.aoTocar,
-      padding: EdgeInsets.zero,
-      child: Padding(
-        key: programa.chave,
-        padding: EdgeInsets.all(tokens.spacing.five),
+      padding: EdgeInsets.all(tokens.spacing.five),
+      child: Semantics(
+        button: true,
+        label: 'Abrir ${programa.titulo}: ${programa.descricao}',
         child: Column(
+          key: programa.chave,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  alignment: Alignment.center,
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    color: programa.corFonte,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      topRight: Radius.circular(14),
-                      bottomRight: Radius.circular(14),
-                      bottomLeft: Radius.circular(5),
-                    ),
+                    color: cores.acao.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(tokens.radii.md),
                   ),
+                  child: Padding(
+                    padding: EdgeInsets.all(tokens.spacing.three),
+                    child: Icon(icone, color: cores.acao),
+                  ),
+                ),
+                SizedBox(width: tokens.spacing.three),
+                Expanded(
                   child: Text(
-                    programa.titulo == 'Livelo'
-                        ? 'LI'
-                        : programa.titulo == 'Pichau'
-                        ? 'PI'
-                        : 'BI',
-                    style: TextStyle(
-                      color: cores.marcaTexto,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                    programa.tipo,
+                    textAlign: TextAlign.end,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: cores.textoSuave,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? programa.corFonte.withValues(alpha: 0.18)
-                          : programa.corFonte.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(RaioRadar.pilula),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 6,
-                      ),
-                      child: Text(
-                        programa.tipo,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: programa.corFonte,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                SizedBox(width: tokens.spacing.two),
+                Icon(Icons.arrow_forward, color: cores.acao),
               ],
             ),
-            const SizedBox(height: 15),
+            SizedBox(height: tokens.spacing.five),
             Text(
               programa.titulo,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.8,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: tokens.spacing.two),
             Text(
               programa.descricao,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: cores.textoSuave,
-                height: 1.5,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: tokens.spacing.four),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: tokens.spacing.one,
+              runSpacing: tokens.spacing.one,
               children: [
                 for (final capacidade in programa.capacidades)
                   DecoratedBox(
                     decoration: BoxDecoration(
                       color: cores.superficieAlternativa,
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(tokens.radii.md),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 6,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.two,
+                        vertical: tokens.spacing.one,
                       ),
                       child: Text(
                         capacidade,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: cores.textoSuave,
-                          fontSize: 9,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -342,7 +306,7 @@ class _CartaoPrograma extends StatelessWidget {
               ],
             ),
             if (programa.estado != null) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: tokens.spacing.three),
               Text(
                 '${programa.detalhe} · ${programa.estado}',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -351,25 +315,6 @@ class _CartaoPrograma extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 14),
-            Divider(height: 1, color: cores.borda),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Abrir serviço',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Tokens.acaoForteEscura
-                          : Tokens.actionStrong,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: cores.acao),
-              ],
-            ),
           ],
         ),
       ),

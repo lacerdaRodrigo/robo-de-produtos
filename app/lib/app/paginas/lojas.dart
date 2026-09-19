@@ -385,7 +385,7 @@ class _EstadoHubShoppingInterConteudo extends State<_HubShoppingInter> {
                 _AcessoModalidadeInter(
                   chaveAcao: const Key('abrir-sites-parceiros-inter'),
                   icone: Icons.percent_outlined,
-                  cor: cores.integracaoInter,
+                  cor: cores.acao,
                   titulo: 'Sites parceiros',
                   descricao:
                       'Consulte cashback, acompanhe lojas e abra o destino no Banco Inter.',
@@ -614,46 +614,48 @@ class _AbasModoInter extends StatelessWidget {
   final ValueChanged<int> aoSelecionar;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      border: Border(bottom: BorderSide(color: CoresRadar.de(context).borda)),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: _AbaModoInter(
-            key: const Key('modo-inter-cashback'),
-            rotulo: 'Cashback',
-            contador: totalCashback,
-            selecionada: selecionada == 0,
-            aoTocar: () => aoSelecionar(0),
-          ),
-        ),
-        const SizedBox(width: 18),
-        Expanded(
-          child: _AbaModoInter(
-            key: const Key('modo-inter-compre-direto'),
-            rotulo: 'Compre direto',
-            contador: totalSelecionadas,
-            selecionada: selecionada == 1,
-            aoTocar: () => aoSelecionar(1),
-          ),
-        ),
-      ],
-    ),
+  Widget build(BuildContext context) => Column(
+    children: [
+      _AbaModoInter(
+        key: const Key('modo-inter-cashback'),
+        rotulo: 'Sites parceiros',
+        descricao:
+            'Descubra o cashback das lojas, confira as condições e acompanhe as mudanças.',
+        icone: Icons.storefront_outlined,
+        contador: totalCashback,
+        selecionada: selecionada == 0,
+        aoTocar: () => aoSelecionar(0),
+      ),
+      SizedBox(height: context.tokens.spacing.three),
+      _AbaModoInter(
+        key: const Key('modo-inter-compre-direto'),
+        rotulo: 'Compre direto',
+        descricao:
+            'Encontre produtos, compare preços e consulte o histórico de cada oferta.',
+        icone: Icons.shopping_bag_outlined,
+        contador: totalSelecionadas,
+        selecionada: selecionada == 1,
+        aoTocar: () => aoSelecionar(1),
+      ),
+    ],
   );
 }
 
 class _AbaModoInter extends StatelessWidget {
   const _AbaModoInter({
-    super.key,
+    Key? key,
     required this.rotulo,
+    required this.descricao,
+    required this.icone,
     required this.contador,
     required this.selecionada,
     required this.aoTocar,
-  });
+  }) : _chaveCartao = key;
 
+  final Key? _chaveCartao;
   final String rotulo;
+  final String descricao;
+  final IconData icone;
   final int? contador;
   final bool selecionada;
   final VoidCallback aoTocar;
@@ -661,62 +663,65 @@ class _AbaModoInter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    return Semantics(
-      selected: selecionada,
-      button: true,
-      child: InkWell(
-        onTap: aoTocar,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 46),
-          padding: const EdgeInsets.fromLTRB(4, 0, 4, 11),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                width: 3,
-                color: selecionada ? cores.marca : Colors.transparent,
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  rotulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: selecionada
-                        ? Theme.of(context).colorScheme.onSurface
-                        : cores.textoSuave,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              if (contador != null) ...[
-                const SizedBox(width: 7),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 20),
-                  height: 20,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
+    final contagem = contador == null ? null : '$contador no radar';
+    return CartaoRadar(
+      key: _chaveCartao,
+      aoTocar: aoTocar,
+      padding: EdgeInsets.all(context.tokens.spacing.five),
+      corDestaque: selecionada ? cores.acao : null,
+      child: Semantics(
+        selected: selecionada,
+        button: true,
+        label: '$rotulo. $descricao${contagem == null ? '' : '. $contagem'}',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    color: selecionada
-                        ? cores.superficieAlternativa
-                        : Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    '$contador',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: selecionada ? cores.marca : cores.textoSuave,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
+                    color: cores.acao.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(
+                      context.tokens.radii.md,
                     ),
                   ),
+                  child: Padding(
+                    padding: EdgeInsets.all(context.tokens.spacing.three),
+                    child: Icon(icone, color: cores.acao),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  color: selecionada ? cores.acao : cores.textoSuave,
                 ),
               ],
+            ),
+            SizedBox(height: context.tokens.spacing.four),
+            Text(
+              rotulo,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: context.tokens.spacing.one),
+            Text(
+              descricao,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
+            ),
+            if (contagem != null) ...[
+              SizedBox(height: context.tokens.spacing.three),
+              Text(
+                contagem,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: selecionada ? cores.acao : cores.textoSuave,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -728,10 +733,9 @@ class _CabecalhoBancoInter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const CabecalhoSecaoRadar(
-    sobrelinha: 'Serviço',
-    titulo: 'Banco Inter',
-    descricao:
-        'Consulte cashback ou escolha quais lojas terão produtos coletados.',
+    sobrelinha: 'Escolha a experiência',
+    titulo: 'Como você quer comprar?',
+    descricao: 'Dois caminhos, cada um com seus benefícios.',
   );
 }
 
@@ -1274,24 +1278,15 @@ class _CartaoSiteParceiro extends StatelessWidget {
                   height: 46,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: <Color>[
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.acaoFundoEscuro
-                            : Tokens.acaoFundo,
-                        Theme.of(context).brightness == Brightness.dark
-                            ? Tokens.cianoFundoEscuro
-                            : Tokens.cianoFundo,
-                      ],
+                    color: cores.superficieAlternativa,
+                    borderRadius: BorderRadius.circular(
+                      context.tokens.radii.md,
                     ),
-                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: Text(
                     _iniciais(loja.nome),
                     style: TextStyle(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFDFF8FF)
-                          : Tokens.marca,
+                      color: cores.acao,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1447,7 +1442,7 @@ class _AbaInter extends StatelessWidget {
               ? Theme.of(context).colorScheme.surface
               : Colors.transparent,
           foregroundColor: ativa
-              ? Tokens.marcaClara
+              ? Tokens.action
               : CoresRadar.de(context).textoSuave,
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           shape: RoundedRectangleBorder(
@@ -1776,7 +1771,7 @@ class _ConteudoHubLojas extends StatelessWidget {
           _AcessoFonte(
             key: const Key('abrir-lojas-inter'),
             icone: Icons.shopping_bag_outlined,
-            cor: cores.integracaoInter,
+            cor: cores.acao,
             titulo: 'Shopping Inter',
             descricao:
                 'Entre em Cashback dos Sites parceiros ou Produtos do Compre direto.',

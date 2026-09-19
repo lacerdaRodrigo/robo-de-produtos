@@ -36,7 +36,7 @@ class CartaoProduto extends StatelessWidget {
     return Semantics(
       label: 'Produto ${produto.nome}, da loja ${produto.lojaNome}',
       child: CartaoRadar(
-        corDestaque: cores.produtos,
+        corDestaque: cores.acao,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +217,7 @@ class CartaoProduto extends StatelessWidget {
           'no Banco Inter',
       child: CartaoRadar(
         padding: EdgeInsets.zero,
-        corDestaque: cores.produtos,
+        corDestaque: cores.acao,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -228,7 +228,7 @@ class CartaoProduto extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: brilhoEscuro
                       ? Tokens.ganhoFundoEscuro
-                      : Tokens.positiveSoft,
+                      : Tokens.successSoft,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -327,7 +327,7 @@ class CartaoProduto extends StatelessWidget {
                     children: [
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          color: cores.produtos.withValues(alpha: 0.16),
+                          color: cores.acao.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
@@ -335,7 +335,7 @@ class CartaoProduto extends StatelessWidget {
                           child: Icon(
                             _iconeProduto(produto),
                             size: 19,
-                            color: cores.produtos,
+                            color: cores.acao,
                           ),
                         ),
                       ),
@@ -350,7 +350,7 @@ class CartaoProduto extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: tema.textTheme.labelSmall?.copyWith(
-                                  color: cores.produtos,
+                                  color: cores.acao,
                                   fontSize: 8,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: .2,
@@ -386,7 +386,7 @@ class CartaoProduto extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: brilhoEscuro
                                 ? Tokens.ganhoFundoEscuro
-                                : Tokens.positiveSoft,
+                                : Tokens.successSoft,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Padding(
@@ -576,13 +576,13 @@ class _MonogramaLoja extends StatelessWidget {
       height: 29,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: cores.produtos.withValues(alpha: 0.16),
+        color: cores.acao.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text(
         iniciais,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: cores.produtos,
+          color: cores.acao,
           fontSize: 9,
           fontWeight: FontWeight.w900,
         ),

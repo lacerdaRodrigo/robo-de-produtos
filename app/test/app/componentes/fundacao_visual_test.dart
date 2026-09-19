@@ -82,7 +82,7 @@ void main() {
     );
   }
 
-  testWidgets('folha mobile Delta bloqueia e desfoca o conteúdo ao fundo', (
+  testWidgets('folha mobile V15 bloqueia e desfoca o conteúdo ao fundo', (
     at,
   ) async {
     await at.pumpWidget(

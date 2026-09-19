@@ -1302,7 +1302,7 @@ class _CartaoAtalhoBusca extends StatelessWidget {
         height: 67,
         child: Material(
           color: ativo
-              ? (escuro ? Tokens.cianoFundoEscuro : Tokens.plumSoft)
+              ? (escuro ? Tokens.ganhoFundoEscuro : Tokens.paperSoft)
               : tema.colorScheme.surface,
           elevation: 1,
           shadowColor: SombraRadar.para(tema.brightness).color,
@@ -1323,7 +1323,9 @@ class _CartaoAtalhoBusca extends StatelessWidget {
                     height: 28,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: escuro ? Tokens.cianoFundoEscuro : Tokens.plumSoft,
+                      color: escuro
+                          ? Tokens.ganhoFundoEscuro
+                          : Tokens.paperSoft,
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Icon(atalho.icone, size: 15, color: cores.marca),
@@ -1938,7 +1940,7 @@ class _BuscaProdutosCompacta extends StatelessWidget {
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: escuro ? Tokens.superficieForteEscura : Tokens.plum,
+          color: escuro ? Tokens.superficieForteEscura : Tokens.ink,
           border: Border.all(color: cores.marca.withValues(alpha: .3)),
         ),
         child: Stack(

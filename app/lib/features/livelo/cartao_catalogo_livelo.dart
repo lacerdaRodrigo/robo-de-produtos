@@ -43,7 +43,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               foregroundColor: CoresRadar.de(context).ganho,
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? Tokens.ganhoFundoEscuro
-                  : Tokens.positiveSoft,
+                  : Tokens.successSoft,
               side: BorderSide(
                 color: CoresRadar.de(context).ganho.withValues(alpha: 0.3),
               ),
@@ -79,7 +79,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
         key: Key('cartao-livelo-${parceiro.idExterno}'),
-        corDestaque: cores.livelo,
+        corDestaque: cores.acao,
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,13 +372,13 @@ class _Iniciais extends StatelessWidget {
       height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: cores.livelo.withValues(alpha: 0.16),
+        color: cores.acao.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Text(
         iniciais.isEmpty ? '•' : iniciais,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: cores.livelo,
+          color: cores.acao,
           fontWeight: FontWeight.w900,
         ),
       ),

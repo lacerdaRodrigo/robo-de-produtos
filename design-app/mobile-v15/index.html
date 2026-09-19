@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#b6421e" />
+    <title>Radar · Mobile V15</title>
+    <link rel="icon" href="assets/brand/app-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <script defer src="js/data.js"></script>
+    <script defer src="js/core.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/app.js"></script>
+  </head>
+  <body>
+    <header class="studio-bar">
+      <a class="studio-logo" href="index.html"
+        ><img src="assets/brand/symbol.svg" alt="" width="28" height="28" />
+        radar<span>design mobile / 15</span></a
+      ><a href="identidade.html" class="studio-link"
+        >Identidade & movimento ↗</a
+      >
+    </header>
+    <main class="workspace">
+      <aside class="studio-panel">
+        <p class="studio-eyebrow">ESTÚDIO DE EXPERIÊNCIA</p>
+        <h1>Boas escolhas.<br />À vista.</h1>
+        <p class="studio-copy">Um radar para preços,<br />cashback e pontos.</p>
+        <label class="studio-field"
+          >Explorar tela<select id="review-route"></select
+        ></label>
+        <div class="studio-caption">
+          Navegue também pelos botões no celular.
+        </div>
+        <div class="studio-divider"></div>
+        <p class="studio-eyebrow">APARÊNCIA</p>
+        <div class="studio-segments" id="review-theme">
+          <button data-theme="light">Claro</button
+          ><button data-theme="dark">Escuro</button
+          ><button data-theme="system">Sistema</button>
+        </div>
+        <label class="studio-field"
+          >Largura<select id="review-width">
+            <option value="390">390 px · celular</option>
+            <option value="320">320 px · compacto</option>
+            <option value="430">430 px · grande</option>
+          </select></label
+        ><label class="studio-field"
+          >Texto<select id="review-scale">
+            <option value="1">100%</option>
+            <option value="1.3">130%</option>
+            <option value="2">200%</option>
+          </select></label
+        ><button class="studio-button" id="replay">↻ Repetir abertura</button>
+      </aside>
+      <section class="stage" aria-label="Protótipo mobile">
+        <div id="device" class="device" data-theme="light">
+          <div class="status-bar" aria-hidden="true">
+            <span>9:41</span><span class="status-signal">▮▮▮ &nbsp; ▰</span>
+          </div>
+          <div id="app-content"></div>
+          <nav id="bottom-nav" aria-label="Navegação principal"></nav>
+          <div class="home-indicator" aria-hidden="true"></div>
+          <div id="overlay"></div>
+          <div id="toast" role="status" aria-live="polite"></div>
+        </div>
+        <p class="stage-caption">
+          PROTÓTIPO INTERATIVO <span>•</span> DADOS ILUSTRATIVOS
+        </p>
+      </section>
+      <aside class="studio-panel studio-panel--right">
+        <p class="studio-eyebrow">LABORATÓRIO</p>
+        <label class="studio-field"
+          >Estado da consulta<select id="review-state">
+            <option value="normal">Conteúdo</option>
+            <option value="loading">Carregando</option>
+            <option value="refreshing">Atualizando</option>
+            <option value="empty">Vazio</option>
+            <option value="no-results">Sem resultado</option>
+            <option value="offline">Offline com dados</option>
+            <option value="stale">Atrasado</option>
+            <option value="partial">Parcial</option>
+            <option value="error">Erro com dados</option>
+            <option value="error-empty">Erro sem dados</option>
+            <option value="expired">Sessão expirada</option>
+          </select></label
+        ><label class="studio-field"
+          >Perfil da demonstração<select id="review-role">
+            <option value="user">Usuário</option>
+            <option value="admin">Administrador</option>
+          </select></label
+        ><label class="studio-check"
+          ><input type="checkbox" id="review-motion" /> Reduzir movimento</label
+        ><label class="studio-check"
+          ><input type="checkbox" id="review-rtl" /> Layout RTL</label
+        >
+        <div class="studio-divider"></div>
+        <p class="studio-eyebrow">SUA SESSÃO LOCAL</p>
+        <p class="studio-copy small">
+          Acompanhamentos, tema, filtros, leitura e preferências ficam salvos
+          neste navegador.
+        </p>
+        <button class="studio-button" id="reset-demo">
+          Restaurar demonstração
+        </button>
+        <p class="studio-caption">
+          Login de demonstração:<br /><strong>demo@radar.app</strong><br />senha
+          <strong>radar123</strong><br />Recuperação e suporte são simulações
+          locais. Use apenas os dados de teste.
+        </p>
+        <a href="README.md" class="studio-link">Guia de uso ↗</a>
+      </aside>
+    </main>
+    <div id="announcer" class="sr-only" aria-live="polite"></div>
+  </body>
+</html>

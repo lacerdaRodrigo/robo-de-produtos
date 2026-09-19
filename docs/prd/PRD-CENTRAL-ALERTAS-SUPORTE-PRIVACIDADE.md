@@ -9,7 +9,7 @@ Android.
 
 ## Objetivo
 
-Oferecer no aplicativo Flutter mobile V12 Delta uma Central autenticada para mudanças válidas
+Oferecer no aplicativo Flutter mobile V15 uma Central autenticada para mudanças válidas
 em itens acompanhados, com histórico de 90 dias, filtros, leitura individual ou
 em massa, preferências de push, Ajuda, Reportar problema e Privacidade. O cliente
 continua consumindo somente a API; Livelo, Cashback Inter, Produtos Inter e
@@ -100,14 +100,15 @@ estado de salvamento/rollback do botão textual. Nenhum desses controles deve se
 interpretado como preferência de push por si só; as seleções administrativas
 globais continuam separadas e protegidas por autorização.
 
-## Flutter mobile V12 Delta
+## Flutter mobile V15
 
 `PaginaAlertas` substitui a folha placeholder e preserva filtro, página e coleta
 recebida por deep link de push. A tela cobre loading, vazio, erro, parcial,
 offline, lidos/não lidos, paginação e preferências. No mobile compacto, o
 perfil substitui a antiga gaveta: oferece Central, Ajuda, Reportar problema,
-Privacidade, aparência, Administração e saída. Resumo e Serviços continuam
-exclusivos da barra inferior. Produtos Inter exibe a ação pessoal `Acompanhar`,
+Privacidade, aparência, Administração e saída. A barra inferior mantém os quatro
+destinos Início, Explorar, Meu radar e Perfil. Livelo, Banco Inter e Pichau são
+subáreas de Explorar. Produtos Inter exibe a ação pessoal `Acompanhar`,
 sem alterar a seleção global de lojas.
 
 Após o primeiro login, FCM solicita permissão. Recusar ou indisponibilidade do

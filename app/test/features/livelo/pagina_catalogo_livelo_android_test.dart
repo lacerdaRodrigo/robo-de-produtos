@@ -304,8 +304,13 @@ void main() {
     expect(find.text('Monitoramento da coleta'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Marketplace'), findsNothing);
-    expect(find.widgetWithText(TextField, 'Buscar loja'), findsOneWidget);
-    final busca = at.getTopLeft(find.widgetWithText(TextField, 'Buscar loja'));
+    expect(
+      find.widgetWithText(TextField, 'Qual loja você procura?'),
+      findsOneWidget,
+    );
+    final busca = at.getTopLeft(
+      find.widgetWithText(TextField, 'Qual loja você procura?'),
+    );
     final abas = at.getTopLeft(find.text('Todas'));
     expect(busca.dy, lessThan(abas.dy));
     await at.drag(
@@ -383,7 +388,10 @@ void main() {
       find.textContaining('Exibindo a última coleta válida.'),
       findsNothing,
     );
-    expect(find.widgetWithText(TextField, 'Buscar loja'), findsOneWidget);
+    expect(
+      find.widgetWithText(TextField, 'Qual loja você procura?'),
+      findsOneWidget,
+    );
     expect(find.textContaining('RN29'), findsNothing);
   });
 

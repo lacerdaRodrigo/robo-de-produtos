@@ -142,7 +142,7 @@ class _EstadoSeletorCategoriasSheet<T>
           child: Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              color: escuro ? Tokens.cianoFundoEscuro : Tokens.plumSoft,
+              color: escuro ? Tokens.ganhoFundoEscuro : Tokens.paperSoft,
               borderRadius: BorderRadius.circular(13),
             ),
             child: Text(

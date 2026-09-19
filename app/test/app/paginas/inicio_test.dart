@@ -95,9 +95,7 @@ Future<void> abrir(
   addTearDown(at.view.resetPhysicalSize);
   await at.pumpWidget(
     MaterialApp(
-      theme: tamanho.width >= 920
-          ? TemaRadar.legadoClaroComCores()
-          : TemaRadar.claro(),
+      theme: tamanho.width >= 920 ? TemaRadar.claro() : TemaRadar.claro(),
       home: Scaffold(
         body: PaginaInicio(
           api: api,
@@ -255,7 +253,7 @@ void main() {
     expect(chamadas, 2);
   });
 
-  testWidgets('Resumo compacto reproduz a hierarquia Delta com dados reais', (
+  testWidgets('Resumo compacto reproduz a hierarquia V15 com dados reais', (
     at,
   ) async {
     final api = apiQueResponde(
@@ -264,10 +262,10 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Última diferença encontrada'), findsOneWidget);
+    expect(find.text('Último sinal do seu radar'), findsOneWidget);
     expect(find.text('Tudo atualizado'), findsNothing);
     expect(find.text('Atualizado com avisos'), findsNothing);
-    expect(find.text('Seus serviços'), findsOneWidget);
+    expect(find.text('Explore as origens'), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-inter')), findsOneWidget);
     expect(find.byKey(const Key('resumo-servico-pichau')), findsOneWidget);
@@ -286,7 +284,7 @@ void main() {
     expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
   });
 
-  testWidgets('card Pichau abre sua subárea de Serviços', (at) async {
+  testWidgets('card Pichau abre sua subárea de Explorar', (at) async {
     var abriu = false;
     final api = apiQueResponde(
       (_) async => http.Response(jsonEncode(resumo()), 200),
@@ -297,13 +295,9 @@ void main() {
       find.byKey(const Key('resumo-servico-pichau')),
       300,
     );
-    await at.drag(
-      find.byKey(const Key('resumo-inicio')),
-      const Offset(0, -180),
-    );
     await at.pumpAndSettle();
     await at.tap(
-      find.ancestor(
+      find.descendant(
         of: find.byKey(const Key('resumo-servico-pichau')),
         matching: find.byType(InkWell),
       ),

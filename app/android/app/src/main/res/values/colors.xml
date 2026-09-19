@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="radar_fundo_abertura">#081A2D</color>
+    <color name="radar_fundo_abertura">#F6F4F0</color>
+    <color name="radar_fundo_icone">#BF4822</color>
 </resources>

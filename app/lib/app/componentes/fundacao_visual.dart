@@ -86,7 +86,7 @@ class CabecalhoSecaoRadar extends StatelessWidget {
           Text(
             sobrelinha!.toUpperCase(),
             style: tema.textTheme.labelSmall?.copyWith(
-              color: cores.teal,
+              color: cores.acao,
               fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -147,13 +147,9 @@ class CartaoRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     final forma = RoundedRectangleBorder(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(20),
-        topRight: Radius.circular(20),
-        bottomRight: Radius.circular(20),
-        bottomLeft: Radius.circular(7),
-      ),
+      borderRadius: BorderRadius.circular(tokens.radii.lg),
       side: BorderSide(color: cores.borda),
     );
     final conteudo = corDestaque == null
@@ -234,7 +230,7 @@ class IndicadorEstadoRadar extends StatelessWidget {
 
 /// Campo de busca do novo mobile, sem acoplar debounce ou consulta ao visual.
 ///
-/// Por padrão, reproduz o campo de busca Delta com ação coral de avanço. Use
+/// Por padrão, reproduz o campo de busca V15 com ação de avanço. Use
 /// [somenteBusca] nos catálogos que filtram enquanto a pessoa digita e não
 /// possuem uma ação separada no campo.
 class CampoBuscaRadar extends StatelessWidget {
@@ -268,7 +264,7 @@ class CampoBuscaRadar extends StatelessWidget {
     final brilho = Theme.of(context).brightness;
     final sufixo = acao != null
         ? Padding(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(tokens.spacing.one),
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: cores.superficieAlternativa,
@@ -280,13 +276,16 @@ class CampoBuscaRadar extends StatelessWidget {
         : somenteBusca
         ? null
         : Padding(
-            padding: const EdgeInsets.all(6),
+            padding: EdgeInsets.all(tokens.spacing.one),
             child: IconButton(
               tooltip: 'Pesquisar',
               onPressed: aoAcionar ?? () => aoMudar(controlador.text),
               icon: const Icon(Icons.chevron_right_rounded, size: 24),
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 38, height: 38),
+              constraints: BoxConstraints.tightFor(
+                width: tokens.sizes.touchTarget,
+                height: tokens.sizes.touchTarget,
+              ),
               style: IconButton.styleFrom(
                 backgroundColor: cores.acao,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -316,25 +315,25 @@ class CampoBuscaRadar extends StatelessWidget {
               }
             : null,
         textInputAction: TextInputAction.search,
-        style: TextStyle(
-          fontSize: 16,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+        style: Theme.of(context).textTheme.bodyLarge,
         decoration: InputDecoration(
           hintText: dica,
           prefixIcon: const Icon(Icons.search, size: 22),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 47,
-            minHeight: 52,
+          prefixIconConstraints: BoxConstraints(
+            minWidth: tokens.sizes.field,
+            minHeight: tokens.sizes.field,
           ),
           suffixIcon: sufixo,
           suffixIconConstraints: sufixo == null
               ? null
-              : const BoxConstraints(minWidth: 50, minHeight: 52),
+              : BoxConstraints(
+                  minWidth: tokens.sizes.field,
+                  minHeight: tokens.sizes.field,
+                ),
           filled: true,
           fillColor: Theme.of(context).cardColor,
-          constraints: const BoxConstraints(minHeight: 52),
-          contentPadding: const EdgeInsets.only(right: 8),
+          constraints: BoxConstraints(minHeight: tokens.sizes.field),
+          contentPadding: EdgeInsetsDirectional.only(end: tokens.spacing.two),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(tokens.radii.lg),
             borderSide: BorderSide(color: cores.borda),
@@ -375,35 +374,36 @@ class AbasRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: cores.superficieAlternativa,
         border: Border.all(color: cores.borda),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(tokens.radii.lg),
       ),
       child: expandir
           ? Padding(
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(tokens.spacing.one),
               child: Row(
                 children: [
                   for (var indice = 0; indice < rotulos.length; indice++) ...[
-                    if (indice > 0) const SizedBox(width: 4),
+                    if (indice > 0) SizedBox(width: tokens.spacing.one),
                     Expanded(child: _construirAba(indice)),
                   ],
                 ],
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(tokens.spacing.one),
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   for (var indice = 0; indice < rotulos.length; indice++) ...[
-                    if (indice > 0) const SizedBox(width: 4),
+                    if (indice > 0) SizedBox(width: tokens.spacing.one),
                     _construirAba(indice),
                   ],
                   if (acao != null) ...[
-                    if (rotulos.isNotEmpty) const SizedBox(width: 4),
+                    if (rotulos.isNotEmpty) SizedBox(width: tokens.spacing.one),
                     acao!,
                   ],
                 ],
@@ -441,20 +441,23 @@ class _AbaRadar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return Material(
       color: selecionada ? cores.superficie : Colors.transparent,
-      borderRadius: BorderRadius.circular(13),
+      borderRadius: BorderRadius.circular(tokens.radii.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(tokens.radii.md),
         onTap: aoTocar,
         child: Semantics(
           selected: selecionada,
           button: true,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44),
+            constraints: BoxConstraints(minHeight: tokens.sizes.touchTarget),
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: larguraFlexivel ? 7 : 12,
+                horizontal: larguraFlexivel
+                    ? tokens.spacing.two
+                    : tokens.spacing.three,
               ),
               child: Row(
                 mainAxisSize: larguraFlexivel
@@ -488,10 +491,16 @@ class _AbaRadar extends StatelessWidget {
                       ),
                     ),
                   if (contador != null) ...[
-                    SizedBox(width: larguraFlexivel ? 4 : 7),
+                    SizedBox(
+                      width: larguraFlexivel
+                          ? tokens.spacing.one
+                          : tokens.spacing.two,
+                    ),
                     Container(
-                      constraints: const BoxConstraints(minWidth: 21),
-                      height: 21,
+                      constraints: BoxConstraints(
+                        minWidth: tokens.spacing.four,
+                      ),
+                      height: tokens.spacing.four,
                       alignment: Alignment.center,
                       padding: EdgeInsets.symmetric(
                         horizontal: larguraFlexivel ? 4 : 6,
@@ -500,13 +509,12 @@ class _AbaRadar extends StatelessWidget {
                         color: selecionada
                             ? cores.teal.withValues(alpha: 0.14)
                             : Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(tokens.radii.pill),
                       ),
                       child: Text(
                         '$contador',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: selecionada ? cores.texto : cores.textoSuave,
-                          fontSize: 9,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -543,32 +551,38 @@ class FolhaRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 8, 17, 21),
+        padding: EdgeInsets.fromLTRB(
+          tokens.spacing.four,
+          tokens.spacing.two,
+          tokens.spacing.four,
+          tokens.spacing.five,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Align(
               child: Container(
-                width: 42,
-                height: 5,
+                width: tokens.sizes.sheetHandleWidth,
+                height: tokens.sizes.sheetHandleHeight,
                 decoration: BoxDecoration(
                   color: cores.borda,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(tokens.radii.pill),
                 ),
               ),
             ),
-            const SizedBox(height: 17),
+            SizedBox(height: tokens.spacing.four),
             ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 42),
+              constraints: BoxConstraints(minHeight: tokens.sizes.touchTarget),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 42,
+                    width: tokens.sizes.touchTarget,
                     child: mostrarVoltar
                         ? IconButton(
                             key: const Key('voltar-folha-radar'),
@@ -589,13 +603,9 @@ class FolhaRadar extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: tema.textTheme.titleLarge?.copyWith(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.7,
-                          ),
+                          style: tema.textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: tokens.spacing.one),
                         Text(
                           descricao,
                           maxLines: 1,
@@ -603,27 +613,26 @@ class FolhaRadar extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: tema.textTheme.bodySmall?.copyWith(
                             color: CoresRadar.de(context).textoSuave,
-                            fontSize: 10,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 11),
+                  SizedBox(width: tokens.spacing.three),
                   IconButton(
                     key: const Key('fechar-folha-radar'),
                     tooltip: 'Fechar painel',
                     onPressed: () => Navigator.maybePop(context),
                     style: IconButton.styleFrom(
-                      minimumSize: const Size.square(42),
-                      maximumSize: const Size.square(42),
+                      minimumSize: Size.square(tokens.sizes.touchTarget),
+                      maximumSize: Size.square(tokens.sizes.touchTarget),
                       padding: EdgeInsets.zero,
                       backgroundColor: CoresRadar.de(
                         context,
                       ).superficieAlternativa,
                       side: BorderSide(color: CoresRadar.de(context).borda),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(tokens.radii.md),
                       ),
                     ),
                     icon: const Icon(Icons.close),
@@ -631,7 +640,7 @@ class FolhaRadar extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: tokens.spacing.three),
             child,
           ],
         ),
@@ -640,7 +649,7 @@ class FolhaRadar extends StatelessWidget {
   }
 }
 
-/// Navegação paginada Delta para catálogos de cards.
+/// Navegação paginada V15 para catálogos de cards.
 ///
 /// Os controles só aparecem quando há mais itens do que a página comporta;
 /// portanto, 9 ou 10 resultados não exibem uma paginação vazia.
@@ -671,6 +680,7 @@ class PaginacaoRadar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (totalItens <= porPagina) return const SizedBox.shrink();
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     final totalPaginas = _totalPaginas;
     final paginas = _paginasVisiveis(totalPaginas);
     final proxima = pagina < totalPaginas ? pagina + 1 : pagina;
@@ -690,20 +700,23 @@ class PaginacaoRadar extends StatelessWidget {
                   icone: Icons.chevron_left_rounded,
                   aoTocar: () => aoIrParaPagina(pagina - 1),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: tokens.spacing.two),
               ],
               for (var indice = 0; indice < paginas.length; indice++) ...[
                 if (paginas[indice] == null)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: tokens.spacing.one / 2,
+                    ),
                     child: Text('…'),
                   )
                 else
                   _botaoPagina(context, paginas[indice]!, cores),
-                if (indice != paginas.length - 1) const SizedBox(width: 8),
+                if (indice != paginas.length - 1)
+                  SizedBox(width: tokens.spacing.two),
               ],
               if (pagina < totalPaginas) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: tokens.spacing.two),
                 _botaoIcone(
                   contexto: context,
                   tooltip: erro == null
@@ -716,10 +729,10 @@ class PaginacaoRadar extends StatelessWidget {
                 ),
               ],
               if (carregando) ...[
-                const SizedBox(width: 10),
-                const SizedBox(
-                  width: 20,
-                  height: 20,
+                SizedBox(width: tokens.spacing.three),
+                SizedBox(
+                  width: tokens.spacing.four,
+                  height: tokens.spacing.four,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ],
@@ -757,13 +770,14 @@ class PaginacaoRadar extends StatelessWidget {
 
   Widget _botaoPagina(BuildContext context, int destino, CoresRadar cores) {
     final ativa = destino == pagina;
+    final tokens = context.tokens;
     return Semantics(
       button: true,
       selected: ativa,
       label: 'Página $destino',
       child: SizedBox(
-        width: 40,
-        height: 40,
+        width: tokens.sizes.touchTarget,
+        height: tokens.sizes.touchTarget,
         child: TextButton(
           key: Key('paginacao-radar-$destino'),
           onPressed: ativa || carregando ? null : () => aoIrParaPagina(destino),
@@ -778,7 +792,7 @@ class PaginacaoRadar extends StatelessWidget {
             backgroundColor: ativa ? cores.marca : Theme.of(context).cardColor,
             side: BorderSide(color: ativa ? cores.marca : cores.borda),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(tokens.radii.md),
             ),
           ),
           child: Text(
@@ -796,8 +810,8 @@ class PaginacaoRadar extends StatelessWidget {
     required IconData icone,
     required VoidCallback aoTocar,
   }) => SizedBox(
-    width: 40,
-    height: 40,
+    width: contexto.tokens.sizes.touchTarget,
+    height: contexto.tokens.sizes.touchTarget,
     child: IconButton(
       tooltip: tooltip,
       onPressed: carregando ? null : aoTocar,
@@ -806,7 +820,9 @@ class PaginacaoRadar extends StatelessWidget {
         backgroundColor: Theme.of(contexto).cardColor,
         foregroundColor: CoresRadar.de(contexto).textoSuave,
         side: BorderSide(color: CoresRadar.de(contexto).borda),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(contexto.tokens.radii.md),
+        ),
       ),
     ),
   );
@@ -822,7 +838,7 @@ Future<void> rolarParaInicioPaginaRadar(ScrollController rolagem) async {
   );
 }
 
-/// Abre uma folha inferior mobile Delta com fundo bloqueado e desfocado.
+/// Abre uma folha inferior mobile V15 com fundo bloqueado e desfocado.
 ///
 /// O conteúdo deve usar [FolhaRadar] para compartilhar o cabeçalho, o
 /// puxador, a tipografia e as ações. O retorno tem a mesma semântica de um
