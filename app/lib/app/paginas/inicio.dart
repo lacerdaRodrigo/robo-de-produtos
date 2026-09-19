@@ -22,6 +22,7 @@ class PaginaInicio extends StatefulWidget {
     this.aoAbrirCashback,
     this.aoAbrirPichau,
     this.aoAbrirAlertas,
+    this.aoAbrirRadar,
     this.agora,
     this.experienciaCompacta = false,
     this.ativa = true,
@@ -35,6 +36,7 @@ class PaginaInicio extends StatefulWidget {
   final VoidCallback? aoAbrirCashback;
   final VoidCallback? aoAbrirPichau;
   final VoidCallback? aoAbrirAlertas;
+  final VoidCallback? aoAbrirRadar;
   final DateTime Function()? agora;
   final bool experienciaCompacta;
   final bool ativa;
@@ -143,13 +145,22 @@ class _PaginaInicioState extends State<PaginaInicio>
                   : const EdgeInsets.fromLTRB(20, 24, 20, 44),
               sliver: SliverList.list(
                 children: [
-                  if (widget.experienciaCompacta)
+                  if (widget.experienciaCompacta) ...[
+                    CabecalhoMarcaRadar(
+                      acao: IconButton(
+                        key: const Key('abrir-alertas-cabecalho'),
+                        tooltip: 'Abrir alertas',
+                        onPressed: widget.aoAbrirAlertas,
+                        icon: const Icon(Icons.notifications_none),
+                      ),
+                    ),
+                    SizedBox(height: context.tokens.spacing.five),
                     _HeroResumoCompacto(
                       resumo: resumo,
                       aoAbrirProdutos: widget.aoAbrirProdutos,
                       aoAbrirAlertas: widget.aoAbrirAlertas,
-                    )
-                  else
+                    ),
+                  ] else
                     _CabecalhoResumo(
                       resumo: resumo,
                       carregando: _carregando,
@@ -174,16 +185,16 @@ class _PaginaInicioState extends State<PaginaInicio>
                             ),
                     ),
                     const SizedBox(height: 12),
-                    _ServicosResumoCompacto(
+                    _TrilhoOrigensCompacto(
                       resumo: resumo,
                       aoAbrirLivelo: widget.aoAbrirLivelo,
                       aoAbrirInter: widget.aoAbrirCashback,
                       aoAbrirPichau: widget.aoAbrirPichau,
                     ),
                     const SizedBox(height: 12),
-                    _AcoesRapidasResumo(
-                      aoAbrirProdutos: widget.aoAbrirProdutos,
-                      aoAbrirServicos: widget.aoAbrirProgramas,
+                    _ColecaoRadarCompacta(
+                      total: _totalAcompanhamentos(resumo),
+                      aoAbrir: widget.aoAbrirRadar,
                     ),
                   ] else ...[
                     const SizedBox(height: 20),
@@ -305,12 +316,13 @@ class _HeroResumoCompacto extends StatelessWidget {
     final atividade = resumo.atividadeRecente.isEmpty
         ? null
         : resumo.atividadeRecente.first;
-    final origem = atividade == null
-        ? 'Retrato das fontes'
-        : _nomeDominio(atividade.dominio);
+    final origem = atividade == null ? null : _nomeDominio(atividade.dominio);
     final leitura = atividade == null
-        ? 'Ainda não há uma diferença recente registrada pela API.'
+        ? 'Nenhuma atividade recente foi fornecida pela API.'
         : 'Estado ${atividade.estado} · ${_dataHora(atividade.momento)}';
+    final acaoPrincipal = atividade?.dominio == 'produtos'
+        ? aoAbrirProdutos
+        : aoAbrirAlertas;
     final cartao = DecoratedBox(
       decoration: BoxDecoration(
         color: tema.brightness == Brightness.dark
@@ -324,16 +336,18 @@ class _HeroResumoCompacto extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'SEU RADAR, SEU RITMO',
+              atividade == null ? 'SEU RADAR, SEU RITMO' : 'SINAL DO SEU RADAR',
               style: tema.textTheme.labelSmall?.copyWith(
-                color: cores.acao,
+                color: tema.brightness == Brightness.dark
+                    ? cores.acao
+                    : Tokens.actionStrong,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.1,
               ),
             ),
             SizedBox(height: tokens.spacing.two),
             Text(
-              'Último sinal do seu radar',
+              origem ?? 'Seu radar está em dia',
               style: tema.textTheme.titleLarge?.copyWith(
                 color: cores.texto,
                 fontWeight: FontWeight.w900,
@@ -341,7 +355,7 @@ class _HeroResumoCompacto extends StatelessWidget {
             ),
             SizedBox(height: tokens.spacing.two),
             Text(
-              '$origem · $leitura',
+              leitura,
               style: tema.textTheme.bodyMedium?.copyWith(
                 color: cores.textoSuave,
                 height: 1.4,
@@ -354,9 +368,9 @@ class _HeroResumoCompacto extends StatelessWidget {
               children: [
                 _SinalResumo(
                   texto: atividade == null
-                      ? 'Sem alteração nova'
-                      : 'Diferença confirmada',
-                  cor: cores.acao,
+                      ? 'Tudo lido por enquanto'
+                      : _rotuloEstado(EstadoResumo.parse(atividade.estado)),
+                  cor: atividade == null ? cores.ganho : cores.acao,
                 ),
                 Text(
                   _dataHora(resumo.geradoEm),
@@ -367,12 +381,23 @@ class _HeroResumoCompacto extends StatelessWidget {
               ],
             ),
             SizedBox(height: tokens.spacing.three),
-            _AcoesRapidasResumo(
-              aoAbrirProdutos: aoAbrirProdutos,
-              aoAbrirAlertas: aoAbrirAlertas,
-              aoAbrirServicos: null,
-              escuro: true,
-            ),
+            if (acaoPrincipal != null)
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: acaoPrincipal,
+                  icon: Icon(
+                    atividade?.dominio == 'produtos'
+                        ? Icons.search
+                        : Icons.notifications_none,
+                  ),
+                  label: Text(
+                    atividade?.dominio == 'produtos'
+                        ? 'Comparar produtos'
+                        : 'Ver alertas',
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -381,7 +406,16 @@ class _HeroResumoCompacto extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Boas escolhas começam aqui.',
+          'SEU RADAR, SEU RITMO',
+          style: tema.textTheme.labelSmall?.copyWith(
+            color: cores.acao,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
+        SizedBox(height: tokens.spacing.two),
+        Text(
+          'Boas escolhas\ncomeçam aqui.',
           style: tema.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             height: 1.1,
@@ -389,12 +423,186 @@ class _HeroResumoCompacto extends StatelessWidget {
         ),
         SizedBox(height: tokens.spacing.one),
         Text(
-          'Preços, cashback e pontos em um só radar.',
+          resumo.estadoGeral == EstadoResumo.atualizando ||
+                  resumo.produtos.estado == EstadoResumo.atualizando ||
+                  resumo.cashbackInter.estado == EstadoResumo.atualizando
+              ? 'Atualizando'
+              : resumo.atividadeRecente.isEmpty
+              ? 'Tudo lido por enquanto'
+              : '${resumo.atividadeRecente.length} mudanças para conferir',
           style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
         ),
         SizedBox(height: tokens.spacing.five),
         cartao,
       ],
+    );
+  }
+}
+
+int _totalAcompanhamentos(ResumoInicio resumo) =>
+    resumo.livelo.lojasAcompanhadas +
+    resumo.cashbackInter.lojasAcompanhadas +
+    resumo.pichau.acompanhadas;
+
+class _TrilhoOrigensCompacto extends StatelessWidget {
+  const _TrilhoOrigensCompacto({
+    required this.resumo,
+    required this.aoAbrirLivelo,
+    required this.aoAbrirInter,
+    required this.aoAbrirPichau,
+  });
+
+  final ResumoInicio resumo;
+  final VoidCallback? aoAbrirLivelo;
+  final VoidCallback? aoAbrirInter;
+  final VoidCallback? aoAbrirPichau;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final itens =
+        <
+          ({
+            String chave,
+            String titulo,
+            String descricao,
+            IconData icone,
+            VoidCallback? acao,
+          })
+        >[
+          (
+            chave: 'origem-inter',
+            titulo: 'Banco Inter',
+            descricao: '${resumo.cashbackInter.lojasAcompanhadas} lojas',
+            icone: Icons.storefront_outlined,
+            acao: aoAbrirInter,
+          ),
+          (
+            chave: 'origem-livelo',
+            titulo: 'Livelo',
+            descricao: '${resumo.livelo.lojasAcompanhadas} lojas',
+            icone: Icons.auto_awesome_outlined,
+            acao: aoAbrirLivelo,
+          ),
+          (
+            chave: 'origem-pichau',
+            titulo: 'Pichau',
+            descricao: '${resumo.pichau.produtosAtivos} produtos',
+            icone: Icons.desktop_windows_outlined,
+            acao: aoAbrirPichau,
+          ),
+        ];
+    return SizedBox(
+      height: tokens.sizes.compactRailHeight,
+      child: ListView.separated(
+        key: const Key('trilho-origens'),
+        scrollDirection: Axis.horizontal,
+        itemCount: itens.length,
+        separatorBuilder: (_, _) => SizedBox(width: tokens.spacing.three),
+        itemBuilder: (context, indice) {
+          final item = itens[indice];
+          return SizedBox(
+            width: tokens.sizes.compactRailWidth,
+            child: CartaoRadar(
+              key: Key(item.chave),
+              aoTocar: item.acao,
+              padding: EdgeInsets.all(tokens.spacing.three),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(item.icone, color: CoresRadar.de(context).acao),
+                  const Spacer(),
+                  Text(
+                    item.titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    item.descricao,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CoresRadar.de(context).textoSuave,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ColecaoRadarCompacta extends StatelessWidget {
+  const _ColecaoRadarCompacta({required this.total, required this.aoAbrir});
+
+  final int total;
+  final VoidCallback? aoAbrir;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final tema = Theme.of(context);
+    return InkWell(
+      onTap: aoAbrir,
+      borderRadius: BorderRadius.circular(tokens.radii.md),
+      child: LayoutBuilder(
+        builder: (context, limites) {
+          final estreito =
+              limites.maxWidth < 340 ||
+              MediaQuery.textScalerOf(context).scale(12) > 16;
+          final resumo = Row(
+            children: [
+              Text(
+                '$total',
+                style: tema.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              SizedBox(width: tokens.spacing.two),
+              Expanded(
+                child: Text(
+                  total == 1 ? 'item no seu radar' : 'itens no seu radar',
+                  style: tema.textTheme.bodyMedium?.copyWith(
+                    color: CoresRadar.de(context).textoSuave,
+                  ),
+                ),
+              ),
+            ],
+          );
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: tokens.spacing.four),
+            child: estreito
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      resumo,
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton(
+                          onPressed: aoAbrir,
+                          child: const Text('Ver lista'),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(child: resumo),
+                      TextButton(
+                        onPressed: aoAbrir,
+                        child: const Text('Ver lista'),
+                      ),
+                    ],
+                  ),
+          );
+        },
+      ),
     );
   }
 }
@@ -615,370 +823,6 @@ class _Metrica extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ServicosResumoCompacto extends StatelessWidget {
-  const _ServicosResumoCompacto({
-    required this.resumo,
-    required this.aoAbrirLivelo,
-    required this.aoAbrirInter,
-    required this.aoAbrirPichau,
-  });
-
-  final ResumoInicio resumo;
-  final VoidCallback? aoAbrirLivelo;
-  final VoidCallback? aoAbrirInter;
-  final VoidCallback? aoAbrirPichau;
-
-  @override
-  Widget build(BuildContext context) {
-    final estadoInter = _estadoInter(resumo);
-    return Column(
-      children: [
-        _CartaoDominioResumo(
-          chave: const Key('resumo-servico-livelo'),
-          iniciais: 'LI',
-          titulo: 'Livelo',
-          descricao: 'Pontos e lojas acompanhadas',
-          estado: resumo.livelo.estado,
-          metricas: [
-            (
-              'Lojas acompanhadas',
-              _valorResumo(
-                resumo.livelo.estado,
-                resumo.livelo.lojasAcompanhadas,
-              ),
-            ),
-            ('Último sucesso', _dataHora(resumo.livelo.ultimoSucessoEm)),
-          ],
-          aviso: resumo.livelo.estado == EstadoResumo.atualizado
-              ? null
-              : _descricaoEstado(resumo.livelo.estado),
-          acao: 'Ver lojas da Livelo',
-          aoTocar: aoAbrirLivelo,
-        ),
-        const SizedBox(height: 11),
-        _CartaoDominioResumo(
-          chave: const Key('resumo-servico-inter'),
-          iniciais: 'BI',
-          titulo: 'Banco Inter',
-          descricao: 'Cashback e Compre direto',
-          estado: estadoInter,
-          metricas: [
-            (
-              'Cashback',
-              _valorResumo(
-                resumo.cashbackInter.estado,
-                resumo.cashbackInter.lojasAcompanhadas,
-                sufixo: ' acompanhadas',
-              ),
-            ),
-            (
-              'Compre direto',
-              _valorResumo(
-                resumo.produtos.estado,
-                resumo.produtos.lojasSelecionadas,
-                sufixo: ' selecionadas',
-              ),
-            ),
-            (
-              'Produtos coletados',
-              _valorResumo(
-                resumo.produtos.estado,
-                resumo.produtos.produtosAtivos,
-                sufixo: ' ativos',
-              ),
-            ),
-          ],
-          aviso:
-              estadoInter == EstadoResumo.atualizado ||
-                  estadoInter == EstadoResumo.atualizando
-              ? null
-              : _descricaoEstado(estadoInter),
-          acao: 'Abrir Banco Inter',
-          aoTocar: aoAbrirInter,
-        ),
-        const SizedBox(height: 11),
-        _CartaoDominioResumo(
-          chave: const Key('resumo-servico-pichau'),
-          iniciais: 'PI',
-          titulo: 'Pichau',
-          descricao: 'PC Gamer e disponibilidade',
-          estado: resumo.pichau.estado,
-          metricas: [
-            (
-              'Produtos ativos',
-              _valorResumo(
-                resumo.pichau.estado,
-                resumo.pichau.produtosAtivos,
-                sufixo: ' disponíveis',
-              ),
-            ),
-            (
-              'Acompanhados',
-              _valorResumo(
-                resumo.pichau.estado,
-                resumo.pichau.acompanhadas,
-                sufixo: ' produtos',
-              ),
-            ),
-            ('Último sucesso', _dataHora(resumo.pichau.ultimoSucessoEm)),
-          ],
-          aviso: resumo.pichau.estado == EstadoResumo.atualizado
-              ? null
-              : _descricaoEstado(resumo.pichau.estado),
-          acao: 'Abrir Pichau',
-          aoTocar: aoAbrirPichau,
-        ),
-      ],
-    );
-  }
-}
-
-class _CartaoDominioResumo extends StatelessWidget {
-  const _CartaoDominioResumo({
-    required this.chave,
-    required this.iniciais,
-    required this.titulo,
-    required this.descricao,
-    required this.estado,
-    required this.metricas,
-    required this.aviso,
-    required this.acao,
-    required this.aoTocar,
-  });
-
-  final Key chave;
-  final String iniciais;
-  final String titulo;
-  final String descricao;
-  final EstadoResumo estado;
-  final List<(String, String)> metricas;
-  final String? aviso;
-  final String acao;
-  final VoidCallback? aoTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final corEstado = _corEstado(context, estado);
-    return CartaoRadar(
-      key: chave,
-      aoTocar: aoTocar,
-      padding: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Tokens.superficieForteEscura
-                        : Tokens.paperSoft,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      topRight: Radius.circular(14),
-                      bottomRight: Radius.circular(14),
-                      bottomLeft: Radius.circular(5),
-                    ),
-                  ),
-                  child: Text(
-                    iniciais,
-                    style: TextStyle(
-                      color: cores.marca,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        titulo,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        descricao,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.textoSuave,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: _Pill(
-                    texto: _rotuloEstado(estado),
-                    compacto: true,
-                    cor: corEstado,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 13),
-            Divider(height: 1, color: cores.borda),
-            for (final metrica in metricas) ...[
-              _LinhaMetricaDominio(rotulo: metrica.$1, valor: metrica.$2),
-              Divider(height: 1, color: cores.borda),
-            ],
-            if (aviso != null) ...[
-              const SizedBox(height: 6),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Tokens.atencaoFundoEscuro
-                      : Tokens.atencaoFundo,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, color: cores.atencao, size: 15),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        aviso!,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.atencao,
-                          fontSize: 9,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 11),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    acao,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Tokens.acaoForteEscura
-                          : Tokens.actionStrong,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: cores.acao, size: 18),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LinhaMetricaDominio extends StatelessWidget {
-  const _LinhaMetricaDominio({required this.rotulo, required this.valor});
-
-  final String rotulo;
-  final String valor;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            rotulo,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-              fontSize: 9,
-            ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Flexible(
-          child: Text(
-            valor,
-            textAlign: TextAlign.end,
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _AcoesRapidasResumo extends StatelessWidget {
-  const _AcoesRapidasResumo({
-    required this.aoAbrirProdutos,
-    required this.aoAbrirServicos,
-    this.aoAbrirAlertas,
-    this.escuro = false,
-  });
-
-  final VoidCallback? aoAbrirProdutos;
-  final VoidCallback? aoAbrirServicos;
-  final VoidCallback? aoAbrirAlertas;
-  final bool escuro;
-
-  @override
-  Widget build(BuildContext context) {
-    final produtos = FilledButton.icon(
-      key: const Key('atalho-produtos'),
-      onPressed: aoAbrirProdutos,
-      icon: const Icon(Icons.search),
-      label: const Text('Comparar produtos'),
-    );
-    final alertas = OutlinedButton.icon(
-      key: const Key('atalho-alertas'),
-      onPressed: aoAbrirAlertas,
-      icon: const Icon(Icons.notifications_none_outlined),
-      label: const Text('Ver alertas'),
-    );
-    final servicos = OutlinedButton(
-      key: const Key('atalho-programas'),
-      onPressed: aoAbrirServicos,
-      child: const Text('Todas as fontes'),
-    );
-    return LayoutBuilder(
-      builder: (context, limites) {
-        final empilhar =
-            limites.maxWidth < 320 ||
-            MediaQuery.textScalerOf(context).scale(12) > 16;
-        if (empilhar) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              produtos,
-              SizedBox(height: context.tokens.spacing.two),
-              escuro ? alertas : servicos,
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: produtos),
-            SizedBox(width: context.tokens.spacing.two),
-            Expanded(child: escuro ? alertas : servicos),
-          ],
-        );
-      },
     );
   }
 }
@@ -1443,29 +1287,6 @@ String _inteiro(int valor) {
     resultado.write(texto[indice]);
   }
   return resultado.toString();
-}
-
-String _valorResumo(EstadoResumo estado, int valor, {String sufixo = ''}) {
-  if (estado == EstadoResumo.indisponivel || estado == EstadoResumo.semDados) {
-    return '—';
-  }
-  return '${_inteiro(valor)}$sufixo';
-}
-
-EstadoResumo _estadoInter(ResumoInicio resumo) {
-  const prioridade = <EstadoResumo>[
-    EstadoResumo.indisponivel,
-    EstadoResumo.falhaRecente,
-    EstadoResumo.parcial,
-    EstadoResumo.degradado,
-    EstadoResumo.atualizando,
-    EstadoResumo.atrasado,
-    EstadoResumo.atencao,
-    EstadoResumo.semDados,
-    EstadoResumo.atualizado,
-  ];
-  final estados = {resumo.cashbackInter.estado, resumo.produtos.estado};
-  return prioridade.firstWhere(estados.contains);
 }
 
 String _dataHora(String? iso) {

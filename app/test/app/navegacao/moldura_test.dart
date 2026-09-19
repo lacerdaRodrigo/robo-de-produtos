@@ -193,7 +193,7 @@ Future<void> _abrir(
 }
 
 Future<void> _abrirConta(WidgetTester at) async {
-  await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
+  await at.tap(find.byKey(const Key('barra-perfil')));
   await at.pumpAndSettle();
 }
 
@@ -293,7 +293,7 @@ void main() {
   testWidgets('celular usa cabeçalho, barra inferior e perfil V15', (at) async {
     await _abrir(at);
 
-    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
+    expect(find.byKey(const Key('abrir-alertas-cabecalho')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
     expect(find.byKey(const Key('gaveta-principal')), findsNothing);
     for (final destino in const [
@@ -315,7 +315,7 @@ void main() {
     await _abrirConta(at);
 
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
-    expect(find.text('Perfil'), findsOneWidget);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
     expect(find.text('Central de Alertas'), findsOneWidget);
     expect(find.text('Aparência'), findsOneWidget);
     expect(find.text('Segurança e acesso'), findsNothing);
@@ -325,7 +325,7 @@ void main() {
   testWidgets('celular em paisagem continua com o perfil', (at) async {
     await _abrir(at, tamanho: const Size(844, 390));
 
-    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
+    expect(find.byKey(const Key('abrir-alertas-cabecalho')), findsOneWidget);
     expect(find.byType(BarraLateral), findsNothing);
     expect(find.byKey(const Key('gaveta-principal')), findsNothing);
     await _abrirConta(at);
@@ -380,9 +380,9 @@ void main() {
   ) async {
     await _abrir(at);
 
-    expect(find.text('Último sinal do seu radar'), findsOneWidget);
+    expect(find.text('Boas escolhas\ncomeçam aqui.'), findsOneWidget);
     expect(
-      find.byKey(const Key('resumo-servico-livelo'), skipOffstage: false),
+      find.byKey(const Key('origem-livelo'), skipOffstage: false),
       findsOneWidget,
     );
   });
@@ -463,16 +463,7 @@ void main() {
     at,
   ) async {
     await _abrir(at);
-    final atalho = find.byKey(const Key('atalho-produtos'));
-    await at.scrollUntilVisible(
-      atalho,
-      180,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await at.ensureVisible(atalho);
-    await at.pumpAndSettle();
-    await at.tap(atalho);
-    await at.pumpAndSettle();
+    await _irParaProdutosCompacto(at);
 
     expect(find.byKey(const Key('produtos-inter-compacto')), findsOneWidget);
     final abas = find.byKey(const Key('abas-compre-direto-inter'));
@@ -830,20 +821,6 @@ void main() {
 
     expect(find.text('Atualizar dados'), findsNothing);
     expect(find.byKey(const ValueKey('atualizar-dados-inter')), findsNothing);
-    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsOneWidget);
-    final resumosAntes = requisicoes
-        .where((requisicao) => requisicao.url.path == '/api/resumo')
-        .length;
-    await at.tap(find.byKey(const Key('atualizar-resumo-cabecalho')));
-    await at.pumpAndSettle();
-    expect(
-      requisicoes.where(
-        (requisicao) =>
-            requisicao.url.path == '/api/resumo' && requisicao.method == 'GET',
-      ),
-      hasLength(resumosAntes + 1),
-    );
-    expect(find.text('Resumo atualizado.'), findsOneWidget);
     expect(
       requisicoes.where(
         (requisicao) =>
@@ -955,11 +932,10 @@ void main() {
 
   testWidgets('conta oferece administração fora das três áreas', (at) async {
     await _abrir(at, administrador: true);
-    await at.tap(find.byKey(const Key('abrir-conta-cabecalho')));
-    await at.pumpAndSettle();
+    await _abrirConta(at);
 
     expect(find.text('Administração'), findsOneWidget);
-    expect(find.text('Perfil'), findsOneWidget);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
     expect(find.text('Acesso administrador'), findsOneWidget);
   });
 
@@ -985,7 +961,7 @@ void main() {
     await _abrirConta(at);
 
     expect(at.takeException(), isNull);
-    expect(find.text('Perfil'), findsOneWidget);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
     expect(find.text('Acesso padrão'), findsOneWidget);
     expect(find.text('Administração'), findsNothing);
   });

@@ -262,26 +262,17 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Último sinal do seu radar'), findsOneWidget);
+    expect(find.text('Boas escolhas\ncomeçam aqui.'), findsOneWidget);
     expect(find.text('Tudo atualizado'), findsNothing);
     expect(find.text('Atualizado com avisos'), findsNothing);
     expect(find.text('Explore as origens'), findsOneWidget);
-    expect(find.byKey(const Key('resumo-servico-livelo')), findsOneWidget);
-    expect(find.byKey(const Key('resumo-servico-inter')), findsOneWidget);
-    expect(find.byKey(const Key('resumo-servico-pichau')), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('resumo-servico-livelo')),
-        matching: find.byType(Divider),
-      ),
-      findsNWidgets(3),
-    );
+    expect(find.byKey(const Key('origem-livelo')), findsOneWidget);
+    expect(find.byKey(const Key('origem-inter')), findsOneWidget);
+    expect(find.byKey(const Key('origem-pichau')), findsOneWidget);
     expect(find.text('Atividade recente'), findsNothing);
-    expect(find.text('126'), findsOneWidget);
-    expect(find.text('4 acompanhadas'), findsOneWidget);
-    expect(find.text('100 disponíveis'), findsOneWidget);
-    expect(find.text('17 produtos'), findsOneWidget);
-    expect(find.byKey(const Key('atualizar-resumo')), findsNothing);
+    expect(find.text('4 lojas'), findsOneWidget);
+    expect(find.text('100 produtos'), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsNothing);
   });
 
   testWidgets('card Pichau abre sua subárea de Explorar', (at) async {
@@ -291,17 +282,12 @@ void main() {
     );
     await abrir(at, api, compacto: true, aoAbrirPichau: () => abriu = true);
     await at.pumpAndSettle();
-    await at.scrollUntilVisible(
-      find.byKey(const Key('resumo-servico-pichau')),
-      300,
+    await at.drag(
+      find.byKey(const Key('trilho-origens')),
+      const Offset(-220, 0),
     );
     await at.pumpAndSettle();
-    await at.tap(
-      find.descendant(
-        of: find.byKey(const Key('resumo-servico-pichau')),
-        matching: find.byType(InkWell),
-      ),
-    );
+    await at.tap(find.byKey(const Key('origem-pichau')));
 
     expect(abriu, isTrue);
   });
@@ -335,10 +321,6 @@ void main() {
     );
     await at.pumpAndSettle();
     expect(at.takeException(), isNull);
-    await at.scrollUntilVisible(
-      find.byKey(const Key('resumo-servico-pichau')),
-      300,
-    );
     expect(at.takeException(), isNull);
   });
 

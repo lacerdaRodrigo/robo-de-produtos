@@ -9,6 +9,7 @@ import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import 'controlador_alertas.dart';
+import 'formatacao_alertas.dart';
 import 'pagina_permissao_notificacoes.dart';
 
 class PaginaAlertas extends StatefulWidget {
@@ -303,9 +304,14 @@ class _CartaoAlerta extends StatelessWidget {
         ? cores.ganho
         : cores.marca;
     final titulo = '${_rotuloTipo(alerta.tipo)} · ${alerta.entidadeNome}';
-    final comparacao = alerta.valorAnterior == null
-        ? alerta.valorAtual
-        : '${alerta.valorAnterior} → ${alerta.valorAtual}';
+    final valorAtual = formatarValorAlerta(alerta.valorAtual, alerta.tipo);
+    final valorAnterior = alerta.valorAnterior == null
+        ? null
+        : formatarValorAlerta(alerta.valorAnterior!, alerta.tipo);
+    final comparacao = valorAnterior == null
+        ? valorAtual
+        : '$valorAnterior → $valorAtual';
+    final unidade = alerta.tipo == TipoAlertaApp.preco ? '' : alerta.unidade;
     return CartaoRadar(
       corDestaque: alerta.lido ? null : cor,
       padding: const EdgeInsets.all(13),
@@ -344,7 +350,10 @@ class _CartaoAlerta extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$comparacao ${alerta.unidade}',
+                  [
+                    comparacao,
+                    unidade,
+                  ].where((item) => item.isNotEmpty).join(' '),
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),

@@ -1,11 +1,77 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../tema/aparencia.dart';
 import '../tema/tokens.dart';
 
 enum TomRadar { neutro, acao, ganho, atencao, perigo }
+
+/// Marca compacta oficial da V15, usada nos cabeçalhos de raiz e de catálogo.
+class CabecalhoMarcaRadar extends StatelessWidget {
+  const CabecalhoMarcaRadar({super.key, this.rotulo, this.acao});
+
+  final String? rotulo;
+  final Widget? acao;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final tokens = context.tokens;
+    final escuro = tema.brightness == Brightness.dark;
+    final marca = escuro
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(
+                'assets/brand/symbol-dark.svg',
+                width: tokens.sizes.brandHeight,
+                height: tokens.sizes.brandHeight,
+                semanticsLabel: 'Radar',
+              ),
+              SizedBox(width: tokens.spacing.two),
+              Flexible(
+                child: Text(
+                  'radar.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: tema.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+              ),
+            ],
+          )
+        : SvgPicture.asset(
+            'assets/brand/wordmark.svg',
+            width: tokens.sizes.brandWidth,
+            height: tokens.sizes.brandHeight,
+            semanticsLabel: 'Radar',
+          );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: marca,
+          ),
+        ),
+        if (rotulo != null)
+          Text(
+            rotulo!,
+            style: tema.textTheme.labelLarge?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        if (acao != null) ...[SizedBox(width: tokens.spacing.two), acao!],
+      ],
+    );
+  }
+}
 
 /// Mensagem padrão de confirmação/erro usada pelas ações do aplicativo.
 /// Mantém o mesmo cartão flutuante e contraste nos temas claro e escuro;

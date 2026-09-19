@@ -764,6 +764,7 @@ integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-005 | Meu radar sem dado inventado | Contagens do resumo são exibidas por fonte e a ação encaminha para Explorar/Alertas | `app/test/app/paginas/meu_radar_test.dart` |
 | V15-006 | Estados e fundação visual | Estados vazio/falha, componentes reutilizáveis, tema e folha continuam acessíveis | `app/test/app/componentes/estados_test.dart`, `app/test/app/componentes/fundacao_visual_test.dart` |
 | V15-007 | Home real | Hierarquia da Home compacta, estados independentes, atualização e callbacks dos catálogos | `app/test/app/paginas/inicio_test.dart` |
+| V15-008 | Valores da Central | Preços vindos como texto decimal são exibidos em moeda local com agrupamento e arredondamento textual, sem converter para `double` | `app/test/features/alertas/formatacao_alertas_test.dart` |
 
 ## Totais
 

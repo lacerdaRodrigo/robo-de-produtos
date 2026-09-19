@@ -22,6 +22,21 @@ contratos não permitem montar uma lista única sem inventar dados ou consultar
 fontes externas no cliente. O Flutter, portanto, mostra apenas as contagens
 reais que já chegam no resumo e encaminha a pessoa para Explorar/Alertas.
 
+## Lacuna encontrada — detalhe ilustrativo da Home
+
+O protótipo V15 apresenta na Home uma composição de produto, preço anterior e
+preço atual. A resposta atual de `/api/resumo` entrega atividade recente e
+contagens por origem, mas não entrega um item/preço real suficiente para
+preencher essa composição. O Flutter mantém a hierarquia visual, usa a
+atividade real quando disponível e não promove o produto/preço do protótipo a
+dado de produção.
+
+Para fechar a paridade visual com dados reais, a API deverá definir um campo de
+atividade recente com origem, nome exibível, identificador, valor anterior,
+valor atual, unidade, direção, estado de qualidade e instante da coleta. O
+contrato deve manter valores financeiros como texto decimal exato; o cliente
+não deve recalcular dinheiro com `double`.
+
 ## Trabalho necessário fora desta tarefa
 
 1. Definir o contrato no PRD aplicável da Central de Alertas e dos domínios,

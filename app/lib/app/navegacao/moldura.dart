@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/api/api.dart';
 import '../../core/versao_app.dart';
@@ -17,7 +16,6 @@ import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';
-import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
@@ -62,7 +60,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   final Set<DestinoCompacto> _visitadosCompactos = {DestinoCompacto.inicio};
   Destino _selecionado = Destino.inicio;
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
-  var _atualizandoResumoCabecalho = false;
   GerenciadorNotificacoes? _notificacoes;
 
   @override
@@ -147,6 +144,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       aoAbrirCashback: () => _selecionarCompacto(DestinoCompacto.inter),
       aoAbrirPichau: () => _selecionarCompacto(DestinoCompacto.pichau),
       aoAbrirAlertas: () => unawaited(_abrirAlertas()),
+      aoAbrirRadar: () => _selecionarCompacto(DestinoCompacto.radar),
       aoAbrirProdutos: _abrirProdutosNoInter,
     ),
     _visitadosCompactos.contains(DestinoCompacto.explorar)
@@ -279,61 +277,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirConta() => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(
-      builder: (_) => PaginaPerfil(
-        administrador: widget.administrador,
-        identificacao: widget.identificacaoConta,
-        aoAbrirAlertas: () => unawaited(_abrirAlertas()),
-        aoAbrirAparencia: () => Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(builder: (_) => const PaginaAparencia()),
-        ),
-        aoAbrirAjuda: () => unawaited(_abrirAjuda()),
-        aoAbrirProblema: () => unawaited(_abrirProblema()),
-        aoAbrirPrivacidade: () => unawaited(_abrirPrivacidade()),
-        aoAbrirLaboratorio: () => Navigator.of(context).push<void>(
-          MaterialPageRoute<void>(builder: (_) => const PaginaLaboratorio()),
-        ),
-        aoAdministrar: widget.administrador
-            ? () => Navigator.of(context).push<void>(
-                MaterialPageRoute<void>(
-                  builder: (_) => PaginaAdministracao(
-                    api: widget.api,
-                    administrador: true,
-                    somenteZonaDePerigo: true,
-                  ),
-                ),
-              )
-            : null,
-        aoSair: widget.aoSair == null
-            ? null
-            : () async {
-                await _notificacoes?.removerAtual();
-                await widget.aoSair!();
-              },
-      ),
-    ),
-  );
-
-  Future<void> _atualizarResumoCabecalho() async {
-    if (_atualizandoResumoCabecalho) return;
-    setState(() => _atualizandoResumoCabecalho = true);
-    try {
-      await widget.api.resumo();
-      if (!mounted) return;
-      mostrarMensagemRadar(context, 'Resumo atualizado.');
-    } on Object {
-      if (!mounted) return;
-      mostrarMensagemRadar(
-        context,
-        'Não foi possível atualizar o resumo.',
-        sucesso: false,
-      );
-    } finally {
-      if (mounted) setState(() => _atualizandoResumoCabecalho = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -367,11 +310,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         );
 
         return Scaffold(
-          appBar: _CabecalhoCompacto(
-            aoAbrirConta: _abrirConta,
-            aoAtualizarResumo: _atualizarResumoCabecalho,
-            atualizandoResumo: _atualizandoResumoCabecalho,
-          ),
           body: conteudo,
           bottomNavigationBar: _BarraInferiorRadar(
             selecionado: _selecionadoCompacto.destinoDaBarra,
@@ -379,83 +317,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           ),
         );
       },
-    );
-  }
-}
-
-class _CabecalhoCompacto extends StatelessWidget
-    implements PreferredSizeWidget {
-  const _CabecalhoCompacto({
-    required this.aoAbrirConta,
-    required this.aoAtualizarResumo,
-    required this.atualizandoResumo,
-  });
-
-  final VoidCallback aoAbrirConta;
-  final VoidCallback aoAtualizarResumo;
-  final bool atualizandoResumo;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(70);
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final tokens = context.tokens;
-    return AppBar(
-      toolbarHeight: 70,
-      backgroundColor: tema.scaffoldBackgroundColor,
-      foregroundColor: tema.colorScheme.onSurface,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      shape: Border(bottom: BorderSide(color: cores.borda)),
-      automaticallyImplyLeading: false,
-      title: const _AssinaturaCompacta(),
-      titleSpacing: 18,
-      centerTitle: false,
-      actions: [
-        IconButton(
-          key: const Key('atualizar-resumo-cabecalho'),
-          tooltip: 'Atualizar resumo',
-          onPressed: atualizandoResumo ? null : aoAtualizarResumo,
-          style: IconButton.styleFrom(
-            minimumSize: const Size.square(48),
-            maximumSize: const Size.square(48),
-            padding: EdgeInsets.zero,
-            backgroundColor: tema.cardColor,
-            side: BorderSide(color: cores.borda),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(tokens.radii.md),
-            ),
-          ),
-          icon: atualizandoResumo
-              ? const SizedBox.square(
-                  dimension: 19,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.refresh),
-        ),
-        SizedBox(width: tokens.spacing.two),
-        IconButton(
-          key: const Key('abrir-conta-cabecalho'),
-          tooltip: 'Abrir perfil',
-          onPressed: aoAbrirConta,
-          style: IconButton.styleFrom(
-            minimumSize: const Size.square(48),
-            maximumSize: const Size.square(48),
-            padding: EdgeInsets.zero,
-            backgroundColor: tema.cardColor,
-            side: BorderSide(color: cores.borda),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(tokens.radii.md),
-            ),
-          ),
-          icon: const Icon(Icons.person_outline),
-        ),
-        SizedBox(width: tokens.spacing.four),
-      ],
     );
   }
 }
@@ -542,76 +403,6 @@ class _PaginaProgramaInterna extends StatelessWidget {
       Expanded(child: child),
     ],
   );
-}
-
-class _AssinaturaCompacta extends StatelessWidget {
-  const _AssinaturaCompacta();
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final escuro = Theme.of(context).brightness == Brightness.dark;
-    return Semantics(
-      label: 'Radar de Benefícios',
-      header: true,
-      excludeSemantics: true,
-      child: Row(
-        children: [
-          SvgPicture.asset(
-            escuro ? 'assets/brand/symbol-dark.svg' : 'assets/brand/symbol.svg',
-            width: 34,
-            height: 34,
-            semanticsLabel: 'Radar',
-          ),
-          const SizedBox(width: 9),
-          Flexible(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Radar',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: cores.acao,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const SizedBox.square(dimension: 7),
-                    ),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        'API protegida',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.acao,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _RodapeVersao extends StatelessWidget {

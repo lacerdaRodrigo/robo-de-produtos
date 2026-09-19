@@ -297,6 +297,10 @@ class AppSizes {
     required this.field,
     required this.icon,
     required this.badge,
+    required this.brandWidth,
+    required this.brandHeight,
+    required this.compactRailWidth,
+    required this.compactRailHeight,
     required this.illustrationWidth,
     required this.illustrationHeight,
     required this.sheetHandleWidth,
@@ -308,6 +312,10 @@ class AppSizes {
       field = 48,
       icon = 24,
       badge = 24,
+      brandWidth = 104,
+      brandHeight = 30,
+      compactRailWidth = 148,
+      compactRailHeight = 120,
       illustrationWidth = 96,
       illustrationHeight = 72,
       sheetHandleWidth = 40,
@@ -317,6 +325,10 @@ class AppSizes {
   final double field;
   final double icon;
   final double badge;
+  final double brandWidth;
+  final double brandHeight;
+  final double compactRailWidth;
+  final double compactRailHeight;
   final double illustrationWidth;
   final double illustrationHeight;
   final double sheetHandleWidth;

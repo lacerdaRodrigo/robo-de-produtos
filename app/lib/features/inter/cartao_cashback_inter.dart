@@ -472,59 +472,68 @@ class _CartaoCompacto extends StatelessWidget {
             ),
           if (podeAdministrar || aoAcompanhar != null)
             const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: OutlinedButton.icon(
-                  key: ValueKey('condicoes-${loja.id}'),
-                  onPressed: () => _abrirCondicoesCashback(context, loja),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 8,
-                    ),
-                    foregroundColor: cores.acao,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(11),
-                    ),
+          LayoutBuilder(
+            builder: (context, limites) {
+              final textoAmpliado =
+                  MediaQuery.textScalerOf(context).scale(10) > 12;
+              final empilhar = limites.maxWidth < 300 || textoAmpliado;
+              final condicoes = OutlinedButton.icon(
+                key: ValueKey('condicoes-${loja.id}'),
+                onPressed: () => _abrirCondicoesCashback(context, loja),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 8,
                   ),
-                  icon: const Icon(Icons.subject_outlined, size: 15),
-                  label: const Text('Ver condições'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 4,
-                child: FilledButton.icon(
-                  key: ValueKey('ir-inter-${loja.id}'),
-                  onPressed: aoAbrirParceiro,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    backgroundColor: cores.acao,
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 10,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(11),
-                    ),
+                  foregroundColor: cores.acao,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
                   ),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 15),
-                  label: const Text('Ir para o Inter'),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
                 ),
-              ),
-            ],
+                icon: const Icon(Icons.subject_outlined, size: 15),
+                label: const Text('Ver condições'),
+              );
+              final abrirInter = FilledButton.icon(
+                key: ValueKey('ir-inter-${loja.id}'),
+                onPressed: aoAbrirParceiro,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  backgroundColor: cores.acao,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                ),
+                icon: const Icon(Icons.open_in_new_rounded, size: 15),
+                label: const Text('Ir para o Inter'),
+              );
+              if (empilhar) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [condicoes, const SizedBox(height: 8), abrirInter],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(flex: 3, child: condicoes),
+                  const SizedBox(width: 8),
+                  Expanded(flex: 4, child: abrirInter),
+                ],
+              );
+            },
           ),
         ],
       ),
