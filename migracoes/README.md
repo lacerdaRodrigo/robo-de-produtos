@@ -63,10 +63,11 @@ A verificação encontrou 39 tabelas, as quatro funções da fila Android, os do
 foram criadas como `NOLOGIN`. A migration `032` cria `robo_api` e
 `robo_coletor`, associa `radar_api`, `radar_actions_robo`,
 `radar_actions_pichau` e `radar_samsung` aos grupos corretos e concede somente
-os acessos documentados. Esses logins permanecem `NOLOGIN` até o provisionamento
-seguro de senhas e a validação dos privilégios efetivos. Usuários, execuções,
-pontuações e catálogos estão vazios; não apontar tráfego para o destino antes
-da validação operacional.
+os acessos documentados. Os quatro logins foram ativados e validados por
+conexões direta e pooled; as credenciais não ficam no repositório. O banco tem
+somente o convite admin inicial, sem UID Firebase; execuções, pontuações e
+catálogos continuam vazios. A API Production e o Samsung ainda não foram
+cortados para este destino.
 
 ## Histórico do projeto Neon anterior
 

@@ -1,12 +1,13 @@
 # PRD — Execução local dos coletores no Samsung e filas Neon
 
-**Status em 2026-09-26:** arquitetura e código preparados neste branch. O novo
+**Status em 2026-09-26:** código mergeado na `main` pelo PR #42 após CI verde. O novo
 projeto Neon recebeu o schema `001`–`026` e `028`–`032`; a migration `027`, que
-faz backfill de dados antigos, foi intencionalmente omitida. Nenhum dado foi
-migrado: usuários, catálogo e históricos seguem vazios. Os grupos e grants por
-consumidor existem; os logins distintos permanecem `NOLOGIN` até a ativação
-segura. O Samsung não foi instalado e API, Actions e Termux ainda não foram
-apontados ao destino.
+faz backfill de dados antigos, foi intencionalmente omitida. Nenhum catálogo ou
+histórico foi migrado; há somente o convite admin inicial, ainda sem UID Firebase.
+Os quatro logins foram ativados e testados por conexão direta e pooler. Os dois
+secrets de dispatch do GitHub já apontam ao destino vazio; o `DATABASE_URL`
+antigo do GitHub continua como rollback. API Production e Termux ainda não foram
+cortados. O worker não deve ser iniciado nem receber pedidos antes do corte.
 
 Este documento é o contrato operacional comum de Livelo, Inter Sites parceiros,
 Inter Compre direto e Pichau. As regras de extração e publicação continuam nos
@@ -107,11 +108,10 @@ e documentação usam os caminhos organizados.
 
 ## Credenciais e segurança
 
-- `ROBO_DISPATCH_DATABASE_URL`: secret do Actions usado apenas para solicitar
-  coletas Livelo/Inter; pertence a um login associado ao grupo
-  `robo_dispatcher`, que só executa a função de solicitação.
-- `PICHAU_DISPATCH_DATABASE_URL`: secret existente/renovado para o dispatcher
-  Pichau, sem fallback para um `DATABASE_URL` amplo.
+- `ROBO_DISPATCH_DATABASE_URL`: secret do Actions atualizado para
+  `radar_actions_robo`, que só executa a função de solicitação Livelo/Inter.
+- `PICHAU_DISPATCH_DATABASE_URL`: secret do Actions atualizado para
+  `radar_actions_pichau`, que só lê/enfileira pedidos Pichau.
 - `DATABASE_URL`: arquivo privado `/etc/robo-celular/env` no Termux. O login do
   telefone precisa publicar os domínios e a fila Pichau e receber associação ao
   grupo `robo_executor` para reivindicar/finalizar a fila genérica.
@@ -119,15 +119,15 @@ e documentação usam os caminhos organizados.
   A atualização para o projeto Neon de destino precisa ser feita separadamente.
 
 No destino novo, as migrations `001`–`026` e `028`–`032` já foram aplicadas e
-os grupos `robo_dispatcher NOLOGIN` e `robo_executor NOLOGIN` foram criados. A
-`027` não foi executada: ela transfere seleções/eventos legados, não estrutura,
-e não faz parte de uma instalação vazia. As roles de login `radar_api`,
-`radar_actions_robo`, `radar_actions_pichau` e `radar_samsung` foram criadas sem
-login e associadas aos grupos previstos. Falta provisionar senhas fora do
-repositório, ativar os logins e provar que as permissões efetivas correspondem
-à separação prevista. A API não recebe acesso às filas; o coletor não recebe
-acesso às tabelas pessoais. Nunca colocar strings de conexão reais no Git,
-logs, Issues públicas ou neste documento.
+os logins `radar_api`, `radar_actions_robo`, `radar_actions_pichau` e
+`radar_samsung` estão ativos, associados aos grupos previstos e validados por
+conexões direta e pooled. A `027` não foi executada: ela transfere
+seleções/eventos legados, não estrutura, e não faz parte de uma instalação
+vazia. A API não recebe acesso às filas; o coletor não recebe acesso às tabelas
+pessoais. A Vercel Production ainda usa o banco anterior, e o ADB do Samsung
+está sem autorização; não iniciar os dispatches até completar o corte. Nunca
+colocar strings de conexão reais no Git, logs, Issues públicas ou neste
+documento.
 
 ## Operação e aceite
 

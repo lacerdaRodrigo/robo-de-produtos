@@ -58,9 +58,10 @@ os itens que dependem de confirmação externa continuam em `docs/PENDENCIAS.md`
   `PICHAU_DISPATCH_DATABASE_URL` a `radar_actions_pichau` e a API a
   `radar_api`. O Samsung usa `radar_samsung`, com direitos de publicação dos
   coletores. A migration `032` mantém as filas fora do acesso da API e as
-  tabelas pessoais fora do coletor. Os logins ainda ficam `NOLOGIN` até que as
-  senhas sejam provisionadas por canal seguro; o banco novo segue vazio e não
-  deve receber tráfego antes dos testes de acesso.
+  tabelas pessoais fora do coletor. Os quatro logins e grants foram validados;
+  os dois secrets de dispatch já apontam ao Neon novo. Não disparar workflows
+  até o Samsung estar instalado. O `DATABASE_URL` antigo do GitHub foi mantido
+  como rollback por sete dias; a API Production ainda não foi cortada.
 - O robô Pichau usa somente páginas públicas autorizadas, limita-se a 300
   páginas por execução, preserva as validações de catálogo e não persiste
   imagens, HTML ou cookies.
