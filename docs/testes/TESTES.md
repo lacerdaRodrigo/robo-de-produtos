@@ -202,6 +202,7 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-074 | Núcleos Livelo e Inter não fazem I/O ⚠️ | Núcleos mantêm dependências apontadas para dentro; o pacote Inter não importa Livelo | Varrer os módulos listados em `MODULOS_POR_PACOTE`, falhar para imports de rede/ambiente/arquivo e verificar isolamento entre pacotes |
+| CT-415 | Coletores publicam a mesma versão | Livelo, Inter e Pichau precisam gravar a versão semântica comum para o diagnóstico operacional identificar o código executado | Comparar `__version__` dos três pacotes com `robo_compartilhado.__version__` |
 
 ## Formatação do app/API (antes `site/testes/formato.teste.ts`, TypeScript)
 

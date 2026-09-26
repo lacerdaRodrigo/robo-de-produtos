@@ -1514,7 +1514,7 @@ wheels = [
 
 [[package]]
 name = "robo-livelo"
-version = "1.72.1"
+version = "1.73.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -1523,6 +1523,7 @@ dependencies = [
     { name = "psycopg", extra = ["binary"], marker = "platform_machine not in 'armv7l armv8l'" },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "tzdata" },
 ]
 
 [package.optional-dependencies]
@@ -1554,6 +1555,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.31" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "seleniumbase", marker = "extra == 'pichau'", specifier = ">=4.53,<5" },
+    { name = "tzdata", specifier = ">=2025.2" },
     { name = "websocket-client", marker = "extra == 'pichau-android'", specifier = ">=1.8,<2" },
 ]
 provides-extras = ["pichau", "pichau-android", "dev"]

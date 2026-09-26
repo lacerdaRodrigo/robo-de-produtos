@@ -12,6 +12,8 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
     "python-dotenv>=1.0",
+    # O Python do Termux pode nao trazer a base IANA usada por zoneinfo.
+    "tzdata>=2025.2",
     # O Python do Termux reporta Linux, embora o processo seja Android. O
     # wheel binario nao cobre o userland ARM32 (armv7l/armv8l); nesses alvos
     # o pacote puro usa o libpq fornecido pelo proprio Termux.

@@ -2,12 +2,15 @@
 
 **Status em 2026-09-26:** código mergeado na `main` pelo PR #42 após CI verde. O novo
 projeto Neon recebeu o schema `001`–`026` e `028`–`032`; a migration `027`, que
-faz backfill de dados antigos, foi intencionalmente omitida. Nenhum catálogo ou
-histórico foi migrado; há somente o convite admin inicial, ainda sem UID Firebase.
-Os quatro logins foram ativados e testados por conexão direta e pooler. Os dois
-secrets de dispatch do GitHub já apontam ao destino vazio; o `DATABASE_URL`
-antigo do GitHub continua como rollback. API Production e Termux ainda não foram
-cortados. O worker não deve ser iniciado nem receber pedidos antes do corte.
+faz backfill de dados antigos, foi intencionalmente omitida. Os quatro logins
+foram validados, os secrets de dispatch já apontam ao destino novo e o Samsung
+usa `radar_samsung` no arquivo privado. O worker, o boot e o watchdog 7301 estão
+ativos e saudáveis. Três disparos manuais reais reconstruíram 255 parceiros
+Livelo, 378 lojas Inter, 111 lojas do Compre direto e 1.223 produtos Pichau; as
+execuções terminaram com sucesso e a Pichau publicou sete páginas sem duplicados.
+A `DATABASE_URL` de Production foi preparada com `radar_api`, mas o redeploy da
+Vercel ainda é o passo pendente do corte. O banco e a credencial antigos seguem
+disponíveis por sete dias para rollback.
 
 Este documento é o contrato operacional comum de Livelo, Inter Sites parceiros,
 Inter Compre direto e Pichau. As regras de extração e publicação continuam nos
@@ -105,6 +108,9 @@ como pedido concluído pela API.
 Os nomes antigos dos scripts Pichau na raiz de `scripts/` permanecem como links
 de compatibilidade com Termux:Boot e instalações já existentes. Novos comandos
 e documentação usam os caminhos organizados.
+Os três pacotes de domínio exportam a versão de `robo_compartilhado`, e a
+dependência `tzdata` garante que a agenda de Brasília carregue no Python do
+Termux mesmo quando o sistema não fornece a base IANA.
 
 ## Credenciais e segurança
 
@@ -124,10 +130,10 @@ os logins `radar_api`, `radar_actions_robo`, `radar_actions_pichau` e
 conexões direta e pooled. A `027` não foi executada: ela transfere
 seleções/eventos legados, não estrutura, e não faz parte de uma instalação
 vazia. A API não recebe acesso às filas; o coletor não recebe acesso às tabelas
-pessoais. A Vercel Production ainda usa o banco anterior, e o ADB do Samsung
-está sem autorização; não iniciar os dispatches até completar o corte. Nunca
-colocar strings de conexão reais no Git, logs, Issues públicas ou neste
-documento.
+pessoais. A variável de Production da Vercel foi atualizada para `radar_api`,
+mas só passará a valer no próximo deploy. O ADB do Samsung está autorizado por
+USB e validado também pelo transporte Wi-Fi interno. Nunca colocar strings de
+conexão reais no Git, logs, Issues públicas ou neste documento.
 
 ## Operação e aceite
 
@@ -144,11 +150,11 @@ em 72 horas, com tela bloqueada e sem abrir o Termux. Uma falha reinicia essa
 janela. Isso não substitui a checagem manual inicial de que Livelo e as duas
 rotinas Inter também executaram e publicaram estados corretos.
 
-## Não realizado pelo código
+## Pendências do rollout
 
 O schema, as roles e os grants do projeto Neon novo foram provisionados sem
-migrar dados. Permanecem pendentes: ativar e testar logins, atualizar os secrets
-GitHub/Vercel/Termux, instalar o checkout no Samsung, validar o job 7301 e
-observar execuções reais. Após o corte, catálogos e históricos precisam ser
-recriados por coletas; seleções e demais dados pessoais não reaparecem
-automaticamente.
+migrar dados. Os catálogos iniciais já foram reconstruídos por coleta; seleções
+e demais dados pessoais não reaparecem automaticamente. Restam o redeploy e a
+validação autenticada da API em Production, além do gate de nove execuções
+Pichau agendadas consecutivas em 72 horas, com tela bloqueada e sem cabo de
+dados.
