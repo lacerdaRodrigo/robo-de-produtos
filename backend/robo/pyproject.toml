@@ -26,7 +26,7 @@ pichau = [
     "seleniumbase>=4.53,<5",
 ]
 pichau-android = [
-    "Appium-Python-Client>=4.0,<6",
+    "Appium-Python-Client>=4.0,<7",
     "websocket-client>=1.8,<2",
 ]
 dev = [
