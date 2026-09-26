@@ -55,30 +55,23 @@ na seção Pichau abaixo.
   `radar_actions_robo`, `radar_actions_pichau` e `radar_samsung`. Foi confirmado
   que a API não acessa filas e que o Samsung não acessa tabelas pessoais. Os
   secrets de dispatch foram atualizados; o `DATABASE_URL` antigo do GitHub
-  permaneceu intacto para rollback. Não disparar coletas até o Samsung novo
-  estar instalado.
-- [ ] Completar o corte: trocar `DATABASE_URL` da Vercel Production e instalar
-  no Termux o login `radar_samsung`. A integração da Vercel ainda não está
-  conectada e o ADB retornou `unauthorized`; a instalação está parada até a
-  autorização no aparelho. Manter o `DATABASE_URL` antigo do GitHub por sete
-  dias; não reutilizar a chave owner nem enviar credenciais pelo chat.
-  Catálogos/históricos serão reconstruídos por novas coletas; seleções e dados
-  pessoais não serão copiados.
-- [ ] Instalar o checkout e dependências no Samsung sem remover os links de boot
-  antigos antes de verificar os novos caminhos; apontar Termux:Boot para
-  `scripts/celular/boot.sh`, validar `scripts/celular/status.sh`, agendas locais
-  e disparos manuais. O worker busca `origin/main` e valida o SHA dos workflows;
-  o código já está na `main` via PR #42. O
-  workflow verde confirma apenas que o pedido entrou na fila, não que o coletor
-  publicou os dados.
-- [ ] Após a implantação, verificar ao menos uma coleta de cada fonte. Manter o
-  gate já definido de nove execuções Pichau agendadas consecutivas em 72 horas,
-  tela bloqueada e sem abrir Termux; qualquer falha reinicia a janela. Isso não
-  prova disponibilidade após reboot nem substitui validar Livelo/Inter.
-- [ ] Aceitar conscientemente a mudança da outbox para uma execução por hora:
-  reduz chamadas agendadas à API/Neon, mas pode acrescentar quase uma hora de
-  atraso à entrega de push. Se essa latência não for aceitável, decidir outro
-  intervalo antes de publicar o workflow.
+  permaneceu intacto para rollback. Os disparos só foram iniciados depois da
+  instalação e validação do Samsung.
+- [ ] Concluir o corte da API: a `DATABASE_URL` de Production já usa
+  `radar_api`, mas ainda falta criar um novo deployment e validar login,
+  autorização e catálogos autenticados. Manter o banco/credencial antigos por
+  sete dias para rollback; não reutilizar a chave owner nem expor credenciais.
+- [x] Instalar checkout, dependências, `radar_samsung`, boot e watchdog 7301 no
+  Samsung. O diagnóstico confirmou checkout `377622b`, worker/wake lock,
+  watchdog novo, duas filas, ADB Wi-Fi e Appium ocioso. A ausência inicial de
+  `tzdata` foi detectada antes das coletas e corrigida como dependência do pacote.
+- [x] Validar uma coleta manual de cada fonte no Neon novo. Livelo publicou 255
+  parceiros; Inter publicou 378 lojas de cashback e sincronizou 111 lojas do
+  Compre direto; Pichau publicou 1.223 produtos em sete páginas, zero duplicados
+  e uma tentativa. Os três pedidos terminaram como sucesso; o gate agendado de
+  72 horas continua aberto abaixo.
+- [x] Aceitar a outbox uma vez por hora, assumindo até cerca de uma hora adicional
+  para entrega de push em troca de menos chamadas à API/Neon.
 
 - [ ] Conferir manualmente no Samsung a composição visual Pichau V15: cabeçalho
   `Pichau`/`Catálogo`, retorno único, busca com avanço, abas `Todos`/`No radar`,

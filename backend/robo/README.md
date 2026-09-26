@@ -66,6 +66,8 @@ python -m robo_pichau.principal --diagnostico
   usa `pageSize=200`, exige a faixa completa renderizada inclusive na última
   página e reconcilia por URL com SKU histórico quando o DOM não o publica.
 - No Termux, instale `libxml2`, `libxslt` e `libpq` antes do ambiente Python.
+  O pacote Python inclui `tzdata`, pois algumas instalações do Termux não
+  fornecem a base IANA usada pela agenda `America/Sao_Paulo`.
   O Android ARM32 usa `psycopg` puro contra o `libpq` do Termux; os runners
   Linux e desktop continuam usando `psycopg[binary]`. Se o ambiente virtual
   tiver sido criado antes do ajuste de arquitetura, complete-o com

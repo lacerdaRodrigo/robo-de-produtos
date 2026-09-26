@@ -13,6 +13,11 @@ from pathlib import Path
 
 import pytest
 
+from robo_compartilhado import __version__ as versao_compartilhada
+from robo_inter import __version__ as versao_inter
+from robo_livelo import __version__ as versao_livelo
+from robo_pichau import __version__ as versao_pichau
+
 SRC = Path(__file__).resolve().parents[1] / "src"
 RAIZ_REPOSITORIO = Path(__file__).resolve().parents[3]
 
@@ -84,3 +89,7 @@ def teste_versionamento_aponta_para_os_arquivos_apos_reorganizacao():
         "app/pubspec.yaml:version",
     ]
     assert "semantic-release -c backend/robo/pyproject.toml version" in workflow
+
+
+def teste_ct415_coletores_publicam_a_mesma_versao():
+    assert versao_livelo == versao_inter == versao_pichau == versao_compartilhada
