@@ -57,13 +57,15 @@ na seção Pichau abaixo.
   secrets de dispatch foram atualizados; o `DATABASE_URL` antigo do GitHub
   permaneceu intacto para rollback. Os disparos só foram iniciados depois da
   instalação e validação do Samsung.
-- [ ] Concluir o corte da API: a `DATABASE_URL` de Production já usa
-  `radar_api`, mas ainda falta criar um novo deployment e validar login,
-  autorização e catálogos autenticados. Manter o banco/credencial antigos por
-  sete dias para rollback; não reutilizar a chave owner nem expor credenciais.
+- [x] Concluir o corte da API: a Vercel publicou `1.73.1` em Production com
+  `radar_api`; `/api/status` ficou saudável, a outbox executou com sucesso e o
+  aplicativo autenticado exibiu 255 lojas Livelo, 378 lojas em Sites parceiros
+  do Inter e 1.223 produtos Pichau a partir do Neon novo. Manter o
+  banco/credencial antigos por sete dias para rollback; não reutilizar a chave
+  owner nem expor credenciais.
 - [x] Instalar checkout, dependências, `radar_samsung`, boot e watchdog 7301 no
-  Samsung. O diagnóstico confirmou checkout `377622b`, worker/wake lock,
-  watchdog novo, duas filas, ADB Wi-Fi e Appium ocioso. A ausência inicial de
+  Samsung. O diagnóstico confirmou worker/wake lock, watchdog novo, duas filas,
+  ADB Wi-Fi e Appium ocioso. A ausência inicial de
   `tzdata` foi detectada antes das coletas e corrigida como dependência do pacote.
 - [x] Validar uma coleta manual de cada fonte no Neon novo. Livelo publicou 255
   parceiros; Inter publicou 378 lojas de cashback e sincronizou 111 lojas do
@@ -164,6 +166,6 @@ na seção Pichau abaixo.
 
 - Integration, E2E, smoke automatizado, performance e regressão visual não fazem parte do gate deste ciclo.
 - O alvo Flutter Web foi removido. API, workflows de backend e o protótipo HTML continuam existindo como superfícies separadas; não há build ou teste Web do aplicativo.
-- O provisionamento do schema no novo Neon foi autorizado e concluído em
-  2026-09-26. Os itens ainda abertos não autorizam deploy, coleta real, alteração
-  de secrets, corte da API/Actions/Termux ou outras mudanças em produção.
+- O provisionamento do schema e o corte autorizado para o novo Neon foram
+  concluídos em 2026-09-26. Os itens ainda abertos não autorizam novas mudanças
+  de secrets, deploys, coletas manuais ou outras alterações em produção.
