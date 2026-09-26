@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v1.73.1 (2026-09-26)
+
+### Bug Fixes
+
+- Estabilizar executor Samsung no Neon
+  ([#45](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/45),
+  [`2470255`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/2470255d21cf853acc8c997a2c894bdebaaad0a2))
+
+### Documentation
+
+- Registrar o rollout Neon validado
+  ([`377622b`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/377622b77c955f36193b9f3f0b0a3d5c0f0ec47e))
+
+
 ## v1.73.0 (2026-09-26)
 
 ### Features
