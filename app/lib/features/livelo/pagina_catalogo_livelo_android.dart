@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
@@ -19,12 +20,14 @@ class PaginaCatalogoLiveloAndroid extends StatefulWidget {
     required this.api,
     required this.administrador,
     this.aoAbrirAlertas,
+    this.aoVoltar,
     this.controlador,
   });
 
   final Api api;
   final bool administrador;
   final VoidCallback? aoAbrirAlertas;
+  final VoidCallback? aoVoltar;
   final ControladorCatalogoLivelo? controlador;
 
   @override
@@ -120,19 +123,16 @@ class _EstadoPaginaCatalogoLiveloAndroid
   }
 
   Future<void> _abrirHistorico(ParceiroCatalogoLivelo parceiro) async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => PaginaHistoricoLiveloAndroid(
-          api: widget.api,
-          parceiro: parceiro,
-          aoAbrirAlertas: widget.aoAbrirAlertas,
-        ),
-      ),
+    await mostrarFolhaRadar<void>(
+      context,
+      alturaMaxima: 0.9,
+      builder: (_) =>
+          PaginaHistoricoLiveloAndroid(api: widget.api, parceiro: parceiro),
     );
   }
 
   Future<void> _abrirDetalhes(ParceiroCatalogoLivelo parceiro) async {
-    final abrirHistorico = await mostrarFolhaRadar<bool>(
+    await mostrarFolhaRadar<void>(
       context,
       alturaMaxima: 0.9,
       builder: (contexto) => ConstrainedBox(
@@ -141,91 +141,154 @@ class _EstadoPaginaCatalogoLiveloAndroid
         ),
         child: FolhaRadar(
           titulo: parceiro.nome,
-          descricao: 'Dados do contrato Livelo',
+          descricao: 'Condições da oferta',
           child: Flexible(
             child: SingleChildScrollView(
               child: _DetalhesParceiroLivelo(
                 parceiro: parceiro,
-                aoAbrirHistorico: () => Navigator.of(contexto).pop(true),
+                aoAbrirLivelo: () {
+                  Navigator.of(contexto).pop();
+                  unawaited(_confirmarAberturaLivelo(parceiro));
+                },
               ),
             ),
           ),
         ),
       ),
     );
-    if (abrirHistorico == true && mounted) await _abrirHistorico(parceiro);
+  }
+
+  Future<void> _confirmarAberturaLivelo(ParceiroCatalogoLivelo parceiro) async {
+    final uri = Uri.tryParse(parceiro.link ?? '');
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) return;
+    final continuar = await mostrarFolhaRadar<bool>(
+      context,
+      alturaMaxima: 0.62,
+      builder: (_) => FolhaRadar(
+        titulo: 'Abrir Livelo?',
+        descricao: '',
+        child: Flexible(
+          child: SingleChildScrollView(
+            child: _ConfirmacaoAberturaLivelo(
+              aoFicarAqui: () => Navigator.of(context).pop(false),
+              aoContinuar: () => Navigator.of(context).pop(true),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (continuar != true || !mounted) return;
+    final abriu = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!abriu && mounted) {
+      mostrarMensagemRadar(
+        context,
+        'Não foi possível abrir o site da Livelo.',
+        sucesso: false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _controlador,
-    builder: (context, _) => CustomScrollView(
-      key: const Key('catalogo-livelo-android'),
-      controller: _rolagem,
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 22, 18, 20),
-          sliver: SliverToBoxAdapter(
-            child: CabecalhoSecaoRadar(
-              sobrelinha: 'Catálogo',
-              titulo: 'Lojas e pontos',
-              descricao: 'Lojas parceiras e pontos por real gasto.',
-              acao: BotaoDisparo(
-                api: widget.api,
-                dominio: 'livelo',
-                administrador: widget.administrador,
-                rotulo: 'Atualizar',
-                aoAceitar: _acompanharNovaColeta,
-                compacto: true,
+    builder: (context, _) {
+      final tokens = context.tokens;
+      return CustomScrollView(
+        key: const Key('catalogo-livelo-android'),
+        controller: _rolagem,
+        slivers: [
+          SliverSafeArea(
+            top: true,
+            bottom: false,
+            sliver: SliverPadding(
+              padding: EdgeInsetsDirectional.only(
+                start: tokens.spacing.five,
+                top: tokens.spacing.four,
+                end: tokens.spacing.five,
+                bottom: tokens.spacing.four,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: _CabecalhoCatalogoLivelo(
+                  aoVoltar: widget.aoVoltar,
+                  atualizar: BotaoDisparo(
+                    key: const Key('atualizar-catalogo-livelo'),
+                    api: widget.api,
+                    dominio: 'livelo',
+                    administrador: widget.administrador,
+                    rotulo: 'Atualizar catálogo',
+                    aoAceitar: _acompanharNovaColeta,
+                    somenteIcone: true,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-          sliver: SliverToBoxAdapter(
-            child: CampoBuscaRadar(
-              controlador: _busca,
-              dica: 'Qual loja você procura?',
-              aoMudar: _controlador.mudarBusca,
-              somenteBusca: true,
+          SliverPadding(
+            padding: EdgeInsetsDirectional.only(
+              start: tokens.spacing.five,
+              end: tokens.spacing.five,
+              bottom: tokens.spacing.four,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Lojas e pontos',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          sliver: SliverToBoxAdapter(
-            child: AbasRadar(
-              rotulos: _abasVisiveis.map((aba) => aba.rotulo).toList(),
-              contadores: [
-                _controlador.resumo?.totalCatalogo ?? 0,
-                _controlador.resumo?.acompanhadas ?? 0,
-              ],
-              expandir: true,
-              selecionada: _abasVisiveis.indexOf(_controlador.aba).clamp(0, 1),
-              aoSelecionar: (indice) =>
-                  _controlador.mudarAba(_abasVisiveis[indice]),
+          SliverPadding(
+            padding: EdgeInsetsDirectional.only(
+              start: tokens.spacing.five,
+              end: tokens.spacing.five,
+              bottom: tokens.spacing.two,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: CampoBuscaRadar(
+                key: const Key('busca-catalogo-livelo'),
+                controlador: _busca,
+                dica: 'Qual loja você procura?',
+                aoMudar: _controlador.mudarBusca,
+              ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 4, 18, 11),
-          sliver: SliverToBoxAdapter(
-            child: _ResumoResultados(
-              total: _controlador.totalItens,
-              contexto: _contextoResultados,
-              mostrarFiltro: _controlador.aba == AbaCatalogoLivelo.lojas,
-              filtroAtivo:
-                  _controlador.categoria.isNotEmpty ||
-                  _controlador.ordenacao != OrdenacaoCatalogoLivelo.nome,
-              aoFiltrar: _abrirFiltros,
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: tokens.spacing.five),
+            sliver: SliverToBoxAdapter(
+              child: AbasRadar(
+                rotulos: const ['Lojas', 'No radar'],
+                plana: true,
+                selecionada: _abasVisiveis
+                    .indexOf(_controlador.aba)
+                    .clamp(0, 1),
+                aoSelecionar: (indice) =>
+                    _controlador.mudarAba(_abasVisiveis[indice]),
+              ),
             ),
           ),
-        ),
-        ..._corpo(),
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
-      ],
-    ),
+          SliverPadding(
+            padding: EdgeInsetsDirectional.only(
+              start: tokens.spacing.five,
+              top: tokens.spacing.one,
+              end: tokens.spacing.five,
+              bottom: tokens.spacing.three,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _ResumoResultados(
+                total: _controlador.totalItens,
+                contexto: _contextoResultados,
+                mostrarFiltro: _controlador.aba == AbaCatalogoLivelo.lojas,
+                filtroAtivo:
+                    _controlador.categoria.isNotEmpty ||
+                    _controlador.ordenacao != OrdenacaoCatalogoLivelo.nome,
+                aoFiltrar: _abrirFiltros,
+              ),
+            ),
+          ),
+          ..._corpo(),
+          SliverToBoxAdapter(child: SizedBox(height: tokens.spacing.eight)),
+        ],
+      );
+    },
   );
 
   String get _contextoResultados {
@@ -451,8 +514,11 @@ class _EstadoPaginaCatalogoLiveloAndroid
               ),
               podeAdministrar: widget.administrador,
               podeAcompanhar: true,
+              atualizadoEm: resumo.ultimaColeta,
               aoAlternar: () => _alternar(parceiro),
               aoDetalhes: () => _abrirDetalhes(parceiro),
+              aoHistorico: () => _abrirHistorico(parceiro),
+              aoAbrirLivelo: () => _confirmarAberturaLivelo(parceiro),
             );
           },
         ),
@@ -482,6 +548,51 @@ class _EstadoPaginaCatalogoLiveloAndroid
   }
 }
 
+class _CabecalhoCatalogoLivelo extends StatelessWidget {
+  const _CabecalhoCatalogoLivelo({
+    required this.aoVoltar,
+    required this.atualizar,
+  });
+
+  final VoidCallback? aoVoltar;
+  final Widget atualizar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        IconButton(
+          key: const Key('voltar-programas-livelo'),
+          tooltip: 'Voltar para Explorar',
+          onPressed: aoVoltar ?? () => Navigator.of(context).maybePop(),
+          icon: const Icon(Icons.arrow_back),
+        ),
+        SizedBox(width: tokens.spacing.two),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Livelo', style: tema.textTheme.titleMedium),
+              Text(
+                'Catálogo',
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.textoSuave,
+                ),
+              ),
+            ],
+          ),
+        ),
+        atualizar,
+      ],
+    );
+  }
+}
+
 class _ResumoResultados extends StatelessWidget {
   const _ResumoResultados({
     required this.total,
@@ -503,21 +614,23 @@ class _ResumoResultados extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+          '$total ${total == 1 ? 'loja' : 'lojas'}',
           style: Theme.of(
             context,
           ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 3),
-        Text(
-          contexto,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-            fontSize: 9,
+        if (contexto != 'Catálogo completo') ...[
+          const SizedBox(height: 3),
+          Text(
+            contexto,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: CoresRadar.de(context).textoSuave,
+              fontSize: 9,
+            ),
           ),
-        ),
+        ],
       ],
     );
     final botao = OutlinedButton.icon(
@@ -549,7 +662,7 @@ class _ResumoResultados extends StatelessWidget {
             ? Tokens.acaoForteEscura
             : Tokens.actionStrong,
       ),
-      label: const Text('Filtrar e ordenar'),
+      label: const Text('Filtros'),
     );
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
@@ -592,66 +705,152 @@ class _ResumoResultados extends StatelessWidget {
 class _DetalhesParceiroLivelo extends StatelessWidget {
   const _DetalhesParceiroLivelo({
     required this.parceiro,
-    required this.aoAbrirHistorico,
+    required this.aoAbrirLivelo,
   });
 
   final ParceiroCatalogoLivelo parceiro;
-  final VoidCallback aoAbrirHistorico;
+  final VoidCallback aoAbrirLivelo;
 
   @override
   Widget build(BuildContext context) {
     final campanha = parceiro.campanha?.trim();
+    final tokens = context.tokens;
+    final cores = tokens.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          'Condições da oferta',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        SizedBox(height: tokens.spacing.two),
+        Text(
+          parceiro.descricaoCampanha?.trim().isNotEmpty == true
+              ? parceiro.descricaoCampanha!.trim()
+              : 'Confira produtos participantes, cupons elegíveis e prazo de crédito no regulamento da campanha.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: cores.textoSuave,
+            height: 1.45,
+          ),
+        ),
+        SizedBox(height: tokens.spacing.three),
         _LinhaDetalheLivelo(
-          rotulo: 'Pontuação atual',
+          rotulo: 'Pontuação comum',
           valor: pontosLivelo(parceiro.pontosAtuais, moeda: parceiro.moeda),
         ),
-        if (parceiro.pontosBase != null)
-          _LinhaDetalheLivelo(
-            rotulo: 'Pontuação base',
-            valor: pontosLivelo(parceiro.pontosBase, moeda: parceiro.moeda),
-          ),
         if (parceiro.pontosClube != null)
           _LinhaDetalheLivelo(
             rotulo: 'Clube Livelo',
             valor: pontosLivelo(parceiro.pontosClube, moeda: parceiro.moeda),
           ),
+        if (parceiro.fimPromocao != null)
+          _LinhaDetalheLivelo(
+            rotulo: 'Validade',
+            valor: validadeLivelo(parceiro.fimPromocao),
+          ),
         if (campanha != null && campanha.isNotEmpty)
           _LinhaDetalheLivelo(rotulo: 'Campanha', valor: campanha),
-        _LinhaDetalheLivelo(
-          rotulo: 'Código externo',
-          valor: parceiro.idExterno,
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'Histórico',
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'O endpoint retorna as últimas 30 medições salvas. '
-          'Abrir o histórico nunca inicia uma coleta.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
-            height: 1.45,
+        SizedBox(height: tokens.spacing.four),
+        FilledButton.icon(
+          key: Key('abrir-livelo-${parceiro.idExterno}'),
+          onPressed: _linkHttpsValido(parceiro.link) ? aoAbrirLivelo : null,
+          style: FilledButton.styleFrom(
+            minimumSize: Size(0, tokens.sizes.touchTarget),
+            backgroundColor: cores.acao,
+            foregroundColor: cores.marcaTexto,
           ),
-        ),
-        const SizedBox(height: 14),
-        OutlinedButton(
-          key: Key('ver-historico-${parceiro.idExterno}'),
-          onPressed: aoAbrirHistorico,
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(46),
-          ),
-          child: const Text('Ver histórico'),
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('Abrir Livelo'),
         ),
       ],
     );
   }
+}
+
+class _ConfirmacaoAberturaLivelo extends StatelessWidget {
+  const _ConfirmacaoAberturaLivelo({
+    required this.aoFicarAqui,
+    required this.aoContinuar,
+  });
+
+  final VoidCallback aoFicarAqui;
+  final VoidCallback aoContinuar;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = tokens.colors;
+    final botoes = [
+      Expanded(
+        child: OutlinedButton(
+          key: const Key('ficar-aqui-livelo'),
+          onPressed: aoFicarAqui,
+          style: OutlinedButton.styleFrom(
+            minimumSize: Size(0, tokens.sizes.touchTarget),
+          ),
+          child: const Text('Ficar aqui'),
+        ),
+      ),
+      SizedBox(width: tokens.spacing.two),
+      Expanded(
+        child: FilledButton.icon(
+          key: const Key('continuar-livelo'),
+          onPressed: aoContinuar,
+          style: FilledButton.styleFrom(
+            minimumSize: Size(0, tokens.sizes.touchTarget),
+            backgroundColor: cores.acao,
+            foregroundColor: cores.marcaTexto,
+          ),
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('Continuar'),
+        ),
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final estreito = limites.maxWidth < 320;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Você será levado ao site oficial para conferir preços e condições.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: cores.textoSuave,
+                height: 1.45,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.five),
+            Text(
+              'Os itens desta demonstração são ilustrativos. O link abre o portal da origem, sem simular uma oferta real.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: cores.textoSuave,
+                height: 1.45,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.five),
+            if (estreito)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  botoes[0],
+                  SizedBox(height: tokens.spacing.two),
+                  botoes[2],
+                ],
+              )
+            else
+              Row(children: botoes),
+          ],
+        );
+      },
+    );
+  }
+}
+
+bool _linkHttpsValido(String? link) {
+  final uri = Uri.tryParse(link ?? '');
+  return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
 }
 
 class _LinhaDetalheLivelo extends StatelessWidget {

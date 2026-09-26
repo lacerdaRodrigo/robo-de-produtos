@@ -96,6 +96,8 @@ describe("persistência do acompanhamento Pichau", () => {
       aba: "acompanhadas",
       disponibilidade: "todas",
       ordenar: "nome",
+      precoMin: null,
+      precoMax: null,
       pagina: 1,
       porPagina: 50,
     });
@@ -119,6 +121,8 @@ describe("persistência do acompanhamento Pichau", () => {
         aba: "acompanhadas",
         disponibilidade: "todas",
         ordenar: "nome",
+        precoMin: null,
+        precoMax: null,
         pagina: 1,
         porPagina: 20,
       },
@@ -171,6 +175,8 @@ describe("persistência do acompanhamento Pichau", () => {
         aba: "todas",
         disponibilidade: "todas",
         ordenar: "nome",
+        precoMin: null,
+        precoMax: null,
         pagina: 1,
         porPagina: 20,
       },
@@ -212,6 +218,8 @@ describe("persistência do acompanhamento Pichau", () => {
       aba: "acompanhadas",
       disponibilidade: "esgotados",
       ordenar: "preco",
+      precoMin: "3000.00",
+      precoMax: "8000.00",
       pagina: 1,
       porPagina: 20,
     });
@@ -219,7 +227,10 @@ describe("persistência do acompanhamento Pichau", () => {
     expect(bancoFalso.consultas[0]).toContain("p.acompanhada = TRUE");
     expect(bancoFalso.consultas[0]).toContain("p.disponibilidade = 'esgotado'");
     expect(bancoFalso.consultas[0]).toContain("p.nome_busca LIKE");
+    expect(bancoFalso.consultas[0]).toContain("preco_pix");
     expect(bancoFalso.consultas[1]).toContain("ORDER BY");
+    expect(bancoFalso.consultas[1]).toContain("m.preco_pix >= 3000.00");
+    expect(bancoFalso.consultas[1]).toContain("m.preco_pix <= 8000.00");
     expect(bancoFalso.consultas[1]).toContain("m.preco_pix");
     expect(bancoFalso.consultas[1]).toContain("LIMIT 20");
   });

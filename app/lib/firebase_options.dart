@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -16,9 +16,6 @@ import 'package:flutter/foundation.dart'
 /// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -45,16 +42,6 @@ class DefaultFirebaseOptions {
         );
     }
   }
-
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAET_reMOvTIzA41gVPJTm2ZJ_I6QA3ado',
-    appId: '1:100167816991:web:956512e3b10bee1df9822a',
-    messagingSenderId: '100167816991',
-    projectId: 'radarbeneficios',
-    authDomain: 'radarbeneficios.firebaseapp.com',
-    storageBucket: 'radarbeneficios.firebasestorage.app',
-    measurementId: 'G-7FTELND430',
-  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBhMVWxrdi-uj3m8yIFWQPBcmBwpM3_lmo',

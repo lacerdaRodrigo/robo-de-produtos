@@ -120,4 +120,39 @@ void main() {
     expect(dataHoraLivelo('2026-08-22T15:30:00Z'), '22/08/2026, 12:30');
     expect(validadeLivelo('2026-08-22T23:59:00Z'), 'Válido até 22/08/2026');
   });
+
+  test('card formata pontuação, coleta e validade sem inventar dados', () {
+    final agora = DateTime.utc(2026, 8, 28, 15);
+
+    expect(valorPontosLivelo('2.90'), '2,9');
+    expect(valorPontosLivelo(null), '—');
+    expect(
+      atualizacaoCatalogoLivelo('2026-08-28T12:00:00Z', agora: agora),
+      'Hoje, 09:00',
+    );
+    expect(
+      atualizacaoCatalogoLivelo('2026-08-27T15:00:00Z', agora: agora),
+      'Ontem, 12:00',
+    );
+    expect(
+      validadeBreveLivelo('2026-08-29T02:00:00Z', agora: agora),
+      'Termina hoje, 23:00',
+    );
+    expect(validadeBreveLivelo(null, agora: agora), '');
+  });
+
+  test('histórico preserva a pontuação do Clube de cada medição', () {
+    final historico = HistoricoLivelo.parse({
+      'medicoes': [
+        {
+          'momento': '2026-08-28T12:00:00Z',
+          'pontos_atuais': '8',
+          'pontos_clube': '10',
+          'moeda': 'R\$',
+        },
+      ],
+    });
+
+    expect(historico.medicoes.single.pontosClube, '10');
+  });
 }

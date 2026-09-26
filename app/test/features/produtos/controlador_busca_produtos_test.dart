@@ -441,4 +441,51 @@ void main() {
       expect(controlador.ultimaTentativaEstado, 'parcial');
     },
   );
+
+  test('envia ordenação e recorte No radar para a busca paginada', () async {
+    final consultas = <(String, bool)>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina(const []),
+      buscarComOpcoes:
+          ({
+            required termo,
+            required pagina,
+            required ordenar,
+            required apenasAcompanhados,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            consultas.add((ordenar, apenasAcompanhados));
+            return _pagina(const []);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    controlador.mudarTermo('edge');
+    await Future<void>.delayed(Duration.zero);
+    controlador.mudarFiltros(const FiltrosProdutos(ordenar: 'nome'));
+    await Future<void>.delayed(Duration.zero);
+    controlador.mudarAcompanhados(true);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(consultas, [("preco", false), ("nome", false), ("nome", true)]);
+    expect(controlador.apenasAcompanhados, isTrue);
+  });
 }

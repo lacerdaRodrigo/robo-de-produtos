@@ -8,8 +8,8 @@ import '../tema/tokens.dart';
 
 /// Catálogo compacto das integrações reais do Radar.
 ///
-/// A busca é local porque esta lista contém apenas os poucos programas
-/// conectados; os catálogos abertos a partir daqui continuam server-side.
+/// A lista reúne somente as fontes conectadas; os catálogos abertos a partir
+/// daqui continuam consultando seus próprios dados server-side.
 class PaginaProgramas extends StatefulWidget {
   const PaginaProgramas({
     super.key,
@@ -31,7 +31,6 @@ class PaginaProgramas extends StatefulWidget {
 }
 
 class _EstadoPaginaProgramas extends State<PaginaProgramas> {
-  final _busca = TextEditingController();
   ResumoInicio? _resumo;
   Object? _erro;
   var _carregando = true;
@@ -68,22 +67,14 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
   }
 
   @override
-  void dispose() {
-    _busca.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final termo = _busca.text.trim().toLowerCase();
     final programas = <_ProgramaRadar>[
       _ProgramaRadar(
         chave: const Key('programa-livelo'),
         titulo: 'Livelo',
-        descricao: 'Pontos, lojas acompanhadas e histórico',
+        descricao: 'Lojas parceiras e pontos por real gasto.',
         tipo: 'Pontos',
         capacidades: const ['Catálogo', 'Pontuação', 'Histórico'],
-        termos: 'livelo pontos lojas historico campanhas',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.livelo.estado),
         detalhe: _resumo == null
             ? null
@@ -93,10 +84,9 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
       _ProgramaRadar(
         chave: const Key('programa-inter'),
         titulo: 'Banco Inter',
-        descricao: 'Cashback, Sites parceiros e Compre direto',
+        descricao: 'Cashback em lojas e compra de produtos.',
         tipo: 'Cashback + produtos',
         capacidades: const ['Sites parceiros', 'Cashback', 'Compre direto'],
-        termos: 'banco inter cashback sites parceiros compre direto produtos',
         estado: _resumo == null
             ? null
             : _rotuloEstado(_resumo!.cashbackInter.estado),
@@ -108,10 +98,9 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
       _ProgramaRadar(
         chave: const Key('programa-pichau'),
         titulo: 'Pichau',
-        descricao: 'Catálogo de PCs Gamer com preços e disponibilidade',
-        tipo: 'PC Gamer',
+        descricao: 'PCs gamer com preço Pix e cartão.',
+        tipo: 'Tecnologia',
         capacidades: const ['Catálogo PC Gamer', 'Pix + cartão', 'Estoque'],
-        termos: 'pichau pc gamer computadores catalogo preços disponibilidade',
         estado: _resumo == null ? null : _rotuloEstado(_resumo!.pichau.estado),
         detalhe: _resumo == null
             ? null
@@ -119,73 +108,80 @@ class _EstadoPaginaProgramas extends State<PaginaProgramas> {
         aoTocar: widget.aoAbrirPichau,
       ),
     ];
-    final visiveis = programas
-        .where((programa) => programa.termos.contains(termo))
-        .toList(growable: false);
 
     return RefreshIndicator(
       onRefresh: _carregar,
-      child: ListView(
-        key: const Key('pagina-programas'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-        children: [
-          const CabecalhoSecaoRadar(
-            sobrelinha: 'Descubra novas possibilidades',
-            titulo: 'Uma compra. Mais possibilidades.',
-            descricao:
-                'Explore fontes, encontre oportunidades e escolha onde continuar.',
+      child: SafeArea(
+        top: true,
+        bottom: false,
+        child: ListView(
+          key: const Key('pagina-programas'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsetsDirectional.only(
+            start: context.tokens.spacing.five,
+            top: context.tokens.spacing.four,
+            end: context.tokens.spacing.five,
+            bottom: context.tokens.spacing.six,
           ),
-          const SizedBox(height: 22),
-          CampoBuscaRadar(
-            chaveCampo: const Key('busca-programas'),
-            controlador: _busca,
-            dica: 'Pesquisar fonte',
-            aoMudar: (_) => setState(() {}),
-            somenteBusca: true,
-          ),
-          if (_carregando) ...[
-            const SizedBox(height: 12),
-            const LinearProgressIndicator(),
-          ],
-          if (_erro != null && _resumo == null) ...[
-            const SizedBox(height: 14),
-            EstadoFalha(
-              mensagem:
-                  'Não foi possível carregar os resumos. As fontes continuam disponíveis.',
-              voltar: _carregar,
-            ),
-          ],
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Fontes disponíveis',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              Text(
-                '${visiveis.length}',
-                style: TextStyle(
-                  color: CoresRadar.de(context).textoSuave,
-                  fontWeight: FontWeight.w800,
-                ),
+          children: [
+            const _CabecalhoExplorar(),
+            SizedBox(height: context.tokens.spacing.six),
+            if (_carregando) ...[
+              SizedBox(height: context.tokens.spacing.three),
+              const LinearProgressIndicator(),
+            ],
+            if (_erro != null && _resumo == null) ...[
+              SizedBox(height: context.tokens.spacing.three),
+              EstadoFalha(
+                mensagem:
+                    'Não foi possível carregar os resumos. As fontes continuam disponíveis.',
+                voltar: _carregar,
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          if (visiveis.isEmpty)
-            const EstadoVazio(mensagem: 'Nenhuma fonte encontrada.')
-          else
-            for (var indice = 0; indice < visiveis.length; indice++) ...[
-              _CartaoPrograma(programa: visiveis[indice]),
-              if (indice != visiveis.length - 1) const SizedBox(height: 10),
+            for (var indice = 0; indice < programas.length; indice++) ...[
+              _CartaoPrograma(programa: programas[indice]),
+              if (indice != programas.length - 1)
+                SizedBox(height: context.tokens.spacing.three),
             ],
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _CabecalhoExplorar extends StatelessWidget {
+  const _CabecalhoExplorar();
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const CabecalhoMarcaRadar(
+          key: Key('cabecalho-explorar'),
+          rotulo: 'Explorar',
+        ),
+        SizedBox(height: tokens.spacing.six),
+        Text(
+          'ESCOLHA SEU CAMINHO',
+          style: tema.textTheme.labelSmall?.copyWith(color: cores.textoSuave),
+        ),
+        SizedBox(height: tokens.spacing.two),
+        Text(
+          'Uma compra.\nMais possibilidades.',
+          softWrap: true,
+          style: tema.textTheme.headlineMedium,
+        ),
+        SizedBox(height: tokens.spacing.two),
+        Text(
+          'Encontre preços e benefícios por origem.',
+          style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
+        ),
+      ],
     );
   }
 }
@@ -197,7 +193,6 @@ class _ProgramaRadar {
     required this.descricao,
     required this.tipo,
     required this.capacidades,
-    required this.termos,
     required this.estado,
     required this.detalhe,
     required this.aoTocar,
@@ -208,7 +203,6 @@ class _ProgramaRadar {
   final String descricao;
   final String tipo;
   final List<String> capacidades;
-  final String termos;
   final String? estado;
   final String? detalhe;
   final VoidCallback aoTocar;

@@ -48,24 +48,10 @@ abstract final class ConfiguracaoFirebase {
         'O acesso do piloto ainda não foi configurado neste build.',
       );
     }
-    if (kIsWeb &&
-        !kDebugMode &&
-        Ambiente.appCheckAtivo &&
-        Ambiente.firebaseRecaptchaSiteKey.trim().isEmpty) {
-      return const InicializacaoFirebase.pendente(
-        'A proteção deste build Web ainda não foi configurada.',
-      );
-    }
-
     try {
       await Firebase.initializeApp(options: opcoes);
       if (Ambiente.appCheckAtivo) {
         await FirebaseAppCheck.instance.activate(
-          providerWeb: kIsWeb
-              ? kDebugMode
-                    ? WebDebugProvider()
-                    : ReCaptchaV3Provider(Ambiente.firebaseRecaptchaSiteKey)
-              : null,
           providerAndroid: provedorAndroid(debug: kDebugMode),
           providerApple: provedorApple(debug: kDebugMode),
         );

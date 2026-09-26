@@ -12,12 +12,12 @@ passou no mesmo commit também deixando o Chrome aberto: o processo residual é
 um risco real agora eliminado, mas não ficou comprovado como causa isolada.
 Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
-**Última atualização:** 2026-09-14
+**Última atualização:** 2026-09-21
 
 ## Objetivo
 
-Adicionar a Pichau como fonte independente de PCs Gamer no Radar, mantendo a
-fonte subordinada a **Serviços** e sem criar um quarto destino no `BottomDock`.
+Adicionar a Pichau como fonte independente de PCs Gamer no Radar, como subárea
+de **Explorar** e sem criar um quinto destino persistente.
 O aplicativo deve consultar somente o catálogo persistido pela API e permitir
 abrir o produto real na Pichau.
 
@@ -47,17 +47,30 @@ Proxy, rotação de IP e qualquer técnica fora do termo continuam proibidos.
 
 - Categoria acompanhada: **PC Gamer**.
 - Catálogo completo da categoria, sem filtros de usuário na coleta.
-- Pichau aparece como card próprio em **Serviços**.
-- O card abre uma subárea interna de Serviços, com botão de retorno.
+- Pichau aparece como card próprio em **Explorar**.
+- O card abre uma subárea interna de Explorar, com botão de retorno.
 - O catálogo é paginado; busca por nome, marca e SKU é server-side.
-- O card do produto mostra nome, marca, origem, categoria, preço Pix,
-  preço original e desconto quando disponíveis, preço no cartão, parcelamento,
-  etiquetas e disponibilidade.
-- **Ver na Pichau** abre somente uma URL `http` ou `https` fornecida pela API,
-  usando o navegador externo.
-- O card oferece **Histórico** em uma folha/modal baseada no componente Delta já
-  existente. A tela inicial não expõe o histórico inteiro; ele aparece sob
-  demanda e é somente leitura.
+- O catálogo mobile segue a composição V15 com cabeçalho `Pichau`/`Catálogo`,
+  voltar, atualizar, título `PCs gamer`, busca com avanço, abas planas
+  `Todos`/`No radar`, total de produtos e botão `Filtros`.
+- A folha `Filtros · Pichau` segue a ordem do protótipo: `Menor preço Pix` por
+  padrão, disponibilidade `Todos`, preço mínimo/máximo em reais e ações
+  `Limpar`/`Aplicar filtros`. Limpar apenas restaura o formulário; aplicar
+  reinicia a página sem perder a busca. Com o teclado aberto, a folha respeita
+  a área útil acima dele e permite rolar até o campo e as ações, sem ocultar o
+  valor digitado; em texto ampliado, ela também rola sem cortar ações. As três
+  ordenações expostas (`Nome`, menor preço Pix e maior desconto Pix) seguem
+  para a API e são aplicadas ao retrato paginado. Cada limite de preço é
+  independente: a pessoa pode aplicar somente o mínimo ou somente o máximo; a
+  comparação só ocorre quando ambos forem informados.
+- O card do produto mostra o SKU quando fornecido, disponibilidade no canto
+  superior direito, nome em até duas linhas com reticências visuais quando
+  necessário (o nome completo permanece na semântica), marca/categoria quando
+  disponíveis, preço Pix em destaque, preço original riscado, preço no cartão
+  e desconto/condições textuais.
+- **Detalhes** abre a folha V15 do produto. Nela, **Abrir Pichau** usa somente
+  uma URL `http` ou `https` fornecida pela API, e **Histórico** mantém as
+  medições somente leitura sob demanda.
 - Nenhuma imagem de produto é armazenada ou necessária para o card.
 
 ## Estados de produto e fonte
@@ -84,13 +97,18 @@ diretamente.
 
 ### Catálogo
 
-`GET /api/pichau/catalogo?q=&aba=todas|acompanhadas&disponibilidade=todas|disponiveis|esgotados&ordenar=nome|preco|desconto&pagina=&por_pagina=`.
+`GET /api/pichau/catalogo?q=&aba=todas|acompanhadas&disponibilidade=todas|disponiveis|esgotados|fora_catalogo&ordenar=nome|preco|desconto&preco_min=&preco_max=&pagina=&por_pagina=`.
 
-Na jornada mobile V12 Delta, `aba`, `disponibilidade` e `ordenar` são filtros do
+Na jornada mobile V15, `aba`, `disponibilidade` e `ordenar` são filtros do
 retrato persistido e continuam server-side; a digitação não consulta a fonte
 externa. Cada item também informa `acompanhada: boolean`. O Flutter preserva
 o filtro, a busca e a página durante as ações e usa estado otimista somente
 até a confirmação da API.
+
+`ordenar=preco` é o padrão da jornada. `preco_min` e `preco_max` são opcionais,
+aceitam decimal com vírgula ou ponto, são validados pela API e comparam o último
+`preco_pix` válido do produto antes da paginação. O cliente não baixa o catálogo
+para filtrar localmente nem converte dinheiro para `double`.
 
 O contrato paginado usa `por_pagina` padrão 20 e limite máximo 50, além de
 ordenação estável por nome e identificador. Cada item deve fornecer, quando a
@@ -123,7 +141,7 @@ acompanhada
 
 O backend implementado limita as medições aos últimos 30 dias e preserva a
 identidade do produto mesmo quando ele sair do catálogo. A resposta do
-histórico é usada pela folha Delta para mostrar as medições de Pix e cartão sem
+histórico é usada pela folha V15 para mostrar as medições de Pix e cartão sem
 recalcular valores financeiros no app.
 
 ### Acompanhamento administrativo legado
@@ -174,7 +192,7 @@ falha da API. Esse fallback mantém a leitura dos produtos disponível, mas não
 substitui a aplicação e a validação das migrations 023/026 no ambiente
 publicado.
 
-### Resumo de Serviços
+### Resumo de Explorar
 
 `GET /api/resumo` agora inclui o bloco `pichau`, com estado, último sucesso,
 última tentativa, qualidade, produtos ativos e produtos esgotados. Os estados
@@ -341,14 +359,133 @@ mantém o comportamento anterior sem expor o conteúdo recusado.
 
 ## Executor Android local — hardening de disponibilidade versionado
 
+### Referência de implantação no Samsung
+
+Esta seção é o runbook vigente de implantação. O arquivo
+`backend/robo/README.md` mantém os detalhes de cada script; este PRD mantém a
+ordem, os gates e as decisões que não podem ser alteradas durante uma
+reinstalação.
+
+#### Pré-requisitos e isolamento
+
+1. Usar um Samsung Android 14 dedicado, com Chrome, ABI `armeabi-v7a/armeabi`
+   32-bit, Wi-Fi privado e carregador. Instalar Termux, Termux:Boot e
+   Termux:API da mesma fonte; não misturar builds.
+2. Desativar otimização de bateria e suspensão para os três aplicativos,
+   manter a tela bloqueável e não cadastrar contas pessoais, senhas ou tokens
+   no Chrome. O telefone não hospeda API/banco e o Flutter nunca acessa o
+   aparelho diretamente.
+3. Manter Appium/UiAutomator2 somente em `127.0.0.1:4723`. A execução
+   recorrente usa Chrome nativo pelo CDP local encaminhado por ADB; não há
+   ChromeDriver Linux ARM32, proxy, rotação ou bypass de bloqueio.
+
+#### Instalação do checkout e dependências
+
+No Termux, instalar Git, Python, OpenSSL, `util-linux`, `libxml2`, `libxslt`,
+`libpq` e manter o checkout em
+`/data/data/com.termux/files/usr/opt/robo` (ou no caminho definido por
+`PICHAU_REPO_ROOT`). Criar o ambiente e instalar o pacote Android:
+
+```bash
+python -m venv /data/data/com.termux/files/usr/opt/robo/.venv
+/data/data/com.termux/files/usr/opt/robo/.venv/bin/pip install -e \
+  /data/data/com.termux/files/usr/opt/robo/backend/robo/'[pichau-android]'
+/data/data/com.termux/files/usr/opt/robo/.venv/bin/python -m pip install 'psycopg>=3.2'
+```
+
+Validar imports de `psycopg`, `lxml`, `requests`, `robo_pichau` e do parser.
+No ARM32, `psycopg` puro é obrigatório; o pacote não deve depender de um
+binário `libpq` incompatível.
+
+#### Configuração privada e segurança
+
+Criar somente no aparelho o arquivo
+`$PREFIX/etc/robo-pichau/env`, modo `600` (ou `400` quando imutável), com
+`DATABASE_URL` SSL e as opções de transporte. Nunca versionar ou imprimir
+esses valores:
+
+```text
+PICHAU_MODO_NAVEGADOR=android
+PICHAU_ANDROID_TRANSPORTE=wifi
+PICHAU_ANDROID_UDID=auto
+PICHAU_ANDROID_WIFI_HOST=<IP_PRIVADO_DO_ANDROID>
+PICHAU_ANDROID_WIFI_PORT=<PORTA_PRIVADA_ADB>
+PICHAU_ANDROID_WIFI_SERVICE=adb-tls-connect._tcp
+```
+
+O host e a porta são filtrados localmente e não são publicados no roteador.
+`DATABASE_URL` entra somente no processo Python publicador; Appium, ADB, CDP e
+Chrome não recebem a credencial. O runner usa `umask 077`, `flock`,
+`termux-wake-lock` e logs `600`, sem URL, IP, porta, serial, chave, token,
+cookie, HTML ou imagem.
+
+#### Boot, worker e diagnóstico
+
+O boot deve apontar para o checkout por link simbólico, nunca por cópia. Os
+scripts vigentes são `pichau-android-boot.sh`,
+`pichau-android-worker.sh`, `pichau-android-schedule.sh`,
+`pichau-android-recover.sh`, `pichau-android-run.sh`,
+`pichau-android-appium.sh` e `pichau-android-status.sh`.
+
+```bash
+mkdir -p "$HOME/.termux/boot" "$HOME/.termux/boot-backups"
+if [[ -e "$HOME/.termux/boot/pichau-android-boot.sh" \
+    && ! -L "$HOME/.termux/boot/pichau-android-boot.sh" ]]; then
+  mv "$HOME/.termux/boot/pichau-android-boot.sh" \
+    "$HOME/.termux/boot-backups/pichau-android-boot.sh.bak"
+fi
+ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/pichau-android-boot.sh" \
+  "$HOME/.termux/boot/pichau-android-boot.sh"
+"$PREFIX/opt/robo/backend/robo/scripts/pichau-android-status.sh"
+```
+
+O worker foreground consulta a fila a cada 30 segundos; o watchdog 7301 chama
+o recuperador a cada 15 minutos, sem coleta independente. O claim usa lock
+transacional e lease de 30 minutos. Antes de abrir o Chrome, o worker exige
+checkout limpo, faz fast-forward de `origin/main`, confirma que o SHA do
+workflow é ancestral e reinstala o extra Android quando o HEAD muda. Falha de
+checkout termina como `pichau-checkout`; pendência sem claim após 20 minutos
+termina como `executor-offline`.
+
+#### Gates antes da operação recorrente
+
+1. Configurar `PICHAU_MODO_NAVEGADOR=android` e, se necessário,
+   `PICHAU_ANDROID_DEVICE_NAME`/`PICHAU_ANDROID_UDID`.
+2. Executar `pichau-android-appium.sh start`, confirmar que UiAutomator2 abre
+   uma página de teste e encerrar com `stop`, sem processo órfão.
+3. Executar `python -m robo_pichau.principal --diagnostico`; ele valida
+   `products.items`, URL HTTPS, preço e disponibilidade, sem criar execução,
+   conexão de banco, HTML, cookie ou imagem.
+4. Fazer uma coleta manual real somente depois do diagnóstico. A publicação
+   exige `itens_lidos = itens_unicos = total_declarado`, zero duplicados e
+   transação completa; uma coleta parcial não substitui o último retrato válido.
+5. Depois do primeiro desbloqueio pós-boot, confirmar o status, bloquear a tela
+   e retirar o cabo. O aceite operacional exige nove execuções agendadas
+   consecutivas em 72 horas; uma falha reinicia a janela.
+
+#### Recuperação após desligamento ou reboot
+
+Tela bloqueada com Android ligado é operação normal; aparelho desligado ou
+reiniciado é outro estado. Nesta ROM, o Android pode desativar Depuração por
+Wi-Fi após reboot, e o worker não tem privilégio para religá-la sozinho:
+
+1. ligar o aparelho e fazer o primeiro desbloqueio;
+2. ativar “Depuração por Wi-Fi” nas Opções do desenvolvedor;
+3. conectar temporariamente um computador autorizado por USB e executar
+   `adb tcpip 5555`;
+4. confirmar `pichau-android-status.sh`, retirar o cabo e bloquear a tela.
+
+Não declarar autonomia após qualquer reboot sem novo teste real. Se essa
+intervenção manual não for aceitável, avaliar um controlador Linux residencial
+sempre ligado como decisão de arquitetura separada.
+
 O uso de um telefone Android conectado ao Wi‑Fi residencial foi separado do
 workflow hospedado. O telefone não será servidor da API, não será acessado
 diretamente pelo Flutter e não hospedará o banco; ele apenas executará o robô
 e publicará no Postgres/API já existentes.
 
-O plano separado está em
-[`docs/planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](../planos/PLANO-SERVIDOR-ANDROID-PICHAU.md).
-O pacote agora possui `FontePichauAndroid`, o modo
+O contrato operacional está consolidado neste PRD e no
+[`PRD-ACEITE-MOBILE-V15.md`](PRD-ACEITE-MOBILE-V15.md). O pacote agora possui `FontePichauAndroid`, o modo
 `PICHAU_MODO_NAVEGADOR=android`, diagnóstico sem banco e scripts de Appium,
 lock, wake-lock, logs e agendamento. No Samsung Android 14, Chrome
 e ABI `armeabi-v7a/armeabi` 32-bit, Termux/Termux:Boot/Termux:API, Appium e
@@ -578,19 +715,20 @@ dinâmico e da restauração da tela. Como o cabo de dados ainda estava fisicame
 conectado para a inspeção ADB, a execução manual sem cabo e o gate agendado
 continuam pendentes.
 
-## Jornada mobile V12 Delta entregue
+## Jornada mobile V15 entregue
 
-- Na Home compacta, a seção **Visão geral** exibe cards independentes de
-  Livelo, Banco Inter e Pichau; o card Pichau usa o retrato real de produtos
-  ativos, acompanhamentos e último sucesso, e abre sua subárea dentro de
-  Serviços.
-- A Home compacta não exibe mais a seção **Atividade recente**; o histórico de
-  coleta continua pertencendo aos estados e jornadas de cada serviço.
+- Na Home compacta, o rail de origens exibe Livelo, Banco Inter e Pichau; o
+  card Pichau usa o retrato real de produtos ativos, acompanhamentos e último
+  sucesso, e abre sua subárea dentro de Explorar.
+- O histórico de coleta continua pertencendo aos estados e jornadas de cada
+  fonte; a Home não mantém uma seção separada de atividade recente.
 - `PaginaProgramas` apresenta o card Pichau junto de Livelo e Banco Inter.
-- `DestinoCompacto.pichau` é uma subárea e não aparece no `BottomDock`.
-- `PaginaPichau` usa a fundação visual Delta, busca server-side, paginação,
-  loading, vazio, erro, atraso/parcial, cards próprios e histórico em folha.
-- A jornada mobile também possui abas Todas/Acompanhadas, filtros de
+- `DestinoCompacto.pichau` é uma subárea e não aparece entre os quatro destinos
+  persistentes.
+- `PaginaPichau` usa a fundação visual V15, o cabeçalho Pichau/Catálogo com
+  retorno e atualização, busca server-side, paginação, loading, vazio,
+  erro, atraso/parcial, cards próprios e detalhes com histórico em folha.
+- A jornada mobile também possui abas Todos/No radar, filtros de
   disponibilidade, ordenação por nome/preço Pix/desconto, acompanhamento
   pessoal com rollback em erro e distinção visual entre esgotado e fora do
   catálogo.
@@ -616,12 +754,13 @@ de 72 horas.
 ## Critérios de aceite
 
 Para o ciclo mobile, a jornada é aceita quando o card abre a subárea Pichau
-dentro de Serviços, o catálogo é paginado, busca/aba/filtros preservam o
-recorte solicitado, os preços Pix e cartão permanecem separados, o histórico
-abre pelo componente existente, os estados não se confundem, URLs inválidas
-não viram ações externas, o acompanhamento faz rollback em falha e Livelo,
-Inter e o `BottomDock` continuam sem alteração semântica. Na Home compacta,
-também deve haver um card Pichau acionável e nenhuma seção `Atividade recente`.
+dentro de Explorar, o cabeçalho oferece retorno/atualização sem duplicar a
+rota, o catálogo é paginado, busca/aba/filtros preservam o recorte solicitado,
+os preços Pix e cartão permanecem separados, `Detalhes` abre a oferta com
+histórico e abertura externa, os estados não se confundem, URLs inválidas não
+viram ações externas, o acompanhamento faz rollback em falha e os quatro
+destinos persistentes mantêm sua semântica. Na Home compacta, também deve
+haver um card Pichau acionável e nenhuma seção `Atividade recente`.
 
 A integração Pichau Android só volta ao estado pronto depois da coleta manual
 da correção e do gate de 72 horas. A coleta `34761933582` já comprovou o

@@ -178,6 +178,44 @@ void main() {
   });
 
   test(
+    'categoria reinicia a página e acompanha as consultas seguintes',
+    () async {
+      final consultas = <String>[];
+      final controlador = ControladorCashbackInter(
+        buscar: ({required q, required ordenar, required pagina}) async =>
+            respostaPagina([loja('1', 'C&A')], proxima: true),
+        buscarComCategoria:
+            ({
+              required q,
+              required ordenar,
+              required categoria,
+              required pagina,
+            }) async {
+              consultas.add('${categoria ?? 'todas'}/$pagina');
+              return respostaPagina(
+                [loja('2', 'Renner')],
+                numero: pagina,
+                proxima: pagina == 1,
+              );
+            },
+      );
+
+      await controlador.carregarInicial();
+      await controlador.carregarMais();
+      await controlador.mudarFiltros(
+        ordenacao: OrdenacaoCashbackInter.nome,
+        categoria: 'moda',
+      );
+
+      expect(consultas, ['todas/1', 'todas/2', 'moda/1']);
+      expect(controlador.categoria, 'moda');
+      expect(controlador.ordenacao, OrdenacaoCashbackInter.nome);
+      expect(controlador.pagina, 1);
+      controlador.dispose();
+    },
+  );
+
+  test(
     'mutação confirmada mantém card, total e filtro acompanhadas coerentes',
     () async {
       var acompanhada = false;

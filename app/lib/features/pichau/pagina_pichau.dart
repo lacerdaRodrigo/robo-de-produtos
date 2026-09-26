@@ -19,11 +19,13 @@ class PaginaPichau extends StatefulWidget {
     required this.api,
     this.administrador = false,
     this.ativa = true,
+    this.aoVoltar,
   });
 
   final Api api;
   final bool administrador;
   final bool ativa;
+  final VoidCallback? aoVoltar;
 
   @override
   State<PaginaPichau> createState() => _EstadoPaginaPichau();
@@ -37,12 +39,16 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
           required String aba,
           required String disponibilidade,
           required String ordenar,
+          required String precoMin,
+          required String precoMax,
           required int pagina,
         }) => widget.api.catalogoPichau(
           q: q,
           aba: aba,
           disponibilidade: disponibilidade,
           ordenar: ordenar,
+          precoMin: precoMin,
+          precoMax: precoMax,
           pagina: pagina,
         ),
     alterarAcompanhamento:
@@ -101,110 +107,132 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
         : _controlador.totalItens == 0
         ? 'Catálogo vazio'
         : 'Catálogo atualizado';
-    return RefreshIndicator(
-      onRefresh: _controlador.tentarNovamente,
-      child: ListView(
-        key: const Key('pagina-pichau'),
-        controller: _rolagem,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-        children: [
-          const CabecalhoSecaoRadar(
-            sobrelinha: 'Tecnologia',
-            titulo: 'PCs gamer',
-            descricao: 'PCs gamer com preço Pix e cartão.',
-          ),
-          const SizedBox(height: 22),
-          CampoBuscaRadar(
-            chaveCampo: const Key('busca-pichau'),
-            controlador: _busca,
-            dica: 'Nome, processador ou SKU',
-            somenteBusca: true,
-            aoMudar: _controlador.mudarBusca,
-          ),
-          const SizedBox(height: 12),
-          AbasRadar(
-            key: const Key('abas-pichau'),
-            rotulos: AbaCatalogoPichau.values.map((aba) => aba.rotulo).toList(),
-            contadores: [
-              _controlador.resumo?.totalCatalogo ?? 0,
-              _controlador.resumo?.acompanhadas ?? 0,
-            ],
-            expandir: true,
-            selecionada: _controlador.aba.index,
-            aoSelecionar: (indice) =>
-                _controlador.mudarAba(AbaCatalogoPichau.values[indice]),
-          ),
-          const SizedBox(height: 4),
-          _BarraCatalogoPichau(
-            total: _controlador.totalItens,
-            acompanhadas: _controlador.aba == AbaCatalogoPichau.acompanhadas,
-            estado: estado,
-            carregando: carregando,
-            filtroAtivo:
-                _controlador.disponibilidade != DisponibilidadePichau.todas ||
-                _controlador.ordenacao != OrdenacaoPichau.nome,
-            aoFiltrar: _abrirFiltros,
-          ),
-          if (parcial || falhaComRetrato) ...[
-            const SizedBox(height: 12),
-            _AvisoQualidadePichau(falha: falhaComRetrato),
-          ],
-          if (_controlador.carregandoInicial && itens.isEmpty) ...[
-            const SizedBox(height: 22),
-            const SizedBox(
-              height: 180,
-              child: Carregando(mensagem: 'Carregando catálogo Pichau…'),
-            ),
-          ] else if (falha && itens.isEmpty) ...[
-            const SizedBox(height: 12),
-            EstadoFalha(
-              mensagem: 'Não foi possível carregar o catálogo Pichau.',
-              voltar: _controlador.tentarNovamente,
-            ),
-          ] else if (itens.isEmpty) ...[
-            const SizedBox(height: 12),
-            EstadoVazio(
-              mensagem: _controlador.aba == AbaCatalogoPichau.acompanhadas
-                  ? 'Nenhum PC Gamer está acompanhado ainda.'
-                  : _controlador.busca.trim().isNotEmpty ||
-                        _controlador.disponibilidade !=
-                            DisponibilidadePichau.todas
-                  ? 'Nenhum PC Gamer corresponde aos filtros atuais.'
-                  : 'Nenhum PC Gamer foi encontrado na última coleta completa.',
-            ),
-          ] else ...[
-            const SizedBox(height: 12),
-            for (final produto in itens) ...[
-              CartaoPichau(
-                produto: produto,
-                alterando: _controlador.mutacoesPendentes.contains(
-                  produto.idExterno,
+    return Column(
+      children: [
+        _CabecalhoPichau(
+          aoVoltar: widget.aoVoltar ?? () => Navigator.maybePop(context),
+          aoAtualizar: _controlador.tentarNovamente,
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _controlador.tentarNovamente,
+            child: ListView(
+              key: const Key('pagina-pichau'),
+              controller: _rolagem,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsetsDirectional.fromSTEB(
+                context.tokens.spacing.five,
+                context.tokens.spacing.four,
+                context.tokens.spacing.five,
+                context.tokens.spacing.seven,
+              ),
+              children: [
+                Text(
+                  'PCs gamer',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-                aoAlternarAcompanhamento: () =>
-                    _alternarAcompanhamento(produto),
-                aoAbrirHistorico: () => _abrirHistorico(produto),
-                aoAbrirNoSite: _acaoAbrirProduto(produto),
-              ),
-              if (produto != itens.last) const SizedBox(height: 10),
-            ],
-            if (carregando)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: LinearProgressIndicator(),
-              ),
-            const SizedBox(height: 17),
-            PaginacaoRadar(
-              pagina: _controlador.pagina,
-              totalItens: _controlador.totalItens,
-              porPagina: _controlador.porPagina,
-              carregando: _controlador.carregandoMais,
-              erro: _controlador.erroMais,
-              aoIrParaPagina: _irParaPagina,
+                SizedBox(height: context.tokens.spacing.four),
+                CampoBuscaRadar(
+                  chaveCampo: const Key('busca-pichau'),
+                  controlador: _busca,
+                  dica: 'Nome, processador ou SKU',
+                  aoAcionar: () => _controlador.mudarBusca(_busca.text),
+                  aoMudar: _controlador.mudarBusca,
+                ),
+                SizedBox(height: context.tokens.spacing.three),
+                AbasRadar(
+                  key: const Key('abas-pichau'),
+                  rotulos: AbaCatalogoPichau.values
+                      .map((aba) => aba.rotulo)
+                      .toList(),
+                  plana: true,
+                  selecionada: _controlador.aba.index,
+                  aoSelecionar: (indice) =>
+                      _controlador.mudarAba(AbaCatalogoPichau.values[indice]),
+                ),
+                SizedBox(height: context.tokens.spacing.four),
+                _BarraCatalogoPichau(
+                  total: _controlador.totalItens,
+                  estado: estado,
+                  carregando: carregando,
+                  filtroAtivo:
+                      _controlador.disponibilidade !=
+                          DisponibilidadePichau.todas ||
+                      _controlador.ordenacao != OrdenacaoPichau.preco ||
+                      _controlador.precoMin.isNotEmpty ||
+                      _controlador.precoMax.isNotEmpty,
+                  aoFiltrar: _abrirFiltros,
+                ),
+                if (parcial || falhaComRetrato) ...[
+                  const SizedBox(height: 12),
+                  _AvisoQualidadePichau(falha: falhaComRetrato),
+                ],
+                if (_controlador.carregandoInicial && itens.isEmpty) ...[
+                  const SizedBox(height: 22),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: context.tokens.spacing.six,
+                    ),
+                    child: const Carregando(
+                      mensagem: 'Carregando catálogo Pichau…',
+                    ),
+                  ),
+                ] else if (falha && itens.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  EstadoFalha(
+                    mensagem: 'Não foi possível carregar o catálogo Pichau.',
+                    voltar: _controlador.tentarNovamente,
+                  ),
+                ] else if (itens.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  EstadoVazio(
+                    mensagem: _controlador.aba == AbaCatalogoPichau.acompanhadas
+                        ? 'Nenhum PC Gamer está acompanhado ainda.'
+                        : _controlador.busca.trim().isNotEmpty ||
+                              _controlador.disponibilidade !=
+                                  DisponibilidadePichau.todas ||
+                              _controlador.precoMin.isNotEmpty ||
+                              _controlador.precoMax.isNotEmpty
+                        ? 'Nenhum PC Gamer corresponde aos filtros atuais.'
+                        : 'Nenhum PC Gamer foi encontrado na última coleta completa.',
+                  ),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  for (final produto in itens) ...[
+                    CartaoPichau(
+                      produto: produto,
+                      alterando: _controlador.mutacoesPendentes.contains(
+                        produto.idExterno,
+                      ),
+                      aoAlternarAcompanhamento: () =>
+                          _alternarAcompanhamento(produto),
+                      aoAbrirDetalhes: () => _abrirDetalhes(produto),
+                    ),
+                    if (produto != itens.last) const SizedBox(height: 10),
+                  ],
+                  if (carregando)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: LinearProgressIndicator(),
+                    ),
+                  const SizedBox(height: 17),
+                  PaginacaoRadar(
+                    pagina: _controlador.pagina,
+                    totalItens: _controlador.totalItens,
+                    porPagina: _controlador.porPagina,
+                    carregando: _controlador.carregandoMais,
+                    erro: _controlador.erroMais,
+                    aoIrParaPagina: _irParaPagina,
+                  ),
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -231,79 +259,21 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
   }
 
   Future<void> _abrirFiltros() async {
-    var disponibilidade = _controlador.disponibilidade;
-    var ordenacao = _controlador.ordenacao;
-    await mostrarFolhaRadar<void>(
+    final filtros = await mostrarFolhaRadar<_FiltrosPichauResultado>(
       context,
-      builder: (contexto) => StatefulBuilder(
-        builder: (contexto, atualizar) => FolhaRadar(
-          titulo: 'Filtrar catálogo Pichau',
-          descricao: 'Refine as ofertas salvas de PC Gamer',
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DropdownButtonFormField<DisponibilidadePichau>(
-                key: const Key('filtro-disponibilidade-pichau'),
-                initialValue: disponibilidade,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Disponibilidade'),
-                items: [
-                  for (final valor in DisponibilidadePichau.values)
-                    DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
-                ],
-                onChanged: (valor) => atualizar(() {
-                  if (valor != null) disponibilidade = valor;
-                }),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<OrdenacaoPichau>(
-                key: const Key('filtro-ordenacao-pichau'),
-                initialValue: ordenacao,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Ordenar por'),
-                items: [
-                  for (final valor in OrdenacaoPichau.values)
-                    DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
-                ],
-                onChanged: (valor) => atualizar(() {
-                  if (valor != null) ordenacao = valor;
-                }),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.of(contexto).pop();
-                        _controlador.aplicarFiltros(
-                          disponibilidade: DisponibilidadePichau.todas,
-                          ordenacao: OrdenacaoPichau.nome,
-                        );
-                      },
-                      child: const Text('Limpar'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.of(contexto).pop();
-                        _controlador.aplicarFiltros(
-                          disponibilidade: disponibilidade,
-                          ordenacao: ordenacao,
-                        );
-                      },
-                      child: const Text('Ver ofertas'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (_) => _FolhaFiltrosPichau(
+        disponibilidade: _controlador.disponibilidade,
+        ordenacao: _controlador.ordenacao,
+        precoMin: _controlador.precoMin,
+        precoMax: _controlador.precoMax,
       ),
+    );
+    if (!mounted || filtros == null) return;
+    await _controlador.aplicarFiltros(
+      disponibilidade: filtros.disponibilidade,
+      ordenacao: filtros.ordenacao,
+      precoMin: filtros.precoMin,
+      precoMax: filtros.precoMax,
     );
   }
 
@@ -337,36 +307,361 @@ class _EstadoPaginaPichau extends State<PaginaPichau> {
       ),
     );
   }
+
+  Future<void> _abrirDetalhes(PichauProduto produto) async {
+    Future<void> abrirHistorico() async {
+      Navigator.of(context).pop();
+      await _abrirHistorico(produto);
+    }
+
+    await mostrarFolhaRadar<void>(
+      context,
+      alturaMaxima: 0.92,
+      builder: (contexto) => FolhaRadar(
+        titulo: 'Detalhes',
+        descricao: '${produto.marca ?? 'Pichau'} · ${produto.idExterno}',
+        child: Flexible(
+          child: _DetalhesPichau(
+            produto: produto,
+            aoAbrirHistorico: abrirHistorico,
+            aoAbrirNoSite: _acaoAbrirProduto(produto),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FiltrosPichauResultado {
+  const _FiltrosPichauResultado({
+    required this.disponibilidade,
+    required this.ordenacao,
+    required this.precoMin,
+    required this.precoMax,
+  });
+
+  final DisponibilidadePichau disponibilidade;
+  final OrdenacaoPichau ordenacao;
+  final String precoMin;
+  final String precoMax;
+}
+
+class _FolhaFiltrosPichau extends StatefulWidget {
+  const _FolhaFiltrosPichau({
+    required this.disponibilidade,
+    required this.ordenacao,
+    required this.precoMin,
+    required this.precoMax,
+  });
+
+  final DisponibilidadePichau disponibilidade;
+  final OrdenacaoPichau ordenacao;
+  final String precoMin;
+  final String precoMax;
+
+  @override
+  State<_FolhaFiltrosPichau> createState() => _EstadoFolhaFiltrosPichau();
+}
+
+class _EstadoFolhaFiltrosPichau extends State<_FolhaFiltrosPichau> {
+  late var _disponibilidade = widget.disponibilidade;
+  late var _ordenacao = widget.ordenacao;
+  late final _precoMin = TextEditingController(text: widget.precoMin);
+  late final _precoMax = TextEditingController(text: widget.precoMax);
+  String? _erro;
+
+  @override
+  void dispose() {
+    _precoMin.dispose();
+    _precoMax.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final estiloRotulo = Theme.of(context).textTheme.labelMedium;
+
+    Widget rotulo(String texto) => Text(texto, style: estiloRotulo);
+
+    Widget campoPreco({
+      required Key key,
+      required String rotuloTexto,
+      required String dica,
+      required TextEditingController controlador,
+    }) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        rotulo(rotuloTexto),
+        SizedBox(height: tokens.spacing.one),
+        TextField(
+          key: key,
+          controller: controlador,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          scrollPadding: EdgeInsets.only(bottom: tokens.sizes.touchTarget),
+          decoration: InputDecoration(hintText: dica),
+          onChanged: (_) {
+            if (_erro != null) setState(() => _erro = null);
+          },
+        ),
+      ],
+    );
+
+    final formulario = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        rotulo('Ordenar'),
+        SizedBox(height: tokens.spacing.one),
+        DropdownButtonFormField<OrdenacaoPichau>(
+          key: const Key('filtro-ordenacao-pichau'),
+          initialValue: _ordenacao,
+          isExpanded: true,
+          alignment: AlignmentDirectional.centerStart,
+          decoration: const InputDecoration(),
+          items: [
+            for (final valor in OrdenacaoPichau.values)
+              DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
+          ],
+          onChanged: (valor) {
+            if (valor != null) setState(() => _ordenacao = valor);
+          },
+        ),
+        SizedBox(height: tokens.spacing.four),
+        rotulo('Disponibilidade'),
+        SizedBox(height: tokens.spacing.one),
+        DropdownButtonFormField<DisponibilidadePichau>(
+          key: const Key('filtro-disponibilidade-pichau'),
+          initialValue: _disponibilidade,
+          isExpanded: true,
+          alignment: AlignmentDirectional.centerStart,
+          decoration: const InputDecoration(),
+          items: [
+            for (final valor in DisponibilidadePichau.values)
+              DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
+          ],
+          onChanged: (valor) {
+            if (valor != null) setState(() => _disponibilidade = valor);
+          },
+        ),
+        SizedBox(height: tokens.spacing.four),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: campoPreco(
+                key: const Key('filtro-preco-minimo-pichau'),
+                rotuloTexto: 'Preço mínimo (R\$)',
+                dica: '0,00',
+                controlador: _precoMin,
+              ),
+            ),
+            SizedBox(width: tokens.spacing.two),
+            Expanded(
+              child: campoPreco(
+                key: const Key('filtro-preco-maximo-pichau'),
+                rotuloTexto: 'Preço máximo (R\$)',
+                dica: 'Sem limite',
+                controlador: _precoMax,
+              ),
+            ),
+          ],
+        ),
+        if (_erro != null) ...[
+          SizedBox(height: tokens.spacing.two),
+          Text(
+            _erro!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: CoresRadar.de(context).perigo,
+            ),
+          ),
+        ],
+        SizedBox(height: tokens.spacing.five),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                key: const Key('limpar-filtros-pichau'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: CoresRadar.de(context).superficieAlternativa,
+                  foregroundColor: CoresRadar.de(context).texto,
+                ),
+                onPressed: () => setState(() {
+                  _disponibilidade = DisponibilidadePichau.todas;
+                  _ordenacao = OrdenacaoPichau.preco;
+                  _precoMin.clear();
+                  _precoMax.clear();
+                }),
+                child: const Text('Limpar'),
+              ),
+            ),
+            SizedBox(width: tokens.spacing.two),
+            Expanded(
+              child: FilledButton(
+                key: const Key('aplicar-filtros-pichau'),
+                onPressed: () {
+                  final erro = _validarFaixaPichau(
+                    _precoMin.text,
+                    _precoMax.text,
+                  );
+                  if (erro != null) {
+                    setState(() => _erro = erro);
+                    return;
+                  }
+                  Navigator.of(context).pop(
+                    _FiltrosPichauResultado(
+                      disponibilidade: _disponibilidade,
+                      ordenacao: _ordenacao,
+                      precoMin: _precoMin.text,
+                      precoMax: _precoMax.text,
+                    ),
+                  );
+                },
+                child: const Text('Aplicar filtros'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    return FolhaRadar(
+      titulo: 'Filtros · Pichau',
+      descricao: '',
+      mostrarVoltar: false,
+      fecharComFundo: false,
+      // Mantenha o mesmo pai enquanto o teclado entra ou sai. Se o tipo do
+      // pai muda nesse frame, o TextField é reparentado e perde o foco antes
+      // de o Android terminar de abrir o teclado.
+      child: Flexible(
+        child: SingleChildScrollView(
+          key: const Key('formulario-filtros-pichau-rolavel'),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const ClampingScrollPhysics(),
+          child: formulario,
+        ),
+      ),
+    );
+  }
+}
+
+class _CabecalhoPichau extends StatelessWidget {
+  const _CabecalhoPichau({required this.aoVoltar, required this.aoAtualizar});
+
+  final VoidCallback aoVoltar;
+  final VoidCallback aoAtualizar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final tema = Theme.of(context);
+    final tokens = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tema.scaffoldBackgroundColor,
+        border: Border(bottom: BorderSide(color: cores.borda)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsetsDirectional.only(
+            start: tokens.spacing.two,
+            end: tokens.spacing.two,
+            top: tokens.spacing.one,
+            bottom: tokens.spacing.one,
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                key: const Key('voltar-programas-pichau'),
+                tooltip: 'Voltar para Explorar',
+                onPressed: aoVoltar,
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: tokens.spacing.one,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pichau',
+                        style: tema.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Catálogo',
+                        style: tema.textTheme.bodySmall?.copyWith(
+                          color: cores.textoSuave,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              IconButton(
+                key: const Key('atualizar-pichau'),
+                tooltip: 'Atualizar catálogo',
+                onPressed: aoAtualizar,
+                style: IconButton.styleFrom(
+                  minimumSize: Size.square(tokens.sizes.touchTarget),
+                  backgroundColor: cores.superficieAlternativa,
+                  shape: const CircleBorder(),
+                ),
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class CartaoPichau extends StatelessWidget {
   const CartaoPichau({
     super.key,
     required this.produto,
-    required this.aoAbrirHistorico,
+    required this.aoAbrirDetalhes,
     this.alterando = false,
     this.aoAlternarAcompanhamento,
-    this.aoAbrirNoSite,
   });
 
   final PichauProduto produto;
-  final VoidCallback aoAbrirHistorico;
+  final VoidCallback aoAbrirDetalhes;
   final bool alterando;
   final VoidCallback? aoAlternarAcompanhamento;
-  final VoidCallback? aoAbrirNoSite;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tema = Theme.of(context);
-    final estadoTom = produto.foraDoCatalogo || produto.esgotado
-        ? TomRadar.atencao
-        : TomRadar.ganho;
+    final tokens = context.tokens;
     final estadoTexto = produto.foraDoCatalogo
         ? 'Fora do catálogo'
         : produto.esgotado
         ? 'Esgotado'
         : 'Disponível';
+    final identificador = produto.sku?.trim().isNotEmpty == true
+        ? produto.sku!.trim()
+        : produto.idExterno;
+    final metadados = [
+      if (produto.marca != null && produto.marca!.trim().isNotEmpty)
+        produto.marca!.trim(),
+      if (produto.categoria != null && produto.categoria!.trim().isNotEmpty)
+        produto.categoria!.trim(),
+    ].join(' · ');
+    final cartao = produto.precoCartaoTexto == null
+        ? null
+        : 'Cartão ${produto.precoCartaoTexto}';
+    final desconto = _rotuloDescontoPichau(produto.descontoPixTexto);
+    final cartaoComplemento = [
+      cartao,
+      desconto,
+    ].whereType<String>().join(' · ');
 
     return Semantics(
       label: 'PC Gamer ${produto.nome}, origem Pichau',
@@ -376,38 +671,131 @@ class CartaoPichau extends StatelessWidget {
             ? cores.atencao
             : cores.acao,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(15, 15, 15, 15),
+          padding: EdgeInsets.all(tokens.spacing.four),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 5,
-                      runSpacing: 5,
-                      children: [
-                        _EtiquetaPichau(texto: produto.categoria ?? 'PC Gamer'),
-                        const _EtiquetaPichau(texto: 'Pichau', destaque: true),
-                      ],
+                  Flexible(
+                    child: Text(
+                      identificador,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: tema.textTheme.labelMedium?.copyWith(
+                        color: cores.textoSuave,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _EtiquetaPichau(texto: 'Origem Pichau', neutra: true),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    key: Key('alerta-pichau-${produto.idExterno}'),
-                    tooltip: produto.acompanhada
-                        ? 'Deixar de acompanhar ${produto.nome}'
-                        : 'Acompanhar ${produto.nome}',
-                    onPressed: !alterando ? aoAlternarAcompanhamento : null,
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 36,
-                      height: 36,
+                  SizedBox(width: tokens.spacing.two),
+                  Flexible(
+                    child: Text(
+                      estadoTexto,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: tema.textTheme.labelMedium?.copyWith(
+                        color: cores.textoSuave,
+                      ),
                     ),
+                  ),
+                ],
+              ),
+              SizedBox(height: tokens.spacing.three),
+              Text(
+                produto.nome,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: tema.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              if (metadados.isNotEmpty)
+                Padding(
+                  padding: EdgeInsets.only(top: tokens.spacing.two),
+                  child: Text(
+                    metadados,
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                    ),
+                  ),
+                ),
+              Divider(height: tokens.spacing.five, color: cores.borda),
+              if (produto.precoOriginalTexto != null)
+                Text(
+                  produto.precoOriginalTexto!,
+                  style: tema.textTheme.bodySmall?.copyWith(
+                    color: cores.textoSuave,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+              MediaQuery.textScalerOf(context).scale(1) > 1
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          produto.precoPixTexto ?? 'Preço Pix indisponível',
+                          style: tema.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                        if (produto.precoPixTexto != null)
+                          Text(
+                            'no Pix',
+                            style: tema.textTheme.labelMedium?.copyWith(
+                              color: cores.textoSuave,
+                            ),
+                          ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            produto.precoPixTexto ?? 'Preço Pix indisponível',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: tema.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.7,
+                            ),
+                          ),
+                        ),
+                        if (produto.precoPixTexto != null) ...[
+                          SizedBox(width: tokens.spacing.one),
+                          Text(
+                            'no Pix',
+                            style: tema.textTheme.labelMedium?.copyWith(
+                              color: cores.textoSuave,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+              if (cartaoComplemento.isNotEmpty || produto.parcelamento != null)
+                Padding(
+                  padding: EdgeInsets.only(top: tokens.spacing.one),
+                  child: Text(
+                    cartaoComplemento.isNotEmpty
+                        ? cartaoComplemento
+                        : produto.parcelamento!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: tema.textTheme.bodySmall?.copyWith(
+                      color: cores.textoSuave,
+                    ),
+                  ),
+                ),
+              Divider(height: tokens.spacing.five, color: cores.borda),
+              LayoutBuilder(
+                builder: (context, limites) {
+                  final acompanhar = OutlinedButton.icon(
+                    key: Key('acompanhar-pichau-${produto.idExterno}'),
+                    onPressed: !alterando ? aoAlternarAcompanhamento : null,
                     icon: alterando
                         ? const SizedBox.square(
                             dimension: 16,
@@ -415,142 +803,70 @@ class CartaoPichau extends StatelessWidget {
                           )
                         : Icon(
                             produto.acompanhada
-                                ? Icons.notifications_active_outlined
+                                ? Icons.check_rounded
                                 : Icons.notifications_none_outlined,
                           ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 7),
-              Text(
-                produto.nome,
-                style: tema.textTheme.titleMedium?.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.35,
-                ),
-              ),
-              if (produto.marca != null || produto.idExterno.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    [
-                      if (produto.marca != null) 'Marca: ${produto.marca}',
-                      if (produto.idExterno.isNotEmpty)
-                        'SKU: ${produto.idExterno}',
-                    ].join(' · '),
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 9,
+                    label: Text(
+                      produto.acompanhada ? 'Acompanhando' : 'Acompanhar',
                     ),
-                  ),
-                ),
-              const SizedBox(height: 11),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _PrecoPichau(
-                      rotulo: 'Preço Pix',
-                      valor: produto.precoPixTexto,
-                      complemento: [
-                        produto.precoOriginalTexto == null
-                            ? null
-                            : 'De ${produto.precoOriginalTexto}',
-                        produto.descontoPixTexto,
-                      ].whereType<String>().join(' · '),
-                      destaque: true,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _PrecoPichau(
-                      rotulo: 'Preço no cartão',
-                      valor: produto.precoCartaoTexto,
-                      complemento: produto.parcelamento ?? '',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 9,
-                runSpacing: 5,
-                children: [
-                  IndicadorEstadoRadar(texto: estadoTexto, tom: estadoTom),
-                  if (produto.semJuros == true)
-                    const _MetaPichau(texto: 'Sem juros'),
-                  for (final etiqueta in produto.etiquetas)
-                    _MetaPichau(texto: etiqueta, acao: true),
-                ],
-              ),
-              const SizedBox(height: 11),
-              OutlinedButton(
-                key: Key('acompanhar-pichau-${produto.idExterno}'),
-                onPressed: !alterando ? aoAlternarAcompanhamento : null,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(41),
-                  foregroundColor: produto.acompanhada
-                      ? cores.ganho
-                      : cores.acao,
-                  backgroundColor: produto.acompanhada
-                      ? cores.ganho.withValues(alpha: 0.12)
-                      : cores.acao.withValues(alpha: 0.08),
-                  side: BorderSide(
-                    color: produto.acompanhada ? cores.ganho : cores.acao,
-                  ),
-                ),
-                child: alterando
-                    ? const SizedBox(
-                        width: 17,
-                        height: 17,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        produto.acompanhada ? 'Acompanhando' : 'Acompanhar',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      key: Key('historico-pichau-${produto.idExterno}'),
-                      onPressed: aoAbrirHistorico,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      child: const Text(
-                        'Histórico',
-                        maxLines: 1,
-                        softWrap: false,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size(0, tokens.sizes.touchTarget),
+                      foregroundColor: produto.acompanhada
+                          ? cores.ganho
+                          : cores.acao,
+                      backgroundColor: produto.acompanhada
+                          ? cores.ganho.withValues(alpha: 0.12)
+                          : cores.acao.withValues(alpha: 0.08),
+                      side: BorderSide(
+                        color: produto.acompanhada ? cores.ganho : cores.acao,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      key: Key('abrir-pichau-${produto.idExterno}'),
-                      onPressed: aoAbrirNoSite,
-                      child: const Text('Ver na Pichau'),
+                  );
+                  final detalhes = TextButton(
+                    key: Key('detalhes-pichau-${produto.idExterno}'),
+                    onPressed: aoAbrirDetalhes,
+                    style: TextButton.styleFrom(
+                      minimumSize: Size(0, tokens.sizes.touchTarget),
+                      padding: EdgeInsetsDirectional.only(
+                        start: tokens.spacing.two,
+                        end: tokens.spacing.one,
+                      ),
+                      foregroundColor: cores.acao,
                     ),
-                  ),
-                ],
+                    child: MediaQuery.textScalerOf(context).scale(1) > 1
+                        ? const Text('Detalhes')
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('Detalhes'),
+                              SizedBox(width: tokens.spacing.one),
+                              const Icon(Icons.arrow_forward_rounded, size: 18),
+                            ],
+                          ),
+                  );
+                  final empilhar =
+                      MediaQuery.textScalerOf(context).scale(1) > 1;
+                  return empilhar
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            acompanhar,
+                            SizedBox(height: tokens.spacing.two),
+                            Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: detalhes,
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: acompanhar),
+                            SizedBox(width: tokens.spacing.two),
+                            detalhes,
+                          ],
+                        );
+                },
               ),
-              if (aoAbrirNoSite == null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    'URL do produto não informada.',
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -559,159 +875,191 @@ class CartaoPichau extends StatelessWidget {
   }
 }
 
-class _EtiquetaPichau extends StatelessWidget {
-  const _EtiquetaPichau({
-    required this.texto,
-    this.destaque = false,
-    this.neutra = false,
+class _DetalhesPichau extends StatelessWidget {
+  const _DetalhesPichau({
+    required this.produto,
+    required this.aoAbrirHistorico,
+    required this.aoAbrirNoSite,
   });
 
-  final String texto;
-  final bool destaque;
-  final bool neutra;
+  final PichauProduto produto;
+  final VoidCallback aoAbrirHistorico;
+  final VoidCallback? aoAbrirNoSite;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final fundo = neutra
-        ? cores.superficieAlternativa
-        : destaque
-        ? cores.acao.withValues(alpha: 0.16)
-        : (Theme.of(context).brightness == Brightness.dark
-              ? Tokens.acaoFundoEscuro
-              : Tokens.actionSoft);
-    final textoCor = neutra
-        ? cores.textoSuave
-        : destaque
-        ? cores.acao
-        : cores.acao;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: fundo,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-        child: Text(
-          texto,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: textoCor,
-            fontSize: 8,
-            fontWeight: FontWeight.w800,
+    final tema = Theme.of(context);
+    final tokens = context.tokens;
+    final estadoTexto = produto.foraDoCatalogo
+        ? 'Fora do catálogo'
+        : produto.esgotado
+        ? 'Esgotado'
+        : 'Disponível';
+    final dados = <(String, String)>[
+      if (produto.precoCartaoTexto != null)
+        ('No cartão', produto.precoCartaoTexto!),
+      if (produto.descontoPixTexto != null)
+        ('Desconto no Pix', produto.descontoPixTexto!),
+      if (produto.parcelamento != null) ('Parcelamento', produto.parcelamento!),
+      if (produto.semJuros == true) ('Condição', 'Sem juros'),
+    ];
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IndicadorEstadoRadar(
+            texto: estadoTexto,
+            tom: produto.esgotado || produto.foraDoCatalogo
+                ? TomRadar.atencao
+                : TomRadar.ganho,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrecoPichau extends StatelessWidget {
-  const _PrecoPichau({
-    required this.rotulo,
-    required this.valor,
-    required this.complemento,
-    this.destaque = false,
-  });
-
-  final String rotulo;
-  final String? valor;
-  final String complemento;
-  final bool destaque;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final cor = destaque
-        ? cores.ganho
-        : Theme.of(context).colorScheme.onSurface;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: destaque
-            ? cores.ganho.withValues(alpha: 0.14)
-            : cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              rotulo,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: destaque
-                    ? cor.withValues(alpha: 0.84)
-                    : cores.textoSuave,
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-              ),
+          SizedBox(height: tokens.spacing.three),
+          Text(
+            produto.nome,
+            style: tema.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
-            const SizedBox(height: 4),
-            Text(
-              valor ?? 'Não informado',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: cor,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            if (complemento.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 3),
-                child: Text(
-                  complemento,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: destaque
-                        ? cor.withValues(alpha: 0.82)
-                        : cores.textoSuave,
-                    fontSize: 8,
-                  ),
+          ),
+          if (produto.marca != null || produto.categoria != null)
+            Padding(
+              padding: EdgeInsets.only(top: tokens.spacing.two),
+              child: Text(
+                [produto.marca, produto.categoria]
+                    .whereType<String>()
+                    .where((texto) => texto.trim().isNotEmpty)
+                    .join(' · '),
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.textoSuave,
                 ),
               ),
+            ),
+          SizedBox(height: tokens.spacing.four),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: cores.superficieAlternativa,
+              borderRadius: BorderRadius.circular(tokens.radii.lg),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(tokens.spacing.four),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Preço no Pix',
+                    style: tema.textTheme.bodySmall?.copyWith(
+                      color: cores.textoSuave,
+                    ),
+                  ),
+                  if (produto.precoOriginalTexto != null)
+                    Text(
+                      produto.precoOriginalTexto!,
+                      style: tema.textTheme.bodySmall?.copyWith(
+                        color: cores.textoSuave,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  Text(
+                    produto.precoPixTexto ?? 'Não informado',
+                    style: tema.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (produto.atualizadoEm != null)
+                    Text(
+                      produto.atualizadoEm!,
+                      style: tema.textTheme.bodySmall?.copyWith(
+                        color: cores.textoSuave,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.spacing.four),
+          for (final dado in dados) ...[
+            _FatoPichau(rotulo: dado.$1, valor: dado.$2),
+            Divider(height: tokens.spacing.four, color: cores.borda),
           ],
-        ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: Key('historico-pichau-${produto.idExterno}'),
+                  onPressed: aoAbrirHistorico,
+                  icon: const Icon(Icons.history_rounded),
+                  label: const Text('Histórico'),
+                ),
+              ),
+              SizedBox(width: tokens.spacing.two),
+              Expanded(
+                child: FilledButton(
+                  key: Key('abrir-pichau-${produto.idExterno}'),
+                  onPressed: aoAbrirNoSite,
+                  child: const Text('Abrir Pichau'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MetaPichau extends StatelessWidget {
-  const _MetaPichau({required this.texto, this.acao = false});
+class _FatoPichau extends StatelessWidget {
+  const _FatoPichau({required this.rotulo, required this.valor});
 
-  final String texto;
-  final bool acao;
+  final String rotulo;
+  final String valor;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final cor = acao ? cores.acao : cores.textoSuave;
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(color: cor, shape: BoxShape.circle),
-          child: const SizedBox.square(dimension: 4),
+        Expanded(
+          child: Text(
+            rotulo,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+          ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          texto,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: cor, fontSize: 8),
+        Flexible(
+          child: Text(
+            valor,
+            textAlign: TextAlign.end,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
   }
 }
 
+String? _rotuloDescontoPichau(String? texto) {
+  final valor = texto?.trim();
+  if (valor == null || valor.isEmpty) return null;
+  final normalizado = valor.replaceAll(RegExp(r'\s+'), ' ');
+  final minusculo = normalizado.toLowerCase();
+  if (minusculo.contains('desconto')) {
+    return minusculo.contains('pix') ? normalizado : '$normalizado no Pix';
+  }
+  final percentual = normalizado
+      .replaceFirst(RegExp(r'\s+off$', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'\s+no\s+pix$', caseSensitive: false), '')
+      .trim();
+  return '$percentual de desconto no Pix';
+}
+
 class _BarraCatalogoPichau extends StatelessWidget {
   const _BarraCatalogoPichau({
     required this.total,
-    required this.acompanhadas,
     required this.estado,
     required this.carregando,
     required this.filtroAtivo,
@@ -719,7 +1067,6 @@ class _BarraCatalogoPichau extends StatelessWidget {
   });
 
   final int total;
-  final bool acompanhadas;
   final String estado;
   final bool carregando;
   final bool filtroAtivo;
@@ -727,9 +1074,7 @@ class _BarraCatalogoPichau extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalTexto = total == 1
-        ? '1 oferta encontrada'
-        : '$total ofertas encontradas';
+    final totalTexto = total == 1 ? '1 produto' : '$total produtos';
     final tom = estado == 'Catálogo atualizado'
         ? TomRadar.ganho
         : estado == 'Parcial / atrasado' || estado == 'Falha recente'
@@ -740,20 +1085,8 @@ class _BarraCatalogoPichau extends StatelessWidget {
       children: [
         Text(
           totalTexto,
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          acompanhadas
-              ? 'Produtos acompanhados'
-              : 'Catálogo completo · última coleta válida',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: CoresRadar.de(context).textoSuave,
-            fontSize: 9,
           ),
         ),
       ],
@@ -762,44 +1095,49 @@ class _BarraCatalogoPichau extends StatelessWidget {
       key: const Key('filtrar-ordenar-pichau'),
       onPressed: aoFiltrar,
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 38),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        minimumSize: Size(0, context.tokens.sizes.touchTarget),
+        padding: EdgeInsets.symmetric(horizontal: context.tokens.spacing.three),
         backgroundColor: filtroAtivo
             ? CoresRadar.de(context).acao.withValues(alpha: 0.1)
             : null,
       ),
-      icon: const Icon(Icons.filter_list_rounded, size: 17),
-      label: const Text('Filtrar e ordenar'),
+      icon: const Icon(Icons.tune_rounded, size: 17),
+      label: Text('Filtros${filtroAtivo ? ' (1)' : ''}'),
     );
+    final linha = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: resumo),
+        SizedBox(width: context.tokens.spacing.two),
+        filtro,
+      ],
+    );
+    final mostrarEstado = estado != 'Catálogo atualizado' || carregando;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LayoutBuilder(
-          builder: (context, limites) {
-            if (limites.maxWidth < 350) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [resumo, const SizedBox(height: 8), filtro],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(child: resumo),
-                const SizedBox(width: 8),
-                filtro,
-              ],
-            );
-          },
+          builder: (context, limites) => limites.maxWidth < 330
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    resumo,
+                    SizedBox(height: context.tokens.spacing.two),
+                    filtro,
+                  ],
+                )
+              : linha,
         ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: IndicadorEstadoRadar(
-            texto: carregando && total > 0 ? 'Atualizando' : estado,
-            tom: carregando && total > 0 ? TomRadar.acao : tom,
+        if (mostrarEstado) ...[
+          SizedBox(height: context.tokens.spacing.two),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: IndicadorEstadoRadar(
+              texto: carregando && total > 0 ? 'Atualizando' : estado,
+              tom: carregando && total > 0 ? TomRadar.acao : tom,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -1113,6 +1451,55 @@ class _ResumoHistoricoPichau extends StatelessWidget {
       ),
     ),
   );
+}
+
+List<String>? _partesDecimalPichau(String valor) {
+  final texto = valor.trim().replaceAll(',', '.');
+  if (texto.isEmpty) return null;
+  if (!RegExp(r'^\d+(?:\.\d+)?$').hasMatch(texto)) return null;
+  final partes = texto.split('.');
+  final inteiro = partes.first.replaceFirst(RegExp(r'^0+(?=\d)'), '');
+  final fracao = partes.length == 2
+      ? partes.last.replaceFirst(RegExp(r'0+$'), '')
+      : '';
+  return [inteiro, fracao];
+}
+
+int _compararDecimaisPichau(List<String> primeiro, List<String> segundo) {
+  if (primeiro.first.length != segundo.first.length) {
+    return primeiro.first.length.compareTo(segundo.first.length);
+  }
+  final parteInteira = primeiro.first.compareTo(segundo.first);
+  if (parteInteira != 0) return parteInteira;
+  final tamanho = primeiro.last.length > segundo.last.length
+      ? primeiro.last.length
+      : segundo.last.length;
+  final primeiraFracao = primeiro.last.padRight(tamanho, '0');
+  final segundaFracao = segundo.last.padRight(tamanho, '0');
+  return primeiraFracao.compareTo(segundaFracao);
+}
+
+String? _validarFaixaPichau(String minimo, String maximo) {
+  final minimoInformado = minimo.trim().isNotEmpty;
+  final maximoInformado = maximo.trim().isNotEmpty;
+  final partesMinimo = minimoInformado
+      ? _partesDecimalPichau(minimo)
+      : const <String>[];
+  final partesMaximo = maximoInformado
+      ? _partesDecimalPichau(maximo)
+      : const <String>[];
+  if ((minimoInformado && partesMinimo == null) ||
+      (maximoInformado && partesMaximo == null)) {
+    return 'Use valores válidos para a faixa de preço.';
+  }
+  if (minimoInformado &&
+      maximoInformado &&
+      partesMinimo != null &&
+      partesMaximo != null &&
+      _compararDecimaisPichau(partesMinimo, partesMaximo) > 0) {
+    return 'O preço máximo deve ser maior ou igual ao mínimo.';
+  }
+  return null;
 }
 
 String _momentoPichau(String? valor) {

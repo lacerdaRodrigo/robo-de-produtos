@@ -69,6 +69,36 @@ describe("catálogo e categorias externas dos produtos Inter", () => {
     );
   });
 
+  it("encaminha a ordem e o recorte No radar para o banco", async () => {
+    const resposta = await GET(
+      new Request(
+        "http://localhost/api/inter/produtos?q=tv&ordenar=nome&acompanhados=true",
+      ),
+    );
+
+    expect(resposta.status).toBe(200);
+    expect(dependencias.buscar).toHaveBeenCalledWith(
+      "tv",
+      1,
+      20,
+      "42",
+      expect.objectContaining({ acompanhado: true, ordenar: "nome" }),
+    );
+  });
+
+  it("rejeita ordenação e estado de acompanhamento desconhecidos", async () => {
+    const ordem = await GET(
+      new Request("http://localhost/api/inter/produtos?ordenar=casual"),
+    );
+    const acompanhamento = await GET(
+      new Request("http://localhost/api/inter/produtos?acompanhados=maybe"),
+    );
+
+    expect(ordem.status).toBe(400);
+    expect(acompanhamento.status).toBe(400);
+    expect(dependencias.buscar).not.toHaveBeenCalled();
+  });
+
   it("resolve escopo de navegação em categorias externas exatas", async () => {
     const resposta = await GET(
       new Request("http://localhost/api/inter/produtos?q=galaxy&escopo=celulares"),

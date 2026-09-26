@@ -100,10 +100,10 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RF18** | Exibir, em cada promoção, quanto tempo resta até o fim, com destaque para o que termina no mesmo dia |
 | **RF19** | Registrar na página o instante da última atualização, em horário de Brasília |
 | **RF20** | Persistir todos os parceiros válidos de cada coleta Livelo, com identidade por ID externo, categorias e pontuação, para formar o histórico completo do catálogo |
-| **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação; o cliente mobile V12 Delta solicita 10 itens e cada resposta é limitada a 50 |
+| **RF21** | Expor o catálogo pela API autenticada com busca, aba, categoria, ordenação e paginação; o cliente mobile V15 solicita 10 itens e cada resposta é limitada a 50 |
 | **RF22** | Permitir que somente administrador acompanhe ou deixe de acompanhar um parceiro pelo ID externo, em operação idempotente e sem iniciar coleta |
-| **RF23** | Aplicar o novo catálogo somente ao Android em largura compacta; Web, iOS e layout amplo mantêm a experiência anterior neste ciclo |
-| **RF24** | No Android compacto, permitir abrir o histórico de qualquer loja do catálogo e consultar as últimas 30 pontuações persistidas, sem iniciar coleta |
+| **RF23** | Aplicar o novo catálogo nativo no Android/iOS em largura compacta; larguras amplas nativas mantêm a experiência anterior neste ciclo |
+| **RF24** | No Android/iOS compacto, permitir abrir o histórico de qualquer loja do catálogo e consultar as últimas 30 pontuações persistidas, sem iniciar coleta |
 
 ### 5.2 Não-funcionais
 
@@ -149,7 +149,7 @@ O4 (portfólio) ganha reforço: uma página pública funcionando é mais demonst
 | **RN37** | Busca e filtros consultam somente o Postgres. O Flutter nunca consulta a Livelo nem recebe o catálogo completo em uma resposta |
 | **RN38** | Categorias conhecidas recebem rótulos em português; código desconhecido ou ausência de categoria aparece como “Outros” |
 | **RN39** | Nome e categoria usados ao acompanhar vêm do catálogo no servidor. O cliente não escolhe nome, link nem categoria |
-| **RN40** | No Android compacto Samsung, o Início consulta `/api/resumo` ao abrir, ao voltar para a tela, ao retomar o app e a cada 30 segundos enquanto estiver visível. Consultas não se sobrepõem; falha mantém o último resumo válido. Web, iOS e layout amplo não mudam neste ciclo. |
+| **RN40** | No Android compacto Samsung, o Início consulta `/api/resumo` ao abrir, ao voltar para a tela, ao retomar o app e a cada 30 segundos enquanto estiver visível. Consultas não se sobrepõem; falha mantém o último resumo válido. iOS e layout amplo nativo não mudam neste ciclo. |
 | **RN41** | O agendamento Livelo é calculado no servidor para 09h10, 14h10 e 20h10 de Brasília. Antes da janela, informa a próxima previsão; depois dela e sem execução nova, informa o atraso real do GitHub. |
 | **RN42** | `melhor_oferta` do catálogo Livelo significa a maior pontuação entre lojas acompanhadas no retrato atual. Sem acompanhadas, retorna vazio; não escolhe parceiro do catálogo geral. |
 | **RN43** | A atividade do Início traz o último evento de Livelo, Cashback e Produtos, ordenado por momento real decrescente e com desempate estável por domínio. Navegar ou pesquisar não consulta Livelo/Inter; somente o botão administrativo idempotente solicita workflow. |
@@ -339,7 +339,7 @@ O robô continua com `permissions: contents: read` (§9.4 do PRD V1) e nunca esc
 |---|---|---|
 | `multiplicador` | `Decimal \| None` | `None` significa "usa o padrão global" (RN28) |
 | `piso_pontos` | `Decimal \| None` | Idem |
-| `alerta_ativo` | `bool` | Preferência administrativa do indicador legado; `false` não remove a seleção global. O cartão mobile V12 Delta usa acompanhamento pessoal separado, conforme o PRD da Central |
+| `alerta_ativo` | `bool` | Preferência administrativa do indicador legado; `false` não remove a seleção global. O cartão mobile V15 usa acompanhamento pessoal separado, conforme o PRD da Central |
 
 ### 8.1 Esquema do banco
 
@@ -444,11 +444,27 @@ O Flutter acessa somente a API autenticada. Preferências de acompanhamento são
 dados de produto protegidos por autorização; credenciais, tokens, URLs de banco
 e detalhes internos de erro não são exibidos pelo aplicativo.
 
-No aplicativo V12 Delta, a busca do catálogo usa `CampoBuscaRadar` em todos os
-layouts, inclusive na Livelo. Filtros, seletores de categoria e detalhes abrem
+No aplicativo V15, a tela Android compacta da Livelo usa cabeçalho próprio com
+`Livelo`, `Catálogo`, voltar para Explorar e atualização representada por ícone.
+O título é `Lojas e pontos`, sem a descrição redundante da origem; a busca usa
+`CampoBuscaRadar` com avanço, e as abas são `Lojas` e `No radar`, sem contadores
+embutidos. Filtros, seletores de categoria e detalhes abrem
 pela `FolhaRadar`, com puxador, cabeçalho centralizado, voltar/fechar e fundo
 bloqueado e desfocado. Essa padronização é visual; o catálogo continua
 consultando apenas a API autenticada e paginada.
+
+O histórico Livelo também abre como folha sobre os detalhes da loja, sem criar
+uma rota de tela cheia. O cabeçalho exibe `Histórico · {nome da loja}` e
+`Últimas medições · até 30 registros · somente leitura`; cada página mostra até
+cinco linhas com data, pontuação curta e o estado `Completa`. Quando há mais
+linhas, a folha usa navegação `página de total`, sem iniciar nova coleta nem
+misturar parceiros. Quando a API fornece `pontos_clube` na medição, a linha
+também mostra `Clube: {valor} pts/R$ 1`, preservando esse valor textual.
+
+`Condições` abre uma folha própria com a pontuação comum, Clube, validade,
+campanha e o botão `Abrir Livelo`; ela não oferece o histórico. `Abrir Livelo`
+abre uma segunda confirmação com `Ficar aqui` e `Continuar`; somente a segunda
+ação chama o link HTTPS recebido da API.
 
 Nos cartões mobile de Livelo, cada consulta solicita **10 itens por página**.
 `PaginacaoRadar` troca a página visível sem anexar resultados ao fim da
@@ -456,6 +472,13 @@ rolagem: com até 10 itens não há controle, e o controle para a página 2 só
 aparece quando o total é 11 ou maior. A API continua sendo a fonte de total e
 das páginas existentes; o Flutter não infere nem baixa o catálogo completo.
 Depois da troca, a lista retorna ao início com uma animação suave.
+
+Cada cartão segue a hierarquia compacta do protótipo: categoria e horário da
+última coleta, nome da loja, pontuação em destaque com `pontos / R$ 1`, base e
+eventual Clube, selos de campanha/validade, acompanhamento, condições,
+histórico e abertura externa da Livelo. O horário é derivado de
+`resumo.ultima_coleta`; ausência continua visível como estado sem atualização.
+O cartão não exibe logotipo externo nem um sino duplicado para acompanhamento.
 
 ### 9.2 Logotipos de parceiros
 

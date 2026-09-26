@@ -13,9 +13,10 @@ import {
   ultimaExecucaoInterValida,
   ultimaTentativaInter,
 } from "@/lib/banco-inter";
+import { categoriaCashbackInterValida } from "@/lib/categorias-cashback-inter";
 
 /**
- * GET /api/v1/inter/cashback?q=&ordenar=&acompanhadas=&pagina=&por_pagina=
+ * GET /api/v1/inter/cashback?q=&ordenar=&categoria=&acompanhadas=&pagina=&por_pagina=
  *
  * Cashback dos Sites parceiros (V3), autenticado para o Flutter. `ordenar`:
  * `cashback` (padrão, RN37) | `nome`. Quando `acompanhadas=true`, o filtro
@@ -28,6 +29,7 @@ export async function GET(requisicao: Request) {
   const url = new URL(requisicao.url);
   const q = url.searchParams.get("q") ?? "";
   const ordenarBruto = url.searchParams.get("ordenar") ?? "cashback";
+  const categoriaBruta = url.searchParams.get("categoria");
   const apenasAcompanhadas = url.searchParams.get("acompanhadas") === "true";
   const escopoGlobal =
     url.searchParams.get("escopo") === "global" && acesso.usuario.papel === "admin";
@@ -35,6 +37,13 @@ export async function GET(requisicao: Request) {
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
 
   const ordenar = ordenarBruto === "nome" ? ("nome" as const) : ("cashback" as const);
+  const categoria = categoriaBruta?.trim() || null;
+  if (categoria !== null && !categoriaCashbackInterValida(categoria)) {
+    return NextResponse.json(
+      corpoErro("validacao", "categoria invalida"),
+      { status: STATUS.INVALIDA, headers: { "x-request-id": acesso.requisicaoId } },
+    );
+  }
 
   try {
     const [execucao, tentativa] = await Promise.all([
@@ -60,6 +69,7 @@ export async function GET(requisicao: Request) {
       q,
       ordenar,
       apenasAcompanhadas,
+      categoria,
       pagina,
       porPagina,
     }, escopoGlobal ? undefined : String(acesso.usuario.id));

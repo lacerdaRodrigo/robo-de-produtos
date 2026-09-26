@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/api/api.dart';
@@ -113,7 +112,7 @@ class _EstadoRadarApp extends State<RadarApp> {
         debugShowCheckedModeBanner: false,
         theme: TemaRadar.claro(),
         darkTheme: TemaRadar.escuro(),
-        themeMode: kIsWeb ? ThemeMode.light : _aparencia.modo,
+        themeMode: _aparencia.modo,
         builder: (context, child) {
           final media = MediaQuery.of(context);
           final mediaComMovimento = media.copyWith(
@@ -127,7 +126,7 @@ class _EstadoRadarApp extends State<RadarApp> {
               child: LayoutBuilder(
                 builder: (context, limites) {
                   final preservarClaro =
-                      kIsWeb || limites.maxWidth >= _larguraLayoutAmplo;
+                      limites.maxWidth >= _larguraLayoutAmplo;
                   if (!preservarClaro) return child!;
                   return Theme(data: TemaRadar.claro(), child: child!);
                 },

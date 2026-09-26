@@ -475,34 +475,47 @@ decisão específica sobre um fluxo separado de configuração.
 
 O campo de produtos segue o campo de busca V15: ícone de busca, superfície de papel com borda e sombra suave, texto de exemplo e botão brasa de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
 
-Na composição compacta V15, aplicada em 2026-09-13, a busca recebe um painel de papel com
-o título “Busque, compare, economize.” e o placeholder “Marca, modelo ou
-categoria”. Logo abaixo, “Atalhos de busca” oferece consultas prontas de
-Celulares, Informática, Casa, Beleza e Pet usando o termo simples da própria
-categoria; cada atalho dispara sua consulta no
-catálogo local, mas mantém o campo limpo para continuar exibindo o placeholder.
-Não há filtro de categoria implícito. “Ver todas” abre o seletor contextual
-completo. Após os filtros, um resumo compacto informa o carimbo real do último
-retrato válido, o total retornado e, quando disponível, a quantidade de lojas
-selecionadas. A interface não exibe um número estimado como se fosse a
-quantidade total de lojas selecionadas.
+Na composição compacta V15, aplicada em 2026-09-20, a tela de Produtos reproduz
+a sequência do protótipo: título “Produtos por loja”, busca com placeholder
+“Produto, marca ou modelo”, abas planas “Todos” e “No radar”, linha com total e
+botão “Filtros”, seguida dos resultados agrupados por loja. O cabeçalho da rota
+informa “Compre direto” e “Banco Inter”. Não há painel de marketing, atalhos,
+cartão de escopo contextual ou resumo paralelo nessa jornada.
 
 Toda busca do aplicativo usa o componente visual `CampoBuscaRadar`; não há `TextField` de busca isolado com aparência própria em uma tela V15. O botão de avanço, quando aplicável, e a variante `search-only` preservam o mesmo campo, espaçamento, tipografia e foco.
 
-Os resultados de Produtos e os cartões de lojas do Compre direto pedem **10
+Os resultados de Produtos e os cartões de lojas do Compre direto pedem **20
 itens por página** à API. A navegação visual compartilhada `PaginacaoRadar`
 substitui a página atual — não existe carregamento incremental ao rolar. Ela
-fica oculta quando o total for 9 ou 10; com 11 resultados, passa a exibir a
+fica oculta quando o total for até 20; com 21 resultados, passa a exibir a
 segunda página. Busca, filtro e categoria continuam reiniciando na página 1.
 Após a troca, a lista retorna ao início com uma animação suave.
 
 O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V15. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
 
+A folha mantém a ordem “Menor preço por loja”/“Nome por loja”, a loja, a
+categoria externa real e a faixa opcional de preço. `Limpar` restaura a ordem e
+remove esses recortes; `Aplicar filtros` preserva o termo e reinicia a página.
+As abas `Todos` e `No radar` também reiniciam a página: a segunda envia
+`acompanhados=true` à API e nunca filtra apenas o primeiro lote no cliente.
+
+Ao tocar em `Detalhes` no cartão, o Flutter abre uma rota interna do catálogo
+com o detalhe completo da oferta, preservando a barra inferior do aplicativo.
+No modo compacto do Shopping Inter, essa rota substitui o cabeçalho `Compre
+direto` da lista; o detalhe exibe somente seu próprio cabeçalho `Detalhes`, sem
+duplicar controles de voltar.
+Essa tela mostra o status, título, marca/categoria, preço de compra, preço
+cheio quando houver, atualização, cashback, estimativa após cashback, loja,
+parcelamento, aviso explicativo e as ações de acompanhamento, histórico e
+abertura segura do Shopping Inter. O botão visível de voltar e o back físico ou
+gesto Android retornam à lista sem resetar termo, filtros ou posição útil.
+
 ### 9.3 Histórico de preço
 
-Ao tocar em `Histórico` em um produto, o Flutter abre uma `FolhaRadar` somente
-para leitura sobre a lista atual. O cabeçalho informa “Histórico de preço” e
-identifica o produto e a loja. O conteúdo usa uma lista compacta de métricas:
+Ao tocar em `Histórico` dentro do detalhe de um produto, o Flutter abre uma
+`FolhaRadar` somente para leitura sobre a rota atual. O cabeçalho informa
+“Histórico de preço” e identifica o produto e a loja. O conteúdo usa uma lista
+compacta de métricas:
 as medições reais em ordem decrescente, com preço, cashback e preço após
 cashback de cada coleta, seguidas pelo menor e maior preço observados na janela
 de 30 dias. As datas são formatadas para leitura em português, sem substituir
@@ -511,8 +524,10 @@ preço após cashback não for informado, a interface mantém essa ausência
 explícita, sem convertê-la em zero.
 
 O painel mantém a paginação do endpoint e informa que o histórico é limitado a
-30 dias. Carregar mais medições não inicia coleta, não perde os dados já
-exibidos e oferece nova tentativa quando uma página adicional falhar.
+30 dias. A folha mostra cinco medições por página, o indicador `página atual de
+total` e setas de anterior/próxima; trocar de página não inicia coleta, não
+mistura páginas na lista e oferece nova tentativa quando uma página adicional
+falhar.
 
 #### Lojas
 
@@ -524,29 +539,39 @@ exibidos e oferece nova tentativa quando uma página adicional falhar.
 
 #### Categoria e preços
 
-- Categoria não aparece como controle separado na tela de Produtos. A busca por área é a porta visual para recortes contextuais e escolhe identificadores aprovados; sem seleção, o CTA contornado `Escolher categoria` ocupa a largura disponível e oferece alvo de toque de 44 px. A pessoa pode somar vários recortes, vê-los como chips removíveis com nomes humanos e pode limpar todos sem perder o restante da busca. O cartão resume a quantidade escolhida, usa `Adicionar área` como ação contornada e `Limpar áreas` como ação textual secundária; slugs técnicos não são exibidos. Não há categoria digitada, aproximada ou inventada.
-- O app serializa os identificadores ativos, únicos e ordenados no parâmetro `escopo` separado por vírgulas (por exemplo, `tv-smart,freezers`). A API mantém compatibilidade com um único identificador, resolve a união para categorias externas exatas e rejeita recorte desconhecido, repetido ou `Outros / novas categorias` combinado com outro recorte. Esse último é uma exclusão dinâmica e só faz sentido sozinho.
-- A folha `Filtros` não carrega nem lista categorias. Ela se mantém em meia tela e contém somente a seleção de Lojas e a faixa de preço.
+- Categoria é escolhida na folha `Filtros` a partir das categorias externas retornadas por `GET /api/inter/produtos/categorias`; “Sem categoria” continua sendo um estado separado e não vira texto inventado.
+- A folha oferece “Todas as lojas” e as lojas elegíveis do catálogo. A escolha envia somente o `slug` já retornado pela API; não há slug digitado.
+- Preço mínimo e máximo aceitam vírgula decimal brasileira e seguem para a validação da API; dinheiro não é recalculado com `double` no Flutter.
 - Marca deixa de ser filtro exposto na interface. O dado de marca pode continuar aparecendo no card quando fornecido pela origem, mas não há campo “Marca” para digitação.
 - Preço mínimo e preço máximo são os únicos campos editáveis da folha, porque representam uma faixa numérica escolhida pela pessoa. O texto aceita vírgula decimal brasileira e segue para a validação já existente da API; dinheiro não é recalculado com `double` no Flutter.
 - Aplicar a folha preserva a categoria já escolhida no controle próprio, reinicia somente a paginação da busca local e preserva o termo. Enquanto a nova página está sendo consultada, os cards do último resultado continuam montados e na mesma posição; eles só são substituídos quando a resposta nova chega, evitando o efeito de lista pulando a cada troca de loja. Falha, lista parcial, atualização atrasada, ausência de categoria e valor zero continuam estados distintos dos controles de filtro.
 
 A URL usa `?q=` para funcionar sem JavaScript e permitir compartilhar a busca.
 
-O agrupamento lógico por loja continua preservado na ordem da lista, mas o
-cartão compacto repete sua origem para manter o contexto mesmo quando a pessoa
-percorre a lista sem um cabeçalho de grupo separado. O primeiro resultado da
-página pode receber o selo honesto “Menor preço atual”, pois a API já ordena os
-resultados por esse critério. Cada card compacto mostra:
+O agrupamento lógico por loja é preservado com cabeçalho de loja e horário da
+última atualização. Cada card compacto mostra:
 
 - nome da loja e horário do último sucesso;
+- nome da loja e disponibilidade no kicker superior, com a disponibilidade
+  alinhada à direita;
+- nome completo do produto em largura total, permitindo quebra natural sem
+  truncamento prematuro;
 - sino de acompanhamento pessoal, quando a ação está disponível;
 - categoria e marca somente quando fornecidas pela origem;
-- preço atual e, quando informado, preço após cashback;
-- cashback, disponibilidade, etiqueta e parcelamento quando presentes;
-- botão “Abrir oferta” no Shopping Inter;
-- ação “Histórico” para a folha de medições;
-- cards ordenados por menor preço atual;
+- preço cheio riscado quando diferente, preço atual em escala de destaque e
+  estimativa após cashback;
+- cashback e disponibilidade quando presentes;
+- ação “Acompanhar”/“Acompanhando” e botão “Detalhes” para a rota completa da oferta;
+- ao salvar o acompanhamento, o card muda imediatamente para “Acompanhando”;
+  se a API falhar, desfaz o estado local e informa a falha;
+- cards ordenados por menor preço por loja ou nome por loja, conforme a folha.
+
+Na jornada compacta, `Detalhes` substitui a composição do catálogo pela rota
+completa da oferta no mesmo navegador interno. Essa rota mostra somente o
+cabeçalho `Detalhes` da oferta, sem repetir o cabeçalho `Compre direto`. O
+botão visível e o back físico/gesto do Android consomem exatamente uma rota e
+retornam ao catálogo de Produtos; não retornam diretamente ao hub `Banco
+Inter`.
 
 No layout amplo, a versão detalhada continua mostrando também:
 

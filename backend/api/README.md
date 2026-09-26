@@ -37,12 +37,14 @@ backend/api/
 | `livelo/lojas/[id]` | PATCH/DELETE | Regra/remoção loja | admin |
 | `inter/lojas` | GET/PATCH | Sites parceiros / favorita | admin |
 | `inter/cashback` | GET | Cashback paginado | Firebase |
+| `inter/cashback/categorias` | GET | Taxonomia editorial do filtro de cashback | Firebase |
+| `inter/lojas/categoria` | PATCH | Mapeamento editorial de categoria por loja | admin |
 | `inter/cashback/[id]/acompanhamento` | PATCH | Acompanhamento individual de loja | Firebase |
 | `inter/produtos` | GET | Busca produtos paginada | Firebase |
 | `inter/produtos/lojas` | GET/PATCH | Seleção lojas diretas | admin |
 | `inter/produtos/historico` | GET | Histórico 30 dias | Firebase |
 | `inter/produtos/[loja]/[id_externo]/acompanhamento` | PATCH | Acompanhamento pessoal de produto | Firebase |
-| `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU, abas, disponibilidade, ordenação e paginação | Firebase |
+| `pichau/catalogo` | GET | Catálogo PC Gamer persistido, busca por nome/marca/SKU, abas, disponibilidade, ordenação, faixa Pix e paginação | Firebase |
 | `pichau/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhar/remover produto Pichau e atualizar o sino | admin |
 | `pichau/catalogo/[id_externo]/historico` | GET | Histórico Pichau limitado a 30 dias | Firebase |
 | `pichau/catalogo/[id_externo]/acompanhamento` | PATCH | Acompanhamento administrativo idempotente de produto | admin |
@@ -58,8 +60,14 @@ backend/api/
 | `cron/notificacoes/outbox` | POST | Processamento interno da outbox pelo GitHub Actions | `Authorization: Bearer OUTBOX_CRON_SECRET` |
 | `relatos-problema` | POST | Relato autenticado sem dados sensíveis | Firebase |
 
-A raiz `/` devolve 404 vazio. Constraints e execução completa em
-[`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
+`GET /api/inter/produtos` aceita `ordenar=preco|nome` (padrão `preco`) e
+`acompanhados=true|false` (padrão `false`). `acompanhados=true` aplica no
+servidor o acompanhamento pessoal do usuário antes da paginação; o cliente
+Flutter não baixa um lote completo para filtrar localmente.
+
+A raiz `/` devolve 404 vazio. Constraints de schema ficam em
+[`../../migracoes/README.md`](../../migracoes/README.md), e o estado operacional
+vigente fica em [`../../docs/PENDENCIAS.md`](../../docs/PENDENCIAS.md).
 
 ## Dependências
 
@@ -89,6 +97,10 @@ em [`../../app/lib/core/api/`](../../app/lib/core/api/).
 O catálogo e o PATCH de acompanhamento da Pichau dependem de
 `migracoes/025_pichau_acompanhamento.sql`, aplicada manualmente pelo responsável
 antes do merge. O coletor preserva a coluna de seleção durante o upsert.
+O catálogo aceita `ordenar=nome|preco|desconto` (padrão `preco`) e
+`disponibilidade=todas|disponiveis|esgotados|fora_catalogo`, além de
+`preco_min`/`preco_max` opcionais, em decimal com vírgula ou ponto; a faixa usa
+o último preço Pix válido antes da paginação.
 
 ## Central de Alertas
 

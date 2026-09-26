@@ -236,6 +236,22 @@ describe("qualidade e frescor dos resultados de produtos", () => {
     expect(consulta.valores[0]).toEqual(["42", 20, 0]);
   });
 
+  it("filtra acompanhados e alterna a ordenação do catálogo", async () => {
+    bancoFalso.respostas.push([{ total: 0 }], []);
+
+    await buscarProdutosDiretosPaginado("", 1, 20, "42", {
+      acompanhado: true,
+      ordenar: "nome",
+    });
+
+    const consulta = bancoFalso.consultas[1];
+    expect(consulta.texto).toContain("FROM acompanhamento_usuario acompanhado");
+    expect(consulta.texto).toContain("acompanhado.entidade_id = p.id");
+    expect(consulta.texto).toContain("CASE WHEN true THEN NULL ELSE m.preco_atual END");
+    expect(consulta.texto).toContain("CASE WHEN true THEN p.nome ELSE NULL END");
+    expect(consulta.valores[0]).toEqual(["42", 20, 0]);
+  });
+
   it("reconcilia somente rodadas iniciadas antigas antes de montar o resumo", async () => {
     bancoFalso.respostas.push([], [
       {

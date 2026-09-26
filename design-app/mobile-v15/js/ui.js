@@ -235,24 +235,8 @@
     const unread = D.events.filter(
       (x) => !s.reads.includes(x.id) && !s.cleared.includes(x.domain),
     );
-    const highlights = unread.slice(0, 3);
-    const first = highlights[0];
-    const ticket = first
-      ? `<article class="change-ticket"><div class="ticket-top">${icon(D.domains[first.domain].icon, "sm")} ${first.type === "price" ? "PREÇO EM MOVIMENTO" : first.type === "points" ? "PONTOS EM MOVIMENTO" : "CASHBACK EM MOVIMENTO"}</div><h2>${e(first.name)}</h2><del class="old-price">${e(first.before)}</del><strong class="price">${e(first.after)}</strong><div class="ticket-footer"><span class="badge accent">${e(D.domains[first.domain].name)}</span>${link(`Ver mudança ${icon("arrow", "sm")}`, "alert", `data-id="${first.id}"`)}</div></article>`
-      : notice(
-          "Seu radar está em dia",
-          "Nenhuma mudança não lida nos seus acompanhamentos.",
-          "success",
-        );
-    const rows = highlights
-      .slice(1)
-      .map(
-        (item) =>
-          `<div class="signal-row"><span class="sig-icon">${icon(D.domains[item.domain].icon)}</span><div class="grow"><strong>${e(item.name)}</strong><p class="meta">${e(item.after)} · ${e(D.domains[item.domain].name)}</p></div>${ib("arrow", `Ver mudança de ${item.name}`, "alert", `data-id="${item.id}"`, "quiet")}</div>`,
-      )
-      .join("");
     return frame(
-      `<header class="app-header">${brand()}<button class="icon-button" data-action="go" data-route="alerts" aria-label="Alertas, ${unread.length} não lidos">${icon("bell")}${unread.length ? `<span class="unread-dot">${unread.length}</span>` : ""}</button></header><div class="home-heading"><p class="eyebrow">SEU RADAR, SEU RITMO</p><h1 class="page-title">Boas escolhas<br>começam aqui.</h1><p class="meta"><span class="live-dot"></span>${unread.length ? `${unread.length} mudanças para conferir` : "Tudo lido por enquanto"}</p></div>${withState(s, ticket + rows)}${sectionHead("Explore as origens", link("Ver todas", "go", 'data-route="explore"'))}<div class="service-rail">${[
+      `<header class="app-header">${brand()}<button class="icon-button" data-action="go" data-route="alerts" aria-label="Alertas, ${unread.length} não lidos">${icon("bell")}${unread.length ? `<span class="unread-dot">${unread.length}</span>` : ""}</button></header><div class="home-heading"><p class="eyebrow">SEU RADAR, SEU RITMO</p><h1 class="page-title">Boas escolhas começam aqui.</h1><p class="meta"><span class="live-dot"></span>${unread.length ? `${unread.length} mudanças para conferir` : "Tudo lido por enquanto"}</p></div>${sectionHead("Explore as origens", link("Ver todas", "go", 'data-route="explore"'))}<div class="service-rail">${[
         ["inter", "store", "Banco Inter", "Cashback e produtos"],
         ["livelo", "spark", "Livelo", "Pontos em lojas"],
         ["pichau", "desktop", "Pichau", "PCs gamer"],
@@ -350,7 +334,7 @@
       )
       .join("");
     return frame(
-      `<header class="app-header"><h1 class="page-title no-margin">Mudou. Você viu.</h1>${ib("tune", "Preferências de alertas", "go", 'data-route="notifications"')}</header><p class="lede">Mudanças nos itens que você acompanha.</p>${segment(
+      `<header class="app-header">${ib("back", "Voltar", "back", "", "back")}<h1 class="page-title no-margin alert-title">Mudou. Você viu.</h1>${ib("tune", "Preferências de alertas", "go", 'data-route="notifications"')}</header><p class="lede">Mudanças nos itens que você acompanha.</p>${segment(
         [
           ["all", "Todos"],
           ["unread", "Não lidos"],
@@ -522,6 +506,18 @@
   function history(s, item) {
     const rows = D.history[item.id] || [],
       result = C.paginate(rows, s.sheet.page || 1, 5);
+    if (item.domain === "direct") {
+      const prices = rows.map((row) => row.price).filter((value) => value != null),
+        minimo = prices.length ? Math.min(...prices) : null,
+        maximo = prices.length ? Math.max(...prices) : null,
+        metrics = (row) =>
+          `<dl class="history-metrics"><div><dt>Preço atual</dt><dd>${C.money(row.price)}</dd></div><div class="cashback"><dt>Cashback</dt><dd>${row.cashback == null ? "Não informado" : C.money(row.cashback)}</dd></div><div><dt>Após cashback</dt><dd>${row.net == null ? "Não informado" : C.money(row.net)}</dd></div></dl>`;
+      return `${
+        minimo == null && maximo == null
+          ? ""
+          : `<div class="history-summary"><div class="history-summary-card"><span>Mínimo no contrato</span><strong>${C.money(minimo)}</strong></div><div class="history-summary-card"><span>Máximo no contrato</span><strong>${C.money(maximo)}</strong></div></div>`
+      }<p class="history-total">${rows.length} ${rows.length === 1 ? "medição" : "medições"} nos últimos 30 dias</p>${rows.length ? result.items.map((row) => `<article class="history-row"><time>${e(row.date)}</time>${metrics(row)}</article>`).join("") + `<p class="history-note">O histórico é paginado e limitado à janela de 30 dias.</p>${pagination(result, "history")}` : empty("empty", "Ainda sem medições", "O histórico aparece depois de uma atualização válida.")}`;
+    }
     const isLivelo = item.domain === "livelo",
       isPartner = item.domain === "partner";
     return `<p class="meta">${isLivelo ? "Últimas medições · até 30 registros" : isPartner ? "Medições completas de cashback" : "Medições dos últimos 30 dias"} · somente leitura</p>${rows.length ? result.items.map((r) => `<article class="history-row"><time>${e(r.date)}</time><div class="row between wrap"><strong>${isLivelo ? `${C.decimal(r.points)} pts/R$ 1` : isPartner ? e(r.benefitText) : C.money(r.price)}</strong><span class="badge">${e(r.status)}</span></div>${item.domain === "pichau" ? `<p class="meta no-margin">Cartão ${C.money(r.cardPrice)}</p>` : item.domain === "direct" ? `<p class="meta no-margin">Cashback ${e(r.benefitText)}</p>` : isLivelo && r.club > r.points ? `<p class="meta no-margin">Clube: ${C.decimal(r.club)} pts/R$ 1</p>` : ""}</article>`).join("") + pagination(result, "history") : empty("empty", "Ainda sem medições", "O histórico aparece depois de uma atualização válida.")}`;
@@ -605,8 +601,10 @@
       title = `Filtros · ${D.domains[sh.domain].name}`;
       body = filters(s, sh.domain);
     }
+    let description = "";
     if (sh.type === "history" && item) {
-      title = `Histórico · ${item.name}`;
+      title = "Histórico de preço";
+      description = `${item.name} · ${item.store || D.domains[item.domain].name}`;
       body = history(s, item);
     }
     if (sh.type === "conditions" && item) {
@@ -649,7 +647,11 @@
       title = "Conteúdo indisponível";
       body = "<p>Este item não está mais nesta amostra.</p>";
     }
-    return `<div class="scrim" data-action="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1"><div class="sheet-handle" aria-hidden="true"></div><header class="sheet-header"><h2 id="sheet-title">${e(title)}</h2>${ib("close", "Fechar", "close")}</header>${body}</section></div>`;
+    const sheetHeader =
+      sh.type === "history"
+        ? `<header class="sheet-header sheet-header--history"><div>${ib("back", "Voltar", "close", "", "sheet-back")}</div><div class="sheet-header-main"><h2 id="sheet-title">${e(title)}</h2><p>${e(description)}</p></div><div>${ib("close", "Fechar", "close")}</div></header>`
+        : `<header class="sheet-header"><h2 id="sheet-title">${e(title)}</h2>${ib("close", "Fechar", "close")}</header>`;
+    return `<div class="scrim" data-action="backdrop"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1"><div class="sheet-handle" aria-hidden="true"></div>${sheetHeader}${body}</section></div>`;
   }
   const routes = {
     launch: ["Abertura", launch],

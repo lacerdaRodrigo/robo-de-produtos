@@ -40,8 +40,9 @@ function booleanoOpcional(bruto: string | null): boolean | null {
 }
 
 /**
- * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&marca=&categoria=
- *   &escopo=tv-smart,freezers&sem_categoria=&loja=&preco_min=&preco_max=
+ * GET /api/v1/inter/produtos?q=&pagina=&por_pagina=&ordenar=preco|nome
+ *   &acompanhados=true|false&marca=&categoria=&escopo=tv-smart,freezers
+ *   &sem_categoria=&loja=&preco_min=&preco_max=
  *
  * Busca de produtos (V4), autenticada e **paginada no servidor** — nada de baixar
  * catálogo no cliente. `q` vazio lista o catálogo persistido; quando presente,
@@ -58,6 +59,21 @@ export async function GET(requisicao: Request) {
   const q = (url.searchParams.get("q") ?? "").trim();
   const pagina = paginaValida(url.searchParams.get("pagina"));
   const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
+  const ordenar = url.searchParams.get("ordenar") ?? "preco";
+  const acompanhados = url.searchParams.get("acompanhados") ?? "false";
+
+  if (ordenar !== "preco" && ordenar !== "nome") {
+    return NextResponse.json(
+      corpoErro("validacao", "ordenar deve ser preco ou nome"),
+      { status: STATUS.INVALIDA },
+    );
+  }
+  if (acompanhados !== "true" && acompanhados !== "false") {
+    return NextResponse.json(
+      corpoErro("validacao", "acompanhados deve ser true ou false"),
+      { status: STATUS.INVALIDA },
+    );
+  }
 
   if ((q.length > 0 && q.length < MIN_Q) || q.length > MAX_Q) {
     return NextResponse.json(
@@ -160,6 +176,8 @@ export async function GET(requisicao: Request) {
           : null,
         preco_min: precoMin,
         preco_max: precoMax,
+        ...(acompanhados === "true" ? { acompanhado: true } : {}),
+        ...(ordenar !== "preco" ? { ordenar } : {}),
       },
     );
 

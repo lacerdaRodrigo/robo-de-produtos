@@ -30,8 +30,10 @@ export type ResumoPichauPersistido = {
 export type OpcoesCatalogoPichau = {
   q: string;
   aba: "todas" | "acompanhadas";
-  disponibilidade: "todas" | "disponiveis" | "esgotados";
+  disponibilidade: "todas" | "disponiveis" | "esgotados" | "fora_catalogo";
   ordenar: "nome" | "preco" | "desconto";
+  precoMin: string | null;
+  precoMax: string | null;
   pagina: number;
   porPagina: number;
 };
@@ -215,8 +217,11 @@ async function buscarCatalogoPichauPessoal(
   const todasDisponibilidades = opcoes.disponibilidade === "todas";
   const disponiveis = opcoes.disponibilidade === "disponiveis";
   const esgotados = opcoes.disponibilidade === "esgotados";
+  const foraCatalogo = opcoes.disponibilidade === "fora_catalogo";
   const porPreco = opcoes.ordenar === "preco";
   const porDesconto = opcoes.ordenar === "desconto";
+  const semPrecoMin = opcoes.precoMin === null;
+  const semPrecoMax = opcoes.precoMax === null;
   const totalLinhas = (await sql`
     SELECT count(*)::int AS total
       FROM pichau_produto p
@@ -236,6 +241,7 @@ async function buscarCatalogoPichauPessoal(
          ${todasDisponibilidades}
          OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
          OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+         OR (${foraCatalogo} AND p.presente_no_catalogo = FALSE)
        )
        AND (
          ${busca === ""}
@@ -243,6 +249,28 @@ async function buscarCatalogoPichauPessoal(
          OR lower(COALESCE(p.sku, '')) LIKE ${`%${busca}%`}
          OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
+       )
+       AND (
+         ${semPrecoMin}
+         OR (SELECT medicao.preco_pix
+               FROM pichau_medicao medicao
+               JOIN pichau_execucao execucao
+                 ON execucao.id = medicao.execucao_id
+                AND execucao.estado = 'sucesso'
+              WHERE medicao.produto_id = p.id
+              ORDER BY medicao.momento DESC, medicao.id DESC
+              LIMIT 1) >= ${opcoes.precoMin}::numeric
+       )
+       AND (
+         ${semPrecoMax}
+         OR (SELECT medicao.preco_pix
+               FROM pichau_medicao medicao
+               JOIN pichau_execucao execucao
+                 ON execucao.id = medicao.execucao_id
+                AND execucao.estado = 'sucesso'
+              WHERE medicao.produto_id = p.id
+              ORDER BY medicao.momento DESC, medicao.id DESC
+              LIMIT 1) <= ${opcoes.precoMax}::numeric
        )
   `) as Array<{ total: number }>;
   const total = totalLinhas[0]?.total ?? 0;
@@ -288,6 +316,7 @@ async function buscarCatalogoPichauPessoal(
          ${todasDisponibilidades}
          OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
          OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+         OR (${foraCatalogo} AND p.presente_no_catalogo = FALSE)
        )
        AND (
          ${busca === ""}
@@ -296,6 +325,8 @@ async function buscarCatalogoPichauPessoal(
            OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
        )
+       AND (${semPrecoMin} OR m.preco_pix >= ${opcoes.precoMin}::numeric)
+       AND (${semPrecoMax} OR m.preco_pix <= ${opcoes.precoMax}::numeric)
      ORDER BY
        CASE WHEN ${porPreco} THEN m.preco_pix END ASC NULLS LAST,
        CASE WHEN ${porDesconto} THEN m.desconto_pix END DESC NULLS LAST,
@@ -317,8 +348,11 @@ async function buscarCatalogoPichauLegado(
   const todasDisponibilidades = opcoes.disponibilidade === "todas";
   const disponiveis = opcoes.disponibilidade === "disponiveis";
   const esgotados = opcoes.disponibilidade === "esgotados";
+  const foraCatalogo = opcoes.disponibilidade === "fora_catalogo";
   const porPreco = opcoes.ordenar === "preco";
   const porDesconto = opcoes.ordenar === "desconto";
+  const semPrecoMin = opcoes.precoMin === null;
+  const semPrecoMax = opcoes.precoMax === null;
   const totalLinhas = (await sql`
     SELECT count(*)::int AS total
       FROM pichau_produto p
@@ -330,6 +364,7 @@ async function buscarCatalogoPichauLegado(
          ${todasDisponibilidades}
          OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
          OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+         OR (${foraCatalogo} AND p.presente_no_catalogo = FALSE)
        )
        AND (
          ${busca === ""}
@@ -337,6 +372,28 @@ async function buscarCatalogoPichauLegado(
          OR lower(COALESCE(p.sku, '')) LIKE ${`%${busca}%`}
          OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
+       )
+       AND (
+         ${semPrecoMin}
+         OR (SELECT medicao.preco_pix
+               FROM pichau_medicao medicao
+               JOIN pichau_execucao execucao
+                 ON execucao.id = medicao.execucao_id
+                AND execucao.estado = 'sucesso'
+              WHERE medicao.produto_id = p.id
+              ORDER BY medicao.momento DESC, medicao.id DESC
+              LIMIT 1) >= ${opcoes.precoMin}::numeric
+       )
+       AND (
+         ${semPrecoMax}
+         OR (SELECT medicao.preco_pix
+               FROM pichau_medicao medicao
+               JOIN pichau_execucao execucao
+                 ON execucao.id = medicao.execucao_id
+                AND execucao.estado = 'sucesso'
+              WHERE medicao.produto_id = p.id
+              ORDER BY medicao.momento DESC, medicao.id DESC
+              LIMIT 1) <= ${opcoes.precoMax}::numeric
        )
   `) as Array<{ total: number }>;
   const total = totalLinhas[0]?.total ?? 0;
@@ -366,6 +423,7 @@ async function buscarCatalogoPichauLegado(
          ${todasDisponibilidades}
          OR (${disponiveis} AND p.presente_no_catalogo = TRUE AND p.disponibilidade <> 'esgotado')
          OR (${esgotados} AND p.presente_no_catalogo = TRUE AND p.disponibilidade = 'esgotado')
+         OR (${foraCatalogo} AND p.presente_no_catalogo = FALSE)
        )
        AND (
          ${busca === ""}
@@ -374,6 +432,8 @@ async function buscarCatalogoPichauLegado(
          OR p.marca_busca LIKE ${`%${busca}%`}
          OR lower(p.id_externo) LIKE ${`%${busca}%`}
        )
+       AND (${semPrecoMin} OR m.preco_pix >= ${opcoes.precoMin}::numeric)
+       AND (${semPrecoMax} OR m.preco_pix <= ${opcoes.precoMax}::numeric)
      ORDER BY
        CASE WHEN ${porPreco} THEN m.preco_pix END ASC NULLS LAST,
        CASE WHEN ${porDesconto} THEN m.desconto_pix END DESC NULLS LAST,

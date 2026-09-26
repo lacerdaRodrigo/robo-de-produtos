@@ -66,6 +66,36 @@ Map<String, Object?> resumo({
   },
 };
 
+Map<String, Object?> resumoComDestaque() {
+  final corpo = resumo();
+  corpo['radar'] = <String, Object?>{
+    'estado': 'atualizado',
+    'total_acompanhamentos': 17,
+    'por_origem': <String, int>{
+      'livelo': 1,
+      'inter_cashback': 4,
+      'inter_produto': 8,
+      'pichau': 4,
+    },
+    'alertas_nao_lidos': 1,
+    'destaque': <String, Object?>{
+      'alerta_id': 'alerta-natura',
+      'origem': 'livelo',
+      'tipo': 'pontuacao',
+      'entidade_id': 'natura',
+      'entidade_externa': 'natura',
+      'nome': 'Natura',
+      'valor_anterior': '4',
+      'valor_atual': '8',
+      'unidade': 'pontos_por_real',
+      'direcao': 'aumento',
+      'criado_em': '2026-08-23T11:00:00.000Z',
+      'url_externa': 'https://www.livelo.com.br/natura',
+    },
+  };
+  return corpo;
+}
+
 Api apiQueResponde(Future<http.Response> Function(http.Request) responder) =>
     Api(
       paginaPadrao: 20,
@@ -262,7 +292,7 @@ void main() {
     await abrir(at, api, compacto: true);
     await at.pumpAndSettle();
 
-    expect(find.text('Boas escolhas\ncomeçam aqui.'), findsOneWidget);
+    expect(find.text('Boas escolhas começam aqui.'), findsOneWidget);
     expect(find.text('Tudo atualizado'), findsNothing);
     expect(find.text('Atualizado com avisos'), findsNothing);
     expect(find.text('Explore as origens'), findsOneWidget);
@@ -273,6 +303,18 @@ void main() {
     expect(find.text('4 lojas'), findsOneWidget);
     expect(find.text('100 produtos'), findsOneWidget);
     expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsNothing);
+  });
+
+  testWidgets('Home compacta não exibe o destaque de alerta', (at) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumoComDestaque()), 200),
+    );
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+
+    expect(find.text('Natura'), findsNothing);
+    expect(find.text('Ver alertas'), findsNothing);
+    expect(find.text('Explore as origens'), findsOneWidget);
   });
 
   testWidgets('card Pichau abre sua subárea de Explorar', (at) async {
@@ -350,7 +392,7 @@ void main() {
       await at.tap(atalho);
     }
     expect(abertos, ['lojas', 'livelo', 'produtos', 'cashback']);
-  }, tags: 'web');
+  });
 
   testWidgets('layout amplo e texto ampliado não estouram', (at) async {
     final api = apiQueResponde(
@@ -361,7 +403,7 @@ void main() {
 
     expect(at.takeException(), isNull);
     expect(find.text('Produtos ativos'), findsOneWidget);
-  }, tags: 'web');
+  });
 
   testWidgets('celular estreito com texto ampliado alcança todos os estados', (
     at,

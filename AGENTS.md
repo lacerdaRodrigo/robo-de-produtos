@@ -1,20 +1,19 @@
 # Instruções para o Codex — design mobile V15
 
-## Escopo do design mobile
+## Escopo do aplicativo mobile
 
-Este ciclo existe para **implementar somente o aplicativo mobile Flutter** conforme o design V15 aprovado, com o menor gasto de contexto possível.
+Este ciclo existe para **implementar somente o aplicativo Flutter Android/iOS** conforme o design V15 aprovado, com o menor gasto de contexto possível. O alvo Flutter Web foi removido; a API e o protótipo HTML continuam separados.
 
 ### Fora do escopo
 
-Durante este ciclo, **não trabalhar no Web**:
+Durante este ciclo, não trabalhar em superfícies que não sejam a jornada
+Android/iOS:
 
 - não investigar protótipos ou documentação visual fora da V15;
-- não redesenhar Flutter Web;
 - não investigar CSS/site/Next.js/Vercel;
-- não atualizar documentação Web;
 - não gastar contexto tentando manter paridade visual com desktop.
 
-Código compartilhado pode continuar existindo, mas só deve ser inspecionado quando for necessário para compilar ou para não quebrar a jornada mobile tocada. Não faça refatoração preventiva do Web.
+Código compartilhado pode continuar existindo, mas só deve ser inspecionado quando for necessário para compilar ou para não quebrar a jornada mobile tocada.
 
 Para tarefas do design mobile V15, esta regra de escopo substitui instruções históricas que mandem atualizar ou comparar Web e Mobile juntos.
 
@@ -27,7 +26,7 @@ Antes de alterar uma tela mobile, leia apenas:
 3. arquivos Flutter e testes unitários/widgets diretamente relacionados à fase atual;
 4. PRD específico do domínio somente quando precisar confirmar regra, dado ou contrato de API.
 
-**Não leia documentação grande sem necessidade.** Não leia `CLAUDE.md`, todos os PRDs, histórico do projeto ou arquivos Web por padrão. Abra somente o necessário para resolver a fase atual.
+**Não leia documentação grande sem necessidade.** Não leia `CLAUDE.md`, todos os PRDs, histórico do projeto ou arquivos de backend por padrão. Abra somente o necessário para resolver a fase atual.
 
 ## Regra visual inegociável
 
@@ -38,6 +37,16 @@ Não invente UI. Não substitua o protótipo por uma interpretação Material ge
 Se algo não estiver definido no HTML nem no `design-v15.md`, não improvise: registre a lacuna e peça decisão.
 
 Dados ilustrativos do HTML não viram dados reais. Backend, regras e contratos continuam vindo da API/PRDs existentes.
+
+### Regra de retorno nas telas secundárias
+
+Toda tela mobile aberta a partir de outra rota deve oferecer um controle visível
+e acessível de voltar no cabeçalho quando houver uma rota anterior. O botão deve
+usar o stack de navegação existente, sem duplicar a operação do sistema. O back
+físico/gesto do Android também deve retornar à mesma rota anterior; não pode
+fechar a sessão, resetar filtros ou criar uma segunda cópia da tela. O protótipo
+V15 e a implementação Flutter precisam permanecer sincronizados, e os testes
+afetados devem cobrir o toque no botão e o evento de back do Android.
 
 ## Ciclo obrigatório
 
@@ -129,7 +138,7 @@ Não criar, atualizar ou executar como parte deste plano:
 - smoke automatizado;
 - performance;
 - regressão visual automatizada;
-- testes Web.
+- testes de build Web.
 
 `dart format` e `flutter analyze` continuam obrigatórios porque são validações estáticas, não tipos de teste.
 

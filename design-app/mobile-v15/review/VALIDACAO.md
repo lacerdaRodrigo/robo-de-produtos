@@ -38,7 +38,7 @@ compras, exclusões remotas, envio de mensagens ou solicitação real de push.
 8. Livelo distingue pontuação comum de Clube; histórico troca páginas reais.
 9. Pichau separa esgotado, ausente, preço desconhecido e histórico sem medição.
 10. Abas, detalhe e retorno preservam busca, página e posição útil.
-11. Leitura da Central altera o destaque do Início e os contadores.
+11. Leitura da Central atualiza os contadores; a Home não exibe cartão de alerta.
 12. Permissão opcional, preferências, tema e movimento persistem.
 13. Suporte valida tamanho, preserva texto na falha, gera protocolo e escapa HTML.
 14. Sessão expirada retoma contexto; logout mantém acompanhamentos locais.
@@ -60,7 +60,7 @@ visual e comportamento técnico. Correções realizadas:
 | Catálogos tinham apresentação demais antes da primeira oferta. | Removidos eyebrow e texto promocional repetido; título de catálogo compacto. |
 | Rótulo da navegação partia palavra no modo mais compacto/ampliado. | Navegação se reorganiza em duas linhas de ações nesse caso extremo. |
 | Termos longos competiam por largura com texto ampliado. | “PCs gamer” e o filtro “No radar” mantêm o significado sem partir palavras. |
-| Destaque do Início podia continuar apontando para evento já lido. | Primeiro evento não lido determina o destaque; teste lê e verifica o próximo. |
+| O alerta ocupava a área principal da Home. | A Home mantém o estado resumido e o acesso à Central no cabeçalho; o evento completo fica na Central. |
 | Operação de formulário podia redirecionar após o usuário sair da tela. | Navegação invalida a operação pendente. |
 | Limpar filtros apagava busca e modo de acompanhamento. | Limpeza preserva esses dois contextos; teste confere os resultados. |
 | Troca entre folhas podia perder o elemento de retorno de foco. | Referência inicial é preservada ao passar de condições para destino externo. |

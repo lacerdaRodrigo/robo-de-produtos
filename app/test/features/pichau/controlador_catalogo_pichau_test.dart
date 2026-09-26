@@ -35,6 +35,8 @@ void main() {
             required aba,
             required disponibilidade,
             required ordenar,
+            required precoMin,
+            required precoMax,
             required pagina,
           }) async {
             consultas.add({
@@ -42,6 +44,8 @@ void main() {
               'aba': aba,
               'disponibilidade': disponibilidade,
               'ordenar': ordenar,
+              'precoMin': precoMin,
+              'precoMax': precoMax,
               'pagina': pagina,
             });
             return _pagina();
@@ -63,6 +67,8 @@ void main() {
       'aba': 'acompanhadas',
       'disponibilidade': 'esgotados',
       'ordenar': 'desconto',
+      'precoMin': '',
+      'precoMax': '',
       'pagina': 1,
     });
   });
@@ -78,6 +84,8 @@ void main() {
               required aba,
               required disponibilidade,
               required ordenar,
+              required precoMin,
+              required precoMax,
               required pagina,
             }) async => _pagina(),
         alterarAcompanhamento:
@@ -113,6 +121,8 @@ void main() {
             required aba,
             required disponibilidade,
             required ordenar,
+            required precoMin,
+            required precoMax,
             required pagina,
           }) async => _pagina(acompanhada: true),
       alterarAcompanhamento:
@@ -151,6 +161,8 @@ void main() {
             required aba,
             required disponibilidade,
             required ordenar,
+            required precoMin,
+            required precoMax,
             required pagina,
           }) async => retrato,
       alterarAcompanhamento:
@@ -182,6 +194,8 @@ void main() {
             required aba,
             required disponibilidade,
             required ordenar,
+            required precoMin,
+            required precoMax,
             required pagina,
           }) async {
             if (falhar) throw StateError('indisponível');

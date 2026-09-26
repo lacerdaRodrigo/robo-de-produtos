@@ -22,14 +22,23 @@ class PaginaHistoricoProduto extends StatefulWidget {
 }
 
 class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
+  static const _itensPorPagina = 5;
+
   final _medicoes = <MedicaoProdutoDireto>[];
   HistoricoProdutoDireto? _resumo;
   Object? _erro;
-  Object? _erroMais;
+  Object? _erroPagina;
   var _carregando = true;
-  var _carregandoMais = false;
-  var _pagina = 0;
-  var _temProxima = false;
+  var _carregandoPagina = false;
+  var _pagina = 1;
+  var _paginaComErro = 1;
+
+  int get _totalPaginas {
+    final resumo = _resumo;
+    if (resumo == null || resumo.totalItens == 0) return 1;
+    final porPagina = resumo.porPagina > 0 ? resumo.porPagina : _itensPorPagina;
+    return (resumo.totalItens + porPagina - 1) ~/ porPagina;
+  }
 
   @override
   void initState() {
@@ -37,52 +46,53 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
     _carregar();
   }
 
-  Future<void> _carregar({bool mais = false}) async {
-    if (mais && (_carregandoMais || !_temProxima)) return;
+  Future<void> _carregar({int pagina = 1}) async {
+    if (_carregandoPagina) return;
+    final inicial = _resumo == null;
     setState(() {
-      if (mais) {
-        _carregandoMais = true;
-        _erroMais = null;
-      } else {
+      if (inicial) {
         _carregando = true;
         _erro = null;
+      } else {
+        _carregandoPagina = true;
+        _erroPagina = null;
+        _paginaComErro = pagina;
       }
     });
     try {
       final resposta = await widget.api.historicoProduto(
         loja: widget.produto.lojaSlug,
         produto: widget.produto.idExterno,
-        pagina: mais ? _pagina + 1 : 1,
+        pagina: pagina,
+        porPagina: _itensPorPagina,
       );
       if (!mounted) return;
       setState(() {
         _resumo = resposta;
-        if (mais) {
-          _medicoes.addAll(resposta.medicoes);
-        } else {
-          _medicoes
-            ..clear()
-            ..addAll(resposta.medicoes);
-        }
+        _medicoes
+          ..clear()
+          ..addAll(resposta.medicoes);
         _pagina = resposta.pagina;
-        _temProxima = resposta.temProxima;
-        _erroMais = null;
+        _erroPagina = null;
       });
     } catch (erro) {
       if (mounted) {
         setState(() {
-          if (mais) {
-            _erroMais = erro;
-          } else {
+          if (inicial) {
             _erro = erro;
+          } else {
+            _erroPagina = erro;
           }
         });
       }
     } finally {
       if (mounted) {
         setState(() {
-          _carregando = false;
-          _carregandoMais = false;
+          if (inicial) {
+            _carregando = false;
+          } else {
+            _carregandoPagina = false;
+          }
         });
       }
     }
@@ -149,31 +159,25 @@ class _EstadoPaginaHistoricoProduto extends State<PaginaHistoricoProduto> {
             height: 1.45,
           ),
         ),
-        if (_carregandoMais)
-          const Padding(
-            padding: EdgeInsets.only(top: 12),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_erroMais != null)
+        if (_erroPagina != null)
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: Center(
               child: FilledButton.tonal(
-                onPressed: () => _carregar(mais: true),
-                child: const Text('Tentar carregar mais medições'),
-              ),
-            ),
-          )
-        else if (_temProxima)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Center(
-              child: OutlinedButton(
-                onPressed: () => _carregar(mais: true),
-                child: const Text('Carregar mais medições'),
+                onPressed: () => _carregar(pagina: _paginaComErro),
+                child: const Text('Tentar carregar esta página'),
               ),
             ),
           ),
+        if (_totalPaginas > 1) ...[
+          const SizedBox(height: 10),
+          _PaginacaoHistoricoProduto(
+            pagina: _pagina,
+            totalPaginas: _totalPaginas,
+            carregando: _carregandoPagina,
+            aoIrParaPagina: (pagina) => _carregar(pagina: pagina),
+          ),
+        ],
       ],
     );
   }
@@ -278,6 +282,94 @@ class _MetricaHistorico extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _PaginacaoHistoricoProduto extends StatelessWidget {
+  const _PaginacaoHistoricoProduto({
+    required this.pagina,
+    required this.totalPaginas,
+    required this.carregando,
+    required this.aoIrParaPagina,
+  });
+
+  final int pagina;
+  final int totalPaginas;
+  final bool carregando;
+  final Future<void> Function(int pagina) aoIrParaPagina;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    final anterior = pagina > 1;
+    final proxima = pagina < totalPaginas;
+    return Semantics(
+      label: 'Paginação do histórico, página $pagina de $totalPaginas',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _botao(
+            context,
+            key: const Key('historico-pagina-anterior'),
+            tooltip: 'Página anterior',
+            icone: Icons.arrow_back,
+            habilitado: anterior,
+            aoTocar: () => aoIrParaPagina(pagina - 1),
+          ),
+          SizedBox(width: tokens.spacing.four),
+          Text(
+            '$pagina de $totalPaginas',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          SizedBox(width: tokens.spacing.four),
+          _botao(
+            context,
+            key: const Key('historico-pagina-proxima'),
+            tooltip: 'Próxima página',
+            icone: Icons.arrow_forward,
+            habilitado: proxima,
+            aoTocar: () => aoIrParaPagina(pagina + 1),
+          ),
+          if (carregando) ...[
+            SizedBox(width: tokens.spacing.two),
+            SizedBox(
+              width: tokens.sizes.icon,
+              height: tokens.sizes.icon,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cores.acao,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _botao(
+    BuildContext context, {
+    required Key key,
+    required String tooltip,
+    required IconData icone,
+    required bool habilitado,
+    required VoidCallback aoTocar,
+  }) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    return IconButton(
+      key: key,
+      tooltip: tooltip,
+      onPressed: habilitado && !carregando ? aoTocar : null,
+      icon: Icon(icone),
+      style: IconButton.styleFrom(
+        minimumSize: Size.square(tokens.sizes.touchTarget),
+        maximumSize: Size.square(tokens.sizes.touchTarget),
+        foregroundColor: cores.textoSuave,
+        side: BorderSide(color: cores.borda),
+        shape: const CircleBorder(),
+      ),
+    );
+  }
 }
 
 class _ResumoHistorico extends StatelessWidget {

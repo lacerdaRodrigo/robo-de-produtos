@@ -14,15 +14,18 @@ import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/produtos/cartao_produto.dart';
 import 'package:app_robo/features/produtos/controlador_busca_produtos.dart';
 import 'package:app_robo/features/produtos/pagina_historico_produto.dart';
+import 'package:app_robo/features/produtos/pagina_detalhe_produto.dart';
 import 'package:app_robo/features/produtos/pagina_produtos.dart';
 
 ProdutoDireto _produto({
   String id = 'edge',
   String loja = 'Casas Bahia',
+  String nome = 'Motorola Edge 60 Pro',
   String? categoria = 'Celular',
+  bool acompanhado = false,
 }) => ProdutoDireto(
   idExterno: id,
-  nome: 'Motorola Edge 60 Pro',
+  nome: nome,
   marca: 'Motorola',
   categoria: categoria,
   caminho: 'produto/$id',
@@ -41,6 +44,7 @@ ProdutoDireto _produto({
   lojaSlug: loja == 'Casas Bahia' ? 'casas-bahia' : 'ponto',
   lojaNome: loja,
   atualizadaEm: '2026-08-22T12:00:00Z',
+  acompanhado: acompanhado,
 );
 
 Pagina<ProdutoDireto> _pagina(
@@ -148,6 +152,30 @@ Api _apiHistorico({
           falhaPaginaDoisPendente = false;
           return http.Response('{"erro":{"codigo":"falha"}}', 500);
         }
+        final medicoes = pagina == '2'
+            ? [
+                {
+                  'momento': '2026-08-21T12:00:00Z',
+                  'preco_atual_valor': '3600.00',
+                  'cashback_valor': '332.00',
+                  'preco_liquido_valor': '3268.00',
+                },
+              ]
+            : [
+                for (final momento in [
+                  '2026-08-22T12:00:00Z',
+                  '2026-08-21T12:00:00Z',
+                  '2026-08-20T12:00:00Z',
+                  '2026-08-20T08:00:00Z',
+                  '2026-08-19T12:00:00Z',
+                ])
+                  {
+                    'momento': momento,
+                    'preco_atual_valor': '3688.89',
+                    'cashback_valor': '332.00',
+                    'preco_liquido_valor': '3356.89',
+                  },
+              ];
         return http.Response(
           jsonEncode({
             'produto': {
@@ -175,19 +203,10 @@ Api _apiHistorico({
             },
             'minimo': '3500.00',
             'maximo': '4000.00',
-            'medicoes': [
-              {
-                'momento': pagina == '2'
-                    ? '2026-08-21T12:00:00Z'
-                    : '2026-08-22T12:00:00Z',
-                'preco_atual_valor': pagina == '2' ? '3600.00' : '3688.89',
-                'cashback_valor': '332.00',
-                'preco_liquido_valor': '3356.89',
-              },
-            ],
+            'medicoes': medicoes,
             'pagina': int.parse(pagina),
-            'por_pagina': 30,
-            'total_itens': 2,
+            'por_pagina': 5,
+            'total_itens': 6,
             'total_paginas': 2,
             'tem_proxima': pagina != '2',
           }),
@@ -204,352 +223,6 @@ Widget _tela(ControladorBuscaProdutos controlador) => MaterialApp(
 );
 
 void main() {
-  testWidgets('escopo contextual percorre as listas de Casa até Fogões', (
-    at,
-  ) async {
-    final escopos = <String?>[];
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async {
-            escopos.add(escopo);
-            return _pagina(const []);
-          },
-    );
-    addTearDown(controlador.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-
-    await at.tap(find.byKey(const Key('escolher-area-produtos')));
-    await at.pumpAndSettle();
-    expect(find.byTooltip('Voltar'), findsOneWidget);
-    await at.tap(find.text('Casa e cozinha'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrodomésticos'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Fogões e fornos'));
-    await at.pumpAndSettle();
-
-    expect(escopos, contains('fogoes-fornos'));
-    expect(find.text('Buscando em 1 área'), findsOneWidget);
-    expect(find.text('Fogões e fornos'), findsOneWidget);
-  });
-
-  testWidgets('acrescenta, remove e limpa recortes contextuais', (at) async {
-    at.view.devicePixelRatio = 1;
-    at.view.physicalSize = const Size(390, 844);
-    addTearDown(at.view.resetDevicePixelRatio);
-    addTearDown(at.view.resetPhysicalSize);
-    final escopos = <String?>[];
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async {
-            escopos.add(escopo);
-            return _pagina(const []);
-          },
-    );
-    addTearDown(controlador.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-
-    await at.tap(find.byKey(const Key('escolher-area-produtos')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrônicos'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('TV e imagem'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('TVs'));
-    await at.pumpAndSettle();
-
-    final adicionarArea = find.text('Adicionar área');
-    await at.drag(
-      find.byKey(const Key('produtos-compacto')),
-      const Offset(0, -240),
-    );
-    await at.pumpAndSettle();
-    await Scrollable.ensureVisible(
-      at.element(adicionarArea),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await at.tap(adicionarArea);
-    await at.pumpAndSettle();
-    await at.tap(find.text('Casa e cozinha'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrodomésticos'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Refrigeração e lavanderia'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Freezers'));
-    await at.pumpAndSettle();
-
-    expect(escopos, contains('tv-convencional,freezers'));
-    expect(find.text('Buscando em 2 áreas'), findsOneWidget);
-    expect(find.text('TVs convencionais'), findsOneWidget);
-    expect(find.text('Freezers'), findsOneWidget);
-    expect(find.textContaining('tv-convencional'), findsNothing);
-    expect(
-      find.byKey(const Key('escopo-produtos-tv-convencional')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('escopo-produtos-freezers')), findsOneWidget);
-
-    await at.tap(
-      find.descendant(
-        of: find.byKey(const Key('escopo-produtos-freezers')),
-        matching: find.byIcon(Icons.close),
-      ),
-    );
-    await at.pumpAndSettle();
-    expect(escopos.last, 'tv-convencional');
-
-    await at.tap(find.byKey(const Key('limpar-escopos-produtos')));
-    await at.pumpAndSettle();
-    expect(escopos.last, isNull);
-    expect(find.text('Comece por uma área'), findsOneWidget);
-  });
-
-  testWidgets('card de áreas não estoura em 320 px no tema escuro', (at) async {
-    at.view.devicePixelRatio = 1;
-    at.view.physicalSize = const Size(320, 640);
-    addTearDown(at.view.resetDevicePixelRatio);
-    addTearDown(at.view.resetPhysicalSize);
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async => _pagina(const []),
-    );
-    addTearDown(controlador.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.escuro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: const TextScaler.linear(1.3)),
-          child: child!,
-        ),
-      ),
-    );
-    controlador.mudarFiltros(
-      const FiltrosProdutos(escopos: ['tv-convencional', 'freezers']),
-    );
-    await at.pumpAndSettle();
-    await at.drag(
-      find.byKey(const Key('produtos-compacto')),
-      const Offset(0, -240),
-    );
-    await at.pumpAndSettle();
-
-    expect(find.text('Buscando em 2 áreas'), findsOneWidget);
-    expect(find.text('Limpar áreas'), findsOneWidget);
-    expect(find.text('Adicionar área'), findsOneWidget);
-    expect(at.takeException(), isNull);
-  });
-
-  testWidgets('escopo contextual separa refrigeração em três opções', (
-    at,
-  ) async {
-    final escopos = <String?>[];
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async {
-            escopos.add(escopo);
-            return _pagina(const []);
-          },
-    );
-    addTearDown(controlador.dispose);
-
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-
-    await at.tap(find.byKey(const Key('escolher-area-produtos')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Casa e cozinha'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrodomésticos'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Refrigeração e lavanderia'));
-    await at.pumpAndSettle();
-
-    expect(find.text('Geladeiras'), findsOneWidget);
-    expect(find.text('Freezers'), findsOneWidget);
-    expect(find.text('Lavadoras e secadoras'), findsOneWidget);
-
-    await at.tap(find.text('Freezers'));
-    await at.pumpAndSettle();
-    expect(escopos, contains('freezers'));
-  });
-
-  testWidgets('seta de voltar retorna à lista anterior sem aplicar escopo', (
-    at,
-  ) async {
-    final escopos = <String?>[];
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async {
-            escopos.add(escopo);
-            return _pagina(const []);
-          },
-    );
-    addTearDown(controlador.dispose);
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('escolher-area-produtos')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Casa e cozinha'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Eletrodomésticos'));
-    await at.pumpAndSettle();
-    await at.tap(find.byTooltip('Voltar'));
-    await at.pumpAndSettle();
-
-    expect(find.text('Casa e cozinha'), findsOneWidget);
-    expect(find.text('Eletrodomésticos'), findsOneWidget);
-    expect(escopos, isEmpty);
-  });
-
-  testWidgets('disponibiliza os novos recortes de casa e saúde', (at) async {
-    final escopos = <String?>[];
-    final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
-      buscar:
-          ({
-            required termo,
-            required pagina,
-            marca,
-            categoria,
-            escopo,
-            required semCategoria,
-            loja,
-            precoMin,
-            precoMax,
-          }) async {
-            escopos.add(escopo);
-            return _pagina(const []);
-          },
-    );
-    addTearDown(controlador.dispose);
-    await at.pumpWidget(
-      MaterialApp(
-        theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          experienciaCompacta: true,
-        ),
-      ),
-    );
-    await at.pumpAndSettle();
-
-    await at.tap(find.byKey(const Key('escolher-area-produtos')));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Casa e cozinha'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Cozinhas e jantar'));
-    await at.pumpAndSettle();
-    await at.tap(find.text('Cozinhas'));
-    await at.pumpAndSettle();
-    expect(escopos, contains('cozinhas-modulares'));
-  });
-
   testWidgets('oferta compacta identifica loja e Banco Inter', (at) async {
     await at.pumpWidget(
       MaterialApp(
@@ -561,14 +234,21 @@ void main() {
               produto: _produto(),
               compacto: true,
               mostrarLoja: false,
-              aoAbrirHistorico: () {},
+              aoAbrirDetalhes: () {},
             ),
           ),
         ),
       ),
     );
 
-    expect(find.text('Casas Bahia · Banco Inter'), findsOneWidget);
+    expect(find.text('Casas Bahia'), findsOneWidget);
+    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+    expect(find.text('Disponível'), findsOneWidget);
+    expect(at.widget<Text>(find.text('Disponível')).textAlign, TextAlign.end);
+    expect(
+      at.widget<Text>(find.text('R\$ 3.688,89')).style?.fontSize,
+      greaterThanOrEqualTo(28),
+    );
     final semantica = at.getSemantics(find.byType(CartaoProduto));
     expect(
       semantica.label,
@@ -576,6 +256,28 @@ void main() {
         'Oferta Motorola Edge 60 Pro, da loja Casas Bahia, no Banco Inter',
       ),
     );
+  });
+
+  testWidgets('título compacto ocupa o card sem truncar o nome', (at) async {
+    const nome = 'Fone de ouvido JBL Tune sem fio com cancelamento de ruído';
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: CartaoProduto(
+              produto: _produto(nome: nome),
+              compacto: true,
+              aoAbrirDetalhes: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(nome), findsOneWidget);
+    expect(at.takeException(), isNull);
   });
 
   testWidgets('oferta compacta exibe sino quando o acompanhamento está ativo', (
@@ -589,7 +291,7 @@ void main() {
             produto: _produto(),
             compacto: true,
             aoAcompanhar: () {},
-            aoAbrirHistorico: () {},
+            aoAbrirDetalhes: () {},
           ),
         ),
       ),
@@ -609,7 +311,7 @@ void main() {
           body: CartaoProduto(
             produto: _produto(categoria: null),
             compacto: true,
-            aoAbrirHistorico: () {},
+            aoAbrirDetalhes: () {},
           ),
         ),
       ),
@@ -619,9 +321,8 @@ void main() {
     expect(find.text('Outros'), findsNothing);
   });
 
-  testWidgets('histórico recebe a oferta tocada com loja e identificador', (
-    at,
-  ) async {
+  testWidgets('detalhes e histórico preservam a oferta tocada', (at) async {
+    final navegador = GlobalKey<NavigatorState>();
     final controlador = ControladorBuscaProdutos(
       debounce: Duration.zero,
       buscar:
@@ -642,12 +343,22 @@ void main() {
     await at.pumpWidget(
       MaterialApp(
         theme: TemaRadar.claro(),
-        home: Scaffold(
-          body: PaginaProdutos(
-            api: _apiHistorico(),
-            controlador: controlador,
-            incorporada: true,
-            experienciaCompacta: true,
+        home: NavigatorPopHandler<void>(
+          onPopWithResult: (_) => navegador.currentState?.pop(),
+          child: Navigator(
+            key: navegador,
+            onGenerateRoute: (_) => MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Compre direto')),
+                body: PaginaProdutos(
+                  api: _apiHistorico(),
+                  controlador: controlador,
+                  incorporada: true,
+                  experienciaCompacta: true,
+                  navegadorParaDetalhes: navegador,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -659,7 +370,21 @@ void main() {
       const Offset(0, -600),
     );
     await at.pumpAndSettle();
-    await at.tap(find.byTooltip('Ver histórico'));
+    await at.tap(find.byKey(const Key('detalhes-produto')));
+    await at.pumpAndSettle();
+
+    expect(find.byType(PaginaDetalheProduto), findsOneWidget);
+    expect(find.text('Compre direto'), findsNothing);
+    expect(find.text('Detalhes'), findsOneWidget);
+    expect(find.text('Disponível'), findsOneWidget);
+    expect(find.text('Preço de compra'), findsOneWidget);
+    expect(find.text('Cashback'), findsOneWidget);
+    expect(find.text('Estimativa após cashback'), findsOneWidget);
+    expect(find.text('Loja'), findsOneWidget);
+    await at.drag(find.byType(ListView).last, const Offset(0, -260));
+    await at.pumpAndSettle();
+    expect(find.text('Abrir Inter'), findsOneWidget);
+    await at.tap(find.byKey(const Key('historico-detalhe-produto')));
     await at.pumpAndSettle();
 
     final pagina = at.widget<PaginaHistoricoProduto>(
@@ -671,6 +396,13 @@ void main() {
     expect(pagina.produto.idExterno, 'ponto-42');
     expect(pagina.produto.lojaSlug, 'ponto');
     expect(pagina.produto.lojaNome, 'Ponto');
+
+    await at.tap(find.byKey(const Key('fechar-folha-radar')));
+    await at.pumpAndSettle();
+    await at.binding.handlePopRoute();
+    await at.pumpAndSettle();
+    expect(find.byType(PaginaDetalheProduto), findsNothing);
+    expect(find.byKey(const Key('produtos-compacto')), findsOneWidget);
   });
 
   testWidgets('pede termo, agrupa por loja e mostra os dados comerciais', (
@@ -725,7 +457,9 @@ void main() {
     );
   });
 
-  testWidgets('filtros usam lojas selecionadas e só editam preços', (at) async {
+  testWidgets('filtros seguem o protótipo e editam ordem, loja e preços', (
+    at,
+  ) async {
     var chamadas = 0;
     String? marcaRecebida;
     String? categoriaRecebida;
@@ -775,18 +509,18 @@ void main() {
     await at.pumpAndSettle();
     await at.tap(find.text('Filtros'));
     await at.pumpAndSettle();
-    expect(find.text('Marca'), findsNothing);
-    expect(find.text('Loja (slug)'), findsNothing);
-    expect(find.text('2 para coleta'), findsOneWidget);
-    expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
-    expect(find.byKey(const Key('filtro-loja-ponto')), findsOneWidget);
-    expect(
-      at
-          .widget<ChoiceChip>(find.byKey(const Key('filtro-loja-ponto')))
-          .selectedColor,
-      Colors.white,
-    );
-    await at.tap(find.byKey(const Key('filtro-loja-ponto')));
+    expect(find.text('Menor preço por loja'), findsOneWidget);
+    expect(find.text('Todas as lojas'), findsOneWidget);
+    expect(find.text('Todas as categorias'), findsOneWidget);
+    await at.ensureVisible(find.byKey(const Key('filtro-ordenar')));
+    await at.tap(find.byKey(const Key('filtro-ordenar')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Nome por loja').last);
+    await at.pumpAndSettle();
+    await at.ensureVisible(find.byKey(const Key('filtro-loja')));
+    await at.tap(find.byKey(const Key('filtro-loja')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Ponto').last);
     await at.enterText(find.byKey(const Key('filtro-preco-minimo')), '100');
     await at.enterText(find.byKey(const Key('filtro-preco-maximo')), '500');
     await at.scrollUntilVisible(
@@ -872,7 +606,81 @@ void main() {
     expect(controlador.itens.single.idExterno, 'oferta-3');
   });
 
-  testWidgets('busca compacta segue o protótipo e usa o catálogo local', (
+  testWidgets('catálogo compacto segue o protótipo e filtra No radar', (
+    at,
+  ) async {
+    final acompanhados = <bool>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto()]),
+      buscarComOpcoes:
+          ({
+            required termo,
+            required pagina,
+            required ordenar,
+            required apenasAcompanhados,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            acompanhados.add(apenasAcompanhados);
+            return _pagina([
+              _produto(acompanhado: apenasAcompanhados),
+            ], total: 1);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Produtos por loja'), findsOneWidget);
+    expect(find.byKey(const Key('busca-produtos')), findsOneWidget);
+    expect(find.text('Todos'), findsOneWidget);
+    expect(find.text('No radar'), findsOneWidget);
+    expect(find.byKey(const Key('filtros-produtos')), findsOneWidget);
+
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    expect(find.text('Casas Bahia'), findsAtLeastNWidgets(1));
+    expect(find.text('Disponível'), findsOneWidget);
+    expect(find.text('Detalhes'), findsOneWidget);
+
+    await at.tap(find.text('No radar'));
+    await at.pumpAndSettle();
+    expect(controlador.apenasAcompanhados, isTrue);
+    expect(acompanhados, contains(true));
+    expect(find.text('Acompanhando'), findsOneWidget);
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('card compacto atualiza para Acompanhando após salvar', (
     at,
   ) async {
     final controlador = ControladorBuscaProdutos(
@@ -897,112 +705,25 @@ void main() {
         theme: TemaRadar.claro(),
         home: Scaffold(
           body: PaginaProdutos(
-            api: _api(),
+            api: _apiHistorico(),
             controlador: controlador,
             incorporada: true,
             experienciaCompacta: true,
-            administrador: true,
           ),
         ),
       ),
     );
-    await at.pumpAndSettle();
-
-    expect(find.text('Busque, compare, economize.'), findsOneWidget);
-    expect(find.text('Atalhos de busca'), findsOneWidget);
-    expect(find.text('Celulares'), findsOneWidget);
-    expect(find.text('Informática'), findsOneWidget);
-    expect(find.text('Casa'), findsOneWidget);
-    expect(find.text('Beleza'), findsOneWidget);
-    expect(find.text('Pet'), findsOneWidget);
-    expect(find.text('Ver todas'), findsOneWidget);
-    await at.tap(find.byKey(const Key('atalho-busca-celulares')));
-    await at.pumpAndSettle();
-    expect(controlador.termo, 'celular');
-    expect(
-      at
-          .widget<TextField>(find.byKey(const Key('busca-produtos')))
-          .controller!
-          .text,
-      isEmpty,
-    );
-    expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.category_outlined), findsOneWidget);
-    expect(find.text('Escolha uma categoria para começar.'), findsOneWidget);
-    expect(find.text('Todas selecionadas'), findsOneWidget);
-    expect(find.text('Escolher lojas'), findsNothing);
-    expect(find.text('+ escolher lojas'), findsNothing);
-    expect(find.text('Atualizar Produtos'), findsNothing);
     await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
     await at.pumpAndSettle();
-    final precoLiquido = find.text('Após cashback');
-    await at.scrollUntilVisible(
-      precoLiquido,
-      180,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('produtos-compacto')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(precoLiquido, findsOneWidget);
-    expect(find.text('R\$ 3.356,89'), findsOneWidget);
-    expect(find.text('Abrir oferta'), findsOneWidget);
-    for (final atalho in const {
-      'atalho-busca-informatica': 'informatica',
-      'atalho-busca-casa': 'casa',
-      'atalho-busca-beleza': 'beleza',
-      'atalho-busca-pet': 'pet',
-    }.entries) {
-      final atalhoFinder = find.byKey(Key(atalho.key));
-      await at.ensureVisible(atalhoFinder);
-      await at.tap(atalhoFinder);
-      await at.pumpAndSettle();
-      expect(controlador.termo, atalho.value);
-    }
+
+    final acompanhar = find.byKey(const Key('alerta-produto-casas-bahia-edge'));
+    expect(find.text('Acompanhar'), findsOneWidget);
+    await at.tap(acompanhar);
+    await at.pumpAndSettle();
+
+    expect(find.text('Acompanhando'), findsOneWidget);
+    expect(at.takeException(), isNull);
   });
-
-  testWidgets(
-    'não exibe categoria nesta tela e preserva o recorte contextual',
-    (at) async {
-      final controlador = ControladorBuscaProdutos(
-        debounce: Duration.zero,
-        buscar:
-            ({
-              required termo,
-              required pagina,
-              marca,
-              categoria,
-              escopo,
-              required semCategoria,
-              loja,
-              precoMin,
-              precoMax,
-            }) async => _pagina([_produto()]),
-      );
-      addTearDown(controlador.dispose);
-
-      await at.pumpWidget(
-        MaterialApp(
-          theme: TemaRadar.claro(),
-          home: Scaffold(
-            body: PaginaProdutos(
-              api: _api(),
-              controlador: controlador,
-              incorporada: true,
-              experienciaCompacta: true,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byKey(const Key('categoria-nesta-tela')), findsNothing);
-      expect(find.text('Categoria nesta tela'), findsNothing);
-      expect(find.text('Comece por uma área'), findsOneWidget);
-      expect(find.text('Escolher categoria'), findsOneWidget);
-    },
-  );
 
   testWidgets('busca compacta não estoura em 320 px com texto ampliado', (
     at,
@@ -1059,9 +780,7 @@ void main() {
     expect(at.takeException(), isNull);
   });
 
-  testWidgets('filtros compactos acomodam opções de loja em 320 px', (
-    at,
-  ) async {
+  testWidgets('filtros compactos não estouram em 320 px', (at) async {
     at.view.devicePixelRatio = 1;
     at.view.physicalSize = const Size(320, 640);
     addTearDown(at.view.resetDevicePixelRatio);
@@ -1112,12 +831,12 @@ void main() {
     await at.tap(filtros);
     await at.pumpAndSettle();
 
-    expect(find.byKey(const Key('filtro-loja-casas-bahia')), findsOneWidget);
-    expect(find.byKey(const Key('filtro-loja-ponto')), findsOneWidget);
-    expect(find.byKey(const Key('filtro-categoria-todas')), findsNothing);
+    expect(find.byKey(const Key('filtro-ordenar')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-loja')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-categoria')), findsOneWidget);
     expect(
       at.getSize(find.byKey(const Key('folha-radar-modal'))).height,
-      lessThanOrEqualTo(320),
+      lessThan(640),
     );
     expect(at.takeException(), isNull);
   });
@@ -1212,9 +931,9 @@ void main() {
     await at.enterText(find.byType(TextField).first, 'edge');
     await at.pumpAndSettle();
 
-    expect(find.byType(Card), findsNWidgets(2));
+    expect(find.byType(CartaoProduto), findsNWidgets(2));
     expect(find.byType(Wrap), findsAtLeastNWidgets(2));
-  }, tags: 'web');
+  });
 
   testWidgets('histórico mostra mínimo, máximo e pagina as medições', (
     at,
@@ -1228,30 +947,36 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('22 ago 2026'), findsOneWidget);
-    expect(find.text('2 medições nos últimos 30 dias'), findsOneWidget);
-    expect(find.text('Preço atual'), findsOneWidget);
-    expect(find.text('Cashback'), findsOneWidget);
-    expect(find.text('R\$ 332,00'), findsOneWidget);
-    expect(find.text('Após cashback'), findsOneWidget);
-    expect(find.text('R\$ 3.356,89'), findsOneWidget);
+    expect(find.text('6 medições nos últimos 30 dias'), findsOneWidget);
+    expect(find.text('Preço atual'), findsNWidgets(5));
+    expect(find.text('Cashback'), findsNWidgets(5));
+    expect(find.text('R\$ 332,00'), findsNWidgets(5));
+    expect(find.text('Após cashback'), findsNWidgets(5));
+    expect(find.text('R\$ 3.356,89'), findsNWidgets(5));
     expect(find.text('R\$ 3.500,00'), findsOneWidget);
     expect(find.text('R\$ 4.000,00'), findsOneWidget);
+    expect(find.text('1 de 2'), findsOneWidget);
     expect(
-      (at.getCenter(find.text('Preço atual')).dy -
-              at.getCenter(find.text('R\$ 3.688,89')).dy)
+      (at.getCenter(find.text('Preço atual').first).dy -
+              at.getCenter(find.text('R\$ 3.688,89').first).dy)
           .abs(),
       lessThan(2),
     );
     expect(
-      (at.getCenter(find.text('Cashback')).dy -
-              at.getCenter(find.text('R\$ 332,00')).dy)
+      (at.getCenter(find.text('Cashback').first).dy -
+              at.getCenter(find.text('R\$ 332,00').first).dy)
           .abs(),
       lessThan(2),
     );
-    await at.tap(find.text('Carregar mais medições'));
+    await at.tap(find.byKey(const Key('historico-pagina-proxima')));
     await at.pumpAndSettle();
+    expect(find.text('2 de 2'), findsOneWidget);
     expect(find.text('21 ago 2026'), findsOneWidget);
     expect(find.text('R\$ 3.600,00'), findsOneWidget);
+    expect(find.text('R\$ 3.688,89'), findsNothing);
+    await at.tap(find.byKey(const Key('historico-pagina-anterior')));
+    await at.pumpAndSettle();
+    expect(find.text('1 de 2'), findsOneWidget);
   });
 
   testWidgets('histórico mantém medições de produto que ficou inativo', (
@@ -1275,6 +1000,11 @@ void main() {
     );
     expect(find.text('R\$ 3.500,00'), findsOneWidget);
     expect(find.text('22 ago 2026'), findsOneWidget);
+    await at.scrollUntilVisible(
+      find.text('O histórico é paginado e limitado à janela de 30 dias.'),
+      300,
+      scrollable: find.byType(Scrollable),
+    );
     expect(
       find.text('O histórico é paginado e limitado à janela de 30 dias.'),
       findsOneWidget,
@@ -1317,10 +1047,11 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('R\$ 3.688,89'), findsAtLeastNWidgets(1));
-    await at.tap(find.text('Carregar mais medições'));
+    await at.tap(find.byKey(const Key('historico-pagina-proxima')));
     await at.pumpAndSettle();
 
     expect(find.text('R\$ 3.688,89'), findsAtLeastNWidgets(1));
-    expect(find.text('Tentar carregar mais medições'), findsOneWidget);
+    expect(find.text('Tentar carregar esta página'), findsOneWidget);
+    expect(find.text('1 de 2'), findsOneWidget);
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,6 +13,7 @@ import 'cartao_produto.dart';
 import 'controlador_busca_produtos.dart';
 import 'formato_produtos.dart';
 import 'link_shopping_inter.dart';
+import 'pagina_detalhe_produto.dart';
 import 'pagina_historico_produto.dart';
 
 /// Busca local de produtos diretos. Nunca consulta o Inter durante a digitação.
@@ -25,6 +28,7 @@ class PaginaProdutos extends StatefulWidget {
     this.experienciaCompacta = false,
     this.sliversAntes = const [],
     this.totalLojasSelecionadas,
+    this.navegadorParaDetalhes,
   });
 
   final Api api;
@@ -35,6 +39,7 @@ class PaginaProdutos extends StatefulWidget {
   final bool experienciaCompacta;
   final List<Widget> sliversAntes;
   final int? totalLojasSelecionadas;
+  final GlobalKey<NavigatorState>? navegadorParaDetalhes;
 
   @override
   State<PaginaProdutos> createState() => _EstadoPaginaProdutos();
@@ -69,11 +74,40 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               precoMin: precoMin,
               precoMax: precoMax,
             ),
+        buscarComOpcoes:
+            ({
+              required termo,
+              required pagina,
+              required ordenar,
+              required apenasAcompanhados,
+              marca,
+              categoria,
+              escopo,
+              required semCategoria,
+              loja,
+              precoMin,
+              precoMax,
+            }) => widget.api.buscarProdutos(
+              termo,
+              pagina: pagina,
+              porPagina: _itensPorPagina,
+              ordenar: ordenar,
+              apenasAcompanhados: apenasAcompanhados,
+              marca: marca,
+              categoria: categoria,
+              escopo: escopo,
+              semCategoria: semCategoria,
+              loja: loja,
+              precoMin: precoMin,
+              precoMax: precoMax,
+            ),
       );
   late final bool _controladorExterno = widget.controlador != null;
   final _campoBusca = TextEditingController();
   final _rolagem = ScrollController();
+  final _navegadorInterno = GlobalKey<NavigatorState>();
   final _acompanhamentos = <String, bool>{};
+  final _mudancasAcompanhamento = _AcompanhamentoNotifier();
 
   @override
   void initState() {
@@ -89,6 +123,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   void dispose() {
     _campoBusca.dispose();
     _rolagem.dispose();
+    _mudancasAcompanhamento.dispose();
     if (!_controladorExterno) _controlador.dispose();
     super.dispose();
   }
@@ -96,13 +131,26 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   @override
   Widget build(BuildContext context) {
     final corpo = AnimatedBuilder(
-      animation: _controlador,
+      animation: Listenable.merge([_controlador, _mudancasAcompanhamento]),
       builder: (context, _) => _conteudo(context),
     );
-    if (widget.incorporada) return corpo;
+    final navegadorCatalogo = Navigator(
+      key: _navegadorInterno,
+      onGenerateRoute: (_) => MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'catalogo-produtos'),
+        builder: (_) => corpo,
+      ),
+    );
+    final catalogo = widget.navegadorParaDetalhes == null
+        ? NavigatorPopHandler<void>(
+            onPopWithResult: (_) => _navegadorInterno.currentState?.pop(),
+            child: navegadorCatalogo,
+          )
+        : navegadorCatalogo;
+    if (widget.incorporada || widget.experienciaCompacta) return catalogo;
     return Scaffold(
       appBar: AppBar(title: const Text('Produtos no Inter')),
-      body: corpo,
+      body: catalogo,
     );
   }
 
@@ -256,153 +304,121 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   }
 
   Widget _conteudoCompacto(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final atrasado = coletaProdutosAtrasada(
-      _controlador.atualizadoEm,
-      DateTime.now(),
-    );
-    final avisoTentativa = _controlador.erro == null
-        ? _avisoDaTentativa()
-        : null;
     return CustomScrollView(
       key: const Key('produtos-compacto'),
       controller: _rolagem,
       slivers: [
         ...widget.sliversAntes,
-        if (widget.mostrarTituloInterno)
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(18, 22, 18, 20),
-            sliver: SliverToBoxAdapter(
-              child: CabecalhoSecaoRadar(
-                sobrelinha: 'Compre direto',
-                titulo: 'Produtos',
-                descricao:
-                    'Pesquise ofertas salvas nas lojas que você selecionou. '
-                    'Cada oferta mantém sua própria origem.',
+        SliverPadding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            context.tokens.spacing.five,
+            context.tokens.spacing.six,
+            context.tokens.spacing.five,
+            context.tokens.spacing.two,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              'Produtos por loja',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.7,
               ),
             ),
           ),
+        ),
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            18,
-            widget.mostrarTituloInterno ? 0 : 18,
-            18,
-            16,
+          padding: EdgeInsetsDirectional.fromSTEB(
+            context.tokens.spacing.five,
+            0,
+            context.tokens.spacing.five,
+            context.tokens.spacing.two,
           ),
           sliver: SliverToBoxAdapter(
-            child: _BuscaProdutosCompacta(
+            child: CampoBuscaRadar(
               controlador: _campoBusca,
               aoMudar: _controlador.mudarTermo,
+              aoAcionar: () => _controlador.mudarTermo(_campoBusca.text),
+              dica: 'Produto, marca ou modelo',
+              chaveCampo: const Key('busca-produtos'),
             ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _AtalhosBuscaCompactos(
-            consulta: _campoBusca.text,
-            aoSelecionar: _aplicarAtalhoBusca,
-            aoVerTodas: _abrirEscopoContextual,
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+          padding: EdgeInsetsDirectional.only(
+            start: context.tokens.spacing.five,
+            end: context.tokens.spacing.five,
+          ),
           sliver: SliverToBoxAdapter(
-            child: _EntradaEscopoProdutos(
-              escopos: _controlador.filtros.escoposAtivos,
-              rotulos: _controlador.filtros.escoposAtivos
-                  .map(_rotuloDoEscopo)
-                  .map((rotulo) => rotulo ?? '')
-                  .toList(growable: false),
-              aoAbrir: _abrirEscopoContextual,
-              aoRemover: (escopo) {
-                _controlador.mudarFiltros(
-                  _controlador.filtros.copiarCom(
-                    escopos: _controlador.filtros.escoposAtivos
-                        .where((ativo) => ativo != escopo)
-                        .toList(growable: false),
-                  ),
-                );
-              },
-              aoLimpar: () => _controlador.mudarFiltros(
-                _controlador.filtros.copiarCom(escopos: const []),
-              ),
+            child: AbasRadar(
+              rotulos: const ['Todos', 'No radar'],
+              plana: true,
+              selecionada: _controlador.apenasAcompanhados ? 1 : 0,
+              aoSelecionar: (indice) =>
+                  _controlador.mudarAcompanhados(indice == 1),
             ),
           ),
         ),
-        SliverToBoxAdapter(child: _filtrosCompactos()),
-        if (_controlador.atualizadoEm != null)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 2),
-            sliver: SliverToBoxAdapter(
-              child: _ResumoCatalogoCompacto(
-                atualizadoEm: _controlador.atualizadoEm,
-                totalItens: _controlador.totalItens,
-                lojasNoResultado: _controlador.itens
-                    .map((produto) => produto.lojaSlug)
-                    .toSet()
-                    .length,
-                lojasSelecionadas: widget.totalLojasSelecionadas,
-                atrasado: atrasado,
-              ),
-            ),
+        SliverPadding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            context.tokens.spacing.five,
+            context.tokens.spacing.two,
+            context.tokens.spacing.five,
+            context.tokens.spacing.two,
           ),
-        if (_controlador.qualidade == 'degradada')
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(18, 8, 18, 0),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                'Uma das lojas teve coleta degradada; produtos ausentes não foram removidos.',
-              ),
-            ),
-          ),
-        if (avisoTentativa != null)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-            sliver: SliverToBoxAdapter(child: Text(avisoTentativa)),
-          ),
-        if (_controlador.preservandoResultados)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
-            sliver: SliverToBoxAdapter(
-              child: _AvisoFalhaBuscaProdutos(
-                tentarNovamente: _controlador.tentarNovamente,
-              ),
-            ),
-          ),
-        if (_controlador.podeBuscar &&
-            !_controlador.carregando &&
-            (_controlador.erro == null || _controlador.preservandoResultados))
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 11),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _controlador.preservandoResultados
-                          ? '${_controlador.itens.length} '
-                                '${_controlador.itens.length == 1 ? 'oferta preservada' : 'ofertas preservadas'}'
-                          : '${_controlador.totalItens} resultados encontrados',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
+          sliver: SliverToBoxAdapter(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${_controlador.totalItens} produtos',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CoresRadar.de(context).textoSuave,
+                    ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('filtros-produtos'),
+                  onPressed: _abrirFiltros,
+                  icon: const Icon(Icons.tune, size: 17),
+                  label: const Text('Filtros'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(0, context.tokens.sizes.touchTarget),
+                    padding: EdgeInsetsDirectional.symmetric(
+                      horizontal: context.tokens.spacing.three,
+                    ),
+                    foregroundColor: CoresRadar.de(context).texto,
+                    side: BorderSide(color: CoresRadar.de(context).borda),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        context.tokens.radii.md,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  if (!_controlador.preservandoResultados)
-                    Text(
-                      'Página ${_controlador.pagina}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: cores.textoSuave,
-                        fontSize: 9,
-                      ),
-                    ),
-                ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_controlador.atualizadoEm != null && _controlador.erro == null)
+          SliverPadding(
+            padding: EdgeInsetsDirectional.only(
+              start: context.tokens.spacing.five,
+              end: context.tokens.spacing.five,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Atualizado ${dataHoraProduto(_controlador.atualizadoEm)}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: CoresRadar.de(context).textoSuave,
+                ),
               ),
             ),
           ),
-        ..._corpoCompacto(),
-        const SliverToBoxAdapter(child: SizedBox(height: 38)),
+        ..._corpoCompacto(context),
+        SliverToBoxAdapter(
+          child: SizedBox(height: context.tokens.spacing.seven),
+        ),
       ],
     );
   }
@@ -421,47 +437,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     _ => 'Qualidade indisponível',
   };
 
-  Widget _filtrosCompactos() => SingleChildScrollView(
-    padding: const EdgeInsets.symmetric(horizontal: 18),
-    scrollDirection: Axis.horizontal,
-    child: Row(
-      children: [
-        _ChipProduto(
-          texto: 'Todas selecionadas',
-          ativo: _controlador.filtros.lojaOpcional == null,
-          aoTocar: () => _controlador.mudarFiltros(
-            _controlador.filtros.copiarCom(loja: ''),
-          ),
-        ),
-        if (_controlador.filtros.lojaOpcional != null) ...[
-          const SizedBox(width: 7),
-          _ChipProduto(
-            texto: _controlador.filtros.lojaOpcional!,
-            ativo: true,
-            aoTocar: () {},
-          ),
-        ],
-        const SizedBox(width: 7),
-        _ChipProduto(
-          texto: _controlador.filtros.estaVazio ? 'Filtros' : 'Filtros ativos',
-          icone: Icons.tune_rounded,
-          aoTocar: _abrirFiltros,
-        ),
-      ],
-    ),
-  );
-
-  List<Widget> _corpoCompacto() {
-    if (!_controlador.podeBuscar) {
-      return const [
-        SliverToBoxAdapter(
-          child: EstadoVazio(
-            mensagem:
-                'Digite pelo menos 2 caracteres para pesquisar no catálogo.',
-          ),
-        ),
-      ];
-    }
+  List<Widget> _corpoCompacto(BuildContext context) {
     if (_controlador.carregando && _controlador.itens.isEmpty) {
       return const [
         SliverToBoxAdapter(
@@ -495,20 +471,68 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
     for (final produto in _controlador.itens) {
       grupos.putIfAbsent(produto.lojaNome, () => []).add(produto);
     }
-    final produtos = [for (final grupo in grupos.values) ...grupo];
+    final widgets = <Widget>[];
+    for (final grupo in grupos.entries) {
+      final primeiro = grupo.value.first;
+      widgets.add(
+        Padding(
+          padding: EdgeInsetsDirectional.only(
+            top: context.tokens.spacing.two,
+            bottom: context.tokens.spacing.two,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  grupo.key,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  dataHoraProduto(primeiro.atualizadaEm),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: CoresRadar.de(context).textoSuave,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      for (final produto in grupo.value) {
+        widgets.add(_cartao(produto, compacto: true, mostrarLoja: false));
+      }
+    }
     return [
+      if (_controlador.erro != null)
+        SliverPadding(
+          padding: EdgeInsetsDirectional.only(
+            start: context.tokens.spacing.five,
+            end: context.tokens.spacing.five,
+            bottom: context.tokens.spacing.two,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: _AvisoFalhaBuscaProdutos(
+              quantidadePreservada: _controlador.itens.length,
+              tentarNovamente: _controlador.tentarNovamente,
+            ),
+          ),
+        ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: EdgeInsetsDirectional.symmetric(
+          horizontal: context.tokens.spacing.five,
+        ),
         sliver: SliverList.separated(
-          itemCount: produtos.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 17),
-          itemBuilder: (context, indice) {
-            return _cartao(
-              produtos[indice],
-              compacto: true,
-              destaque: indice == 0,
-            );
-          },
+          itemCount: widgets.length,
+          separatorBuilder: (_, _) =>
+              SizedBox(height: context.tokens.spacing.two),
+          itemBuilder: (_, indice) => widgets[indice],
         ),
       ),
       SliverPadding(
@@ -604,20 +628,24 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       compacto: compacto,
       mostrarLoja: mostrarLoja,
       destaque: destaque,
-      aoAbrirHistorico: () => _abrirHistorico(produto),
+      aoAbrirDetalhes: () => _abrirDetalhes(produtoAtual),
+      aoAbrirHistorico: () => _abrirHistorico(produtoAtual),
       aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
-      aoAcompanhar: () => _alternarAcompanhamento(produto),
+      aoAcompanhar: () {
+        unawaited(_alternarAcompanhamento(produto));
+      },
     );
   }
 
   String _chaveAcompanhamento(ProdutoDireto produto) =>
       '${produto.lojaSlug}/${produto.idExterno}';
 
-  Future<void> _alternarAcompanhamento(ProdutoDireto produto) async {
+  Future<bool> _alternarAcompanhamento(ProdutoDireto produto) async {
     final chave = _chaveAcompanhamento(produto);
     final atual = _acompanhamentos[chave] ?? produto.acompanhado;
     final novo = !atual;
-    setState(() => _acompanhamentos[chave] = novo);
+    _acompanhamentos[chave] = novo;
+    _mudancasAcompanhamento.mudou();
     try {
       await widget.api.alterarAcompanhamentoProduto(
         loja: produto.lojaSlug,
@@ -632,15 +660,36 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
               : 'Produto removido da Central de Alertas.',
         );
       }
+      return true;
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _acompanhamentos[chave] = atual);
+      if (!mounted) return false;
+      _acompanhamentos[chave] = atual;
+      _mudancasAcompanhamento.mudou();
       mostrarMensagemRadar(
         context,
         'Não foi possível salvar o acompanhamento.',
         sucesso: false,
       );
+      return false;
     }
+  }
+
+  Future<void> _abrirDetalhes(ProdutoDireto produto) async {
+    final navigator =
+        widget.navegadorParaDetalhes?.currentState ??
+        _navegadorInterno.currentState;
+    if (navigator == null) return;
+    final link = linkSeguroShoppingInter(produto.caminho);
+    await navigator.push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => PaginaDetalheProduto(
+          produto: produto,
+          aoAbrirHistorico: () => _abrirHistorico(produto),
+          aoAcompanhar: () => _alternarAcompanhamento(produto),
+          aoAbrirNoShopping: link == null ? null : () => _abrirNoShopping(link),
+        ),
+      ),
+    );
   }
 
   Future<void> _abrirHistorico(ProdutoDireto produto) async {
@@ -689,10 +738,10 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
   Future<void> _abrirFiltros() async {
     final novos = await mostrarFolhaRadar<FiltrosProdutos>(
       context,
-      alturaMaxima: 0.5,
+      alturaMaxima: 0.84,
       builder: (_) => FolhaRadar(
-        titulo: 'Filtrar produtos',
-        descricao: 'Refine o catálogo salvo do Compre direto.',
+        titulo: 'Filtros · Compre direto',
+        descricao: 'Ajuste a ordem e o recorte do catálogo salvo.',
         child: Flexible(
           child: _FiltrosProdutosSheet(
             api: widget.api,
@@ -707,890 +756,15 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       _controlador.mudarFiltros(novos);
     }
   }
-
-  Future<void> _abrirEscopoContextual() async {
-    final area = await _escolherNivelDeEscopo(
-      titulo: 'Escolha uma área',
-      descricao: 'Depois você escolhe o tipo de produto.',
-      opcoes: [
-        ..._areasDeEntradaProdutos,
-        const _OpcaoNavegacaoEscopo(
-          'outros-novas-categorias',
-          'Outros / novas categorias',
-          'Itens ainda sem recorte próprio',
-        ),
-      ],
-    );
-    if (area == null || area.id == _idVoltarEscopo || !mounted) return;
-
-    final escopo = switch (area.id) {
-      'eletronicos' => await _escolherSubgrupo(
-        titulo: 'Eletrônicos',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('celulares', 'Celulares e smartphones', null, [
-            _OpcaoNavegacaoEscopo('celulares-android', 'Android'),
-            _OpcaoNavegacaoEscopo('celulares-smartphones', 'Smartphones'),
-          ]),
-          _OpcaoNavegacaoEscopo('tv-imagem', 'TV e imagem', null, [
-            _OpcaoNavegacaoEscopo('tv-smart', 'Smart TVs'),
-            _OpcaoNavegacaoEscopo('tv-convencional', 'TVs'),
-            _OpcaoNavegacaoEscopo('suportes-tv', 'Suportes para TV'),
-          ]),
-          _OpcaoNavegacaoEscopo('computadores', 'Computadores', null, [
-            _OpcaoNavegacaoEscopo('notebooks', 'Notebooks'),
-            _OpcaoNavegacaoEscopo('tablets', 'Tablets'),
-            _OpcaoNavegacaoEscopo('monitores', 'Monitores'),
-            _OpcaoNavegacaoEscopo('e-readers', 'E-readers'),
-          ]),
-          _OpcaoNavegacaoEscopo('audio', 'Áudio', null, [
-            _OpcaoNavegacaoEscopo('caixas-acusticas', 'Caixas acústicas'),
-            _OpcaoNavegacaoEscopo('fones', 'Fones e headsets'),
-            _OpcaoNavegacaoEscopo('som-portatil', 'Som portátil'),
-            _OpcaoNavegacaoEscopo('soundbars', 'Soundbars'),
-          ]),
-        ],
-      ),
-      'casa' => await _escolherEscopoDeCasa(),
-      'beleza' => await _escolherSubgrupo(
-        titulo: 'Beleza e cuidados',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('maquiagem', 'Maquiagem', null, [
-            _OpcaoNavegacaoEscopo('bases', 'Bases'),
-            _OpcaoNavegacaoEscopo('batons', 'Batons'),
-            _OpcaoNavegacaoEscopo('blushes', 'Blushes'),
-            _OpcaoNavegacaoEscopo('glosses', 'Glosses'),
-            _OpcaoNavegacaoEscopo('olhos', 'Olhos'),
-            _OpcaoNavegacaoEscopo('esmaltes', 'Esmaltes'),
-          ]),
-          _OpcaoNavegacaoEscopo('cabelos', 'Cabelos', null, [
-            _OpcaoNavegacaoEscopo('shampoos', 'Shampoos'),
-            _OpcaoNavegacaoEscopo('condicionadores', 'Condicionadores'),
-            _OpcaoNavegacaoEscopo(
-              'tratamento-cabelos',
-              'Tratamento e finalização',
-            ),
-            _OpcaoNavegacaoEscopo('cabelos-aparelhos', 'Aparelhos para cabelo'),
-          ]),
-          _OpcaoNavegacaoEscopo('pele', 'Pele e banho', null, [
-            _OpcaoNavegacaoEscopo('cuidados-faciais', 'Cuidados faciais'),
-            _OpcaoNavegacaoEscopo('corpo-banho', 'Corpo e banho'),
-            _OpcaoNavegacaoEscopo('protetores-solares', 'Protetor solar'),
-          ]),
-          _OpcaoNavegacaoEscopo('perfumaria', 'Perfumaria', null, [
-            _OpcaoNavegacaoEscopo('perfumes', 'Perfumes'),
-            _OpcaoNavegacaoEscopo('desodorantes', 'Desodorantes'),
-          ]),
-          _OpcaoNavegacaoEscopo(
-            'cuidados-pessoais',
-            'Cuidados pessoais',
-            null,
-            [
-              _OpcaoNavegacaoEscopo('depilacao', 'Depilação'),
-              _OpcaoNavegacaoEscopo('higiene-feminina', 'Higiene feminina'),
-            ],
-          ),
-        ],
-      ),
-      'saude-area' => await _escolherSubgrupo(
-        titulo: 'Saúde e bem-estar',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo(
-            'saude-primeiros-socorros',
-            'Saúde e primeiros socorros',
-            'Medicamentos, cuidados e equipamentos de saúde',
-          ),
-        ],
-      ),
-      'mercado' => await _escolherSubgrupo(
-        titulo: 'Mercado',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('alimentos', 'Alimentos', null, [
-            _OpcaoNavegacaoEscopo('biscoitos', 'Biscoitos'),
-            _OpcaoNavegacaoEscopo('chocolates', 'Chocolates'),
-            _OpcaoNavegacaoEscopo('mercearia', 'Mercearia'),
-          ]),
-          _OpcaoNavegacaoEscopo('bebidas', 'Bebidas', null, [
-            _OpcaoNavegacaoEscopo('bebidas-agua', 'Bebidas'),
-            _OpcaoNavegacaoEscopo('chas-cafes', 'Chás e cafés'),
-            _OpcaoNavegacaoEscopo('sucos-aguas', 'Sucos e águas'),
-          ]),
-          _OpcaoNavegacaoEscopo('snacks', 'Doces e snacks', null, [
-            _OpcaoNavegacaoEscopo('balas-doces', 'Balas e doces'),
-            _OpcaoNavegacaoEscopo('chicletes', 'Chicletes'),
-            _OpcaoNavegacaoEscopo('salgadinhos', 'Salgadinhos'),
-          ]),
-          _OpcaoNavegacaoEscopo('suplementos', 'Suplementos', null, [
-            _OpcaoNavegacaoEscopo(
-              'suplementos-vitaminas',
-              'Vitaminas e suplementos',
-            ),
-          ]),
-        ],
-      ),
-      'infantil' => await _escolherSubgrupo(
-        titulo: 'Bebês e brinquedos',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('bebe', 'Bebês e infantil', null, [
-            _OpcaoNavegacaoEscopo('mamadeiras', 'Mamadeiras'),
-            _OpcaoNavegacaoEscopo('fraldas', 'Fraldas'),
-            _OpcaoNavegacaoEscopo('bercos', 'Berços'),
-            _OpcaoNavegacaoEscopo('amamentacao', 'Amamentação e troca'),
-          ]),
-          _OpcaoNavegacaoEscopo('brinquedos', 'Brinquedos', null, [
-            _OpcaoNavegacaoEscopo('bonecas', 'Bonecas'),
-            _OpcaoNavegacaoEscopo('bonecos', 'Bonecos'),
-            _OpcaoNavegacaoEscopo('jogos', 'Jogos'),
-            _OpcaoNavegacaoEscopo('pelucias', 'Pelúcias'),
-          ]),
-        ],
-      ),
-      'pet-area' => await _escolherSubgrupo(
-        titulo: 'Pet',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('pet', 'Pet', null, [
-            _OpcaoNavegacaoEscopo('racao', 'Ração'),
-            _OpcaoNavegacaoEscopo('saude-pet', 'Saúde pet'),
-            _OpcaoNavegacaoEscopo('higiene-pet', 'Higiene pet'),
-            _OpcaoNavegacaoEscopo('acessorios-pet', 'Acessórios pet'),
-          ]),
-        ],
-      ),
-      'esporte-area' => await _escolherSubgrupo(
-        titulo: 'Esporte e lazer',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('esporte', 'Esporte e lazer', null, [
-            _OpcaoNavegacaoEscopo('bicicletas', 'Bicicletas'),
-            _OpcaoNavegacaoEscopo('patinetes-patins', 'Patinetes e patins'),
-            _OpcaoNavegacaoEscopo('fitness', 'Fitness'),
-            _OpcaoNavegacaoEscopo('piscinas', 'Piscinas'),
-          ]),
-        ],
-      ),
-      'ferramentas-area' => await _escolherSubgrupo(
-        titulo: 'Ferramentas e construção',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo(
-            'ferramentas',
-            'Ferramentas e construção',
-            null,
-            [
-              _OpcaoNavegacaoEscopo('furadeiras', 'Furadeiras'),
-              _OpcaoNavegacaoEscopo('parafusadeiras', 'Parafusadeiras'),
-              _OpcaoNavegacaoEscopo(
-                'ferramentas-basicas',
-                'Ferramentas manuais e elétricas',
-              ),
-              _OpcaoNavegacaoEscopo('eletrica', 'Elétrica'),
-              _OpcaoNavegacaoEscopo('torneiras', 'Torneiras'),
-            ],
-          ),
-        ],
-      ),
-      'auto-area' => await _escolherSubgrupo(
-        titulo: 'Auto',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('auto', 'Auto', null, [
-            _OpcaoNavegacaoEscopo('pneus', 'Pneus e rodas'),
-            _OpcaoNavegacaoEscopo('limpeza-auto', 'Limpeza automotiva'),
-          ]),
-        ],
-      ),
-      'moda-area' => await _escolherSubgrupo(
-        titulo: 'Moda',
-        descricao: 'Escolha o tipo de produto.',
-        opcoes: const [
-          _OpcaoNavegacaoEscopo('moda', 'Moda', null, [
-            _OpcaoNavegacaoEscopo('roupas', 'Roupas'),
-            _OpcaoNavegacaoEscopo('calcados', 'Calçados'),
-            _OpcaoNavegacaoEscopo('acessorios-moda', 'Acessórios'),
-          ]),
-        ],
-      ),
-      _ => area,
-    };
-    if (escopo == null || escopo.id == _idVoltarEscopo || !mounted) return;
-    final ativos = _controlador.filtros.escoposAtivos;
-    const outro = 'outros-novas-categorias';
-    if ((escopo.id == outro && ativos.isNotEmpty) || ativos.contains(outro)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Outros / novas categorias deve ser usado sozinho.'),
-        ),
-      );
-      return;
-    }
-    _controlador.mudarFiltros(
-      _controlador.filtros.copiarCom(escopos: [...ativos, escopo.id]),
-    );
-  }
-
-  void _aplicarAtalhoBusca(String consulta) {
-    _campoBusca.clear();
-    _controlador.mudarTermo(consulta);
-  }
-
-  Future<_OpcaoNavegacaoEscopo?> _escolherEscopoDeCasa() async {
-    return _escolherSubgrupo(
-      titulo: 'Casa e cozinha',
-      descricao: 'Escolha uma seção.',
-      opcoes: const [
-        _OpcaoNavegacaoEscopo(
-          'eletrodomesticos',
-          'Eletrodomésticos',
-          'Escolha o tipo de eletrodoméstico.',
-          [
-            _OpcaoNavegacaoEscopo(
-              'refrigeracao-lavanderia',
-              'Refrigeração e lavanderia',
-              'Escolha uma categoria de produto.',
-              [
-                _OpcaoNavegacaoEscopo(
-                  'geladeiras',
-                  'Geladeiras',
-                  'Geladeiras, refrigeradores e frigobares',
-                ),
-                _OpcaoNavegacaoEscopo(
-                  'freezers',
-                  'Freezers',
-                  'Freezers verticais e horizontais',
-                ),
-                _OpcaoNavegacaoEscopo(
-                  'lavadoras',
-                  'Lavadoras e secadoras',
-                  'Máquinas de lavar, lava e seca e secadoras',
-                ),
-              ],
-            ),
-            _OpcaoNavegacaoEscopo(
-              'fogoes-fornos',
-              'Fogões e fornos',
-              'Fogões, cooktops e fornos',
-            ),
-            _OpcaoNavegacaoEscopo('microondas', 'Micro-ondas'),
-            _OpcaoNavegacaoEscopo(
-              'limpeza-climatizacao',
-              'Limpeza e climatização',
-              'Aspiradores, ferros, ventiladores e ar-condicionado',
-              [
-                _OpcaoNavegacaoEscopo('limpeza-eletro', 'Limpeza e passar'),
-                _OpcaoNavegacaoEscopo('climatizacao', 'Climatização'),
-              ],
-            ),
-          ],
-        ),
-        _OpcaoNavegacaoEscopo(
-          'cozinhas-jantar',
-          'Cozinhas e jantar',
-          'Cozinhas, balcões e mesas',
-          [
-            _OpcaoNavegacaoEscopo('cozinhas-modulares', 'Cozinhas'),
-            _OpcaoNavegacaoEscopo('mesa-jantar', 'Mesas e jantar'),
-          ],
-        ),
-        _OpcaoNavegacaoEscopo('eletroportateis', 'Eletroportáteis', null, [
-          _OpcaoNavegacaoEscopo('fritadeiras', 'Fritadeiras'),
-          _OpcaoNavegacaoEscopo('liquidificadores', 'Liquidificadores'),
-          _OpcaoNavegacaoEscopo('cafeteiras', 'Cafeteiras'),
-          _OpcaoNavegacaoEscopo('chaleiras', 'Chaleiras'),
-          _OpcaoNavegacaoEscopo('mixers', 'Mixers'),
-          _OpcaoNavegacaoEscopo('panelas-eletricas', 'Panelas elétricas'),
-          _OpcaoNavegacaoEscopo('processadores', 'Processadores'),
-        ]),
-        _OpcaoNavegacaoEscopo('moveis', 'Móveis', null, [
-          _OpcaoNavegacaoEscopo('sofas', 'Sofás'),
-          _OpcaoNavegacaoEscopo('racks-paineis', 'Racks e painéis'),
-          _OpcaoNavegacaoEscopo('guarda-roupas', 'Guarda-roupas'),
-          _OpcaoNavegacaoEscopo('comodas', 'Cômodas'),
-          _OpcaoNavegacaoEscopo('escritorio', 'Escritório'),
-          _OpcaoNavegacaoEscopo('poltronas', 'Poltronas'),
-          _OpcaoNavegacaoEscopo('quarto-camas', 'Quarto e camas'),
-        ]),
-        _OpcaoNavegacaoEscopo('utilidades', 'Mesa e utilidades', null, [
-          _OpcaoNavegacaoEscopo('panelas', 'Panelas'),
-          _OpcaoNavegacaoEscopo('copos', 'Copos'),
-          _OpcaoNavegacaoEscopo('potes', 'Potes e tigelas'),
-          _OpcaoNavegacaoEscopo('formas', 'Formas e assadeiras'),
-          _OpcaoNavegacaoEscopo('organizacao', 'Organização'),
-        ]),
-        _OpcaoNavegacaoEscopo(
-          'festas-decoracao',
-          'Festas e decoração',
-          'Artigos para festas, fantasias e enfeites',
-        ),
-      ],
-    );
-  }
-
-  Future<_OpcaoNavegacaoEscopo?> _escolherSubgrupo({
-    required String titulo,
-    required String descricao,
-    required List<_OpcaoNavegacaoEscopo> opcoes,
-    bool mostrarVoltar = true,
-  }) async {
-    var opcao = await _escolherNivelDeEscopo(
-      titulo: titulo,
-      descricao: descricao,
-      opcoes: opcoes,
-      mostrarVoltar: mostrarVoltar,
-    );
-    while (opcao != null && mounted) {
-      if (opcao.id == _idVoltarEscopo) return opcao;
-      if (opcao.filhos == null) return opcao;
-      final filho = await _escolherSubgrupo(
-        titulo: opcao.rotulo,
-        descricao: opcao.descricao ?? 'Escolha o tipo de produto.',
-        opcoes: opcao.filhos!,
-      );
-      if (filho?.id == _idVoltarEscopo) {
-        opcao = await _escolherNivelDeEscopo(
-          titulo: titulo,
-          descricao: descricao,
-          opcoes: opcoes,
-          mostrarVoltar: mostrarVoltar,
-        );
-        continue;
-      }
-      return filho;
-    }
-    return null;
-  }
-
-  Future<_OpcaoNavegacaoEscopo?> _escolherNivelDeEscopo({
-    required String titulo,
-    required String descricao,
-    required List<_OpcaoNavegacaoEscopo> opcoes,
-    bool mostrarVoltar = true,
-  }) => mostrarFolhaRadar<_OpcaoNavegacaoEscopo>(
-    context,
-    alturaMaxima: 0.9,
-    builder: (contexto) => FolhaRadar(
-      titulo: titulo,
-      descricao: descricao,
-      mostrarVoltar: mostrarVoltar,
-      aoVoltar: mostrarVoltar
-          ? () => Navigator.pop(
-              contexto,
-              const _OpcaoNavegacaoEscopo(_idVoltarEscopo, ''),
-            )
-          : null,
-      child: Flexible(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(3, 0, 3, 28),
-          children: [
-            for (final opcao in opcoes)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(contexto, opcao),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(opcao.rotulo),
-                        if (opcao.descricao != null)
-                          Text(
-                            opcao.descricao!,
-                            style: Theme.of(contexto).textTheme.labelSmall,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  String? _rotuloDoEscopo(String? escopo) => switch (escopo) {
-    'celulares' => 'Celulares e smartphones',
-    'celulares-android' => 'Celulares Android',
-    'celulares-smartphones' => 'Smartphones',
-    'tv-imagem' => 'TV e imagem',
-    'tv-smart' => 'Smart TVs',
-    'tv-convencional' => 'TVs convencionais',
-    'suportes-tv' => 'Suportes para TV',
-    'computadores' => 'Computadores',
-    'audio' => 'Áudio',
-    'caixas-acusticas' => 'Caixas acústicas',
-    'fones' => 'Fones e headsets',
-    'som-portatil' => 'Som portátil',
-    'soundbars' => 'Soundbars',
-    'geladeiras' => 'Geladeiras',
-    'freezers' => 'Freezers',
-    'lavadoras' => 'Lavadoras e secadoras',
-    'fogoes-fornos' => 'Fogões e fornos',
-    'microondas' => 'Micro-ondas',
-    'eletroportateis' => 'Eletroportáteis',
-    'moveis' => 'Móveis',
-    'utilidades' => 'Mesa e utilidades',
-    'cabelos-aparelhos' => 'Aparelhos para cabelo',
-    'higiene-feminina' => 'Higiene feminina',
-    'saude-primeiros-socorros' => 'Saúde e primeiros socorros',
-    'cozinhas-modulares' => 'Cozinhas',
-    'mesa-jantar' => 'Mesas e jantar',
-    'quarto-camas' => 'Quarto e camas',
-    'limpeza-eletro' => 'Limpeza e passar',
-    'festas-decoracao' => 'Festas e decoração',
-    'bebe' => 'Bebês e infantil',
-    'pet' => 'Pet',
-    'esporte' => 'Esporte e lazer',
-    'ferramentas' => 'Ferramentas e construção',
-    'auto' => 'Auto',
-    'moda' => 'Moda',
-    'outros-novas-categorias' => 'Outros / novas categorias',
-    _ => _humanizarEscopo(escopo),
-  };
-
-  String? _humanizarEscopo(String? escopo) {
-    if (escopo == null || escopo.isEmpty) return null;
-    final texto = escopo.replaceAll('-', ' ');
-    return '${texto[0].toUpperCase()}${texto.substring(1)}';
-  }
-}
-
-class _AtalhosBuscaCompactos extends StatelessWidget {
-  const _AtalhosBuscaCompactos({
-    required this.consulta,
-    required this.aoSelecionar,
-    required this.aoVerTodas,
-  });
-
-  final String consulta;
-  final ValueChanged<String> aoSelecionar;
-  final VoidCallback aoVerTodas;
-
-  static const _atalhos = [
-    _AtalhoBusca(
-      id: 'celulares',
-      rotulo: 'Celulares',
-      consulta: 'celular',
-      icone: Icons.smartphone_outlined,
-    ),
-    _AtalhoBusca(
-      id: 'informatica',
-      rotulo: 'Informática',
-      consulta: 'informatica',
-      icone: Icons.laptop_mac_outlined,
-    ),
-    _AtalhoBusca(
-      id: 'casa',
-      rotulo: 'Casa',
-      consulta: 'casa',
-      icone: Icons.home_outlined,
-    ),
-    _AtalhoBusca(
-      id: 'beleza',
-      rotulo: 'Beleza',
-      consulta: 'beleza',
-      icone: Icons.spa_outlined,
-    ),
-    _AtalhoBusca(
-      id: 'pet',
-      rotulo: 'Pet',
-      consulta: 'pet',
-      icone: Icons.pets_outlined,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Atalhos de busca',
-                  style: tema.textTheme.titleSmall?.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: aoVerTodas,
-                style: TextButton.styleFrom(
-                  minimumSize: Size.zero,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: cores.acao,
-                  textStyle: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                child: const Text('Ver todas'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            child: Row(
-              children: [
-                for (var indice = 0; indice < _atalhos.length; indice++) ...[
-                  _CartaoAtalhoBusca(
-                    atalho: _atalhos[indice],
-                    ativo: consulta == _atalhos[indice].consulta,
-                    aoTocar: () => aoSelecionar(_atalhos[indice].consulta),
-                  ),
-                  if (indice != _atalhos.length - 1) const SizedBox(width: 8),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AtalhoBusca {
-  const _AtalhoBusca({
-    required this.id,
-    required this.rotulo,
-    required this.consulta,
-    required this.icone,
-  });
-
-  final String id;
-  final String rotulo;
-  final String consulta;
-  final IconData icone;
-}
-
-class _CartaoAtalhoBusca extends StatelessWidget {
-  const _CartaoAtalhoBusca({
-    required this.atalho,
-    required this.ativo,
-    required this.aoTocar,
-  });
-
-  final _AtalhoBusca atalho;
-  final bool ativo;
-  final VoidCallback aoTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final escuro = tema.brightness == Brightness.dark;
-    return Semantics(
-      button: true,
-      label: 'Buscar por ${atalho.rotulo}',
-      child: SizedBox(
-        key: ValueKey('atalho-busca-${atalho.id}'),
-        width: 76,
-        height: 67,
-        child: Material(
-          color: ativo
-              ? (escuro ? Tokens.ganhoFundoEscuro : Tokens.paperSoft)
-              : tema.colorScheme.surface,
-          elevation: 1,
-          shadowColor: SombraRadar.para(tema.brightness).color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-            side: BorderSide(color: ativo ? cores.marca : cores.borda),
-          ),
-          child: InkWell(
-            onTap: aoTocar,
-            borderRadius: BorderRadius.circular(15),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: escuro
-                          ? Tokens.ganhoFundoEscuro
-                          : Tokens.paperSoft,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Icon(atalho.icone, size: 15, color: cores.marca),
-                  ),
-                  const Spacer(),
-                  Text(
-                    atalho.rotulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OpcaoNavegacaoEscopo {
-  const _OpcaoNavegacaoEscopo(
-    this.id,
-    this.rotulo, [
-    this.descricao,
-    this.filhos,
-  ]);
-
-  final String id;
-  final String rotulo;
-  final String? descricao;
-  final List<_OpcaoNavegacaoEscopo>? filhos;
-}
-
-const _idVoltarEscopo = '__voltar__';
-
-const _areasDeEntradaProdutos = <_OpcaoNavegacaoEscopo>[
-  _OpcaoNavegacaoEscopo(
-    'eletronicos',
-    'Eletrônicos',
-    'Celulares, TV, computadores e áudio',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'casa',
-    'Casa e cozinha',
-    'Eletrodomésticos, móveis e utilidades',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'beleza',
-    'Beleza e cuidados',
-    'Maquiagem, cabelos e perfumaria',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'mercado',
-    'Mercado',
-    'Alimentos, bebidas e suplementos',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'saude-area',
-    'Saúde e bem-estar',
-    'Cuidados de saúde, farmácia e primeiros socorros',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'infantil',
-    'Bebês e brinquedos',
-    'Itens infantis e diversão',
-  ),
-  _OpcaoNavegacaoEscopo('pet-area', 'Pet', 'Alimentação, higiene e acessórios'),
-  _OpcaoNavegacaoEscopo(
-    'esporte-area',
-    'Esporte e lazer',
-    'Fitness, bikes e lazer',
-  ),
-  _OpcaoNavegacaoEscopo(
-    'ferramentas-area',
-    'Ferramentas e construção',
-    'Construção e casa',
-  ),
-  _OpcaoNavegacaoEscopo('auto-area', 'Auto', 'Pneus e acessórios'),
-  _OpcaoNavegacaoEscopo('moda-area', 'Moda', 'Roupas, calçados e acessórios'),
-];
-
-class _EntradaEscopoProdutos extends StatelessWidget {
-  const _EntradaEscopoProdutos({
-    required this.escopos,
-    required this.rotulos,
-    required this.aoAbrir,
-    required this.aoRemover,
-    required this.aoLimpar,
-  });
-
-  final List<String> escopos;
-  final List<String> rotulos;
-  final VoidCallback aoAbrir;
-  final ValueChanged<String> aoRemover;
-  final VoidCallback aoLimpar;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: tema.cardColor,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: cores.borda),
-        boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
-      ),
-      child: LayoutBuilder(
-        builder: (context, limites) {
-          final icone = Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: tema.colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(Icons.category_outlined, color: cores.marca, size: 21),
-          );
-          final temEscopos = escopos.isNotEmpty;
-          final texto = Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  !temEscopos
-                      ? 'Comece por uma área'
-                      : escopos.length == 1
-                      ? 'Buscando em 1 área'
-                      : 'Buscando em ${escopos.length} áreas',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: tema.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  !temEscopos
-                      ? 'Escolha uma categoria para começar.'
-                      : escopos.length == 1
-                      ? 'Adicione outra área ou remova esta seleção.'
-                      : 'Os resultados podem estar em qualquer uma delas.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: tema.textTheme.labelSmall?.copyWith(
-                    color: cores.textoSuave,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          );
-          if (!temEscopos) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(children: [icone, const SizedBox(width: 10), texto]),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  key: const Key('escolher-area-produtos'),
-                  onPressed: aoAbrir,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  label: const Text('Escolher categoria'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: cores.marca,
-                    backgroundColor: cores.superficieAlternativa,
-                    side: BorderSide(
-                      color: cores.marca.withValues(alpha: 0.38),
-                    ),
-                    minimumSize: const Size.fromHeight(44),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(children: [icone, const SizedBox(width: 10), texto]),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: [
-                  for (var indice = 0; indice < escopos.length; indice++)
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: limites.maxWidth - 30,
-                      ),
-                      child: InputChip(
-                        key: Key('escopo-produtos-${escopos[indice]}'),
-                        label: Text(
-                          rotulos[indice],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onDeleted: () => aoRemover(escopos[indice]),
-                        deleteIcon: const Icon(Icons.close, size: 17),
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: cores.superficieAlternativa,
-                        side: BorderSide(color: cores.borda),
-                        shape: const StadiumBorder(),
-                        labelStyle: tema.textTheme.labelMedium?.copyWith(
-                          color: tema.colorScheme.onSurface,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 5,
-                runSpacing: 4,
-                children: [
-                  TextButton.icon(
-                    key: const Key('limpar-escopos-produtos'),
-                    onPressed: aoLimpar,
-                    icon: const Icon(Icons.close, size: 17),
-                    label: const Text('Limpar áreas'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: cores.textoSuave,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: aoAbrir,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Adicionar área'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: cores.marca,
-                      side: BorderSide(
-                        color: cores.marca.withValues(alpha: 0.42),
-                      ),
-                      minimumSize: const Size(0, 40),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 }
 
 class _AvisoFalhaBuscaProdutos extends StatelessWidget {
-  const _AvisoFalhaBuscaProdutos({required this.tentarNovamente});
+  const _AvisoFalhaBuscaProdutos({
+    required this.quantidadePreservada,
+    required this.tentarNovamente,
+  });
 
+  final int quantidadePreservada;
   final VoidCallback tentarNovamente;
 
   @override
@@ -1626,6 +800,12 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
                         style: tema.textTheme.labelMedium?.copyWith(
                           color: cores.perigo,
                           fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        '$quantidadePreservada ${quantidadePreservada == 1 ? 'oferta' : 'ofertas'} preservada${quantidadePreservada == 1 ? '' : 's'}',
+                        style: tema.textTheme.labelSmall?.copyWith(
+                          color: cores.textoSuave,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -1675,6 +855,10 @@ class _AvisoFalhaBuscaProdutos extends StatelessWidget {
   }
 }
 
+class _AcompanhamentoNotifier extends ChangeNotifier {
+  void mudou() => notifyListeners();
+}
+
 class _FiltrosProdutosSheet extends StatefulWidget {
   const _FiltrosProdutosSheet({
     required this.api,
@@ -1696,7 +880,11 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
   late final _precoMin = TextEditingController(text: widget.filtros.precoMin);
   late final _precoMax = TextEditingController(text: widget.filtros.precoMax);
   var _lojas = const <LojaDireto>[];
+  var _categorias = const <CategoriaInter>[];
+  late String _ordenar = widget.filtros.ordenar;
   late String _loja = widget.filtros.loja;
+  late String _categoria = widget.filtros.categoria;
+  late bool _semCategoria = widget.filtros.semCategoria;
   var _carregando = true;
   String? _erro;
 
@@ -1719,11 +907,20 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
       _erro = null;
     });
     try {
-      final lojas = widget.podeLerLojasSelecionadas
-          ? await _carregarLojasSelecionadas()
-          : const <LojaDireto>[];
+      final lojas = await _carregarLojas(
+        filtro: widget.podeLerLojasSelecionadas ? 'todas' : 'acompanhadas',
+      );
+      CatalogoCategoriasInterUsuario? catalogo;
+      try {
+        catalogo = await widget.api.categoriasInter();
+      } catch (_) {
+        // A lista de lojas continua utilizável se as categorias falharem.
+      }
       if (!mounted) return;
-      setState(() => _lojas = lojas);
+      setState(() {
+        _lojas = lojas;
+        _categorias = catalogo?.itens ?? const <CategoriaInter>[];
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _erro = 'Não foi possível carregar as opções de filtro.');
@@ -1732,15 +929,15 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
     }
   }
 
-  Future<List<LojaDireto>> _carregarLojasSelecionadas() async {
+  Future<List<LojaDireto>> _carregarLojas({required String filtro}) async {
     final lojas = <LojaDireto>[];
     var pagina = 1;
     while (true) {
       final resposta = await widget.api.lojasDiretas(
-        filtro: 'acompanhadas',
+        filtro: filtro,
         pagina: pagina,
       );
-      lojas.addAll(resposta.itens.where((loja) => loja.selecionada));
+      lojas.addAll(resposta.itens);
       if (!resposta.temProxima) return lojas;
       pagina++;
     }
@@ -1749,12 +946,7 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
   @override
   Widget build(BuildContext context) => SafeArea(
     child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        24,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1764,7 +956,7 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
               Text('Filtros', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),
               Text(
-                'Escolha a loja. Só a faixa de preço é editável.',
+                'Escolha a ordem, a loja, a categoria e a faixa de preço.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: CoresRadar.de(context).textoSuave,
                 ),
@@ -1779,35 +971,73 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
             else if (_erro != null)
               _erroOpcoes()
             else ...[
-              if (widget.podeLerLojasSelecionadas) ...[
-                _tituloSecao('Lojas', '${_lojas.length} para coleta'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _chipLoja(
-                      key: const Key('filtro-loja-todas'),
-                      nome: 'Todas as lojas',
-                      selecionada: _loja.trim().isEmpty,
-                      aoSelecionar: () => setState(() => _loja = ''),
-                    ),
-                    for (final loja in _lojas)
-                      _chipLoja(
-                        key: Key('filtro-loja-${loja.slug}'),
-                        nome: loja.nome,
-                        selecionada: _loja == loja.slug,
-                        aoSelecionar: () => setState(() => _loja = loja.slug),
-                      ),
-                  ],
-                ),
-                if (_lojas.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text('Nenhuma loja está selecionada para coleta.'),
+              _tituloSecao('Ordenar', 'como os produtos aparecem'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: const Key('filtro-ordenar'),
+                isExpanded: true,
+                initialValue: _ordenar,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'preco',
+                    child: Text('Menor preço por loja'),
                   ),
-                const SizedBox(height: 20),
-              ],
+                  DropdownMenuItem(value: 'nome', child: Text('Nome por loja')),
+                ],
+                onChanged: (valor) {
+                  if (valor != null) setState(() => _ordenar = valor);
+                },
+              ),
+              const SizedBox(height: 16),
+              _tituloSecao('Loja', 'opcional'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: const Key('filtro-loja'),
+                isExpanded: true,
+                initialValue: _lojas.any((loja) => loja.slug == _loja)
+                    ? _loja
+                    : '',
+                items: [
+                  const DropdownMenuItem(
+                    value: '',
+                    child: Text('Todas as lojas'),
+                  ),
+                  for (final loja in _lojas)
+                    DropdownMenuItem(value: loja.slug, child: Text(loja.nome)),
+                ],
+                onChanged: (valor) {
+                  if (valor != null) setState(() => _loja = valor);
+                },
+              ),
+              const SizedBox(height: 16),
+              _tituloSecao('Categoria', 'opcional'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: const Key('filtro-categoria'),
+                isExpanded: true,
+                initialValue: _valorCategoriaSelecionada,
+                items: [
+                  const DropdownMenuItem(
+                    value: '',
+                    child: Text('Todas as categorias'),
+                  ),
+                  for (final categoria in _categorias)
+                    DropdownMenuItem(
+                      value: categoria.semCategoria
+                          ? _valorSemCategoria
+                          : categoria.valor,
+                      child: Text(categoria.nome),
+                    ),
+                ],
+                onChanged: (valor) {
+                  if (valor == null) return;
+                  setState(() {
+                    _semCategoria = valor == _valorSemCategoria;
+                    _categoria = _semCategoria ? '' : valor;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
               _tituloSecao('Faixa de preço', 'opcional'),
               const SizedBox(height: 8),
               Row(
@@ -1836,9 +1066,23 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
                 ],
               ),
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _aplicar,
-                child: const Text('Aplicar filtros'),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: const Key('limpar-filtros-produtos'),
+                      onPressed: _limpar,
+                      child: const Text('Limpar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _aplicar,
+                      child: const Text('Aplicar filtros'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -1861,33 +1105,6 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
     ],
   );
 
-  Widget _chipLoja({
-    required Key key,
-    required String nome,
-    required bool selecionada,
-    required VoidCallback aoSelecionar,
-  }) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final claro = tema.brightness == Brightness.light;
-    return ChoiceChip(
-      key: key,
-      label: Text(nome),
-      selected: selecionada,
-      onSelected: (_) => aoSelecionar(),
-      selectedColor: claro ? Colors.white : Tokens.superficieEscura,
-      backgroundColor: claro
-          ? Tokens.superficieAlternativa
-          : Tokens.superficieAlternativaEscura,
-      checkmarkColor: cores.acao,
-      side: BorderSide(color: selecionada ? cores.acao : cores.borda),
-      labelStyle: TextStyle(
-        color: selecionada ? cores.acao : cores.textoSuave,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-
   Widget _erroOpcoes() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -1903,258 +1120,35 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
 
   void _aplicar() => Navigator.of(context).pop(
     FiltrosProdutos(
-      categoria: widget.filtros.categoria,
+      ordenar: _ordenar,
+      categoria: _categoria,
       escopos: widget.filtros.escopos,
-      semCategoria: widget.filtros.semCategoria,
+      semCategoria: _semCategoria,
       loja: _loja,
       precoMin: _precoMin.text,
       precoMax: _precoMax.text,
     ),
   );
-}
 
-class _BuscaProdutosCompacta extends StatelessWidget {
-  const _BuscaProdutosCompacta({
-    required this.controlador,
-    required this.aoMudar,
-  });
-
-  final TextEditingController controlador;
-  final ValueChanged<String> aoMudar;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final escuro = tema.brightness == Brightness.dark;
-    final cores = CoresRadar.de(context);
-    final texto = escuro ? Tokens.textoEscuro : Colors.white;
-    final textoSuave = escuro
-        ? Tokens.textoSuaveEscuro
-        : Colors.white.withValues(alpha: .74);
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(23),
-        topRight: Radius.circular(23),
-        bottomRight: Radius.circular(23),
-        bottomLeft: Radius.circular(9),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: escuro ? Tokens.superficieForteEscura : Tokens.ink,
-          border: Border.all(color: cores.marca.withValues(alpha: .3)),
-        ),
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            Positioned(
-              right: -47,
-              top: -82,
-              child: Container(
-                width: 158,
-                height: 158,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: .1)),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 55,
-              bottom: -76,
-              child: Container(
-                width: 134,
-                height: 134,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: .1)),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(13, 13, 13, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ENCONTRE NO SEU CATÁLOGO',
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: textoSuave,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: .55,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Busque, compare, economize.',
-                    style: tema.textTheme.titleLarge?.copyWith(
-                      color: texto,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  CampoBuscaRadar(
-                    controlador: controlador,
-                    dica: 'Marca, modelo ou categoria',
-                    aoMudar: aoMudar,
-                    chaveCampo: const Key('busca-produtos'),
-                    aoAcionar: () => aoMudar(controlador.text),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _limpar() {
+    setState(() {
+      _ordenar = 'preco';
+      _loja = '';
+      _categoria = '';
+      _semCategoria = false;
+      _precoMin.clear();
+      _precoMax.clear();
+    });
   }
-}
 
-class _ResumoCatalogoCompacto extends StatelessWidget {
-  const _ResumoCatalogoCompacto({
-    required this.atualizadoEm,
-    required this.totalItens,
-    required this.lojasNoResultado,
-    required this.lojasSelecionadas,
-    required this.atrasado,
-  });
+  static const _valorSemCategoria = '__sem_categoria__';
 
-  final String? atualizadoEm;
-  final int totalItens;
-  final int lojasNoResultado;
-  final int? lojasSelecionadas;
-  final bool atrasado;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: tema.colorScheme.surface,
-        border: Border.all(color: atrasado ? cores.atencao : cores.borda),
-        borderRadius: BorderRadius.circular(13),
-        boxShadow: [SombraRadar.para(tema.brightness)],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-        child: LayoutBuilder(
-          builder: (context, limites) {
-            final informacoes = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Atualizado ${dataHoraProduto(atualizadoEm)}',
-                  style: tema.textTheme.labelSmall?.copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  atrasado
-                      ? 'Retrato mais antigo disponível'
-                      : 'Último retrato válido',
-                  style: tema.textTheme.labelSmall?.copyWith(
-                    color: atrasado ? cores.atencao : cores.ganho,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            );
-            final total = Text(
-              '$totalItens produtos',
-              style: tema.textTheme.labelSmall?.copyWith(
-                color: cores.textoSuave,
-                fontSize: 8,
-              ),
-            );
-            final quantidadeLojas = lojasSelecionadas ?? lojasNoResultado;
-            final rotuloLojas = lojasSelecionadas == null
-                ? 'na página'
-                : 'selecionadas';
-            final lojas = quantidadeLojas == 0
-                ? null
-                : Text(
-                    '$quantidadeLojas ${quantidadeLojas == 1 ? 'loja' : 'lojas'} $rotuloLojas',
-                    style: tema.textTheme.labelSmall?.copyWith(
-                      color: cores.textoSuave,
-                      fontSize: 8,
-                    ),
-                  );
-            final textoAmpliado =
-                MediaQuery.textScalerOf(context).scale(9) > 12;
-            if (limites.maxWidth < 330 || textoAmpliado) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: informacoes),
-                      total,
-                    ],
-                  ),
-                  if (lojas != null) ...[
-                    const SizedBox(height: 2),
-                    Align(alignment: Alignment.centerRight, child: lojas),
-                  ],
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: informacoes),
-                total,
-                if (lojas != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text('|', style: TextStyle(color: cores.borda)),
-                  ),
-                  lojas,
-                ],
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipProduto extends StatelessWidget {
-  const _ChipProduto({
-    required this.texto,
-    required this.aoTocar,
-    this.ativo = false,
-    this.icone,
-  });
-
-  final String texto;
-  final VoidCallback aoTocar;
-  final bool ativo;
-  final IconData? icone;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return TextButton.icon(
-      onPressed: aoTocar,
-      icon: icone == null ? const SizedBox.shrink() : Icon(icone, size: 16),
-      label: Text(texto),
-      style: TextButton.styleFrom(
-        minimumSize: const Size(0, 37),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        backgroundColor: ativo
-            ? (Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.acaoFundoEscuro
-                  : Tokens.acaoFundo)
-            : Theme.of(context).colorScheme.surface,
-        foregroundColor: ativo ? cores.acao : cores.textoSuave,
-        side: BorderSide(color: ativo ? cores.acao : cores.borda),
-        shape: const StadiumBorder(),
-        textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
-      ),
-    );
+  String get _valorCategoriaSelecionada {
+    if (_semCategoria) return _valorSemCategoria;
+    if (_categoria.isNotEmpty &&
+        _categorias.any((categoria) => categoria.valor == _categoria)) {
+      return _categoria;
+    }
+    return '';
   }
 }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
 import 'formato_livelo.dart';
 
+/// Card de uma loja da Livelo, seguindo a hierarquia do catálogo V15.
+///
+/// A pontuação é apresentada como veio da API. O card não cria uma regra de
+/// pontuação nova nem transforma ausência em zero.
 class CartaoCatalogoLivelo extends StatelessWidget {
   const CartaoCatalogoLivelo({
     super.key,
@@ -13,334 +16,291 @@ class CartaoCatalogoLivelo extends StatelessWidget {
     required this.pendente,
     required this.podeAdministrar,
     this.podeAcompanhar = false,
+    required this.atualizadoEm,
     required this.aoAlternar,
     required this.aoDetalhes,
+    required this.aoHistorico,
+    required this.aoAbrirLivelo,
   });
 
   final ParceiroCatalogoLivelo parceiro;
   final bool pendente;
   final bool podeAdministrar;
   final bool podeAcompanhar;
+  final String? atualizadoEm;
   final VoidCallback aoAlternar;
   final VoidCallback aoDetalhes;
+  final VoidCallback aoHistorico;
+  final VoidCallback aoAbrirLivelo;
 
   @override
   Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    final cores = tokens.colors;
+    final categoria = parceiro.categorias
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .take(2)
+        .join(' · ');
+    final nomeCategoria = categoria.isEmpty ? 'Livelo' : categoria;
     final clube = rotuloClube(parceiro.campanha);
-    final botaoDetalhes = OutlinedButton(
+    final podeInteragir = podeAdministrar || podeAcompanhar;
+
+    final botaoAcompanhar = _BotaoAcompanhar(
+      chave: Key('acompanhar-${parceiro.idExterno}'),
+      acompanhada: parceiro.acompanhada,
+      pendente: pendente,
+      habilitado: podeInteragir,
+      aoAlternar: aoAlternar,
+    );
+    final botaoCondicoes = TextButton(
       key: Key('detalhes-${parceiro.idExterno}'),
       onPressed: aoDetalhes,
-      child: const Text('Detalhes'),
+      style: TextButton.styleFrom(foregroundColor: cores.acao),
+      child: const Text('Condições'),
     );
-    final botaoAcompanhar = parceiro.acompanhada
-        ? OutlinedButton.icon(
-            key: Key('acompanhar-${parceiro.idExterno}'),
-            onPressed: (podeAdministrar || podeAcompanhar) && !pendente
-                ? aoAlternar
-                : null,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: CoresRadar.de(context).ganho,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.ganhoFundoEscuro
-                  : Tokens.successSoft,
-              side: BorderSide(
-                color: CoresRadar.de(context).ganho.withValues(alpha: 0.3),
-              ),
-            ),
-            icon: pendente
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check_circle_outline),
-            label: Text(pendente ? 'Salvando…' : 'Acompanhando'),
-          )
-        : FilledButton.tonalIcon(
-            key: Key('acompanhar-${parceiro.idExterno}'),
-            onPressed: (podeAdministrar || podeAcompanhar) && !pendente
-                ? aoAlternar
-                : null,
-            style: FilledButton.styleFrom(
-              foregroundColor: CoresRadar.de(context).acao,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Tokens.acaoFundoEscuro
-                  : Tokens.actionSoft,
-            ),
-            icon: pendente
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.add),
-            label: Text(pendente ? 'Salvando…' : 'Acompanhar'),
-          );
+
     return Semantics(
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
         key: Key('cartao-livelo-${parceiro.idExterno}'),
-        corDestaque: cores.acao,
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsetsDirectional.all(tokens.spacing.four),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TopoCartao(
-              parceiro: parceiro,
-              podeInteragir: podeAdministrar || podeAcompanhar,
-              pendente: pendente,
-              aoAlternar: aoAlternar,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (parceiro.pontosBase != null)
-                  _Selo(
-                    texto:
-                        'Normal ${pontosLivelo(parceiro.pontosBase, moeda: parceiro.moeda)}',
+                Expanded(
+                  child: Text(
+                    nomeCategoria,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
                   ),
-                if (parceiro.pontosClube != null)
-                  _Selo(
-                    texto:
-                        'Clube ${pontosLivelo(parceiro.pontosClube, moeda: parceiro.moeda)}',
-                    tom: TomRadar.acao,
+                ),
+                SizedBox(width: tokens.spacing.two),
+                Flexible(
+                  child: Text(
+                    atualizacaoCatalogoLivelo(atualizadoEm),
+                    textAlign: TextAlign.end,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
                   ),
-                if (parceiro.emPromocao)
-                  const _Selo(texto: 'Promoção', tom: TomRadar.ganho),
-                if (clube != null) _Selo(texto: clube, tom: TomRadar.acao),
-                if (parceiro.alerta)
-                  const _Selo(texto: 'Alerta ativo', tom: TomRadar.perigo),
+                ),
               ],
             ),
-            if (parceiro.fimPromocao != null) ...[
-              const SizedBox(height: 10),
-              IndicadorEstadoRadar(
-                texto: validadeLivelo(parceiro.fimPromocao),
-                tom: TomRadar.atencao,
+            SizedBox(height: tokens.spacing.three),
+            Text(
+              parceiro.nome,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: tokens.spacing.three),
+            Wrap(
+              alignment: WrapAlignment.start,
+              runAlignment: WrapAlignment.start,
+              spacing: tokens.spacing.two,
+              runSpacing: tokens.spacing.one,
+              children: [
+                Text(
+                  valorPontosLivelo(parceiro.pontosAtuais),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: cores.texto,
+                  ),
+                ),
+                Text(
+                  'pontos / ${parceiro.moeda} 1',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cores.textoSuave,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            if (parceiro.pontosBase != null) ...[
+              SizedBox(height: tokens.spacing.one),
+              Text(
+                'Base ${valorPontosLivelo(parceiro.pontosBase)} pts'
+                '${parceiro.pontosClube == null ? '' : ' · Clube ${valorPontosLivelo(parceiro.pontosClube)} pts'}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
               ),
             ],
-            if (parceiro.descricaoCampanha != null &&
-                parceiro.descricaoCampanha!.trim().isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _DescricaoCampanha(
-                texto: parceiro.descricaoCampanha!,
-                link: parceiro.link,
+            if (_temSelos(parceiro, clube)) ...[
+              SizedBox(height: tokens.spacing.three),
+              Wrap(
+                spacing: tokens.spacing.two,
+                runSpacing: tokens.spacing.one,
+                children: [
+                  if (parceiro.emPromocao && clube == null)
+                    const _Selo(
+                      texto: 'Pontuação ampliada',
+                      tom: TomRadar.ganho,
+                    ),
+                  if (parceiro.fimPromocao != null &&
+                      parceiro.fimPromocao!.trim().isNotEmpty)
+                    _Selo(
+                      texto: validadeBreveLivelo(parceiro.fimPromocao),
+                      tom: TomRadar.atencao,
+                    ),
+                  if (clube != null) _Selo(texto: clube, tom: TomRadar.acao),
+                ],
               ),
             ],
-            const SizedBox(height: 14),
+            SizedBox(height: tokens.spacing.four),
+            Divider(height: tokens.spacing.one, color: cores.borda),
+            SizedBox(height: tokens.spacing.two),
             LayoutBuilder(
-              builder: (context, _) {
+              builder: (context, limites) {
                 final textoAmpliado =
                     MediaQuery.textScalerOf(context).scale(12) > 15;
-                if (textoAmpliado) {
+                if (limites.maxWidth < 300 || textoAmpliado) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       botaoAcompanhar,
-                      const SizedBox(height: 8),
-                      botaoDetalhes,
+                      SizedBox(height: tokens.spacing.one),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: botaoCondicoes,
+                      ),
                     ],
                   );
                 }
                 return Row(
                   children: [
                     Expanded(child: botaoAcompanhar),
-                    const SizedBox(width: 8),
-                    botaoDetalhes,
+                    SizedBox(width: tokens.spacing.two),
+                    botaoCondicoes,
                   ],
                 );
               },
+            ),
+            SizedBox(height: tokens.spacing.one),
+            Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      key: Key('historico-${parceiro.idExterno}'),
+                      onPressed: aoHistorico,
+                      style: TextButton.styleFrom(foregroundColor: cores.acao),
+                      icon: const Icon(Icons.history),
+                      label: const Text('Histórico'),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      onPressed: _linkHttpsValido(parceiro.link)
+                          ? aoAbrirLivelo
+                          : null,
+                      style: TextButton.styleFrom(foregroundColor: cores.acao),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Ir à Livelo'),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+
+  bool _temSelos(ParceiroCatalogoLivelo item, String? clube) =>
+      (item.emPromocao && clube == null) ||
+      (item.fimPromocao != null && item.fimPromocao!.trim().isNotEmpty) ||
+      clube != null;
 }
 
-class _DescricaoCampanha extends StatefulWidget {
-  const _DescricaoCampanha({required this.texto, this.link});
-  final String texto;
-  final String? link;
-
-  @override
-  State<_DescricaoCampanha> createState() => _DescricaoCampanhaState();
-}
-
-class _TopoCartao extends StatelessWidget {
-  const _TopoCartao({
-    required this.parceiro,
-    required this.podeInteragir,
+class _BotaoAcompanhar extends StatelessWidget {
+  const _BotaoAcompanhar({
+    required this.chave,
+    required this.acompanhada,
     required this.pendente,
+    required this.habilitado,
     required this.aoAlternar,
   });
 
-  final ParceiroCatalogoLivelo parceiro;
-  final bool podeInteragir;
+  final Key chave;
+  final bool acompanhada;
   final bool pendente;
+  final bool habilitado;
   final VoidCallback aoAlternar;
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
-    final beneficio = Text(
-      pontosLivelo(parceiro.pontosAtuais, moeda: parceiro.moeda),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.end,
-      style: tema.textTheme.labelMedium?.copyWith(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Tokens.acaoForteEscura
-            : Tokens.actionStrong,
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
+    final tokens = context.tokens;
+    final cores = tokens.colors;
+    final cor = cores.acao;
+    final estilo = FilledButton.styleFrom(
+      foregroundColor: cor,
+      backgroundColor: cor.withValues(alpha: 0.14),
+      minimumSize: Size(0, tokens.sizes.touchTarget),
+      padding: EdgeInsetsDirectional.symmetric(
+        horizontal: tokens.spacing.three,
       ),
     );
-    final nome = Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            parceiro.nome,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: tema.textTheme.titleSmall?.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            parceiro.categorias.join(' · '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: tema.textTheme.labelSmall?.copyWith(
-              color: cores.textoSuave,
-              fontSize: 9,
-            ),
-          ),
-        ],
+    return FilledButton.icon(
+      key: chave,
+      onPressed: habilitado && !pendente ? aoAlternar : null,
+      style: estilo,
+      icon: pendente
+          ? SizedBox.square(
+              dimension: tokens.sizes.icon,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(acompanhada ? Icons.check : Icons.add),
+      label: Text(
+        pendente
+            ? 'Salvando…'
+            : acompanhada
+            ? 'Acompanhando'
+            : 'Acompanhar',
       ),
-    );
-
-    return LayoutBuilder(
-      builder: (context, limites) {
-        final estreito =
-            limites.maxWidth < 270 ||
-            MediaQuery.textScalerOf(context).scale(12) > 15;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _Iniciais(nome: parceiro.nome),
-                const SizedBox(width: 9),
-                nome,
-                if (!estreito) ...[
-                  const SizedBox(width: 7),
-                  SizedBox(width: 76, child: beneficio),
-                ],
-                const SizedBox(width: 4),
-                IconButton(
-                  key: Key('alerta-${parceiro.idExterno}'),
-                  tooltip: parceiro.acompanhada
-                      ? 'Deixar de acompanhar ${parceiro.nome}'
-                      : 'Acompanhar ${parceiro.nome}',
-                  onPressed: podeInteragir && !pendente ? aoAlternar : null,
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints.tightFor(
-                    width: 36,
-                    height: 36,
-                  ),
-                  icon: pendente
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          parceiro.acompanhada
-                              ? Icons.notifications_active_outlined
-                              : Icons.notifications_none_outlined,
-                        ),
-                ),
-              ],
-            ),
-            if (estreito) ...[
-              const SizedBox(height: 8),
-              Align(alignment: Alignment.centerRight, child: beneficio),
-            ],
-          ],
-        );
-      },
     );
   }
 }
 
-class _DescricaoCampanhaState extends State<_DescricaoCampanha> {
-  bool _aberta = false;
+class _Selo extends StatelessWidget {
+  const _Selo({required this.texto, this.tom = TomRadar.neutro});
 
-  Future<void> _abrirLink() async {
-    final uri = Uri.tryParse(widget.link ?? '');
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
+  final String texto;
+  final TomRadar tom;
 
   @override
   Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    final cores = tokens.colors;
+    final cor = switch (tom) {
+      TomRadar.acao => cores.acao,
+      TomRadar.ganho => cores.ganho,
+      TomRadar.atencao => cores.atencao,
+      TomRadar.perigo => cores.perigo,
+      TomRadar.neutro => cores.textoSuave,
+    };
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-      decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(13),
+      padding: EdgeInsetsDirectional.symmetric(
+        horizontal: tokens.spacing.two,
+        vertical: tokens.spacing.one,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Condições da campanha',
-            style: tema.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.texto,
-            maxLines: _aberta ? null : 3,
-            overflow: _aberta ? null : TextOverflow.ellipsis,
-            style: tema.textTheme.bodySmall?.copyWith(
-              color: cores.textoSuave,
-              height: 1.35,
-            ),
-          ),
-          if (widget.texto.length > 180)
-            TextButton(
-              onPressed: () => setState(() => _aberta = !_aberta),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 30),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(_aberta ? 'Ver menos' : 'Ver mais'),
-            ),
-          if (_linkHttpsValido(widget.link))
-            TextButton.icon(
-              onPressed: _abrirLink,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 30),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('Ver regras completas no site da Livelo'),
-            ),
-        ],
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(tokens.radii.pill),
+      ),
+      child: Text(
+        texto,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: cor),
       ),
     );
   }
@@ -349,64 +309,4 @@ class _DescricaoCampanhaState extends State<_DescricaoCampanha> {
 bool _linkHttpsValido(String? link) {
   final uri = Uri.tryParse(link ?? '');
   return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
-}
-
-class _Iniciais extends StatelessWidget {
-  const _Iniciais({required this.nome});
-  final String nome;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    final partes = nome
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((item) => item.isNotEmpty);
-    final iniciais = partes
-        .take(2)
-        .map((item) => item.substring(0, 1))
-        .join()
-        .toUpperCase();
-    return Container(
-      width: 46,
-      height: 46,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: cores.acao.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Text(
-        iniciais.isEmpty ? '•' : iniciais,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: cores.acao,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _Selo extends StatelessWidget {
-  const _Selo({required this.texto, this.tom = TomRadar.neutro});
-  final String texto;
-  final TomRadar tom;
-
-  @override
-  Widget build(BuildContext context) {
-    final cor = switch (tom) {
-      TomRadar.acao => CoresRadar.de(context).acao,
-      TomRadar.ganho => CoresRadar.de(context).ganho,
-      TomRadar.atencao => CoresRadar.de(context).atencao,
-      TomRadar.perigo => CoresRadar.de(context).perigo,
-      TomRadar.neutro => CoresRadar.de(context).textoSuave,
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.11),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(texto, style: TextStyle(color: cor, fontSize: 9)),
-    );
-  }
 }

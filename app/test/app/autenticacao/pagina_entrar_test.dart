@@ -54,13 +54,14 @@ Future<void> _abrir(
   _AutenticadorFalso autenticador, {
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
+  ThemeData? tema,
 }) async {
   await at.binding.setSurfaceSize(tamanho);
   addTearDown(() => at.binding.setSurfaceSize(null));
   addTearDown(autenticador.fechar);
   await at.pumpWidget(
     MaterialApp(
-      theme: TemaRadar.claro(),
+      theme: tema ?? TemaRadar.claro(),
       home: PaginaEntrar(autenticador: autenticador),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(
@@ -81,13 +82,30 @@ void main() {
 
     expect(find.byKey(const Key('login-marca-compacta')), findsOneWidget);
     expect(find.byKey(const Key('login-painel-marca')), findsNothing);
+    expect(find.byKey(const Key('login-ilustracao')), findsOneWidget);
     expect(find.text('Bom te ver por aqui.'), findsOneWidget);
+    expect(
+      at.getSize(find.byKey(const Key('login-ilustracao'))).height,
+      greaterThan(200),
+    );
     expect(find.text('E-mail'), findsOneWidget);
     expect(find.text('Senha'), findsOneWidget);
     expect(find.text('Entrar'), findsOneWidget);
+    expect(
+      find.text(
+        'Seu acesso continua protegido pelo Firebase e validado pela API.',
+      ),
+      findsNothing,
+    );
   });
 
-  testWidgets('Web amplo divide apresentação e formulário', (at) async {
+  testWidgets('celular escuro mantém a palavra da marca legível', (at) async {
+    await _abrir(at, _AutenticadorFalso(), tema: TemaRadar.escuro());
+
+    expect(find.text('radar.'), findsOneWidget);
+  });
+
+  testWidgets('tablet amplo divide apresentação e formulário', (at) async {
     await _abrir(at, _AutenticadorFalso(), tamanho: const Size(1440, 900));
 
     expect(find.byKey(const Key('login-painel-marca')), findsOneWidget);
@@ -98,7 +116,7 @@ void main() {
     );
     expect(find.text('Histórico de preços'), findsOneWidget);
     expect(find.text('Que bom ter você aqui'), findsOneWidget);
-  }, tags: 'web');
+  });
 
   testWidgets('celular estreito aceita texto ampliado sem perder ações', (
     at,

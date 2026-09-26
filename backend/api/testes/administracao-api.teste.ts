@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  validarCategoriaLojaInter,
   validarFavoritaInter,
   validarNovaLojaLivelo,
   validarPreferenciasLivelo,
@@ -119,7 +120,18 @@ describe("CT-295 favorita administrativa do Inter", () => {
   });
 });
 
-describe("CT-296 contrato de disparo administrativo", () => {
+describe("CT-296 categoria editorial da loja Inter", () => {
+  it("aceita somente código canônico e ID numérico", () => {
+    expect(validarCategoriaLojaInter({ id: "42", categoria: "moda" }, ["moda"])).toEqual({
+      ok: true,
+      valor: { id: "42", categoria: "moda" },
+    });
+    expect(validarCategoriaLojaInter({ id: "42", categoria: "Moda" }, ["moda"]).ok).toBe(false);
+    expect(validarCategoriaLojaInter({ id: "loja", categoria: "moda" }, ["moda"]).ok).toBe(false);
+  });
+});
+
+describe("CT-297 contrato de disparo administrativo", () => {
   it("aceita somente domínio fechado e chave idempotente segura", () => {
     expect(validarSolicitacaoDeDisparo({ dominio: "produtos_inter" })).toEqual({
       ok: true,

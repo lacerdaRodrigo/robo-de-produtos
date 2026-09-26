@@ -5,12 +5,13 @@ Livelo e mostra cashback, condições e produtos do Shopping Inter, com busca e
 histórico de 30 dias. O antigo canal SMTP/e-mail não está ativo no código atual.
 
 Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Neon)
-guarda os catálogos e retratos, e um cliente **Flutter** (Web, Android e iOS) mostra
+guarda os catálogos e retratos, e um cliente **Flutter** (Android e iOS) mostra
 cada fonte sem misturar suas regras.
 
 > **Ciclo atual:** o Flutter está em redesign **mobile-only V15**, governado por
-> [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. Web permanece no repositório,
-> mas não é alvo nem gate deste ciclo. A Central de Alertas está implementada;
+> [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. O aplicativo Flutter não
+> possui mais alvo Web; a API e o protótipo HTML continuam no repositório como
+> serviços/referências separados. A Central de Alertas está implementada;
 > configuração Firebase/FCM e secret do cron estão ativos; o aceite físico e um
 > push provocado por evento real continuam pendentes conforme
 > [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md).
@@ -19,7 +20,7 @@ cada fonte sem misturar suas regras.
 
 ```text
 robo/
-├── app/            # Flutter (Web, Android e iOS) — única interface
+├── app/            # Flutter (Android e iOS) — única interface
 ├── backend/
 │   ├── robo/       # robôs Python (Livelo, Inter Sites, Inter Compre direto)
 │   └── api/        # API autenticada consumida pelo Flutter
@@ -50,14 +51,13 @@ todas leem apenas fontes públicas.
 | **[`docs/prd/PRD-LIVELO.md`](docs/prd/PRD-LIVELO.md)** | **Fonte da verdade.** Requisitos, regras de negócio, arquitetura, segurança e roadmap |
 | [`docs/testes/TESTES.md`](docs/testes/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
+| [`docs/prd/PRD-ACEITE-MOBILE-V15.md`](docs/prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo do aceite físico Android/iOS V15 |
 | [`docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md) | Livelo: catálogo, alertas e aplicativo |
 | [`docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Central de Alertas, suporte, privacidade, FCM e acompanhamento pessoal |
 | [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
 | [`docs/prd/PRD-INTER-PRODUTOS.md`](docs/prd/PRD-INTER-PRODUTOS.md) | V4: catálogo completo, busca local e histórico de 30 dias |
-| [`docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md) | Delta: categorias externas do Compre direto no Inter e limpeza da taxonomia Radar |
+| [`docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](docs/prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md) | Categorias externas do Compre direto no Inter e limpeza da taxonomia Radar |
 | [`docs/prd/PRD-ADMINISTRACAO.md`](docs/prd/PRD-ADMINISTRACAO.md) | V5: limpeza administrativa |
-| [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md) | Escolha de modelo/esforço antes de mudar o projeto |
-| [`ARQUIVO-PROJETO.md`](ARQUIVO-PROJETO.md) | Estado e memória da reorganização; como reativar a API |
 | [`CLAUDE.md`](CLAUDE.md) | Contexto para agentes de IA |
 | [`CHANGELOG.md`](CHANGELOG.md) | Histórico de versões |
 
@@ -128,12 +128,12 @@ find test -type f -name '*_test.dart' \
   ! -name 'app_smoke_test.dart' \
   ! -name 'controlador_painel_livelo_test.dart' \
   ! -name 'pagina_painel_livelo_test.dart' \
-  -print0 | xargs -0 flutter test --exclude-tags web
+  -print0 | xargs -0 flutter test
 ```
 
 Rode TypeScript/ESLint ou Ruff apenas quando o componente correspondente for
-alterado. Integration, E2E, smoke, performance e Web não são gates do ciclo
-atual.
+alterado. Integration, E2E, smoke, performance e build Web não fazem parte do
+gate do aplicativo mobile.
 
 ## Versionamento e rastreabilidade
 

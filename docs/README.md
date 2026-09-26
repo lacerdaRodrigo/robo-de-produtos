@@ -9,17 +9,16 @@ documentação antes de abrir arquivos isolados.
 | Caminho | Conteúdo | Quando consultar |
 |---|---|---|
 | [`prd/`](prd/) | Requisitos de produto, regras de negócio, contratos, arquitetura e critérios de aceite por domínio. | Antes de implementar ou alterar comportamento de Livelo, Shopping Inter, categorias ou administração. |
-| [`planos/`](planos/) | Planos e registros de evolução do aplicativo. | Ao revisar decisões de implementação ou evoluções ainda abertas. |
 | [`testes/`](testes/) | Catálogo técnico de casos de teste por módulo. | Ao alterar testes ou confirmar a cobertura esperada de uma regra. |
 | [`guias/`](guias/) | Orientações operacionais e de uso do ambiente. | Para tarefas de operação ou configuração descritas no guia correspondente. |
 
-## Registros concluídos
+## Registros consolidados
 
 | Documento | Finalidade |
 |---|---|
 | [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato vigente da validação e distribuição privada de APK Android pelo GitHub Actions, Google Drive e e-mail. |
 | [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
-| [`planos/PLANO-SERVIDOR-ANDROID-PICHAU.md`](planos/PLANO-SERVIDOR-ANDROID-PICHAU.md) | Registro histórico da primeira validação do executor; o contrato vigente e o novo gate de disponibilidade estão no PRD Pichau. |
+| [`prd/PRD-ACEITE-MOBILE-V15.md`](prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo de validação física, evidências e bloqueios do aceite Mobile V15. |
 
 ## Artefatos visuais
 
@@ -28,15 +27,6 @@ documentação antes de abrir arquivos isolados.
 | [`../design-app/mobile-v15/index.html`](../design-app/mobile-v15/index.html) | Fonte visual navegável da identidade mobile V15, com temas, assets, estados, jornadas e movimento. |
 | [`../design-app/mobile-v15/identidade.html`](../design-app/mobile-v15/identidade.html) | Galeria da marca, ícones, ilustrações e animações oficiais da V15. |
 | [`guias/design-v15.md`](guias/design-v15.md) | Contrato visual, componentes, acessibilidade, movimento e cobertura funcional da V15. |
-
-## Execução da V15
-
-| Documento | Finalidade |
-|---|---|
-| [`planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md`](planos/PROMPT-MIGRACAO-DEFINITIVA-MOBILE-V15.md) | Prompt mestre para substituir integralmente a experiência visual mobile Flutter pela V15 sem regredir regras, API ou autorização. |
-| [`planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md`](planos/DEPENDENCIAS-BACKEND-MOBILE-V15.md) | Registro dos contratos de backend do Mobile V15 já fechados e do checkpoint externo de migration/publicação. |
-| [`planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md`](planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md) | Plano ativo para fechar os contratos de backend do Mobile V15 e retestar os 42 cenários no device. |
-| [`planos/RELATORIO-TESTE-DEVICE-MOBILE-V15.md`](planos/RELATORIO-TESTE-DEVICE-MOBILE-V15.md) | Registro dos testes manuais no Android, correções, evidências e bloqueios externos da validação V15. |
 
 ## PRDs de domínio
 
@@ -60,12 +50,11 @@ catálogo não são, sozinhos, garantia de alerta pessoal.
 | Documento | Finalidade |
 |---|---|
 | [`PENDENCIAS.md`](PENDENCIAS.md) | Lista viva do que continua aberto; não registra trabalho concluído. |
-| [`AUDITORIA-COMPLETA-PROJETO.md`](AUDITORIA-COMPLETA-PROJETO.md) | Relatório de auditoria do projeto, com evidências e itens que exigem confirmação externa. |
 
 ## Ordem sugerida de leitura
 
 1. Abra o PRD do domínio em [`prd/`](prd/).
 2. Consulte [`PENDENCIAS.md`](PENDENCIAS.md) para não tratar pendência operacional como concluída.
 3. Consulte o catálogo em [`testes/`](testes/) somente quando a mudança afetar comportamento coberto.
-4. Use [`planos/`](planos/) para decisões de evolução, distinguindo registros
-   já executados de pendências ainda abertas.
+4. Consulte o PRD de aceite mobile somente para evidências físicas e o estado
+   dos gates; pendências abertas continuam exclusivamente em `PENDENCIAS.md`.

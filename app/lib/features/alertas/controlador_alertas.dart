@@ -113,4 +113,44 @@ class ControladorAlertas extends ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Marca como lidos todos os eventos do recorte atual, não só a página
+  /// renderizada. A busca continua paginada e cada mutação respeita o limite
+  /// de ids aceito pela API.
+  Future<void> marcarTodos() async {
+    final ids = <String>[];
+    var paginaBusca = 1;
+    PaginaAlertasApi? resposta;
+    do {
+      resposta = await _api.alertas(
+        filtro: filtro,
+        pagina: paginaBusca,
+        porPagina: 50,
+        coleta: _coleta,
+      );
+      ids.addAll(
+        resposta.itens.where((item) => !item.lido).map((item) => item.id),
+      );
+      paginaBusca++;
+    } while (paginaBusca <= resposta.totalPaginas);
+
+    final anteriores = itens;
+    final naoLidosAnterior = naoLidos;
+    itens = itens
+        .map((item) => item.copiarCom(lido: true))
+        .toList(growable: false);
+    naoLidos = naoLidos > ids.length ? naoLidos - ids.length : 0;
+    notifyListeners();
+    try {
+      for (var inicio = 0; inicio < ids.length; inicio += 100) {
+        final fim = (inicio + 100).clamp(0, ids.length);
+        await _api.marcarAlertas(ids: ids.sublist(inicio, fim), lido: true);
+      }
+    } catch (_) {
+      itens = anteriores;
+      naoLidos = naoLidosAnterior;
+      notifyListeners();
+      rethrow;
+    }
+  }
 }

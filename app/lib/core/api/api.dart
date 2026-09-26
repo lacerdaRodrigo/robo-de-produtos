@@ -113,10 +113,22 @@ class Api {
     return HistoricoLivelo.parse(corpo);
   }
 
+  /// Categorias editoriais usadas pelo filtro de Sites parceiros.
+  Future<List<CategoriaCashbackInter>> categoriasCashbackInter() async {
+    final corpo = await cliente.obter('/api/inter/cashback/categorias');
+    final itens = corpo['categorias'];
+    if (itens is! List) return const <CategoriaCashbackInter>[];
+    return itens
+        .whereType<Map<String, dynamic>>()
+        .map(CategoriaCashbackInter.parse)
+        .toList(growable: false);
+  }
+
   /// Cashback dos Sites parceiros do Inter (PRD-V3), sempre lido da API.
   Future<Pagina<CashbackInter>> painelCashbackInter({
     String q = '',
     String ordenar = 'cashback',
+    String? categoria,
     int pagina = 1,
     bool apenasAcompanhadas = false,
     int? porPagina,
@@ -129,6 +141,7 @@ class Api {
         'ordenar': ordenar,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (categoria != null && categoria.isNotEmpty) 'categoria': categoria,
         if (apenasAcompanhadas) 'acompanhadas': 'true',
         if (!acompanhamentoPessoal) 'escopo': 'global',
       },
@@ -143,6 +156,8 @@ class Api {
     String termo, {
     int pagina = 1,
     int? porPagina,
+    String ordenar = 'preco',
+    bool apenasAcompanhados = false,
     String? marca,
     String? categoria,
     String? escopo,
@@ -157,6 +172,8 @@ class Api {
         'q': termo,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (ordenar != 'preco') 'ordenar': ordenar,
+        if (apenasAcompanhados) 'acompanhados': 'true',
         'marca': ?marca,
         'categoria': ?categoria,
         'escopo': ?escopo,
@@ -177,7 +194,9 @@ class Api {
     String q = '',
     String aba = 'todas',
     String disponibilidade = 'todas',
-    String ordenar = 'nome',
+    String ordenar = 'preco',
+    String? precoMin,
+    String? precoMax,
     int pagina = 1,
     int? porPagina,
   }) async {
@@ -188,6 +207,8 @@ class Api {
         'aba': aba,
         'disponibilidade': disponibilidade,
         'ordenar': ordenar,
+        if (precoMin?.trim().isNotEmpty ?? false) 'preco_min': precoMin!,
+        if (precoMax?.trim().isNotEmpty ?? false) 'preco_max': precoMax!,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
       },

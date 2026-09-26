@@ -1,15 +1,31 @@
 import { NextResponse } from "next/server";
 
 import { autenticarRequisicao } from "@/lib/autenticacao-api";
-import { corpoErro, paginacaoEnvelope, paginaValida, porPaginaValida, STATUS } from "@/lib/api";
+import {
+  corpoErro,
+  paginacaoEnvelope,
+  paginaValida,
+  porPaginaValida,
+  STATUS,
+} from "@/lib/api";
 import {
   buscarCatalogoPichau,
   resumoPichauPersistido,
   type OpcoesCatalogoPichau,
 } from "@/lib/banco-pichau";
 
+function precoValido(bruto: string): string | null {
+  const texto = bruto.trim().replace(",", ".");
+  if (!texto || Number.isNaN(Number(texto)) || Number(texto) < 0) {
+    return null;
+  }
+  return texto;
+}
+
 export async function GET(requisicao: Request) {
-    const acesso = await autenticarRequisicao(requisicao, { operacao: "pichau.catalogo.ler" });
+  const acesso = await autenticarRequisicao(requisicao, {
+    operacao: "pichau.catalogo.ler",
+  });
   if (!acesso.ok) return acesso.resposta;
   try {
     const url = new URL(requisicao.url);
@@ -17,14 +33,37 @@ export async function GET(requisicao: Request) {
     const abaBruta = url.searchParams.get("aba");
     const disponibilidadeBruta = url.searchParams.get("disponibilidade");
     const disponibilidade: OpcoesCatalogoPichau["disponibilidade"] =
-      disponibilidadeBruta === "disponiveis" || disponibilidadeBruta === "esgotados"
+      disponibilidadeBruta === "disponiveis" ||
+      disponibilidadeBruta === "esgotados" ||
+      disponibilidadeBruta === "fora_catalogo"
         ? disponibilidadeBruta
         : "todas";
     const ordenarBruto = url.searchParams.get("ordenar");
     const ordenar: OpcoesCatalogoPichau["ordenar"] =
-      ordenarBruto === "preco" || ordenarBruto === "desconto"
+      ordenarBruto === "nome" ||
+      ordenarBruto === "preco" ||
+      ordenarBruto === "desconto"
         ? ordenarBruto
-        : "nome";
+        : "preco";
+    const precoMinBruto = url.searchParams.get("preco_min");
+    const precoMaxBruto = url.searchParams.get("preco_max");
+    const precoMin =
+      precoMinBruto === null || precoMinBruto.trim() === ""
+        ? null
+        : precoValido(precoMinBruto);
+    const precoMax =
+      precoMaxBruto === null || precoMaxBruto.trim() === ""
+        ? null
+        : precoValido(precoMaxBruto);
+    if (
+      (precoMinBruto !== null && precoMin === null) ||
+      (precoMaxBruto !== null && precoMax === null)
+    ) {
+      return NextResponse.json(
+        corpoErro("validacao", "preco_min/preco_max devem ser números >= 0"),
+        { status: STATUS.INVALIDA },
+      );
+    }
     const pagina = paginaValida(url.searchParams.get("pagina"));
     const porPagina = porPaginaValida(url.searchParams.get("por_pagina"));
     const opcoes: OpcoesCatalogoPichau = {
@@ -32,6 +71,8 @@ export async function GET(requisicao: Request) {
       aba: abaBruta === "acompanhadas" ? "acompanhadas" : "todas",
       disponibilidade,
       ordenar,
+      precoMin,
+      precoMax,
       pagina,
       porPagina,
     };
@@ -40,27 +81,36 @@ export async function GET(requisicao: Request) {
       buscarCatalogoPichau(opcoes, usuarioId),
       resumoPichauPersistido(usuarioId),
     ]);
-    return NextResponse.json({
-      itens: resultado.itens.map((item) => ({ ...item, origem: "Pichau" })),
-      resumo: {
-        ultima_tentativa_em: resumo.ultima_tentativa_em,
-        ultima_tentativa_estado: resumo.ultima_tentativa_estado,
-        ultimo_sucesso_em: resumo.ultimo_sucesso_em,
-        qualidade: resumo.qualidade,
-        total_catalogo: resumo.total_catalogo,
-        acompanhadas: resumo.acompanhadas,
-        produtos_ativos: resumo.produtos_ativos,
-        produtos_esgotados: resumo.produtos_esgotados,
+    return NextResponse.json(
+      {
+        itens: resultado.itens.map((item) => ({ ...item, origem: "Pichau" })),
+        resumo: {
+          ultima_tentativa_em: resumo.ultima_tentativa_em,
+          ultima_tentativa_estado: resumo.ultima_tentativa_estado,
+          ultimo_sucesso_em: resumo.ultimo_sucesso_em,
+          qualidade: resumo.qualidade,
+          total_catalogo: resumo.total_catalogo,
+          acompanhadas: resumo.acompanhadas,
+          produtos_ativos: resumo.produtos_ativos,
+          produtos_esgotados: resumo.produtos_esgotados,
+        },
+        atualizado_em: resumo.ultimo_sucesso_em,
+        ...paginacaoEnvelope(resultado.total, resultado.pagina, porPagina),
       },
-      atualizado_em: resumo.ultimo_sucesso_em,
-      ...paginacaoEnvelope(resultado.total, resultado.pagina, porPagina),
-    }, {
-      headers: { "cache-control": "no-store, max-age=0", "x-request-id": acesso.requisicaoId },
-    });
+      {
+        headers: {
+          "cache-control": "no-store, max-age=0",
+          "x-request-id": acesso.requisicaoId,
+        },
+      },
+    );
   } catch {
-    return NextResponse.json(corpoErro("inesperado", "nao foi possivel carregar o catalogo Pichau"), {
-      status: STATUS.INESPERADO,
-      headers: { "x-request-id": acesso.requisicaoId },
-    });
+    return NextResponse.json(
+      corpoErro("inesperado", "nao foi possivel carregar o catalogo Pichau"),
+      {
+        status: STATUS.INESPERADO,
+        headers: { "x-request-id": acesso.requisicaoId },
+      },
+    );
   }
 }

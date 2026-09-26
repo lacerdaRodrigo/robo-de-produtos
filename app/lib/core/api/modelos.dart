@@ -479,6 +479,20 @@ class ResumoLimpezaAdministrativa {
   final Map<String, int> contagens;
 }
 
+/// Categoria editorial de uma loja dos Sites parceiros do Inter.
+class CategoriaCashbackInter {
+  const CategoriaCashbackInter({required this.codigo, required this.nome});
+
+  factory CategoriaCashbackInter.parse(Map<String, dynamic> objeto) =>
+      CategoriaCashbackInter(
+        codigo: _texto(objeto['codigo']),
+        nome: _texto(objeto['nome']),
+      );
+
+  final String codigo;
+  final String nome;
+}
+
 /// Oferta persistida dos Sites parceiros do Inter (PRD-V3 RN32–RN40).
 ///
 /// Percentuais permanecem em texto: o aplicativo exibe o texto da fonte e
@@ -495,6 +509,7 @@ class CashbackInter {
     required this.etiqueta,
     required this.descricaoPrincipal,
     required this.descricaoSecundaria,
+    this.categoria,
     required this.encontrada,
     required this.favorita,
     this.link,
@@ -515,6 +530,7 @@ class CashbackInter {
     etiqueta: _textoOpcional(objeto['etiqueta']),
     descricaoPrincipal: _textoOpcional(objeto['descricao_principal']),
     descricaoSecundaria: _textoOpcional(objeto['descricao_secundaria']),
+    categoria: _textoOpcional(objeto['categoria']),
     encontrada: _booleano(objeto['encontrada']),
     favorita: _booleano(objeto['favorita']),
     link: _textoOpcional(objeto['link']),
@@ -530,6 +546,7 @@ class CashbackInter {
   final String? etiqueta;
   final String? descricaoPrincipal;
   final String? descricaoSecundaria;
+  final String? categoria;
   final bool encontrada;
   final bool favorita;
   final String? link;
@@ -545,6 +562,7 @@ class CashbackInter {
     etiqueta: etiqueta,
     descricaoPrincipal: descricaoPrincipal,
     descricaoSecundaria: descricaoSecundaria,
+    categoria: categoria,
     encontrada: encontrada,
     favorita: favorita ?? this.favorita,
     link: link,
@@ -1123,16 +1141,19 @@ class MedicaoHistoricoLivelo {
   const MedicaoHistoricoLivelo({
     required this.momento,
     required this.pontos,
+    required this.pontosClube,
     required this.moeda,
   });
   factory MedicaoHistoricoLivelo.parse(Map<String, dynamic> objeto) =>
       MedicaoHistoricoLivelo(
         momento: _texto(objeto['momento']),
         pontos: _textoOpcional(objeto['pontos_atuais']),
+        pontosClube: _textoOpcional(objeto['pontos_clube']),
         moeda: _texto(objeto['moeda']),
       );
   final String momento;
   final String? pontos;
+  final String? pontosClube;
   final String moeda;
 }
 

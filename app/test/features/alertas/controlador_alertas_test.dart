@@ -38,4 +38,23 @@ void main() {
     expect(requisicoes.last.url.queryParameters['tipo'], 'pontuacao');
     expect(requisicoes.last.url.queryParameters['pagina'], '1');
   });
+
+  test('marcar todos percorre páginas e atualiza a leitura local', () async {
+    final requisicoes = <http.Request>[];
+    final controlador = ControladorAlertas(api: _api(requisicoes: requisicoes));
+    addTearDown(controlador.dispose);
+
+    await controlador.iniciar();
+    await controlador.marcarTodos();
+
+    expect(controlador.naoLidos, 0);
+    expect(controlador.itens.single.lido, isTrue);
+    expect(
+      requisicoes.where(
+        (request) =>
+            request.method == 'PATCH' && request.url.path == '/api/alertas',
+      ),
+      hasLength(1),
+    );
+  });
 }

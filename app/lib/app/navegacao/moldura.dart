@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
@@ -13,7 +12,6 @@ import '../../features/conta/paginas_conta.dart';
 import '../../features/conta/pagina_aparencia.dart';
 import '../../features/conta/pagina_laboratorio.dart';
 import '../../features/conta/pagina_perfil.dart';
-import '../../features/livelo/pagina_painel_livelo.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';
@@ -154,6 +152,20 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     });
   }
 
+  void _voltarCompacto() {
+    final destino = switch (_selecionadoCompacto) {
+      DestinoCompacto.inicio => null,
+      DestinoCompacto.explorar ||
+      DestinoCompacto.radar ||
+      DestinoCompacto.perfil => DestinoCompacto.inicio,
+      DestinoCompacto.programas ||
+      DestinoCompacto.livelo ||
+      DestinoCompacto.inter ||
+      DestinoCompacto.pichau => DestinoCompacto.explorar,
+    };
+    if (destino != null) _selecionarCompacto(destino);
+  }
+
   void _abrirFonte(FonteLojas fonte) {
     _selecionar(Destino.lojas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -229,34 +241,26 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         : const SizedBox.shrink(),
     const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.livelo)
-        ? _PaginaProgramaInterna(
-            chaveVoltar: const Key('voltar-programas-livelo'),
+        ? PaginaCatalogoLiveloAndroid(
+            key: const PageStorageKey('livelo-catalogo-nativo'),
+            api: widget.api,
+            administrador: widget.administrador,
+            aoAbrirAlertas: _abrirAlertas,
             aoVoltar: () => _selecionarCompacto(DestinoCompacto.explorar),
-            child: !kIsWeb
-                ? PaginaCatalogoLiveloAndroid(
-                    key: const PageStorageKey('livelo-catalogo-nativo'),
-                    api: widget.api,
-                    administrador: widget.administrador,
-                    aoAbrirAlertas: _abrirAlertas,
-                  )
-                : PaginaPainelLivelo(
-                    key: const PageStorageKey('livelo-compacto'),
-                    api: widget.api,
-                    administrador: widget.administrador,
-                    experienciaCompacta: true,
-                  ),
           )
         : const SizedBox.shrink(),
     _visitadosCompactos.contains(DestinoCompacto.inter)
         ? _PaginaProgramaInterna(
             chaveVoltar: const Key('voltar-programas-inter'),
             aoVoltar: () => _selecionarCompacto(DestinoCompacto.explorar),
+            mostrarCabecalho: false,
             child: PaginaHubShoppingInter(
               key: _inter,
               api: widget.api,
               administrador: widget.administrador,
               experienciaCompacta: true,
               ativa: _selecionadoCompacto == DestinoCompacto.inter,
+              aoVoltar: () => _selecionarCompacto(DestinoCompacto.explorar),
             ),
           )
         : const SizedBox.shrink(),
@@ -264,11 +268,13 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         ? _PaginaProgramaInterna(
             chaveVoltar: const Key('voltar-programas-pichau'),
             aoVoltar: () => _selecionarCompacto(DestinoCompacto.explorar),
+            mostrarCabecalho: false,
             child: PaginaPichau(
               key: const PageStorageKey('pichau-catalogo-nativo'),
               api: widget.api,
               administrador: widget.administrador,
               ativa: _selecionadoCompacto == DestinoCompacto.pichau,
+              aoVoltar: () => _selecionarCompacto(DestinoCompacto.explorar),
             ),
           )
         : const SizedBox.shrink(),
@@ -367,11 +373,22 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           children: _paineisCompactos,
         );
 
-        return Scaffold(
-          body: conteudo,
-          bottomNavigationBar: _BarraInferiorRadar(
-            selecionado: _selecionadoCompacto.destinoDaBarra,
-            aoSelecionar: _selecionarCompacto,
+        return PopScope<void>(
+          canPop: _selecionadoCompacto == DestinoCompacto.inicio,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            if (_selecionadoCompacto == DestinoCompacto.inter &&
+                _inter.currentState?.voltarRotaInterna() == true) {
+              return;
+            }
+            _voltarCompacto();
+          },
+          child: Scaffold(
+            body: conteudo,
+            bottomNavigationBar: _BarraInferiorRadar(
+              selecionado: _selecionadoCompacto.destinoDaBarra,
+              aoSelecionar: _selecionarCompacto,
+            ),
           ),
         );
       },
@@ -432,35 +449,43 @@ class _PaginaProgramaInterna extends StatelessWidget {
     required this.chaveVoltar,
     required this.aoVoltar,
     required this.child,
+    this.mostrarCabecalho = true,
   });
 
   final Key chaveVoltar;
   final VoidCallback aoVoltar;
   final Widget child;
+  final bool mostrarCabecalho;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            context.tokens.spacing.two,
-            context.tokens.spacing.one,
-            context.tokens.spacing.two,
-            0,
-          ),
-          child: TextButton.icon(
-            key: chaveVoltar,
-            onPressed: aoVoltar,
-            icon: const Icon(Icons.arrow_back, size: 17),
-            label: const Text('Explorar'),
-          ),
-        ),
-      ),
-      Expanded(child: child),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cabecalho = !mostrarCabecalho
+        ? const SizedBox.shrink()
+        : Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Padding(
+              padding: EdgeInsetsDirectional.only(
+                start: tokens.spacing.two,
+                end: tokens.spacing.two,
+                top: tokens.spacing.one,
+              ),
+              child: TextButton.icon(
+                key: chaveVoltar,
+                onPressed: aoVoltar,
+                icon: Icon(Icons.arrow_back, size: tokens.sizes.icon),
+                label: const Text('Explorar'),
+              ),
+            ),
+          );
+
+    return Column(
+      children: [
+        cabecalho,
+        Expanded(child: child),
+      ],
+    );
+  }
 }
 
 class _RodapeVersao extends StatelessWidget {

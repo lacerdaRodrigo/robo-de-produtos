@@ -65,7 +65,26 @@ Api _api() => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
-    cliente: http_testing.MockClient((_) async => http.Response('{}', 500)),
+    provedorToken: () async => 'token-teste',
+    cliente: http_testing.MockClient((requisicao) async {
+      if (requisicao.url.path == '/api/inter/cashback/categorias') {
+        return http.Response(
+          jsonEncode({
+            'categorias': [
+              {'codigo': 'beleza', 'nome': 'Beleza'},
+              {'codigo': 'casa', 'nome': 'Casa'},
+              {'codigo': 'eletronicos', 'nome': 'Eletrônicos'},
+              {'codigo': 'esporte', 'nome': 'Esporte'},
+              {'codigo': 'moda', 'nome': 'Moda'},
+              {'codigo': 'outros', 'nome': 'Outros'},
+              {'codigo': 'pets', 'nome': 'Pets'},
+            ],
+          }),
+          200,
+        );
+      }
+      return http.Response('{}', 500);
+    }),
   ),
 );
 
@@ -122,6 +141,94 @@ void main() {
     await at.pumpAndSettle();
     expect(find.textContaining('Para não-correntistas'), findsOneWidget);
     expect(controlador.temProxima, isFalse);
+  });
+
+  testWidgets('folha de filtros mantém a ordem e as categorias do protótipo', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    String? categoriaConsultada;
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([_loja()]),
+      buscarComCategoria:
+          ({
+            required q,
+            required ordenar,
+            required categoria,
+            required pagina,
+          }) async {
+            categoriaConsultada = categoria;
+            return _pagina([_loja()]);
+          },
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(_telaCompacta(controlador));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('abrir-filtros-cashback-inter')));
+    await at.pumpAndSettle();
+
+    expect(find.text('Filtros · Sites parceiros'), findsOneWidget);
+    expect(find.text('Maior cashback'), findsOneWidget);
+    expect(find.text('Todas as categorias'), findsOneWidget);
+    final ordenarRect = at.getRect(
+      find.byKey(const Key('filtro-ordenacao-cashback-inter')),
+    );
+    final categoriaRect = at.getRect(
+      find.byKey(const Key('filtro-categoria-cashback-inter')),
+    );
+    expect(categoriaRect.left, closeTo(ordenarRect.left, 0.1));
+    expect(categoriaRect.right, closeTo(ordenarRect.right, 0.1));
+    expect(ordenarRect.height, greaterThanOrEqualTo(48));
+    expect(categoriaRect.height, greaterThanOrEqualTo(48));
+
+    await at.tap(find.byKey(const Key('filtro-ordenacao-cashback-inter')));
+    await at.pumpAndSettle();
+    final maiorCashback = find.text('Maior cashback');
+    final nomeDaLoja = find.text('Nome da loja');
+    expect(maiorCashback, findsWidgets);
+    expect(nomeDaLoja, findsOneWidget);
+    expect(
+      at.getTopLeft(maiorCashback.last).dy,
+      lessThan(at.getTopLeft(nomeDaLoja).dy),
+    );
+
+    await at.tap(find.text('Nome da loja'));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('filtro-categoria-cashback-inter')));
+    await at.pumpAndSettle();
+    for (final categoria in const [
+      'Todas as categorias',
+      'Beleza',
+      'Casa',
+      'Eletrônicos',
+      'Esporte',
+      'Moda',
+      'Outros',
+      'Pets',
+    ]) {
+      expect(find.text(categoria), findsWidgets);
+    }
+
+    await at.tap(find.text('Moda'));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('aplicar-filtros-cashback-inter')));
+    await at.pumpAndSettle();
+
+    expect(controlador.categoria, 'moda');
+    expect(categoriaConsultada, 'moda');
+
+    await at.tap(find.byKey(const Key('abrir-filtros-cashback-inter')));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('limpar-filtros-cashback-inter')));
+    await at.pumpAndSettle();
+
+    expect(controlador.categoria, isNull);
+    expect(categoriaConsultada, isNull);
   });
 
   testWidgets('separa falha recente, atraso e loja ausente', (at) async {
@@ -347,13 +454,17 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
+    final modoSitesParceiros = find.byKey(const Key('modo-inter-cashback'));
+    await at.ensureVisible(modoSitesParceiros);
+    await at.tap(modoSitesParceiros);
+    await at.pumpAndSettle();
     final metrica = find.byKey(const Key('aba-radar-1'));
     expect(
       find.descendant(of: metrica, matching: find.text('0')),
       findsOneWidget,
     );
     await at.drag(
-      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      find.byKey(const Key('cashback-inter-compacto')),
       const Offset(0, -520),
     );
     await at.pumpAndSettle();
@@ -392,7 +503,7 @@ void main() {
     );
 
     await at.drag(
-      find.byKey(const PageStorageKey('rolagem-cashback-inter')),
+      find.byKey(const Key('cashback-inter-compacto')),
       const Offset(0, -220),
     );
     await at.pumpAndSettle();
@@ -795,7 +906,7 @@ void main() {
     );
     await at.pumpAndSettle();
     expect(find.text('C&A'), findsOneWidget);
-  }, tags: 'web');
+  });
 
   testWidgets('página mantém o foco nos Sites parceiros', (at) async {
     final controlador = ControladorCashbackInter(

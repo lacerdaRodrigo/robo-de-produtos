@@ -273,11 +273,11 @@ robo/
 │   └── api/                      # API v1 arquivada (sem prefixo v1)
 │       ├── routes/               # rotas por domínio (livelo, inter, administracao, status...)
 │       └── lib/                  # banco, autenticação, formato, limpeza, disparos
-├── app/                          # Flutter (Web, Android e iOS) — única interface
+├── app/                          # Flutter (Android e iOS) — única interface
 ├── migracoes/                    # esquema do Postgres, em SQL versionado
 ├── docs/
 │   ├── prd/                      # PRD-LIVELO.md, evolução Livelo e PRDs dos domínios
-│   ├── guias/                    # ARQUITETURA (histórico), EMAIL, ROTEAMENTO_MODELOS
+│   ├── guias/                    # guia visual e operacional vigente
 │   ├── TESTES.md                 # catálogo de casos
 │   └── PENDENCIAS.md             # lista viva do que falta
 ├── .env.example                  ✔

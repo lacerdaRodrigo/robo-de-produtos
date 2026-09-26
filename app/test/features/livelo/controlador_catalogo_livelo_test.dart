@@ -11,6 +11,7 @@ ParceiroCatalogoLivelo parceiro(
   bool acompanhada = false,
   bool alerta = false,
   bool alertaAtivo = false,
+  String? link,
 }) => ParceiroCatalogoLivelo(
   idExterno: id,
   nome: nome ?? 'Loja $id',
@@ -29,6 +30,7 @@ ParceiroCatalogoLivelo parceiro(
   acompanhada: acompanhada,
   alertaAtivo: alertaAtivo,
   alerta: alerta,
+  link: link,
 );
 
 ResumoCatalogoLivelo resumo({

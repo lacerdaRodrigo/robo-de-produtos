@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
+import { CATEGORIAS_CASHBACK_INTER, type CategoriaCashbackInter } from "./categorias-cashback-inter";
 import { linkShoppingInterDaLoja, normalizarBuscaInter } from "./formato-inter";
 
 function conectar() {
@@ -34,6 +35,7 @@ export type CashbackInter = {
   etiqueta: string | null;
   descricao_principal: string | null;
   descricao_secundaria: string | null;
+  categoria: string;
   encontrada: boolean;
   favorita: boolean;
   link: string;
@@ -133,6 +135,35 @@ export type PaginaCashbacksInter = {
   pagina: number;
 };
 
+export async function listarCategoriasCashbackInter(): Promise<CategoriaCashbackInter[]> {
+  const sql = conectar();
+  const linhas = (await sql`
+    SELECT codigo, nome
+      FROM categoria_cashback_inter
+     ORDER BY ordem
+  `) as CategoriaCashbackInter[];
+  return linhas.length > 0 ? linhas : [...CATEGORIAS_CASHBACK_INTER];
+}
+
+export async function definirCategoriaCashbackInter(
+  id: string,
+  categoria: string,
+): Promise<boolean> {
+  const sql = conectar();
+  const lojas = (await sql`
+    SELECT id FROM loja_inter WHERE id = ${id}
+  `) as Array<{ id: string }>;
+  if (lojas.length === 0) return false;
+  await sql`
+    INSERT INTO mapeamento_categoria_cashback_inter (loja_inter_id, categoria)
+    VALUES (${id}, ${categoria})
+    ON CONFLICT (loja_inter_id) DO UPDATE SET
+      categoria = EXCLUDED.categoria,
+      atualizado_em = now()
+  `;
+  return true;
+}
+
 /** Cashback filtrado, ordenado e paginado no Postgres com NUMERIC intacto. */
 export async function buscarCashbacksInter(
   execucaoId: string,
@@ -140,6 +171,7 @@ export async function buscarCashbacksInter(
     q: string;
     ordenar: "cashback" | "nome";
     apenasAcompanhadas: boolean;
+    categoria?: string | null;
     pagina: number;
     porPagina: number;
   },
@@ -155,6 +187,8 @@ export async function buscarCashbacksInter(
     SELECT count(*)::int AS total
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN mapeamento_categoria_cashback_inter categoria
+        ON categoria.loja_inter_id = l.id
       LEFT JOIN acompanhamento_usuario acompanhamento
         ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
        AND acompanhamento.origem = 'inter_cashback'
@@ -164,6 +198,10 @@ export async function buscarCashbacksInter(
          (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
          OR (${!usaAcompanhamentoPessoal} AND f.loja_inter_id IS NOT NULL)
        ))
+       AND (
+         ${opcoes.categoria === null || opcoes.categoria === undefined}
+         OR COALESCE(categoria.categoria, 'outros') = ${opcoes.categoria ?? null}
+       )
        AND (
          ${busca === ""}
          OR strpos(
@@ -183,6 +221,7 @@ export async function buscarCashbacksInter(
 
   const itensPersistidos = (await sql`
     SELECT l.id, l.id_externo, l.slug, COALESCE(c.nome, l.nome) AS nome,
+           COALESCE(categoria.categoria, 'outros') AS categoria,
            COALESCE(c.cashback_principal_texto, l.cashback_principal_texto) AS cashback_principal_texto,
            COALESCE(c.cashback_principal_valor, l.cashback_principal_valor) AS cashback_principal_valor,
            COALESCE(c.cashback_secundario_texto, l.cashback_secundario_texto) AS cashback_secundario_texto,
@@ -196,6 +235,8 @@ export async function buscarCashbacksInter(
                 ELSE f.loja_inter_id IS NOT NULL END AS favorita
       FROM loja_inter l
       LEFT JOIN favorita_inter f ON f.loja_inter_id = l.id
+      LEFT JOIN mapeamento_categoria_cashback_inter categoria
+        ON categoria.loja_inter_id = l.id
       LEFT JOIN acompanhamento_usuario acompanhamento
         ON acompanhamento.usuario_app_id = ${acompanhamentoUsuario}
        AND acompanhamento.origem = 'inter_cashback'
@@ -207,6 +248,10 @@ export async function buscarCashbacksInter(
          (${usaAcompanhamentoPessoal} AND acompanhamento.id IS NOT NULL)
          OR (${!usaAcompanhamentoPessoal} AND f.loja_inter_id IS NOT NULL)
        ))
+       AND (
+         ${opcoes.categoria === null || opcoes.categoria === undefined}
+         OR COALESCE(categoria.categoria, 'outros') = ${opcoes.categoria ?? null}
+       )
        AND (
          ${busca === ""}
          OR strpos(

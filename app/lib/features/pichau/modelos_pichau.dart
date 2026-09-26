@@ -6,6 +6,7 @@
 class PichauProduto {
   const PichauProduto({
     required this.idExterno,
+    required this.sku,
     required this.nome,
     required this.marca,
     required this.categoria,
@@ -26,6 +27,7 @@ class PichauProduto {
   factory PichauProduto.parse(Map<String, dynamic> objeto) {
     return PichauProduto(
       idExterno: _textoPichau(objeto['id_externo']),
+      sku: _textoOpcionalPichau(objeto['sku']),
       nome: _textoPichau(objeto['nome']),
       marca: _textoOpcionalPichau(objeto['marca']),
       categoria: _textoOpcionalPichau(objeto['categoria_externa']),
@@ -50,6 +52,7 @@ class PichauProduto {
   }
 
   final String idExterno;
+  final String? sku;
   final String nome;
   final String? marca;
   final String? categoria;
@@ -71,6 +74,7 @@ class PichauProduto {
 
   PichauProduto copiarCom({bool? acompanhada}) => PichauProduto(
     idExterno: idExterno,
+    sku: sku,
     nome: nome,
     marca: marca,
     categoria: categoria,

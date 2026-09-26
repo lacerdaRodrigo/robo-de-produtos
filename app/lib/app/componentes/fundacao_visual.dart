@@ -428,6 +428,7 @@ class AbasRadar extends StatelessWidget {
     this.acao,
     this.contadores,
     this.expandir = false,
+    this.plana = false,
   }) : assert(contadores == null || contadores.length == rotulos.length);
 
   final List<String> rotulos;
@@ -436,11 +437,32 @@ class AbasRadar extends StatelessWidget {
   final Widget? acao;
   final List<int?>? contadores;
   final bool expandir;
+  final bool plana;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
+    if (plana) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: cores.borda)),
+        ),
+        child: Row(
+          children: [
+            for (var indice = 0; indice < rotulos.length; indice++)
+              Expanded(
+                child: _AbaRadarPlana(
+                  key: Key('aba-radar-$indice'),
+                  rotulo: rotulos[indice],
+                  selecionada: indice == selecionada,
+                  aoTocar: () => aoSelecionar(indice),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color: cores.superficieAlternativa,
@@ -596,6 +618,61 @@ class _AbaRadar extends StatelessWidget {
   }
 }
 
+class _AbaRadarPlana extends StatelessWidget {
+  const _AbaRadarPlana({
+    super.key,
+    required this.rotulo,
+    required this.selecionada,
+    required this.aoTocar,
+  });
+
+  final String rotulo;
+  final bool selecionada;
+  final VoidCallback aoTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: aoTocar,
+        child: Semantics(
+          selected: selecionada,
+          button: true,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: selecionada
+                    ? BorderSide(color: cores.acao)
+                    : BorderSide.none,
+              ),
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: tokens.sizes.touchTarget),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: tokens.spacing.two),
+                child: Center(
+                  child: Text(
+                    rotulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: selecionada ? cores.acao : cores.textoSuave,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Estrutura das folhas de Alertas e Conta/Sistema previstas para a Etapa 7.
 class FolhaRadar extends StatelessWidget {
   const FolhaRadar({
@@ -605,6 +682,7 @@ class FolhaRadar extends StatelessWidget {
     required this.child,
     this.mostrarVoltar = true,
     this.aoVoltar,
+    this.fecharComFundo = true,
   });
 
   final String titulo;
@@ -612,12 +690,14 @@ class FolhaRadar extends StatelessWidget {
   final Widget child;
   final bool mostrarVoltar;
   final VoidCallback? aoVoltar;
+  final bool fecharComFundo;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
+    final possuiDescricao = descricao.trim().isNotEmpty;
     return SafeArea(
       top: false,
       child: Padding(
@@ -647,40 +727,47 @@ class FolhaRadar extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: tokens.sizes.touchTarget,
-                    child: mostrarVoltar
-                        ? IconButton(
-                            key: const Key('voltar-folha-radar'),
-                            tooltip: 'Voltar',
-                            onPressed:
-                                aoVoltar ?? () => Navigator.maybePop(context),
-                            padding: EdgeInsets.zero,
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                          )
-                        : null,
-                  ),
+                  if (mostrarVoltar)
+                    SizedBox(
+                      width: tokens.sizes.touchTarget,
+                      child: IconButton(
+                        key: const Key('voltar-folha-radar'),
+                        tooltip: 'Voltar',
+                        onPressed:
+                            aoVoltar ?? () => Navigator.maybePop(context),
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      ),
+                    ),
                   Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: mostrarVoltar
+                          ? CrossAxisAlignment.center
+                          : CrossAxisAlignment.start,
                       children: [
                         Text(
                           titulo,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
+                          textAlign: mostrarVoltar
+                              ? TextAlign.center
+                              : TextAlign.start,
                           style: tema.textTheme.titleLarge,
                         ),
-                        SizedBox(height: tokens.spacing.one),
-                        Text(
-                          descricao,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: tema.textTheme.bodySmall?.copyWith(
-                            color: CoresRadar.de(context).textoSuave,
+                        if (possuiDescricao) ...[
+                          SizedBox(height: tokens.spacing.one),
+                          Text(
+                            descricao,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: mostrarVoltar
+                                ? TextAlign.center
+                                : TextAlign.start,
+                            style: tema.textTheme.bodySmall?.copyWith(
+                              color: CoresRadar.de(context).textoSuave,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -689,18 +776,28 @@ class FolhaRadar extends StatelessWidget {
                     key: const Key('fechar-folha-radar'),
                     tooltip: 'Fechar painel',
                     onPressed: () => Navigator.maybePop(context),
-                    style: IconButton.styleFrom(
-                      minimumSize: Size.square(tokens.sizes.touchTarget),
-                      maximumSize: Size.square(tokens.sizes.touchTarget),
-                      padding: EdgeInsets.zero,
-                      backgroundColor: CoresRadar.de(
-                        context,
-                      ).superficieAlternativa,
-                      side: BorderSide(color: CoresRadar.de(context).borda),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(tokens.radii.md),
-                      ),
-                    ),
+                    style: fecharComFundo
+                        ? IconButton.styleFrom(
+                            minimumSize: Size.square(tokens.sizes.touchTarget),
+                            maximumSize: Size.square(tokens.sizes.touchTarget),
+                            padding: EdgeInsets.zero,
+                            backgroundColor: CoresRadar.de(
+                              context,
+                            ).superficieAlternativa,
+                            side: BorderSide(
+                              color: CoresRadar.de(context).borda,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                tokens.radii.md,
+                              ),
+                            ),
+                          )
+                        : IconButton.styleFrom(
+                            minimumSize: Size.square(tokens.sizes.touchTarget),
+                            maximumSize: Size.square(tokens.sizes.touchTarget),
+                            padding: EdgeInsets.zero,
+                          ),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -849,14 +946,12 @@ class PaginacaoRadar extends StatelessWidget {
           onPressed: ativa || carregando ? null : () => aoIrParaPagina(destino),
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
-            foregroundColor: ativa
-                ? Theme.of(context).colorScheme.onSecondary
-                : cores.textoSuave,
+            foregroundColor: ativa ? cores.marcaTexto : cores.textoSuave,
             disabledForegroundColor: ativa
-                ? Theme.of(context).colorScheme.onSecondary
+                ? cores.marcaTexto
                 : cores.textoSuave,
-            backgroundColor: ativa ? cores.marca : Theme.of(context).cardColor,
-            side: BorderSide(color: ativa ? cores.marca : cores.borda),
+            backgroundColor: ativa ? cores.acao : Theme.of(context).cardColor,
+            side: BorderSide(color: ativa ? cores.acao : cores.borda),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(tokens.radii.md),
             ),
@@ -926,6 +1021,10 @@ Future<T?> mostrarFolhaRadar<T>(
     ),
     pageBuilder: (context, _, _) {
       final cores = CoresRadar.de(context);
+      final tokens = context.tokens;
+      final teclado = MediaQuery.viewInsetsOf(context).bottom;
+      final alturaDisponivel = (MediaQuery.sizeOf(context).height - teclado)
+          .clamp(0.0, double.infinity);
       return Stack(
         children: [
           Positioned.fill(
@@ -944,34 +1043,42 @@ Future<T?> mostrarFolhaRadar<T>(
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SafeArea(
-              top: false,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 430,
-                  maxHeight: MediaQuery.sizeOf(context).height * alturaMaxima,
-                ),
-                child: Material(
-                  key: const Key('folha-radar-modal'),
-                  color: Theme.of(context).cardColor,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 20,
-                  shadowColor: Colors.black.withValues(alpha: 0.22),
-                  clipBehavior: Clip.antiAlias,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(AppTokens.de(context).radii.xl),
-                    ),
+          AnimatedPadding(
+            duration: tokens.motion.forReducedMotion(
+              tokens.motion.standard,
+              MediaQuery.disableAnimationsOf(context),
+            ),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsetsDirectional.only(bottom: teclado),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: SafeArea(
+                top: false,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 430,
+                    maxHeight: alturaDisponivel * alturaMaxima,
                   ),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: cores.acao, width: 3),
+                  child: Material(
+                    key: const Key('folha-radar-modal'),
+                    color: Theme.of(context).cardColor,
+                    surfaceTintColor: Colors.transparent,
+                    elevation: 20,
+                    shadowColor: Colors.black.withValues(alpha: 0.22),
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(tokens.radii.xl),
                       ),
                     ),
-                    child: builder(context),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: cores.acao, width: 3),
+                        ),
+                      ),
+                      child: builder(context),
+                    ),
                   ),
                 ),
               ),

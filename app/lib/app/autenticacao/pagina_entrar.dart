@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/autenticacao/autenticador.dart';
+import '../componentes/fundacao_visual.dart';
 import 'pagina_recuperar.dart';
 import '../identidade/logo_radar.dart';
 import '../tema/tokens.dart';
 
 abstract final class _TokensLogin {
-  static const marca = Tokens.ink;
   static const marcaClara = Tokens.action;
   static const ganho = Tokens.teal;
   static const perigo = Tokens.danger;
@@ -208,46 +207,56 @@ class _AssinaturaMarca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = compacta ? _TokensLogin.marca : Tokens.actionInk;
-    final escuro = Theme.of(context).brightness == Brightness.dark;
+    if (compacta) {
+      return Semantics(
+        key: const Key('login-marca-compacta'),
+        container: true,
+        child: const CabecalhoMarcaRadar(),
+      );
+    }
+
     return Row(
-      key: compacta ? const Key('login-marca-compacta') : null,
-      mainAxisSize: compacta ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (compacta && !escuro)
-          SvgPicture.asset(
-            'assets/brand/wordmark.svg',
-            width: 150,
-            height: 38,
-            semanticsLabel: 'radar.',
-          )
-        else if (compacta)
-          SvgPicture.asset(
-            'assets/brand/symbol-dark.svg',
-            width: 42,
-            height: 42,
-            semanticsLabel: 'Radar',
-          )
-        else
-          const LogoRadar(
-            tamanho: 48,
-            sobreFundoEscuro: true,
-            rotuloSemantico: 'Radar',
+        const LogoRadar(
+          tamanho: 48,
+          sobreFundoEscuro: true,
+          rotuloSemantico: 'Radar',
+        ),
+        const SizedBox(width: 12),
+        const Text(
+          'radar.',
+          style: TextStyle(
+            color: Tokens.actionInk,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
-        if (!compacta || escuro) ...[
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              'radar.',
-              style: TextStyle(
-                color: cor,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
+        ),
       ],
+    );
+  }
+}
+
+class _IlustracaoAcesso extends StatelessWidget {
+  const _IlustracaoAcesso();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return ClipRRect(
+      key: const Key('login-ilustracao'),
+      borderRadius: BorderRadius.circular(tokens.radii.xl),
+      child: AspectRatio(
+        aspectRatio: 1.25,
+        child: ColoredBox(
+          color: CoresRadar.de(context).canvas,
+          child: Image.asset(
+            'assets/illustrations/descoberta-transparente.png',
+            fit: BoxFit.contain,
+            semanticLabel: 'Composição de descoberta de preços',
+          ),
+        ),
+      ),
     );
   }
 }
@@ -413,16 +422,7 @@ class _AreaFormulario extends StatelessWidget {
                             if (compacto) ...[
                               const _AssinaturaMarca(compacta: true),
                               const SizedBox(height: 20),
-                              const Image(
-                                image: AssetImage(
-                                  'assets/illustrations/descoberta.png',
-                                ),
-                                height: 150,
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                                semanticLabel:
-                                    'Composição de descoberta de preços',
-                              ),
+                              const _IlustracaoAcesso(),
                               const SizedBox(height: 20),
                             ],
                             Text(
@@ -434,10 +434,14 @@ class _AreaFormulario extends StatelessWidget {
                                     color: Theme.of(
                                       context,
                                     ).colorScheme.onSurface,
-                                    fontSize: compacto ? 42 : null,
-                                    height: compacto ? 0.98 : null,
+                                    fontSize: compacto
+                                        ? (limites.maxWidth * 0.075)
+                                              .clamp(28.0, 32.0)
+                                              .toDouble()
+                                        : null,
+                                    height: compacto ? 1.16 : null,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: compacto ? -2.2 : -1,
+                                    letterSpacing: compacto ? -0.8 : -1,
                                   ),
                             ),
                             const SizedBox(height: 8),
@@ -528,7 +532,6 @@ class _AreaFormulario extends StatelessWidget {
                               child: const Text('Recuperar acesso'),
                             ),
                             const SizedBox(height: 16),
-                            const _AvisoSeguranca(),
                           ],
                         ),
                       ),
@@ -666,39 +669,6 @@ class _MensagemLogin extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _AvisoSeguranca extends StatelessWidget {
-  const _AvisoSeguranca();
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(context.tokens.radii.md),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.lock_outline, color: Tokens.action, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Seu acesso continua protegido pelo Firebase e validado pela API.',
-              style: TextStyle(
-                color: cores.textoSuave,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

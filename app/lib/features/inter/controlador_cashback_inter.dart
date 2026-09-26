@@ -23,15 +23,27 @@ typedef BuscarCashbackInter =
       required int pagina,
     });
 
+typedef BuscarCashbackInterComCategoria =
+    Future<Pagina<CashbackInter>> Function({
+      required String q,
+      required String ordenar,
+      required String? categoria,
+      required int pagina,
+    });
+
 class ControladorCashbackInter extends ChangeNotifier {
   ControladorCashbackInter({
     required this.buscar,
     BuscarCashbackInter? buscarAcompanhadas,
+    this.buscarComCategoria,
+    this.buscarAcompanhadasComCategoria,
     this.debounce = const Duration(milliseconds: 350),
   }) : buscarAcompanhadas = buscarAcompanhadas ?? buscar;
 
   final BuscarCashbackInter buscar;
   final BuscarCashbackInter buscarAcompanhadas;
+  final BuscarCashbackInterComCategoria? buscarComCategoria;
+  final BuscarCashbackInterComCategoria? buscarAcompanhadasComCategoria;
   final Duration debounce;
   Timer? _temporizador;
   var _versao = 0;
@@ -41,6 +53,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   String _busca = '';
   OrdenacaoCashbackInter _ordenacao = OrdenacaoCashbackInter.cashback;
   FiltroCashbackInter _filtro = FiltroCashbackInter.todas;
+  String? _categoria;
   String? _atualizadoEm;
   String? _ultimaTentativaEm;
   String? _ultimaTentativaEstado;
@@ -58,6 +71,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   String get busca => _busca;
   OrdenacaoCashbackInter get ordenacao => _ordenacao;
   FiltroCashbackInter get filtro => _filtro;
+  String? get categoria => _categoria;
   String? get atualizadoEm => _atualizadoEm;
   String? get ultimaTentativaEm => _ultimaTentativaEm;
   String? get ultimaTentativaEstado => _ultimaTentativaEstado;
@@ -85,6 +99,10 @@ class ControladorCashbackInter extends ChangeNotifier {
     await mudarConsulta(ordenacao: valor);
   }
 
+  Future<void> mudarCategoria(String? valor) async {
+    await mudarFiltros(ordenacao: _ordenacao, categoria: valor);
+  }
+
   Future<void> mudarFiltro(FiltroCashbackInter valor) async {
     await mudarConsulta(filtro: valor);
   }
@@ -98,6 +116,16 @@ class ControladorCashbackInter extends ChangeNotifier {
     if (proximaOrdenacao == _ordenacao && proximoFiltro == _filtro) return;
     _ordenacao = proximaOrdenacao;
     _filtro = proximoFiltro;
+    await _reiniciar();
+  }
+
+  Future<void> mudarFiltros({
+    required OrdenacaoCashbackInter ordenacao,
+    required String? categoria,
+  }) async {
+    if (ordenacao == _ordenacao && categoria == _categoria) return;
+    _ordenacao = ordenacao;
+    _categoria = categoria;
     await _reiniciar();
   }
 
@@ -129,7 +157,7 @@ class ControladorCashbackInter extends ChangeNotifier {
     _erroMais = null;
     notifyListeners();
     try {
-      final resposta = await _buscaAtiva(
+      final resposta = await _consultar(
         q: _busca,
         ordenar: _ordenacao.codigo,
         pagina: _pagina + 1,
@@ -159,7 +187,7 @@ class ControladorCashbackInter extends ChangeNotifier {
     _erroMais = null;
     notifyListeners();
     try {
-      final resposta = await _buscaAtiva(
+      final resposta = await _consultar(
         q: _busca,
         ordenar: _ordenacao.codigo,
         pagina: pagina,
@@ -208,7 +236,7 @@ class ControladorCashbackInter extends ChangeNotifier {
   Future<void> _primeiraPagina() async {
     final versao = _versao;
     try {
-      final resposta = await _buscaAtiva(
+      final resposta = await _consultar(
         q: _busca,
         ordenar: _ordenacao.codigo,
         pagina: 1,
@@ -247,6 +275,25 @@ class ControladorCashbackInter extends ChangeNotifier {
 
   BuscarCashbackInter get _buscaAtiva =>
       _filtro == FiltroCashbackInter.acompanhadas ? buscarAcompanhadas : buscar;
+
+  Future<Pagina<CashbackInter>> _consultar({
+    required String q,
+    required String ordenar,
+    required int pagina,
+  }) {
+    final buscaComCategoria = _filtro == FiltroCashbackInter.acompanhadas
+        ? buscarAcompanhadasComCategoria
+        : buscarComCategoria;
+    if (buscaComCategoria != null) {
+      return buscaComCategoria(
+        q: q,
+        ordenar: ordenar,
+        categoria: _categoria,
+        pagina: pagina,
+      );
+    }
+    return _buscaAtiva(q: q, ordenar: ordenar, pagina: pagina);
+  }
 
   @override
   void dispose() {

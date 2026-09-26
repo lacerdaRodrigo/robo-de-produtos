@@ -222,4 +222,4 @@ python -m pytest --cov --cov-fail-under=90
   [`../../docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](../../docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md)
   e os PRDs dos domínios V3/V4/V5.
 - Reativação dos workflows de coleta: [`../../.github/README.md`](../../.github/README.md)
-  e [`../../ARQUIVO-PROJETO.md`](../../ARQUIVO-PROJETO.md).
+  e as pendências operacionais em [`../../docs/PENDENCIAS.md`](../../docs/PENDENCIAS.md).

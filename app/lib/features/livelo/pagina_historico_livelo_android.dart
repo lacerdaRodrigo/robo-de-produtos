@@ -1,25 +1,24 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/estados.dart';
 import '../../app/componentes/fundacao_visual.dart';
-import '../../app/identidade/logo_radar.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/modelos.dart';
 import 'formato_livelo.dart';
 
-/// Histórico de leitura do parceiro do catálogo atual.
+/// Histórico de leitura do parceiro do catálogo atual, exibido em folha V15.
 class PaginaHistoricoLiveloAndroid extends StatefulWidget {
   const PaginaHistoricoLiveloAndroid({
     super.key,
     required this.api,
     required this.parceiro,
-    this.aoAbrirAlertas,
   });
 
   final Api api;
   final ParceiroCatalogoLivelo parceiro;
-  final VoidCallback? aoAbrirAlertas;
 
   @override
   State<PaginaHistoricoLiveloAndroid> createState() =>
@@ -28,9 +27,12 @@ class PaginaHistoricoLiveloAndroid extends StatefulWidget {
 
 class _EstadoPaginaHistoricoLiveloAndroid
     extends State<PaginaHistoricoLiveloAndroid> {
+  static const _itensPorPagina = 5;
+
   HistoricoLivelo? _historico;
   Object? _erro;
   var _carregando = true;
+  var _pagina = 1;
 
   @override
   void initState() {
@@ -47,7 +49,12 @@ class _EstadoPaginaHistoricoLiveloAndroid
       final historico = await widget.api.historicoLivelo(
         widget.parceiro.idExterno,
       );
-      if (mounted) setState(() => _historico = historico);
+      if (mounted) {
+        setState(() {
+          _historico = historico;
+          _pagina = 1;
+        });
+      }
     } catch (erro) {
       if (mounted) setState(() => _erro = erro);
     } finally {
@@ -56,20 +63,25 @@ class _EstadoPaginaHistoricoLiveloAndroid
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-    appBar: _CabecalhoHistorico(aoAbrirAlertas: widget.aoAbrirAlertas),
-    body: _corpo(),
+  Widget build(BuildContext context) => FolhaRadar(
+    key: const Key('folha-historico-livelo'),
+    titulo: 'Histórico · ${widget.parceiro.nome}',
+    descricao: 'Últimas medições · até 30 registros · somente leitura',
+    mostrarVoltar: false,
+    child: Flexible(child: _corpo()),
   );
 
   Widget _corpo() {
-    if (_carregando) return const Carregando(mensagem: 'Carregando histórico…');
+    if (_carregando) {
+      return const Center(child: Carregando(mensagem: 'Carregando histórico…'));
+    }
     if (_erro != null) {
       return EstadoFalha(
         mensagem: 'Não foi possível carregar o histórico desta loja.',
         voltar: _carregar,
       );
     }
+
     final medicoes = _historico!.medicoes;
     if (medicoes.isEmpty) {
       return EstadoVazio(
@@ -77,129 +89,34 @@ class _EstadoPaginaHistoricoLiveloAndroid
             'Ainda não há medições históricas para ${widget.parceiro.nome}.',
       );
     }
-    final atual = pontosLivelo(
-      widget.parceiro.pontosAtuais,
-      moeda: widget.parceiro.moeda,
-    );
+
+    final inicio = (_pagina - 1) * _itensPorPagina;
+    final fim = math.min(inicio + _itensPorPagina, medicoes.length);
+    final pagina = medicoes.sublist(inicio, fim);
+    final totalPaginas =
+        (medicoes.length + _itensPorPagina - 1) ~/ _itensPorPagina;
+    final tokens = context.tokens;
+
     return ListView(
       key: const Key('historico-livelo-android'),
-      padding: const EdgeInsets.fromLTRB(18, 22, 18, 38),
+      padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.five),
       children: [
-        const IndicadorEstadoRadar(
-          texto: 'Pontuação salva',
-          tom: TomRadar.acao,
-        ),
-        const SizedBox(height: 8),
-        CabecalhoSecaoRadar(
-          titulo: 'Histórico',
-          descricao: 'Últimas coletas registradas no banco.',
-        ),
-        const SizedBox(height: 3),
-        Text(
-          widget.parceiro.nome,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: CoresRadar.de(context).textoSuave,
+        for (final medicao in pagina) _LinhaMedicao(medicao: medicao),
+        if (totalPaginas > 1) ...[
+          SizedBox(height: tokens.spacing.three),
+          _PaginacaoHistorico(
+            pagina: _pagina,
+            totalPaginas: totalPaginas,
+            aoIrParaPagina: _irParaPagina,
           ),
-        ),
-        const SizedBox(height: 20),
-        CartaoRadar(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      atual,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Melhor atual',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: CoresRadar.de(context).ganho,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 22),
-              for (var indice = 0; indice < medicoes.length; indice++) ...[
-                _LinhaMedicao(medicao: medicoes[indice]),
-                if (indice != medicoes.length - 1) const Divider(height: 22),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        const _AvisoHistorico(),
+        ],
       ],
     );
   }
-}
 
-class _CabecalhoHistorico extends StatelessWidget
-    implements PreferredSizeWidget {
-  const _CabecalhoHistorico({this.aoAbrirAlertas});
-
-  final VoidCallback? aoAbrirAlertas;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(72);
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return AppBar(
-      backgroundColor: tema.colorScheme.surface,
-      foregroundColor: tema.colorScheme.onSurface,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        tooltip: 'Voltar para Livelo',
-        onPressed: () => Navigator.of(context).maybePop(),
-        icon: const Icon(Icons.arrow_back),
-      ),
-      titleSpacing: 0,
-      title: Row(
-        children: [
-          const LogoRadar(tamanho: 30),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Radar',
-                style: tema.textTheme.titleSmall?.copyWith(
-                  color: tema.colorScheme.onSurface,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                'Histórico',
-                style: tema.textTheme.labelSmall?.copyWith(
-                  color: CoresRadar.de(context).textoSuave,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        const ControleAparenciaRadar.icone(),
-        const SizedBox(width: 4),
-        IconButton(
-          tooltip: 'Abrir alertas',
-          onPressed: aoAbrirAlertas,
-          icon: const Icon(Icons.notifications_none_outlined),
-        ),
-        const SizedBox(width: 8),
-      ],
-    );
+  Future<void> _irParaPagina(int pagina) async {
+    if (!mounted || pagina == _pagina) return;
+    setState(() => _pagina = pagina);
   }
 }
 
@@ -211,90 +128,152 @@ class _LinhaMedicao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final horario = Text(
-      dataHoraLivelo(medicao.momento).replaceFirst(', ', ' · '),
-      style: Theme.of(
-        context,
-      ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
-    );
-    return LayoutBuilder(
-      builder: (context, limites) {
-        final estreito =
-            limites.maxWidth < 290 ||
-            MediaQuery.textScalerOf(context).scale(12) > 15;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final tokens = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: cores.borda)),
+      ),
+      child: Padding(
+        padding: EdgeInsetsDirectional.symmetric(vertical: tokens.spacing.four),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.acao.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: SizedBox.square(
-                dimension: 34,
-                child: Icon(Icons.check, color: cores.acao, size: 18),
-              ),
+            Text(
+              dataHoraLivelo(medicao.momento).replaceFirst(', ', ' · '),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pontosLivelo(medicao.pontos, moeda: medicao.moeda),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            SizedBox(height: tokens.spacing.two),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    pontosHistoricoLivelo(medicao.pontos, moeda: medicao.moeda),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Coleta concluída',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelSmall?.copyWith(color: cores.textoSuave),
-                  ),
-                  if (estreito) ...[const SizedBox(height: 4), horario],
-                ],
-              ),
+                ),
+                SizedBox(width: tokens.spacing.two),
+                const _StatusHistorico(),
+              ],
             ),
-            if (!estreito) ...[const SizedBox(width: 8), horario],
+            if (medicao.pontosClube != null) ...[
+              SizedBox(height: tokens.spacing.one),
+              Text(
+                'Clube: ${pontosHistoricoLivelo(medicao.pontosClube, moeda: medicao.moeda)}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+              ),
+            ],
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
-class _AvisoHistorico extends StatelessWidget {
-  const _AvisoHistorico();
+class _StatusHistorico extends StatelessWidget {
+  const _StatusHistorico();
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: cores.ganho.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cores.ganho.withValues(alpha: 0.4)),
+        color: cores.superficieAlternativa,
+        borderRadius: BorderRadius.circular(tokens.radii.md),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(13),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.schedule, color: cores.ganho, size: 21),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'O histórico está disponível para qualquer loja do catálogo e mostra somente medições salvas; navegar aqui não inicia nova coleta.',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: cores.ganho,
-                  height: 1.35,
-                ),
-              ),
-            ),
-          ],
+        padding: EdgeInsetsDirectional.symmetric(
+          horizontal: tokens.spacing.two,
+          vertical: tokens.spacing.one,
         ),
+        child: Text(
+          'Completa',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: cores.textoSuave,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaginacaoHistorico extends StatelessWidget {
+  const _PaginacaoHistorico({
+    required this.pagina,
+    required this.totalPaginas,
+    required this.aoIrParaPagina,
+  });
+
+  final int pagina;
+  final int totalPaginas;
+  final Future<void> Function(int pagina) aoIrParaPagina;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final anterior = pagina > 1;
+    final proxima = pagina < totalPaginas;
+    return Semantics(
+      label: 'Paginação do histórico, página $pagina de $totalPaginas',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _botao(
+            context,
+            key: const Key('historico-pagina-anterior'),
+            tooltip: 'Página anterior',
+            icone: Icons.arrow_back,
+            habilitado: anterior,
+            aoTocar: () => aoIrParaPagina(pagina - 1),
+          ),
+          SizedBox(width: tokens.spacing.four),
+          Text(
+            '$pagina de $totalPaginas',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          SizedBox(width: tokens.spacing.four),
+          _botao(
+            context,
+            key: const Key('historico-pagina-proxima'),
+            tooltip: 'Próxima página',
+            icone: Icons.arrow_forward,
+            habilitado: proxima,
+            aoTocar: () => aoIrParaPagina(pagina + 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _botao(
+    BuildContext context, {
+    required Key key,
+    required String tooltip,
+    required IconData icone,
+    required bool habilitado,
+    required VoidCallback aoTocar,
+  }) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    return IconButton(
+      key: key,
+      tooltip: tooltip,
+      onPressed: habilitado ? aoTocar : null,
+      icon: Icon(icone),
+      style: IconButton.styleFrom(
+        minimumSize: Size.square(tokens.sizes.touchTarget),
+        maximumSize: Size.square(tokens.sizes.touchTarget),
+        foregroundColor: cores.textoSuave,
+        side: BorderSide(color: cores.borda),
+        shape: const CircleBorder(),
       ),
     );
   }

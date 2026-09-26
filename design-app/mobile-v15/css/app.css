@@ -324,6 +324,10 @@ svg {
   margin-inline-start: -10px;
   background: transparent;
 }
+.app-header .alert-title {
+  flex: 1;
+  min-width: 0;
+}
 .header-title {
   font-size: var(--fs-label);
   font-weight: 700;
@@ -1549,6 +1553,38 @@ details p {
 .sheet-header .icon-button {
   background: transparent;
 }
+.sheet-header--history {
+  display: grid;
+  grid-template-columns: var(--s12) minmax(0, 1fr) var(--s12);
+  align-items: start;
+  gap: var(--s2);
+}
+.sheet-header--history > div:first-child {
+  justify-self: start;
+}
+.sheet-header--history > div:last-child {
+  justify-self: end;
+}
+.sheet-header--history .sheet-header-main {
+  min-width: 0;
+  text-align: center;
+}
+.sheet-header--history .sheet-header-main h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sheet-header--history .sheet-header-main p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  margin: var(--s1) 0 0;
+}
+.sheet-header--history .sheet-back {
+  background: transparent;
+}
 .sheet h3 {
   font-size: var(--fs-title);
   margin: var(--s5) 0 var(--s2);
@@ -1591,6 +1627,68 @@ details p {
 .history-row strong {
   font-size: var(--fs-title);
   font-variant-numeric: tabular-nums;
+}
+.history-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+.history-summary-card {
+  min-width: 0;
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.history-summary-card span {
+  display: block;
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+.history-summary-card strong {
+  display: block;
+  margin-top: var(--s1);
+  font-size: var(--fs-title);
+  font-variant-numeric: tabular-nums;
+}
+.history-total {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  margin: 0 0 var(--s1);
+}
+.history-metrics {
+  margin: 0;
+}
+.history-metrics > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: baseline;
+  margin-top: var(--s1);
+}
+.history-metrics dt {
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
+}
+.history-metrics dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-small);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.history-metrics .cashback dd {
+  color: var(--success);
+}
+.history-note {
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  margin: var(--s3) 0 0;
 }
 .scrim.closing {
   animation: fade-out var(--duration-exit) var(--ease-out) forwards;

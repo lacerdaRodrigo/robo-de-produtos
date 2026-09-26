@@ -17,7 +17,6 @@ class GerenciadorNotificacoes {
   String? _ultimoToken;
 
   Future<void> iniciar() async {
-    if (kIsWeb) return;
     try {
       final messaging = FirebaseMessaging.instance;
       final permissao = await _pedirPermissao(messaging);
@@ -36,7 +35,6 @@ class GerenciadorNotificacoes {
   /// Solicita somente a decisão do sistema para a tela explícita de permissão.
   /// Retorna nulo quando a plataforma ou o plugin não está disponível.
   Future<AuthorizationStatus?> solicitarPermissao() async {
-    if (kIsWeb) return null;
     try {
       return (await _pedirPermissao(
         FirebaseMessaging.instance,

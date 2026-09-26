@@ -10,34 +10,51 @@ const _descricaoAusente =
 
 Future<void> _abrirCondicoesCashback(
   BuildContext context,
-  CashbackInter loja,
-) async {
+  CashbackInter loja, {
+  String? atualizadoEm,
+  VoidCallback? aoAbrirParceiro,
+}) async {
   await mostrarFolhaRadar<void>(
     context,
     alturaMaxima: 0.86,
     builder: (contexto) => FolhaRadar(
-      titulo: 'Condições de cashback',
-      descricao: loja.nome,
+      titulo: loja.nome,
+      descricao: '',
+      mostrarVoltar: false,
       child: Flexible(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: CoresRadar.de(contexto).superficieAlternativa,
+                    borderRadius: BorderRadius.circular(
+                      contexto.tokens.radii.md,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: contexto.tokens.spacing.two,
+                      vertical: contexto.tokens.spacing.one,
+                    ),
+                    child: Text(
+                      'Sites parceiros',
+                      style: Theme.of(contexto).textTheme.labelMedium,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: contexto.tokens.spacing.four),
               Text(
-                'Para correntista',
+                'Condições da oferta',
                 style: Theme.of(
                   contexto,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 7),
-              Text(
-                loja.cashbackPrincipalTexto ?? 'Oferta não informada',
-                style: Theme.of(contexto).textTheme.titleLarge?.copyWith(
-                  color: CoresRadar.de(contexto).ganho,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
+              SizedBox(height: contexto.tokens.spacing.two),
               Text(
                 loja.descricaoPrincipal ?? _descricaoAusente,
                 key: ValueKey('condicoes-principal-${loja.id}'),
@@ -48,30 +65,43 @@ Future<void> _abrirCondicoesCashback(
               ),
               if (loja.cashbackSecundarioTexto != null ||
                   loja.descricaoSecundaria != null) ...[
-                const SizedBox(height: 22),
-                const Divider(),
-                const SizedBox(height: 14),
+                SizedBox(height: contexto.tokens.spacing.four),
                 Text(
                   'Para não-correntista',
                   style: Theme.of(contexto).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 7),
+                SizedBox(height: contexto.tokens.spacing.two),
                 Text(
                   loja.cashbackSecundarioTexto ?? 'Oferta não informada',
-                  style: Theme.of(contexto).textTheme.titleMedium?.copyWith(
-                    color: CoresRadar.de(contexto).ganho,
+                  style: Theme.of(contexto).textTheme.bodyMedium?.copyWith(
+                    color: CoresRadar.de(contexto).textoSuave,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 8),
+              ],
+              if (atualizadoEm != null) ...[
+                SizedBox(height: contexto.tokens.spacing.four),
                 Text(
-                  loja.descricaoSecundaria ?? _descricaoAusente,
-                  key: ValueKey('condicoes-secundaria-${loja.id}'),
-                  style: Theme.of(contexto).textTheme.bodyMedium?.copyWith(
+                  dataHoraInter(atualizadoEm),
+                  style: Theme.of(contexto).textTheme.bodySmall?.copyWith(
                     color: CoresRadar.de(contexto).textoSuave,
-                    height: 1.45,
+                  ),
+                ),
+              ],
+              if (aoAbrirParceiro != null) ...[
+                SizedBox(height: contexto.tokens.spacing.four),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: ValueKey('abrir-banco-inter-${loja.id}'),
+                    onPressed: () {
+                      Navigator.of(contexto).pop();
+                      aoAbrirParceiro();
+                    },
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: const Text('Abrir Banco Inter'),
                   ),
                 ),
               ],
@@ -110,7 +140,7 @@ class CartaoCashbackInter extends StatelessWidget {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
     final conteudo = compacto
-        ? _CartaoCompacto(
+        ? _CartaoCompactoV15(
             tema: tema,
             cores: cores,
             loja: loja,
@@ -131,6 +161,215 @@ class CartaoCashbackInter extends StatelessWidget {
             aoAbrirParceiro: aoAbrirParceiro,
           );
     return Semantics(label: 'Loja ${loja.nome}', child: conteudo);
+  }
+}
+
+class _CartaoCompactoV15 extends StatelessWidget {
+  const _CartaoCompactoV15({
+    required this.tema,
+    required this.cores,
+    required this.loja,
+    required this.acompanhada,
+    required this.alterando,
+    required this.atualizadoEm,
+    required this.podeAdministrar,
+    required this.aoAcompanhar,
+    required this.aoAbrirParceiro,
+  });
+
+  final ThemeData tema;
+  final CoresRadar cores;
+  final CashbackInter loja;
+  final bool acompanhada;
+  final bool alterando;
+  final String? atualizadoEm;
+  final bool podeAdministrar;
+  final VoidCallback? aoAcompanhar;
+  final VoidCallback? aoAbrirParceiro;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final textoPrincipal =
+        loja.cashbackPrincipalTexto ?? 'Oferta não informada';
+    final possuiAcompanhamento = podeAdministrar || aoAcompanhar != null;
+    final seguir = OutlinedButton.icon(
+      key: ValueKey('acompanhar-${loja.id}'),
+      onPressed: !alterando ? aoAcompanhar : null,
+      icon: alterando
+          ? SizedBox.square(
+              dimension: tokens.sizes.icon,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(
+              acompanhada
+                  ? Icons.check_rounded
+                  : Icons.notifications_none_rounded,
+            ),
+      label: Text(
+        alterando
+            ? 'Salvando…'
+            : acompanhada
+            ? 'Acompanhando'
+            : 'Acompanhar',
+      ),
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(0, tokens.sizes.touchTarget),
+        padding: EdgeInsets.symmetric(horizontal: tokens.spacing.two),
+        foregroundColor: acompanhada ? cores.acao : cores.texto,
+        backgroundColor: acompanhada
+            ? cores.acao.withValues(alpha: 0.14)
+            : Colors.transparent,
+        side: BorderSide(color: acompanhada ? Colors.transparent : cores.borda),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(tokens.radii.md),
+        ),
+      ),
+    );
+    final condicoes = TextButton(
+      key: ValueKey('condicoes-${loja.id}'),
+      onPressed: () => _abrirCondicoesCashback(
+        context,
+        loja,
+        atualizadoEm: atualizadoEm,
+        aoAbrirParceiro: aoAbrirParceiro,
+      ),
+      style: TextButton.styleFrom(
+        minimumSize: Size(0, tokens.sizes.touchTarget),
+        padding: EdgeInsets.symmetric(horizontal: tokens.spacing.two),
+        foregroundColor: cores.acao,
+      ),
+      child: const Text('Condições'),
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: tokens.spacing.three),
+      child: CartaoRadar(
+        padding: EdgeInsets.all(tokens.spacing.four),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    loja.etiqueta ?? 'Site parceiro',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: tema.textTheme.labelMedium?.copyWith(
+                      color: cores.textoSuave,
+                    ),
+                  ),
+                ),
+                if (!loja.encontrada)
+                  Text(
+                    'Indisponível',
+                    style: tema.textTheme.labelSmall?.copyWith(
+                      color: cores.atencao,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: tokens.spacing.one),
+            Text(
+              loja.nome,
+              style: tema.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.two),
+            Text(
+              loja.encontrada ? textoPrincipal : 'Oferta não encontrada',
+              style: tema.textTheme.headlineSmall?.copyWith(
+                color: loja.encontrada ? cores.texto : cores.textoSuave,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: tokens.spacing.one),
+            Text(
+              'Cliente Inter Shopping',
+              style: tema.textTheme.bodySmall?.copyWith(
+                color: cores.textoSuave,
+              ),
+            ),
+            if (loja.cashbackSecundarioTexto != null ||
+                loja.descricaoSecundaria != null) ...[
+              SizedBox(height: tokens.spacing.three),
+              Text(
+                'Para não-correntista',
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.textoSuave,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: tokens.spacing.one),
+              Text(
+                loja.cashbackSecundarioTexto ?? 'Oferta não informada',
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.textoSuave,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            if (!loja.encontrada) ...[
+              SizedBox(height: tokens.spacing.two),
+              Text(
+                'A loja continua acompanhada; a fonte não a retornou.',
+                style: tema.textTheme.bodySmall?.copyWith(
+                  color: cores.atencao,
+                  height: 1.35,
+                ),
+              ),
+            ],
+            SizedBox(height: tokens.spacing.three),
+            Divider(color: cores.borda),
+            if (possuiAcompanhamento) ...[
+              SizedBox(height: tokens.spacing.one),
+              LayoutBuilder(
+                builder: (context, limites) {
+                  final textoAmpliado =
+                      MediaQuery.textScalerOf(context).scale(10) > 12;
+                  final empilhar = limites.maxWidth < 300 || textoAmpliado;
+                  if (empilhar) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        seguir,
+                        SizedBox(height: tokens.spacing.one),
+                        condicoes,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: seguir),
+                      SizedBox(width: tokens.spacing.one),
+                      condicoes,
+                    ],
+                  );
+                },
+              ),
+            ],
+            if (aoAbrirParceiro != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: ValueKey('ir-inter-${loja.id}'),
+                  onPressed: aoAbrirParceiro,
+                  style: TextButton.styleFrom(
+                    minimumSize: Size(0, tokens.sizes.touchTarget),
+                    padding: EdgeInsets.zero,
+                    foregroundColor: cores.acao,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text('Ir para o Inter'),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

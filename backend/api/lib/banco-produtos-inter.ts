@@ -123,6 +123,8 @@ export type FiltrosProdutosDiretos = {
   loja?: string | null; // slug da loja direta
   preco_min?: string | null; // string decimal (NUMERIC) >= 0
   preco_max?: string | null;
+  acompanhado?: boolean;
+  ordenar?: "preco" | "nome";
 };
 
 export type PaginaProdutosDiretos = {
@@ -263,6 +265,16 @@ export async function buscarProdutosDiretosPaginado(
     )`,
   ];
 
+  if (filtros.acompanhado) {
+    condicoes.push(`EXISTS (
+      SELECT 1
+        FROM acompanhamento_usuario acompanhado
+       WHERE acompanhado.usuario_app_id = $1::bigint
+         AND acompanhado.origem = 'inter_produto'
+         AND acompanhado.entidade_id = p.id
+    )`);
+  }
+
   // Busca por texto: todos os tokens devem constar em nome/marca/categoria.
   if (busca) {
     params.push(busca);
@@ -343,7 +355,10 @@ export async function buscarProdutosDiretosPaginado(
            LIMIT 1
         ) m ON TRUE
        WHERE ${onde}
-       ORDER BY m.preco_atual ASC, p.nome, p.id_externo
+       ORDER BY
+         CASE WHEN ${filtros.ordenar === "nome"} THEN NULL ELSE m.preco_atual END ASC NULLS LAST,
+         CASE WHEN ${filtros.ordenar === "nome"} THEN p.nome ELSE NULL END ASC NULLS LAST,
+         l.nome, p.id_externo
        LIMIT $${params.length - 1} OFFSET $${params.length}
       `,
       params,

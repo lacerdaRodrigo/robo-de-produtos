@@ -134,6 +134,60 @@ void main() {
     expect(consultas.single.queryParameters.containsKey('categoria'), isFalse);
   });
 
+  test('buscarProdutos envia ordenação nominal e somente No radar', () async {
+    final consultas = <Uri>[];
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          consultas.add(requisicao.url);
+          return http.Response(
+            '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    await api.buscarProdutos('edge', ordenar: 'nome', apenasAcompanhados: true);
+
+    expect(consultas.single.queryParameters['ordenar'], 'nome');
+    expect(consultas.single.queryParameters['acompanhados'], 'true');
+  });
+
+  test(
+    'catalogoPichau envia faixa de preço e usa Pix como ordem padrão',
+    () async {
+      final consultas = <Uri>[];
+      final api = Api(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            consultas.add(requisicao.url);
+            return http.Response(
+              '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
+              200,
+            );
+          }),
+        ),
+      );
+
+      await api.catalogoPichau(
+        q: 'ryzen',
+        precoMin: '3000,00',
+        precoMax: '8000,00',
+      );
+
+      expect(consultas.single.queryParameters['ordenar'], 'preco');
+      expect(consultas.single.queryParameters['preco_min'], '3000,00');
+      expect(consultas.single.queryParameters['preco_max'], '8000,00');
+    },
+  );
+
   test('categorias do Inter leem e salvam valores externos', () async {
     final requisicoes = <http.Request>[];
     final api = Api(
@@ -456,6 +510,7 @@ void main() {
                   'etiqueta': 'Oferta especial',
                   'descricao_principal': 'Em itens selecionados',
                   'descricao_secundaria': null,
+                  'categoria': 'moda',
                   'encontrada': true,
                   'favorita': false,
                 },
@@ -478,6 +533,7 @@ void main() {
     final resposta = await api.painelCashbackInter(
       q: 'c&a',
       ordenar: 'nome',
+      categoria: 'moda',
       pagina: 2,
       apenasAcompanhadas: true,
       porPagina: 10,
@@ -487,15 +543,43 @@ void main() {
     expect(consulta!.queryParameters, {
       'q': 'c&a',
       'ordenar': 'nome',
+      'categoria': 'moda',
       'pagina': '2',
       'por_pagina': '10',
       'acompanhadas': 'true',
     });
     expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
     expect(resposta.itens.single.cashbackPrincipalValor, '12.00');
+    expect(resposta.itens.single.categoria, 'moda');
     expect(resposta.itens.single.encontrada, isTrue);
     expect(resposta.itens.single.favorita, isFalse);
     expect(resposta.ultimaTentativaEstado, 'falha');
+  });
+
+  test('categoriasCashbackInter lê a taxonomia da API', () async {
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          expect(requisicao.url.path, '/api/inter/cashback/categorias');
+          return http.Response(
+            jsonEncode({
+              'categorias': [
+                {'codigo': 'moda', 'nome': 'Moda'},
+              ],
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    final categorias = await api.categoriasCashbackInter();
+
+    expect(categorias.single.codigo, 'moda');
+    expect(categorias.single.nome, 'Moda');
   });
 
   test(

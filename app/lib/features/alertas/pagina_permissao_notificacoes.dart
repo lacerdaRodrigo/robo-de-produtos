@@ -1,5 +1,4 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
@@ -64,10 +63,7 @@ class _EstadoPaginaPermissaoNotificacoes
       'Notificações não foram permitidas. A Central de Alertas continua disponível.',
     AuthorizationStatus.notDetermined =>
       'A decisão ficou pendente. Você pode tentar novamente quando quiser.',
-    null =>
-      kIsWeb
-          ? 'Notificações push não são solicitadas no Web.'
-          : 'Não foi possível acessar a permissão neste dispositivo agora.',
+    null => 'Não foi possível acessar a permissão neste dispositivo agora.',
   };
 
   @override

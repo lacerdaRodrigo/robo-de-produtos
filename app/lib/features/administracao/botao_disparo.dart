@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
+import '../../app/tema/tokens.dart';
 import '../../core/api/api.dart';
 import '../../core/api/erros.dart';
 import '../../core/api/idempotencia.dart';
 import '../../core/api/modelos.dart';
-import '../../app/tema/tokens.dart';
 
 /// Botão administrativo que pede uma coleta, mas nunca promete que ela acabou.
 ///
@@ -23,6 +23,7 @@ class BotaoDisparo extends StatefulWidget {
     this.aoAceitar,
     this.compacto = false,
     this.destaque = false,
+    this.somenteIcone = false,
   });
 
   final Api api;
@@ -32,6 +33,7 @@ class BotaoDisparo extends StatefulWidget {
   final VoidCallback? aoAceitar;
   final bool compacto;
   final bool destaque;
+  final bool somenteIcone;
 
   @override
   State<BotaoDisparo> createState() => _EstadoBotaoDisparo();
@@ -155,8 +157,19 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     if (!widget.administrador) return const SizedBox.shrink();
     if (_carregando) {
+      if (widget.somenteIcone) {
+        return IconButton.filledTonal(
+          tooltip: 'Verificando atualização',
+          onPressed: null,
+          icon: SizedBox.square(
+            dimension: tokens.sizes.icon,
+            child: const CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      }
       return const SizedBox(
         width: 40,
         height: 40,
@@ -167,6 +180,13 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
       );
     }
     if (_erro != null) {
+      if (widget.somenteIcone) {
+        return IconButton.filledTonal(
+          tooltip: 'Verificar disponibilidade de atualização',
+          onPressed: _consultar,
+          icon: const Icon(Icons.refresh),
+        );
+      }
       return IconButton(
         tooltip: 'Verificar disponibilidade de atualização',
         onPressed: _consultar,
@@ -182,6 +202,20 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     // No compacto o rótulo não muda durante o cooldown: isso preserva a
     // largura das abas e deixa o estado completo disponível no tooltip.
     final textoCompacto = _solicitando ? 'Atualizando…' : widget.rotulo;
+    if (widget.somenteIcone) {
+      return IconButton.filledTonal(
+        tooltip: espera > 0
+            ? 'Aguarde ${_tempo(espera)} para atualizar.'
+            : widget.rotulo,
+        onPressed: espera > 0 || _solicitando ? null : _solicitar,
+        icon: _solicitando
+            ? SizedBox.square(
+                dimension: tokens.sizes.icon,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.refresh),
+      );
+    }
     return Tooltip(
       message: espera > 0
           ? 'Aguarde ${_tempo(espera)} para pedir nova coleta.'

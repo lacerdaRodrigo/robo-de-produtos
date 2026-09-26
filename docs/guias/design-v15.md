@@ -59,6 +59,15 @@ As duas imagens raster usam cerâmica, etiqueta, lente e sino: descoberta e
 acompanhamento. Elas aparecem no acesso e em estados adequados, nunca em cada
 card. Os catálogos não reservam espaços vazios para fotos indisponíveis.
 
+No acesso compacto, a assinatura usa a marca horizontal oficial no claro e
+símbolo mais palavra em contraste no escuro. A ilustração de descoberta ocupa
+a largura útil com proporção responsiva, preservando a arte inteira sem cortar
+seus objetos, e o título usa a escala de tela de 28–32 px, permitindo quebra
+natural em larguras menores e com texto ampliado. O aviso técnico de Firebase e
+API não é um cartão da composição visual de acesso. No Flutter, a variante
+transparente da arte permite que o fundo use o papel claro ou o grafite escuro
+do tema, sem criar um quadrado branco na tela escura.
+
 [Briefs e inventário](../../design-app/mobile-v15/assets/PROMPTS.md).
 
 ## Arquitetura da experiência
@@ -72,16 +81,16 @@ origem; abrir condições não deve limpar busca, filtro ou página.
 | `launch` | Marca animada → login ou sessão local existente. |
 | `login` | Validação, senha visível, recuperação, entrada demonstrativa. |
 | `recovery`, `recovery-sent` | Pedido simulado com confirmação e retorno ao acesso. |
-| `home` | Primeiro evento não lido em destaque, demais mudanças e origens. |
-| `explore` | Inter, Livelo e Pichau, com descrição inequívoca. |
-| `inter` | Escolha entre Sites parceiros e Compre direto. |
+| `home` | Cabeçalho, estado resumido, origens e acesso à Central; alertas não são renderizados como cartão de destaque na Home. |
+| `explore` | Marca `radar.` com rótulo Explorar, retorno pelo botão Android/gesto, área segura do sistema, kicker `ESCOLHA SEU CAMINHO`, título responsivo em duas linhas, descrição curta e cards de Inter, Livelo e Pichau com descrição inequívoca; o hub não exibe campo de busca. |
+| `inter` | Escolha entre Sites parceiros e Compre direto; cada card abre sua própria rota interna, sem renderizar o catálogo abaixo da escolha. |
 | `partners` | Cashback por loja, principal/secundário, condições e acompanhamento. |
 | `direct` | Produtos agrupados por loja, busca e filtros; preço, cashback e estimativa. |
-| `livelo` | Lojas e pontuação; base, Clube, campanha e validade. |
-| `pichau` | PCs gamer, Pix/cartão, disponibilidade e histórico. |
+| `livelo` | Cabeçalho Livelo/Catálogo com voltar e atualizar por ícone, título Lojas e pontos sem descrição redundante, busca com avanço, abas Lojas/No radar, filtros e cartões com categoria/última coleta, loja, pontuação, base, Clube, campanha, validade, acompanhamento, condições e histórico. Condições e abertura externa usam folhas próprias; o histórico mostra Clube quando o payload da medição o fornece, com título da loja, status Completa e paginação. |
+| `pichau` | Cabeçalho Pichau/Catálogo com voltar e atualizar, título PCs gamer, busca com avanço, abas Todos/No radar, folha `Filtros · Pichau` com ordem Pix, disponibilidade, faixa de preço e ações Limpar/Aplicar filtros, cards com SKU, disponibilidade no canto direito, título longo em duas linhas, preços Pix/cartão e desconto; Detalhes reúne abertura externa e histórico. |
 | `detail` | Identidade do item, valores, especificações, seguir e destino. |
 | `watching` | Lista pessoal, origem, busca, remoção e desfazer. |
-| `alerts` | Eventos, filtros, paginação e estado de leitura. |
+| `alerts` | Cabeçalho com `Voltar`, `Mudou. Você viu.` e preferências, abas `Todos`/`Não lidos`, filtro em folha, janela de 90 dias, feed de eventos, paginação e estado de leitura; o botão/gesto Android retorna à rota anterior e a barra inferior permanece visível no compacto. |
 | `profile` | Conta, preferências, suporte, gestão autorizada e saída. |
 | `appearance` | Claro, escuro, sistema e movimento reduzido. |
 | `notifications` | Preferências por tipo e permissão demonstrativa independente. |
@@ -90,7 +99,12 @@ origem; abrir condições não deve limpar busca, filtro ou página.
 | `admin`, `confirm` | Gestão por domínio, impacto, frase exata, cancelamento. |
 
 Folhas reutilizáveis: condições, histórico, filtros do catálogo, filtros de
-alertas, saída, destino externo, permissão e restauração da demonstração.
+alertas, saída, destino externo, permissão e restauração da demonstração. A
+folha de histórico usa cabeçalho centralizado com voltar/fechar, identificação
+do produto, resumo de mínimo e máximo, total da janela de 30 dias e medições
+com preço, cashback e após cashback alinhados à direita. Quando houver mais de
+uma página, a folha mostra cinco medições por vez, o indicador `1 de N` (com o
+número da página atual) e setas circulares de anterior/próxima.
 
 ## Composição e comportamento
 
@@ -133,6 +147,9 @@ deve mostrar marca estática e combinar com a entrada Flutter, sem duplicar a es
 - Preço, disponibilidade e benefício têm texto; cor não é a única informação.
 - Contraste medido nos pares de texto; foco visível e retorno de foco nas folhas.
 - Conteúdo atrás de modal fica inerte. Escape fecha e Tab permanece no diálogo.
+- Ao abrir o teclado, uma folha reduz sua altura útil e sobe acima dele. Campos
+  e ações de filtros continuam alcançáveis por rolagem, sem o teclado cobrir o
+  valor em edição ou cortar opções de seleção.
 - Texto de até 200%, larguras compactas e rolagem sem truncar condições.
 - Direção RTL usa propriedades lógicas e espelha setas direcionais, não a marca.
 - Movimento reduzido inclusive no skeleton e nos SVGs animados.
@@ -176,5 +193,5 @@ O fechamento do backend mobile V15 adiciona somente a leitura autenticada dos
 acompanhamentos pessoais, o bloco `radar` do resumo e índices aditivos. Não há
 acesso do Flutter ao banco, remoção de schema ou mudança da autorização.
 Migration, publicação, hardware e aceite físico continuam discriminados no
-[plano de backend e reteste](../planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md)
-e no [relatório de validação](../../design-app/mobile-v15/review/VALIDACAO.md).
+[PRD de aceite Mobile V15](../prd/PRD-ACEITE-MOBILE-V15.md), nas
+[pendências](../PENDENCIAS.md) e no [relatório visual](../../design-app/mobile-v15/review/VALIDACAO.md).

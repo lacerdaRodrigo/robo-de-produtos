@@ -148,7 +148,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RF22** | Permitir buscar no catálogo por nome ou `slug` normalizados e selecionar/remover uma loja da lista pessoal do Inter sob autenticação |
 | **RF23** | Exibir publicamente as favoritas do Inter usando o retrato válido mais recente, inclusive quando uma favorita não apareceu na última coleta |
 | **RF24** | Ordenar as favoritas por maior `fullCashbackValue`, com opções de busca por nome e ordenação alfabética |
-| **RF25** | Mostrar no card o texto de cashback, o valor numérico quando aplicável, a etiqueta promocional e a descrição completa de `redirectWarning` |
+| **RF25** | Mostrar no card o texto de cashback e a etiqueta promocional quando aplicável; abrir a descrição completa de `redirectWarning` na folha de condições |
 | **RF26** | Guardar também `partialCashback`, `partialCashbackValue` e `redirectWarningBasicAccount`, mas não misturá-los com a oferta principal |
 | **RF27** | Usar em cada card a rota individual oficial `https://shopping.inter.co/site-parceiro/lojas/{slug}`, aberta somente por ação da pessoa |
 | **RF28** | Criar páginas próprias para consulta e cadastro do Inter e incluí-las na navegação sem mudar o comportamento das rotas da Livelo |
@@ -157,6 +157,8 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RF31** | Mostrar falha, dado atrasado e loja ausente como estados distintos; nenhum deles pode aparecer como cashback zero |
 | **RF32** | Exibir a oferta para não-correntista em uma seção secundária identificada, recolhida por padrão, quando ela existir |
 | **RF33** | Consultar separadamente a última tentativa e a última execução válida, para mostrar falha recente sem substituir os cashbacks válidos anteriores |
+| **RF34** | Expor o filtro editorial de categoria dos Sites parceiros com taxonomia canônica e fallback `Outros`, sem inferir categoria a partir do nome ou da oferta |
+| **RF35** | Permitir que a administração atualize o mapeamento de categoria de uma loja por endpoint protegido, sem alterar a fonte externa |
 
 ### 5.2 Não-funcionais
 
@@ -211,6 +213,9 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RN50** | Textos e percentuais de execuções diferentes nunca são combinados no mesmo card |
 | **RN51** | Toda tentativa é registrada com estado `iniciada`, `sucesso` ou `falha`. Somente `sucesso` pode ser origem dos cards; falha guarda código controlado, nunca payload ou exceção bruta |
 | **RN52** | A V3 não apaga automaticamente execuções nem snapshots. Retenção só será criada se as tabelas do Inter ultrapassarem 100 MB, mediante nova decisão documentada |
+| **RN53** | As categorias funcionais são `Beleza`, `Casa`, `Eletrônicos`, `Esporte`, `Moda`, `Outros` e `Pets`; “Todas as categorias” é ausência do parâmetro, não uma categoria persistida |
+| **RN54** | Loja sem mapeamento aprovado pertence a `Outros` até uma alteração administrativa explícita; o sistema não classifica por nome, marca ou texto do cashback |
+| **RN55** | `GET /api/inter/cashback` aplica `categoria` antes da contagem e da paginação; código desconhecido retorna validação 400 |
 
 ### 6.1 O significado dos campos
 
@@ -410,6 +415,12 @@ cashback_inter
   cashback_secundario_texto, cashback_secundario_valor,
   etiqueta, descricao_principal, descricao_secundaria, encontrada
 
+categoria_cashback_inter
+  codigo PRIMARY KEY, nome UNIQUE, ordem UNIQUE
+
+mapeamento_categoria_cashback_inter
+  loja_inter_id PRIMARY KEY, categoria, atualizado_em
+
 disparo_manual_inter
   id, momento
 ```
@@ -427,6 +438,11 @@ disparo_manual_inter
 - `execucao_inter.estado` aceita somente `iniciada`, `sucesso` ou `falha`; `codigo_falha` usa uma enumeração controlada pela aplicação.
 - Não existe `apelido_inter`: a busca usa `nome` e `slug` normalizados, e a seleção persiste o ID externo.
 - Não há exclusão automática de histórico na V3 (RN52).
+- A categoria da loja é editorial e fica separada do snapshot de cashback. Sem
+  linha em `mapeamento_categoria_cashback_inter`, a consulta usa `outros`.
+- A administração atualiza esse vínculo por
+  `PATCH /api/inter/lojas/categoria` com `{ id, categoria }`; a fonte do Inter
+  continua sem categoria e não é modificada.
 
 ### 8.4 Atualização do catálogo
 
@@ -455,10 +471,23 @@ Cada card contém:
 2. Texto principal, preservando “Até”.
 3. Rótulo “Cliente Inter Shopping”.
 4. Etiqueta promocional, quando existir.
-5. Condições completas ou mensagem explícita de ausência.
-6. Oferta secundária recolhida, quando existir.
-7. Momento da coleta.
-8. Botão “Ir para o Inter” com a rota individual da loja.
+5. Acesso às condições completas ou à mensagem explícita de ausência pela folha da oferta.
+6. Oferta secundária com o rótulo “Para não-correntista”, quando existir.
+7. Botão “Ir para o Inter” com a rota individual da loja.
+
+Na jornada mobile V15 de `Sites parceiros`, o cabeçalho exibe `Sites parceiros`,
+`Banco Inter`, retorno pela pilha e a ação administrativa de atualização como
+ícone. O catálogo compacto usa o título `Lojas com cashback`, busca com ação de
+avanço, abas planas `Todos`/`No radar`, ação `Filtros` e cartões com nome,
+benefício, contexto e ações de acompanhamento/destino; as condições completas
+ficam na folha aberta pelo botão `Condições`. A composição é responsiva e não
+altera os textos ou estados reais recebidos da API. A folha `Filtros · Sites
+parceiros` segue a composição V15 com os campos `Ordenar` e `Categoria` e as
+ações `Limpar` e `Aplicar filtros`; no contrato atual do endpoint, somente a
+ordenação e categoria são aplicadas à consulta. As opções são carregadas de
+`GET /api/inter/cashback/categorias`; `Todas as categorias` omite o parâmetro.
+O mapeamento é editorial no servidor porque a fonte pública do Inter não traz
+categoria por loja.
 
 O topo mostra total de favoritas, total de lojas lidas e maior cashback numérico entre as favoritas. Não chama o primeiro lugar de “melhor oferta”, conforme §6.3.
 
@@ -766,11 +795,16 @@ Em 2026-08-14, o endpoint público retornou 381 lojas válidas, incluindo C&A, R
   snapshot histórico de `cashback_inter` continua restrito às acompanhadas e
   só complementa uma favorita na execução correspondente; não há mistura de
   ofertas de execuções diferentes.
+- O contrato aceita `categoria=beleza|casa|eletronicos|esporte|moda|outros|pets`
+  e devolve o código `categoria` em cada item. A rota
+  `GET /api/inter/cashback/categorias` devolve código e rótulo na ordem visual;
+  a rota administrativa `PATCH /api/inter/lojas/categoria` mantém o
+  mapeamento por loja.
 - Produtos de Sites parceiros não fazem parte desta evolução. O PRD de
   Produtos continua limitado a **Compre direto** até que exista decisão e
   contrato específicos para a nova fonte.
 
-No aplicativo mobile V12 Delta, as abas de Sites parceiros consultam 10 cartões por
+No aplicativo mobile V15, as abas de Sites parceiros consultam 10 cartões por
 página. `PaginacaoRadar` troca a página exibida sem carregar e acumular cards
 pela rolagem; não é mostrada com até 10 resultados e a página 2 só aparece a
 partir de 11. A aba Acompanhadas segue a mesma regra, preservando filtro e
@@ -801,7 +835,7 @@ vazia apesar de haver acompanhamento pessoal.
 
 **Implementado em 7 de setembro de 2026.** O catálogo compacto do aplicativo
 mantém uma prévia curta no card e oferece a ação **Ver condições**. A ação abre
-uma folha Delta rolável com o texto integral de `descricao_principal`, preservando
+uma folha V15 rolável com o texto integral de `descricao_principal`, preservando
 quebras de linha e múltiplas faixas retornadas em `redirectWarning`.
 
 - A descrição vazia continua usando exatamente “O Inter não informou condições
@@ -815,3 +849,18 @@ No cartão compacto, a ação de acompanhamento fica em uma linha própria. A
 linha seguinte reúne **Ver condições** e **Ir para o Inter**, mantendo a
 abertura externa como ação primária e evitando o desalinhamento causado por
 ações quebradas em um `Wrap` alinhado ao fim.
+
+### 16.2. Entrada compacta do Banco Inter
+
+Na jornada mobile V15, a entrada do Banco Inter fica ancorada em
+`Explorar → Banco Inter` e apresenta o cabeçalho `Banco Inter` com o subtítulo
+`Escolha a experiência`. O cabeçalho oferece retorno visível para Explorar; o
+botão usa a pilha de navegação existente e o back/gesto Android retorna à mesma
+rota anterior.
+
+A tela inicial exibe somente os dois caminhos definidos pelo protótipo:
+**Sites parceiros** e **Compre direto**, com suas descrições completas. Os
+contadores do resumo pessoal não são renderizados nesses cards; eles continuam
+disponíveis somente nas telas e resumos que os usam como métrica. O conteúdo
+se adapta à largura disponível, rola em alturas menores e não fixa a composição
+em um único modelo de aparelho.

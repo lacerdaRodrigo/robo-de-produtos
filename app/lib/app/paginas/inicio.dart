@@ -155,11 +155,7 @@ class _PaginaInicioState extends State<PaginaInicio>
                       ),
                     ),
                     SizedBox(height: context.tokens.spacing.five),
-                    _HeroResumoCompacto(
-                      resumo: resumo,
-                      aoAbrirProdutos: widget.aoAbrirProdutos,
-                      aoAbrirAlertas: widget.aoAbrirAlertas,
-                    ),
+                    _HeroResumoCompacto(resumo: resumo),
                   ] else
                     _CabecalhoResumo(
                       resumo: resumo,
@@ -298,110 +294,15 @@ class _CabecalhoResumo extends StatelessWidget {
 }
 
 class _HeroResumoCompacto extends StatelessWidget {
-  const _HeroResumoCompacto({
-    required this.resumo,
-    required this.aoAbrirProdutos,
-    required this.aoAbrirAlertas,
-  });
+  const _HeroResumoCompacto({required this.resumo});
 
   final ResumoInicio resumo;
-  final VoidCallback? aoAbrirProdutos;
-  final VoidCallback? aoAbrirAlertas;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final tema = Theme.of(context);
-    final destaque = resumo.radar.destaque;
-    final origem = destaque == null ? null : _nomeDominio(destaque.origem);
-    final leitura = destaque == null
-        ? resumo.radar.estado == EstadoResumo.indisponivel
-              ? 'O sinal pessoal está indisponível. Tente atualizar novamente.'
-              : 'Nenhum alerta não lido por enquanto.'
-        : '${destaque.valorAnterior ?? '—'} → ${destaque.valorAtual} · ${_dataHora(destaque.criadoEm)}';
-    final acaoPrincipal = destaque?.origem == 'inter_produto'
-        ? aoAbrirProdutos
-        : aoAbrirAlertas;
-    final cartao = DecoratedBox(
-      decoration: BoxDecoration(
-        color: tema.brightness == Brightness.dark
-            ? Tokens.acaoFundoEscuro
-            : Tokens.actionSoft,
-        borderRadius: BorderRadius.circular(tokens.radii.xl),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(tokens.spacing.five),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              destaque == null ? 'SEU RADAR, SEU RITMO' : 'SINAL DO SEU RADAR',
-              style: tema.textTheme.labelSmall?.copyWith(
-                color: tema.brightness == Brightness.dark
-                    ? cores.acao
-                    : Tokens.actionStrong,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-              ),
-            ),
-            SizedBox(height: tokens.spacing.two),
-            Text(
-              origem ?? 'Seu radar está em dia',
-              style: tema.textTheme.titleLarge?.copyWith(
-                color: cores.texto,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            SizedBox(height: tokens.spacing.two),
-            Text(
-              leitura,
-              style: tema.textTheme.bodyMedium?.copyWith(
-                color: cores.textoSuave,
-                height: 1.4,
-              ),
-            ),
-            SizedBox(height: tokens.spacing.four),
-            Wrap(
-              spacing: tokens.spacing.two,
-              runSpacing: tokens.spacing.two,
-              children: [
-                _SinalResumo(
-                  texto: destaque == null
-                      ? _rotuloEstado(resumo.radar.estado)
-                      : 'Não lido',
-                  cor: destaque == null ? cores.ganho : cores.acao,
-                ),
-                Text(
-                  _dataHora(resumo.geradoEm),
-                  style: tema.textTheme.labelMedium?.copyWith(
-                    color: cores.textoSuave,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: tokens.spacing.three),
-            if (acaoPrincipal != null)
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: acaoPrincipal,
-                  icon: Icon(
-                    destaque?.origem == 'inter_produto'
-                        ? Icons.search
-                        : Icons.notifications_none,
-                  ),
-                  label: Text(
-                    destaque?.origem == 'inter_produto'
-                        ? 'Comparar produtos'
-                        : 'Ver alertas',
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -415,7 +316,7 @@ class _HeroResumoCompacto extends StatelessWidget {
         ),
         SizedBox(height: tokens.spacing.two),
         Text(
-          'Boas escolhas\ncomeçam aqui.',
+          'Boas escolhas começam aqui.',
           style: tema.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
             height: 1.1,
@@ -436,7 +337,6 @@ class _HeroResumoCompacto extends StatelessWidget {
           style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
         ),
         SizedBox(height: tokens.spacing.five),
-        cartao,
       ],
     );
   }
@@ -609,29 +509,6 @@ class _ColecaoRadarCompacta extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SinalResumo extends StatelessWidget {
-  const _SinalResumo({required this.texto, required this.cor});
-
-  final String texto;
-  final Color cor;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-    decoration: BoxDecoration(
-      color: cor.withValues(alpha: 0.16),
-      borderRadius: BorderRadius.circular(context.tokens.radii.md),
-    ),
-    child: Text(
-      texto,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-        color: cor,
-        fontWeight: FontWeight.w800,
-      ),
-    ),
-  );
 }
 
 class _AvisoFalhaAtualizacao extends StatelessWidget {
@@ -1253,14 +1130,6 @@ String _descricaoEstado(EstadoResumo estado) => switch (estado) {
   EstadoResumo.semDados =>
     'Ainda não existe uma coleta válida para este recorte.',
   _ => 'Os dados estão dentro do intervalo esperado.',
-};
-
-String _nomeDominio(String dominio) => switch (dominio) {
-  'livelo' => 'Livelo',
-  'cashback' || 'cashback_inter' => 'Cashback Inter',
-  'produtos' || 'produtos_inter' => 'Produtos Inter',
-  'pichau' => 'Pichau',
-  _ => 'Uma fonte acompanhada',
 };
 
 String _rotuloEstado(EstadoResumo estado) => switch (estado) {

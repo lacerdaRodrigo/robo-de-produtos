@@ -16,7 +16,7 @@ nunca em arquivo versionado.
 | [`app-robo.yml`](workflows/app-robo.yml) | CI mobile; na `main` aprovada, gera APK debug e envia cópia privada ao Drive com aviso por e-mail | a cada push/PR; distribuição na `main` ou manual | `GOOGLE_DRIVE_OAUTH_CLIENT_JSON`, `GOOGLE_DRIVE_REFRESH_TOKEN`, `GOOGLE_DRIVE_FOLDER_ID`, `EMAIL_DESTINO`, `EMAIL_REMETENTE`, `SENHA_APP_GMAIL` |
 | [`notificacoes-outbox.yml`](workflows/notificacoes-outbox.yml) | Acorda a API para processar a outbox FCM; a API envia pelo Firebase Admin SDK | a cada 15 minutos + manual | `OUTBOX_CRON_SECRET` |
 
-O CI do app não executa Web, integration, E2E ou smoke. Pull requests apenas
+O CI do app valida Android/iOS e não executa integração, E2E ou smoke. Pull requests apenas
 validam; a distribuição de APK acontece somente após push humano na `main` ou
 por disparo manual explícito. A APK não é publicada como artifact do GitHub,
 porque o repositório é público: ela vai para uma pasta privada do Drive e o

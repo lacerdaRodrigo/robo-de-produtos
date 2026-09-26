@@ -258,7 +258,7 @@ aparece em **Outros / novas categorias**. Quando uma oferta deixa de vir numa
 coleta, ela deixa apenas os resultados ativos daquela coleta, preservando as
 regras já existentes de histórico e publicação.
 
-No Flutter mobile V12 Delta, a entrada **Comece por uma área** permanece uma ação de
+No Flutter mobile V15, a entrada **Comece por uma área** permanece uma ação de
 descoberta contextual. Ela usa cartão com ícone, texto de apoio e CTA
 contornado `Escolher categoria`, com largura total e alvo de toque de 44 px; quando
 um recorte está ativo, o mesmo controle
@@ -542,7 +542,7 @@ Seguir `AGENTS.md`: somente unitários/widgets diretamente afetados.
 - [ ] nomes longos continuam sem overflow;
 - [ ] claro/escuro continuam funcionando onde aplicável.
 
-Não criar integração, E2E, smoke, performance ou teste Web para esta mudança.
+Não criar integração, E2E, smoke, performance ou build/teste Web para esta mudança.
 
 ### Fase 8 — migração/limpeza de banco
 
@@ -625,7 +625,7 @@ Este plano não autoriza:
 - usar IA para classificar produtos;
 - alterar Livelo;
 - alterar Inter Sites Parceiros;
-- mexer no Web por consequência desta decisão;
+- criar uma superfície Flutter diferente do Android/iOS por consequência desta decisão;
 - remover migration histórica já aplicada;
 - executar mudança destrutiva no banco sem aprovação.
 
@@ -635,7 +635,6 @@ A decisão deste plano entra em conflito com partes da documentação criada par
 
 Após aprovação e durante a implementação, revisar somente os trechos afetados em:
 
-- `docs/planos/PLANO-MODIFICACAO-PRODUTOS.md`;
 - planos temporários de categorias da etapa anterior, já incorporados a este
   PRD e sem documento vigente separado;
 - documentação/PRD que declare `categoria_radar` como fonte funcional dos produtos;

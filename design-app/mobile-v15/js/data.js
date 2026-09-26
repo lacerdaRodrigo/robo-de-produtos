@@ -513,13 +513,15 @@
         return;
       }
       history[item.id] = Array.from(
-        { length: item.domain === "livelo" ? 12 : 14 },
+        { length: item.domain === "livelo" ? 12 : item.domain === "direct" ? 29 : 14 },
         (_, i) => ({
           id: `${item.id}:h${i}`,
           date:
-            i === 0
-              ? item.updated
-              : `${String(18 - Math.floor((i + 1) / 2)).padStart(2, "0")}/09, ${i % 2 ? "14:10" : "09:10"}`,
+            item.domain === "direct"
+              ? `${String(20 - Math.floor(i / 3)).padStart(2, "0")} set 2026`
+              : i === 0
+                ? item.updated
+                : `${String(18 - Math.floor((i + 1) / 2)).padStart(2, "0")}/09, ${i % 2 ? "14:10" : "09:10"}`,
           price: item.price == null ? null : item.price + (i > 2 ? 20000 : 0),
           cardPrice:
             item.cardPrice == null
@@ -527,6 +529,8 @@
               : item.cardPrice + (i > 2 ? 20000 : 0),
           points: item.points == null ? null : i > 2 ? item.base : item.points,
           club: item.club == null ? null : i > 2 ? item.base : item.club,
+          cashback: item.cashback == null ? null : item.cashback,
+          net: item.net == null ? null : item.net + (i > 2 ? 20000 : 0),
           benefitText: item.benefitText || null,
           status: "Completa",
           available: item.available !== false,

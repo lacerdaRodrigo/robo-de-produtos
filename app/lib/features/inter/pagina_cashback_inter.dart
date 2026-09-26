@@ -68,10 +68,39 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               porPagina: _itensPorPagina,
               acompanhamentoPessoal: !widget.administrador,
             ),
+        buscarComCategoria:
+            ({
+              required q,
+              required ordenar,
+              required categoria,
+              required pagina,
+            }) => widget.api.painelCashbackInter(
+              q: q,
+              ordenar: ordenar,
+              categoria: categoria,
+              pagina: pagina,
+              porPagina: _itensPorPagina,
+              acompanhamentoPessoal: !widget.administrador,
+            ),
         buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
             widget.api.painelCashbackInter(
               q: q,
               ordenar: ordenar,
+              pagina: pagina,
+              porPagina: _itensPorPagina,
+              apenasAcompanhadas: true,
+              acompanhamentoPessoal: !widget.administrador,
+            ),
+        buscarAcompanhadasComCategoria:
+            ({
+              required q,
+              required ordenar,
+              required categoria,
+              required pagina,
+            }) => widget.api.painelCashbackInter(
+              q: q,
+              ordenar: ordenar,
+              categoria: categoria,
               pagina: pagina,
               porPagina: _itensPorPagina,
               apenasAcompanhadas: true,
@@ -84,6 +113,8 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
   final _acompanhamentoAlterado = <String, bool>{};
   final _alterandoAcompanhamento = <String>{};
   final _salvamentosAcompanhamento = <String, Future<void>>{};
+  var _categorias = const <CategoriaCashbackInter>[];
+  Object? _erroCategorias;
   late var _filtroCompacto =
       _controlador.filtro == FiltroCashbackInter.acompanhadas ? 1 : 0;
 
@@ -92,6 +123,21 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _controlador.carregarInicial();
+    unawaited(_carregarCategorias());
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await widget.api.categoriasCashbackInter();
+      if (!mounted) return;
+      setState(() {
+        _categorias = categorias;
+        _erroCategorias = null;
+      });
+    } catch (erro) {
+      if (!mounted) return;
+      setState(() => _erroCategorias = erro);
+    }
   }
 
   @override
@@ -334,27 +380,31 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         ...widget.sliversAntesDoCashback,
-        if (widget.mostrarAtualizacao)
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(margem, 16, margem, 8),
-            sliver: SliverToBoxAdapter(
-              child: BotaoDisparo(
-                api: widget.api,
-                dominio: 'inter',
-                administrador: widget.administrador,
-                rotulo: 'Atualizar Cashback',
-              ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            margem,
+            context.tokens.spacing.four,
+            margem,
+            context.tokens.spacing.two,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              'Lojas com cashback',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
+        ),
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(margem, 0, margem, 0),
+          padding: EdgeInsets.symmetric(horizontal: margem),
           sliver: SliverToBoxAdapter(
             child: CampoBuscaRadar(
               controlador: _campoBusca,
               chaveCampo: const Key('busca-cashback-inter'),
-              dica: 'Buscar loja',
+              dica: 'Qual loja você procura?',
               aoMudar: _controlador.mudarBusca,
-              somenteBusca: true,
+              aoAcionar: () => _controlador.mudarBusca(_campoBusca.text),
             ),
           ),
         ),
@@ -444,16 +494,6 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
       ? _controlador.itens.where(_estaAcompanhada).toList(growable: false)
       : _controlador.itens;
 
-  int get _totalCatalogoCompacto =>
-      widget.totalCatalogo ??
-      (_controlador.filtro == FiltroCashbackInter.todas
-          ? _controlador.totalItens
-          : _controlador.itens.length);
-
-  int get _totalAcompanhadasCompacto =>
-      widget.totalAcompanhadas ??
-      _controlador.itens.where(_estaAcompanhada).length;
-
   List<Widget> _estadoCompacto(double margem) {
     if (_controlador.atualizadoEm == null || _controlador.carregando) {
       return const [];
@@ -470,8 +510,6 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
         sliver: SliverToBoxAdapter(
           child: _FiltrosCompactosInter(
             selecionado: _filtroCompacto,
-            totalCatalogo: _totalCatalogoCompacto,
-            totalAcompanhadas: _totalAcompanhadasCompacto,
             aoSelecionar: _selecionarFiltroCompacto,
           ),
         ),
@@ -484,8 +522,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
             children: [
               _BarraResultadosCashbackInter(
                 total: _controlador.totalItens,
-                acompanhadas: _filtroCompacto == 1,
-                pagina: _controlador.pagina,
+                aoFiltrar: _abrirFiltros,
               ),
               if (falhou || atrasada) ...[
                 const SizedBox(height: 10),
@@ -600,27 +637,51 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     if (!mounted || _controlador.pagina != pagina) return;
     await rolarParaInicioPaginaRadar(_rolagem);
   }
+
+  Future<void> _abrirFiltros() async {
+    final filtros = await mostrarFolhaRadar<_FiltrosCashbackInterResultado>(
+      context,
+      alturaMaxima: 0.62,
+      builder: (_) => FolhaRadar(
+        titulo: 'Filtros · Sites parceiros',
+        descricao: '',
+        mostrarVoltar: false,
+        child: Flexible(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: _FiltrosCashbackInter(
+              selecionada: _controlador.ordenacao,
+              categoriaSelecionada: _controlador.categoria,
+              categorias: _categorias,
+              erroCategorias: _erroCategorias,
+            ),
+          ),
+        ),
+      ),
+    );
+    if (mounted && filtros != null) {
+      await _controlador.mudarFiltros(
+        ordenacao: filtros.ordenacao,
+        categoria: filtros.categoria,
+      );
+    }
+  }
 }
 
 class _FiltrosCompactosInter extends StatelessWidget {
   const _FiltrosCompactosInter({
     required this.selecionado,
-    required this.totalCatalogo,
-    required this.totalAcompanhadas,
     required this.aoSelecionar,
   });
 
   final int selecionado;
-  final int totalCatalogo;
-  final int totalAcompanhadas;
   final ValueChanged<int> aoSelecionar;
 
   @override
   Widget build(BuildContext context) => AbasRadar(
     key: const Key('filtros-cashback-inter'),
-    rotulos: const ['Todas', 'Acompanhadas'],
-    contadores: [totalCatalogo, totalAcompanhadas],
-    expandir: true,
+    rotulos: const ['Todos', 'No radar'],
+    plana: true,
     selecionada: selecionado,
     aoSelecionar: aoSelecionar,
   );
@@ -629,70 +690,231 @@ class _FiltrosCompactosInter extends StatelessWidget {
 class _BarraResultadosCashbackInter extends StatelessWidget {
   const _BarraResultadosCashbackInter({
     required this.total,
-    required this.acompanhadas,
-    required this.pagina,
+    required this.aoFiltrar,
   });
 
   final int total;
-  final bool acompanhadas;
-  final int pagina;
+  final VoidCallback aoFiltrar;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final resumo = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          acompanhadas
-              ? 'Suas lojas acompanhadas'
-              : 'Catálogo completo de cashback',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: cores.textoSuave,
-            fontSize: 9,
-          ),
-        ),
-      ],
-    );
+    final tokens = context.tokens;
     return Container(
       key: const Key('barra-resultados-cashback-inter'),
-      padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: cores.borda.withValues(alpha: 0.76)),
-        ),
-      ),
+      padding: EdgeInsets.only(top: tokens.spacing.three),
       child: Row(
         children: [
-          Expanded(child: resumo),
-          const SizedBox(width: 10),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: cores.ganho,
-              shape: BoxShape.circle,
+          Expanded(
+            child: Text(
+              '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
             ),
-            child: const SizedBox.square(dimension: 6),
           ),
-          const SizedBox(width: 6),
-          Text(
-            'Página $pagina',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: cores.ganho,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
+          OutlinedButton.icon(
+            key: const Key('abrir-filtros-cashback-inter'),
+            onPressed: aoFiltrar,
+            icon: const Icon(Icons.tune_rounded, size: 18),
+            label: const Text('Filtros'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size(0, tokens.sizes.touchTarget),
+              padding: EdgeInsets.symmetric(horizontal: tokens.spacing.three),
+              foregroundColor: cores.texto,
+              side: BorderSide(color: cores.borda),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.radii.md),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _FiltrosCashbackInter extends StatefulWidget {
+  const _FiltrosCashbackInter({
+    required this.selecionada,
+    required this.categoriaSelecionada,
+    required this.categorias,
+    required this.erroCategorias,
+  });
+
+  final OrdenacaoCashbackInter selecionada;
+  final String? categoriaSelecionada;
+  final List<CategoriaCashbackInter> categorias;
+  final Object? erroCategorias;
+
+  @override
+  State<_FiltrosCashbackInter> createState() => _EstadoFiltrosCashbackInter();
+}
+
+class _EstadoFiltrosCashbackInter extends State<_FiltrosCashbackInter> {
+  late OrdenacaoCashbackInter _ordenacao = widget.selecionada;
+  static const _categoriaTodas = '';
+  late String _categoria = widget.categoriaSelecionada ?? _categoriaTodas;
+
+  String _rotuloOrdenacao(OrdenacaoCashbackInter valor) =>
+      valor == OrdenacaoCashbackInter.nome ? 'Nome da loja' : valor.rotulo;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    final tema = Theme.of(context);
+    final estiloRotulo = tema.textTheme.bodySmall?.copyWith(
+      color: cores.texto,
+      fontWeight: FontWeight.w700,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Ordenar', style: estiloRotulo),
+        SizedBox(height: tokens.spacing.one),
+        Semantics(
+          label: 'Ordenar',
+          value: _rotuloOrdenacao(_ordenacao),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: tokens.sizes.field),
+            child: DropdownButtonFormField<OrdenacaoCashbackInter>(
+              key: const Key('filtro-ordenacao-cashback-inter'),
+              initialValue: _ordenacao,
+              isExpanded: true,
+              alignment: AlignmentDirectional.centerStart,
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: tokens.sizes.icon,
+              ),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.four,
+                  vertical: tokens.spacing.three,
+                ),
+              ),
+              items: [
+                for (final valor in OrdenacaoCashbackInter.values)
+                  DropdownMenuItem(
+                    value: valor,
+                    child: Text(_rotuloOrdenacao(valor)),
+                  ),
+              ],
+              onChanged: (valor) {
+                if (valor != null) setState(() => _ordenacao = valor);
+              },
+            ),
+          ),
+        ),
+        SizedBox(height: tokens.spacing.four),
+        Text('Categoria', style: estiloRotulo),
+        SizedBox(height: tokens.spacing.one),
+        Semantics(
+          label: 'Categoria',
+          value: _rotuloCategoria,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: tokens.sizes.field),
+            child: DropdownButtonFormField<String>(
+              key: const Key('filtro-categoria-cashback-inter'),
+              initialValue: _categoria,
+              isExpanded: true,
+              alignment: AlignmentDirectional.centerStart,
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: tokens.sizes.icon,
+              ),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: tokens.spacing.four,
+                  vertical: tokens.spacing.three,
+                ),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: _categoriaTodas,
+                  child: Text('Todas as categorias'),
+                ),
+                for (final categoria in widget.categorias)
+                  DropdownMenuItem(
+                    key: ValueKey('opcao-categoria-${categoria.codigo}'),
+                    value: categoria.codigo,
+                    child: Text(categoria.nome),
+                  ),
+              ],
+              onChanged: (valor) {
+                if (valor != null) setState(() => _categoria = valor);
+              },
+            ),
+          ),
+        ),
+        if (widget.erroCategorias != null)
+          Padding(
+            padding: EdgeInsetsDirectional.only(top: tokens.spacing.two),
+            child: Text(
+              'Não foi possível carregar as categorias. Tente novamente.',
+              style: tema.textTheme.bodySmall?.copyWith(color: cores.perigo),
+            ),
+          ),
+        SizedBox(height: tokens.spacing.four),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                key: const Key('limpar-filtros-cashback-inter'),
+                onPressed: () => Navigator.of(context).pop(
+                  const _FiltrosCashbackInterResultado(
+                    ordenacao: OrdenacaoCashbackInter.cashback,
+                    categoria: null,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cores.superficieAlternativa,
+                  foregroundColor: cores.texto,
+                  minimumSize: Size(0, tokens.sizes.touchTarget),
+                ),
+                child: const Text('Limpar'),
+              ),
+            ),
+            SizedBox(width: tokens.spacing.three),
+            Expanded(
+              child: FilledButton(
+                key: const Key('aplicar-filtros-cashback-inter'),
+                onPressed: () => Navigator.of(context).pop(
+                  _FiltrosCashbackInterResultado(
+                    ordenacao: _ordenacao,
+                    categoria: _categoria.isEmpty ? null : _categoria,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cores.acao,
+                  foregroundColor: cores.marcaTexto,
+                  minimumSize: Size(0, tokens.sizes.touchTarget),
+                ),
+                child: const Text('Aplicar filtros'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String get _rotuloCategoria {
+    if (_categoria.isEmpty) return 'Todas as categorias';
+    for (final categoria in widget.categorias) {
+      if (categoria.codigo == _categoria) return categoria.nome;
+    }
+    return _categoria;
+  }
+}
+
+class _FiltrosCashbackInterResultado {
+  const _FiltrosCashbackInterResultado({
+    required this.ordenacao,
+    required this.categoria,
+  });
+
+  final OrdenacaoCashbackInter ordenacao;
+  final String? categoria;
 }

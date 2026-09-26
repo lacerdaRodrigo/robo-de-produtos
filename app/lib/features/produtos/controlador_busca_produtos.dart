@@ -7,6 +7,7 @@ import '../../core/api/pagina.dart';
 
 class FiltrosProdutos {
   const FiltrosProdutos({
+    this.ordenar = 'preco',
     this.marca = '',
     this.categoria = '',
     this.escopos = const [],
@@ -16,6 +17,7 @@ class FiltrosProdutos {
     this.precoMax = '',
   });
 
+  final String ordenar;
   final String marca;
   final String categoria;
 
@@ -31,6 +33,7 @@ class FiltrosProdutos {
   final String precoMax;
 
   FiltrosProdutos copiarCom({
+    String? ordenar,
     String? marca,
     String? categoria,
     List<String>? escopos,
@@ -39,6 +42,7 @@ class FiltrosProdutos {
     String? precoMin,
     String? precoMax,
   }) => FiltrosProdutos(
+    ordenar: ordenar ?? this.ordenar,
     marca: marca ?? this.marca,
     categoria: categoria ?? this.categoria,
     escopos: escopos ?? this.escopos,
@@ -86,6 +90,7 @@ class FiltrosProdutos {
   @override
   bool operator ==(Object other) =>
       other is FiltrosProdutos &&
+      other.ordenar == ordenar &&
       other.marca == marca &&
       other.categoria == categoria &&
       listEquals(other.escoposAtivos, escoposAtivos) &&
@@ -96,6 +101,7 @@ class FiltrosProdutos {
 
   @override
   int get hashCode => Object.hash(
+    ordenar,
     marca,
     categoria,
     Object.hashAll(escoposAtivos),
@@ -119,14 +125,31 @@ typedef BuscarProdutos =
       String? precoMax,
     });
 
+typedef BuscarProdutosComOpcoes =
+    Future<Pagina<ProdutoDireto>> Function({
+      required String termo,
+      required int pagina,
+      required String ordenar,
+      required bool apenasAcompanhados,
+      String? marca,
+      String? categoria,
+      String? escopo,
+      required bool semCategoria,
+      String? loja,
+      String? precoMin,
+      String? precoMax,
+    });
+
 /// Estado paginado da busca local de produtos (PRD-V4 RF43/RN70/RN71).
 class ControladorBuscaProdutos extends ChangeNotifier {
   ControladorBuscaProdutos({
     required this.buscar,
+    this.buscarComOpcoes,
     this.debounce = const Duration(milliseconds: 350),
   });
 
   final BuscarProdutos buscar;
+  final BuscarProdutosComOpcoes? buscarComOpcoes;
   final Duration debounce;
   final _itens = <ProdutoDireto>[];
   final _ids = <String>{};
@@ -135,6 +158,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   var _descartado = false;
   String _termo = '';
   FiltrosProdutos _filtros = const FiltrosProdutos();
+  var _apenasAcompanhados = false;
   int _pagina = 0;
   int _porPagina = 20;
   int _totalItens = 0;
@@ -152,6 +176,7 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   List<ProdutoDireto> get itens => List.unmodifiable(_itens);
   String get termo => _termo;
   FiltrosProdutos get filtros => _filtros;
+  bool get apenasAcompanhados => _apenasAcompanhados;
   int get totalItens => _totalItens;
   int get pagina => _pagina;
   int get porPagina => _porPagina;
@@ -178,6 +203,12 @@ class ControladorBuscaProdutos extends ChangeNotifier {
   void mudarFiltros(FiltrosProdutos valor) {
     if (valor == _filtros) return;
     _filtros = valor;
+    _reiniciar();
+  }
+
+  void mudarAcompanhados(bool valor) {
+    if (valor == _apenasAcompanhados) return;
+    _apenasAcompanhados = valor;
     _reiniciar();
   }
 
@@ -274,17 +305,35 @@ class ControladorBuscaProdutos extends ChangeNotifier {
     }
   }
 
-  Future<Pagina<ProdutoDireto>> _buscar({required int pagina}) => buscar(
-    termo: _termo.trim(),
-    pagina: pagina,
-    marca: _filtros.marcaOpcional,
-    categoria: _filtros.categoriaOpcional,
-    escopo: _filtros.escopoOpcional,
-    semCategoria: _filtros.semCategoria,
-    loja: _filtros.lojaOpcional,
-    precoMin: _filtros.precoMinOpcional,
-    precoMax: _filtros.precoMaxOpcional,
-  );
+  Future<Pagina<ProdutoDireto>> _buscar({required int pagina}) {
+    final buscarComOpcoes = this.buscarComOpcoes;
+    if (buscarComOpcoes != null) {
+      return buscarComOpcoes(
+        termo: _termo.trim(),
+        pagina: pagina,
+        ordenar: _filtros.ordenar,
+        apenasAcompanhados: _apenasAcompanhados,
+        marca: _filtros.marcaOpcional,
+        categoria: _filtros.categoriaOpcional,
+        escopo: _filtros.escopoOpcional,
+        semCategoria: _filtros.semCategoria,
+        loja: _filtros.lojaOpcional,
+        precoMin: _filtros.precoMinOpcional,
+        precoMax: _filtros.precoMaxOpcional,
+      );
+    }
+    return buscar(
+      termo: _termo.trim(),
+      pagina: pagina,
+      marca: _filtros.marcaOpcional,
+      categoria: _filtros.categoriaOpcional,
+      escopo: _filtros.escopoOpcional,
+      semCategoria: _filtros.semCategoria,
+      loja: _filtros.lojaOpcional,
+      precoMin: _filtros.precoMinOpcional,
+      precoMax: _filtros.precoMaxOpcional,
+    );
+  }
 
   void _aplicar(Pagina<ProdutoDireto> resposta, {bool substituir = false}) {
     if (substituir) {

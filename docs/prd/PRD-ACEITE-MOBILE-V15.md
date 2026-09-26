@@ -1,4 +1,8 @@
-# Relatório de teste em device — Mobile V15
+# PRD — Aceite físico do Mobile V15
+
+**Status:** registro completo da validação Android/iOS executada até 2026-09-19.
+Os cenários continuam sendo evidência, não substituem as pendências abertas em
+[`../PENDENCIAS.md`](../PENDENCIAS.md) nem autorizam publicação externa.
 
 ## Identificação
 
@@ -51,6 +55,12 @@ tentativa enquanto não houver condição de execução.
   `Marcar visíveis` zerou os itens carregados na página. Após reabrir, `33`
   alertas permaneceram fora da página carregada, comportamento compatível com
   a ação limitada aos itens visíveis e paginação.
+
+> Nota de manutenção (2026-09-20): o registro acima é evidência do APK build
+> `27503`, anterior à composição V15 da Central. A implementação atual usa
+> `Marcar todos como lidos`, percorre todas as páginas do recorte e mantém a
+> paginação; o aceite físico dessa versão ainda está pendente em
+> `docs/PENDENCIAS.md`.
 - ✅ Nenhuma remoção administrativa foi confirmada: a prévia Livelo abriu, a
   frase exata foi exigida e o botão permaneceu desabilitado sem confirmação.
 - ✅ Bloqueio/desbloqueio com o app aberto preservou a rota administrativa e a
@@ -80,7 +90,7 @@ tentativa enquanto não houver condição de execução.
 | D-007 | Sessão | Fechar/reabrir app com sessão persistida | ✅ | 1 | `d060-after-unlock.png`, `d071-reopen-after-wait.png`; sessão retomada após reinício da Activity. |
 | D-008 | Sessão | Logout e retorno ao acesso | ✅ | 1 | `d068-logout.png`, `d069-login-reentry-final.png`; logout retornou ao acesso e novo login funcionou. |
 | D-009 | Moldura | Início, Explorar, Meu radar e Perfil | ✅ | 1 | `d020-explorar.png`, `d040-meu-radar.png`, `d050-perfil.png`; quatro destinos acessíveis. |
-| D-010 | Início | Resumo real, carregamento e atualização | ✅ | 1 | APK atual abriu a Home com resposta real da API publicada, `radar.destaque`, contagem de alertas e atualização após leitura. Migration 029 confirmada aplicada. |
+| D-010 | Início | Resumo real, carregamento e atualização | ✅ | 1 | APK atual abriu a Home com resposta real da API publicada, contagem de alertas e atualização após leitura. O campo `radar.destaque` permaneceu disponível no contrato da Central, sem cartão de alerta na Home compacta. Migration 029 confirmada aplicada. |
 | D-011 | Início | Erro, parcial, ausência e retry | ⬜ | — | — |
 | D-012 | Início | Cards Livelo, Inter e Pichau | ✅ | 1 | `d052-home-light-fixed-2.png`; rail horizontal exibiu contagens reais das três origens. |
 | D-013 | Explorar | Cards, busca e abertura das subáreas | ✅ | 1 | `d020-explorar.png`, `d023-explorar-pichau.png`, `d021-livelo.png`, `d024-pichau.png`. |
@@ -99,7 +109,7 @@ tentativa enquanto não houver condição de execução.
 | D-026 | Meu radar | Contagens reais por origem | ✅ | 1 | Lista atual mostrou `74 acompanhamentos ativos`, com filtros Livelo/Inter e cartões reais. |
 | D-027 | Meu radar | Vazio, explorar, alertas e atualização | 🟡 | 1 | Meu radar cheio, filtro Livelo, buscas reais e busca `zzzzzz` com estado vazio foram executados; remoção e paginação completa continuam pendentes. |
 | D-028 | Alertas | Lista, vazio, filtros e paginação | 🟡 | 1 | Lista real, filtros `Todos`/`Preço` e paginação implícita foram observados; estado vazio e paginação física completa continuam pendentes. |
-| D-029 | Alertas | Leitura individual e coletiva | ✅ | 1 | `Marcar lido` reduziu `52` para `51`; `Marcar visíveis` zerou os itens carregados, preservando os não carregados para a próxima página. |
+| D-029 | Alertas | Leitura individual e coletiva (build 27503) | ✅ | 1 | Evidência histórica: `Marcar lido` reduziu `52` para `51`; `Marcar visíveis` zerou os itens carregados. A versão atual precisa de novo aceite físico porque a ação agora percorre todas as páginas. |
 | D-030 | Alertas | Preferências e push opcional | ✅ | 1 | `d073-alertas-preferencias.png`, `d074-permissao-notificacoes.png`, `d075-permissao-recusada.png`; preferências abertas e recusa preservou o histórico. |
 | D-031 | Perfil | Tema claro, escuro e sistema | ✅ | 1 | `d052-home-light-fixed-2.png`, `d053-home-dark-fixed.png`, `d051-aparencia.png`; claro/escuro e tela de aparência verificados. |
 | D-032 | Perfil | Movimento reduzido e preferências | ✅ | 1 | Aparência alternou redução de movimento para ativo e foi restaurada para desativado, junto com o tema claro. |

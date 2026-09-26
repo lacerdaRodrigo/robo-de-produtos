@@ -54,6 +54,7 @@ Api _apiDisparo(List<http.Request> requisicoes) => Api(
 ControladorCatalogoLivelo _controlador({
   Future<void> Function({required String idExterno, required bool acompanhada})?
   alterar,
+  String? linkB,
 }) => ControladorCatalogoLivelo(
   buscar:
       ({
@@ -70,7 +71,7 @@ ControladorCatalogoLivelo _controlador({
             acompanhada: true,
             alerta: true,
           ),
-          dados.parceiro('B', nome: 'Loja Comum'),
+          dados.parceiro('B', nome: 'Loja Comum', link: linkB),
         ],
         total: 2,
         resumoDaPagina: dados.resumo(acompanhadas: 1, alertas: 1),
@@ -113,9 +114,10 @@ Future<void> _abrir(
 }
 
 Future<void> _dispararAtualizacao(WidgetTester at) async {
-  await at.ensureVisible(find.text('Atualizar'));
+  final atualizar = find.byTooltip('Atualizar catálogo');
+  await at.ensureVisible(atualizar);
   await at.pump();
-  await at.tap(find.text('Atualizar'));
+  await at.tap(atualizar);
   await at.pump();
   await at.pump(const Duration(milliseconds: 300));
   await at.pump();
@@ -290,19 +292,22 @@ void main() {
     expect(find.text('Última coleta concluída'), findsNothing);
     expect(find.textContaining('melhor acompanhada agora'), findsNothing);
     expect(find.textContaining('Coleta:'), findsNothing);
-    expect(find.text('Todas'), findsOneWidget);
-    expect(find.text('Acompanhando'), findsWidgets);
-    expect(find.text('252'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Livelo'), findsOneWidget);
+    expect(find.text('Catálogo'), findsOneWidget);
+    expect(find.byKey(const Key('voltar-programas-livelo')), findsOneWidget);
+    expect(find.text('Lojas'), findsOneWidget);
+    expect(find.text('No radar'), findsOneWidget);
+    expect(find.text('Lojas parceiras e pontos por real gasto.'), findsNothing);
     expect(
       at.getSize(find.byKey(const Key('aba-radar-0'))).width,
       at.getSize(find.byKey(const Key('aba-radar-1'))).width,
     );
-    expect(find.text('Filtrar e ordenar'), findsOneWidget);
-    expect(find.text('Atualizar'), findsOneWidget);
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.byTooltip('Atualizar catálogo'), findsOneWidget);
+    expect(find.byTooltip('Pesquisar'), findsOneWidget);
     expect(find.text('Alertas'), findsNothing);
     expect(find.text('Monitoramento da coleta'), findsNothing);
-    expect(find.widgetWithText(ChoiceChip, 'Todas'), findsNothing);
+    expect(find.widgetWithText(ChoiceChip, 'Lojas'), findsNothing);
     expect(find.widgetWithText(ChoiceChip, 'Marketplace'), findsNothing);
     expect(
       find.widgetWithText(TextField, 'Qual loja você procura?'),
@@ -311,7 +316,7 @@ void main() {
     final busca = at.getTopLeft(
       find.widgetWithText(TextField, 'Qual loja você procura?'),
     );
-    final abas = at.getTopLeft(find.text('Todas'));
+    final abas = at.getTopLeft(find.text('Lojas'));
     expect(busca.dy, lessThan(abas.dy));
     await at.drag(
       find.byKey(const Key('catalogo-livelo-android')),
@@ -320,7 +325,10 @@ void main() {
     await at.pumpAndSettle();
     expect(find.text('Loja Clube'), findsOneWidget);
     expect(find.text('Acompanhando'), findsWidgets);
-    expect(find.text('Alerta ativo'), findsOneWidget);
+    expect(find.text('Pontuação ampliada'), findsNWidgets(2));
+    expect(find.text('Base 1 pts'), findsNWidgets(2));
+    expect(find.text('Histórico'), findsNWidgets(2));
+    expect(find.text('Ir à Livelo'), findsNWidgets(2));
     expect(
       at.getTopLeft(find.byKey(const Key('acompanhar-A'))).dx,
       lessThan(at.getTopLeft(find.byKey(const Key('detalhes-A'))).dx),
@@ -455,15 +463,8 @@ void main() {
     },
   );
 
-  testWidgets('cartão Livelo exibe sino e compartilha o acompanhamento', (
-    at,
-  ) async {
-    final chamadas = <bool>[];
-    final controlador = _controlador(
-      alterar: ({required idExterno, required acompanhada}) async {
-        chamadas.add(acompanhada);
-      },
-    );
+  testWidgets('cartão Livelo segue a hierarquia do protótipo', (at) async {
+    final controlador = _controlador();
     addTearDown(controlador.dispose);
     await _abrir(at, controlador);
     await at.drag(
@@ -472,26 +473,46 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    final sino = find.byKey(const Key('alerta-A'));
-    expect(sino, findsOneWidget);
-    expect(at.widget<IconButton>(sino).onPressed, isNotNull);
-    await at.tap(sino);
-    await at.pumpAndSettle();
-    expect(chamadas, [false]);
-
     final cartao = find.byKey(const Key('cartao-livelo-A'));
-    final pontos = find.descendant(
-      of: cartao,
-      matching: find.text('2,9 pontos por R\$ 1'),
+    expect(find.byKey(const Key('alerta-A')), findsNothing);
+    expect(
+      find.descendant(of: cartao, matching: find.text('Marketplace')),
+      findsOneWidget,
     );
-    expect(pontos, findsOneWidget);
-    expect(at.getTopRight(sino).dx, closeTo(at.getTopRight(cartao).dx - 14, 1));
+    expect(
+      find.descendant(of: cartao, matching: find.text('2,9')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('pontos / R\$ 1')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('Base 1 pts')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('Pontuação ampliada')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('Condições')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('Histórico')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: cartao, matching: find.text('Ir à Livelo')),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
-    'detalhes abrem em modal e o histórico continua disponível para toda loja',
+    'condições abrem confirmação da Livelo e o histórico continua separado',
     (at) async {
-      final controlador = _controlador();
+      final controlador = _controlador(linkB: 'https://www.livelo.com.br');
       addTearDown(controlador.dispose);
       final requisicoes = <http.Request>[];
       final api = Api(
@@ -502,7 +523,7 @@ void main() {
           cliente: http_testing.MockClient((requisicao) async {
             requisicoes.add(requisicao);
             return http.Response(
-              r'{"id_externo":"B","medicoes":[{"momento":"2026-08-29T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":null,"moeda":"R$"}]}',
+              r'{"id_externo":"B","medicoes":[{"momento":"2026-08-29T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-28T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-27T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-26T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-25T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-24T17:00:00Z","pontos_atuais":"4","pontos_base":"1","pontos_clube":"10","moeda":"R$"}]}',
               200,
             );
           }),
@@ -531,12 +552,13 @@ void main() {
       await at.pumpAndSettle();
 
       expect(find.text('Loja Comum'), findsWidgets);
-      expect(find.text('Dados do contrato Livelo'), findsOneWidget);
-      expect(find.text('Pontuação atual'), findsOneWidget);
-      expect(find.text('Pontuação base'), findsOneWidget);
+      expect(find.text('Condições da oferta'), findsNWidgets(2));
+      expect(find.text('Pontuação comum'), findsOneWidget);
       expect(find.text('Campanha'), findsOneWidget);
-      expect(find.text('Código externo'), findsOneWidget);
-      expect(find.text('Ver histórico'), findsOneWidget);
+      final abrirLivelo = find.byKey(const Key('abrir-livelo-B'));
+      expect(abrirLivelo, findsOneWidget);
+      expect(at.widget<FilledButton>(abrirLivelo).onPressed, isNotNull);
+      expect(find.text('Ver histórico'), findsNothing);
       expect(
         requisicoes.where(
           (requisicao) => requisicao.url.path.endsWith('/historico'),
@@ -544,10 +566,53 @@ void main() {
         isEmpty,
       );
 
-      await at.tap(find.byKey(const Key('ver-historico-B')));
+      await at.tap(abrirLivelo);
+      await at.pumpAndSettle();
+      expect(find.text('Abrir Livelo?'), findsOneWidget);
+      expect(
+        find.text(
+          'Você será levado ao site oficial para conferir preços e condições.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('ficar-aqui-livelo')), findsOneWidget);
+      expect(find.byKey(const Key('continuar-livelo')), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('ficar-aqui-livelo')));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('historico-B')));
       await at.pumpAndSettle();
 
-      expect(find.text('5 pontos por R\$ 1'), findsOneWidget);
+      expect(find.byKey(const Key('folha-historico-livelo')), findsOneWidget);
+      expect(find.text('Histórico · Loja Comum'), findsOneWidget);
+      expect(
+        find.text('Últimas medições · até 30 registros · somente leitura'),
+        findsOneWidget,
+      );
+      expect(find.text('5 pts/R\$ 1'), findsNWidgets(5));
+      expect(find.text('Clube: 10 pts/R\$ 1'), findsNWidgets(5));
+      expect(find.text('Completa'), findsNWidgets(5));
+      await at.scrollUntilVisible(
+        find.byTooltip('Próxima página'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.text('1 de 2'), findsOneWidget);
+      expect(find.byTooltip('Próxima página'), findsOneWidget);
+      expect(
+        at
+            .widget<IconButton>(
+              find.byKey(const Key('historico-pagina-proxima')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await at.ensureVisible(find.byKey(const Key('historico-pagina-proxima')));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('historico-pagina-proxima')));
+      await at.pumpAndSettle();
+      expect(find.text('2 de 2'), findsOneWidget);
+      expect(find.text('4 pts/R\$ 1'), findsOneWidget);
       expect(
         requisicoes.map((requisicao) => requisicao.url.path),
         contains('/api/livelo/catalogo/B/historico'),

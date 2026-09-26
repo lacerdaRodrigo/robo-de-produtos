@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'modelos_pichau.dart';
 
 enum AbaCatalogoPichau {
-  todas('todas', 'Todas'),
-  acompanhadas('acompanhadas', 'Acompanhadas');
+  todas('todas', 'Todos'),
+  acompanhadas('acompanhadas', 'No radar');
 
   const AbaCatalogoPichau(this.codigo, this.rotulo);
 
@@ -15,9 +15,10 @@ enum AbaCatalogoPichau {
 }
 
 enum DisponibilidadePichau {
-  todas('todas', 'Todas as disponibilidades'),
+  todas('todas', 'Todos'),
   disponiveis('disponiveis', 'Disponíveis'),
-  esgotados('esgotados', 'Esgotados');
+  esgotados('esgotados', 'Esgotados'),
+  foraCatalogo('fora_catalogo', 'Fora do catálogo');
 
   const DisponibilidadePichau(this.codigo, this.rotulo);
 
@@ -26,7 +27,7 @@ enum DisponibilidadePichau {
 }
 
 enum OrdenacaoPichau {
-  nome('nome', 'Nome do produto'),
+  nome('nome', 'Nome'),
   preco('preco', 'Menor preço Pix'),
   desconto('desconto', 'Maior desconto Pix');
 
@@ -42,6 +43,8 @@ typedef BuscarCatalogoPichau =
       required String aba,
       required String disponibilidade,
       required String ordenar,
+      required String precoMin,
+      required String precoMax,
       required int pagina,
     });
 
@@ -74,7 +77,9 @@ class ControladorCatalogoPichau extends ChangeNotifier {
   var _busca = '';
   var _aba = AbaCatalogoPichau.todas;
   var _disponibilidade = DisponibilidadePichau.todas;
-  var _ordenacao = OrdenacaoPichau.nome;
+  var _ordenacao = OrdenacaoPichau.preco;
+  var _precoMin = '';
+  var _precoMax = '';
   ResumoCatalogoPichau? _resumo;
   var _paginaAtual = 0;
   var _totalItens = 0;
@@ -94,6 +99,8 @@ class ControladorCatalogoPichau extends ChangeNotifier {
   AbaCatalogoPichau get aba => _aba;
   DisponibilidadePichau get disponibilidade => _disponibilidade;
   OrdenacaoPichau get ordenacao => _ordenacao;
+  String get precoMin => _precoMin;
+  String get precoMax => _precoMax;
   ResumoCatalogoPichau? get resumo => _resumo;
   int get pagina => _paginaAtual == 0 ? 1 : _paginaAtual;
   int get totalItens => _totalItens;
@@ -125,12 +132,21 @@ class ControladorCatalogoPichau extends ChangeNotifier {
   Future<void> aplicarFiltros({
     required DisponibilidadePichau disponibilidade,
     required OrdenacaoPichau ordenacao,
+    String precoMin = '',
+    String precoMax = '',
   }) async {
-    if (disponibilidade == _disponibilidade && ordenacao == _ordenacao) {
+    final novoPrecoMin = precoMin.trim();
+    final novoPrecoMax = precoMax.trim();
+    if (disponibilidade == _disponibilidade &&
+        ordenacao == _ordenacao &&
+        novoPrecoMin == _precoMin &&
+        novoPrecoMax == _precoMax) {
       return;
     }
     _disponibilidade = disponibilidade;
     _ordenacao = ordenacao;
+    _precoMin = novoPrecoMin;
+    _precoMax = novoPrecoMax;
     await _reiniciarECarregar();
   }
 
@@ -270,6 +286,8 @@ class ControladorCatalogoPichau extends ChangeNotifier {
     aba: _aba.codigo,
     disponibilidade: _disponibilidade.codigo,
     ordenar: _ordenacao.codigo,
+    precoMin: _precoMin,
+    precoMax: _precoMax,
     pagina: pagina,
   );
 

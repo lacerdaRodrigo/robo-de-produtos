@@ -1,6 +1,6 @@
 # Contexto para agentes de IA
 
-> **Design mobile V11:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter mobile, usa `design-app/prototipo-mobile-redesign-novo-11.html` como fonte visual e `design-app/SISTEMA-DESIGN-MOBILE-V11.md` como contrato. Não exige Web, integration, E2E ou suíte completa. Referências abaixo a Web e ao antigo canal de e-mail são históricas, não instruções nem estado ativo deste ciclo.
+> **Design mobile V15:** [`AGENTS.md`](AGENTS.md) tem precedência operacional. O ciclo trabalha somente no Flutter Android/iOS, usa [`design-app/mobile-v15/index.html`](design-app/mobile-v15/index.html) como fonte visual e [`docs/guias/design-v15.md`](docs/guias/design-v15.md) como contrato. O alvo Flutter Web foi removido; integração, E2E e suíte completa continuam fora do gate.
 
 ## Pendência manual — Shopping Inter compacto
 
@@ -49,7 +49,7 @@ Antes de qualquer alteração em código, documentação, workflow, teste, confi
 3. Informar a escolha e o motivo em uma frase.
 4. Fazer a menor alteração coerente e executar as validações relevantes, sem aguardar confirmação manual.
 
-Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde que não mudem arquivos. Se o escopo mudar, classifique novamente. Um pedido de implementação cobre as edições, os testes e a documentação diretamente relacionados, mas não publicação, migração de produção, exclusão, envio real ou outra ação externa relevante. A referência prática fica em [`docs/guias/ROTEAMENTO_MODELOS_CODEX.md`](docs/guias/ROTEAMENTO_MODELOS_CODEX.md).
+Leitura, busca e diagnóstico são permitidos para classificar a tarefa, desde que não mudem arquivos. Se o escopo mudar, classifique novamente. Um pedido de implementação cobre as edições, os testes e a documentação diretamente relacionados, mas não publicação, migração de produção, exclusão, envio real ou outra ação externa relevante. A referência de produto fica nos PRDs do domínio e em `docs/PENDENCIAS.md`.
 
 ## Regra de produto — protótipo antes da implementação
 
@@ -62,14 +62,23 @@ navegação. Quando o protótipo não definir algo, peça uma decisão em vez de
 usar uma tela genérica do Material ou criar uma solução visual por conta
 própria.
 
-Protótipo mobile oficial: [`prototipo-mobile-redesign-novo-11.html`](design-app/prototipo-mobile-redesign-novo-11.html).
+Protótipo mobile oficial: [`mobile-v15/index.html`](design-app/mobile-v15/index.html).
 
-Contrato visual oficial: [`SISTEMA-DESIGN-MOBILE-V11.md`](design-app/SISTEMA-DESIGN-MOBILE-V11.md).
+Contrato visual oficial: [`design-v15.md`](docs/guias/design-v15.md).
 
 No ciclo atual, toda nova funcionalidade mobile visível, tela, jornada ou
-mudança relevante de navegação passa pelo protótipo V11 e pelo sistema de
-design V11. Experiências não documentadas nesses dois arquivos ficam fora
+mudança relevante de navegação passa pelo protótipo V15 e pelo guia de design
+V15. Experiências não documentadas nesses dois arquivos ficam fora
 do escopo até uma decisão explícita.
+
+### Regra de retorno das rotas mobile
+
+Toda rota mobile secundária deve manter um botão visível e acessível de
+`Voltar` no cabeçalho quando foi aberta a partir de outra tela. O botão chama o
+stack de navegação existente; o back físico/gesto do Android deve produzir o
+mesmo retorno pela rota atual, sem duplicar `pop`, perder filtros ou limpar o
+contexto. O protótipo V15, o Flutter e os testes da jornada devem representar e
+verificar os dois caminhos.
 
 Ordem obrigatória:
 
@@ -163,7 +172,8 @@ A V3.0–V3.3 do Shopping Inter está **implementada e validada no workspace** d
 
 A V4 implementa a área Compre direto no Inter como terceira integração: seleciona qualquer quantidade de lojas, pagina o catálogo exposto, busca somente no banco e guarda 30 dias de histórico. Em 2026-08-17 o contrato real foi corrigido (`sellers` na raiz, caminhos relativos com `?v=`, tags como objetos e marca/categoria/estoque em `skus`), a migração incremental `008` foi aplicada e a primeira carga da Casas Bahia publicou 3.310 produtos. A janela vazia termina na letra M; por isso a coleta une uma partição fixa `smartphone`, que trouxe o Edge 60 Pro sem transformar o site em proxy. O workflow V4.5 usa matriz dinâmica, `max-parallel: 2` e pausa de 1,5 s. A correção V4.5.1 guarda até três tentativas completas quando o total varia, publica a maior como degradada sem inativar ausentes e requer aplicar a migração `009`. Ponto e o dimensionamento para mais lojas continuam pendentes.
 
-O e-mail foi redesenhado em 2026-08-13 (bloco de cor sólida por oferta, descrição de campanha expansível sem JavaScript, marca "Pontuação Livelo" no topo e no rodapé) e o site ganhou logo própria no cabeçalho, rodapé e título do navegador — raciocínio completo, incluindo o orçamento de bytes contra o corte do Gmail (C05) e como regenerar os PNGs, em [`docs/guias/EMAIL.md`](docs/guias/EMAIL.md).
+O antigo canal de e-mail não está ativo no código atual; não há um guia de
+implementação de e-mail vigente neste repositório.
 
 Um redesenho de navegação apelidado "V4.6" (nome do mockup que o originou, não é versão do projeto) começou na madrugada de 2026-08-12 para 13: o cabeçalho fixo virou barra lateral (coluna fixa em telas largas, barra compacta no celular), e a cor de ação geral separou do rosa de alerta — indigo (`--marca`) para botão/link/foco, rosa (`--acento`) só para o que pede atenção. O logo real entrou na barra lateral com um chip branco atrás — o quadrado "R$" da marca é quase branco, pensado pro fundo claro do resto do site, e sumia no fundo escuro da lateral sem isso. Nas fatias seguintes, ainda em 2026-08-13, o Painel ganhou o hero escuro com "Top 3 Oportunidade" e o botão "Ir para a Livelo" em cada cartão, a tabela de Lojas ganhou a coluna Limiar e o ícone de remover, e — depois que você mandou `novo.html` direto na `main` (mesmo mockup, confirmado idêntico) cobrando que o Painel estava "totalmente diferente" — o agrupamento por categoria saiu do Painel: virou uma grade única com ordenar (Maior pontuação / Em alerta / Nome A-Z, por link comum, sem JavaScript), igual ao mockup, com a busca cobrindo o que o índice de categoria fazia antes. Só a Central de Alertas (histórico dos e-mails enviados) segue pendente, detalhada em `docs/PENDENCIAS.md` — é funcionalidade nova de verdade (exige tabela e mudança em `principal.py`), não só reskin; o toggle de "e-mail automático" do mockup foi deliberadamente deixado de fora por esbarrar na V2.4 acima, e o "+X% avanço" do mockup também ficou de fora por virar `Number()` em texto na tela, o que a regra de ouro nº 7 já proíbe. Numa fatia seguinte, ainda em 2026-08-13, o botão "Forçar atualização" saiu do fim de `/lojas` e foi para a barra lateral, logo abaixo de "Lojas" — igual ao mockup. Essa mudança expôs um bug de verdade na barra compacta do celular (logado, a navegação ficava espremida a ~77px de largura, exigindo rolagem quase sem indício visual), corrigido escondendo o nome ao lado do logo abaixo de 480px — provavelmente a causa real de um "veio quebrado" relatado antes que não tinha sido reproduzido.
 

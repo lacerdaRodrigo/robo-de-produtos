@@ -18,6 +18,8 @@ vi.mock("@neondatabase/serverless", () => ({
 
 import {
   buscarCashbacksInter,
+  definirCategoriaCashbackInter,
+  listarCategoriasCashbackInter,
   resumoCashbackInterPersistido,
 } from "@/lib/banco-inter";
 
@@ -113,6 +115,64 @@ describe("catálogo paginado de cashback Inter", () => {
     expect(consulta).toContain("cashback_principal_valor) END DESC");
     expect(consulta).toContain("LIMIT 2");
     expect(consulta).not.toMatch(/::(double precision|real)/i);
+  });
+
+  it("aplica categoria antes da contagem e da paginação", async () => {
+    bancoFalso.respostas.push(
+      [{ total: 2 }],
+      [
+        {
+          id: "1",
+          id_externo: "cea",
+          slug: "ca",
+          nome: "C&A",
+          categoria: "moda",
+          favorita: false,
+        },
+      ],
+    );
+
+    const resultado = await buscarCashbacksInter("42", {
+      q: "",
+      ordenar: "nome",
+      apenasAcompanhadas: false,
+      categoria: "moda",
+      pagina: 1,
+      porPagina: 10,
+    });
+
+    expect(resultado.itens[0]).toMatchObject({ categoria: "moda" });
+    expect(resultado.total).toBe(2);
+    for (const consulta of bancoFalso.consultas) {
+      expect(consulta).toContain("mapeamento_categoria_cashback_inter");
+      expect(consulta).toContain("COALESCE(categoria.categoria, 'outros')");
+      expect(consulta).toContain("moda");
+    }
+  });
+
+  it("devolve a taxonomia padrão quando a tabela ainda não tem linhas", async () => {
+    bancoFalso.respostas.push([]);
+
+    await expect(listarCategoriasCashbackInter()).resolves.toEqual([
+      { codigo: "beleza", nome: "Beleza" },
+      { codigo: "casa", nome: "Casa" },
+      { codigo: "eletronicos", nome: "Eletrônicos" },
+      { codigo: "esporte", nome: "Esporte" },
+      { codigo: "moda", nome: "Moda" },
+      { codigo: "outros", nome: "Outros" },
+      { codigo: "pets", nome: "Pets" },
+    ]);
+  });
+
+  it("atualiza o mapeamento editorial de uma loja existente", async () => {
+    bancoFalso.respostas.push([{ id: "42" }], []);
+
+    await expect(definirCategoriaCashbackInter("42", "moda")).resolves.toBe(true);
+
+    expect(bancoFalso.consultas[1]).toContain(
+      "mapeamento_categoria_cashback_inter",
+    );
+    expect(bancoFalso.consultas[1]).toContain("moda");
   });
 
   it("conta acompanhamentos do Inter por usuario no resumo", async () => {

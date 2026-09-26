@@ -49,6 +49,28 @@ export function validarFavoritaInter(corpo: unknown): ResultadoDaValidacao<Favor
   return { ok: true, valor: { id, favorita: objeto.favorita } };
 }
 
+export type CategoriaLojaInter = {
+  id: string;
+  categoria: string;
+};
+
+export function validarCategoriaLojaInter(
+  corpo: unknown,
+  categoriasValidas: readonly string[],
+): ResultadoDaValidacao<CategoriaLojaInter> {
+  if (!corpo || typeof corpo !== "object" || Array.isArray(corpo)) {
+    return { ok: false, mensagem: "corpo da requisicao invalido" };
+  }
+  const objeto = corpo as Record<string, unknown>;
+  const id = typeof objeto.id === "string" ? objeto.id.trim() : "";
+  const categoria = typeof objeto.categoria === "string" ? objeto.categoria.trim() : "";
+  if (!/^\d{1,20}$/.test(id)) return { ok: false, mensagem: "loja invalida" };
+  if (!categoriasValidas.includes(categoria)) {
+    return { ok: false, mensagem: "categoria invalida" };
+  }
+  return { ok: true, valor: { id, categoria } };
+}
+
 export type SolicitacaoDeDisparo = {
   dominio: "livelo" | "inter" | "produtos_inter";
 };

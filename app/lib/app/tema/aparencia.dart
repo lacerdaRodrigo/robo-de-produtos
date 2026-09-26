@@ -13,16 +13,15 @@ abstract interface class PreferenciasAparencia {
   Future<void> salvarReduzirMovimento(bool valor);
 }
 
-/// Usa as preferências nativas do Android/iOS sem levar essa decisão ao Web.
+/// Usa as preferências nativas do Android/iOS.
 class PreferenciasAparenciaNativas implements PreferenciasAparencia {
   const PreferenciasAparenciaNativas();
 
   static const _canal = MethodChannel('br.com.radarbeneficios.app/aparencia');
 
   bool get _disponivel =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS);
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
 
   @override
   Future<ThemeMode?> carregar() async {

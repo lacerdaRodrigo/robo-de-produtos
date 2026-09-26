@@ -14,6 +14,7 @@ const _catalogo = {
   'itens': [
     {
       'id_externo': 'PG-7800',
+      'sku': 'PCM-7800',
       'nome': 'Pichau Gaming 7800X3D RTX 4070 Super',
       'marca': 'Pichau',
       'categoria_externa': 'PC Gamer',
@@ -106,7 +107,12 @@ Api _api({
   ),
 );
 
-Widget _tela(Api api, {ThemeData? tema, bool administrador = false}) {
+Widget _tela(
+  Api api, {
+  ThemeData? tema,
+  bool administrador = false,
+  TextScaler? textScaler,
+}) {
   return MaterialApp(
     theme: tema ?? TemaRadar.claro(),
     home: Scaffold(
@@ -116,8 +122,10 @@ Widget _tela(Api api, {ThemeData? tema, bool administrador = false}) {
         administrador: administrador,
       ),
     ),
-    builder: (context, child) =>
-        MediaQuery(data: MediaQuery.of(context), child: child!),
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+      child: child!,
+    ),
   );
 }
 
@@ -130,22 +138,43 @@ void main() {
     expect(find.text('Carregando catálogo Pichau…'), findsOneWidget);
     await at.pumpAndSettle();
 
+    expect(find.byKey(const Key('voltar-programas-pichau')), findsOneWidget);
+    expect(find.byKey(const Key('atualizar-pichau')), findsOneWidget);
+    expect(find.text('PCs gamer'), findsOneWidget);
+    expect(find.text('Todos'), findsOneWidget);
+    expect(find.text('No radar'), findsOneWidget);
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.text('Tecnologia'), findsNothing);
+    expect(find.text('Acompanhadas'), findsNothing);
+    expect(find.text('PCM-7800'), findsOneWidget);
     expect(find.text('Pichau'), findsWidgets);
     expect(find.text('R\$ 7.499,90'), findsOneWidget);
-    expect(find.text('R\$ 7.999,90'), findsOneWidget);
+    expect(
+      find.text('Cartão R\$ 7.999,90 · 9% de desconto no Pix'),
+      findsOneWidget,
+    );
     expect(find.text('Disponível'), findsOneWidget);
+    final titulo = at.widget<Text>(
+      find.text('Pichau Gaming 7800X3D RTX 4070 Super'),
+    );
+    expect(titulo.maxLines, 2);
+    expect(titulo.overflow, TextOverflow.ellipsis);
     await at.scrollUntilVisible(
       find.text('Esgotado'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Esgotado'), findsOneWidget);
-    expect(find.byKey(const Key('abrir-pichau-PG-7600')), findsOneWidget);
+    expect(find.byKey(const Key('detalhes-pichau-PG-7600')), findsOneWidget);
     expect(requisicoes.single.url.queryParameters['por_pagina'], '20');
 
-    await at.tap(find.byKey(const Key('historico-pichau-PG-7800')));
+    await at.tap(find.byKey(const Key('detalhes-pichau-PG-7800')));
     await at.pumpAndSettle();
 
+    expect(find.text('Detalhes'), findsAtLeastNWidgets(1));
+    await at.ensureVisible(find.byKey(const Key('historico-pichau-PG-7800')));
+    await at.tap(find.byKey(const Key('historico-pichau-PG-7800')));
+    await at.pumpAndSettle();
     expect(find.text('Histórico de preço'), findsOneWidget);
     expect(find.text('R\$ 7.399,90'), findsOneWidget);
     expect(find.byKey(const Key('historico-pichau-conteudo')), findsOneWidget);
@@ -189,6 +218,92 @@ void main() {
     }
   });
 
+  testWidgets('folha de filtros segue o protótipo em tela estreita', (
+    at,
+  ) async {
+    addTearDown(at.view.reset);
+    at.view.physicalSize = const Size(320, 844);
+    at.view.devicePixelRatio = 1;
+    await at.pumpWidget(_tela(_api(requisicoes: <http.Request>[])));
+    await at.pumpAndSettle();
+
+    await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
+    await at.pumpAndSettle();
+
+    expect(find.text('Filtros · Pichau'), findsOneWidget);
+    expect(find.byKey(const Key('voltar-folha-radar')), findsNothing);
+    expect(find.byKey(const Key('filtro-preco-minimo-pichau')), findsOneWidget);
+    expect(find.byKey(const Key('filtro-preco-maximo-pichau')), findsOneWidget);
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('folha de filtros mantém o preço acessível acima do teclado', (
+    at,
+  ) async {
+    addTearDown(at.view.reset);
+    at.view.physicalSize = const Size(390, 844);
+    at.view.devicePixelRatio = 1;
+    final requisicoes = <http.Request>[];
+    await at.pumpWidget(_tela(_api(requisicoes: requisicoes)));
+    await at.pumpAndSettle();
+
+    await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
+    await at.pumpAndSettle();
+    at.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await at.pumpAndSettle();
+
+    final formulario = find
+        .descendant(
+          of: find.byKey(const Key('formulario-filtros-pichau-rolavel')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    final minimo = find.byKey(const Key('filtro-preco-minimo-pichau'));
+    await at.scrollUntilVisible(minimo, 120, scrollable: formulario);
+    expect(at.getBottomRight(minimo).dy, lessThanOrEqualTo(524));
+
+    await at.enterText(minimo, '3000,00');
+    expect(find.text('3000,00'), findsOneWidget);
+    final aplicar = find.byKey(const Key('aplicar-filtros-pichau'));
+    await at.scrollUntilVisible(aplicar, 120, scrollable: formulario);
+    expect(at.getBottomRight(aplicar).dy, lessThanOrEqualTo(524));
+    await at.tap(aplicar);
+    await at.pumpAndSettle();
+    expect(requisicoes.last.url.queryParameters['preco_min'], '3000,00');
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('folha de filtros rola com texto ampliado', (at) async {
+    addTearDown(at.view.reset);
+    at.view.physicalSize = const Size(320, 844);
+    at.view.devicePixelRatio = 1;
+    await at.pumpWidget(
+      _tela(
+        _api(requisicoes: <http.Request>[]),
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
+    await at.pumpAndSettle();
+
+    final formulario = find
+        .descendant(
+          of: find.byKey(const Key('formulario-filtros-pichau-rolavel')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await at.scrollUntilVisible(
+      find.byKey(const Key('aplicar-filtros-pichau')),
+      120,
+      scrollable: formulario,
+    );
+
+    expect(find.byKey(const Key('aplicar-filtros-pichau')), findsOneWidget);
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('catálogo mantém a fundação visual no tema escuro', (at) async {
     addTearDown(at.view.reset);
     at.view.physicalSize = const Size(390, 844);
@@ -198,13 +313,13 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    expect(find.text('Catálogo atualizado'), findsOneWidget);
+    expect(find.text('Catálogo'), findsOneWidget);
     await at.scrollUntilVisible(
       find.text('Esgotado'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.byKey(const Key('abrir-pichau-PG-7600')), findsOneWidget);
+    expect(find.byKey(const Key('detalhes-pichau-PG-7600')), findsOneWidget);
     expect(at.takeException(), isNull);
   });
 
@@ -256,30 +371,65 @@ void main() {
     );
     await at.pumpAndSettle();
 
-    await at.tap(find.text('Acompanhadas'));
+    await at.tap(find.text('No radar'));
     await at.pumpAndSettle();
     expect(requisicoes.last.url.queryParameters['aba'], 'acompanhadas');
     expect(find.text('Pichau Gaming 7800X3D RTX 4070 Super'), findsOneWidget);
     expect(find.text('Pichau Gaming Ryzen 5 RX 7600'), findsNothing);
-    expect(find.text('1 oferta encontrada'), findsOneWidget);
+    expect(find.text('1 produto'), findsOneWidget);
 
     await at.tap(find.byKey(const Key('filtrar-ordenar-pichau')));
     await at.pumpAndSettle();
-    expect(find.text('Filtrar catálogo Pichau'), findsOneWidget);
+    expect(find.text('Filtros · Pichau'), findsOneWidget);
+    expect(find.text('Ordenar'), findsOneWidget);
+    expect(find.text('Preço mínimo (R\$)'), findsOneWidget);
+    expect(find.text('Preço máximo (R\$)'), findsOneWidget);
+    expect(find.text('Menor preço Pix'), findsOneWidget);
+    expect(find.text('0,00'), findsOneWidget);
+    expect(find.text('Sem limite'), findsOneWidget);
+    await at.tap(find.byKey(const Key('filtro-ordenacao-pichau')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Nome').last);
+    await at.pumpAndSettle();
     await at.tap(find.byKey(const Key('filtro-disponibilidade-pichau')));
     await at.pumpAndSettle();
     await at.tap(find.text('Esgotados').last);
     await at.pumpAndSettle();
-    await at.tap(find.text('Ver ofertas'));
+    await at.enterText(
+      find.byKey(const Key('filtro-preco-minimo-pichau')),
+      '8000,00',
+    );
+    await at.enterText(
+      find.byKey(const Key('filtro-preco-maximo-pichau')),
+      '3000,00',
+    );
+    await at.tap(find.text('Aplicar filtros'));
+    await at.pumpAndSettle();
+    expect(
+      find.text('O preço máximo deve ser maior ou igual ao mínimo.'),
+      findsOneWidget,
+    );
+    await at.enterText(
+      find.byKey(const Key('filtro-preco-minimo-pichau')),
+      '3000,00',
+    );
+    await at.enterText(
+      find.byKey(const Key('filtro-preco-maximo-pichau')),
+      '8000,00',
+    );
+    await at.tap(find.text('Aplicar filtros'));
     await at.pumpAndSettle();
     expect(
       requisicoes.last.url.queryParameters['disponibilidade'],
       'esgotados',
     );
+    expect(requisicoes.last.url.queryParameters['ordenar'], 'nome');
+    expect(requisicoes.last.url.queryParameters['preco_min'], '3000,00');
+    expect(requisicoes.last.url.queryParameters['preco_max'], '8000,00');
 
-    await at.tap(find.text('Todas'));
+    await at.tap(find.text('Todos'));
     await at.pumpAndSettle();
-    await at.tap(find.byKey(const Key('alerta-pichau-PG-7800')));
+    await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
     await at.pumpAndSettle();
     expect(requisicoes.last.method, 'PATCH');
     expect(
@@ -314,7 +464,13 @@ void main() {
       await at.pumpAndSettle();
       await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
       await at.pumpAndSettle();
-      expect(find.text('Acompanhar'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('acompanhar-pichau-PG-7800')),
+          matching: find.text('Acompanhar'),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.text('Não foi possível salvar o acompanhamento.'),
         findsOneWidget,

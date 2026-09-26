@@ -1,7 +1,7 @@
 # PRD — Central de Alertas, suporte e privacidade
 
 Status: implementado no contrato e no código; as migrations `023`, `025`, `026`,
-`027` e `028` foram aplicadas manualmente. A aplicação da `028` foi confirmada
+`027`, `028` e `029` foram aplicadas manualmente. A aplicação da `028` foi confirmada
 por leitura de produção: as funções estão como `SECURITY DEFINER`, com
 `search_path` fechado, e o `pichau_publisher` pode executá-las. Ainda dependem
 de operação um evento real que gere push, a entrega FCM e o aceite físico do
@@ -67,6 +67,7 @@ não substituem o acompanhamento pessoal desta tabela.
 
 Rotas autenticadas em `backend/api/app/api`:
 
+- `GET /api/perfil`;
 - `GET/PATCH /api/alertas` e `PATCH /api/alertas/{id}/leitura`;
 - `GET/PATCH /api/alertas/preferencias`;
 - `POST/DELETE /api/notificacoes/dispositivos`;
@@ -91,6 +92,12 @@ acorda a API a cada 15 minutos; o envio real continua no Firebase Cloud
 Messaging através do Firebase Admin SDK. Não há limite diário artificial de
 notificações.
 
+`GET /api/perfil` fecha o gate de entrada do Flutter: não recebe identidade em
+query ou corpo e retorna exclusivamente o `id`, o `email` e o `papel` da sessão
+autenticada. `403` impede a abertura da moldura para conta sem convite/papel
+válido; rede, App Check e outros erros permanecem distintos de sessão expirada
+no cliente.
+
 As leituras de Livelo, Sites parceiros do Inter e Pichau usam acompanhamento pessoal
 por padrão; `escopo=global` só é aceito para administradores e mantém a seleção
 legada separada da Central.
@@ -108,7 +115,11 @@ separados. Ausência de retrato não é convertida em zero ou item fictício.
 origem, alertas não lidos e o destaque mais recente. O destaque usa o mesmo
 contrato textual de valores e URL segura; `atividade_recente` permanece apenas
 para clientes antigos. A migration `029_indices_mobile_v15.sql` é aditiva e
-deve ser aplicada fora de transação em conexão direta.
+foi aplicada pelo responsável fora de transação, em conexão direta.
+
+O bloco `radar.destaque` continua disponível para a Central e para integrações,
+mas a Home compacta não o renderiza como cartão de alerta. O acesso aos eventos
+permanece no sino do cabeçalho e na Central de Alertas.
 
 Nos cards de Livelo, cashback Inter, produtos Inter e Pichau, o sino é apenas
 um atalho visual para a ação de acompanhamento do usuário e compartilha o mesmo
@@ -116,16 +127,61 @@ estado de salvamento/rollback do botão textual. Nenhum desses controles deve se
 interpretado como preferência de push por si só; as seleções administrativas
 globais continuam separadas e protegidas por autorização.
 
+### Fixture guardada para QA
+
+O roteiro de dados controlados para validar lista, paginação, leitura, vazio,
+ausência de destaque e alternância de autorização fica em
+`backend/api/scripts/qa-mobile-v15.mjs`. Ele só pode ser executado com
+`QA_ENVIRONMENT=test`, `QA_RUN_ID`, `QA_ACCOUNT_ID`, conexão Postgres direta e
+`QA_CONFIRM=I_UNDERSTAND_QA_FIXTURE` para preparação/restauração. O backup deve
+ficar fora do repositório, com modo `0600`; a ferramenta falha antes de escrever
+quando ambiente, conexão, confirmação ou caminho não são válidos.
+
+O roteiro guarda o estado original, cria apenas relações e alertas identificados
+por `QA_RUN_ID`, não dispara push, restaura exatamente as linhas alteradas e
+remove somente os dados do ciclo. Não registrar credenciais, tokens, URLs
+privadas ou backups no Git. Revogação de token Firebase para o cenário de sessão
+expirada é uma ação manual explícita da conta de teste, nunca uma mutação SQL.
+
+O checkpoint da migration `029_indices_mobile_v15.sql` foi confirmado pelo
+responsável em conexão direta/unpooled, com checksum
+`ec0394b66618b9606373a3a34dcdb97f183813e059f53d87abf41ff78d179a89`. A
+evidência completa do aceite físico, incluindo os 42 cenários e suas provas,
+está no [`PRD-ACEITE-MOBILE-V15.md`](PRD-ACEITE-MOBILE-V15.md); os bloqueios
+ainda abertos ficam somente em [`../PENDENCIAS.md`](../PENDENCIAS.md).
+
 ## Flutter mobile V15
 
 `PaginaAlertas` substitui a folha placeholder e preserva filtro, página e coleta
 recebida por deep link de push. A tela cobre loading, vazio, erro, parcial,
-offline, lidos/não lidos, paginação e preferências. No mobile compacto, o
-perfil substitui a antiga gaveta: oferece Central, Ajuda, Reportar problema,
-Privacidade, aparência, Administração e saída. A barra inferior mantém os quatro
-destinos Início, Explorar, Meu radar e Perfil. Livelo, Banco Inter e Pichau são
-subáreas de Explorar. Produtos Inter exibe a ação pessoal `Acompanhar`,
-sem alterar a seleção global de lojas.
+offline, lidos/não lidos, paginação e preferências. No mobile compacto, a
+Central segue a composição do protótipo V15: cabeçalho `Mudou. Você viu.` com
+botão acessível `Voltar` e acesso às preferências, descrição curta, abas planas `Todos`/`Não lidos`,
+linha `Últimos 90 dias` com a ação `Filtrar`, ação `Marcar todos como lidos` e
+um feed de mudanças sem cartões elevados. Cada mudança mostra origem e horário,
+título orientado pela direção da alteração, entidade, comparação textual dos
+valores, `Ver item` e o estado de leitura. O filtro de tipo abre uma folha; ele
+continua usando o contrato paginado da API, sem baixar catálogo completo.
+
+`Marcar todos como lidos` percorre as páginas do recorte atual com `por_pagina`
+limitado a 50 e envia lotes de no máximo 100 IDs para o `PATCH /api/alertas`.
+Falhas restauram os itens e a contagem que estavam visíveis antes da tentativa.
+`Ver item` mantém a ação contextual do protótipo e usa o callback da moldura
+quando disponível para voltar à origem correspondente (Livelo, Inter ou Pichau);
+sem esse callback, informa a origem sem inventar uma rota de detalhe que a API de
+alertas não fornece.
+
+A rota compacta mantém a barra inferior V15 visível, com Início selecionado como
+no protótipo; tocar outro destino fecha a Central e devolve o contexto à moldura
+principal. O perfil substitui a antiga gaveta: oferece Central, Ajuda, Reportar
+problema, Privacidade, aparência, Administração e saída. Livelo, Banco Inter e
+Pichau são subáreas de Explorar. O botão/gesto de voltar do Android em Explorar
+retorna para Início. Produtos Inter exibe a ação pessoal `Acompanhar`, sem
+alterar a seleção global de lojas.
+
+Quando a Central é aberta como rota secundária, o botão `Voltar` do cabeçalho e
+o botão/gesto de voltar do Android fazem o mesmo `pop` para a tela anterior,
+preservando o estado da moldura e sem criar uma nova instância da Central.
 
 Após o primeiro login, FCM solicita permissão. Recusar ou indisponibilidade do
 Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
@@ -135,7 +191,7 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 1. `dart format`, `flutter analyze` e testes unitários/widgets afetados passam.
 2. `npm run checar`, testes Vitest direcionados e workflow da outbox passam; testes Python dos
    adaptadores de coleta passam.
-3. O protótipo Delta e a tela Flutter mantêm estados e hierarquia nas larguras
+3. O protótipo V15 e a tela Flutter mantêm estados e hierarquia nas larguras
    320, 360, 390 e 430 px, em claro e escuro, sem overflow.
 4. Migrations 023, 025, 026, 027 e 028 estão aplicadas no banco alvo por
    operação autorizada, com a validação de contagens, isolamento da conta e
@@ -157,6 +213,7 @@ O merge, deploy, APK e secret do cron foram confirmados; ainda falta produzir um
 evento real, observar sua entrega FCM e instalar/conferir a APK nos devices para
 o aceite manual completo.
 
-Este PRD incorpora os contratos implementados. O plano em
-`docs/planos/PLANO-BACKEND-E-RETESTE-MOBILE-V15.md` permanece somente como
-registro do checkpoint operacional de migration, publicação e reteste físico.
+Este PRD incorpora os contratos implementados. O checkpoint operacional de
+migration, publicação e reteste físico está no
+[`PRD-ACEITE-MOBILE-V15.md`](PRD-ACEITE-MOBILE-V15.md); a lista viva de
+bloqueios e próximas ações está em [`../PENDENCIAS.md`](../PENDENCIAS.md).
