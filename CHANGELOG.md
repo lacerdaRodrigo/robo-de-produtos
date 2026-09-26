@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.73.0 (2026-09-26)
+
+### Features
+
+- Executar coletores no Samsung com filas Neon
+  ([`429e3c3`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/429e3c3a90b0e1fc3b924de996509160d92ffa84))
+
+
 ## v1.72.1 (2026-09-19)
 
 ### Bug Fixes

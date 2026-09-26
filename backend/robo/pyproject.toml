@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "robo-livelo"
-version = "1.72.1"
+version = "1.73.0"
 description = "Coletores Livelo, Inter e Pichau do Radar de Benefícios"
 requires-python = ">=3.11"
 dependencies = [
