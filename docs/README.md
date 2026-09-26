@@ -17,6 +17,7 @@ documentação antes de abrir arquivos isolados.
 | Documento | Finalidade |
 |---|---|
 | [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato vigente da validação e distribuição privada de APK Android pelo GitHub Actions, Google Drive e e-mail. |
+| [`prd/PRD-EXECUCAO-COLETORES.md`](prd/PRD-EXECUCAO-COLETORES.md) | Agendamento local no Samsung, filas manuais do Neon, credenciais e aceite operacional dos quatro coletores. |
 | [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
 | [`prd/PRD-ACEITE-MOBILE-V15.md`](prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo de validação física, evidências e bloqueios do aceite Mobile V15. |
 
@@ -39,6 +40,10 @@ documentação antes de abrir arquivos isolados.
 | [`prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](prd/PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md) | Contrato das categorias externas de Produtos Inter. |
 | [`prd/PRD-ADMINISTRACAO.md`](prd/PRD-ADMINISTRACAO.md) | Contrato de autorização e operações administrativas, incluindo seleções globais legadas. |
 | [`prd/PRD-PICHAU.md`](prd/PRD-PICHAU.md) | Contrato da jornada Pichau PC Gamer, coletor/API versionados e pendências de operação externa. |
+
+O contrato comum de execução recorrente é o `PRD-EXECUCAO-COLETORES.md`; os
+PRDs Livelo, Inter e Pichau continuam definindo extração, persistência e regras
+de negócio de cada fonte.
 
 O comportamento comum de eventos, histórico, outbox e push está no PRD da
 Central. “Acompanhada” no aplicativo significa relação pessoal em

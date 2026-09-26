@@ -1514,7 +1514,7 @@ wheels = [
 
 [[package]]
 name = "robo-livelo"
-version = "1.66.13"
+version = "1.72.1"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

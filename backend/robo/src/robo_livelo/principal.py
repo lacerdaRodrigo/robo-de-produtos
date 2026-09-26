@@ -38,7 +38,9 @@ from robo_livelo.portas import (
 _log = logging.getLogger("robo_livelo")
 
 LIMIAR_PADRAO = 150  # PRD 2.4: a pagina trazia 247 parceiros em 2026-08-09
-CAMINHO_CONFIG_PADRAO = Path("config/lojas_favoritas.toml")
+CAMINHO_CONFIG_PADRAO = (
+    Path(__file__).resolve().parents[2] / "config" / "livelo" / "lojas_favoritas.toml"
+)
 
 # Brasil nao usa mais horario de verao desde 2019 — fuso fixo, sem
 # dependencia nova (RNF13).

@@ -20,7 +20,7 @@ na seção Pichau abaixo.
   depende da publicação/autorização externa.
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
 - [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. No Samsung, o APK build `27503` foi instalado e o relatório atual registra `29` cenários verdes, `11` amarelos, `2` pendentes e nenhum vermelho; o estado offline inicial agora apresenta falha/retry recuperável. Ainda faltam sessão expirada controlada, usuário comum, paginação completa, alguns estados e comparação visual formal, incluindo os cabeçalhos responsivos, áreas seguras, retorno Android, a composição corrigida do hub Banco Inter, a tela responsiva de Sites parceiros, a conferência física da folha de filtros de Sites parceiros com os selects alinhados e as opções do protótipo, ausência de busca no hub de Explorar, composição dos cartões do catálogo Livelo (hierarquia, Clube no histórico, condições e confirmação externa) e folha de histórico. No Moto G6 Play, permanecem as lacunas já registradas. Isso não vira smoke automatizado neste ciclo.
-- [ ] Aplicar `migracoes/030_categorias_cashback_inter.sql` no ambiente autorizado e classificar as lojas atuais pelo endpoint administrativo. Enquanto não houver mapeamento aprovado, a API mantém as lojas em `Outros`; os códigos, validação, fallback e filtro já estão cobertos localmente.
+- [ ] Aplicar `migracoes/030_categorias_cashback_inter.sql` no projeto Neon que atende a API Production e classificar as lojas atuais pelo endpoint administrativo. A migration já foi aplicada no novo destino vazio em 2026-09-26; lá ainda não há lojas para classificar. Enquanto não houver mapeamento aprovado, a API mantém as lojas em `Outros`; os códigos, validação, fallback e filtro já estão cobertos localmente.
 - [ ] Revalidar fisicamente a Central de Alertas após a composição V15 atual: botão `Voltar`, título `Mudou. Você viu.`, abas planas, filtro em folha, feed sem cartões, barra inferior e `Marcar todos como lidos` em mais de uma página. O widget e o controlador cobrem a estrutura, o toque de retorno e o contrato paginado; o back Android e a comparação visual ainda precisam de conferência no Samsung/Moto G6 Play.
 - [x] Conferir manualmente no Samsung a nova composição da Home compacta: rail Livelo, Banco Inter e Pichau, sem a seção `Atividade recente` nem cartão de alerta; claro/escuro e bloqueio/retomada foram observados. `radar.destaque` permanece no contrato para a Central, enquanto a Home usa contadores e mantém estado honesto quando não há dados.
 - [x] Aplicar e verificar `migracoes/029_indices_mobile_v15.sql` em conexão
@@ -44,6 +44,39 @@ na seção Pichau abaixo.
   corrigida; o backfill histórico não envia push atrasado.
 
 ## Pichau — evolução ainda aberta
+
+- [x] Preparar o novo projeto Neon vazio: aplicar as migrations `001`–`026` e
+  `028`–`032`, criar roles/grants por consumidor e verificar schema, funções e índices.
+  A migration `027` foi pulada porque só transporta seleções/eventos legados.
+  Nenhum dado foi migrado; usuários, catálogos e históricos estão vazios.
+- [ ] Criar PR desta branch, aguardar a CI verde e fazer merge squash conforme
+  aprovado; não iniciar os coletores pelo código ainda não publicado na `main`.
+- [ ] Ativar e validar os logins `radar_api`, `radar_actions_robo`,
+  `radar_actions_pichau` e `radar_samsung` com senhas geradas fora do
+  repositório; provar que a API não acessa filas e que o Samsung não acessa as
+  tabelas pessoais.
+- [ ] Após a validação de acesso, fazer o corte para o destino vazio:
+  substituir `DATABASE_URL` da Vercel Production, atualizar
+  `ROBO_DISPATCH_DATABASE_URL` e `PICHAU_DISPATCH_DATABASE_URL` no GitHub e
+  `DATABASE_URL` no arquivo privado do Termux. Manter o `DATABASE_URL` antigo
+  do GitHub como rollback por sete dias; não reutilizar a chave owner nem enviar
+  credenciais pelo chat. Catálogos/históricos serão reconstruídos por novas
+  coletas; seleções e dados pessoais não serão copiados.
+- [ ] Instalar o checkout e dependências no Samsung sem remover os links de boot
+  antigos antes de verificar os novos caminhos; apontar Termux:Boot para
+  `scripts/celular/boot.sh`, validar `scripts/celular/status.sh`, agendas locais
+  e disparos manuais. O worker busca `origin/main` e valida o SHA dos workflows;
+  este branch precisa chegar à `main` antes de operar pelo fluxo normal. O
+  workflow verde confirma apenas que o pedido entrou na fila, não que o coletor
+  publicou os dados.
+- [ ] Após a implantação, verificar ao menos uma coleta de cada fonte. Manter o
+  gate já definido de nove execuções Pichau agendadas consecutivas em 72 horas,
+  tela bloqueada e sem abrir Termux; qualquer falha reinicia a janela. Isso não
+  prova disponibilidade após reboot nem substitui validar Livelo/Inter.
+- [ ] Aceitar conscientemente a mudança da outbox para uma execução por hora:
+  reduz chamadas agendadas à API/Neon, mas pode acrescentar quase uma hora de
+  atraso à entrega de push. Se essa latência não for aceitável, decidir outro
+  intervalo antes de publicar o workflow.
 
 - [ ] Conferir manualmente no Samsung a composição visual Pichau V15: cabeçalho
   `Pichau`/`Catálogo`, retorno único, busca com avanço, abas `Todos`/`No radar`,
@@ -74,11 +107,11 @@ na seção Pichau abaixo.
   Actions e Chrome/Appium ociosos ao final. A `34547539783` comprovou tudo isso
   com transporte interno Wi-Fi, mas o cabo de dados permaneceu conectado para a
   inspeção ADB e por isso não encerra este aceite.
-- [ ] Observar nove execuções agendadas consecutivas em 72 horas, com o aparelho
-  dedicado, carregando, no Wi-Fi e com a tela bloqueada, sem abrir o Termux
-  entre as coletas. A grade vigente é Livelo às `:10`, Pichau às `:30` e Inter
-  às `:30` da hora seguinte. A janela recomeça após a validação manual desta
-  correção; qualquer nova falha a reinicia novamente.
+- [ ] Observar nove execuções Pichau agendadas consecutivas em 72 horas, com o
+  aparelho dedicado, carregando, no Wi-Fi e tela bloqueada, sem abrir o Termux.
+  Na arquitetura proposta, o worker Samsung também agenda Livelo às `:10` e
+  Inter às `:30` da hora seguinte; validar essas publicações separadamente. A
+  janela Pichau recomeça após implantação; qualquer nova falha a reinicia.
 - [ ] Decidir depois do gate se a exigência de recuperação manual após reboot é
   aceitável: ligar e desbloquear uma vez, ativar “Depuração por Wi‑Fi”, executar
   `adb tcpip 5555` por USB autorizado, conferir o status e retirar o cabo. A
@@ -136,4 +169,6 @@ na seção Pichau abaixo.
 
 - Integration, E2E, smoke automatizado, performance e regressão visual não fazem parte do gate deste ciclo.
 - O alvo Flutter Web foi removido. API, workflows de backend e o protótipo HTML continuam existindo como superfícies separadas; não há build ou teste Web do aplicativo.
-- Nenhum item acima autoriza deploy, coleta real, alteração de secrets, aplicação de migration ou mudança em produção.
+- O provisionamento do schema no novo Neon foi autorizado e concluído em
+  2026-09-26. Os itens ainda abertos não autorizam deploy, coleta real, alteração
+  de secrets, corte da API/Actions/Termux ou outras mudanças em produção.

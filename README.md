@@ -91,10 +91,10 @@ cd backend/robo
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-cp ../../backend/api/examples/.env.example .env   # preencha com seus dados
+cp examples/.env.example .env                     # mantenha o .env fora do Git
 python -m robo_livelo.principal
-python -m robo_livelo.principal_inter
-python -m robo_livelo.principal_produtos_inter
+python -m robo_inter.principal_inter
+python -m robo_inter.principal_produtos_inter
 ```
 
 Com `DATABASE_URL`, as lojas acompanhadas ficam no Postgres; o TOML é reserva
@@ -102,21 +102,24 @@ somente para indisponibilidade e não repõe um banco que respondeu vazio. Os
 robôs publicam seus retratos no banco e não possuem notificador SMTP ativo. Veja
 [`backend/robo/README.md`](backend/robo/README.md).
 
-## GitHub Actions
+## Coleta no Samsung e GitHub Actions
 
-Em **Settings → Secrets and variables → Actions**, crie os segredos usados pelos
-workflows. A sequência planejada é Livelo às 09h10/14h10/20h10, Pichau às
-09h30/14h30/20h30 e Inter às 10h30/15h30/21h30.
-Veja a lista completa em [`.github/README.md`](.github/README.md).
+As agendas Livelo às 09h10/14h10/20h10, Pichau às 09h30/14h30/20h30 e Inter às
+10h30/15h30/21h30 são locais no worker Samsung, no fuso `America/Sao_Paulo`.
+GitHub Actions oferece disparo manual e enfileira o pedido no Neon; workflow
+verde não significa coleta concluída. Configure os secrets e siga os gates em
+[`.github/README.md`](.github/README.md) e no
+[`PRD operacional dos coletores`](docs/prd/PRD-EXECUCAO-COLETORES.md).
 
 O `OUTBOX_CRON_SECRET` está cadastrado com o mesmo valor na Vercel
 (`Production`) e em GitHub Actions. O valor não deve ser enviado pelo chat nem
 versionado; não são usados `CRON_SECRET`, `DEBUG_AUTH` ou `ALLOWED_ORIGINS` para
 esse workflow.
 
-> **Nota sobre reativação:** com o pacote em `backend/robo/src/`, recolocar o CI
-> de coleta em pé exige rodar a partir de `backend/robo/` e ajustar o caminho de
-> `config/lojas_favoritas.toml`.
+O arquivo TOML de reserva fica em `backend/robo/config/livelo/`; o estado do
+worker é mínimo e local, e o Neon continua guardando os dados de negócio. A
+implementação no repositório não migra os dados para um novo projeto nem altera
+secrets ou o telefone.
 
 ## Validação no ciclo mobile
 

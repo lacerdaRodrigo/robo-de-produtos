@@ -21,7 +21,7 @@ ORIGENS_VALIDAS = {"schedule", "workflow_dispatch"}
 INTERVALO_PADRAO_SEGUNDOS = 30
 PRAZO_PADRAO_SEGUNDOS = 20 * 60
 LEASE_PADRAO_SEGUNDOS = 30 * 60
-CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau-android-run.sh"
+CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau" / "run.sh"
 CAMINHO_REPOSITORIO = Path(__file__).resolve().parents[4]
 CODIGOS_RUNNER = {
     1: "runner-inesperado",
@@ -263,6 +263,21 @@ def obter(database_url: str, trabalho_id: int) -> TrabalhoAndroid:
     return trabalho
 
 
+def obter_por_github_run_id(database_url: str, github_run_id: int) -> TrabalhoAndroid | None:
+    with _conectar(database_url) as conexao, conexao.cursor() as cursor:
+        cursor.execute(
+            f"""
+            SELECT {COLUNAS_TRABALHO}
+              FROM pichau_android_fila
+             WHERE github_run_id = %s
+             ORDER BY id DESC
+             LIMIT 1
+            """,
+            (github_run_id,),
+        )
+        return _trabalho(cursor.fetchone())
+
+
 def verificar_saude(database_url: str) -> None:
     """Confirma acesso mínimo à fila sem expor detalhes da conexão."""
 
@@ -359,24 +374,10 @@ def reivindicar(
     database_url: str,
     *,
     lease_segundos: int = LEASE_PADRAO_SEGUNDOS,
-    prazo_pendente_segundos: int = PRAZO_PADRAO_SEGUNDOS,
 ) -> TrabalhoAndroid | None:
     with _conectar(database_url) as conexao, conexao.cursor() as cursor:
-        # Uma pipeline que já desistiu não pode virar uma coleta atrasada quando
-        # o telefone reaparecer horas depois. Jobs em execução permanecem sob o
-        # lease e continuam recuperáveis pelo contrato existente.
-        cursor.execute(
-            """
-            UPDATE pichau_android_fila
-               SET estado = 'falha',
-                   concluida_em = now(),
-                   lease_ate = NULL,
-                   codigo_falha = 'executor-offline'
-             WHERE estado = 'pendente'
-               AND criada_em <= now() - make_interval(secs => %s)
-            """,
-            (prazo_pendente_segundos,),
-        )
+        # Pedidos manuais permanecem duráveis enquanto o telefone estiver
+        # indisponível; a expiração de workflow não descarta o trabalho.
         cursor.execute(
             f"""
             WITH candidata AS (

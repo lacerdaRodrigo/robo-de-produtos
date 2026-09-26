@@ -15,7 +15,7 @@ final deste catálogo e não faz parte do `testes.yml` dos robôs/API.
 
 ---
 
-## `backend/robo/testes/teste_categorias.py` — função `reconhecer()`
+## `backend/robo/testes/livelo/teste_categorias.py` — função `reconhecer()`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -28,7 +28,7 @@ final deste catálogo e não faz parte do `testes.yml` dos robôs/API.
 | CT-007 | String vazia | Nome vazio não pode gerar erro | Chamar `reconhecer("")`, checar `None` sem exceção |
 | CT-008 | Espaços extras | " Natura " (com espaços) deve funcionar igual a "Natura" | Testar com espaços sobrando, comparar resultado |
 
-## `backend/robo/testes/teste_extrator.py` — núcleo puro: payload JSON → `Parceiro` (fixture do payload, **nunca** rede)
+## `backend/robo/testes/livelo/teste_extrator.py` — núcleo puro: payload JSON → `Parceiro` (fixture do payload, **nunca** rede)
 
 > A V2.0 trocou a raspagem de HTML (`data-testid`, regex sobre texto de card) pela leitura do payload `__NEXT_DATA__` (RF14). CT-015 (nome via atributo `alt`), CT-016 (fallback sem `alt`) e CT-019 (link que não é de parceiro) foram **aposentados**, não adaptados — não existe mais atributo `alt` nem "link solto misturado no HTML" num array JSON, então não há o que testar no lugar. Os números não são reaproveitados.
 
@@ -57,7 +57,7 @@ final deste catálogo e não faz parte do `testes.yml` dos robôs/API.
 | CT-092 | Moeda preservada (RN11) | Nunca converte, exibe como veio | Item com `currency: "U$"` |
 | CT-093 | `parityClub == parity` não popula `pontos_clube` | Evita ruído de "Clube: N pontos" repetido em toda loja sem distinção real | Item com os dois valores iguais |
 | CT-094 | `parityClub` distinto popula `pontos_clube` | Contraprova de CT-093 | Item com os dois valores diferentes |
-| CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `backend/robo/backend/robo/testes/fixtures/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
+| CT-095 | Integração com o payload real recortado | A fixture é o payload de verdade (capturado ao vivo em 2026-08), não inventado | `backend/robo/testes/fixtures/livelo/payload_parceiros.json`, checar nomes e os casos difíceis (RN21, RN22 candidato, RN23, dado malformado) |
 | CT-106 | Item sem `parity` não vira `WARNING` | São 11 por execução (produtos da própria Livelo: `LVA`, `CIB`, `XXX`...). Descartar está certo; gritar toda vez afogaria o aviso que importa (RNF06). Vai em `DEBUG` mais um resumo em `INFO` | Item com `parity` ausente entre válidos, checar nível dos registros |
 | CT-107 | `parity` presente mas ilegível continua `WARNING` | Contraprova de CT-106: pontuação que existe e não dá para ler é sintoma de mudança na página | Item com `parity.parity` não numérico, checar `WARNING` |
 | CT-166 | `legalTerms` vira texto puro (RN31) | RN07 — só o texto sai daqui, nunca a marcação HTML crua | Item com `legalTerms: "<p>Campanha válida...</p>"`, checar `descricao_campanha` sem as tags |
@@ -65,7 +65,7 @@ final deste catálogo e não faz parte do `testes.yml` dos robôs/API.
 
 Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `__NEXT_DATA__` ausente, JSON inválido, payload que não é objeto, componente ou item que não é um objeto, `parity` que não é um objeto, `parityBau`/`parityClub` não numéricos — todos cobertos, contam para o total executado mas não têm CT próprio (mesma convenção dos testes de apoio já existentes no arquivo).
 
-## `backend/robo/testes/teste_adaptadores.py` — implementações das portas (PRD §4.2)
+## `backend/robo/testes/livelo/teste_adaptadores.py` — implementações das portas (PRD §4.2)
 
 > Bloco novo. CT-021 a CT-023 vieram de `teste_extrator.py`: o extrator virou núcleo puro e não conhece rede, então falha de conexão é responsabilidade do adaptador `FonteDePagina`.
 
@@ -130,7 +130,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-172 | Descrição longa corta sem quebrar palavra (C05) | O "resto" atrás do "…mais" tem teto, para o pior caso (132 lojas) caber no limite do Gmail | Descrição com "resto" bem acima do limite, checar corte em fronteira de palavra |
 | CT-173 | Marca aparece no topo e no rodapé | Redesign 2026-08-13: logo R$→ponto hospedado em URL, assinando as duas pontas do e-mail. Não pode usar `data:` URI, que o Gmail descarta | `montar(...)`, contar duas ocorrências de `https://robo-livelo.vercel.app/logo.png` e checar ausência de `data:image` |
 
-## `backend/robo/testes/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
+## `backend/robo/testes/livelo/teste_principal.py` — orquestração com **fakes** das 3 portas (sem rede nem e-mail reais)
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -163,7 +163,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 | CT-168 | `enviar_email=False` cala o notificador, não o retrato | RF13: disparo manual do site. Não é RF16 — não depende de ter promoção, depende de quem pediu a execução | Fluxo completo com `enviar_email=False`, checar `notificador.foi_chamado is False` e retrato gravado igual |
 | CT-169 | Sino desligado suprime alerta | RN27 — a régua continua calculada, mas só uma loja marcada no sino gera alerta | Retrato com loja acompanhada e `alerta_ativo=False`, checar `alertou is False` |
 
-## `backend/robo/testes/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1)
+## `backend/robo/testes/livelo/teste_alertas.py` — núcleo puro: o que merece alerta (PRD-LIVELO-CATALOGO-ALERTAS-APP §6.1)
 
 > Bloco novo da V2.2. Os números dos casos vêm da medição real de 2026-08-09 e 2026-08-11 registrada no PRD-LIVELO-CATALOGO-ALERTAS-APP — são exatamente os exemplos que a V1 errava.
 
@@ -185,7 +185,7 @@ Também há um bloco sem ID de "robustez contra payload hostil" (RN07): script `
 
 Sem ID: página que parou de trazer `parityBau` também levanta suspeita, página vazia não (aí quem falha é RN13), e o critério fechado sobre as preferências chega intacto ao `agrupar`.
 
-## `backend/robo/testes/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-LIVELO-CATALOGO-ALERTAS-APP RF15)
+## `backend/robo/testes/livelo/teste_retrato.py` — núcleo puro: o retrato da execução (PRD-LIVELO-CATALOGO-ALERTAS-APP RF15)
 
 > Bloco novo da V2.3. O robô passa a guardar o que viu, para o site ter o que mostrar.
 
@@ -201,7 +201,7 @@ Sem ID: página que parou de trazer `parityBau` também levanta suspeita, págin
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-074 | Núcleo puro não importa dependência externa ⚠️ | A estrutura é plana, então a fronteira núcleo/adaptador só existe se for testada | Varrer os imports de `modelos.py`, `extrator.py`, `categorias.py`, `alertas.py` e `montador_email.py`, falhar se aparecer `requests`, `smtplib`, `tomllib`, `os`, `pathlib` ou `dotenv` |
+| CT-074 | Núcleos Livelo e Inter não fazem I/O ⚠️ | Núcleos mantêm dependências apontadas para dentro; o pacote Inter não importa Livelo | Varrer os módulos listados em `MODULOS_POR_PACOTE`, falhar para imports de rede/ambiente/arquivo e verificar isolamento entre pacotes |
 
 ## Formatação do app/API (antes `site/testes/formato.teste.ts`, TypeScript)
 
@@ -227,9 +227,9 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 > Casos da V3 definidos no
 > [`PRD-INTER-CASHBACK.md`](../prd/PRD-INTER-CASHBACK.md). A suíte padrão usa a
-> fixture sanitizada `backend/robo/testes/fixtures/lojas_inter.json` e nunca toca a rede.
+> fixture sanitizada `backend/robo/testes/fixtures/inter/lojas_inter.json` e nunca toca a rede.
 
-### `backend/robo/testes/teste_extrator_inter.py` — JSON público → `LojaInter`
+### `backend/robo/testes/inter/teste_extrator_inter.py` — JSON público → `LojaInter`
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -243,19 +243,19 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
 | CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
 
-### `backend/robo/testes/teste_ranking_inter.py` — ordenação pura
+### `backend/robo/testes/inter/teste_ranking_inter.py` — ordenação pura
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
 
-### `backend/robo/testes/teste_retrato_inter.py` — favoritas da execução
+### `backend/robo/testes/inter/teste_retrato_inter.py` — favoritas da execução
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-184 | Favorita ausente permanece | Fonte não devolver a loja não remove a escolha | Favorita sem loja correspondente vira `encontrada=false` |
 
-### `backend/robo/testes/teste_adaptadores_inter.py` — HTTP e Postgres
+### `backend/robo/testes/inter/teste_adaptadores_inter.py` — HTTP e Postgres
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -268,7 +268,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 |---|---|---|---|
 | CT-188 | Núcleo do Inter não faz I/O | Modelos, extrator, ranking e retrato não importam rede, banco, arquivo ou ambiente | Varrer AST dos módulos novos |
 
-### `backend/robo/testes/teste_principal_inter.py` — orquestração com fakes
+### `backend/robo/testes/inter/teste_principal_inter.py` — orquestração com fakes
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -295,13 +295,13 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 > Casos definidos no
 > [`PRD-INTER-PRODUTOS.md`](../prd/PRD-INTER-PRODUTOS.md). A primeira implementação usa
-> `backend/robo/testes/teste_produtos_inter.py` para o domínio, paginação e isolamento,
+> `backend/robo/testes/inter/teste_produtos_inter.py` para o domínio, paginação e isolamento,
 > e `backend/api/` (antes `site/testes/formato-produtos-inter.teste.ts`) para a busca local e a migração
 > `007`/`008` para a persistência. Em 2026-08-17, o aceite real da Casas Bahia
 > confirmou 111 vendedores, 94 páginas, 3.310 produtos únicos e o Edge 60 Pro
 > na busca local. Fixtures continuam obrigatórias para o CI não tocar a rede.
 
-### `backend/robo/testes/teste_extrator_produtos_inter.py` — páginas públicas → produtos
+### `backend/robo/testes/inter/teste_produtos_inter.py` — páginas públicas → produtos
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -317,7 +317,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-209 | Textos hostis continuam texto | Nome e etiquetas com HTML não são interpretados | Extrair tags maliciosas e renderizar escapado |
 | CT-210 | Vendedor incompatível falha | Página pedida para Casas Bahia não aceita silenciosamente produto de outro vendedor | Fixture com `sellerId` inesperado |
 
-### `backend/robo/testes/teste_paginacao_produtos_inter.py` — catálogo completo exposto
+### `backend/robo/testes/inter/teste_produtos_inter.py` — catálogo completo exposto
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -329,7 +329,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-216 | Offset sem avanço interrompe | Limite zero ou próximo offset igual ao anterior vira falha de paginação | Página malformada com `limit=0` |
 | CT-217 | União de partições é observável | Totais declarados, lidos, únicos e sobreposições permanecem separados | Janela-base + `smartphone` com ID repetido e Edge só no suplemento |
 
-### `backend/robo/testes/teste_adaptadores_produtos_inter.py` — HTTP responsável
+### `backend/robo/testes/inter/teste_produtos_inter.py` — HTTP responsável
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -338,7 +338,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-220 | Retry só em falha transitória | Timeout, 429 e 5xx respeitam limite; 401/403 encerram imediatamente | Parametrizar status e contar tentativas |
 | CT-221 | Resposta grande é recusada | Limite de bytes impede carregar payload sem controle | Stream fake acima do máximo definido na V4.1 |
 
-### `backend/robo/testes/teste_principal_produtos_inter.py` — seleção e isolamento
+### `backend/robo/testes/inter/teste_produtos_inter.py` — seleção e isolamento
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
@@ -602,7 +602,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 
 | ID | Regra | Aceite | Cobertura |
 |---|---|---|---|
-| CT-369 | Extração comercial sem imagem | Payload Next.js ou fixture HTML extrai preços Pix/cartão, desconto, parcelamento, etiquetas e disponibilidade; opcionais ausentes não viram zero | `backend/robo/testes/teste_pichau.py` |
+| CT-369 | Extração comercial sem imagem | Payload Next.js ou fixture HTML extrai preços Pix/cartão, desconto, parcelamento, etiquetas e disponibilidade; opcionais ausentes não viram zero | `backend/robo/testes/pichau/teste_pichau.py` |
 | CT-370 | Identidade e URL segura | SKU/ID é estável, URLs ficam restritas a HTTPS no domínio Pichau e imagens não entram no modelo | `teste_pichau.py` |
 | CT-371 | Paginação conservadora | Página repetida, total incoerente ou limite não encerrado rejeitam a coleta | `teste_pichau.py` |
 | CT-372 | Retry, bloqueio e diagnóstico seguro | Respostas transitórias e falhas de navegador podem repetir dentro do limite de três tentativas e cooldown de 2–5 s; bloqueio persistente encerra a coleta, o log registra apenas metadados seguros e o modo Xvfb manual é validado sem alterar o padrão agendado | `teste_pichau.py` |
@@ -625,16 +625,16 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-391 | Telemetria sem identificadores privados | Falhas de ADB, Appium e fila expõem somente categorias operacionais; endpoint, serial, código de pareamento e credenciais não entram em logs ou workflow; a execução final manteve essa política | `teste_fila_android.py`, scripts Termux e revisão de logs |
 | CT-392 | Fronteira local e credencial isolada | Appium escuta em loopback, o CDP usa ponte ADB local, configuração/logs usam permissões privadas, URLs de diagnóstico perdem query/credenciais e `DATABASE_URL` não é herdada pelo processo Appium/Chrome | `teste_fila_android.py`, `teste_pichau.py` e scripts Termux |
 | CT-393 | Inicialização transitória do DevTools | Depois do `force-stop`, a abertura direta aguarda a aba DevTools dentro de limite finito; somente então usa o fallback Appium, cuja sessão nativa não recebe o timeout W3C `pageLoad` incompatível | `teste_pichau.py` |
-| CT-394 | Pendência sem executor | Job não reivindicado em 20 minutos é informado pelo workflow como `executor-offline`, sem ampliar a credencial do dispatcher para update | `teste_fila_android.py` |
-| CT-395 | Limpeza de fila atrasada | Antes do claim, o publicador encerra como `falha/executor-offline` as pendências cujo workflow já desistiu e preserva trabalhos em execução sob lease | `teste_fila_android.py` |
+| CT-394 | Espera legada não descarta pedido | O comando legado `wait`, se usado manualmente, pode reportar timeout, mas não altera a linha pendente; os workflows atuais não o chamam | `backend/robo/testes/pichau/teste_fila_android.py` |
+| CT-395 | Pedido manual durável | Uma pendência Pichau não expira por idade e pode ser reivindicada após o aparelho voltar; trabalho em execução só é recuperado pelo lease | `backend/robo/testes/pichau/teste_fila_android.py` |
 | CT-396 | Worker foreground recuperável | O boot transfere o processo ao daemon, a pasta de boot contém somente lançadores ativos, o worker mantém wake/Wi-Fi lock sem o runner liberá-lo e o watchdog permissivo relança somente quando o flock está livre | análise estática dos scripts, reboot e execução `34424475472`; disponibilidade contínua ainda sob gate de 72 horas |
-| CT-397 | Diagnóstico local seguro | O status verifica checkout, configuração, worker, watchdog, fila e ADB sem imprimir URL do banco, host, porta ou serial; Appium ocioso é estado válido | `teste_fila_android.py`, análise estática e diagnóstico pós-execução `34424475472` |
+| CT-397 | Diagnóstico local seguro | O status verifica checkout, configuração, worker, watchdog, filas Pichau e genérica e ADB sem imprimir URL do banco, host, porta ou serial; Appium ocioso é estado válido | scripts em `scripts/celular/`, revisão estática e validação operacional futura |
 | CT-398 | Fallback DOM sequencial no Android | O prefetch concorrente usa somente fetch; páginas instáveis ficam pendentes e só navegam a aba compartilhada pelo fallback DOM sequencial de `pagina()` | `teste_pichau.py` |
 | CT-399 | Ciclo limpo e recuperação completa | Sucesso/falha sempre limpam tarefas recentes, Chrome/driver/CDP e voltam à Home sem mascarar a causa; navegador, rede, HTTP 408/425/429/5xx e catálogo incompleto permitem exatamente uma segunda sessão após 10 s, enquanto bloqueio, configuração, dados, banco e parcial não repetem; itens da primeira sessão nunca são publicados | `teste_pichau.py` e `pichau-android-run.sh` |
 | CT-400 | Diagnóstico seguro da fila | O JSON aceita somente campos tipados do vocabulário fechado e até 2 KiB; o publicador atualiza somente o ID em execução, o `wait` formata `chave=valor`, anota e resume o Actions, prefere código granular e ignora diagnóstico ausente/inválido sem expor segredos | `teste_fila_android.py`, `teste_pichau.py` e migration `024_pichau_android_diagnostico.sql` |
 | CT-401 | “Fechar tudo” sem coordenada | O adaptador e o trap enumeram somente tarefas recentes `type=standard`, limitam/validam IDs, removem cada uma com `am stack remove`, acionam `KEYCODE_HOME`, confirmam lista vazia e restauram a tela bloqueada com `KEYCODE_SLEEP`; Home/Recents e conteúdo do `dumpsys` não entram nos logs | `teste_pichau.py`, `teste_fila_android.py` e validação real no Samsung |
-| CT-402 | Checkout Android alinhado à `main` | Antes da coleta, o worker recusa alteração local versionada, busca `origin/main`, aceita somente fast-forward, confirma que o HEAD contém o SHA do workflow e reinstala projeto/extra Android quando o HEAD muda; falha segura como `pichau-checkout` sem iniciar o runner e mantém compatibilidade com chaves antigas | `teste_fila_android.py`, `pichau.yml` e execução real `34547539783` (`ee17a16` → `7487d87`) |
-| CT-386 | Workflow produtor Android | Cron 09h30/14h30/20h30, depois da Livelo e antes do Inter, manual, `contents: read`, enqueue e espera de até 20 minutos estão presentes; não há coleta Selenium no Ubuntu | `.github/workflows/pichau.yml` e revisão do workflow |
+| CT-402 | Checkout Android alinhado à `main` | Antes de pedidos manuais, o worker recusa alteração local versionada, busca `origin/main`, aceita somente fast-forward, confirma o SHA disponível e reinstala projeto/extra Android quando o HEAD muda; a execução antiga é evidência histórica, não aceite do daemon novo | `backend/robo/testes/pichau/teste_fila_android.py`, `pichau.yml` e teste unitário do daemon |
+| CT-386 | Workflow produtor Android | O workflow tem somente `workflow_dispatch`, usa o secret dedicado, enfileira uma vez e encerra sem cron, fallback de credencial ou espera/polling do Android | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
 | CT-403 | Acompanhamento Pichau sem teto artificial | A rota administrativa é idempotente, o catálogo retorna `acompanhada` e a aba Acompanhadas consulta 17 ou mais produtos sem truncar em 16 | `banco-pichau.teste.ts`, `catalogo-pichau-api.teste.ts` e `acompanhamento-pichau-api.teste.ts` |
@@ -750,9 +750,32 @@ O que conferir:
 | CT-186 | Catálogos usam o escopo correto | Usuário vê somente seus acompanhamentos; administrador pode solicitar o catálogo global | Teste da rota e SQL parametrizado |
 | CT-187 | Cron da outbox protegido | Somente `Authorization: Bearer OUTBOX_CRON_SECRET` chama a rota interna; resposta tem contagens operacionais e falhas não expõem segredos | `backend/api/app/api/cron/notificacoes/outbox/route.teste.ts` |
 | CT-188 | Alertas de produtos usam a qualidade correta | A função de produtos Inter consulta `qualidade` na execução da loja, sem referenciar coluna inexistente na rodada coordenadora | `backend/api/testes/migracao-alertas-produtos-inter.teste.ts` |
-| CT-189 | Alertas Inter após rodada final | A rodada coordenadora muda de estado antes de gerar alertas para cada loja completa; falha/parcial degradada não cria falso evento | `backend/robo/testes/teste_produtos_inter.py` e migration `026` |
+| CT-189 | Alertas Inter após rodada final | A rodada coordenadora muda de estado antes de gerar alertas para cada loja completa; falha/parcial degradada não cria falso evento | `backend/robo/testes/inter/teste_produtos_inter.py` e migration `026` |
 | CT-190 | Alertas pessoais Pichau | Usuário acompanha pela chave externa, a aba/resumo/histórico usam seu recorte e o preço Pix gera evento somente após snapshot completo | `acompanhamento-pessoal-api.teste.ts`, `banco-pichau.teste.ts` e `teste_pichau.py` |
 | CT-191 | Backfill sem push | Seleções legadas Livelo/Pichau viram relações pessoais e a janela Inter recuperada entra na Central sem criar outbox | `migracao-alertas-produtos-inter.teste.ts` e migration `027` |
+
+## Executor celular — testes unitários do worker e despacho
+
+Os testes abaixo usam relógio fixo, SQLite temporário, fakes de GitHub/Neon e
+subprocessos simulados. Não acessam redes reais, não aplicam SQL e não testam
+instalação no Samsung.
+
+| ID | Título | Cobertura | Arquivo |
+|---|---|---|---|
+| CO-001 | Grade local por fonte | Nove horários no fuso `America/Sao_Paulo`, sem misturar as três fontes | `backend/robo/testes/celular/teste_agenda.py` |
+| CO-002 | Janela curta e sem catch-up | Aceita até 90 segundos de atraso, pula slot mais antigo e rejeita horário sem fuso | `backend/robo/testes/celular/teste_agenda.py` |
+| CO-003 | Estado local idempotente | Chave do slot não agenda duas vezes; metadados GitHub persistem no SQLite | `backend/robo/testes/celular/teste_estado_local.py` |
+| CO-004 | Estado local privado | Banco SQLite criado com modo `0600`; não guarda catálogo ou histórico | `backend/robo/testes/celular/teste_estado_local.py` |
+| CO-005 | Só pedido manual concluído | API GitHub ignora cron/falha e reconhece somente workflow dispatch concluído com sucesso | `backend/robo/testes/celular/teste_github.py` |
+| CO-006 | Consulta condicional GitHub | Envia ETag, limita a página a 100 runs e devolve ETag atualizado | `backend/robo/testes/celular/teste_github.py` |
+| CO-007 | Fontes e fluxo Inter serial | Separa pacotes; cashback vem antes de Produtos e falha interrompe a segunda etapa | `backend/robo/testes/celular/teste_executores.py` |
+| CO-008 | URL segura da fila | Aceita apenas PostgreSQL com SSL e rejeita fonte externa antes de abrir conexão | `backend/robo/testes/celular/teste_fila.py` |
+| CO-009 | Pedido manual encaminhado | Encaminha somente fonte e ID da execução à função SQL de solicitação | `backend/robo/testes/celular/teste_fila.py` |
+| CO-010 | Slot agendado único | Executor local roda uma vez por chave sem iniciar consulta remota de fila | `backend/robo/testes/celular/teste_daemon.py` |
+| CO-011 | Run manual idempotente | Worker sincroniza o SHA da execução, processa uma vez e salva o ETag | `backend/robo/testes/celular/teste_daemon.py` |
+| CO-012 | Primeiro baseline drena a fila | Pedidos duráveis mais antigos são drenados antes de IDs históricos entrarem como vistos | `backend/robo/testes/celular/teste_daemon.py` |
+| CO-013 | Neon indisponível não avança baseline | Falha de fila não grava ETag/baseline e mantém oportunidade de reprocessamento | `backend/robo/testes/celular/teste_daemon.py` |
+| CO-014 | Polling respeita margem da API pública | Aceita intervalo GitHub de 120–3600 s e recusa valores que aproximariam o executor do limite anônimo | `backend/robo/testes/celular/teste_daemon.py` |
 
 ## Ciclo mobile V15 — cobertura diretamente afetada
 
@@ -779,42 +802,37 @@ Web, integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-015 | Central de Alertas alinhada ao protótipo | Cabeçalho com botão `Voltar`, abas planas, filtro em folha, feed sem cartões elevados, barra inferior, toque de retorno e back Android; leitura coletiva percorre todas as páginas sem perder rollback local | `app/test/features/alertas/pagina_alertas_test.dart`, `app/test/features/alertas/controlador_alertas_test.dart`, `app/test/app/navegacao/moldura_test.dart` |
 | V15-016 | Hub Inter compacto alinhado ao protótipo | Cabeçalho com retorno visível, título/subtítulo do Banco Inter, dois cards responsivos sem contadores de resumo e retorno por toque e back Android | `app/test/app/navegacao/moldura_test.dart` |
 
-## Totais
+## Totais do pytest Python
 
-Até CT-199, a implementação acrescentou testes de apoio sem identificador (caminhos de descarte, validação do catálogo real, ordenação), por isso o número executado é maior que o catalogado. A V4 inicia a cobertura automatizada em `teste_produtos_inter.py`; os demais CT-200 a CT-244 continuam como roteiro de expansão e aceite real.
+Coletados em 2026-09-26 com `pytest --collect-only -q`; 276 testes unitários em
+arquivos Livelo, Inter, Pichau, celular e fronteira. A contagem é coleta de
+casos, não resultado de execução. Os testes TypeScript antigos abaixo do site e
+o gate Flutter são catálogos separados e não foram executados neste trabalho.
 
-| Arquivo | Casos CT | Executados |
-|---|---|---|
-| `teste_categorias.py` | 8 | 12 |
-| `teste_extrator.py` | 28 | 40 |
-| `teste_adaptadores.py` | 22 | 29 |
-| `teste_alertas.py` | 13 | 17 |
-| `teste_retrato.py` | 5 | 5 |
-| `teste_montador_email.py` | 31 | 33 |
-| `teste_principal.py` | 27 | 29 |
-| `teste_extrator_inter.py` | 9 | 10 |
-| `teste_adaptadores_inter.py` | 2 | 4 |
-| `teste_ranking_inter.py` | 1 | 1 |
-| `teste_retrato_inter.py` | 1 | 1 |
-| `teste_principal_inter.py` | 1 | 3 |
-| `teste_produtos_inter.py` | 9 | 19 |
-| `teste_fronteira.py` | 2 | 13 |
-| **Total (robô)** | **159** | **177** |
-| `site/testes/formato.teste.ts` | 11 | 23 |
-| `site/testes/formato-inter.teste.ts` | 10 | 8 |
-| `site/testes/formato-produtos-inter.teste.ts` | 2 | 2 |
-| `site/testes/paginacao.teste.ts` | 0 | 5 |
-| `site/testes/api.teste.ts` | 0 | 9 |
-| `site/testes/limpeza.teste.ts` | 0 | 3 |
-| `site/testes/autenticacao-api.teste.ts` | CT-248–CT-256 | 12 |
-| `site/testes/firebase-admin.teste.ts` | regressão de carregamento tardio do App Check | 1 |
-| `site/testes/banco-autenticacao.teste.ts` | CT-260 | 1 |
-| `site/testes/resumo-inicio.teste.ts` | CT-319–CT-321 | 5 |
-| **Total (site)** | **CTs catalogados + apoio** | **83** |
-| `app/test/` | CT-257–CT-259, CT-261–CT-355 + fundação + V15-001–V15-007 | Catálogo histórico e cobertura V15 diretamente afetada |
-| **Total (Flutter)** | **CTs catalogados + apoio** | **Catálogo histórico + cobertura V15 diretamente afetada** |
-
-`teste_extrator.py` conta 28 CTs: CT-015, CT-016 e CT-019 (V1) foram aposentados na V2.0, não substituídos por outro número; CT-106, CT-107, CT-166 e CT-167 entraram depois.
+| Arquivo | Testes coletados |
+|---|---:|
+| `testes/celular/teste_agenda.py` | 4 |
+| `testes/celular/teste_daemon.py` | 4 |
+| `testes/celular/teste_estado_local.py` | 2 |
+| `testes/celular/teste_executores.py` | 3 |
+| `testes/celular/teste_fila.py` | 3 |
+| `testes/celular/teste_github.py` | 2 |
+| `testes/inter/teste_adaptadores_inter.py` | 4 |
+| `testes/inter/teste_extrator_inter.py` | 10 |
+| `testes/inter/teste_principal_inter.py` | 5 |
+| `testes/inter/teste_produtos_inter.py` | 23 |
+| `testes/inter/teste_ranking_inter.py` | 1 |
+| `testes/inter/teste_retrato_inter.py` | 1 |
+| `testes/livelo/teste_adaptadores.py` | 30 |
+| `testes/livelo/teste_alertas.py` | 17 |
+| `testes/livelo/teste_categorias.py` | 12 |
+| `testes/livelo/teste_extrator.py` | 40 |
+| `testes/livelo/teste_principal.py` | 23 |
+| `testes/livelo/teste_retrato.py` | 6 |
+| `testes/pichau/teste_fila_android.py` | 16 |
+| `testes/pichau/teste_pichau.py` | 55 |
+| `testes/teste_fronteira.py` | 14 |
+| **Total Python** | **276** |
 
 ## Distribuição privada do Android
 
@@ -830,6 +848,12 @@ Até CT-199, a implementação acrescentou testes de apoio sem identificador (ca
 | CI-006 | Retenção | Remove somente APKs marcadas mais antigas que o limite de 10. |
 
 Execução local: `python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v`.
+
+## Permissões dos consumidores Neon
+
+| ID | Título | Descrição | Como fazer |
+|---|---|---|---|
+| NEON-001 | Separação de credenciais e filas | API, Actions e Samsung usam roles distintas; a API não acessa as filas, os coletores não recebem tabelas pessoais e funções de alerta não ficam executáveis por `PUBLIC` | `backend/api/testes/migracao-permissoes-neon.teste.ts`; antes de ativar logins, validar os privilégios efetivos no destino |
 
 Manuais: CT-050 e CT-051.
 
