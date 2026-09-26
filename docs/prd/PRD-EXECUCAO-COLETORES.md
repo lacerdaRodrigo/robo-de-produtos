@@ -1,6 +1,7 @@
 # PRD — Execução local dos coletores no Samsung e filas Neon
 
-**Status em 2026-09-26:** código mergeado na `main` pelo PR #42 após CI verde. O novo
+**Status em 2026-09-26:** código mergeado na `main` pelos PRs #42 e #45 após CI
+verde e publicado como `1.73.1`. O novo
 projeto Neon recebeu o schema `001`–`026` e `028`–`032`; a migration `027`, que
 faz backfill de dados antigos, foi intencionalmente omitida. Os quatro logins
 foram validados, os secrets de dispatch já apontam ao destino novo e o Samsung
@@ -8,9 +9,11 @@ usa `radar_samsung` no arquivo privado. O worker, o boot e o watchdog 7301 estã
 ativos e saudáveis. Três disparos manuais reais reconstruíram 255 parceiros
 Livelo, 378 lojas Inter, 111 lojas do Compre direto e 1.223 produtos Pichau; as
 execuções terminaram com sucesso e a Pichau publicou sete páginas sem duplicados.
-A `DATABASE_URL` de Production foi preparada com `radar_api`, mas o redeploy da
-Vercel ainda é o passo pendente do corte. O banco e a credencial antigos seguem
-disponíveis por sete dias para rollback.
+A Vercel recebeu `radar_api` em Production e publicou a versão nova; o status
+público ficou saudável, a outbox executou com sucesso e o aplicativo autenticado
+leu do destino novo os catálogos Livelo (255), Inter Sites parceiros (378) e
+Pichau (1.223). O banco e a credencial antigos seguem disponíveis por sete dias
+para rollback.
 
 Este documento é o contrato operacional comum de Livelo, Inter Sites parceiros,
 Inter Compre direto e Pichau. As regras de extração e publicação continuam nos
@@ -121,8 +124,8 @@ Termux mesmo quando o sistema não fornece a base IANA.
 - `DATABASE_URL`: arquivo privado `/etc/robo-celular/env` no Termux. O login do
   telefone precisa publicar os domínios e a fila Pichau e receber associação ao
   grupo `robo_executor` para reivindicar/finalizar a fila genérica.
-- A API Production continua usando seu próprio secret `DATABASE_URL` na Vercel.
-  A atualização para o projeto Neon de destino precisa ser feita separadamente.
+- A API Production usa seu próprio secret `DATABASE_URL` na Vercel, com o login
+  restrito `radar_api` do projeto Neon de destino.
 
 No destino novo, as migrations `001`–`026` e `028`–`032` já foram aplicadas e
 os logins `radar_api`, `radar_actions_robo`, `radar_actions_pichau` e
@@ -130,9 +133,10 @@ os logins `radar_api`, `radar_actions_robo`, `radar_actions_pichau` e
 conexões direta e pooled. A `027` não foi executada: ela transfere
 seleções/eventos legados, não estrutura, e não faz parte de uma instalação
 vazia. A API não recebe acesso às filas; o coletor não recebe acesso às tabelas
-pessoais. A variável de Production da Vercel foi atualizada para `radar_api`,
-mas só passará a valer no próximo deploy. O ADB do Samsung está autorizado por
-USB e validado também pelo transporte Wi-Fi interno. Nunca colocar strings de
+pessoais. A variável de Production da Vercel foi atualizada para `radar_api` e
+validada depois do deploy por status público, execução da outbox e leitura
+autenticada dos três catálogos no aplicativo. O ADB do Samsung está autorizado
+por USB e validado também pelo transporte Wi-Fi interno. Nunca colocar strings de
 conexão reais no Git, logs, Issues públicas ou neste documento.
 
 ## Operação e aceite
@@ -154,7 +158,7 @@ rotinas Inter também executaram e publicaram estados corretos.
 
 O schema, as roles e os grants do projeto Neon novo foram provisionados sem
 migrar dados. Os catálogos iniciais já foram reconstruídos por coleta; seleções
-e demais dados pessoais não reaparecem automaticamente. Restam o redeploy e a
-validação autenticada da API em Production, além do gate de nove execuções
-Pichau agendadas consecutivas em 72 horas, com tela bloqueada e sem cabo de
-dados.
+e demais dados pessoais não reaparecem automaticamente. O corte da API e a
+validação autenticada em Production foram concluídos. Resta o gate de nove
+execuções Pichau agendadas consecutivas em 72 horas, com tela bloqueada e sem
+cabo de dados.
