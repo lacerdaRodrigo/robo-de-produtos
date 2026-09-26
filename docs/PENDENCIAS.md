@@ -48,25 +48,27 @@ na seção Pichau abaixo.
 - [x] Preparar o novo projeto Neon vazio: aplicar as migrations `001`–`026` e
   `028`–`032`, criar roles/grants por consumidor e verificar schema, funções e índices.
   A migration `027` foi pulada porque só transporta seleções/eventos legados.
-  Nenhum dado foi migrado; usuários, catálogos e históricos estão vazios.
-- [ ] Criar PR desta branch, aguardar a CI verde e fazer merge squash conforme
-  aprovado; não iniciar os coletores pelo código ainda não publicado na `main`.
-- [ ] Ativar e validar os logins `radar_api`, `radar_actions_robo`,
-  `radar_actions_pichau` e `radar_samsung` com senhas geradas fora do
-  repositório; provar que a API não acessa filas e que o Samsung não acessa as
-  tabelas pessoais.
-- [ ] Após a validação de acesso, fazer o corte para o destino vazio:
-  substituir `DATABASE_URL` da Vercel Production, atualizar
-  `ROBO_DISPATCH_DATABASE_URL` e `PICHAU_DISPATCH_DATABASE_URL` no GitHub e
-  `DATABASE_URL` no arquivo privado do Termux. Manter o `DATABASE_URL` antigo
-  do GitHub como rollback por sete dias; não reutilizar a chave owner nem enviar
-  credenciais pelo chat. Catálogos/históricos serão reconstruídos por novas
-  coletas; seleções e dados pessoais não serão copiados.
+  Nenhum catálogo/histórico foi migrado; há somente o convite admin inicial, sem
+  UID Firebase vinculado.
+- [x] Enviar PR com CI e fazer merge squash: [#42](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/42). Os jobs de qualidade e API passaram; o código já está na `main`.
+- [x] Ativar e validar por conexão direta e pooler os logins `radar_api`,
+  `radar_actions_robo`, `radar_actions_pichau` e `radar_samsung`. Foi confirmado
+  que a API não acessa filas e que o Samsung não acessa tabelas pessoais. Os
+  secrets de dispatch foram atualizados; o `DATABASE_URL` antigo do GitHub
+  permaneceu intacto para rollback. Não disparar coletas até o Samsung novo
+  estar instalado.
+- [ ] Completar o corte: trocar `DATABASE_URL` da Vercel Production e instalar
+  no Termux o login `radar_samsung`. A integração da Vercel ainda não está
+  conectada e o ADB retornou `unauthorized`; a instalação está parada até a
+  autorização no aparelho. Manter o `DATABASE_URL` antigo do GitHub por sete
+  dias; não reutilizar a chave owner nem enviar credenciais pelo chat.
+  Catálogos/históricos serão reconstruídos por novas coletas; seleções e dados
+  pessoais não serão copiados.
 - [ ] Instalar o checkout e dependências no Samsung sem remover os links de boot
   antigos antes de verificar os novos caminhos; apontar Termux:Boot para
   `scripts/celular/boot.sh`, validar `scripts/celular/status.sh`, agendas locais
   e disparos manuais. O worker busca `origin/main` e valida o SHA dos workflows;
-  este branch precisa chegar à `main` antes de operar pelo fluxo normal. O
+  o código já está na `main` via PR #42. O
   workflow verde confirma apenas que o pedido entrou na fila, não que o coletor
   publicou os dados.
 - [ ] Após a implantação, verificar ao menos uma coleta de cada fonte. Manter o
