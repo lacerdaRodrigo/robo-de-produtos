@@ -1,8 +1,10 @@
 # `backend/robo/` — Robôs Python (coleta e publicação)
 
-Núcleo do backend: robôs que coletam das **fontes públicas** (Livelo e Shopping
-Inter e Pichau) e gravam no Postgres (Neon). É processado separadamente pelo GitHub
-Actions a cada 3×/dia; não tem servidor próprio.
+Coletores das fontes públicas Livelo, Banco Inter e Pichau. Catálogos,
+históricos e filas ficam no Postgres (Neon); a execução recorrente é local no
+Samsung dedicado, sem manter um servidor adicional. O GitHub Actions apenas
+enfileira disparos manuais. O contrato operacional está em
+[`PRD-EXECUCAO-COLETORES.md`](../../docs/prd/PRD-EXECUCAO-COLETORES.md).
 
 ## Domínios isolados
 
@@ -10,12 +12,13 @@ São **quatro integrações independentes**, cada uma com código, tabelas e wor
 próprios — não misturam regras nem se afetam:
 
 1. **Livelo** — publica o catálogo completo atual, calcula o retrato somente das
-   acompanhadas e alerta quando a pontuação cruza a régua (V2). Entrada:
+   acompanhadas e alertas do domínio. Entrada:
    `src/robo_livelo/principal.py`.
-2. **Inter — Sites parceiros** — catálogo de cashback (V3). Entrada:
-   `src/robo_livelo/principal_inter.py`.
+2. **Inter — Sites parceiros** — catálogo de cashback. Entrada:
+   `src/robo_inter/principal_inter.py`.
 3. **Inter — Compre direto** — coleta de produtos das lojas escolhidas, com busca
-   e histórico de 30 dias (V4). Entrada: `src/robo_livelo/principal_produtos_inter.py`.
+   e histórico de 30 dias. Entrada:
+   `src/robo_inter/principal_produtos_inter.py`.
 4. **Pichau — PC Gamer** — coleta pública independente, snapshot e histórico de
    preços de 30 dias. Entrada: `src/robo_pichau/principal.py`.
 
@@ -23,12 +26,15 @@ próprios — não misturam regras nem se afetam:
 
 ```text
 backend/robo/
-├── src/robo_livelo/   # código (domínio puro + portas + adaptadores)
-├── src/robo_pichau/   # coletor, extração, portas e publicação Pichau
-├── testes/            # pytest (prefixo teste_)
-├── config/            # lojas_favoritas.toml (reserva local da seleção Livelo)
-├── scripts/           # utilitários e runner local Termux da Pichau
-└── pyproject.toml     # dependências, versão, gates
+├── src/robo_celular/  # agenda local, daemon, estado e fila manual
+├── src/robo_livelo/   # domínio Livelo
+├── src/robo_inter/    # cashback e Compre direto, separados da Livelo
+├── src/robo_pichau/   # coleta, publicação e fila Pichau
+├── src/robo_compartilhado/ # versão semântica comum
+├── testes/{celular,livelo,inter,pichau}/
+├── config/livelo/     # seleção TOML de reserva
+├── scripts/{celular,livelo,inter,pichau}/
+└── pyproject.toml     # dependências e gates
 ```
 
 ## Como rodar
@@ -39,10 +45,10 @@ O pacote vive em `src/`. A partir desta pasta:
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-cp ../../backend/api/examples/.env.example .env   # ou um .env com seus dados
+cp examples/.env.example .env                     # mantenha o .env fora do Git
 python -m robo_livelo.principal
-python -m robo_livelo.principal_inter
-python -m robo_livelo.principal_produtos_inter
+python -m robo_inter.principal_inter
+python -m robo_inter.principal_produtos_inter
 python -m robo_pichau.principal
 python -m robo_pichau.principal --diagnostico
 ```
@@ -50,8 +56,9 @@ python -m robo_pichau.principal --diagnostico
 - O coletor do Inter exige `DATABASE_URL`.
 - O diagnóstico Pichau lê somente a primeira página, valida `products.items` e
   não cria execução ou conexão no banco. A coleta normal exige `DATABASE_URL`.
-- O workflow Pichau enfileira a execução no Postgres e aguarda o Android; ele
-  não instala SeleniumBase nem coleta no Ubuntu. Para operação Android,
+- Os workflows de coleta são manuais e encerram após enfileirar o pedido; verde
+  significa aceito, não coleta concluída. Coletas agendadas rodam no Samsung.
+  Para operação Android,
   instale `.[pichau-android]`, mantenha Appium/UiAutomator2
   em `127.0.0.1` e use `PICHAU_MODO_NAVEGADOR=android`. No Samsung 32-bit,
   UiAutomator2 abre o Chrome nativo e `websocket-client` lê o DOM pelo CDP
@@ -63,8 +70,9 @@ python -m robo_pichau.principal --diagnostico
   Linux e desktop continuam usando `psycopg[binary]`. Se o ambiente virtual
   tiver sido criado antes do ajuste de arquitetura, complete-o com
   `python -m pip install "psycopg>=3.2"`. O script
-  `scripts/pichau-android-run.sh` lê um arquivo privado
-  `PREFIX/etc/robo-pichau/env`, exige modo `600`/`400`, `sslmode` seguro,
+  `scripts/pichau/run.sh` lê o arquivo privado
+  `PREFIX/etc/robo-celular/env` (com caminhos antigos aceitos durante a
+  transição), exige modo `600`/`400`, `sslmode` seguro,
   `flock`, `termux-wake-lock` e um `.venv`. O transporte operacional é
   Wireless Debugging por Wi-Fi: `PICHAU_ANDROID_UDID=auto` reutiliza um endpoint
   Wi-Fi já conectado pelo ADB. Quando disponível, descobre o serviço pareado
@@ -123,27 +131,29 @@ python -m robo_pichau.principal --diagnostico
   vez após 10 segundos. Bloqueio/desafio, manutenção, HTTP 401/403,
   configuração, dados, banco e parcial não iniciam essa recuperação. A segunda
   sessão descarta integralmente a primeira; não há publicação parcial.
-  `scripts/pichau-android-appium.sh` aceita `start`, `stop` e `status`; o runner
+  `scripts/pichau/appium.sh` aceita `start`, `stop` e `status`; o runner
   mantém a sessão tmux somente durante a coleta e a encerra ao sair. Ao sair, o
   adaptador encerra a sessão, confirma o `force-stop` do Chrome, limpa novamente
   as tarefas recentes, volta à Home, bloqueia a tela com `KEYCODE_SLEEP` e remove
   a ponte CDP antes da publicação. O trap do runner repete o fechamento e o
   bloqueio em sucesso, falha ou sinal sem substituir a causa original.
-  `scripts/pichau-android-worker.sh` consulta a fila a cada 30 segundos como
-  tarefa foreground rastreada pelo Termux e mantém wake/Wi-Fi lock durante toda
-  a vida do daemon. Ao reivindicar uma solicitação, ele exige checkout sem
+  `scripts/celular/worker.sh` mantém uma tarefa foreground rastreada pelo
+  Termux e wake/Wi-Fi lock durante a vida do daemon. Ele verifica a agenda local
+  a cada 30 segundos e consulta a API pública do GitHub a cada 180 segundos com
+  ETag; não consulta o Neon em loop ocioso. Ao reivindicar um pedido Pichau,
+  exige checkout sem
   alterações versionadas, busca `origin/main`, avança somente por fast-forward
   e confirma que o `github.sha` do workflow está contido no HEAD local. Quando
   o HEAD avança, reinstala o projeto e o extra Android no ambiente virtual antes
   da coleta. Uma divergência termina a fila como `pichau-checkout` antes de abrir o navegador;
   filas antigas sem SHA continuam compatíveis e recebem o mesmo fast-forward.
   O runner não libera o wake lock quando foi iniciado pelo worker.
-  `pichau-android-schedule.sh` agenda o job 7301 a cada 15 minutos com
+  `scripts/celular/schedule-watchdog.sh` agenda o job 7301 a cada 15 minutos com
   rede `any` e sem condições de bateria/armazenamento; o job chama
-  `pichau-android-recover.sh`, que só assume o daemon quando o `flock` está
-  livre. `pichau-android-status.sh` verifica checkout, configuração, worker,
-  watchdog, fila e ADB sem imprimir identificadores privados.
-  `scripts/pichau-android-boot.sh` registra o watchdog e transfere o próprio
+  `scripts/celular/recover.sh`, que só assume o daemon quando o `flock` está
+  livre. `scripts/celular/status.sh` verifica checkout, configuração, worker,
+  watchdog, filas e ADB sem imprimir identificadores privados.
+  `scripts/celular/boot.sh` registra o watchdog e transfere o próprio
   processo ao worker; Appium permanece desligado quando não há coleta. Instale
   esse arquivo como link simbólico, não como cópia separada, para o boot usar o
   checkout atualizado:
@@ -155,7 +165,7 @@ python -m robo_pichau.principal --diagnostico
     mv "$HOME/.termux/boot/pichau-android-boot.sh" \
       "$HOME/.termux/boot-backups/pichau-android-boot.sh.bak"
   fi
-  ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/pichau-android-boot.sh" \
+  ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/celular/boot.sh" \
     "$HOME/.termux/boot/pichau-android-boot.sh"
   ```
 
@@ -178,7 +188,7 @@ python -m robo_pichau.principal --diagnostico
 
   1. ative “Depuração por Wi‑Fi” nas Opções do desenvolvedor;
   2. conecte um computador autorizado por USB e execute `adb tcpip 5555`;
-  3. confirme `pichau-android-status.sh` e retire o cabo de dados;
+  3. confirme `scripts/celular/status.sh` e retire o cabo de dados;
   4. bloqueie a tela novamente e deixe o telefone carregando no Wi‑Fi.
 
   Não considerar provada a autonomia após qualquer reboot sem novo teste real.

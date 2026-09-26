@@ -17,6 +17,11 @@ O aplicativo não consulta a Livelo nem o Postgres diretamente.
 > significam que uma mudança de pontos hoje enviará e-mail. O comportamento
 > vigente é: acompanhamento pessoal + snapshot Livelo completo + evento na
 > Central; o push depende da outbox, token e preferências.
+>
+> **Execução vigente:** o agendamento foi movido do cron GitHub para o worker
+> local do Samsung. Horários, filas, consumo de Neon e status dos workflows
+> estão em [`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md); referências
+> abaixo a cron/workflow são históricas quando conflitarem com esse contrato.
 
 ---
 
@@ -105,14 +110,14 @@ MS5 existe por causa de C01. O GitHub desabilita workflows agendados após 60 di
 | **RF06** | Ordenar as categorias por nome e, dentro de cada categoria, as lojas por pontuação decrescente. |
 | **RF11** | Repetir a requisição em caso de falha transitória, respeitando um limite de tentativas. |
 | **RF12** | Disparar o alerta de quebra quando o total de parceiros extraídos ficar abaixo do limiar configurado. |
-| **RF13** | Executar de forma agendada 3x ao dia e também sob disparo manual. |
+| **RF13** | Executar três vezes ao dia pelo worker local e permitir disparo manual via GitHub Actions, que apenas enfileira o pedido. |
 
 ### 2.2 Requisitos não-funcionais
 
 | ID | Requisito | Alvo verificável |
 |---|---|---|
-| **RNF01** | Custo zero de operação | Somente free tier do GitHub Actions, em repositório público |
-| **RNF02** | Cortesia de rede | Três execuções agendadas por dia, mais disparos manuais com **intervalo mínimo de 5 minutos** entre eles (V2.3.2); timeout explícito; User-Agent honesto |
+| **RNF01** | Custo controlado | Neon e GitHub Actions dentro dos planos escolhidos; Samsung dedicado já disponível; limites e uso devem ser monitorados |
+| **RNF02** | Cortesia de rede | Três coletas diárias, sem polling do Neon ocioso, timeout explícito e User-Agent honesto |
 | **RNF03** | Execução rápida | Menos de 60 segundos por execução |
 | **RNF04** | Decisão sem memória | Nenhuma decisão do robô consulta execução anterior; duas execuções seguidas sobre a mesma página produzem o mesmo e-mail. **Revisado na V2.3:** o robô passou a *escrever* o retrato de cada rodada para alimentar o app/API (RF15). Ele grava e nunca lê de volta — o histórico é subproduto, não entrada de regra |
 | **RNF05** | Segredo fora do código **e fora do log** | Nenhum valor sensível impresso — o log do Actions é público |
@@ -130,8 +135,8 @@ Limitações reais do ambiente escolhido. Não são negociáveis — o projeto c
 
 | ID | Restrição | Impacto |
 |---|---|---|
-| **C01** | O GitHub desabilita workflows agendados após 60 dias sem atividade no repositório | O robô para de rodar em silêncio; exige mitigação explícita no roadmap |
-| **C02** | O cron do GitHub Actions não garante horário exato — depende da fila | Os horários de 09h10/14h10/20h10 são aproximados; atraso de minutos é comportamento normal |
+| **C01** | O Android pode encerrar o worker ou ficar desligado | Coletas podem atrasar ou ser ignoradas; o relógio local não promete disponibilidade de servidor |
+| **C02** | O worker só executa um slot até 90 segundos após o horário | Falha prolongada perde o slot; não há catch-up nem execução retroativa |
 | **C04** | A Livelo pode alterar o HTML ou adotar proteção anti-bot sem aviso | O extrator é frágil por natureza — é exatamente o que RF12 existe para detectar |
 
 ### 2.4 Parâmetros de configuração
@@ -262,13 +267,13 @@ Estrutura plana, com um arquivo dedicado aos contratos. O projeto deve ficar aba
 ```
 robo/
 ├── .github/
-│   └── workflows/                # robo.yml, inter.yml, produtos-inter.yml, testes.yml, versao.yml, app.yml
+│   └── workflows/                # disparos manuais e CI separado da agenda local
 ├── backend/
 │   ├── robo/                     # robô Python
 │   │   ├── src/robo_livelo/      # núcleo puro + portas + adaptadores + composition roots
 │   │   ├── testes/               # pytest (prefixo teste_)
-│   │   ├── config/lojas_favoritas.toml   # RNF09 — dado de negócio fora do código ✔
-│   │   ├── scripts/              # carregar_catalogo.py, medir_v4.py
+│   │   ├── config/livelo/lojas_favoritas.toml
+│   │   ├── scripts/{celular,inter,livelo,pichau}/
 │   │   └── pyproject.toml
 │   └── api/                      # API v1 arquivada (sem prefixo v1)
 │       ├── routes/               # rotas por domínio (livelo, inter, administracao, status...)
@@ -336,7 +341,7 @@ erDiagram
 
 ### 5.3 Configuração das lojas favoritas
 
-Arquivo `backend/robo/config/lojas_favoritas.toml`, fonte da verdade das favoritas e dos apelidos exigidos por RN04.
+Arquivo `backend/robo/config/livelo/lojas_favoritas.toml`, fonte da verdade das favoritas e dos apelidos exigidos por RN04.
 
 ```toml
 [[loja]]

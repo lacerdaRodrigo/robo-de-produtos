@@ -1,7 +1,8 @@
 # `migracoes/` — Schema do Postgres (Neon)
 
 Migrações SQL **aplicadas manualmente** no Postgres (Neon). Cada arquivo é
-idempotente e numerado na ordem em que evoluiu o schema. `scripts/carregar_catalogo.py`
+idempotente e numerado na ordem em que evoluiu o schema.
+`backend/robo/scripts/livelo/carregar_catalogo.py`
 cria o `001` e carrega o catálogo.
 
 ## Migrações
@@ -37,20 +38,44 @@ cria o `001` e carrega o catálogo.
 | `027_backfill_alertas_sem_push.sql` | ponte das seleções legadas para a conta pessoal e recuperação Inter | Operação/Alertas |
 | `028_permissoes_alertas_pichau.sql` | função segura para o publicador Pichau gravar alertas sem grants pessoais amplos | Operação/Alertas |
 | `029_indices_mobile_v15.sql` | índices para lista consolidada de acompanhamentos e destaque não lido | Mobile V15/Alertas |
+| `030_categorias_cashback_inter.sql` | taxonomia editorial dos Sites parceiros | Inter Cashback |
+| `031_fila_coletas_android.sql` | fila idempotente de pedidos manuais Livelo/Inter, leases e funções com grants separados | Executor Android |
+| `032_permissoes_consumidores_neon.sql` | roles distintas para API, Actions e Samsung; isolamento das filas e dados pessoais | Segurança/Neon |
 
 ## Onde são usadas
 
-- Robôs: `001`–`009`, `013`–`022`, `024`, `026` e `028` (coleta Livelo/Inter/produtos, histórico, categorias, Pichau e alertas).
+- Robôs: `001`–`009`, `013`–`022`, `024`, `026`, `028` e `031` (coleta Livelo/Inter/produtos, histórico, categorias, Pichau, alertas e fila manual).
 - API do app: `010`–`020`, `023`, `025` e `026` (autenticação, disparos, catálogos, acompanhamentos e Central de Alertas).
 - Operação: `027` (ponte inicial das seleções legadas e recuperação sem push).
+- Segurança dos consumidores: `032` (grants mínimos para API, Actions e Samsung).
+
+## Destino Neon novo — 2026-09-26
+
+O projeto de destino foi preparado como banco vazio, sem importar dados do
+projeto anterior. Foram aplicadas `001`–`026` e `028`–`032`; a `027` foi
+intencionalmente pulada porque é um backfill de seleções/eventos antigos e exige
+uma conta ativa. A `029` foi executada em conexão direta, fora de transação,
+como exige `CREATE INDEX CONCURRENTLY`.
+
+A verificação encontrou 39 tabelas, as quatro funções da fila Android, os dois
+índices V15 e os grants de execução esperados. As roles de grupo
+`pichau_publisher`, `pichau_dispatcher`, `robo_dispatcher` e `robo_executor`
+foram criadas como `NOLOGIN`. A migration `032` cria `robo_api` e
+`robo_coletor`, associa `radar_api`, `radar_actions_robo`,
+`radar_actions_pichau` e `radar_samsung` aos grupos corretos e concede somente
+os acessos documentados. Esses logins permanecem `NOLOGIN` até o provisionamento
+seguro de senhas e a validação dos privilégios efetivos. Usuários, execuções,
+pontuações e catálogos estão vazios; não apontar tráfego para o destino antes
+da validação operacional.
+
+## Histórico do projeto Neon anterior
 
 > **Importante:** aplicar migração em produção é ação explícita e separada — nunca
-> feita por esta organização de pastas. Conforme confirmação operacional do
-> responsável, as migrations `001`–`028` foram aplicadas manualmente no banco
-> alvo. A `028` corrige a permissão do publicador para alertas Pichau. Este
-> checkout não aplica migrations; a verificação somente de leitura de 2026-09-13
-> confirmou a definição segura das funções e a execução autorizada pelo
-> `pichau_publisher`.
+> feita automaticamente pela organização de pastas. As confirmações a seguir
+> descrevem o projeto Neon anterior; não representam o estado do destino novo.
+> A `028` corrige a permissão do publicador para alertas Pichau, e a verificação
+> somente de leitura de 2026-09-13 confirmou a definição segura das funções e a
+> execução autorizada pelo `pichau_publisher`.
 
 `023` foi aplicada manualmente no banco alvo. Este checkout não executou a SQL
 nem produziu evidência independente; a confirmação operacional permanece
@@ -84,6 +109,18 @@ execução 58 em qualidade completa, com 1.180 itens lidos/únicos e zero
 duplicados. Como não houve mudança de preço, não houve evento ou outbox novo;
 isso mantém pendente apenas a prova de um evento real e de sua entrega FCM.
 
-`029` depende de `023` e `026`, usa somente índices concorrentes aditivos para o
-Mobile V15 e deve ser aplicada em conexão direta, fora de transação. A aplicação
-e a verificação ainda são um checkpoint operacional deste plano.
+`029` depende de `023` e `026`, usa índices concorrentes aditivos para o Mobile
+V15 e foi aplicada/verificada pelo responsável no ambiente informado.
+
+`030` depende do schema do Inter. Ela foi aplicada no destino novo, que ainda não
+tem lojas para classificar; no projeto anterior, a aplicação e classificação
+continuam pendentes conforme `docs/PENDENCIAS.md`.
+
+`031` adiciona uma fila separada para pedidos manuais Livelo e Inter; não move
+nem apaga catálogos ou históricos. Ela foi aplicada no destino novo. Os grupos
+`robo_dispatcher NOLOGIN` e `robo_executor NOLOGIN` já existem, mas ainda é
+necessário associar logins distintos: `ROBO_DISPATCH_DATABASE_URL` usa o
+primeiro; o login privado do Samsung recebe o segundo, além dos privilégios já
+exigidos pelos coletores e pela fila Pichau. O destino permanece vazio e não
+deve receber tráfego até que esses acessos e cada consumidor sejam configurados
+e verificados separadamente.

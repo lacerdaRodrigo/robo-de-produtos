@@ -1,10 +1,6 @@
 name: pichau-pc-gamer
 
 on:
-  schedule:
-    # 12h30/17h30/23h30 UTC = 09h30/14h30/20h30 em Brasilia (UTC-3),
-    # depois da Livelo e antes do Inter.
-    - cron: "30 12,17,23 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -17,7 +13,7 @@ permissions:
 jobs:
   coletar_android:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: backend/robo
@@ -31,7 +27,7 @@ jobs:
       - name: Enfileirar coleta no Android
         id: enfileirar
         env:
-          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL || secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL }}
         run: |
           python -m robo_pichau.fila_android enqueue \
             --chave "github-${{ github.run_id }}-${{ github.sha }}" \
@@ -41,11 +37,3 @@ jobs:
           [[ "$job_id" =~ ^[0-9]+$ ]] || { echo "id de fila invalido" >&2; exit 1; }
           echo "job_id=$job_id" >> "$GITHUB_OUTPUT"
           echo "Solicitacao Pichau Android enfileirada: id=$job_id"
-      - name: Aguardar publicação no Android
-        env:
-          DATABASE_URL: ${{ secrets.PICHAU_DISPATCH_DATABASE_URL || secrets.DATABASE_URL }}
-        run: |
-          python -m robo_pichau.fila_android wait \
-            --id "${{ steps.enfileirar.outputs.job_id }}" \
-            --timeout-seconds 1200 \
-            --poll-seconds 30

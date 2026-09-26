@@ -14,6 +14,11 @@ Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
 
 **Última atualização:** 2026-09-21
 
+O histórico de execuções reais acima prova o runner Pichau anterior, não a nova
+agenda conjunta Livelo/Inter/Pichau. O código desta reorganização ainda precisa
+ser integrado e instalado no Samsung; migrations, secrets, cópia Neon e gate de
+72 horas permanecem pendentes em [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
+
 ## Objetivo
 
 Adicionar a Pichau como fonte independente de PCs Gamer no Radar, como subárea
@@ -400,7 +405,7 @@ binário `libpq` incompatível.
 #### Configuração privada e segurança
 
 Criar somente no aparelho o arquivo
-`$PREFIX/etc/robo-pichau/env`, modo `600` (ou `400` quando imutável), com
+`$PREFIX/etc/robo-celular/env`, modo `600` (ou `400` quando imutável), com
 `DATABASE_URL` SSL e as opções de transporte. Nunca versionar ou imprimir
 esses valores:
 
@@ -422,10 +427,10 @@ cookie, HTML ou imagem.
 #### Boot, worker e diagnóstico
 
 O boot deve apontar para o checkout por link simbólico, nunca por cópia. Os
-scripts vigentes são `pichau-android-boot.sh`,
-`pichau-android-worker.sh`, `pichau-android-schedule.sh`,
-`pichau-android-recover.sh`, `pichau-android-run.sh`,
-`pichau-android-appium.sh` e `pichau-android-status.sh`.
+scripts vigentes estão separados por responsabilidade:
+`scripts/celular/{boot.sh,worker.sh,schedule-watchdog.sh,recover.sh,status.sh}`
+e `scripts/pichau/{run.sh,appium.sh}`. Os antigos nomes Pichau na raiz de
+`scripts/` são links de compatibilidade.
 
 ```bash
 mkdir -p "$HOME/.termux/boot" "$HOME/.termux/boot-backups"
@@ -434,24 +439,25 @@ if [[ -e "$HOME/.termux/boot/pichau-android-boot.sh" \
   mv "$HOME/.termux/boot/pichau-android-boot.sh" \
     "$HOME/.termux/boot-backups/pichau-android-boot.sh.bak"
 fi
-ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/pichau-android-boot.sh" \
+ln -sfn "$PREFIX/opt/robo/backend/robo/scripts/celular/boot.sh" \
   "$HOME/.termux/boot/pichau-android-boot.sh"
-"$PREFIX/opt/robo/backend/robo/scripts/pichau-android-status.sh"
+"$PREFIX/opt/robo/backend/robo/scripts/celular/status.sh"
 ```
 
-O worker foreground consulta a fila a cada 30 segundos; o watchdog 7301 chama
-o recuperador a cada 15 minutos, sem coleta independente. O claim usa lock
-transacional e lease de 30 minutos. Antes de abrir o Chrome, o worker exige
-checkout limpo, faz fast-forward de `origin/main`, confirma que o SHA do
-workflow é ancestral e reinstala o extra Android quando o HEAD muda. Falha de
-checkout termina como `pichau-checkout`; pendência sem claim após 20 minutos
-termina como `executor-offline`.
+O worker foreground verifica a agenda local a cada 30 segundos e consulta a API
+pública do GitHub a cada 180 segundos com ETag; não consulta a fila Neon em
+loop ocioso. O watchdog 7301 chama o recuperador a cada 15 minutos, sem coleta
+independente. O claim manual Pichau usa lock transacional e lease de 30 minutos.
+Antes de abrir o Chrome, o runner exige checkout limpo, faz fast-forward de
+`origin/main`, confirma que o SHA do workflow é ancestral e reinstala o extra
+Android quando o HEAD muda. Falha de checkout termina como `pichau-checkout`;
+pedido pendente não expira se o telefone ficar offline.
 
 #### Gates antes da operação recorrente
 
 1. Configurar `PICHAU_MODO_NAVEGADOR=android` e, se necessário,
    `PICHAU_ANDROID_DEVICE_NAME`/`PICHAU_ANDROID_UDID`.
-2. Executar `pichau-android-appium.sh start`, confirmar que UiAutomator2 abre
+2. Executar `scripts/pichau/appium.sh start`, confirmar que UiAutomator2 abre
    uma página de teste e encerrar com `stop`, sem processo órfão.
 3. Executar `python -m robo_pichau.principal --diagnostico`; ele valida
    `products.items`, URL HTTPS, preço e disponibilidade, sem criar execução,
@@ -473,7 +479,7 @@ Wi-Fi após reboot, e o worker não tem privilégio para religá-la sozinho:
 2. ativar “Depuração por Wi-Fi” nas Opções do desenvolvedor;
 3. conectar temporariamente um computador autorizado por USB e executar
    `adb tcpip 5555`;
-4. confirmar `pichau-android-status.sh`, retirar o cabo e bloquear a tela.
+4. confirmar `scripts/celular/status.sh`, retirar o cabo e bloquear a tela.
 
 Não declarar autonomia após qualquer reboot sem novo teste real. Se essa
 intervenção manual não for aceitável, avaliar um controlador Linux residencial
@@ -528,7 +534,7 @@ tem privilégio para religar essa função sozinho. O runbook de recuperação �
 2. ativar “Depuração por Wi‑Fi” nas Opções do desenvolvedor;
 3. conectar temporariamente um computador autorizado por USB e executar
    `adb tcpip 5555`;
-4. confirmar `pichau-android-status.sh` e retirar o cabo de dados antes de
+4. confirmar `scripts/celular/status.sh` e retirar o cabo de dados antes de
    bloquear novamente a tela.
 
 Enquanto essa limitação existir, a operação recorrente não deve depender do
@@ -564,56 +570,37 @@ A execução `34306849805` confirmou esse fluxo corrigido sem cabo, com fila,
 worker, Appium, Chrome e publicação concluídos em 2m17s.
 Livelo e Inter permanecem fora desta prova.
 
-## Workflow GitHub Actions e fila Android — contrato versionado, aceite em observação
+## Execução no Samsung e fila Pichau — contrato vigente
 
-O workflow Pichau é o disparador único da coleta. O cron usa `09h30`, `14h30`
-e `20h30` de Brasília, entre Livelo e Inter, e o botão manual usa a mesma
-fila. Cada execução combina `github_run_id` e o `github.sha` de 40
-caracteres na chave idempotente, insere um trabalho `pendente` e aguarda até 20
-minutos os estados `sucesso` ou `falha`. O uso da chave existente dispensa nova
-coluna ou migration e mantém legíveis as linhas antigas sem SHA.
+O fluxo comum das quatro fontes está em
+[`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md). A coleta Pichau roda
+localmente às 09h30, 14h30 e 20h30 de Brasília. O workflow
+`.github/workflows/pichau.yml` não tem cron: o botão manual registra uma linha
+idempotente na fila existente e encerra sem aguardar o Android. Portanto,
+workflow verde é confirmação de pedido aceito, não de catálogo publicado.
 
-O worker `pichau-android-worker.sh` é iniciado diretamente pelo Termux:Boot,
-sem ser destacado em tmux: o script de boot transfere o processo com `exec`, o
-Termux mantém a tarefa foreground e o worker conserva wake/Wi-Fi lock durante
-toda a vida do daemon. Ele consulta a fila a cada 30 segundos e reivindica um
-trabalho com `FOR UPDATE SKIP LOCKED`. O lease de 30 minutos continua permitindo
-recuperar uma execução abandonada.
+O daemon único é iniciado por `scripts/celular/boot.sh`, roda em primeiro plano
+no Termux e mantém wake lock. A cada 30 segundos verifica a agenda local; a cada
+180 segundos consulta a API pública de GitHub Actions com ETag. Não consulta o
+Neon em loop ocioso. O job 7301 tenta recuperar o mesmo processo a cada 15
+minutos; `flock` impede workers simultâneos. Appium sobe somente durante a
+coleta.
 
-Depois do claim e antes de abrir o Chrome, o executor exige que não existam
-alterações locais versionadas, busca somente `origin/main` sem prompt interativo
-e avança o checkout exclusivamente por fast-forward. Em seguida confirma por
-ancestralidade que o HEAD local contém o SHA que disparou o workflow. Isso
-aceita um release automático posterior ao disparo, como ocorreu entre
-`4a3e91b` e `e64a003`, mas não aceita branch divergente, checkout sujo, falha de
-rede ou commit ausente. Quando o HEAD muda, o mesmo Python do worker reinstala
-o projeto editável com o extra `pichau-android`, garantindo também o alinhamento
-das dependências. Falha de Git ou instalação termina a fila como
-`pichau-checkout` e a coleta nem inicia. Solicitações antigas sem SHA ainda
-atualizam até a `main`, preservando a compatibilidade operacional.
+O slot local usa SQLite para impedir duplicação por fonte/data/horário. Atraso
+acima de 90 segundos é ignorado, sem catch-up. O disparo manual reivindica a
+fila Pichau por `FOR UPDATE SKIP LOCKED`, com lease de 30 minutos. Pedidos
+pendentes não são descartados por timeout do workflow; falhas ficam no estado
+persistido da fila e nos logs do telefone.
 
-O job 7301 chama `pichau-android-recover.sh` a cada 15 minutos com rede `any`,
-sem condições de bateria ou armazenamento. O recuperador tenta iniciar o mesmo
-daemon; o `flock` torna a chamada inofensiva quando o worker principal está
-ativo. Appium não permanece carregado no boot: o runner o inicia sob demanda e
-o encerra ao terminar, reduzindo processos ociosos no aparelho antigo.
+Antes de abrir o Chrome, o executor exige checkout limpo, atualiza por
+fast-forward para `origin/main` e confirma que o SHA do workflow pertence ao
+checkout. Ao mudar HEAD, reinstala o projeto e extra Android. Falha termina o
+pedido como `pichau-checkout`. Solicitações antigas sem SHA ainda são aceitas.
 
-Uma solicitação que permanecer `pendente` por 20 minutos é informada pelo
-workflow como `executor-offline`. A credencial restrita do dispatcher não ganha
-permissão de update; quando o publicador voltar, o worker encerra pendências
-antigas como `falha/executor-offline` antes do próximo claim, impedindo que
-pipelines já encerradas sejam coletadas horas depois. Trabalhos `executando` não
-são expirados por essa limpeza e continuam protegidos pelo lease. Falhas
-reivindicadas chegam ao workflow nas categorias seguras do runner ou, quando o
-publicador já registrou diagnóstico, em códigos mais granulares como
-`pichau-rede`, `pichau-http-503` e `pichau-catalogo-incompleto`.
-
-O comando `pichau-android-status.sh` verifica checkout, arquivo privado, lock do
-worker, wake lock de propriedade do worker, watchdog, banco da fila e ADB Wi-Fi
-sem imprimir URL, host, porta ou serial. O arquivo do Termux:Boot deve ser um
-link para o checkout em `PREFIX/opt/robo`, evitando divergência após `git pull`.
-Backups ficam fora de `.termux/boot`, porque todos os arquivos presentes nessa
-pasta são executados durante a inicialização.
+O comando atual de diagnóstico é `scripts/celular/status.sh`; o runner e Appium
+estão em `scripts/pichau/{run.sh,appium.sh}`. O Termux:Boot deve apontar por
+link simbólico para o checkout em `PREFIX/opt/robo`. Os nomes antigos na raiz
+de `scripts/` são symlinks de compatibilidade, não a organização recomendada.
 
 O `android-tools` instalado neste Samsung não implementa a consulta mDNS no
 servidor ADB local. O runner reutiliza conexões existentes e aceita uma porta
@@ -635,13 +622,14 @@ workflow. A migration `022_pichau_android_fila.sql` já foi aplicada; a `024`
 passou pela validação branch-first e também foi aplicada em produção. As
 execuções reais `34081623450`, `34136108063` e `34302348225` confirmaram o
 caminho GitHub → fila → worker Android → banco/API. As credenciais mínimas
-separadas estão configuradas; o fallback para `DATABASE_URL` permanece
-funcional.
+separadas eram usadas pelo fluxo anterior. O workflow atual exige
+`PICHAU_DISPATCH_DATABASE_URL` e não tem fallback para um `DATABASE_URL` amplo.
 
-O novo aceite operacional exige uma coleta manual inicial após implantação e
-nove execuções agendadas consecutivas durante 72 horas, com tela bloqueada e
-sem abrir o Termux. Todas devem ser reivindicadas uma vez e concluir dentro do
-workflow. Qualquer falha reinicia a janela depois da correção. Se
+O aceite operacional exige uma coleta manual inicial após implantação e nove
+execuções Pichau agendadas consecutivas durante 72 horas, com tela bloqueada e
+sem abrir o Termux. Cada coleta deve publicar catálogo completo e deixar
+Chrome/Appium ociosos; o resultado não é medido pelo estado do workflow manual.
+Qualquer falha reinicia a janela depois da correção. Se
 `executor-offline` persistir com o aparelho dedicado, carregando e configurado
 como nunca suspender, esta ROM/aparelho não será aceita como servidor; a coleta
 deve ser planejada com controlador Linux residencial separado.
@@ -739,17 +727,16 @@ continuam pendentes.
 
 ## Estado operacional do executor Android
 
-O hardening, a migration, a limpeza de tarefas recentes, a restauração da tela
-bloqueada e o alinhamento automático de checkout estão implantados e passaram
-em coleta real. A execução manual sem cabo físico e a nova observação agendada
-de 72 horas continuam abertas. O telefone precisa
+O runner Pichau, a migration 022, o diagnóstico 024, a limpeza de tarefas
+recentes, a restauração da tela e o alinhamento de checkout do código anterior
+passaram por coleta real. A nova integração com agenda única, estado SQLite,
+despacho GitHub para Livelo/Inter e caminhos organizados ainda não foi instalada
+no Samsung nem validada em produção. Backup/cópia do Neon, migration 031,
+secrets, instalação e gate de 72 horas continuam pendentes. O telefone precisa
 permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
 pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
 faz parte da execução recorrente. A inclusão da Pichau na busca global de
-Produtos continua sendo decisão separada; a evolução do acompanhamento desta
-jornada está versionada, com a aplicação da migration 028 confirmada em
-produção. Permanecem pendentes somente o evento/push real e o gate operacional
-de 72 horas.
+Produtos continua sendo decisão separada.
 
 ## Critérios de aceite
 

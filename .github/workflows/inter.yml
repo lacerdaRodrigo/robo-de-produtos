@@ -1,138 +1,35 @@
 name: shopping-inter
 
 on:
-  schedule:
-    # 13h30/18h30/00h30 UTC = 10h30/15h30/21h30 de Brasilia (UTC-3).
-    # O disparo fica por ultimo para reservar tempo para Pichau e Livelo.
-    - cron: "30 0,13,18 * * *"
   workflow_dispatch:
 
-# Cashback e Compre direto formam uma unica rodada do Banco Inter. Uma nova
-# rodada espera a anterior terminar e qualquer falha deixa o workflow inteiro
-# vermelho; snapshots validos anteriores continuam preservados no banco.
-concurrency:
-  group: shopping-inter
-  cancel-in-progress: false
-
-# Os coletores nunca escrevem no repositorio.
 permissions:
   contents: read
 
+concurrency:
+  group: coleta-inter-manual
+  cancel-in-progress: false
+
 jobs:
-  cashback:
+  solicitar:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: backend/robo
-
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
           cache-dependency-path: backend/robo/pyproject.toml
-
-      - name: Instalar dependencias
-        run: pip install -e .
-
-      - name: Atualizar cashback do Shopping Inter
+      - name: Instalar dependências do despachante
+        run: python -m pip install --no-cache-dir .
+      - name: Enfileirar rodada do Inter no Samsung
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # Piso defensivo, nao quantidade fixa: 110, 112, 130 etc. sao aceitos.
-          LIMIAR_LOJAS_INTER: "100"
-        run: python -m robo_livelo.principal_inter
-
-  preparar_produtos:
-    needs: cashback
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: backend/robo
-    outputs:
-      execucao_id: ${{ steps.preparar.outputs.execucao_id }}
-      lojas: ${{ steps.preparar.outputs.lojas }}
-      tem_lojas: ${{ steps.preparar.outputs.tem_lojas }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend/robo/pyproject.toml
-
-      - name: Instalar dependencias
-        run: pip install -e .
-
-      - name: Sincronizar vendedores e preparar matriz
-        id: preparar
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m robo_livelo.principal_produtos_inter preparar >> "$GITHUB_OUTPUT"
-
-  coletar_produtos:
-    needs: preparar_produtos
-    if: needs.preparar_produtos.outputs.tem_lojas == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: backend/robo
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        loja: ${{ fromJSON(needs.preparar_produtos.outputs.lojas) }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend/robo/pyproject.toml
-
-      - name: Instalar dependencias
-        run: pip install -e .
-
-      - name: Coletar loja selecionada
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.ROBO_DISPATCH_DATABASE_URL }}
         run: >-
-          python -m robo_livelo.principal_produtos_inter coletar
-          --execucao-id "${{ needs.preparar_produtos.outputs.execucao_id }}"
-          --loja-id "${{ matrix.loja }}"
-
-  concluir_produtos:
-    needs: [cashback, preparar_produtos, coletar_produtos]
-    if: >-
-      always() &&
-      needs.cashback.result == 'success' &&
-      needs.preparar_produtos.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: backend/robo
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend/robo/pyproject.toml
-
-      - name: Instalar dependencias
-        run: pip install -e .
-
-      - name: Consolidar resultado da rodada
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: >-
-          python -m robo_livelo.principal_produtos_inter concluir
-          --execucao-id "${{ needs.preparar_produtos.outputs.execucao_id }}"
+          python -m robo_celular.fila solicitar
+          --fonte inter
+          --github-run-id "${{ github.run_id }}"

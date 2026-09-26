@@ -14,11 +14,12 @@ from pathlib import Path
 
 import pytest
 
+from robo_inter.modelos_inter import LojaInter
 from robo_livelo.extrator import TITULO_SECAO_PARCEIROS
 from robo_livelo.modelos import LojaFavorita, Parceiro
-from robo_livelo.modelos_inter import LojaInter
 
-PASTA_FIXTURES = Path(__file__).parent / "fixtures"
+PASTA_FIXTURES_LIVELO = Path(__file__).parent / "fixtures" / "livelo"
+PASTA_FIXTURES_INTER = Path(__file__).parent / "fixtures" / "inter"
 
 FUSO_BRASILIA = timezone(timedelta(hours=-3))
 
@@ -32,20 +33,20 @@ TITULO_SECAO_DESTAQUE = "[AP] - Mosaico Carrossel de Parceiros - Página Compre 
 @pytest.fixture
 def html_exemplo() -> str:
     """HTML real da pagina da Livelo (V1), recortado em 20 parceiros."""
-    return (PASTA_FIXTURES / "exemplo_parceiros.html").read_text(encoding="utf-8")
+    return (PASTA_FIXTURES_LIVELO / "exemplo_parceiros.html").read_text(encoding="utf-8")
 
 
 @pytest.fixture
 def payload_exemplo() -> str:
     """Payload JSON real da Livelo, recortado (schema confirmado ao vivo em 2026-08)."""
-    texto = (PASTA_FIXTURES / "payload_parceiros.json").read_text(encoding="utf-8")
+    texto = (PASTA_FIXTURES_LIVELO / "payload_parceiros.json").read_text(encoding="utf-8")
     return envolver_payload_em_html(texto)
 
 
 @pytest.fixture
 def json_inter_exemplo() -> str:
     """Cinco formatos reais do endpoint do Inter, recortados e sanitizados."""
-    return (PASTA_FIXTURES / "lojas_inter.json").read_text(encoding="utf-8")
+    return (PASTA_FIXTURES_INTER / "lojas_inter.json").read_text(encoding="utf-8")
 
 
 @pytest.fixture

@@ -1,12 +1,17 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.2 em aceite progressivo
-**Status vigente em 2026-09-14:** schema, coletor, API autenticada, Flutter e
+**Status vigente em 2026-09-26:** schema, coletor, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara preço e cashback
 de Produtos Inter conforme a seção 15.4 e o PRD compartilhado de alertas. A
 carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do
 domínio foram aplicadas manualmente no banco alvo; as categorias externas são
 regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
+**Execução recorrente vigente:** Produtos roda às 10h30, 15h30 e 21h30 no
+worker Samsung, depois da coleta de Sites parceiros. O workflow `inter.yml`
+somente enfileira pedidos manuais; a instalação do worker, a migration 031 e a
+troca de credenciais continuam pendentes. O contrato comum está em
+[`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
 > A V4 acrescenta uma terceira integração ao Radar de Benefícios: produtos vendidos na área **Compre direto no Inter**. Ela não substitui a Livelo nem o cashback de **Sites parceiros** da V3. Cada fonte continua com domínio, coleta, persistência e páginas próprios.
@@ -185,7 +190,7 @@ Nenhuma rota, tabela, regra ou workflow existente é removido.
 | **RF45** | Guardar três medições diárias por produto e reter somente os últimos 30 dias |
 | **RF46** | Exibir preço atual, mínimo, máximo e tabela cronológica do produto naquela loja |
 | **RF47** | Registrar por loja total declarado, páginas, itens lidos, únicos, duplicados, duração e estado |
-| **RF48** | Executar em workflow próprio nos três horários e por disparo manual com cooldown |
+| **RF48** | Executar em série no worker local nos três horários Inter e aceitar disparo manual enfileirado pelo workflow; o Actions não executa a coleta |
 | **RF49** | Exibir catálogo anterior, falha recente, loja sem sucesso e dado atrasado como estados distintos |
 
 ### 5.2 Não-funcionais
@@ -374,13 +379,19 @@ RepositorioDeProdutos.falhar_loja(...) -> estado controlado
 
 As assinaturas definitivas e o esquema físico serão fechados no gate de persistência. O contrato comportamental deste documento não depende dos nomes finais.
 
-### 7.4 Workflow e escala
+### 7.4 Workflow, agenda e despacho manual
 
-O workflow `produtos-inter.yml` é exclusivo da V4. Um job coordenador gera JSON para uma matriz dinâmica. O job por loja usa `max-parallel: 2`, `permissions: contents: read`, timeout de 30 minutos e pausa de 1,5 s entre páginas.
+O workflow de domínio vigente é `inter.yml`, acionado manualmente e usado
+somente para inserir um pedido durável na fila Neon. Ele não coleta produtos,
+não cria matriz por loja e não espera pelo telefone. O worker Samsung executa
+Sites parceiros e, em seguida, Compre direto nos horários compartilhados do
+Inter. A coleta por loja, paginação e concorrência interna continuam definidas
+pelas regras deste PRD, mas o Actions não é mais o executor.
 
-Não há limite de lojas na interface. Selecionar dez lojas cria dez tarefas; selecionar três cria três. Concorrência baixa controla pressão sobre a fonte sem serializar todas num único processo sujeito ao timeout global.
-
-O disparo manual usa o token existente somente para iniciar o workflow. Ele não recebe slug ou URL arbitrária do navegador: as lojas sempre são relidas do banco, impedindo transformar a action num proxy aberto.
+O botão administrativo usa o token de dispatch já existente para iniciar
+`inter.yml`; o pedido não aceita slug ou URL arbitrária do navegador. O estado
+final deve ser conferido na fila e no registro da coleta, não pelo status verde
+do workflow.
 
 ---
 

@@ -1,12 +1,16 @@
 # PRD — Inter Cashback (Sites parceiros)
 
 **Versão:** V3.0–V3.3
-**Status vigente em 2026-09-13:** coleta, Postgres, API autenticada, Flutter e
+**Status vigente em 2026-09-26:** coleta, Postgres, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara o cashback de
 Sites parceiros conforme a seção 16.2 e o PRD compartilhado de alertas. A
 migration `006` foi registrada como aplicada no Neon; a primeira sincronização
 real cadastrou 381 lojas. A entrega FCM de um evento real ainda depende de
 validação operacional.
+**Execução recorrente vigente:** o worker Samsung agenda esta fonte às 10h30,
+15h30 e 21h30; `inter.yml` apenas enfileira pedidos manuais. A instalação do
+worker, a migration 031 e a troca de credenciais continuam pendentes. O contrato comum
+está em [`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
 **Levantamento da fonte:** 14 de agosto de 2026
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
@@ -153,7 +157,7 @@ O limiar de 100 em MS9 não afirma que o catálogo sempre terá 381 lojas. Ele c
 | **RF27** | Usar em cada card a rota individual oficial `https://shopping.inter.co/site-parceiro/lojas/{slug}`, aberta somente por ação da pessoa |
 | **RF28** | Criar páginas próprias para consulta e cadastro do Inter e incluí-las na navegação sem mudar o comportamento das rotas da Livelo |
 | **RF29** | Registrar cada execução do Inter com momento, versão, total lido, total válido, favoritas encontradas e estado final |
-| **RF30** | Executar o robô do Inter em workflow próprio, nos horários 10h30, 15h30 e 21h30 de Brasília e por disparo manual |
+| **RF30** | Executar o robô do Inter às 10h30, 15h30 e 21h30 pelo worker local; o workflow próprio aceita apenas disparo manual e enfileira no Neon |
 | **RF31** | Mostrar falha, dado atrasado e loja ausente como estados distintos; nenhum deles pode aparecer como cashback zero |
 | **RF32** | Exibir a oferta para não-correntista em uma seção secundária identificada, recolhida por padrão, quando ela existir |
 | **RF33** | Consultar separadamente a última tentativa e a última execução válida, para mostrar falha recente sem substituir os cashbacks válidos anteriores |
@@ -304,7 +308,7 @@ O princípio da V1 continua: **núcleo puro, mundo por contrato**. A separação
 | `backend/api/app/api/inter/cashback` | API autenticada | Cashback, ordenação, busca e estado da coleta |
 | `backend/api/app/api/inter/lojas` | API administrativa | Busca no catálogo e seleção/remoção |
 | `app/lib/features/inter/` | Flutter | Consulta de cashback e acompanhamento |
-| `.github/workflows/inter.yml` | Automação nova | Cron e disparo manual do Inter |
+| `.github/workflows/inter.yml` | Automação nova | Dispatcher manual do Inter; somente enfileira a solicitação |
 
 A estrutura continua plana, conforme PRD §4.4. Um pacote novo inteiro não é necessário para cinco módulos pequenos.
 
@@ -354,11 +358,16 @@ Qualquer falha antes do passo 8 preserva a última execução válida e tenta ma
 
 ### 7.5 Workflow e disparo manual
 
-`inter.yml` agenda o Inter por último, às 10h30, 15h30 e 21h30 de Brasília,
-com cron `30 0,13,18 * * *` em UTC. Ele mantém `permissions: contents: read`,
-timeout próprio e somente os segredos de que precisa.
+`inter.yml` aceita somente `workflow_dispatch`, mantém `permissions: contents: read`
+e timeout de cinco minutos. Usa `ROBO_DISPATCH_DATABASE_URL` exclusivamente
+para enfileirar o pedido manual no Neon; não executa o coletor nem consulta o
+telefone. Os horários recorrentes rodam no worker local, conforme o PRD
+compartilhado de execução.
 
-O botão “Atualizar Inter” dispara apenas `inter.yml`. O limite de cinco minutos é independente do botão da Livelo, por meio de `disparo_manual_inter`; um serviço não consome a janela do outro.
+O botão “Atualizar Inter” usa `GITHUB_TOKEN_DISPARO`, configurado no servidor,
+para disparar `inter.yml`. O limite de cinco minutos é independente do botão da
+Livelo, por meio de `disparo_manual_inter`; um serviço não consome a janela do
+outro. O workflow verde confirma apenas que o pedido foi registrado.
 
 ---
 
@@ -676,7 +685,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 |---|---|
 | Fonte | Endpoint fixo `https://marketplace-api.web.bancointer.com.br/site/affiliate/inter/v1/departments/ALL-STORES/stores?lang=pt-BR` |
 | Plano alternativo | Não há scraping do HTML nem Playwright automático. Mudança do endpoint interrompe a integração para revisão |
-| Frequência | 10h30, 15h30 e 21h30 de Brasília, em `.github/workflows/inter.yml`, além de disparo manual |
+| Frequência | 10h30, 15h30 e 21h30 de Brasília no worker Samsung, além de disparo manual enfileirado por `inter.yml` |
 | Cortesia de rede | No máximo três tentativas por execução, timeout de 30 segundos cada e espera linear de 2 e 4 segundos; retry somente para erro de conexão/timeout, HTTP 408, 429 ou 5xx |
 | HTTP definitivo | HTTP 400–407 (exceto 408) e 409–499 (exceto 429) falham na primeira resposta; 401 e 403 nunca são repetidos |
 | Tamanho | Resposta acima de 5 MiB é rejeitada antes da decodificação |
@@ -733,12 +742,12 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 | Tema | Decisão fechada |
 |---|---|
 | Módulos | `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
-| Entrada | `python -m robo_livelo.principal_inter` (a partir de `backend/robo/`) |
+| Entrada | `python -m robo_inter.principal_inter` (a partir de `backend/robo/`) |
 | API | `backend/api/lib/banco-inter.ts` ativo, usado pelas rotas em `backend/api/app/api/inter/**` |
 | Dependências | Nenhuma dependência Python ou npm nova; usar `requests`, `psycopg`, React e Neon já instalados |
 | Compartilhamento | Sessão, tema, componentes realmente genéricos e dispatch parametrizado podem ser reutilizados; modelos e regras da Livelo não |
-| Workflow | `inter.yml` tem `permissions: contents: read`, timeout de 10 minutos e recebe apenas `DATABASE_URL` |
-| Disparo manual | Usa o `GITHUB_TOKEN_DISPARO` já existente, aponta para `inter.yml` e tem cooldown próprio de cinco minutos |
+| Workflow | `inter.yml` tem somente `workflow_dispatch`, `permissions: contents: read`, timeout de cinco minutos e usa `ROBO_DISPATCH_DATABASE_URL` para enfileirar; não executa a coleta |
+| Disparo manual | A API usa `GITHUB_TOKEN_DISPARO` para iniciar `inter.yml`; cooldown próprio de cinco minutos |
 | Versão | “V3” é versão de produto/documento. O `python-semantic-release` continua calculando a versão técnica por Conventional Commits; não se força `3.0.0` |
 
 ### 15.7 Segurança, publicação e desligamento

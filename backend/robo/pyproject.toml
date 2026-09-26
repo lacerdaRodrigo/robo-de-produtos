@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "robo-livelo"
 version = "1.72.1"
-description = "Radar de beneficios da Livelo e do Shopping Inter"
+description = "Coletores Livelo, Inter e Pichau do Radar de Benefícios"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
@@ -54,12 +54,12 @@ include = [
     "*/robo_livelo/categorias.py",
     "*/robo_livelo/alertas.py",
     "*/robo_livelo/retrato.py",
-    "*/robo_livelo/modelos_inter.py",
-    "*/robo_livelo/extrator_inter.py",
-    "*/robo_livelo/ranking_inter.py",
-    "*/robo_livelo/retrato_inter.py",
-    "*/robo_livelo/modelos_produtos_inter.py",
-    "*/robo_livelo/extrator_produtos_inter.py",
+    "*/robo_inter/modelos_inter.py",
+    "*/robo_inter/extrator_inter.py",
+    "*/robo_inter/ranking_inter.py",
+    "*/robo_inter/retrato_inter.py",
+    "*/robo_inter/modelos_produtos_inter.py",
+    "*/robo_inter/extrator_produtos_inter.py",
     "*/robo_pichau/modelos.py",
     "*/robo_pichau/extrator.py",
 ]
@@ -75,7 +75,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 # Versao vem dos commits: fix -> patch, feat -> minor, feat! -> major.
 version_toml = ["backend/robo/pyproject.toml:project.version"]
 version_variables = [
-    "backend/robo/src/robo_livelo/__init__.py:__version__",
+    "backend/robo/src/robo_compartilhado/__init__.py:__version__",
     "app/pubspec.yaml:version",
 ]
 commit_message = "chore(release): {version}"

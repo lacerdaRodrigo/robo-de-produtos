@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-PACOTE = Path(__file__).resolve().parents[1] / "src" / "robo_livelo"
+SRC = Path(__file__).resolve().parents[1] / "src"
 RAIZ_REPOSITORIO = Path(__file__).resolve().parents[3]
 
 # O nucleo nao faz entrada e saida: nada de rede, disco ou ambiente.
@@ -34,7 +34,13 @@ MODULOS_INTER = [
     "modelos_produtos_inter.py",
     "extrator_produtos_inter.py",
 ]
-MODULOS_DO_NUCLEO = [*MODULOS_LIVELO, *MODULOS_INTER]
+MODULOS_POR_PACOTE = {
+    "robo_livelo": MODULOS_LIVELO,
+    "robo_inter": MODULOS_INTER,
+}
+MODULOS_DO_NUCLEO = [
+    (pacote, modulo) for pacote, modulos in MODULOS_POR_PACOTE.items() for modulo in modulos
+]
 IMPORTS_PROIBIDOS = {"requests", "tomllib", "os", "pathlib", "dotenv", "socket"}
 
 
@@ -49,22 +55,21 @@ def imports_de(caminho: Path) -> set[str]:
     return encontrados
 
 
-@pytest.mark.parametrize("modulo", MODULOS_LIVELO)
-def teste_ct074_nucleo_nao_faz_io(modulo):
-    proibidos = imports_de(PACOTE / modulo) & IMPORTS_PROIBIDOS
-    assert not proibidos, f"{modulo} importa {sorted(proibidos)}, que fazem I/O"
-
-
-@pytest.mark.parametrize("modulo", MODULOS_INTER)
-def teste_ct188_nucleo_inter_nao_faz_io(modulo):
-    proibidos = imports_de(PACOTE / modulo) & IMPORTS_PROIBIDOS
-    assert not proibidos, f"{modulo} importa {sorted(proibidos)}, que fazem I/O"
+@pytest.mark.parametrize(("pacote", "modulo"), MODULOS_DO_NUCLEO)
+def teste_ct074_ct188_nucleos_nao_fazem_io(pacote, modulo):
+    proibidos = imports_de(SRC / pacote / modulo) & IMPORTS_PROIBIDOS
+    assert not proibidos, f"{pacote}/{modulo} importa {sorted(proibidos)}, que fazem I/O"
 
 
 def teste_nucleo_nao_importa_adaptadores():
     """A dependencia aponta para dentro: adaptador conhece nucleo, nunca o contrario."""
-    for modulo in MODULOS_DO_NUCLEO:
-        assert "adaptadores" not in "".join(imports_de(PACOTE / modulo))
+    for pacote, modulo in MODULOS_DO_NUCLEO:
+        assert "adaptadores" not in "".join(imports_de(SRC / pacote / modulo))
+
+
+def teste_inter_nao_importa_o_pacote_livelo():
+    for caminho in (SRC / "robo_inter").glob("*.py"):
+        assert "robo_livelo" not in imports_de(caminho)
 
 
 def teste_versionamento_aponta_para_os_arquivos_apos_reorganizacao():
@@ -75,7 +80,7 @@ def teste_versionamento_aponta_para_os_arquivos_apos_reorganizacao():
 
     assert configuracao["version_toml"] == ["backend/robo/pyproject.toml:project.version"]
     assert configuracao["version_variables"] == [
-        "backend/robo/src/robo_livelo/__init__.py:__version__",
+        "backend/robo/src/robo_compartilhado/__init__.py:__version__",
         "app/pubspec.yaml:version",
     ]
     assert "semantic-release -c backend/robo/pyproject.toml version" in workflow
