@@ -262,6 +262,16 @@ Future<void> _irParaProdutosCompacto(WidgetTester at) async {
   await _irParaCompacto(at, DestinoCompacto.inter);
   if (find.byKey(const Key('voltar-para-shopping-inter')).evaluate().isEmpty) {
     final modoCompreDireto = find.byKey(const Key('modo-inter-compre-direto'));
+    final hubInter = find.byKey(const Key('hub-shopping-inter'));
+    for (
+      var tentativa = 0;
+      tentativa < 8 && modoCompreDireto.evaluate().isEmpty;
+      tentativa++
+    ) {
+      await at.drag(hubInter, const Offset(0, -240));
+      await at.pumpAndSettle();
+    }
+    await _esperarFinder(at, modoCompreDireto);
     await at.ensureVisible(modoCompreDireto);
     await at.pumpAndSettle();
     await at.tap(modoCompreDireto);
@@ -731,7 +741,7 @@ void main() {
       isEmpty,
     );
     expect(find.text('Acompanhar'), findsNothing);
-    expect(find.text('✓ Acompanhada'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.text('Atualizar dados'), findsNothing);
     expect(
       requisicoes.where(

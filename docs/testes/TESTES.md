@@ -801,7 +801,7 @@ Web, integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-007 | Home real | Hierarquia da Home compacta, estados independentes, atualização e callbacks dos catálogos | `app/test/app/paginas/inicio_test.dart` |
 | V15-008 | Valores da Central | Preços vindos como texto decimal são exibidos em moeda local com agrupamento e arredondamento textual, sem converter para `double` | `app/test/features/alertas/formatacao_alertas_test.dart` |
 | V15-015 | Central de Alertas alinhada ao protótipo | Cabeçalho com botão `Voltar`, abas planas, filtro em folha, feed sem cartões elevados, barra inferior, toque de retorno e back Android; leitura coletiva percorre todas as páginas sem perder rollback local | `app/test/features/alertas/pagina_alertas_test.dart`, `app/test/features/alertas/controlador_alertas_test.dart`, `app/test/app/navegacao/moldura_test.dart` |
-| V15-016 | Hub Inter compacto alinhado ao protótipo | Cabeçalho com retorno visível, título/subtítulo do Banco Inter, dois cards responsivos sem contadores de resumo e retorno por toque e back Android | `app/test/app/navegacao/moldura_test.dart` |
+| V15-016 | Hub Inter compacto alinhado ao protótipo | Cabeçalho com retorno visível, título/subtítulo do Banco Inter, dois cards responsivos sem contadores de resumo; Compre direto permanece alcançável em 320 px com texto ampliado, sem overflow, e o retorno usa toque e back Android | `app/test/app/navegacao/moldura_test.dart` |
 | V15-017 | Condição secundária do Inter completa | Folha da oferta exibe percentual e descrição integral para não-correntista, com quebra de linha, rolagem e texto ampliado em 320 px | `app/test/features/inter/pagina_cashback_inter_test.dart` |
 
 ## Totais do pytest Python
