@@ -37,7 +37,7 @@ dependencies:
   http: ^1.6.0
   firebase_core: ^4.13.0
   firebase_auth: ^6.5.7
-  firebase_app_check: ^0.4.6
+  firebase_app_check: ^0.4.8
   firebase_messaging: ^16.1.2
   url_launcher: ^6.3.2
   package_info_plus: ^10.2.1
