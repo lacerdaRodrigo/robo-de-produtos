@@ -49,6 +49,12 @@ function dependencias(): DependenciasResumoInicio {
 describe("resumo real do Início", () => {
   it("inclui o retrato pessoal do radar sem confundir ausência com falha", async () => {
     const deps = dependencias();
+    const usuarioIds: Array<string | undefined> = [];
+    const livelo = deps.livelo;
+    deps.livelo = async (usuarioId) => {
+      usuarioIds.push(usuarioId);
+      return livelo(usuarioId);
+    };
     deps.radar = async () => ({
       estado: "atualizado",
       total_acompanhamentos: 3,
@@ -65,6 +71,28 @@ describe("resumo real do Início", () => {
       alertas_nao_lidos: 1,
     });
     expect(resumo.radar.por_origem.inter_produto).toBe(1);
+    expect(usuarioIds).toEqual([undefined]);
+  });
+
+  it("consulta os acompanhamentos por usuário na Home, inclusive no fluxo admin", async () => {
+    const deps = dependencias();
+    const usuariosConsultados: string[] = [];
+    deps.livelo = async (usuarioId) => {
+      usuariosConsultados.push(usuarioId ?? "sem-usuario");
+      return (await dependencias().livelo());
+    };
+    deps.cashbackInter = async (usuarioId) => {
+      expect(usuarioId).toBe("42");
+      return (await dependencias().cashbackInter());
+    };
+    deps.pichau = async (usuarioId) => {
+      expect(usuarioId).toBe("42");
+      return (await dependencias().pichau());
+    };
+
+    await carregarResumoInicio(deps, agora, "42", "42");
+
+    expect(usuariosConsultados).toEqual(["42"]);
   });
 
   it("mantém os três domínios e seus recortes independentes", async () => {

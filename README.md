@@ -4,9 +4,10 @@ Monitora benefícios em fontes públicas: publica catálogo, histórico e alerta
 Livelo e mostra cashback, condições e produtos do Shopping Inter, com busca e
 histórico de 30 dias. O antigo canal SMTP/e-mail não está ativo no código atual.
 
-Sem servidor próprio: os robôs Python rodam no GitHub Actions, um Postgres (Neon)
-guarda os catálogos e retratos, e um cliente **Flutter** (Android e iOS) mostra
-cada fonte sem misturar suas regras.
+O Neon guarda catálogos e retratos, a API roda na Vercel e um worker dedicado no
+Samsung executa as coletas. GitHub Actions valida o código e enfileira pedidos
+manuais; o cliente **Flutter** (Android e iOS) mostra cada fonte sem misturar
+suas regras.
 
 > **Ciclo atual:** o Flutter está em redesign **mobile-only V15**, governado por
 > [`AGENTS.md`](AGENTS.md) e pelo protótipo mobile. O aplicativo Flutter não
@@ -52,6 +53,7 @@ todas leem apenas fontes públicas.
 | [`docs/testes/TESTES.md`](docs/testes/TESTES.md) | Catálogo de casos de teste |
 | **[`docs/PENDENCIAS.md`](docs/PENDENCIAS.md)** | O que falta fazer, em ordem. Lista viva |
 | [`docs/prd/PRD-ACEITE-MOBILE-V15.md`](docs/prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo do aceite físico Android/iOS V15 |
+| [`docs/prd/PRD-BACKUP-NEON.md`](docs/prd/PRD-BACKUP-NEON.md) | Backup Neon cifrado, restauração e configuração operacional pendente |
 | [`docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md`](docs/prd/PRD-LIVELO-CATALOGO-ALERTAS-APP.md) | Livelo: catálogo, alertas e aplicativo |
 | [`docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](docs/prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Central de Alertas, suporte, privacidade, FCM e acompanhamento pessoal |
 | [`docs/prd/PRD-INTER-CASHBACK.md`](docs/prd/PRD-INTER-CASHBACK.md) | V3: Shopping Inter, cashback e condições |
@@ -71,10 +73,13 @@ Cada pasta tem seu próprio `README.md` com contexto local:
 ```bash
 make dev                       # Android conectado, usando a branch atual
 make dev DEVICE=emulator-5554  # escolhe outro Android
-make apk                       # gera o APK de release para instalar manualmente
+make apk                       # gera APK release; exige keystore e variáveis de assinatura
 ```
 
-O alvo detecta o primeiro Android disponível e executa o checkout atual. Para
+O alvo detecta o primeiro Android disponível e executa o checkout atual. O build
+release exige `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` e `ANDROID_KEY_PASSWORD`; não usa a chave debug como fallback.
+Para
 trocar a API ou o App Check, passe `API_URL=...` e `APP_CHECK=true` no comando.
 Após `make apk`, o arquivo fica em
 `app/build/app/outputs/flutter-apk/app-release.apk`.

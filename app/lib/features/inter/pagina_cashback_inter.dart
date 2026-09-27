@@ -66,7 +66,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               ordenar: ordenar,
               pagina: pagina,
               porPagina: _itensPorPagina,
-              acompanhamentoPessoal: !widget.administrador,
+              acompanhamentoPessoal: true,
             ),
         buscarComCategoria:
             ({
@@ -80,7 +80,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               categoria: categoria,
               pagina: pagina,
               porPagina: _itensPorPagina,
-              acompanhamentoPessoal: !widget.administrador,
+              acompanhamentoPessoal: true,
             ),
         buscarAcompanhadas: ({required q, required ordenar, required pagina}) =>
             widget.api.painelCashbackInter(
@@ -89,7 +89,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               pagina: pagina,
               porPagina: _itensPorPagina,
               apenasAcompanhadas: true,
-              acompanhamentoPessoal: !widget.administrador,
+              acompanhamentoPessoal: true,
             ),
         buscarAcompanhadasComCategoria:
             ({
@@ -104,7 +104,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               pagina: pagina,
               porPagina: _itensPorPagina,
               apenasAcompanhadas: true,
-              acompanhamentoPessoal: !widget.administrador,
+              acompanhamentoPessoal: true,
             ),
       );
   late final bool _externo = widget.controlador != null;
@@ -190,17 +190,10 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     required bool? valorAnterior,
   }) async {
     try {
-      if (widget.administrador) {
-        await widget.api.alterarFavoritaInter(
-          id: loja.id,
-          favorita: acompanhada,
-        );
-      } else {
-        await widget.api.alterarAcompanhamentoPessoalCashback(
-          id: loja.id,
-          ativo: acompanhada,
-        );
-      }
+      await widget.api.alterarAcompanhamentoPessoalCashback(
+        id: loja.id,
+        ativo: acompanhada,
+      );
       if (!mounted) return;
       _controlador.sincronizarAcompanhamento(loja, acompanhada);
       mostrarMensagemRadar(

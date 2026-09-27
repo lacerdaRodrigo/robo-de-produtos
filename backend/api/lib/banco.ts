@@ -512,13 +512,23 @@ export async function alterarAlertaParceiroLivelo(
  * Tentativas degradadas ficam em `execucao`, mas o sucesso e seus alertas
  * continuam vindo exclusivamente do último snapshot completo.
  */
-export async function resumoLiveloPersistido(): Promise<ResumoLiveloPersistido> {
+export async function resumoLiveloPersistido(
+  usuarioId?: string,
+): Promise<ResumoLiveloPersistido> {
   const sql = conectar();
   const linhas = (await sql`
     SELECT tentativa.momento AS ultima_tentativa_em,
            tentativa.qualidade,
            sucesso.momento AS ultimo_sucesso_em,
-           (SELECT count(*)::int FROM loja WHERE acompanhada = TRUE) AS lojas_acompanhadas,
+           CASE WHEN ${usuarioId ?? null}::bigint IS NULL
+             THEN (SELECT count(*)::int FROM loja WHERE acompanhada = TRUE)
+             ELSE (
+               SELECT count(*)::int
+                 FROM acompanhamento_usuario
+                WHERE usuario_app_id = ${usuarioId ?? null}::bigint
+                  AND origem = 'livelo'
+             )
+           END AS lojas_acompanhadas,
            COALESCE(sucesso.alertas, 0)::int AS alertas_ultima_coleta
       FROM (SELECT 1) base
       LEFT JOIN LATERAL (
@@ -694,28 +704,3 @@ export async function categorias(): Promise<string[]> {
   `) as { categoria: string }[];
   return linhas.map((l) => l.categoria);
 }
-
-// --- Limite de tentativas de login (PRD-LIVELO-CATALOGO-ALERTAS-APP 9.0, migracao 003) ---
-
-const JANELA_MINUTOS = 15;
-const TENTATIVAS_MAXIMAS = 5;
-
-export async function tentativasRecentes(origem: string): Promise<number> {
-  const sql = conectar();
-  const linhas = (await sql`
-    SELECT count(*)::int AS total
-      FROM tentativa_login
-     WHERE origem = ${origem}
-       AND sucesso = FALSE
-       AND momento > now() - (${JANELA_MINUTOS} || ' minutes')::interval
-  `) as { total: number }[];
-  return linhas[0]?.total ?? 0;
-}
-
-export async function registrarTentativa(origem: string, sucesso: boolean): Promise<void> {
-  const sql = conectar();
-  await sql`INSERT INTO tentativa_login (origem, sucesso) VALUES (${origem}, ${sucesso})`;
-}
-
-export const LIMITE_DE_TENTATIVAS = TENTATIVAS_MAXIMAS;
-export const JANELA_DE_BLOQUEIO_MINUTOS = JANELA_MINUTOS;

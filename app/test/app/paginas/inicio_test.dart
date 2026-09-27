@@ -118,6 +118,7 @@ Future<void> abrir(
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool compacto = false,
+  DateTime Function()? agora,
 }) async {
   at.view.devicePixelRatio = 1;
   at.view.physicalSize = tamanho;
@@ -135,7 +136,7 @@ Future<void> abrir(
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
           aoAbrirPichau: aoAbrirPichau,
-          agora: () => DateTime(2026, 8, 23),
+          agora: agora ?? () => DateTime(2026, 8, 23),
           experienciaCompacta: compacto,
         ),
       ),
@@ -267,18 +268,32 @@ void main() {
     );
   });
 
-  testWidgets('Início compacto consulta novamente a cada 30 segundos', (
+  testWidgets('Início compacto evita polling e atualiza após TTL ao retomar', (
     at,
   ) async {
     var chamadas = 0;
+    var agora = DateTime(2026, 8, 23);
     final api = apiQueResponde((_) async {
       chamadas++;
       return http.Response(jsonEncode(resumo()), 200);
     });
-    await abrir(at, api, compacto: true);
+    await abrir(at, api, compacto: true, agora: () => agora);
     await at.pumpAndSettle();
     expect(chamadas, 1);
     await at.pump(const Duration(seconds: 30));
+    await at.pumpAndSettle();
+    expect(chamadas, 1);
+
+    agora = agora.add(const Duration(minutes: 6));
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await at.pump();
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await at.pumpAndSettle();
+    expect(chamadas, 2);
+
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await at.pump();
+    at.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await at.pumpAndSettle();
     expect(chamadas, 2);
   });

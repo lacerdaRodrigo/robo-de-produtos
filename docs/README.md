@@ -18,8 +18,10 @@ documentação antes de abrir arquivos isolados.
 |---|---|
 | [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato vigente da validação e distribuição privada de APK Android pelo GitHub Actions, Google Drive e e-mail. |
 | [`prd/PRD-EXECUCAO-COLETORES.md`](prd/PRD-EXECUCAO-COLETORES.md) | Agendamento local no Samsung, filas manuais do Neon, credenciais e aceite operacional dos quatro coletores. |
+| [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato da assinatura e distribuição privada do APK Android pelo GitHub Actions, Google Drive e e-mail. |
 | [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
 | [`prd/PRD-ACEITE-MOBILE-V15.md`](prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo de validação física, evidências e bloqueios do aceite Mobile V15. |
+| [`prd/PRD-BACKUP-NEON.md`](prd/PRD-BACKUP-NEON.md) | Contrato do backup semanal criptografado do Neon, limites da restauração e configuração externa pendente. |
 
 ## Artefatos visuais
 

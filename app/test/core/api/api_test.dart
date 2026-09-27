@@ -463,6 +463,30 @@ void main() {
     expect(requisicoes[2].body, '{"ativo":true}');
   });
 
+  test('acompanhamento Livelo do catálogo usa a relação pessoal', () async {
+    late http.Request requisicao;
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((entrada) async {
+          requisicao = entrada;
+          return http.Response('{}', 200);
+        }),
+      ),
+    );
+
+    await api.alterarAcompanhamentoPessoalLivelo(idExterno: 'NAT', ativo: true);
+
+    expect(requisicao.method, 'PATCH');
+    expect(
+      requisicao.url.path,
+      '/api/livelo/catalogo/NAT/acompanhamento-pessoal',
+    );
+    expect(requisicao.body, '{"ativo":true}');
+  });
+
   test('acompanhamento Pichau usa a rota pessoal e o campo ativo', () async {
     late http.Request requisicao;
     final api = Api(
@@ -548,6 +572,7 @@ void main() {
       'por_pagina': '10',
       'acompanhadas': 'true',
     });
+    expect(consulta!.queryParameters.containsKey('escopo'), isFalse);
     expect(resposta.itens.single.cashbackPrincipalTexto, 'Até 12% de cashback');
     expect(resposta.itens.single.cashbackPrincipalValor, '12.00');
     expect(resposta.itens.single.categoria, 'moda');

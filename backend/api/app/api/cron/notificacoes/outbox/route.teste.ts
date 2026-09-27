@@ -2,10 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const dependencias = vi.hoisted(() => ({
   processar: vi.fn(),
+  expurgar: vi.fn(),
 }));
 
 vi.mock("@/lib/banco-alertas", () => ({
   processarOutboxAlertas: dependencias.processar,
+}));
+
+vi.mock("@/lib/banco-autenticacao", () => ({
+  expurgarRegistrosTecnicos: dependencias.expurgar,
 }));
 
 import { POST } from "./route";
@@ -17,6 +22,7 @@ describe("rota interna da outbox", () => {
     vi.clearAllMocks();
     vi.stubEnv("OUTBOX_CRON_SECRET", segredo);
     dependencias.processar.mockResolvedValue({ processadas: 2, enviadas: 1, recuperadas: 1 });
+    dependencias.expurgar.mockResolvedValue({ auditorias: 3, limites: 4 });
   });
 
   afterEach(() => {
@@ -73,8 +79,15 @@ describe("rota interna da outbox", () => {
     expect(resposta.status).toBe(200);
     expect(resposta.headers.get("x-request-id")).toBe("actions-run-123");
     expect(resposta.headers.get("cache-control")).toBe("no-store");
-    await expect(resposta.json()).resolves.toEqual({ processadas: 2, enviadas: 1, recuperadas: 1 });
+    await expect(resposta.json()).resolves.toEqual({
+      processadas: 2,
+      enviadas: 1,
+      recuperadas: 1,
+      auditorias_expurgadas: 3,
+      limites_expurgados: 4,
+    });
     expect(dependencias.processar).toHaveBeenCalledTimes(1);
+    expect(dependencias.expurgar).toHaveBeenCalledTimes(1);
   });
 
   it("converte falha do processamento em resposta segura", async () => {

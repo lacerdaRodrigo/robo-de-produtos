@@ -84,51 +84,14 @@ export async function resumoDadosInter(): Promise<ResumoDadosInter> {
   );
 }
 
-const TABELAS_LIVELO = [
-  "pontuacao",
-  "apelido",
-  "loja",
-  "parceiro_livelo",
-  "execucao",
-  "preferencia",
-  "disparo_manual",
-];
-
-const TABELAS_INTER = [
-  "cashback_inter",
-  "favorita_inter",
-  "execucao_inter",
-  "loja_inter",
-  "disparo_manual_inter",
-  "medicao_produto_direto_inter",
-  "estagio_produto_inter",
-  "produto_direto_inter",
-  "oferta_direta_inter_atual",
-  "execucao_loja_produtos_inter",
-  "execucao_produtos_inter",
-  "loja_direta_inter",
-];
-
-function truncar(tabelas: string[]): string {
-  return "TRUNCATE TABLE " + tabelas.join(", ") + " RESTART IDENTITY";
-}
-
 export async function apagarDadosLivelo(): Promise<void> {
   const sql = conectar();
-  await sql.transaction((tx) => [
-    tx(truncar(TABELAS_LIVELO)),
-    tx(
-      "INSERT INTO preferencia (chave, valor) VALUES " +
-        "('multiplicador_padrao', '2.0'), " +
-        "('piso_pontos_padrao', '4'), " +
-        "('assinante_clube', 'false')",
-    ),
-  ]);
+  await sql`SELECT public.apagar_dados_livelo()`;
 }
 
 export async function resetarDadosInter(): Promise<void> {
   const sql = conectar();
-  await sql.transaction((tx) => [tx(truncar(TABELAS_INTER))]);
+  await sql`SELECT public.resetar_dados_inter()`;
 }
 
 export function dominioValido(valor: string): valor is DominioDaLimpeza {

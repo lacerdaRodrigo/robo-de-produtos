@@ -244,12 +244,6 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-183 | Resposta inválida falha ruidosamente | Objeto, JSON quebrado e estrutura incompatível não viram catálogo vazio | Entradas inválidas levantam erro próprio |
 | CT-186 | Imagem não entra no domínio | `imageUrl` da fonte não é persistida nem exposta pelo modelo | Inspecionar campos de `LojaInter` |
 
-### `backend/robo/testes/inter/teste_ranking_inter.py` — ordenação pura
-
-| ID | Título | Descrição | Como fazer |
-|---|---|---|---|
-| CT-181 | Ranking principal | Positivos descem por valor; empate por nome; zero e ausente ficam depois | Misturar 20, 15, 12, 0, `None` e ausente |
-
 ### `backend/robo/testes/inter/teste_retrato_inter.py` — favoritas da execução
 
 | ID | Título | Descrição | Como fazer |
@@ -267,7 +261,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
-| CT-188 | Núcleo do Inter não faz I/O | Modelos, extrator, ranking e retrato não importam rede, banco, arquivo ou ambiente | Varrer AST dos módulos novos |
+| CT-188 | Núcleo do Inter não faz I/O | Modelos, extrator e retrato não importam rede, banco, arquivo ou ambiente | Varrer AST dos módulos ativos |
 
 ### `backend/robo/testes/inter/teste_principal_inter.py` — orquestração com fakes
 
@@ -388,6 +382,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-254 | Limite por origem | Excesso antes da autenticação devolve 429 e `Retry-After` | Contador persistente falso bloqueia primeira janela |
 | CT-255 | Limite por usuário/operação | Segundo limite protege conta autenticada e ações sensíveis | Primeira janela aceita e segunda recusa |
 | CT-256 | Falha interna neutra | Erro de banco/provedor não vaza URL ou segredo e conserva request ID | Exceção sentinela e corpo 500 |
+| CT-419 | Proxy de origem da API | `proxy.ts` aceita origens listadas, recusa outras, atende preflight, permite cliente sem `Origin` e força HTTPS em produção | `backend/api/lib/proxy.teste.ts` |
 | CT-257 | Tokens no cliente | Flutter envia Bearer/App Check em chamada privada e nunca chama rede privada sem sessão | `MockClient` inspeciona cabeçalhos |
 | CT-258 | Login e recuperação | Tela envia credenciais pela porta injetada e recuperação não enumera e-mail | Testes de widget com autenticador falso |
 | CT-259 | Gate de convite | Perfil autorizado abre o app; 403 mostra acesso negado e permite sair | API e autenticação falsas em widget test |
@@ -423,7 +418,7 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-279 | Página visível Inter | Primeira página e página seguinte trocam os cards sem acumulá-los na rolagem | Fonte injetada com duas páginas |
 | CT-280 | Reset e resposta antiga | Busca/ordenação reiniciam a sequência, aguardam 350 ms e descartam a resposta anterior | `Completer` e fonte injetada |
 | CT-403 | Sino do cashback Inter | Card compacto e detalhado exibem o sino contextual quando a ação está disponível e delegam ao mesmo callback do acompanhamento | `pagina_cashback_inter_test.dart` |
-| CT-404 | Escopo pessoal do Inter | Usuário comum consulta e conta `acompanhamento_usuario`; `favorita_inter` permanece restrita ao escopo global administrativo | `banco-inter.teste.ts` e `pagina_cashback_inter_test.dart` |
+| CT-404 | Escopo pessoal do Inter | Usuário comum e administrador no app consultam/alteram o próprio `acompanhamento_usuario`; `favorita_inter` permanece restrita ao escopo global administrativo explícito | `banco-inter.teste.ts`, `api_test.dart` e `pagina_cashback_inter_test.dart` |
 | CT-405 | Sino dos produtos Inter | Card compacto e card completo exibem o sino quando recebem a ação de acompanhamento | `pagina_produtos_test.dart` |
 | CT-281 | Erro de página adicional | Lista anterior permanece visível e o retry consulta a mesma página | Segunda resposta falha, terceira responde |
 | CT-282 | Falha, atraso e ausência | Última tentativa falha sem apagar o último retrato; atraso, sem coleta e loja ausente têm textos diferentes | Envelope com metadados de tentativa e widgets |
@@ -461,7 +456,8 @@ Rodavam com `npm run testar` dentro de `site/` (removido em 2026-08-24). A API a
 | CT-295 | Disparo idempotente e cooldown | Duplo toque não cria dois pedidos; o app exibe aceite/cooldown sem afirmar que a coleta terminou | API falsa, chave opaca e widget do botão de disparo |
 | CT-296 | Decimais administrativos textuais | Pontos, limites, multiplicadores e cashback atravessam Flutter/API como texto, sem `double` | Fixtures e inspeção de corpo JSON |
 | CT-297 | Preferências e regras Livelo | Padrões globais, Clube e exceção por loja usam rotas fechadas e preservam o estado carregado | API falsa e jornada de widget da administração |
-| CT-298 | Limpeza protegida e descartável | Prévia, frase exata, autorização e rollback impedem limpeza acidental; o aceite destrutivo usa somente banco isolado | Widgets, Vitest e roteiro 5.3 do plano Flutter |
+| CT-298 | Limpeza protegida e descartável | Prévia, frase exata, autorização e rollback impedem limpeza acidental; funções SQL fixas têm `search_path` fechado e concedem somente execução à API; o aceite destrutivo usa somente banco isolado | Widgets, Vitest, `migracao-limpeza-admin.teste.ts` e roteiro 5.3 |
+| CT-416 | Reset Inter respeita dependência de categoria | O reset limpa mapeamentos antes do catálogo, não usa `CASCADE` e preserva o dicionário; o aceite descartável popula e verifica essas linhas | `migracao-limpeza-admin.teste.ts` e `limpeza-descartavel.teste.ts` |
 
 ### Redesign — Etapa 1, identidade e abertura
 
@@ -540,7 +536,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | ID | Título | Descrição | Como fazer |
 |---|---|---|---|
 | CT-328 | Resumos isolados no hub | Livelo, Cashback e Produtos exibem contagens e estados próprios; falha recente e parcial não viram zero nem contaminam outra fonte | Fixture de `/api/resumo` com estados distintos e teste de widget da moldura |
-| CT-413 | Resumo compacto com Pichau | Home compacta remove `Atividade recente`, exibe cards independentes de Livelo, Banco Inter e Pichau com contagens reais e abre a subárea Pichau pelo próprio card, sem overflow em 320 px com texto ampliado | `inicio_test.dart` |
+| CT-413 | Resumo pessoal sem polling curto | Home usa contagens do usuário inclusive quando admin, não consulta a cada 30 s, mantém os dados por até 5 min e atualiza sob demanda, ao vencer o prazo ou ao retomar obsoleta; os cards continuam independentes e sem overflow | `resumo-inicio.teste.ts` e `inicio_test.dart` |
 
 ### Redesign — Módulo 5, hub do Shopping Inter
 
@@ -565,7 +561,6 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-405 | Atalho contextual de Produtos | `Buscar produtos` na Home abre Banco Inter → Compre direto → Produtos, sem criar item global no dock | Widget da moldura e callback da Home |
 | CT-406 | Origem e isolamento | Produtos Inter permanece separado de Livelo, Sites parceiros e Pichau; trocar de área preserva a busca e não altera APIs | Widget com `IndexedStack`, controlador e `MockClient` |
 | CT-407 | Abas responsivas | A terceira aba continua acessível em larguras estreitas, com tema claro/escuro e sem overflow | Widget em 320, 390 e 430 px com `TextScaler` |
-| CT-414 | Compre direto sem cartão redundante | As abas `Todas` e `Selecionadas` exibem busca e lista de lojas diretamente, sem o cartão `Categorias acompanhadas` ou sua ação `Configurar` | `pagina_compre_direto_inter_test.dart` |
 
 ### Migração mobile — Etapa 1, fundação visual e aparência
 
@@ -635,6 +630,7 @@ global ficou em 2872/3146 linhas (91,29%); `inicio.dart` atingiu 306/306
 | CT-400 | Diagnóstico seguro da fila | O JSON aceita somente campos tipados do vocabulário fechado e até 2 KiB; o publicador atualiza somente o ID em execução, o `wait` formata `chave=valor`, anota e resume o Actions, prefere código granular e ignora diagnóstico ausente/inválido sem expor segredos | `teste_fila_android.py`, `teste_pichau.py` e migration `024_pichau_android_diagnostico.sql` |
 | CT-401 | “Fechar tudo” sem coordenada | O adaptador e o trap enumeram somente tarefas recentes `type=standard`, limitam/validam IDs, removem cada uma com `am stack remove`, acionam `KEYCODE_HOME`, confirmam lista vazia e restauram a tela bloqueada com `KEYCODE_SLEEP`; Home/Recents e conteúdo do `dumpsys` não entram nos logs | `teste_pichau.py`, `teste_fila_android.py` e validação real no Samsung |
 | CT-402 | Checkout Android alinhado à `main` | Antes de pedidos manuais, o worker recusa alteração local versionada, busca `origin/main`, aceita somente fast-forward, confirma o SHA disponível e reinstala projeto/extra Android quando o HEAD muda; a execução antiga é evidência histórica, não aceite do daemon novo | `backend/robo/testes/pichau/teste_fila_android.py`, `pichau.yml` e teste unitário do daemon |
+| CT-417 | Atualização não consome pedido | Se checkout/dependências mudarem, worker sai com status 75 antes do claim; o pedido permanece pendente e o shell limita o restart interno a uma tentativa | `teste_fila_android.py`, `teste_daemon.py` e inspeção unitária de `worker.sh` |
 | CT-386 | Workflow produtor Android | O workflow tem somente `workflow_dispatch`, usa o secret dedicado, enfileira uma vez e encerra sem cron, fallback de credencial ou espera/polling do Android | `.github/workflows/pichau.yml` e revisão do workflow |
 | CT-373 | Busca e identidade da API | Busca normaliza acentos, limita o termo e o identificador da rota rejeita traversal | `backend/api/lib/catalogo-pichau.teste.ts` |
 | CT-374 | Contrato autenticado e paginado | Catálogo, histórico de 30 dias e bloco Pichau do resumo são expostos pelas rotas protegidas | `backend/api/app/api/pichau/**` e `backend/api/lib/banco-pichau.ts` |
@@ -742,7 +738,7 @@ O que conferir:
 | CT-177 | Central vazia | Página exibe estado vazio quando a API não retorna eventos | Widget `PaginaAlertas` com página vazia |
 | CT-178 | Central com erro/parcial | Erro sem itens permite tentar novamente; falha após itens mantém o último resultado | Fakes de resposta/erro em `ControladorAlertas` |
 | CT-179 | Preferências e push opcional | Flags serializam e recusa de permissão não impede histórico | Parser, API fake e `GerenciadorNotificacoes` |
-| CT-180 | Isolamento e autorização | Rotas exigem Firebase/App Check quando configurado, limite e `usuario_app_id`; acompanhamento não acessa outra conta | Testes direcionados da autenticação/validadores e revisão de SQL |
+| CT-180 | Isolamento e autorização | Rotas exigem Firebase/App Check quando configurado, limite por usuário autenticado e `usuario_app_id`; tentativa sem identidade não escreve no Neon e acompanhamento não acessa outra conta | `autenticacao-api.teste.ts`, validadores e revisão de SQL |
 | CT-181 | Snapshot válido e deduplicação por origem | Livelo compara pontos; Inter Cashback compara cashback; Inter Produtos compara preço/cashback; Pichau compara preço Pix. Primeiro snapshot, ausente, inválido, parcial e falho não geram evento; aumento/redução gera uma vez por coleta | Funções das migrations e adaptadores após snapshot publicado |
 | CT-182 | Retenção e outbox | Expurgo respeita 90/180 dias; outbox é idempotente, faz retry, recupera linha presa em `enviando`, respeita preferências e desativa token inválido | `backend/api/lib/banco-alertas.teste.ts`, consulta da migration e fake do mensageiro |
 | CT-183 | Relato sem segredo | Categoria/mensagem/versionamento são validados e logs usam apenas request ID | Validator `alertas-api` e rota autenticada |
@@ -754,6 +750,7 @@ O que conferir:
 | CT-189 | Alertas Inter após rodada final | A rodada coordenadora muda de estado antes de gerar alertas para cada loja completa; falha/parcial degradada não cria falso evento | `backend/robo/testes/inter/teste_produtos_inter.py` e migration `026` |
 | CT-190 | Alertas pessoais Pichau | Usuário acompanha pela chave externa, a aba/resumo/histórico usam seu recorte e o preço Pix gera evento somente após snapshot completo | `acompanhamento-pessoal-api.teste.ts`, `banco-pichau.teste.ts` e `teste_pichau.py` |
 | CT-191 | Backfill sem push | Seleções legadas Livelo/Pichau viram relações pessoais e a janela Inter recuperada entra na Central sem criar outbox | `migracao-alertas-produtos-inter.teste.ts` e migration `027` |
+| CT-192 | Retenção de registros técnicos | Auditoria acima de 30 dias e baldes de limite inativos há 24 horas são removidos pelo cron autenticado | `banco-autenticacao.teste.ts` e `route.teste.ts` da outbox |
 
 ## Executor celular — testes unitários do worker e despacho
 
@@ -777,6 +774,9 @@ instalação no Samsung.
 | CO-012 | Primeiro baseline drena a fila | Pedidos duráveis mais antigos são drenados antes de IDs históricos entrarem como vistos | `backend/robo/testes/celular/teste_daemon.py` |
 | CO-013 | Neon indisponível não avança baseline | Falha de fila não grava ETag/baseline e mantém oportunidade de reprocessamento | `backend/robo/testes/celular/teste_daemon.py` |
 | CO-014 | Polling respeita margem da API pública | Aceita intervalo GitHub de 120–3600 s e recusa valores que aproximariam o executor do limite anônimo | `backend/robo/testes/celular/teste_daemon.py` |
+| CO-015 | Prazo e encerramento de subprocessos | Limites por domínio são finitos; timeout encerra processo/grupo descendente e Pichau finaliza a fila como `executor-timeout` | `teste_executores.py`, `teste_processos.py` e `teste_fila_android.py` |
+| CO-016 | Contrato real de Popen | Processo Python real aceita `check=False`; `check=True` lança `CalledProcessError` com retorno, stdout e stderr, sem enviar argumento incompatível a `Popen` | `backend/robo/testes/celular/teste_processos.py` |
+| CO-017 | Restart controlado do checkout | Atualização não marca run/ETag nem drena fila no processo antigo; status 75 e shell permitem somente um reinício imediato com wake lock refeito | `teste_daemon.py` e `scripts/celular/worker.sh` |
 
 ## Ciclo mobile V15 — cobertura diretamente afetada
 
@@ -802,10 +802,11 @@ Web, integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-008 | Valores da Central | Preços vindos como texto decimal são exibidos em moeda local com agrupamento e arredondamento textual, sem converter para `double` | `app/test/features/alertas/formatacao_alertas_test.dart` |
 | V15-015 | Central de Alertas alinhada ao protótipo | Cabeçalho com botão `Voltar`, abas planas, filtro em folha, feed sem cartões elevados, barra inferior, toque de retorno e back Android; leitura coletiva percorre todas as páginas sem perder rollback local | `app/test/features/alertas/pagina_alertas_test.dart`, `app/test/features/alertas/controlador_alertas_test.dart`, `app/test/app/navegacao/moldura_test.dart` |
 | V15-016 | Hub Inter compacto alinhado ao protótipo | Cabeçalho com retorno visível, título/subtítulo do Banco Inter, dois cards responsivos sem contadores de resumo e retorno por toque e back Android | `app/test/app/navegacao/moldura_test.dart` |
+| V15-017 | Condição secundária do Inter completa | Folha da oferta exibe percentual e descrição integral para não-correntista, com quebra de linha, rolagem e texto ampliado em 320 px | `app/test/features/inter/pagina_cashback_inter_test.dart` |
 
 ## Totais do pytest Python
 
-Coletados em 2026-09-26 com `pytest --collect-only -q`; 276 testes unitários em
+Coletados em 2026-09-26 com `pytest --collect-only -q`; 286 testes unitários em
 arquivos Livelo, Inter, Pichau, celular e fronteira. A contagem é coleta de
 casos, não resultado de execução. Os testes TypeScript antigos abaixo do site e
 o gate Flutter são catálogos separados e não foram executados neste trabalho.
@@ -813,16 +814,16 @@ o gate Flutter são catálogos separados e não foram executados neste trabalho.
 | Arquivo | Testes coletados |
 |---|---:|
 | `testes/celular/teste_agenda.py` | 4 |
-| `testes/celular/teste_daemon.py` | 4 |
+| `testes/celular/teste_daemon.py` | 7 |
 | `testes/celular/teste_estado_local.py` | 2 |
-| `testes/celular/teste_executores.py` | 3 |
+| `testes/celular/teste_executores.py` | 5 |
 | `testes/celular/teste_fila.py` | 3 |
 | `testes/celular/teste_github.py` | 2 |
+| `testes/celular/teste_processos.py` | 4 |
 | `testes/inter/teste_adaptadores_inter.py` | 4 |
 | `testes/inter/teste_extrator_inter.py` | 10 |
 | `testes/inter/teste_principal_inter.py` | 5 |
 | `testes/inter/teste_produtos_inter.py` | 23 |
-| `testes/inter/teste_ranking_inter.py` | 1 |
 | `testes/inter/teste_retrato_inter.py` | 1 |
 | `testes/livelo/teste_adaptadores.py` | 30 |
 | `testes/livelo/teste_alertas.py` | 17 |
@@ -830,10 +831,10 @@ o gate Flutter são catálogos separados e não foram executados neste trabalho.
 | `testes/livelo/teste_extrator.py` | 40 |
 | `testes/livelo/teste_principal.py` | 23 |
 | `testes/livelo/teste_retrato.py` | 6 |
-| `testes/pichau/teste_fila_android.py` | 16 |
+| `testes/pichau/teste_fila_android.py` | 19 |
 | `testes/pichau/teste_pichau.py` | 55 |
 | `testes/teste_fronteira.py` | 14 |
-| **Total Python** | **276** |
+| **Total Python** | **286** |
 
 ## Distribuição privada do Android
 
@@ -843,10 +844,19 @@ o gate Flutter são catálogos separados e não foram executados neste trabalho.
 |---|---|---|
 | CI-001 | ACL privada | Aceita somente proprietário e destinatário autorizado. |
 | CI-002 | Rejeição de link público | Rejeita permissões `anyone` e não deixa o upload inseguro. |
+
+### `.github/scripts/test_backup_neon_drive.py` — backup Neon cifrado sem rede
+
+| ID | Título | Descrição |
+|---|---|---|
+| BK-001 | Dump cifrado e credencial protegida | Exige SSL, não expõe senha na linha de comando, apaga dump/.pgpass em claro e não publica se `pg_dump` falhar. |
+| BK-002 | Drive privado e retenção | Rejeita ACL pública/terceiros e conserva somente as 12 cópias semanais mais recentes. |
+| BK-003 | Role Postgres somente leitura | Migration `034` impede login/atributos privilegiados e concede apenas `SELECT` presente/futuro, sem senha embutida (`migracao-backup-readonly.teste.ts`). |
 | CI-003 | Rejeição de usuário desconhecido | Rejeita qualquer usuário fora da ACL esperada. |
 | CI-004 | Escape da consulta Drive | Preserva IDs com aspas na consulta ao Drive. |
 | CI-005 | Consulta de propriedade balanceada | Monta corretamente as consultas da pasta e das APKs marcadas. |
 | CI-006 | Retenção | Remove somente APKs marcadas mais antigas que o limite de 10. |
+| CI-007 | Assinatura privada release | O build de distribuição exige keystore e alias configurados, não usa assinatura debug como fallback, verifica o APK e apaga o JKS temporário do runner | `app/android/app/build.gradle.kts`, `.github/workflows/app-robo.yml` e `apksigner verify --print-certs` |
 
 Execução local: `python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v`.
 

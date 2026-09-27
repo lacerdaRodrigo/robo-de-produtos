@@ -7,6 +7,7 @@ import {
   segredoOutboxConfigurado,
 } from "@/lib/cron-api";
 import { processarOutboxAlertas } from "@/lib/banco-alertas";
+import { expurgarRegistrosTecnicos } from "@/lib/banco-autenticacao";
 
 export const runtime = "nodejs";
 
@@ -35,8 +36,14 @@ export async function POST(requisicao: Request) {
   }
 
   try {
-    const resultado = await processarOutboxAlertas();
-    return NextResponse.json(resultado, { headers: cabecalhos(requisicaoId) });
+    const [resultado, expurgo] = await Promise.all([
+      processarOutboxAlertas(),
+      expurgarRegistrosTecnicos(),
+    ]);
+    return NextResponse.json(
+      { ...resultado, auditorias_expurgadas: expurgo.auditorias, limites_expurgados: expurgo.limites },
+      { headers: cabecalhos(requisicaoId) },
+    );
   } catch {
     return NextResponse.json(
       corpoErro("inesperado", "nao foi possivel processar notificacoes"),

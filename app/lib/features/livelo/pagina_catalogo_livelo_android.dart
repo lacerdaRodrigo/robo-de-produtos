@@ -63,18 +63,13 @@ class _EstadoPaginaCatalogoLiveloAndroid
               ordenar: ordenar,
               pagina: pagina,
               porPagina: _itensPorPagina,
-              acompanhamentoPessoal: !widget.administrador,
+              acompanhamentoPessoal: true,
             ),
         alterarAcompanhamento: ({required idExterno, required acompanhada}) =>
-            widget.administrador
-            ? widget.api.alterarAcompanhamentoLivelo(
-                idExterno: idExterno,
-                acompanhada: acompanhada,
-              )
-            : widget.api.alterarAcompanhamentoPessoalLivelo(
-                idExterno: idExterno,
-                ativo: acompanhada,
-              ),
+            widget.api.alterarAcompanhamentoPessoalLivelo(
+              idExterno: idExterno,
+              ativo: acompanhada,
+            ),
         alterarAlerta: ({required idExterno, required ativo}) =>
             widget.api.alterarAlertaLivelo(idExterno: idExterno, ativo: ativo),
       );

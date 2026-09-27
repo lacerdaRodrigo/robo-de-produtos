@@ -72,7 +72,7 @@ describe("flag de enforcement do App Check", () => {
 });
 
 describe("gate de autenticacao da API v1", () => {
-  it("concede acesso somente apos os dois limites, token e convite", async () => {
+  it("concede acesso apos autenticar, vincular o convite e aplicar limite do usuario", async () => {
     const deps = dependencias();
     const resultado = await autenticarRequisicao(
       requisicao({ "x-request-id": "req-teste-1" }),
@@ -85,8 +85,25 @@ describe("gate de autenticacao da API v1", () => {
     expect(resultado.usuario).toEqual(usuarioAtivo);
     expect(resultado.requisicaoId).toBe("req-teste-1");
     expect(deps.verificarAppCheck).not.toHaveBeenCalled();
-    expect(deps.consumirLimite).toHaveBeenCalledTimes(2);
-    expect(deps.registrarAuditoria).toHaveBeenLastCalledWith(
+    expect(deps.consumirLimite).toHaveBeenCalledTimes(1);
+    expect(deps.consumirLimite).toHaveBeenCalledWith(
+      "limite-usuario:42:perfil.ler",
+      120,
+      60,
+    );
+    expect(deps.registrarAuditoria).not.toHaveBeenCalled();
+  });
+
+  it("audita sucesso de operação sensível, sem auditar leituras rotineiras", async () => {
+    const deps = dependencias();
+    const resultado = await autenticarRequisicao(
+      requisicao(),
+      { operacao: "admin.executar", papel: "usuario", sensivel: true },
+      deps,
+    );
+
+    expect(resultado.ok).toBe(true);
+    expect(deps.registrarAuditoria).toHaveBeenCalledWith(
       expect.objectContaining({ resultado: "sucesso", codigo: "permitido" }),
     );
   });
@@ -103,6 +120,9 @@ describe("gate de autenticacao da API v1", () => {
     expect((await corpoDaRecusa(resultado)).erro.codigo).toBe("autenticacao");
     if (!resultado.ok) expect(resultado.resposta.status).toBe(401);
     expect(deps.verificarIdToken).not.toHaveBeenCalled();
+    expect(deps.autorizarUsuario).not.toHaveBeenCalled();
+    expect(deps.consumirLimite).not.toHaveBeenCalled();
+    expect(deps.registrarAuditoria).not.toHaveBeenCalled();
   });
 
   it("nao revela se o token e invalido, expirado ou revogado", async () => {
@@ -227,18 +247,14 @@ describe("gate de autenticacao da API v1", () => {
     expect(deps.verificarIdToken).not.toHaveBeenCalled();
   });
 
-  it("devolve 429 e Retry-After para limite por IP", async () => {
+  it("devolve 429 e Retry-After no único limite persistido por usuário/operação", async () => {
     const deps = dependencias({
       consumirLimite: vi.fn(async () => ({
         permitido: false,
         tentarNovamenteEm: 37,
       })),
     });
-    const resultado = await autenticarRequisicao(
-      requisicao(),
-      { operacao: "perfil.ler" },
-      deps,
-    );
+    const resultado = await autenticarRequisicao(requisicao(), { operacao: "perfil.ler" }, deps);
 
     expect((await corpoDaRecusa(resultado)).erro.codigo).toBe("limite");
     if (!resultado.ok) {
@@ -247,19 +263,21 @@ describe("gate de autenticacao da API v1", () => {
     }
   });
 
-  it("devolve 429 no segundo limite, por usuario e operacao", async () => {
-    const consumirLimite = vi
-      .fn<DependenciasDeAcesso["consumirLimite"]>()
-      .mockResolvedValueOnce({ permitido: true, tentarNovamenteEm: 1 })
-      .mockResolvedValueOnce({ permitido: false, tentarNovamenteEm: 18 });
+  it("não cria balde de limite antes de validar token e convite", async () => {
+    const deps = dependencias({
+      verificarIdToken: vi.fn(async () => {
+        throw new Error("token inválido");
+      }),
+    });
     const resultado = await autenticarRequisicao(
       requisicao(),
       { operacao: "perfil.ler" },
-      dependencias({ consumirLimite }),
+      deps,
     );
 
-    expect((await corpoDaRecusa(resultado)).erro.codigo).toBe("limite");
-    if (!resultado.ok) expect(resultado.resposta.headers.get("retry-after")).toBe("18");
+    expect(resultado.ok).toBe(false);
+    expect(deps.consumirLimite).not.toHaveBeenCalled();
+    expect(deps.registrarAuditoria).not.toHaveBeenCalled();
   });
 
   it("converte falha interna em erro neutro com request id", async () => {

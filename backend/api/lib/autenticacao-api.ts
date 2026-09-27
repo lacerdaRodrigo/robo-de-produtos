@@ -68,7 +68,6 @@ const dependenciasPadrao: DependenciasDeAcesso = {
 };
 
 const JANELA_LEITURA_SEGUNDOS = 60;
-const MAXIMO_IP_POR_JANELA = 240;
 const MAXIMO_USUARIO_POR_JANELA = 120;
 const JANELA_SENSIVEL_SEGUNDOS = 5 * 60;
 const MAXIMO_SENSIVEL_POR_JANELA = 10;
@@ -106,56 +105,36 @@ function papelPermite(atual: PapelUsuarioApp, exigido: PapelUsuarioApp): boolean
   return exigido === "usuario" || atual === "admin";
 }
 
-async function auditar(
-  deps: DependenciasDeAcesso,
-  base: Omit<EventoAuditoria, "resultado" | "codigo">,
-  resultado: EventoAuditoria["resultado"],
-  codigo: string,
-): Promise<void> {
-  await deps.registrarAuditoria({ ...base, resultado, codigo });
-}
-
 export async function autenticarRequisicao(
   requisicao: Request,
   opcoes: OpcoesDeAcesso,
   deps: DependenciasDeAcesso = dependenciasPadrao,
 ): Promise<ResultadoAcesso> {
   const requisicaoId = idDaRequisicao(requisicao);
-  const origemHash = deps.hash("origem", origem(requisicao));
   let identidadeHash: string | null = null;
   let usuario: UsuarioApp | null = null;
-  const auditoriaBase = () => ({
-    usuarioId: usuario?.id ?? null,
-    identidadeHash,
-    origemHash,
-    requisicaoId,
-    acao: opcoes.operacao,
-  });
+  const auditar = async (
+    resultado: EventoAuditoria["resultado"],
+    codigo: string,
+  ): Promise<void> => {
+    // Leituras rotineiras e tentativas sem identidade verificada não geram
+    // escrita de auditoria. Eventos sensíveis continuam rastreáveis.
+    if (!opcoes.sensivel || !identidadeHash) return;
+    await deps.registrarAuditoria({
+      usuarioId: usuario?.id ?? null,
+      identidadeHash,
+      origemHash: deps.hash("origem", origem(requisicao)),
+      requisicaoId,
+      acao: opcoes.operacao,
+      resultado,
+      codigo,
+    });
+  };
 
   try {
-    const limiteIp = await deps.consumirLimite(
-      deps.hash("limite-ip", origemHash),
-      MAXIMO_IP_POR_JANELA,
-      JANELA_LEITURA_SEGUNDOS,
-    );
-    if (!limiteIp.permitido) {
-      await auditar(deps, auditoriaBase(), "negado", "limite-ip");
-      return {
-        ok: false,
-        resposta: respostaErro(
-          STATUS.LIMITE,
-          "limite",
-          "muitas requisicoes; tente novamente em instantes",
-          requisicaoId,
-          limiteIp.tentarNovamenteEm,
-        ),
-      };
-    }
-
     if (deps.appCheckObrigatorio) {
       const appCheck = requisicao.headers.get("x-firebase-appcheck");
       if (!appCheck) {
-        await auditar(deps, auditoriaBase(), "negado", "app-check-ausente");
         return {
           ok: false,
           resposta: respostaErro(
@@ -169,7 +148,6 @@ export async function autenticarRequisicao(
       try {
         await deps.verificarAppCheck(appCheck);
       } catch {
-        await auditar(deps, auditoriaBase(), "negado", "app-check-invalido");
         return {
           ok: false,
           resposta: respostaErro(
@@ -184,7 +162,6 @@ export async function autenticarRequisicao(
 
     const token = tokenBearer(requisicao.headers.get("authorization"));
     if (!token) {
-      await auditar(deps, auditoriaBase(), "negado", "token-ausente");
       return {
         ok: false,
         resposta: respostaErro(
@@ -207,7 +184,6 @@ export async function autenticarRequisicao(
           }`,
         );
       }
-      await auditar(deps, auditoriaBase(), "negado", "token-invalido-ou-revogado");
       return {
         ok: false,
         resposta: respostaErro(
@@ -221,7 +197,7 @@ export async function autenticarRequisicao(
 
     identidadeHash = deps.hash("firebase-uid", identidade.uid);
     if (!identidade.email || !identidade.emailVerificado) {
-      await auditar(deps, auditoriaBase(), "negado", "email-nao-verificado");
+      await auditar("negado", "email-nao-verificado");
       return {
         ok: false,
         resposta: respostaErro(
@@ -235,7 +211,7 @@ export async function autenticarRequisicao(
 
     usuario = await deps.autorizarUsuario(identidade.uid, identidade.email);
     if (!usuario || !usuario.ativo) {
-      await auditar(deps, auditoriaBase(), "negado", "usuario-nao-autorizado");
+      await auditar("negado", "usuario-nao-autorizado");
       return {
         ok: false,
         resposta: respostaErro(
@@ -249,7 +225,7 @@ export async function autenticarRequisicao(
 
     const papelExigido = opcoes.papel ?? "usuario";
     if (!papelPermite(usuario.papel, papelExigido)) {
-      await auditar(deps, auditoriaBase(), "negado", "papel-insuficiente");
+      await auditar("negado", "papel-insuficiente");
       return {
         ok: false,
         resposta: respostaErro(
@@ -269,7 +245,7 @@ export async function autenticarRequisicao(
       janela,
     );
     if (!limiteUsuario.permitido) {
-      await auditar(deps, auditoriaBase(), "negado", "limite-usuario");
+      await auditar("negado", "limite-usuario");
       return {
         ok: false,
         resposta: respostaErro(
@@ -282,7 +258,7 @@ export async function autenticarRequisicao(
       };
     }
 
-    await auditar(deps, auditoriaBase(), "sucesso", "permitido");
+    await auditar("sucesso", "permitido");
     return { ok: true, usuario, requisicaoId };
   } catch {
     // Nenhuma excecao crua chega ao cliente; pode conter URL de banco ou

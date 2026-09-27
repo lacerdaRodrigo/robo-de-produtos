@@ -84,9 +84,22 @@ Rotas autenticadas em `backend/api/app/api`:
 As rotas de usuário e administrativas usam Firebase Auth, respeitam App Check
 quando o enforcement está ligado, isolam por `usuario_app_id`, paginam e
 retornam `x-request-id`. A rota interna do cron usa exclusivamente o Bearer
-`OUTBOX_CRON_SECRET`, sem identidade de usuário. `autenticarRequisicao` aplica
-limites por IP e operação, e mensagens/logs não incluem tokens, URLs de banco ou
-dados pessoais. A outbox faz retry, recupera linhas presas em `enviando` há pelo
+`OUTBOX_CRON_SECRET`, sem identidade de usuário. Depois de validar App Check
+(quando exigido), Firebase Auth, convite e papel, `autenticarRequisicao` aplica
+limites persistentes por usuário e operação: até 120 leituras por minuto e 10
+operações sensíveis por cinco minutos. Tentativas sem identidade verificada não
+escrevem no Neon; negações com identidade verificada e operações sensíveis são
+auditadas usando hashes, sem armazenar IP bruto. A proteção volumétrica antes da
+autenticação depende do provedor de borda e permanece uma validação operacional
+externa. O rollout de referência no Vercel é uma regra para `/api/*`, agrupada
+por IP, janela fixa de 60 segundos e limite de 240 requisições por minuto: modo
+Log por 24 horas, revisão do tráfego e depois resposta 429. `/api/status` também
+entra na regra; a rota interna da outbox roda uma vez por hora. A configuração
+continua pendente no painel e não deve ser descrita como ativa antes da
+verificação. O `proxy.ts` aplica HTTPS e a allowlist CORS somente a `/api/*`;
+origens não autorizadas são recusadas antes dos route handlers. Mensagens/logs
+não incluem tokens, URLs de banco ou dados pessoais. A
+outbox faz retry, recupera linhas presas em `enviando` há pelo
 menos 15 minutos, não duplica envios e desativa tokens FCM inválidos. O workflow
 acorda a API a cada 15 minutos; o envio real continua no Firebase Cloud
 Messaging através do Firebase Admin SDK. Não há limite diário artificial de
@@ -111,7 +124,11 @@ textual, URL validada, paginação e contagem das quatro origens. Livelo, Inter
 Sites parceiros, Inter Compre direto e Pichau continuam em joins e contratos
 separados. Ausência de retrato não é convertida em zero ou item fictício.
 
-`GET /api/resumo` acrescenta o bloco pessoal `radar`, com total, recorte por
+`GET /api/resumo` sempre recebe o ID da identidade autenticada, inclusive para
+quem tem papel `admin`; o bloco `livelo`, `cashback_inter` e o recorte de `radar`
+representam acompanhamentos pessoais. A seleção global legada não vira o
+acompanhamento de administrador no aplicativo. O endpoint acrescenta o bloco
+pessoal `radar`, com total, recorte por
 origem, alertas não lidos e o destaque mais recente. O destaque usa o mesmo
 contrato textual de valores e URL segura; `atividade_recente` permanece apenas
 para clientes antigos. A migration `029_indices_mobile_v15.sql` é aditiva e
@@ -120,6 +137,18 @@ foi aplicada pelo responsável fora de transação, em conexão direta.
 O bloco `radar.destaque` continua disponível para a Central e para integrações,
 mas a Home compacta não o renderiza como cartão de alerta. O acesso aos eventos
 permanece no sino do cabeçalho e na Central de Alertas.
+
+A Home Flutter consulta o resumo na abertura, por atualização explícita e quando
+o app retorna do segundo plano se o último sucesso tiver mais de cinco minutos.
+Enquanto os dados ainda estão frescos, voltar ao app não gera consulta. A Home
+não faz polling a cada 30 segundos; o prazo local é apenas cache em memória e
+não altera a agenda nem a validade das coletas persistidas.
+
+`usuario_app.ultimo_acesso_em` só é atualizado no primeiro vínculo, quando o
+e-mail verificado muda ou após 24 horas. Auditoria técnica é retida por 30 dias;
+baldes de limite sem uso são removidos após 24 horas pelo cron interno horário.
+As tabelas legadas de tentativas de login permanecem no schema por ora, mas não
+são o mecanismo ativo de autenticação/rate limit.
 
 Nos cards de Livelo, cashback Inter, produtos Inter e Pichau, o sino é apenas
 um atalho visual para a ação de acompanhamento do usuário e compartilha o mesmo

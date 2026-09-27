@@ -26,10 +26,7 @@ export type EventoAuditoria = {
   codigo: string;
 };
 
-/**
- * Prazo aprovado para os registros técnicos da API. A limpeza acontece na
- * mesma consulta que grava o evento seguinte, sem cron nem credencial extra.
- */
+/** Prazo de retenção da auditoria técnica, expurgada pelo cron horário. */
 export const RETENCAO_AUDITORIA_DIAS = 30;
 
 function conectar() {
@@ -60,15 +57,39 @@ export async function autorizarUsuario(
 ): Promise<UsuarioApp | null> {
   const sql = conectar();
   const linhas = (await sql`
-    UPDATE usuario_app
-       SET firebase_uid = COALESCE(firebase_uid, ${uid}),
-           email = CASE WHEN firebase_uid = ${uid} THEN ${email} ELSE email END,
-           vinculado_em = COALESCE(vinculado_em, now()),
-           ultimo_acesso_em = now(),
-           atualizado_em = now()
-     WHERE firebase_uid = ${uid}
-        OR (firebase_uid IS NULL AND lower(email) = lower(${email}))
-     RETURNING id, email, papel, ativo
+    WITH encontrado AS (
+      SELECT id
+        FROM usuario_app
+       WHERE firebase_uid = ${uid}
+          OR (firebase_uid IS NULL AND lower(email) = lower(${email}))
+       ORDER BY id
+       LIMIT 1
+       FOR UPDATE
+    ), atualizado AS (
+      UPDATE usuario_app usuario
+         SET firebase_uid = COALESCE(usuario.firebase_uid, ${uid}),
+             email = CASE WHEN usuario.firebase_uid = ${uid}
+               THEN ${email} ELSE usuario.email END,
+             vinculado_em = COALESCE(usuario.vinculado_em, now()),
+             ultimo_acesso_em = now(),
+             atualizado_em = now()
+        FROM encontrado
+       WHERE usuario.id = encontrado.id
+         AND (
+           usuario.firebase_uid IS NULL
+           OR (usuario.firebase_uid = ${uid} AND usuario.email IS DISTINCT FROM ${email})
+           OR usuario.ultimo_acesso_em IS NULL
+           OR usuario.ultimo_acesso_em < now() - interval '24 hours'
+         )
+      RETURNING usuario.id, usuario.email, usuario.papel, usuario.ativo
+    )
+    SELECT id, email, papel, ativo FROM atualizado
+    UNION ALL
+    SELECT usuario.id, usuario.email, usuario.papel, usuario.ativo
+      FROM usuario_app usuario
+      JOIN encontrado ON encontrado.id = usuario.id
+     WHERE NOT EXISTS (SELECT 1 FROM atualizado)
+    LIMIT 1
   `) as UsuarioApp[];
   return linhas[0] ?? null;
 }
@@ -112,20 +133,35 @@ export async function consumirLimite(
 export async function registrarAuditoria(evento: EventoAuditoria): Promise<void> {
   const sql = conectar();
   await sql`
-    WITH evento_inserido AS (
-      INSERT INTO auditoria_app (
-        usuario_app_id, identidade_hash, origem_hash, requisicao_id,
-        acao, resultado, codigo
-      ) VALUES (
-        ${evento.usuarioId}, ${evento.identidadeHash}, ${evento.origemHash},
-        ${evento.requisicaoId}, ${evento.acao}, ${evento.resultado}, ${evento.codigo}
-      )
-      RETURNING momento
+    INSERT INTO auditoria_app (
+      usuario_app_id, identidade_hash, origem_hash, requisicao_id,
+      acao, resultado, codigo
+    ) VALUES (
+      ${evento.usuarioId}, ${evento.identidadeHash}, ${evento.origemHash},
+      ${evento.requisicaoId}, ${evento.acao}, ${evento.resultado}, ${evento.codigo}
     )
-    DELETE FROM auditoria_app
-     WHERE momento < (
-       SELECT momento - make_interval(days => ${RETENCAO_AUDITORIA_DIAS})
-         FROM evento_inserido
-     )
   `;
+}
+
+/** Expurgo amortizado: chamado uma vez por hora pelo cron interno protegido. */
+export async function expurgarRegistrosTecnicos(): Promise<{
+  auditorias: number;
+  limites: number;
+}> {
+  const sql = conectar();
+  const linhas = (await sql`
+    WITH auditorias_expurgadas AS (
+      DELETE FROM auditoria_app
+       WHERE momento < now() - make_interval(days => ${RETENCAO_AUDITORIA_DIAS})
+       RETURNING 1
+    ), limites_expurgados AS (
+      DELETE FROM limite_requisicao_app
+       WHERE atualizado_em < now() - interval '24 hours'
+       RETURNING 1
+    )
+    SELECT
+      (SELECT count(*)::int FROM auditorias_expurgadas) AS auditorias,
+      (SELECT count(*)::int FROM limites_expurgados) AS limites
+  `) as Array<{ auditorias: number; limites: number }>;
+  return linhas[0] ?? { auditorias: 0, limites: 0 };
 }

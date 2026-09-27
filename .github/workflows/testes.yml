@@ -38,6 +38,9 @@ jobs:
       - name: Testes e cobertura
         run: pytest --cov --cov-fail-under=90
 
+      - name: Testes unitarios dos scripts de automacao
+        run: python -m unittest discover -s ../../.github/scripts -p "test_*.py"
+
   api:
     runs-on: ubuntu-latest
     defaults:
@@ -55,6 +58,9 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
+
+      - name: Auditoria de dependencias
+        run: npm audit --audit-level=high
 
       - name: Tipos
         run: npm run checar

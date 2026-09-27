@@ -122,7 +122,7 @@ na seção Pichau abaixo.
 
 - [ ] Revisar periodicamente amostras reais dos recortes hierárquicos de navegação do catálogo Inter (incluindo os novos recortes de cozinhas, quarto/camas, beleza, saúde, limpeza/climatização e festas) e ampliar apenas folhas finais quando houver evidência. Os escopos atuais e “Outros / novas categorias” já são dinâmicos para qualquer quantidade de lojas ativas e selecionadas.
 - [ ] Publicar a API com os novos identificadores de escopo antes de distribuir o APK correspondente; app e API fora de versão retornam erro de validação e mantêm os cards anteriores como estado de falha.
-- [ ] Fechar o rollout externo do App Check antes de exigir enforcement. Não declarar uma plataforma nativa observada nem enforcement ativo sem confirmação.
+- [ ] App Check e Google Play permanecem adiados por decisão do responsável: manter `ATIVAR_APP_CHECK=false`, não ativar `EXIGIR_APP_CHECK=true` e não descrever o APK privado como distribuição Play. Preparar Play Console/App Check em uma etapa futura, com teste real em instalação Play antes de enforcement.
 - [ ] Concluir a publicação em `Production` do cliente OAuth usado pela distribuição privada do APK; enquanto estiver em `Testing`, o refresh token do Drive pode exigir renovação após o prazo do Google.
 - [ ] Corrigir a credencial OAuth da distribuição privada: o CI `35471530166`
   falhou com `invalid_grant` (`Token has been expired or revoked`). Renovar o
@@ -132,6 +132,12 @@ na seção Pichau abaixo.
 
 ## Próxima fase — produto, operação e publicação
 
+- [x] Aplicar `migracoes/033_limpeza_admin_segura.sql` e `migracoes/034_role_backup_readonly.sql` no Neon correto; aplicação confirmada pelo responsável em 2026-09-26. Isso instala as funções de limpeza e a role de grupo de backup, mas não comprova backup restaurável nem aceite das funções destrutivas.
+- [ ] Configurar o backup conforme [`PRD-BACKUP-NEON.md`](prd/PRD-BACKUP-NEON.md): conferir os grants da role `radar_backup`, criar login próprio associado a ela, gerar chave age e guardar a privada offline, renovar OAuth, cadastrar secrets e fazer bootstrap da pasta privada no Drive.
+- [ ] Executar o primeiro backup manual, conferir ACL e restaurar em banco/branch descartável. **Não executar as funções de limpeza da migration 033 antes desse restore e do aceite destrutivo descartável.** A automação versionada ainda não prova acesso às contas nem recuperação.
+- [ ] **Gate obrigatório antes de publicar a API desta branch:** a autenticação deixou de gravar no Neon o limite por IP para reduzir carga no banco; o limite por usuário autenticado continua no código, mas não substitui proteção por IP. Configurar no Vercel WAF uma regra para `/api/*`, chave por IP, janela fixa de 60 segundos e limite de 240 requisições por minuto. Manter em `Log` por 24 horas, revisar tráfego legítimo e só então habilitar 429. Inclui `/api/status`. Não publicar esta alteração antes de confirmar a regra ativa no painel e registrar evidência.
+- [ ] Validar no Samsung os timeouts e a atualização/reinício controlado do worker implementados nesta branch. O código não está instalado no aparelho; a atualização continua in-place, sem releases atômicos ou rollback automático.
+- [ ] Acompanhar a compatibilidade Gradle do plugin `firebase_app_check`: o build debug atual passou, mas Flutter avisou que versões futuras deixarão de aceitar plugins que ainda aplicam Kotlin Gradle Plugin diretamente. Atualizar quando o plugin upstream oferecer suporte ao Kotlin integrado ou antes da próxima atualização Flutter incompatível.
 - [ ] Decidir e validar separadamente Crashlytics e ambientes Firebase adicionais; a configuração de autenticação, App Check e FCM do projeto `radarbeneficios` já foi usada pela API/Android desta entrega.
 - [ ] Definir um sistema centralizado de logs para app, API e robôs, com correlação por execução, níveis de severidade, retenção e sem registrar tokens, dados pessoais ou payloads sensíveis.
 - [ ] Completar o runbook operacional dos robôs Livelo, Inter Sites parceiros e Inter Compre direto: entradas, variáveis de ambiente, comandos, workflows, horários, tabelas escritas, códigos de saída, retries, reexecução manual e diagnóstico de falhas.
@@ -141,7 +147,7 @@ na seção Pichau abaixo.
   A jornada compacta V15 já usa a fundação visual compartilhada e os tokens do
   design, e não deve reabrir a antiga gaveta como referência visual.
 - [ ] Preparar a publicação na Google Play: nome, ícone, screenshots, classificação etária, política de privacidade, ficha de segurança de dados, versão e pacote de produção.
-- [ ] Configurar assinatura do Android e guardar keystore, senhas e credenciais somente nos secrets protegidos do ambiente de release.
+- [ ] Provisionar a assinatura release Android: criar a chave estável `radar-release`, guardar cópia offline criptografada, cadastrar os quatro secrets `ANDROID_KEYSTORE_*`/`ANDROID_KEY_*` e habilitar `ANDROID_RELEASE_ENABLED` só depois de comparar a impressão digital. A distribuição release está implementada, mas permanece desligada; a primeira instalação exige remover o APK debug e autenticar novamente.
 - [ ] Criar deploy automático via GitHub Actions para API e aplicativo, com ambientes de validação e produção, aprovação antes da publicação e possibilidade de rollback.
 - [ ] Criar monitoramento pós-publicação para erros, indisponibilidade da API, falhas dos robôs, dados atrasados e regressões de autenticação/App Check.
 - [ ] Criar documentação OpenAPI/Swagger da API, cobrindo rotas públicas, autenticadas e administrativas, autenticação, paginação, schemas de resposta, códigos de erro e exemplos; validar o contrato no CI.
@@ -150,15 +156,15 @@ na seção Pichau abaixo.
 ## Sugestões para priorização futura
 
 - [ ] Criar ambiente de homologação separado de produção, com Firebase, banco, API e secrets próprios.
-- [ ] Definir rotina de backup, restauração testada e checklist de migrations antes de alterações no banco.
+- [ ] Formalizar checklist de backup/restauração e migrations antes de alterações no banco, após o primeiro restore descartável comprovar o procedimento.
 - [ ] Garantir compatibilidade entre versões antigas do aplicativo e da API durante o período de atualização.
 - [ ] Configurar distribuição interna na Google Play antes de liberar a versão pública.
+- [ ] Google Play/App Check: criar e validar a configuração Play Integrity, testar em instalação pela Play Store e só depois avaliar enforcement. Enquanto isso, manter App Check desativado e registrar a distribuição atual como privada.
 - [ ] Revisar com responsável jurídico o fluxo LGPD da Central: consentimento, exclusão de conta, política de privacidade e dados efetivamente coletados.
 - [ ] Documentar e testar rollback da API, banco, robôs e versão publicada do aplicativo.
 
 ## Legado preservado ou incerto
 
-- [ ] Decidir em ciclo próprio o destino de `ranking_inter.py`; o preview Flutter não faz mais parte do repositório.
 - [ ] Planejar, em migration futura separada, eventual remoção das tabelas legadas `oferta_direta_inter_atual` e `disparo_manual*`. Não há remoção de schema neste ciclo.
 - [ ] Reavaliar o painel Livelo legado somente quando o layout não compacto e a compatibilidade da rota `/api/livelo/painel` deixarem de ser necessários.
 
@@ -167,5 +173,7 @@ na seção Pichau abaixo.
 - Integration, E2E, smoke automatizado, performance e regressão visual não fazem parte do gate deste ciclo.
 - O alvo Flutter Web foi removido. API, workflows de backend e o protótipo HTML continuam existindo como superfícies separadas; não há build ou teste Web do aplicativo.
 - O provisionamento do schema e o corte autorizado para o novo Neon foram
-  concluídos em 2026-09-26. Os itens ainda abertos não autorizam novas mudanças
-  de secrets, deploys, coletas manuais ou outras alterações em produção.
+  concluídos em 2026-09-26. O responsável confirmou que as migrations 033 e 034
+  foram aplicadas corretamente; esta sessão não verificou o banco diretamente.
+  Nenhuma credencial foi criada/alterada, deploy realizado, coleta manual
+  disparada ou alteração feita no Samsung por esta sessão.

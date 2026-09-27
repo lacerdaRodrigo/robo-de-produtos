@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -77,13 +78,14 @@ def teste_checkout_avanca_main_e_confirma_commit_solicitante(tmp_path: Path) -> 
             return SimpleNamespace(returncode=0, stdout=next(heads))
         return SimpleNamespace(returncode=0, stdout="")
 
-    fila_android.sincronizar_checkout(
+    atualizado = fila_android.sincronizar_checkout(
         f"github-123-{commit}", repositorio=tmp_path, executar=executar
     )
 
     prefixo = ["git", "-C", str(tmp_path)]
     assert fila_android.commit_solicitado(f"github-123-{commit}") == commit
     assert fila_android.commit_solicitado("github-123") is None
+    assert atualizado is True
     assert chamadas == [
         [*prefixo, "status", "--porcelain", "--untracked-files=no"],
         [*prefixo, "rev-parse", "HEAD"],
@@ -95,8 +97,8 @@ def teste_checkout_avanca_main_e_confirma_commit_solicitante(tmp_path: Path) -> 
             "origin",
             "+refs/heads/main:refs/remotes/origin/main",
         ],
+        [*prefixo, "merge-base", "--is-ancestor", commit, "origin/main"],
         [*prefixo, "merge", "--ff-only", "--quiet", "origin/main"],
-        [*prefixo, "merge-base", "--is-ancestor", commit, "HEAD"],
         [*prefixo, "rev-parse", "HEAD"],
         [
             fila_android.sys.executable,
@@ -109,6 +111,7 @@ def teste_checkout_avanca_main_e_confirma_commit_solicitante(tmp_path: Path) -> 
             ".[pichau-android]",
         ],
     ]
+    assert (tmp_path / ".robo-installed-commit").read_text(encoding="ascii") == f"{commit}\n"
 
 
 def teste_checkout_local_alterado_impede_atualizacao(tmp_path: Path) -> None:
@@ -123,6 +126,38 @@ def teste_checkout_local_alterado_impede_atualizacao(tmp_path: Path) -> None:
         fila_android.sincronizar_checkout("github-123", repositorio=tmp_path, executar=executar)
 
     assert chamadas == 1
+
+
+def teste_checkout_reaplica_dependencias_ate_instalacao_ser_confirmada(
+    tmp_path: Path,
+) -> None:
+    instalacoes = iter((1, 0))
+    chamadas: list[list[str]] = []
+
+    def executar(argumentos: list[str], **_kwargs):
+        chamadas.append(argumentos)
+        if argumentos[:3] == [fila_android.sys.executable, "-m", "pip"]:
+            return SimpleNamespace(returncode=next(instalacoes), stdout="")
+        if argumentos[-2:] == ["rev-parse", "HEAD"]:
+            return SimpleNamespace(returncode=0, stdout="a" * 40)
+        return SimpleNamespace(returncode=0, stdout="")
+
+    with pytest.raises(fila_android.FalhaFilaAndroid, match="dependencias"):
+        fila_android.sincronizar_checkout("github-7", repositorio=tmp_path, executar=executar)
+
+    marcador = tmp_path / ".robo-installed-commit"
+    assert not marcador.exists()
+
+    fila_android.sincronizar_checkout("github-7", repositorio=tmp_path, executar=executar)
+
+    assert marcador.read_text(encoding="ascii") == f"{'a' * 40}\n"
+    assert (
+        fila_android.sincronizar_checkout("github-7", repositorio=tmp_path, executar=executar)
+        is False
+    )
+    assert (
+        sum(chamada[:3] == [fila_android.sys.executable, "-m", "pip"] for chamada in chamadas) == 2
+    )
 
 
 def teste_workflow_transporta_sha_na_chave_da_fila() -> None:
@@ -285,9 +320,10 @@ def teste_runner_nao_herda_database_url_do_worker(monkeypatch, tmp_path: Path) -
     assert "DATABASE_URL" not in ambiente_recebido
     assert ambiente_recebido["PICHAU_WAKE_LOCK_OWNER"] == "worker"
     assert ambiente_recebido["PICHAU_ANDROID_FILA_ID"] == "7"
+    assert fila_android.PRAZO_RUNNER_SEGUNDOS == 20 * 60
 
 
-def teste_checkout_incompativel_falha_sem_executar_coleta(monkeypatch, tmp_path: Path) -> None:
+def teste_timeout_do_runner_finaliza_a_fila_com_codigo_seguro(monkeypatch, tmp_path: Path) -> None:
     runner = tmp_path / "pichau-android-run.sh"
     runner.touch()
     finalizados: list[tuple[bool, str | None]] = []
@@ -301,20 +337,69 @@ def teste_checkout_incompativel_falha_sem_executar_coleta(monkeypatch, tmp_path:
         ),
     )
 
-    def nao_executar(*_args, **_kwargs):
-        pytest.fail("coleta nao pode iniciar com checkout incompativel")
+    def expirar(_comando, **kwargs):
+        assert kwargs["timeout"] == fila_android.PRAZO_RUNNER_SEGUNDOS
+        raise subprocess.TimeoutExpired(_comando, kwargs["timeout"])
 
     resultado = fila_android.executar_trabalho(
         "postgres://db?sslmode=require",
         runner=runner,
-        executar=nao_executar,
-        sincronizar=lambda _chave: (_ for _ in ()).throw(
-            fila_android.FalhaFilaAndroid("checkout incompativel")
-        ),
+        executar=expirar,
+        sincronizar=lambda _chave: None,
     )
 
     assert resultado is False
-    assert finalizados == [(False, "pichau-checkout")]
+    assert finalizados == [(False, "executor-timeout")]
+
+
+def teste_checkout_incompativel_falha_sem_executar_coleta(monkeypatch, tmp_path: Path) -> None:
+    runner = tmp_path / "pichau-android-run.sh"
+    runner.touch()
+    reivindicacoes: list[bool] = []
+    monkeypatch.setattr(
+        fila_android,
+        "reivindicar",
+        lambda _url: reivindicacoes.append(True) or trabalho(),
+    )
+    monkeypatch.setattr(fila_android, "obter", lambda *_args: trabalho())
+    monkeypatch.setattr(fila_android, "finalizar", lambda *_args, **_kwargs: None)
+
+    def nao_executar(*_args, **_kwargs):
+        pytest.fail("coleta nao pode iniciar com checkout incompativel")
+
+    with pytest.raises(fila_android.FalhaFilaAndroid, match="checkout incompativel"):
+        fila_android.executar_trabalho(
+            "postgres://db?sslmode=require",
+            runner=runner,
+            executar=nao_executar,
+            sincronizar=lambda _chave: (_ for _ in ()).throw(
+                fila_android.FalhaFilaAndroid("checkout incompativel")
+            ),
+        )
+
+    assert reivindicacoes == []
+
+
+def teste_checkout_atualizado_reinicia_antes_de_reivindicar_a_fila(
+    monkeypatch, tmp_path: Path
+) -> None:
+    runner = tmp_path / "pichau-android-run.sh"
+    runner.touch()
+    reivindicacoes: list[bool] = []
+    monkeypatch.setattr(
+        fila_android,
+        "reivindicar",
+        lambda _url: reivindicacoes.append(True) or trabalho(),
+    )
+
+    with pytest.raises(fila_android.CheckoutAtualizado):
+        fila_android.executar_trabalho(
+            "postgres://db?sslmode=require",
+            runner=runner,
+            sincronizar=lambda _chave: True,
+        )
+
+    assert reivindicacoes == []
 
 
 def teste_runner_remove_tarefas_recentes_sem_coordenada_de_tela() -> None:

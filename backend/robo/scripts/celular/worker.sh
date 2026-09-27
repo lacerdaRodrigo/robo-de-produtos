@@ -97,11 +97,24 @@ export ROBO_GITHUB_POLL_SECONDS
 
 argumentos=()
 [[ "$MODO" == "--once" ]] && argumentos+=(--once)
-if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
-    PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_celular.daemon "${argumentos[@]}"; then
-    exit 0
-else
-    status=$?
+reinicios_checkout=0
+while true; do
+    if PYTHONPATH="$ROBO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
+        PYTHONUNBUFFERED=1 "$VENV_DIR/bin/python" -m robo_celular.daemon "${argumentos[@]}"; then
+        exit 0
+    else
+        status=$?
+    fi
+
+    if [[ "$status" == 75 && "$MODO" == "--daemon" && "$reinicios_checkout" == 0 ]]; then
+        reinicios_checkout=1
+        echo "$(date --iso-8601=seconds) checkout atualizado; reiniciando worker" >&2
+        liberar_wake_lock
+        termux-wake-lock >/dev/null
+        liberou_wake_lock=0
+        continue
+    fi
+
     echo "$(date --iso-8601=seconds) worker celular encerrou status=$status" >&2
     exit "$status"
-fi
+done

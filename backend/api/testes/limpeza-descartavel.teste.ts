@@ -46,6 +46,10 @@ async function popularBanco() {
       "cashback_principal_texto, vista_em) " +
       "VALUES (1, 'inter-1', 'inter-1', 'Inter aceite', 'inter aceite', 'inter 1', '5%', now())",
   );
+  await sql(
+    "INSERT INTO mapeamento_categoria_cashback_inter (loja_inter_id, categoria) " +
+      "VALUES (1, 'outros')",
+  );
   await sql("INSERT INTO favorita_inter (loja_inter_id) VALUES (1)");
   await sql(
     "INSERT INTO execucao_inter (id, iniciada_em, concluida_em, estado, lojas_lidas, " +
@@ -221,6 +225,11 @@ describe.skipIf(!habilitado)("aceite destrutivo Fase 5 em banco descartável", (
         medicoes: 0,
         execucoesProdutos: 0,
       });
+      const categorias = await sql(
+        "SELECT (SELECT count(*)::int FROM mapeamento_categoria_cashback_inter) AS mapeamentos, " +
+          "(SELECT count(*)::int FROM categoria_cashback_inter WHERE codigo = 'outros') AS categoria_preservada",
+      );
+      expect(categorias).toEqual([{ mapeamentos: 0, categoria_preservada: 1 }]);
       expect((await resumoDadosLivelo()).lojas).toBe(1);
       expect(await contagensPreservadas()).toEqual({
         login: 1,

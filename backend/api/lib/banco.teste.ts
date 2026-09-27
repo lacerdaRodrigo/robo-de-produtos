@@ -127,6 +127,15 @@ describe("pontuacoes", () => {
     expect(bancoFalso.consultas[3]).toContain("WHERE qualidade = 'completa'");
   });
 
+  it("resume Livelo pela camada pessoal quando recebe o usuário autenticado", async () => {
+    await resumoLiveloPersistido("42");
+
+    expect(bancoFalso.consultas[0]).toContain("FROM acompanhamento_usuario");
+    expect(bancoFalso.consultas[0]).toContain("usuario_app_id = 42::bigint");
+    expect(bancoFalso.consultas[0]).toContain("origem = 'livelo'");
+    expect(bancoFalso.consultas[0]).toContain("FROM loja WHERE acompanhada = TRUE");
+  });
+
   it("expõe RN29 sem trocar o instante do último snapshot completo", async () => {
     bancoFalso.resposta = [{
       ultima_coleta: "2026-08-23T08:00:00.000Z",

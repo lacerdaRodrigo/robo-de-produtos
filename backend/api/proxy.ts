@@ -4,14 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
  * Portão de origem na borda do servidor.
  *
  * A API autentica toda rota de dado, mas um browser malicioso ainda poderia
- * acionar endpoints só com token e o browser coopera. Aqui fechamos origem:
+ * acionar endpoints quando o navegador coopera. Aqui fechamos origem:
  * - Requisição com cabeçalho `Origin`: precisa estar na allowlist, senão 403.
  * - Sem `Origin` (APK/celular nativo, curl, CI): passa — a autenticação
  *   (Firebase + App Check) cuida. É o modelo esperado de cliente nativo.
  * - Pré-flight CORS (OPTIONS) só devolve permissão para origem listada.
  *
- * A allowlist vem de `ALLOWED_ORIGINS` (lista separada por vírgula). Usar
- * exatamente o Origin do Flutter Web publicado.
+ * A allowlist vem de `ALLOWED_ORIGINS` (lista separada por vírgula).
  */
 const ORIGENS_PERMITIDAS = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
@@ -28,12 +27,15 @@ function respostaCors(origem: string): NextResponse {
   resposta.headers.set("Access-Control-Allow-Origin", origem);
   resposta.headers.set("Vary", "Origin");
   resposta.headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-  resposta.headers.set("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, x-firebase-appcheck");
+  resposta.headers.set(
+    "Access-Control-Allow-Headers",
+    "Authorization, Content-Type, Idempotency-Key, x-firebase-appcheck",
+  );
   resposta.headers.set("Access-Control-Max-Age", "86400");
   return resposta;
 }
 
-export function middleware(requisicao: NextRequest): NextResponse | undefined {
+export function proxy(requisicao: NextRequest): NextResponse | undefined {
   // HTTPS obrigatório em produção (no Vercel já é; por segurança explícita).
   if (
     process.env.NODE_ENV === "production" &&

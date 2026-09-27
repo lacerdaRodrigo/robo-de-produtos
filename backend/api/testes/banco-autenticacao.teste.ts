@@ -12,6 +12,8 @@ vi.mock("@neondatabase/serverless", () => ({
 }));
 
 import {
+  autorizarUsuario,
+  expurgarRegistrosTecnicos,
   registrarAuditoria,
   RETENCAO_AUDITORIA_DIAS,
 } from "../lib/banco-autenticacao";
@@ -29,7 +31,7 @@ describe("retenção da auditoria da API", () => {
     delete process.env.DATABASE_URL;
   });
 
-  it("grava o evento e remove registros anteriores a 30 dias na mesma consulta", async () => {
+  it("grava auditoria sem executar expurgo em toda requisicao", async () => {
     await registrarAuditoria({
       usuarioId: "42",
       identidadeHash: "a".repeat(64),
@@ -46,8 +48,31 @@ describe("retenção da auditoria da API", () => {
     const [trechos, ...valores] = bancoFalso.consultar.mock.calls[0];
     const consulta = (trechos as TemplateStringsArray).join("?");
     expect(consulta).toContain("INSERT INTO auditoria_app");
+    expect(consulta).not.toContain("DELETE FROM auditoria_app");
+    expect(valores).not.toContain(RETENCAO_AUDITORIA_DIAS);
+  });
+
+  it("atualiza último acesso no máximo uma vez por 24 horas", async () => {
+    bancoFalso.consultar.mockResolvedValue([{ id: "42", email: "piloto@example.com", papel: "usuario", ativo: true }]);
+
+    await autorizarUsuario("firebase-42", "piloto@example.com");
+
+    const [trechos] = bancoFalso.consultar.mock.calls[0];
+    const consulta = (trechos as TemplateStringsArray).join("?");
+    expect(consulta).toContain("ultimo_acesso_em < now() - interval '24 hours'");
+    expect(consulta).toContain("vinculado_em = COALESCE(usuario.vinculado_em, now())");
+    expect(consulta).toContain("UNION ALL");
+  });
+
+  it("expurga auditoria e baldes inativos em chamada periódica", async () => {
+    bancoFalso.consultar.mockResolvedValue([{ auditorias: 3, limites: 5 }]);
+
+    await expect(expurgarRegistrosTecnicos()).resolves.toEqual({ auditorias: 3, limites: 5 });
+
+    const [trechos, ...valores] = bancoFalso.consultar.mock.calls[0];
+    const consulta = (trechos as TemplateStringsArray).join("?");
     expect(consulta).toContain("DELETE FROM auditoria_app");
-    expect(consulta).toContain("make_interval(days => ?)");
+    expect(consulta).toContain("DELETE FROM limite_requisicao_app");
     expect(valores).toContain(RETENCAO_AUDITORIA_DIAS);
   });
 });

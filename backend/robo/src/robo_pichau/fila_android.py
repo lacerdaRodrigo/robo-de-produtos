@@ -14,13 +14,17 @@ from pathlib import Path
 
 import psycopg
 
+from robo_compartilhado.processos import executar_com_prazo
+
 from .diagnostico import formatar_diagnostico, sanitizar_diagnostico
 
 ESTADOS_TERMINAIS = {"sucesso", "falha"}
 ORIGENS_VALIDAS = {"schedule", "workflow_dispatch"}
 INTERVALO_PADRAO_SEGUNDOS = 30
 PRAZO_PADRAO_SEGUNDOS = 20 * 60
+PRAZO_RUNNER_SEGUNDOS = 20 * 60
 LEASE_PADRAO_SEGUNDOS = 30 * 60
+WORKER_RESTART_EXIT_CODE = 75
 CAMINHO_RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "pichau" / "run.sh"
 CAMINHO_REPOSITORIO = Path(__file__).resolve().parents[4]
 CODIGOS_RUNNER = {
@@ -45,6 +49,10 @@ _CHAVE_COM_COMMIT = re.compile(r"^github-[0-9]+-([0-9a-f]{40})$")
 
 class FalhaFilaAndroid(RuntimeError):
     """Falha operacional segura da fila, sem expor credenciais ou payload."""
+
+
+class CheckoutAtualizado(RuntimeError):
+    """Sinaliza que o processo precisa recarregar o checkout recém-instalado."""
 
 
 def codigo_falha_runner(codigo: int) -> str:
@@ -114,8 +122,8 @@ def sincronizar_checkout(
     *,
     repositorio: Path = CAMINHO_REPOSITORIO,
     executar=subprocess.run,
-) -> None:
-    """Avança o Samsung até ``origin/main`` e confirma o commit solicitante."""
+) -> bool:
+    """Avança o Samsung e informa se código ou dependências foram instalados."""
 
     ambiente = os.environ.copy()
     ambiente["GIT_TERMINAL_PROMPT"] = "0"
@@ -148,14 +156,19 @@ def sincronizar_checkout(
         "origin",
         "+refs/heads/main:refs/remotes/origin/main",
     )
-    git("merge", "--ff-only", "--quiet", "origin/main")
-
     commit = commit_solicitado(chave_idempotencia)
     if commit is not None:
-        git("merge-base", "--is-ancestor", commit, "HEAD")
+        git("merge-base", "--is-ancestor", commit, "origin/main")
+    git("merge", "--ff-only", "--quiet", "origin/main")
     head_atual = str(git("rev-parse", "HEAD").stdout or "").strip()
+    marcador_instalado = repositorio / ".robo-installed-commit"
+    try:
+        commit_instalado = marcador_instalado.read_text(encoding="ascii").strip()
+    except (FileNotFoundError, UnicodeDecodeError):
+        commit_instalado = ""
 
-    if head_atual != head_anterior:
+    atualizado = head_atual != head_anterior or commit_instalado != head_atual
+    if atualizado:
         try:
             resultado = executar(
                 [
@@ -179,6 +192,13 @@ def sincronizar_checkout(
             raise FalhaFilaAndroid("dependencias do executor Android indisponiveis.") from erro
         if resultado.returncode != 0:
             raise FalhaFilaAndroid("dependencias do executor Android nao podem ser atualizadas.")
+        temporario = marcador_instalado.with_suffix(".tmp")
+        try:
+            temporario.write_text(f"{head_atual}\n", encoding="ascii")
+            temporario.replace(marcador_instalado)
+        except OSError as erro:
+            raise FalhaFilaAndroid("estado do executor Android nao pode ser confirmado.") from erro
+    return atualizado
 
 
 def _conectar(database_url: str):
@@ -436,9 +456,12 @@ def executar_trabalho(
     database_url: str,
     *,
     runner: Path = CAMINHO_RUNNER,
-    executar=subprocess.run,
-    sincronizar: Callable[[str], None] = sincronizar_checkout,
+    executar=executar_com_prazo,
+    sincronizar: Callable[[str], bool | None] = sincronizar_checkout,
+    checkout_verificado: bool = False,
 ) -> bool | None:
+    if not checkout_verificado and sincronizar("github-bootstrap"):
+        raise CheckoutAtualizado("checkout atualizado; worker precisa reiniciar")
     trabalho = reivindicar(database_url)
     if trabalho is None:
         return None
@@ -447,11 +470,6 @@ def executar_trabalho(
         flush=True,
     )
     try:
-        sincronizar(trabalho.chave_idempotencia)
-        print(
-            f"Pichau Android fila: id={trabalho.id} checkout=ok",
-            flush=True,
-        )
         # A credencial é necessária para a fila Python, mas não deve ser
         # herdada pelo Appium/ADB nem por processos filhos do navegador.
         ambiente = os.environ.copy()
@@ -462,12 +480,13 @@ def executar_trabalho(
             cwd=str(runner.parent.parent),
             check=False,
             env=ambiente,
+            timeout=PRAZO_RUNNER_SEGUNDOS,
         )
         sucesso = resultado.returncode == 0
         codigo = None if sucesso else codigo_falha_runner(resultado.returncode)
-    except FalhaFilaAndroid:
+    except subprocess.TimeoutExpired:
         sucesso = False
-        codigo = "pichau-checkout"
+        codigo = "executor-timeout"
     except OSError:
         sucesso = False
         codigo = "runner-indisponivel"
@@ -544,7 +563,11 @@ def executar_cli(argv: list[str] | None = None) -> int:
         verificar_saude(database_url)
         print("Pichau Android fila: banco acessivel.")
         return 0
-    resultado = executar_trabalho(database_url)
+    try:
+        resultado = executar_trabalho(database_url)
+    except CheckoutAtualizado as erro:
+        print(f"Pichau Android fila: {erro}", file=sys.stderr)
+        return WORKER_RESTART_EXIT_CODE
     return 1 if resultado is False else 0
 
 

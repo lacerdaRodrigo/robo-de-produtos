@@ -1514,7 +1514,7 @@ wheels = [
 
 [[package]]
 name = "robo-livelo"
-version = "1.73.0"
+version = "1.73.1"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -1543,7 +1543,7 @@ pichau-android = [
 
 [package.metadata]
 requires-dist = [
-    { name = "appium-python-client", marker = "extra == 'pichau-android'", specifier = ">=4.0,<6" },
+    { name = "appium-python-client", marker = "extra == 'pichau-android'", specifier = ">=4.0,<7" },
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "lxml", specifier = ">=5.0" },
     { name = "psycopg", marker = "platform_machine in 'armv7l armv8l'", specifier = ">=3.2" },

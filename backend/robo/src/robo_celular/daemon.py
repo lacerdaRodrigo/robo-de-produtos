@@ -53,7 +53,7 @@ class WorkerCelular:
         executar=executar_fonte,
         processar_pichau=fila_android.executar_trabalho,
         obter_pichau=fila_android.obter_por_github_run_id,
-        sincronizar: Callable[[str], None] = fila_android.sincronizar_checkout,
+        sincronizar: Callable[[str], bool | None] = fila_android.sincronizar_checkout,
         agora=lambda: datetime.now(UTC),
     ) -> None:
         self.database_url = fila.validar_database_url(database_url)
@@ -69,13 +69,22 @@ class WorkerCelular:
         self.agora = agora
 
     def inicializar(self) -> None:
+        try:
+            self._sincronizar_checkout("github-bootstrap")
+        except fila_android.FalhaFilaAndroid as erro:
+            _log.warning("Checkout Android indisponível na partida: %s", erro)
         self.consultar_github()
         self.processar_pendentes_no_boot()
+
+    def _sincronizar_checkout(self, chave: str) -> None:
+        if self.sincronizar(chave):
+            raise fila_android.CheckoutAtualizado("checkout atualizado; worker precisa reiniciar")
+        self._checkout_sincronizado_no_boot = True
 
     def processar_pendentes_no_boot(self) -> bool:
         if not self._checkout_sincronizado_no_boot:
             try:
-                self.sincronizar("github-bootstrap")
+                self._sincronizar_checkout("github-bootstrap")
             except fila_android.FalhaFilaAndroid as erro:
                 _log.warning("Checkout Android indisponível; pedidos continuam pendentes: %s", erro)
                 return False
@@ -100,7 +109,12 @@ class WorkerCelular:
 
         while True:
             try:
-                resultado = self.processar_pichau(self.database_url)
+                resultado = self.processar_pichau(
+                    self.database_url,
+                    checkout_verificado=True,
+                )
+            except fila_android.CheckoutAtualizado:
+                raise
             except Exception as erro:
                 _log.warning("Fila Pichau indisponível na partida (%s).", type(erro).__name__)
                 filas_saudaveis = False
@@ -140,7 +154,7 @@ class WorkerCelular:
             chave = f"github-{run_id}"
             if isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha):
                 chave = f"{chave}-{sha}"
-            self.sincronizar(chave)
+            self._sincronizar_checkout(chave)
             resultado = fila.processar_pedido(
                 self.database_url,
                 fonte,
@@ -163,7 +177,8 @@ class WorkerCelular:
             return False
         if trabalho.estado in fila_android.ESTADOS_TERMINAIS:
             return True
-        self.processar_pichau(self.database_url)
+        self._sincronizar_checkout(trabalho.chave_idempotencia)
+        self.processar_pichau(self.database_url, checkout_verificado=True)
         atual = self.obter_pichau(self.database_url, run_id)
         return atual is not None and atual.estado in fila_android.ESTADOS_TERMINAIS
 
@@ -208,6 +223,8 @@ class WorkerCelular:
                 continue
             try:
                 concluida = self._processar_execucao_manual(execucao, fonte)
+            except fila_android.CheckoutAtualizado:
+                raise
             except Exception as erro:
                 _log.warning(
                     "Pedido manual pendente: fonte=%s run=%s erro=%s",
@@ -254,11 +271,18 @@ def principal(argv: list[str] | None = None) -> int:
     try:
         database_url = fila.validar_database_url(os.getenv("DATABASE_URL"))
         worker = WorkerCelular(database_url, EstadoLocal(caminho_estado()))
+    except fila_android.CheckoutAtualizado as erro:
+        _log.info("%s", erro)
+        return fila_android.WORKER_RESTART_EXIT_CODE
     except fila.FalhaFilaColeta as erro:
         _log.error("Worker celular não iniciou: %s", erro)
         return 2
     if opcoes.once:
-        worker.executar_once()
+        try:
+            worker.executar_once()
+        except fila_android.CheckoutAtualizado as erro:
+            _log.info("%s", erro)
+            return fila_android.WORKER_RESTART_EXIT_CODE
         return 0
     try:
         intervalo_github = validar_intervalo_github(os.getenv("ROBO_GITHUB_POLL_SECONDS", "180"))
@@ -267,6 +291,9 @@ def principal(argv: list[str] | None = None) -> int:
         return 2
     try:
         worker.executar_daemon(intervalo_github=intervalo_github)
+    except fila_android.CheckoutAtualizado as erro:
+        _log.info("%s", erro)
+        return fila_android.WORKER_RESTART_EXIT_CODE
     except KeyboardInterrupt:
         _log.info("Worker celular encerrado pelo sistema.")
         return 0

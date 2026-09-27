@@ -471,21 +471,23 @@ def _distribution(args: argparse.Namespace) -> int:
         f"Versão: {args.version}\n"
         f"Execução: {args.run_id}\n"
         f"Commit: {args.sha}\n"
-        "Tipo: debug interna\n"
+        "Tipo: release assinada para distribuição privada\n"
         "API: https://robo-de-produtos.vercel.app\n\n"
         f"Download privado: {published.web_view_link}\n\n"
         "A APK pode substituir a instalada no Samsung somente se o application "
-        "id e a assinatura forem compatíveis."
+        "id e a assinatura forem compatíveis. A primeira instalação pode exigir "
+        "remover a versão debug e entrar novamente."
     )
     html_body = (
         "<p>A nova APK interna do Radar de Benefícios está pronta.</p>"
         f"<p><b>Versão:</b> {args.version}<br>"
         f"<b>Execução:</b> {args.run_id}<br>"
         f"<b>Commit:</b> {args.sha}<br>"
-        "<b>Tipo:</b> debug interna<br>"
+        "<b>Tipo:</b> release assinada para distribuição privada<br>"
         "<b>API:</b> https://robo-de-produtos.vercel.app</p>"
         f'<p><a href="{published.web_view_link}">Baixar APK privada</a></p>'
-        "<p>A atualização depende de application id e assinatura compatíveis.</p>"
+        "<p>A atualização depende de application id e assinatura compatíveis. "
+        "A primeira instalação pode exigir remover a versão debug e entrar novamente.</p>"
     )
     send_gmail_message(
         sender=owner,

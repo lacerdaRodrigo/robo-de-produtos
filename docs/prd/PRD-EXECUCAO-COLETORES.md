@@ -72,6 +72,35 @@ falha na segunda não transforma a coleta de cashback em coleta de produtos nem
 recomeça a primeira silenciosamente. Pichau continua usando seu runner Android,
 fila existente, leases e ciclo de navegador.
 
+Cada processo filho tem prazo finito: Livelo 15 minutos, Inter 50 minutos para
+cashback e Compre direto em série e Pichau 20 minutos dentro do lease de 30.
+No Android/Linux, o executor inicia cada comando em um grupo de processos; ao
+estourar o prazo envia `SIGTERM` e, após cinco segundos sem encerrar, `SIGKILL`
+ao grupo para não deixar Chrome/driver órfão. Timeout é falha explícita (`124`
+nos executores gerais ou `executor-timeout` na fila Pichau), nunca sucesso
+parcial silencioso.
+
+Antes de assumir filas ou pedidos manuais, o worker exige checkout limpo, faz
+fast-forward de `origin/main` e confirma que o commit solicitado pertence à
+linha de histórico publicada. Depois instala a dependência do runner e grava
+`.robo-installed-commit` somente após sucesso. Se o `pip install` falhar, o
+próximo ciclo tenta instalar novamente mesmo que o checkout já esteja no SHA
+novo. O marcador é local, não versionado, e não contém credenciais.
+
+Quando código ou dependências mudam, o processo antigo não inicia nem reivindica
+uma coleta. Ele termina com o status reservado `75`; `worker.sh` libera e
+readquire o wake lock e inicia o daemon atualizado uma vez. A solicitação fica
+pendente durante esse reinício. Se o novo processo também pedir restart, o
+wrapper encerra com erro e o watchdog pode recuperá-lo; não há loop de restart
+interno. A Pichau sincroniza antes do claim da fila, então uma atualização não
+consome tentativa nem marca o pedido como falha.
+
+Essa recuperação trata falha de instalação, mas a atualização do checkout ainda
+é feita no diretório ativo; não equivale a uma troca atômica de releases nem a
+rollback automático. A aceitação dessa estratégia deve ser acompanhada no
+Samsung e segue pendente; o teste unitário não comprova a instalação real nem o
+reinício no Termux.
+
 ## Disparos manuais e significado do status
 
 `robo.yml`, `inter.yml` e `pichau.yml` não têm cron. Ao acioná-los manualmente,

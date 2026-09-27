@@ -299,7 +299,6 @@ O princípio da V1 continua: **núcleo puro, mundo por contrato**. A separação
 |---|---|---|
 | `modelos_inter.py` | Núcleo novo | `LojaInter`, `FavoritaInter`, `RetratoInter` e valores imutáveis |
 | `extrator_inter.py` | Núcleo novo | JSON bruto → lojas normalizadas; nenhuma rede |
-| `ranking_inter.py` | Núcleo novo | Ordem definida por RN37 e RN38 |
 | `retrato_inter.py` | Núcleo novo | Junta catálogo, favoritas e momento da execução |
 | `portas_inter.py` | Contratos novos | Fonte, catálogo de favoritas e repositório do Inter |
 | `adaptadores_inter.py` | Adaptadores novos | HTTP fixo e Postgres das tabelas do Inter |
@@ -741,7 +740,7 @@ Esta seção é o fechamento operacional da V3. Em conflito com uma expressão g
 
 | Tema | Decisão fechada |
 |---|---|
-| Módulos | `modelos_inter.py`, `extrator_inter.py`, `ranking_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
+| Módulos | `modelos_inter.py`, `extrator_inter.py`, `retrato_inter.py`, `portas_inter.py`, `adaptadores_inter.py` e `principal_inter.py` |
 | Entrada | `python -m robo_inter.principal_inter` (a partir de `backend/robo/`) |
 | API | `backend/api/lib/banco-inter.ts` ativo, usado pelas rotas em `backend/api/app/api/inter/**` |
 | Dependências | Nenhuma dependência Python ou npm nova; usar `requests`, `psycopg`, React e Neon já instalados |
@@ -850,6 +849,9 @@ quebras de linha e múltiplas faixas retornadas em `redirectWarning`.
 - A descrição vazia continua usando exatamente “O Inter não informou condições
   adicionais nesta consulta”.
 - `descricao_secundaria` aparece em bloco separado sob “Para não-correntista”.
+- O modal compacto mostra o percentual secundário e a descrição integral da
+  oferta secundária, preservando as quebras de linha; a prévia do card continua
+  resumida ao percentual.
 - A interface exibe o texto recebido pela API como texto seguro; não interpreta
   HTML nem reconstrói regras a partir do percentual numérico.
 - A melhoria não altera o contrato da API, o schema do banco ou a paginação.

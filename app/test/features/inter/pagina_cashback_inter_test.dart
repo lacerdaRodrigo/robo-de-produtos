@@ -255,48 +255,50 @@ void main() {
     expect(find.text('Não encontrada na última coleta'), findsOneWidget);
   });
 
-  testWidgets(
-    'Cashback compacto mostra o catálogo inteiro e filtra acompanhadas',
-    (at) async {
-      at.view.devicePixelRatio = 1;
-      at.view.physicalSize = const Size(390, 844);
-      addTearDown(at.view.resetDevicePixelRatio);
-      addTearDown(at.view.resetPhysicalSize);
-      final controlador = ControladorCashbackInter(
-        buscar: ({required q, required ordenar, required pagina}) async =>
-            _pagina([
-              _loja(nome: 'Animale'),
-              _loja(nome: 'Aramis', favorita: true),
-            ]),
-      );
-      addTearDown(controlador.dispose);
+  testWidgets('Cashback compacto mostra a lista e filtra pelo No radar', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(390, 844);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async =>
+          _pagina([
+            _loja(nome: 'Animale'),
+            _loja(nome: 'Aramis', favorita: true),
+          ]),
+    );
+    addTearDown(controlador.dispose);
 
-      await at.pumpWidget(_telaCompacta(controlador));
-      await at.pumpAndSettle();
+    await at.pumpWidget(_telaCompacta(controlador));
+    await at.pumpAndSettle();
 
-      expect(find.text('Animale'), findsOneWidget);
-      expect(find.text('Aramis'), findsOneWidget);
-      expect(find.text('2 lojas encontradas'), findsOneWidget);
-      expect(find.text('Catálogo completo de cashback'), findsOneWidget);
-      expect(find.text('Página 1'), findsOneWidget);
-      expect(find.text('Maior cashback'), findsNothing);
-      expect(find.byKey(const Key('aba-radar-0')), findsOneWidget);
-      expect(find.byKey(const Key('aba-radar-1')), findsOneWidget);
-      expect(
-        at.getTopLeft(find.text('2 lojas encontradas')).dy,
-        greaterThan(at.getBottomLeft(find.byKey(const Key('aba-radar-0'))).dy),
-      );
+    expect(find.text('Animale'), findsOneWidget);
+    expect(find.text('Aramis'), findsOneWidget);
+    expect(find.text('2 lojas encontradas'), findsOneWidget);
+    expect(find.text('Lojas com cashback'), findsOneWidget);
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.byKey(const Key('paginacao-radar-1')), findsNothing);
+    expect(find.text('Maior cashback'), findsNothing);
+    expect(find.byKey(const Key('filtros-cashback-inter')), findsOneWidget);
+    expect(find.text('Todos'), findsOneWidget);
+    expect(find.text('No radar'), findsOneWidget);
+    expect(
+      at.getTopLeft(find.text('2 lojas encontradas')).dy,
+      greaterThan(
+        at.getBottomLeft(find.byKey(const Key('filtros-cashback-inter'))).dy,
+      ),
+    );
 
-      await at.tap(find.text('Acompanhadas'));
-      await at.pumpAndSettle();
+    await at.tap(find.text('No radar'));
+    await at.pumpAndSettle();
 
-      expect(find.text('Animale'), findsNothing);
-      expect(find.text('Aramis'), findsOneWidget);
-      expect(find.text('✓ Acompanhada'), findsOneWidget);
-      expect(find.text('Suas lojas acompanhadas'), findsOneWidget);
-      expect(find.text('Página 1'), findsOneWidget);
-    },
-  );
+    expect(find.text('Animale'), findsNothing);
+    expect(find.text('Aramis'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsOneWidget);
+    expect(find.byKey(const Key('paginacao-radar-1')), findsNothing);
+  });
 
   testWidgets('puxar e voltar ao app atualizam cashback e resumo', (at) async {
     var consultas = 0;
@@ -351,6 +353,7 @@ void main() {
     addTearDown(at.view.resetPhysicalSize);
     var acompanhada = false;
     var alteracoes = 0;
+    var consultasGlobais = 0;
     final primeiraAlteracao = Completer<void>();
     final api = Api(
       paginaPadrao: 20,
@@ -393,6 +396,9 @@ void main() {
             );
           }
           if (requisicao.url.path == '/api/inter/cashback') {
+            if (requisicao.url.queryParameters['escopo'] == 'global') {
+              consultasGlobais++;
+            }
             final somenteAcompanhadas =
                 requisicao.url.queryParameters['acompanhadas'] == 'true';
             final itens = somenteAcompanhadas && !acompanhada
@@ -426,13 +432,12 @@ void main() {
               200,
             );
           }
-          if (requisicao.url.path == '/api/inter/lojas' &&
+          if (requisicao.url.path == '/api/inter/cashback/cea/acompanhamento' &&
               requisicao.method == 'PATCH') {
             alteracoes++;
             if (alteracoes == 1) await primeiraAlteracao.future;
             acompanhada =
-                (jsonDecode(requisicao.body)
-                        as Map<String, dynamic>)['favorita']
+                (jsonDecode(requisicao.body) as Map<String, dynamic>)['ativo']
                     as bool;
             return http.Response('{}', 200);
           }
@@ -458,11 +463,6 @@ void main() {
     await at.ensureVisible(modoSitesParceiros);
     await at.tap(modoSitesParceiros);
     await at.pumpAndSettle();
-    final metrica = find.byKey(const Key('aba-radar-1'));
-    expect(
-      find.descendant(of: metrica, matching: find.text('0')),
-      findsOneWidget,
-    );
     await at.drag(
       find.byKey(const Key('cashback-inter-compacto')),
       const Offset(0, -520),
@@ -478,12 +478,8 @@ void main() {
     await at.tap(acompanhar);
     await at.pump();
     expect(find.text('Salvando…'), findsOneWidget);
-    expect(
-      find.descendant(of: metrica, matching: find.text('1')),
-      findsOneWidget,
-    );
 
-    final acompanhadas = find.text('Acompanhadas');
+    final acompanhadas = find.text('No radar');
     await Scrollable.ensureVisible(
       at.element(acompanhadas),
       alignment: 0.5,
@@ -495,12 +491,8 @@ void main() {
 
     primeiraAlteracao.complete();
     await at.pumpAndSettle();
-    expect(find.text('Deixar de acompanhar'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.text('C&A'), findsOneWidget);
-    expect(
-      find.descendant(of: metrica, matching: find.text('1')),
-      findsOneWidget,
-    );
 
     await at.drag(
       find.byKey(const Key('cashback-inter-compacto')),
@@ -514,12 +506,10 @@ void main() {
     );
     await at.tap(acompanhar);
     await at.pumpAndSettle();
-    expect(
-      find.descendant(of: metrica, matching: find.text('0')),
-      findsOneWidget,
-    );
     expect(find.text('C&A'), findsNothing);
     expect(find.text('Nenhuma loja está acompanhada ainda.'), findsOneWidget);
+    expect(consultasGlobais, 0);
+    expect(alteracoes, 2);
   });
 
   testWidgets('Cashback compacto não estoura em 320 px no tema escuro', (
@@ -555,7 +545,7 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    expect(find.text('Deixar de acompanhar'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.text('Ir para o Inter'), findsOneWidget);
     expect(at.takeException(), isNull);
     await at.drag(
@@ -600,23 +590,14 @@ void main() {
       final topoCondicoes = at.getTopLeft(condicoes);
       final topoIrParaInter = at.getTopLeft(irParaInter);
 
-      expect(topoAcompanhar.dy, lessThan(topoCondicoes.dy));
-      expect(topoAcompanhar.dx, closeTo(topoCondicoes.dx, 0.1));
       if (largura < 340) {
-        expect(topoCondicoes.dy, lessThan(topoIrParaInter.dy));
-        expect(topoIrParaInter.dx, closeTo(topoCondicoes.dx, 0.1));
-        expect(
-          at.getSize(irParaInter).width,
-          closeTo(at.getSize(condicoes).width, 0.1),
-        );
+        expect(topoAcompanhar.dx, closeTo(topoCondicoes.dx, 0.1));
+        expect(topoAcompanhar.dy, lessThan(topoCondicoes.dy));
       } else {
-        expect(topoCondicoes.dy, closeTo(topoIrParaInter.dy, 0.1));
-        expect(topoIrParaInter.dx, greaterThan(topoCondicoes.dx));
-        expect(
-          at.getSize(irParaInter).width,
-          greaterThan(at.getSize(condicoes).width),
-        );
+        expect(topoAcompanhar.dx, lessThan(topoCondicoes.dx));
+        expect(topoAcompanhar.dy, closeTo(topoCondicoes.dy, 0.1));
       }
+      expect(topoIrParaInter.dy, greaterThan(topoCondicoes.dy));
       expect(at.takeException(), isNull);
     }
   });
@@ -638,6 +619,7 @@ void main() {
               descricaoSecundaria:
                   '14% no aparelho destacado e 1,4% nas demais.',
             ),
+            aoAcompanhar: () {},
           ),
         ),
       ),
@@ -647,7 +629,7 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('folha-radar-modal')), findsOneWidget);
-    expect(find.text('Condições de cashback'), findsOneWidget);
+    expect(find.text('Condições da oferta'), findsOneWidget);
     expect(
       find.byKey(const Key('condicoes-principal-magazine luiza')),
       findsOneWidget,
@@ -661,11 +643,78 @@ void main() {
       ),
       findsOneWidget,
     );
+    final folha = find.byKey(const Key('folha-radar-modal'));
     expect(
-      find.byKey(const Key('condicoes-secundaria-magazine luiza')),
+      find.descendant(of: folha, matching: find.text('Para não-correntista')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: folha, matching: find.text('2% de cashback')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: folha,
+        matching: find.byKey(const Key('condicoes-secundaria-magazine luiza')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: folha,
+        matching: find.text('14% no aparelho destacado e 1,4% nas demais.'),
+      ),
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'descrição secundária continua legível em tela estreita e texto ampliado',
+    (at) async {
+      at.view.physicalSize = const Size(320, 640);
+      at.view.devicePixelRatio = 1;
+      addTearDown(at.view.resetPhysicalSize);
+      addTearDown(at.view.resetDevicePixelRatio);
+
+      const descricao =
+          '14% no aparelho destacado.\n'
+          '1,4% nas demais condições, para compras elegíveis feitas pelo site.';
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2)),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: child!,
+            ),
+          ),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CartaoCashbackInter(
+                compacto: true,
+                loja: _loja(descricaoSecundaria: descricao),
+                aoAcompanhar: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await at.ensureVisible(find.byKey(const Key('condicoes-magazine luiza')));
+      await at.tap(find.byKey(const Key('condicoes-magazine luiza')));
+      await at.pumpAndSettle();
+
+      final descricaoCompleta = find.byKey(
+        const Key('condicoes-secundaria-magazine luiza'),
+      );
+      expect(descricaoCompleta, findsOneWidget);
+      await at.ensureVisible(descricaoCompleta);
+      expect(at.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'condições ausentes mostram o estado neutro definido no contrato',
@@ -681,6 +730,7 @@ void main() {
                 descricaoPrincipal: null,
                 descricaoSecundaria: null,
               ),
+              aoAcompanhar: () {},
             ),
           ),
         ),

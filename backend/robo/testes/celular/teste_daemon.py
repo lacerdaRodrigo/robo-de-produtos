@@ -3,10 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from robo_celular import daemon, fila
 from robo_celular.agenda import FUSO_BRASILIA
 from robo_celular.estado_local import EstadoLocal
 from robo_celular.github import RespostaRuns
+from robo_pichau import fila_android
 
 
 def teste_intervalo_github_preserva_margem_da_api_publica() -> None:
@@ -40,7 +43,7 @@ def teste_agendamento_roda_uma_vez_sem_consulta_remota(tmp_path: Path) -> None:
         estado,
         github=GitHubFalso(RespostaRuns((), None)),
         executar=lambda fonte: fontes.append(fonte) or 0,
-        processar_pichau=lambda _url: None,
+        processar_pichau=lambda _url, **_kwargs: None,
         sincronizar=lambda _chave: None,
     )
     momento = datetime(2026, 9, 25, 9, 10, tzinfo=FUSO_BRASILIA)
@@ -77,7 +80,7 @@ def teste_run_manual_concluido_e_processado_idempotentemente(tmp_path: Path, mon
         "postgresql://db/app?sslmode=require",
         estado,
         github=github,
-        processar_pichau=lambda _url: None,
+        processar_pichau=lambda _url, **_kwargs: None,
         sincronizar=sincronizacoes.append,
     )
 
@@ -89,6 +92,47 @@ def teste_run_manual_concluido_e_processado_idempotentemente(tmp_path: Path, mon
     assert estado.run_foi_visto(77)
     assert estado.metadado("github_etag") == '"etag-77"'
     assert github.etags == [None, '"etag-77"']
+
+
+def teste_checkout_novo_interrompe_worker_antes_de_marcar_run_ou_drenar_fila(
+    tmp_path: Path,
+) -> None:
+    estado = EstadoLocal(tmp_path / "estado.sqlite3")
+    execucao = {
+        "id": 81,
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "path": ".github/workflows/robo.yml@refs/heads/main",
+        "head_sha": "b" * 40,
+    }
+    github = GitHubFalso(RespostaRuns((execucao,), '"etag-81"'))
+    filas_processadas: list[str] = []
+    worker = daemon.WorkerCelular(
+        "postgresql://db/app?sslmode=require",
+        estado,
+        github=github,
+        executar=lambda fonte: filas_processadas.append(fonte) or 0,
+        processar_pichau=lambda _url, **_kwargs: filas_processadas.append("pichau"),
+        sincronizar=lambda _chave: True,
+    )
+
+    with pytest.raises(fila_android.CheckoutAtualizado):
+        worker.inicializar()
+
+    assert filas_processadas == []
+    assert not estado.run_foi_visto(81)
+    assert estado.metadado("github_etag") is None
+
+
+def teste_worker_shell_limita_restart_interno_a_uma_tentativa() -> None:
+    caminho = Path(daemon.__file__).resolve().parents[2] / "scripts" / "celular" / "worker.sh"
+    script = caminho.read_text(encoding="utf-8")
+
+    assert "reinicios_checkout=0" in script
+    assert '[[ "$status" == 75 && "$MODO" == "--daemon" && "$reinicios_checkout" == 0 ]]' in script
+    assert "reinicios_checkout=1" in script
+    assert "liberar_wake_lock" in script
 
 
 def teste_primeiro_baseline_drena_fila_antes_de_marcar_runs_antigos(
@@ -121,7 +165,7 @@ def teste_primeiro_baseline_drena_fila_antes_de_marcar_runs_antigos(
         "postgresql://db/app?sslmode=require",
         estado,
         github=github,
-        processar_pichau=lambda _url: None,
+        processar_pichau=lambda _url, **_kwargs: None,
         sincronizar=lambda _chave: None,
     )
 
@@ -146,7 +190,7 @@ def teste_baseline_nao_esconde_runs_se_neon_estiver_indisponivel(
         "postgresql://db/app?sslmode=require",
         estado,
         github=github,
-        processar_pichau=lambda _url: None,
+        processar_pichau=lambda _url, **_kwargs: None,
         sincronizar=lambda _chave: None,
     )
 

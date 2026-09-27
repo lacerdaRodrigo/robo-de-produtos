@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
@@ -47,25 +45,25 @@ class PaginaInicio extends StatefulWidget {
 
 class _PaginaInicioState extends State<PaginaInicio>
     with WidgetsBindingObserver {
+  static const _validadeResumo = Duration(minutes: 5);
+
   ResumoInicio? _resumo;
   bool _carregando = true;
   bool _falhouAtualizacao = false;
   bool _consultando = false;
   bool _emPrimeiroPlano = true;
-  Timer? _polling;
+  DateTime? _ultimaConsultaBemSucedida;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _consultar();
-    _configurarPolling();
+    _consultar(forcar: true);
   }
 
   @override
   void didUpdateWidget(covariant PaginaInicio antigo) {
     super.didUpdateWidget(antigo);
-    _configurarPolling();
     if (widget.ativa && !antigo.ativa && _emPrimeiroPlano) _consultar();
   }
 
@@ -75,16 +73,17 @@ class _PaginaInicioState extends State<PaginaInicio>
     if (_emPrimeiroPlano && widget.ativa) _consultar();
   }
 
-  void _configurarPolling() {
-    _polling?.cancel();
-    if (!widget.experienciaCompacta || !widget.ativa) return;
-    _polling = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (_emPrimeiroPlano) _consultar();
-    });
+  DateTime _agora() => (widget.agora ?? DateTime.now)();
+
+  bool get _resumoExpirado {
+    final ultimaConsulta = _ultimaConsultaBemSucedida;
+    return ultimaConsulta == null ||
+        _agora().difference(ultimaConsulta) >= _validadeResumo;
   }
 
-  Future<void> _consultar() async {
+  Future<void> _consultar({bool forcar = false}) async {
     if (_consultando || !widget.ativa || !_emPrimeiroPlano) return;
+    if (!forcar && _resumo != null && !_resumoExpirado) return;
     _consultando = true;
     if (_resumo != null && mounted) {
       setState(() {
@@ -100,6 +99,7 @@ class _PaginaInicioState extends State<PaginaInicio>
         _carregando = false;
         _falhouAtualizacao = false;
       });
+      _ultimaConsultaBemSucedida = _agora();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -113,7 +113,6 @@ class _PaginaInicioState extends State<PaginaInicio>
 
   @override
   void dispose() {
-    _polling?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -128,12 +127,12 @@ class _PaginaInicioState extends State<PaginaInicio>
       return EstadoFalha(
         mensagem:
             'Não foi possível carregar o resumo. O último dado válido não foi alterado.',
-        voltar: _consultar,
+        voltar: () => _consultar(forcar: true),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: _consultar,
+      onRefresh: () => _consultar(forcar: true),
       child: CustomScrollView(
         key: const Key('resumo-inicio'),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -160,12 +159,16 @@ class _PaginaInicioState extends State<PaginaInicio>
                     _CabecalhoResumo(
                       resumo: resumo,
                       carregando: _carregando,
-                      agora: (widget.agora ?? DateTime.now)(),
-                      aoAtualizar: _carregando ? null : _consultar,
+                      agora: _agora(),
+                      aoAtualizar: _carregando
+                          ? null
+                          : () => _consultar(forcar: true),
                     ),
                   if (_falhouAtualizacao) ...[
                     const SizedBox(height: 16),
-                    _AvisoFalhaAtualizacao(aoTentarNovamente: _consultar),
+                    _AvisoFalhaAtualizacao(
+                      aoTentarNovamente: () => _consultar(forcar: true),
+                    ),
                   ],
                   if (widget.experienciaCompacta) ...[
                     const SizedBox(height: 25),

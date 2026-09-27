@@ -41,6 +41,8 @@ cria o `001` e carrega o catálogo.
 | `030_categorias_cashback_inter.sql` | taxonomia editorial dos Sites parceiros | Inter Cashback |
 | `031_fila_coletas_android.sql` | fila idempotente de pedidos manuais Livelo/Inter, leases e funções com grants separados | Executor Android |
 | `032_permissoes_consumidores_neon.sql` | roles distintas para API, Actions e Samsung; isolamento das filas e dados pessoais | Segurança/Neon |
+| `033_limpeza_admin_segura.sql` | funções fixas `SECURITY DEFINER` para limpeza administrativa; API recebe somente `EXECUTE` | Segurança/Admin |
+| `034_role_backup_readonly.sql` | role de grupo `radar_backup` somente leitura e privilégios futuros de leitura | Backup/Neon |
 
 ## Onde são usadas
 
@@ -48,6 +50,12 @@ cria o `001` e carrega o catálogo.
 - API do app: `010`–`020`, `023`, `025` e `026` (autenticação, disparos, catálogos, acompanhamentos e Central de Alertas).
 - Operação: `027` (ponte inicial das seleções legadas e recuperação sem push).
 - Segurança dos consumidores: `032` (grants mínimos para API, Actions e Samsung).
+- Segurança das operações administrativas: `033` (funções fixas de limpeza; não aplicada neste ciclo).
+- Backup: `034` (role de grupo sem login; ainda exige criar/associar credencial de login fora do repositório e não foi aplicada).
+
+As migrations `033` e `034` são apenas arquivos versionados. Não foram
+executadas contra o Neon de produção: `033` depende de backup e teste destrutivo
+em banco descartável; `034` depende de confirmar proprietário, grants e alvo.
 
 ## Destino Neon novo — 2026-09-26
 
@@ -64,10 +72,12 @@ foram criadas como `NOLOGIN`. A migration `032` cria `robo_api` e
 `robo_coletor`, associa `radar_api`, `radar_actions_robo`,
 `radar_actions_pichau` e `radar_samsung` aos grupos corretos e concede somente
 os acessos documentados. Os quatro logins foram ativados e validados por
-conexões direta e pooled; as credenciais não ficam no repositório. O banco tem
-somente o convite admin inicial, sem UID Firebase; execuções, pontuações e
-catálogos continuam vazios. A API Production e o Samsung ainda não foram
-cortados para este destino.
+conexões direta e pooled; as credenciais não ficam no repositório. O destino
+recebeu o corte da API Production e do Samsung em 2026-09-26, com leituras
+autenticadas e coletas manuais reais confirmadas no PRD operacional. Nenhuma
+migração de dados legados foi feita. As migrations `033` e `034` continuam
+pendentes de backup restaurável e teste descartável; não estão aplicadas ao
+destino.
 
 ## Histórico do projeto Neon anterior
 

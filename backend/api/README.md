@@ -5,7 +5,7 @@ legada (`site/`, desativada em 2026-08-24) para este diretório, preservando o
 contrato. É publicável em produção (Vercel, Root Directory = `backend/api`).
 
 > **Estado no repositório:** rotas do App Router em `app/api/**`, headers de
-> segurança, middleware de allowlist de origem (CORS) e `GET /status` mínimo.
+> segurança, `proxy.ts` com allowlist de origem (CORS) e `GET /status` mínimo.
 > Deploy e configuração operacional não fazem parte das validações locais.
 
 ## Estrutura

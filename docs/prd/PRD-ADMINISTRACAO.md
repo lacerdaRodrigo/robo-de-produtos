@@ -1,7 +1,7 @@
 # PRD — Administração (Limpeza por domínio)
 
-**Versão:** V5.0 — implementado
-**Status vigente em 2026-09-04:** implementado na API e no Flutter; aceite destrutivo em banco descartável pendente.
+**Versão:** V5.1 — implementação endurecida
+**Status vigente em 2026-09-26:** API/Flutter e SQL de escopo fixo implementados; migration `033` ainda não aplicada e aceite destrutivo em banco descartável pendente.
 
 > A V5 adiciona uma operação administrativa destrutiva ao Radar de Benefícios. Ela não coleta uma nova fonte e não muda as regras dos robôs: permite apagar separadamente os dados da Livelo ou resetar todos os dados do Shopping Inter, sempre dentro da área autenticada.
 
@@ -44,7 +44,7 @@ O objetivo é permitir recomeçar uma integração sem apagar autenticação, pr
 - Auditoria persistente da limpeza.
 - Exclusão da sessão, tentativas de login, tema ou flags de interface.
 - Pausa ou cancelamento dos workflows agendados e disparos manuais.
-- Exclusão de tabelas, migrações ou schema do Postgres.
+- Exclusão de tabelas ou schema do Postgres. A migration `033` adiciona somente funções fixas de limpeza e grants restritos.
 - Limpeza automática por prazo.
 
 ## 3. Requisitos funcionais
@@ -89,6 +89,7 @@ O reset cobre as duas integrações:
     cashback_inter
     favorita_inter
     execucao_inter
+    mapeamento_categoria_cashback_inter
     loja_inter
     disparo_manual_inter
     medicao_produto_direto_inter
@@ -101,7 +102,10 @@ O reset cobre as duas integrações:
 
 O próximo workflow recompõe os catálogos públicos, mas não recupera favoritas, seleções, produtos antigos ou histórico. Produtos diretos só voltam a ser coletados depois de nova seleção administrativa.
 
-Nenhuma tabela da Livelo ou da autenticação entra nessa transação.
+`categoria_cashback_inter` é o dicionário estável e permanece. O mapeamento de
+loja é removido antes do catálogo para respeitar a chave estrangeira; a função
+usa somente a lista explícita e não usa `CASCADE`. Nenhuma tabela da Livelo ou
+da autenticação entra nessa transação.
 
 ## 5. Interface e fluxo
 
@@ -131,7 +135,7 @@ mobile.
 |---|---|
 | Autorização | Sessão administrativa exigida no cliente e no endpoint da API |
 | Confirmação | Frase específica por domínio, validada no servidor |
-| Escopo SQL | Lista fixa de tabelas; sem cascade genérico |
+| Escopo SQL | Funções `SECURITY DEFINER` com lista fixa, objetos qualificados e `search_path` fechado; `robo_api` recebe apenas `EXECUTE`, não `TRUNCATE` |
 | Atomicidade | Uma transação por botão; falha não deixa parcial |
 | Concorrência | O banco bloqueia as tabelas durante a operação; escrita posterior é um novo estado |
 | Dados comuns | Login, tentativas, cookies, tema e flags preservados |
@@ -140,7 +144,7 @@ mobile.
 
 As contagens são uma fotografia informativa. Se um workflow escrever entre a leitura e a transação, a limpeza continua válida sobre o estado encontrado durante sua execução.
 
-## 7. Interfaces internas previstas
+## 7. Interfaces internas
 
 Concentrar a operação em um módulo próprio de banco:
 
@@ -149,7 +153,7 @@ Concentrar a operação em um módulo próprio de banco:
     apagarDadosLivelo() -> void
     resetarDadosInter() -> void
 
-Também haverá uma função pura para validar a frase esperada por domínio. Não será criada API pública, tabela nova ou migração.
+Também existe uma função pura para validar a frase esperada por domínio. A migration `033_limpeza_admin_segura.sql` cria somente as duas funções SQL fixas; não cria tabela nem altera catálogo. Ela deve ser aplicada manualmente somente depois de backup conferido e alvo confirmado, nunca por CI.
 
 ## 8. Testes e aceite
 
@@ -158,8 +162,9 @@ Também haverá uma função pura para validar a frase esperada por domínio. N�
 - Frase correta, vazia, errada e trocada entre domínios.
 - Resumo com contagens e banco indisponível.
 - Livelo limpa somente Livelo, inclusive `parceiro_livelo`, e restaura os três padrões.
-- Inter limpa V3 e V4, sem tocar Livelo ou autenticação.
-- Cada fluxo usa uma única transação.
+- Inter limpa V3 e V4 e os mapeamentos editoriais, preserva o dicionário de
+  categorias e não toca Livelo ou autenticação.
+- Cada fluxo usa uma única transação; `robo_api` não recebe grants diretos de `TRUNCATE`.
 - Falha no meio não produz sucesso parcial.
 - Limpeza repetida de domínio vazio continua válida.
 - TypeScript, build, Vitest e suíte Python continuam verdes.
@@ -184,7 +189,7 @@ O primeiro teste destrutivo não deve usar o banco de produção.
 | V5.0 | Este PRD e mapa de dados por domínio | concluída |
 | V5.1 | Resumos, validação de frases e transações | concluída |
 | V5.2 | Zona de perigo e páginas protegidas | concluída |
-| V5.3 | Testes descartáveis, regressão e smoke controlado | pendente |
+| V5.3 | Testes descartáveis e regressão | testes automatizados do contrato SQL adicionados; aplicação da migration e aceite destrutivo continuam pendentes |
 
 ## 10. Critérios de aceite
 

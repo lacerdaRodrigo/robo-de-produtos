@@ -554,7 +554,7 @@ Cada fase entrega valor sozinha e pode parar ali sem deixar o projeto pela metad
 | O formato do payload muda (C06) | RN13 continua: poucos parceiros extraídos derruba a execução com erro ruidoso |
 | O e-mail perder relevância diante do site | **Não é risco, é o desenho.** Cada canal ganha um trabalho só: o site é consulta, o e-mail é alarme. O e-mail para de ser catálogo |
 | `parityBau` deixar de ser confiável (C07) | RN29: silêncio de alerta acompanhado de página degenerada é tratado como suspeita, não como "não teve promoção" |
-| Senha única vazar | 9.0: senha aleatória, limite de tentativas, sessão protegida. Estrago limitado a este projeto |
+| Token de identidade ser abusado | Firebase Auth, convite/papel, limite persistente por usuário/operação e auditoria pseudonimizada; tráfego anônimo depende também da proteção de borda, ainda pendente de validação |
 | Free tier de Neon ou Vercel mudar (C08) | Uso medido é ~1% do limite. Se mudar, a configuração volta para arquivo — o contrato `CatalogoFavoritas` torna a volta barata |
 | Deixar de abrir a página e não perceber que o robô morreu | Limitação declarada em MS6. Se virar problema real, o candidato é um e-mail semanal de resumo, mesmo sem promoção |
 | A exposição pública dos dados atrair atenção da Livelo | 9.3: a página sai do ar na primeira manifestação |

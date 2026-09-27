@@ -10,9 +10,7 @@ export async function GET(requisicao: Request) {
   if (!acesso.ok) return acesso.resposta;
 
   try {
-    const usuarioId = acesso.usuario.papel === "admin"
-      ? undefined
-      : String(acesso.usuario.id);
+    const usuarioId = String(acesso.usuario.id);
     const resumo = await carregarResumoInicio(
       undefined,
       undefined,
