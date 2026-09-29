@@ -38,12 +38,13 @@ Subagentes não são terminais independentes: são threads supervisionadas pelo
 agente principal, que continua responsável por escopo, integração, validação e
 resposta final. Quando o responsável solicitar publicação, o gerente isola as
 mudanças em uma branch, roda os gates aplicáveis, commita somente os arquivos da
-tarefa e integra à `main` se passarem. Depois publica o commit integrado no
-remoto e confere o run de CI correspondente, sem contornar proteção de branch.
-Preserve qualquer alteração anterior que não pertença à tarefa. A orquestração
-não amplia a autorização da tarefa nem substitui as regras abaixo. Para tarefas
-Flutter, use as skills deste repositório em `.agents/skills/`, que são a
-referência específica da V15.
+tarefa e publica a branch para executar CI. Integra e publica em `main` somente
+se os gates locais e as verificações obrigatórias para o commit passarem; depois
+confere o resultado do CI de `main`, sem contornar proteção de branch. Preserve
+qualquer alteração anterior que não pertença à tarefa. A orquestração não amplia
+a autorização da tarefa nem substitui as regras abaixo. Para tarefas Flutter,
+use as skills deste repositório em `.agents/skills/`, que são a referência
+específica da V15.
 
 ## Escopo do aplicativo mobile
 
