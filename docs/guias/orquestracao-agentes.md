@@ -24,8 +24,12 @@ nem ficam trabalhando depois que a execução termina.
 
 Os perfis ficam em `.codex/agents/`. Eles herdam as skills e os MCPs da sessão
 quando configurados e autorizados; a configuração não cria conexão nem concede
-acesso a sistemas externos. Para Flutter, use as versões das skills em
-`.agents/skills/`, que seguem o contrato V15 deste projeto.
+acesso a sistemas externos. O Codex só carrega as configurações do projeto quando
+o repositório está marcado como confiável. Além disso, a permissão ativa da sessão
+do gerente pode prevalecer sobre `sandbox_mode` do perfil; para os agentes de
+execução editarem, inicie a sessão com escrita no workspace e crie os subagentes
+depois de atualizar os arquivos de configuração. Para Flutter, use as versões
+das skills em `.agents/skills/`, que seguem o contrato V15 deste projeto.
 
 ## Fluxo de trabalho
 
