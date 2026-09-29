@@ -36,7 +36,10 @@ segura couber no escopo, deixe somente essa etapa pendente e explique o motivo.
 Antes de editar, confira o estado do Git e preserve alterações preexistentes.
 Subagentes não são terminais independentes: são threads supervisionadas pelo
 agente principal, que continua responsável por escopo, integração, validação e
-resposta final. Quando o responsável solicitar publicação, o gerente isola as
+resposta final. Os perfis que editam usam `workspace-write`, mas o projeto precisa
+ser confiável para carregar `.codex/`, e a sessão do gerente precisa permitir
+escrita; permissões ativas da sessão podem prevalecer sobre o perfil individual.
+Quando o responsável solicitar publicação, o gerente isola as
 mudanças em uma branch, roda os gates aplicáveis, commita somente os arquivos da
 tarefa e publica a branch para executar CI. Integra e publica em `main` somente
 se os gates locais e as verificações obrigatórias para o commit passarem; depois
