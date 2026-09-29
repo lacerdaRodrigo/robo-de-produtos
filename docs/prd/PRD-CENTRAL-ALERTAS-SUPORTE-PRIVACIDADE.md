@@ -101,7 +101,7 @@ origens não autorizadas são recusadas antes dos route handlers. Mensagens/logs
 não incluem tokens, URLs de banco ou dados pessoais. A
 outbox faz retry, recupera linhas presas em `enviando` há pelo
 menos 15 minutos, não duplica envios e desativa tokens FCM inválidos. O workflow
-acorda a API a cada 15 minutos; o envio real continua no Firebase Cloud
+acorda a API uma vez por hora; o envio real continua no Firebase Cloud
 Messaging através do Firebase Admin SDK. Não há limite diário artificial de
 notificações.
 
@@ -227,6 +227,19 @@ preservando o estado da moldura e sem criar uma nova instância da Central.
 
 Após o primeiro login, FCM solicita permissão. Recusar ou indisponibilidade do
 Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
+
+O push identifica a origem e a entidade do evento: parceiro para Livelo, loja
+para Inter Sites parceiros e produto para Pichau ou Inter Compre direto. Quando
+os dados existem, o texto resume o tipo de mudança, sua direção e os valores
+anterior e atual, preservados como texto decimal. A mensagem limita os detalhes
+a dois eventos e aponta o restante para a Central; não chama toda mudança de
+promoção. No Android, a mensagem FCM usa o canal `alertas`; recebida com o app
+aberto, é apresentada como notificação local de alta importância. No iOS,
+opções de apresentação foreground habilitam alerta, som e badge. Em segundo
+plano, o sistema apresenta a mensagem FCM. Tocar nela abre a Central filtrada
+pela coleta. A apresentação depende de permissão, token válido, preferências
+habilitadas e processamento da outbox; estado `enviada` isolado não comprova
+entrega ao aparelho.
 
 ## Critérios de aceite
 
