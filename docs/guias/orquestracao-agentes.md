@@ -61,8 +61,8 @@ das skills em `.agents/skills/`, que seguem o contrato V15 deste projeto.
    responsável responder no prazo, usa a resposta; se não, segue a recomendação,
    registra a premissa e não pergunta de novo. O `clarificador` agrupa dúvidas
    relacionadas e sugere a melhor opção, mas não fala diretamente com o
-   responsável. A falta de resposta não amplia o escopo nem autoriza push, deploy,
-   publicação ou outra operação externa não solicitada.
+   responsável. A falta de resposta não amplia o escopo nem concede autorização
+   fora da política permanente de Git registrada abaixo.
    Se nenhuma opção segura couber no escopo autorizado, deixa pendente somente a
    etapa dependente e explica o impedimento.
 8. Com as dúvidas resolvidas, encaminha a execução ao `designer_flutter` ou ao
@@ -85,6 +85,11 @@ responsável corrigir uma premissa.
 
 - Em dúvidas simples, reversíveis e sem risco material, escolha o caminho
   conservador mais adequado, registre a premissa e continue o trabalho.
+- Para alterações solicitadas pelo responsável, há autorização permanente para
+  abrir branch e PR, commitar e publicar a branch, e integrar em `main` quando os
+  gates obrigatórios passarem. Não peça uma segunda autorização para esse fluxo.
+  Essa autorização não cobre deploy, mudanças em produção, migrations, alteração
+  de workflow, dispatch nem reexecução manual de workflows.
 - Quando uma dúvida exigir a opinião do responsável, faça uma pergunta com a
   recomendação e o motivo. Dê 30 segundos para resposta e continue o trabalho
   independente durante esse período.
@@ -101,14 +106,17 @@ responsável corrigir uma premissa.
 - `designer_flutter` e `implementador` devem editar os arquivos atribuídos; não
   devem parar em recomendações quando o gerente delegou implementação. Os agentes
   de investigação, planejamento, clarificação e revisão continuam somente leitura.
-- Quando o responsável solicitar publicação, o gerente cria uma branch da tarefa,
-  roda os gates aplicáveis e revisa o diff. Faz commit somente dos arquivos da
-  tarefa, publica a branch para executar CI e integra em `main` somente depois de
-  todos os gates obrigatórios passarem. Confere também o CI do commit integrado.
-  Se um gate falhar ou houver alteração preexistente inseparável, interrompe a
-  publicação e informa a evidência. Não contorna proteções do repositório.
-- Push, merge, publicação, deploy, dispatch ou reexecução de workflow exigem
-  instrução explícita. A consulta de CI é somente leitura.
+- Para toda alteração de código ou documentação pedida pelo responsável, o
+  gerente cria uma branch, revisa o diff, commita somente os arquivos da tarefa,
+  publica a branch para CI e abre PR. Integra em `main` somente depois que os
+  gates locais e obrigatórios do PR passarem; então confere o CI do commit
+  integrado. Não peça autorização de novo para esse fluxo. Se algum gate falhar,
+  houver alteração preexistente inseparável ou proteção de branch impedir o merge,
+  pare e informe a evidência; nunca contorne a proteção.
+- A autorização permanente cobre somente esse fluxo Git de branch/PR/merge em
+  `main`. Deploy, ações em produção, migrations, alterações de workflow, dispatch
+  e reexecuções manuais de workflow exigem autorização específica. A consulta de
+  CI continua somente leitura.
 - Só declare GitHub Actions aprovado quando houver um run identificado e seu
   resultado corresponder ao commit em questão. Diferencie execução agendada de
   execução manual e sinalize quando a conexão ou os registros não estiverem

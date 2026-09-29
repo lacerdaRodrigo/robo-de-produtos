@@ -29,9 +29,12 @@ pergunta curta ao responsável, sempre incluindo a opção recomendada e o motiv
 Dê uma janela máxima de 30 segundos para resposta. Enquanto ela corre, avance as
 partes independentes; se não houver resposta ao fim do prazo, siga a opção
 recomendada pelo clarificador, registre a premissa e continue sem perguntar de
-novo. Isso vale dentro do escopo já autorizado e não autoriza por si só push,
-deploy, publicação ou outra operação externa fora desse escopo. Se nenhuma opção
-segura couber no escopo, deixe somente essa etapa pendente e explique o motivo.
+novo. Isso vale dentro do escopo já autorizado. A autorização permanente descrita no
+guia cobre branch, commit, push da branch para PR/CI e merge em `main` de código
+pedido pelo responsável, somente após os gates obrigatórios passarem; ela não
+autoriza deploy em produção, alteração de migration/workflow, dispatch ou
+reexecução manual. Se nenhuma opção segura couber no escopo, deixe somente essa
+etapa pendente e explique o motivo.
 
 Antes de editar, confira o estado do Git e preserve alterações preexistentes.
 Subagentes não são terminais independentes: são threads supervisionadas pelo
@@ -39,11 +42,12 @@ agente principal, que continua responsável por escopo, integração, validaçã
 resposta final. Os perfis que editam usam `workspace-write`, mas o projeto precisa
 ser confiável para carregar `.codex/`, e a sessão do gerente precisa permitir
 escrita; permissões ativas da sessão podem prevalecer sobre o perfil individual.
-Quando o responsável solicitar publicação, o gerente isola as
-mudanças em uma branch, roda os gates aplicáveis, commita somente os arquivos da
-tarefa e publica a branch para executar CI. Integra e publica em `main` somente
-se os gates locais e as verificações obrigatórias para o commit passarem; depois
-confere o resultado do CI de `main`, sem contornar proteção de branch. Preserve
+Para cada tarefa com mudanças solicitadas pelo responsável, o gerente usa a
+autorização permanente de publicação registrada no guia: isola as mudanças em uma
+branch, roda os gates aplicáveis, commita somente os arquivos da tarefa e publica
+a branch para PR/CI. Integra em `main` somente se os gates locais e as verificações
+obrigatórias para o commit passarem; depois confere o CI de `main`, sem contornar
+proteção de branch. Preserve
 qualquer alteração anterior que não pertença à tarefa. A orquestração não amplia
 a autorização da tarefa nem substitui as regras abaixo. Para tarefas Flutter,
 use as skills deste repositório em `.agents/skills/`, que são a referência
@@ -143,7 +147,10 @@ arquivo, rota ou fluxo que não existe mais.
 - Falha, parcial, atrasado, ausência de dado e zero continuam estados diferentes.
 - Busca, página e posição útil devem ser preservadas nas ações já cobertas pelo produto.
 - Administração continua protegida por autorização.
-- Backend/API podem ser alterados somente quando forem necessários para a jornada V15 e estiverem dentro da autorização explícita da tarefa; migrations, workflow, produção e publicação continuam fora do escopo sem autorização específica.
+- Backend/API podem ser alterados somente quando forem necessários para a jornada V15 e estiverem
+  dentro da autorização explícita da tarefa. Migrations, alterações de workflow e ações em produção
+  continuam fora do escopo sem autorização específica. A publicação Git em `main` segue a autorização
+  permanente documentada em `docs/guias/orquestracao-agentes.md`.
 
 ## Operação do executor Android da Pichau
 
