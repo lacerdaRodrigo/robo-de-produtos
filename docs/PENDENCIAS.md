@@ -42,6 +42,11 @@ essas regras.
   `Esgotados`, busca, faixa de preço, detalhe e histórico foram conferidos; o
   estado `Fora do catálogo` não foi forçado. Ver também o
   [`PRD Pichau`](prd/PRD-PICHAU.md).
+- [ ] Confirmar em ambiente controlado que a API publicada contém e preserva o
+  fallback de leitura do catálogo Pichau para falhas específicas de relação,
+  coluna ou permissão de acompanhamento pessoal. O Samsung carregou 1.223
+  produtos pelo caminho normal, mas esta rodada não provocou essas falhas; não
+  fazer fault injection em Production.
 - [ ] Reconciliar o estado de `Meu radar`: a conta mostrou um acompanhamento
   Riachuelo em `Sem dados`, enquanto a evidência anterior registrava 74 e outra
   rodada retornou zero. Confirmar conta/corte de dados antes de aceitar a
