@@ -98,10 +98,11 @@ responsável corrigir uma premissa.
   devem parar em recomendações quando o gerente delegou implementação. Os agentes
   de investigação, planejamento, clarificação e revisão continuam somente leitura.
 - Quando o responsável solicitar publicação, o gerente cria uma branch da tarefa,
-  roda os gates aplicáveis e revisa o diff. Se passarem, faz commit somente dos
-  arquivos da tarefa, integra em `main` e publica no remoto conforme o fluxo Git
-  disponível. Se um gate falhar ou houver alteração preexistente inseparável,
-  interrompe a publicação e informa a evidência.
+  roda os gates aplicáveis e revisa o diff. Faz commit somente dos arquivos da
+  tarefa, publica a branch para executar CI e integra em `main` somente depois de
+  todos os gates obrigatórios passarem. Confere também o CI do commit integrado.
+  Se um gate falhar ou houver alteração preexistente inseparável, interrompe a
+  publicação e informa a evidência. Não contorna proteções do repositório.
 - Push, merge, publicação, deploy, dispatch ou reexecução de workflow exigem
   instrução explícita. A consulta de CI é somente leitura.
 - Só declare GitHub Actions aprovado quando houver um run identificado e seu
