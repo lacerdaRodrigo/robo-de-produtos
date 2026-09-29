@@ -99,9 +99,10 @@ responsável corrigir uma premissa.
   de investigação, planejamento, clarificação e revisão continuam somente leitura.
 - Quando o responsável solicitar publicação, o gerente cria uma branch da tarefa,
   roda os gates aplicáveis e revisa o diff. Se passarem, faz commit somente dos
-  arquivos da tarefa, integra em `main` e publica no remoto conforme o fluxo Git
-  disponível. Se um gate falhar ou houver alteração preexistente inseparável,
-  interrompe a publicação e informa a evidência.
+  arquivos da tarefa, integra em `main`, publica no remoto e confere o run de CI
+  do commit integrado. Se um gate falhar ou houver alteração preexistente
+  inseparável, interrompe a publicação e informa a evidência. Não contorna
+  proteções do repositório.
 - Push, merge, publicação, deploy, dispatch ou reexecução de workflow exigem
   instrução explícita. A consulta de CI é somente leitura.
 - Só declare GitHub Actions aprovado quando houver um run identificado e seu
