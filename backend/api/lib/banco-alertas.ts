@@ -549,6 +549,100 @@ export async function registrarRelatoProblema(usuarioId: string, valor: { catego
 
 type OutboxPendente = { id: string; usuario_app_id: string; origem: string; coleta_id: string };
 type ResultadoOutbox = { processadas: number; enviadas: number; recuperadas: number };
+type EventoPush = {
+  origem: string;
+  tipo: TipoAlerta;
+  entidade_nome: string;
+  valor_anterior: string | null;
+  valor_atual: string | null;
+  unidade: string;
+  direcao: "aumento" | "reducao";
+};
+
+const ORIGENS_PUSH: Record<OrigemAcompanhamento, string> = {
+  livelo: "Livelo",
+  inter_cashback: "Inter · Sites parceiros",
+  inter_produto: "Inter · Compre direto",
+  pichau: "Pichau",
+};
+
+function valorPush(valor: string | null, unidade: string): string | null {
+  const original = valor?.trim();
+  if (!original) return null;
+  const partes = original.match(/^(-?)(\d+)(?:\.(\d+))?$/);
+  let apresentado = original;
+  if (partes) {
+    const sinal = partes[1];
+    const inteiro = partes[2].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    let decimais = (partes[3] ?? "").replace(/0+$/, "");
+    if (unidade === "reais" || unidade === "BRL") {
+      decimais = decimais.padEnd(2, "0");
+    }
+    apresentado = `${sinal}${inteiro}${decimais ? `,${decimais}` : ""}`;
+  }
+  if (unidade === "reais" || unidade === "BRL") return `R$ ${apresentado}`;
+  if (unidade === "percentual") return `${apresentado}%`;
+  if (unidade === "pontos_por_real") return `${apresentado} pontos por real`;
+  return `${apresentado} ${unidade}`.trim();
+}
+
+function descreverEventoPush(evento: EventoPush): string {
+  const origem = ORIGENS_PUSH[evento.origem as OrigemAcompanhamento] ?? "Radar";
+  const nome = evento.entidade_nome.trim() || "item acompanhado";
+  const entidade = evento.origem === "livelo"
+    ? `parceiro ${nome}`
+    : evento.origem === "inter_cashback"
+      ? `loja ${nome}`
+      : `produto ${nome}`;
+  const atributo = evento.tipo === "preco"
+    ? "preço"
+    : evento.tipo === "cashback"
+      ? "cashback"
+      : "pontuação";
+  const movimento = evento.direcao === "aumento" ? "aumentou" : "diminuiu";
+  const anterior = valorPush(evento.valor_anterior, evento.unidade);
+  const atual = valorPush(evento.valor_atual, evento.unidade);
+  const comparacao = anterior && atual
+    ? `de ${anterior} para ${atual}`
+    : atual
+      ? `agora ${atual}`
+      : "mudou";
+  return `${origem} · ${entidade}: ${atributo} ${movimento}, ${comparacao}.`;
+}
+
+function limitarTexto(valor: string, limite: number): string {
+  const limpo = valor.trim();
+  return limpo.length <= limite ? limpo : `${limpo.slice(0, limite - 1).trimEnd()}…`;
+}
+
+function textoNotificacao(
+  origem: string,
+  eventos: EventoPush[],
+  total: number,
+): { titulo: string; corpo: string } {
+  const rotulo = ORIGENS_PUSH[origem as OrigemAcompanhamento] ?? "Radar";
+  const titulo = `${rotulo} · mudança em acompanhamento`;
+  const resumoContagem = (quantidade: number) => quantidade === 1
+    ? "1 alteração na Central."
+    : `${quantidade} alterações na Central.`;
+  if (eventos.length === 0) return { titulo, corpo: resumoContagem(total) };
+  const limiteItens = 2;
+  for (let quantidade = Math.min(limiteItens, eventos.length); quantidade >= 0; quantidade -= 1) {
+    const exibidos = eventos.slice(0, quantidade).map((evento) => {
+      const nome = limitarTexto(evento.entidade_nome.trim() || "item acompanhado", 32);
+      return descreverEventoPush({ ...evento, entidade_nome: nome });
+    });
+    const restantes = Math.max(0, total - exibidos.length);
+    const complemento = restantes === 1
+      ? "Mais 1 alteração na Central."
+      : restantes > 1
+        ? `Mais ${restantes} alterações na Central.`
+        : "Toque para abrir a Central.";
+    const corpo = [...exibidos, complemento].join(" ");
+    if (corpo.length <= 240) return { titulo, corpo };
+  }
+  return { titulo, corpo: resumoContagem(total) };
+}
 
 function codigoErroMensageria(erro: unknown): string {
   if (!erro || typeof erro !== "object") return "";
@@ -609,9 +703,26 @@ export async function processarOutboxAlertas(limite = 20): Promise<ResultadoOutb
         enviadas += 1;
         continue;
       }
-      const resumo = contagensHabilitadas.map((item) => `${item.tipo}:${item.total}`).join(", ");
+      const totalAlertas = contagensHabilitadas.reduce((total, item) => total + item.total, 0);
+      const eventos = (await sql`
+        SELECT origem, tipo, entidade_nome,
+               valor_anterior::text AS valor_anterior,
+               valor_atual::text AS valor_atual,
+               unidade, direcao
+          FROM evento_alerta
+         WHERE usuario_app_id = ${outbox.usuario_app_id}
+           AND origem = ${outbox.origem}
+           AND coleta_id = ${outbox.coleta_id}
+           AND (tipo <> 'preco' OR ${habilitado("preco")})
+           AND (tipo <> 'cashback' OR ${habilitado("cashback")})
+           AND (tipo <> 'pontuacao' OR ${habilitado("pontuacao")})
+         ORDER BY criado_em DESC, id DESC
+         LIMIT 2
+      `) as EventoPush[];
+      const notificacao = textoNotificacao(outbox.origem, eventos, totalAlertas);
       const mensagem = {
-        notification: { title: "Novas alterações no Radar", body: `${resumo || "Há uma nova alteração"}. Toque para abrir a Central.` },
+        notification: { title: notificacao.titulo, body: notificacao.corpo },
+        android: { notification: { channelId: "alertas" } },
         data: { rota: "alertas", coleta: outbox.coleta_id, origem: outbox.origem },
       };
       const invalidos: string[] = [];

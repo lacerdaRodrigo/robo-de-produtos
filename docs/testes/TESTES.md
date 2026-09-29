@@ -755,6 +755,8 @@ O que conferir:
 | CT-190 | Alertas pessoais Pichau | Usuário acompanha pela chave externa, a aba/resumo/histórico usam seu recorte e o preço Pix gera evento somente após snapshot completo | `acompanhamento-pessoal-api.teste.ts`, `banco-pichau.teste.ts` e `teste_pichau.py` |
 | CT-191 | Backfill sem push | Seleções legadas Livelo/Pichau viram relações pessoais e a janela Inter recuperada entra na Central sem criar outbox | `migracao-alertas-produtos-inter.teste.ts` e migration `027` |
 | CT-192 | Retenção de registros técnicos | Auditoria acima de 30 dias e baldes de limite inativos há 24 horas são removidos pelo cron autenticado | `banco-autenticacao.teste.ts` e `route.teste.ts` da outbox |
+| CT-420 | Push identifica entidade e mudança | Pichau mostra produto/preço, Livelo mostra parceiro/pontuação e Inter separa loja/produto; direção e valores textuais aparecem, até dois eventos são descritos e o restante aponta para a Central | `backend/api/lib/banco-alertas.teste.ts` |
+| CT-421 | Push visível em primeiro plano | FCM recebido com o app aberto gera notificação Android de alta importância no canal `alertas`; tocar abre a Central filtrada pela coleta, sem duplicar apresentação no iOS | `app/test/features/alertas/gerenciador_notificacoes_test.dart` e aceite físico Android |
 
 ## Executor celular — testes unitários do worker e despacho
 
