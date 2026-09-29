@@ -9,7 +9,26 @@ de dados. A inspeção ADB confirmou worker ativo e Chrome/Appium ociosos ao
 final. Continuam pendentes um evento real com entrega FCM e o gate de nove
 execuções Pichau agendadas consecutivas em 72 horas.
 
-**Última atualização:** 2026-09-27
+**Última atualização:** 2026-09-28
+
+### Verificação física focada — 2026-09-28
+
+No APK `1.74.0+2026092802`, o catálogo publicado carregou 1.223 produtos no
+Samsung. A busca `Draconis` retornou dois itens; os recortes reais retornaram
+1.223 em `Todos`, 535 `Disponíveis` e 688 `Esgotados`. A folha V15 deixou o
+campo e as ações `Limpar`/`Aplicar filtros` acessíveis com o teclado aberto.
+Com mínimo de R$ 3.000 e ordenação pelo menor preço Pix, a consulta retornou
+1.088 resultados, começando em R$ 3.004,23; sem mínimo, a lista continha preços
+abaixo desse valor. O comportamento observado confirma que o filtro de faixa
+está ativo no caminho servidor/API do APK atual. A página 2, um detalhe e um
+histórico com oito medições também foram abertos. Os filtros foram restaurados
+para `Todos` e sem limites antes de encerrar.
+
+Esta conferência não provocou falha de schema ou permissão para forçar o ramo de
+compatibilidade; ela confirma que a consulta normal do catálogo funciona no
+ambiente publicado. O código de fallback mantém seus testes backend próprios.
+Capturas privadas, sem dados copiados para o Git, estão na seção de 2026-09-28
+do [`PRD de aceite mobile`](PRD-ACEITE-MOBILE-V15.md).
 
 O histórico anterior registra falhas e correções do runner; a implantação da
 agenda conjunta, das credenciais e do banco Neon novo está documentada no

@@ -1,9 +1,9 @@
 # PRD — Aceite físico do Mobile V15
 
 **Status:** evidências históricas até 2026-09-19, rodada local no Samsung em
-2026-09-27 e verificação física focada em 2026-09-28 com sessão autenticada
-preservada. O aceite completo continua aberto; as evidências não substituem as
-pendências abertas em
+2026-09-27 e verificações físicas focadas em 2026-09-28, inclusive com o APK
+`1.74.0+2026092802` e a sessão autenticada preservada. O aceite completo
+continua aberto; as evidências não substituem as pendências abertas em
 [`../PENDENCIAS.md`](../PENDENCIAS.md) nem autorizam publicação externa.
 
 ## Identificação
@@ -66,6 +66,46 @@ visual automatizado ou o teste comentado de Shopping Inter compacto.
 - A verificação resolve o bloqueio que impedia seleção de lojas no perfil
   compacto. Não conclui paginação, histórico, comparação formal com o HTML V15,
   nem aceite para usuário sem papel administrativo.
+
+### Rodada de navegação e catálogos — 2026-09-28
+
+- ✅ Samsung SM-M135M, Android 14. APK `1.74.0+2026092802` instalado com
+  `adb install -r` depois de comparar a assinatura; dados locais e sessão
+  autenticada preservados. Commit-base `c8bc931a98af4e3083b91f2006c1c54f8c93b12c`;
+  SHA-256 do APK `f3e2eec1d8756c903e8673529a825f4aaf15f964fad1cf3f062165a6d406761a`.
+- ✅ Runner local: 13/13 cenários de navegação passaram. Foram abertos Início,
+  Explorar, hub Banco Inter, Sites parceiros, Compre direto, Livelo, Pichau,
+  Meu radar e Alertas; as rotas secundárias voltaram à origem com o back Android.
+- ✅ O card Banco Inter da Home abriu o hub. Sites parceiros exibiu 379 lojas;
+  `Ver condições` abriu o endereço real do Shopping Inter no Chrome e o back
+  retornou ao app.
+- ✅ Compre direto carregou 1.924 produtos da Casas Bahia, página 1 de 193.
+  A página 2 mostrou outros produtos; um detalhe e o histórico com quatro
+  medições reais abriram. A folha de filtros abriu; com o teclado visível, uma
+  rolagem deixou `Limpar` e `Aplicar filtros` acessíveis. Não alterei
+  acompanhamento nem apliquei filtro nessa tela.
+- ✅ Pichau carregou 1.223 produtos reais. `Todos` retornou 1.223,
+  `Disponíveis` 535 e `Esgotados` 688. A busca `Draconis` retornou dois produtos.
+  Com preço mínimo de R$ 3.000 e ordenação por menor preço Pix, a API publicada
+  retornou 1.088 produtos e o primeiro custava R$ 3.004,23; sem mínimo havia
+  produtos abaixo de R$ 3.000. A página 2 abriu, assim como o detalhe e o
+  histórico real com oito medições. Isso confirma a filtragem observada no APK
+  atual; não houve deploy nesta rodada. Depois, limpei a busca e restaurei os
+  filtros para Todos, sem preço mínimo/máximo.
+- ✅ Capturas e JSON foram guardados fora do repositório, com permissões
+  privadas, em `~/.local/state/radar-mobile-device-acceptance/evidence/20260929T021136Z/`
+  (o nome usa UTC; a execução ocorreu em 28/09 no horário local). Exemplos:
+  `manual/inter-direct-pagination-page2.png`,
+  `manual/inter-direct-history.png`,
+  `manual/inter-partner-external-link.png`,
+  `manual/pichau-min-3000-results.png`, `manual/pichau-detail.png` e
+  `manual/pichau-history.png`. Não houve login/logout, compra, escrita de
+  acompanhamento, marcação de alertas, criação de fixtures ou alteração remota.
+- 🟡 A rodada não encontrou alertas não lidos para exercitar filtros e leitura
+  coletiva em várias páginas. Também não cobre cardinalidades físicas 9/10/11,
+  conta comum, sessão expirada, todos os estados parciais/erro, leitura de tela,
+  Moto G6 Play ou comparação formal de todas as telas com o HTML V15. Esses
+  limites permanecem em [`../PENDENCIAS.md`](../PENDENCIAS.md).
 
 ### Rodada Meu radar — 2026-09-27
 
@@ -182,16 +222,16 @@ reaproveitar os estados históricos como evidência da build nova.
 | D-012 | Início | Cards Livelo, Inter e Pichau | ✅ | 1 | `d052-home-light-fixed-2.png`; rail horizontal exibiu contagens reais das três origens. |
 | D-013 | Explorar | Cards, busca e abertura das subáreas | ✅ | 1 | `d020-explorar.png`, `d023-explorar-pichau.png`, `d021-livelo.png`, `d024-pichau.png`. |
 | D-014 | Inter | Escolha Sites parceiros/Compre direto | ✅ | 1 | `device-v30-inter.png`, `d033-inter-produtos.png`; hub e duas modalidades acessíveis. |
-| D-015 | Inter parceiros | Busca, filtros, ordenação e paginação | 🟡 | 1 | Lista real de parceiros, busca por `Multi` e filtros foram abertos; ordenação e paginação física completa ainda não foram percorridas. |
+| D-015 | Inter parceiros | Busca, filtros, ordenação e paginação | 🟡 | 1 | Busca/filtros anteriores foram abertos; nesta rodada, 379 lojas e condições reais foram vistas, mas busca, efeito dos filtros, ordenação e paginação física ainda não foram percorridos por completo. |
 | D-016 | Inter parceiros | Acompanhar, desfazer, rollback e condições | ✅ | 1 | Natura foi acompanhada e removida novamente; mensagens de sucesso, condições e estado original foram restaurados. |
-| D-017 | Inter parceiros | Abertura da URL real da API | ✅ | 1 | `Ver condições` abriu a URL real do Shopping Inter no Chrome e o retorno voltou ao app sem perder a jornada. |
-| D-018 | Inter direto | Produtos, lojas e categorias | 🟡 | 2 | Em `1.73.1+2026092801`, `motorola` retornou 66 ofertas reais da Casas Bahia e exibiu o card no aparelho; seleção e coleta também foram confirmadas no banco. Paginação, filtros completos, histórico e estados restantes continuam pendentes. |
-| D-019 | Inter direto | Filtros, busca, acompanhamento e histórico | 🟡 | 1 | Busca real `motorola` retornou 66 produtos e o card abriu; filtros, acompanhamento de um item e histórico ainda precisam de conferência física. |
+| D-017 | Inter parceiros | Abertura da URL real da API | ✅ | 1 | Revalidado em `1.74.0+2026092802`: `Ver condições` abriu a URL real do Shopping Inter no Chrome e o back retornou ao app. |
+| D-018 | Inter direto | Produtos, lojas e categorias | 🟡 | 2 | Em `1.74.0+2026092802`, a Casas Bahia retornou 1.924 produtos; página 2, detalhe e histórico real abriram. Categorias, filtros aplicados, estado acompanhado e aceite visual completo continuam pendentes. |
+| D-019 | Inter direto | Filtros, busca, acompanhamento e histórico | 🟡 | 1 | A folha de filtros e o teclado foram exercitados; o histórico real abriu com quatro medições. Faltam comprovar efeito de filtros/busca nesta build, acompanhamento sem efeito residual e estados restantes. |
 | D-020 | Livelo | Catálogo, busca, filtros e ordenação | ✅ | 1 | Catálogo real, busca por `ACER`, filtros de categoria/acompanhamento e ordenação `Nome A–Z` foram exercitados. |
 | D-021 | Livelo | Pontos, condições, campanhas e validade | ✅ | 1 | Cards reais exibiram pontos normal/Clube, campanha, condições e validade até `23/09/2026`. |
 | D-022 | Livelo | Acompanhamento, paginação e histórico | ✅ | 1 | Angeloni foi acompanhada e removida novamente; página 2 e histórico real com medições foram abertos. |
-| D-023 | Pichau | Catálogo, busca, filtros e disponibilidade | 🟡 | 1 | Busca `Draconis`, Pix/cartão, `Esgotado` e filtro `Esgotados` foram exercitados; cobertura do estado `Disponíveis` ainda falta. |
-| D-024 | Pichau | Preço Pix/cartão, detalhe e histórico | ✅ | 1 | Draconis exibiu Pix/cartão reais, mínimo/máximo e histórico com `55` medições nos últimos `30` dias. |
+| D-023 | Pichau | Catálogo, busca, filtros e disponibilidade | 🟡 | 1 | Em `1.74.0+2026092802`, `Draconis` retornou dois produtos; `Todos` 1.223, `Disponíveis` 535 e `Esgotados` 688. `Fora do catálogo` e estados de erro/parcial não foram forçados. |
+| D-024 | Pichau | Preço Pix/cartão, detalhe e histórico | ✅ | 1 | Pix/cartão reais, filtro mínimo R$ 3.000 aplicado pela API e detalhe/histórico abriram; o histórico atual exibiu oito medições. |
 | D-025 | Pichau | Acompanhamento, paginação e estados parciais | 🟡 | 1 | Acompanhamento foi desfeito/restaurado e página 2 foi aberta; estados parciais adicionais ainda não foram forçados. |
 | D-026 | Meu radar | Contagens reais por origem | ✅ | 1 | Lista atual mostrou `74 acompanhamentos ativos`, com filtros Livelo/Inter e cartões reais. |
 | D-027 | Meu radar | Vazio, explorar, alertas e atualização | 🟡 | 2 | A build atual abriu a lista e mostrou `0 acompanhamentos ativos`/estado vazio. O histórico D-026 registra 74; confirmar se a diferença vem do corte de banco/conta. Remoção, atualização e paginação completa continuam pendentes. |
@@ -210,7 +250,7 @@ reaproveitar os estados históricos como evidência da build nova.
 | D-040 | Visual | Comparação final com o protótipo V15 | 🟡 | 1 | Home, Explorar, Livelo, Pichau, Inter, Alertas, Perfil, suporte, claro e escuro foram renderizados no APK atual; comparação formal tela a tela com o HTML V15 ainda não foi fechada. |
 | D-041 | Device | Bloqueio e retomada via ADB | ✅ | 1 | Com a confirmação administrativa aberta, a tela foi apagada e desbloqueada; a mesma rota e sessão foram retomadas no APK. |
 | D-042 | Instalação | Reinstalação do APK e abertura limpa | ✅ | 1 | `flutter build apk --debug`, `adb install -r` e `d071-reopen-after-wait.png`; APK abriu e passou pelo splash. |
-| D-043 | Navegação | Rotas V15 e back Android com sessão existente | ✅ | 1 | 13/13 passos passaram na build `1.73.1+2026092702`; JSON e capturas privadas listados na execução local de 2026-09-27. Em `1.73.1+2026092801`, a sessão foi preservada e o caminho Administração → seleção → busca de produtos reais foi conferido no aparelho. |
+| D-043 | Navegação | Rotas V15 e back Android com sessão existente | ✅ | 1 | 13/13 passos passaram em `1.74.0+2026092802`; JSON e capturas privadas em `~/.local/state/radar-mobile-device-acceptance/evidence/20260929T021136Z/`. A sessão foi preservada e os retornos das rotas secundárias foram revalidados. |
 
 ## Correções realizadas
 

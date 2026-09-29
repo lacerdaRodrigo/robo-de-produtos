@@ -18,15 +18,17 @@ Usa Appium `3.8.0` e UiAutomator2 `8.7.0`, com servidor limitado a
 
 ```bash
 export ANDROID_SERIAL="serial-do-Samsung-autorizado"
+export DEVICE_ACCEPTANCE_BUILD_NUMBER="numero-novo-desta-rodada"
 tools/mobile-device-acceptance/build-install.sh
 tools/mobile-device-acceptance/run-local.sh
 ```
 
 O build verifica a assinatura antes de `adb install -r`; se não coincidir,
-interrompe sem desinstalar o app nem apagar seus dados. O número padrão desta
-execução é `2026092602`; uma nova rodada deve escolher outro número pelo
-`DEVICE_ACCEPTANCE_BUILD_NUMBER`. O APK mantém o conjunto ABI universal para
-respeitar a ABI que esta ROM Samsung seleciona ao iniciar o processo.
+interrompe sem desinstalar o app nem apagar seus dados. O número de build deve
+ser informado em `DEVICE_ACCEPTANCE_BUILD_NUMBER` e ser novo para cada rodada.
+O nome de versão é lido de `app/pubspec.yaml`, para instalar o
+código atual sem rebaixar a versão exibida. O APK mantém o conjunto ABI universal
+para respeitar a ABI que esta ROM Samsung seleciona ao iniciar o processo.
 
 O runner exige que `ANDROID_SERIAL` identifique o Samsung SM-M135M autorizado
 como único device ADB. Ele mantém `noReset=true` e não chama limpeza de dados,
