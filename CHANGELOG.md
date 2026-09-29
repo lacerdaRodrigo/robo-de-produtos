@@ -2,6 +2,31 @@
 
 <!-- version list -->
 
+## v1.74.0 (2026-09-29)
+
+### Chores
+
+- **deps-dev**: Update appium-python-client requirement
+  ([#43](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/43),
+  [`0e6b9ad`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/0e6b9ad210bb18918d13056272ad6a955c9c1d92))
+
+### Documentation
+
+- Registrar corte do Neon em produção
+  ([#46](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/46),
+  [`4f79420`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/4f794201e5a9da1bbf40459e2efc512a24b42b7b))
+
+### Features
+
+- **mobile**: Implementa ajustes V15 e aceite local
+  ([`e462955`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/e462955b6fd2a5ee65e1d3d31b53ec7d648a2a1d))
+
+### Testing
+
+- **app**: Corrige navegação V15 com texto ampliado
+  ([`05e0109`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/05e0109b3e2ce5f3a914c9637f64127dd67fecc6))
+
+
 ## v1.73.1 (2026-09-26)
 
 ### Bug Fixes
