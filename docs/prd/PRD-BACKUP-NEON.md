@@ -1,9 +1,11 @@
 # PRD — Backup criptografado do Neon
 
 **Versão:** 1.0 — automação versionada; ativação operacional pendente  
-**Status em 2026-09-26:** workflow, script e testes unitários implementados. As
-migrations `033`/`034`, credenciais do backup, primeira execução e restauração
-descartável ainda não foram feitas.
+**Status em 2026-09-26:** workflow, script e testes unitários implementados.
+O responsável confirmou a aplicação das migrations `033` e `034`. A role de
+grupo `radar_backup` existe pelo contrato da migration 034; a configuração da
+credencial de login, secrets, Drive, primeira execução e restauração
+descartável ainda está pendente.
 
 ## Objetivo e limites
 
@@ -37,9 +39,10 @@ produção. A restauração sempre começa em um banco descartável ou branch no
 
 ## Configuração externa necessária
 
-1. Conferir o alvo e aplicar manualmente `migracoes/034_role_backup_readonly.sql`
-   como proprietário. Essa migration cria apenas a role de grupo `radar_backup`
-   `NOLOGIN` e grants de leitura; não cria senha nem usuário de login.
+1. Conferir por leitura a existência da role de grupo `radar_backup` e os
+   grants definidos por `migracoes/034_role_backup_readonly.sql`. A migration
+   foi aplicada e confirmada pelo responsável em 2026-09-26; não a reaplicar.
+   Ela cria apenas a role `NOLOGIN` e grants de leitura, sem senha ou login.
 2. Criar uma role de login exclusiva, com senha gerada no provedor, associá-la a
    `radar_backup` e construir `NEON_BACKUP_DATABASE_URL` usando essa conta e
    `sslmode=require`. Não usar `radar_api`, `radar_samsung`, credencial owner ou
@@ -57,8 +60,11 @@ produção. A restauração sempre começa em um banco descartável ou branch no
    baixar/compartilhar o backup. Restaurar uma cópia em um banco descartável
    usando a chave privada offline e conferir schema e dados essenciais.
 
-Os passos 1–5 são externos e continuam abertos em `docs/PENDENCIAS.md`; nenhum
-secret foi criado e nenhuma migration foi aplicada neste ciclo.
+Os passos 2–5 continuam abertos em `docs/PENDENCIAS.md`. Nenhum secret foi
+cadastrado nem backup restaurado nesta sessão. A migration 033 instala funções
+administrativas de limpeza; sua aplicação não significa que elas foram aceitas
+para uso. Não executá-las antes do primeiro restore descartável e do aceite
+destrutivo isolado.
 
 ## Restauração e limitações
 

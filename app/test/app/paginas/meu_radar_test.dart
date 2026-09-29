@@ -50,13 +50,14 @@ const _resumo = {
   },
 };
 
-Api _api() => Api(
+Api _api({List<Uri>? consultas}) => Api(
   paginaPadrao: 20,
   cliente: ClienteApi(
     baseUrl: 'http://localhost:3000',
     provedorToken: () async => 'token-teste',
     cliente: http_testing.MockClient((requisicao) async {
       if (requisicao.url.path == '/api/alertas/acompanhamentos') {
+        consultas?.add(requisicao.url);
         return http.Response(
           jsonEncode({
             'itens': [
@@ -101,15 +102,23 @@ Api _api() => Api(
 );
 
 void main() {
-  testWidgets('Meu radar mostra contagens reais por fonte', (at) async {
+  testWidgets('Meu radar segue a composição V15 e filtra por origem', (
+    at,
+  ) async {
+    at.view.physicalSize = const Size(390, 844);
+    at.view.devicePixelRatio = 1;
+    addTearDown(at.view.resetPhysicalSize);
+    addTearDown(at.view.resetDevicePixelRatio);
+    final consultas = <Uri>[];
+    var abriuAlertas = false;
     await at.pumpWidget(
       MaterialApp(
         theme: TemaRadar.claro(),
         home: Scaffold(
           body: PaginaMeuRadar(
-            api: _api(),
+            api: _api(consultas: consultas),
             aoExplorar: () {},
-            aoAbrirAlertas: () {},
+            aoAbrirAlertas: () => abriuAlertas = true,
           ),
         ),
       ),
@@ -117,10 +126,36 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.byKey(const Key('pagina-meu-radar')), findsOneWidget);
-    expect(find.text('6'), findsOneWidget);
+    expect(find.text('No seu radar'), findsOneWidget);
+    expect(find.text('6 itens acompanhados por você.'), findsOneWidget);
+    expect(find.text('Encontre na sua lista'), findsOneWidget);
+    expect(find.text('Buscar no seu radar'), findsNothing);
+    expect(find.text('O que merece sua atenção.'), findsNothing);
+    expect(find.text('Ordenar'), findsNothing);
+    expect(find.text('Central de alertas'), findsNothing);
+    expect(find.text('Todos'), findsOneWidget);
+    expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.text('Compre direto'), findsOneWidget);
+    expect(find.text('Livelo'), findsOneWidget);
+    expect(find.text('Pichau'), findsOneWidget);
+    expect(find.byTooltip('Abrir alertas'), findsOneWidget);
+    expect(find.byTooltip('Pesquisar'), findsOneWidget);
     expect(find.text('Loja Livelo'), findsOneWidget);
     expect(find.text('Loja Inter'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsWidgets);
+
+    await at.tap(find.byTooltip('Abrir alertas'));
+    expect(abriuAlertas, isTrue);
+
+    await at.ensureVisible(find.text('Compre direto'));
+    await at.tap(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    expect(consultas.last.queryParameters['origem'], 'inter_produto');
+    expect(consultas.last.queryParameters['ordenar'], 'recentes');
     final lista = find.byKey(const Key('pagina-meu-radar'));
+    await at.drag(lista, const Offset(0, 400));
+    await at.pumpAndSettle();
+    expect(find.text('6 itens acompanhados por você.'), findsOneWidget);
     for (
       var tentativa = 0;
       tentativa < 6 && find.text('Produto Inter').evaluate().isEmpty;
@@ -139,5 +174,43 @@ void main() {
       await at.pumpAndSettle();
     }
     expect(find.text('PC Pichau'), findsOneWidget);
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('Meu radar não estoura com texto ampliado e direção RTL', (
+    at,
+  ) async {
+    at.view.physicalSize = const Size(320, 840);
+    at.view.devicePixelRatio = 1;
+    addTearDown(at.view.resetPhysicalSize);
+    addTearDown(at.view.resetDevicePixelRatio);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.escuro(),
+        home: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2)),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Scaffold(
+                body: PaginaMeuRadar(
+                  api: _api(),
+                  aoExplorar: () {},
+                  aoAbrirAlertas: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.text('No seu radar'), findsOneWidget);
+    expect(find.text('Acompanhando'), findsWidgets);
+    expect(at.takeException(), isNull);
   });
 }

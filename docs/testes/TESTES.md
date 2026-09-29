@@ -1,6 +1,10 @@
 # Plano de Testes
 
-Casos de teste organizados por módulo. Todos rodam automaticamente a cada `git push`, via `testes.yml`: o robô usa `pytest` e o app e a API usam Flutter/TypeScript.
+Casos de teste organizados por módulo. O workflow aplicável depende do caminho:
+`app-robo.yml` executa análise e unitários/widgets Flutter; os workflows dos
+robôs executam `pytest`; a API executa seus testes TypeScript no workflow
+próprio. O aceite físico automatizado do Samsung é local e não roda em `git
+push`, pois depende do aparelho USB e da sessão autenticada existente.
 
 A estratégia (pirâmide, uso de fakes, meta de cobertura) está na **Seção 8 do
 [`PRD-LIVELO.md`](../prd/PRD-LIVELO.md)**. Este documento é só o catálogo de casos.
@@ -780,9 +784,12 @@ instalação no Samsung.
 
 ## Ciclo mobile V15 — cobertura diretamente afetada
 
-Esta seção complementa o catálogo histórico. O gate desta branch executa
-somente os unitários/widgets Flutter diretamente afetados; não inclui build/teste
-Web, integração, E2E, smoke, performance ou regressão visual automatizada.
+Esta seção complementa o catálogo histórico. O gate Flutter executa unitários e
+widgets diretamente afetados; não inclui build/teste Web, integração genérica,
+E2E em CI, smoke em CI, performance ou regressão visual automatizada. Por
+autorização explícita para o plano de aceite, há um runner local que interage
+com o Samsung SM-M135M físico segundo as restrições do PRD de aceite; ele não é
+parte do CI e não substitui casos unitários/widgets.
 
 | ID | Título | Cobertura | Arquivo |
 |---|---|---|---|
@@ -790,8 +797,8 @@ Web, integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-002 | Marca e abertura | Símbolo vetorial, variante escura, redução de movimento e bootstrap honesto | `app/test/app/identidade/logo_radar_test.dart`, `app/test/app/inicializacao/pagina_abertura_test.dart` |
 | V15-003 | Acesso mobile | Marca legível em claro/escuro, ilustração oficial responsiva, título com quebra natural, formulário, senha, erro, retry e recuperação preservam o contrato de autenticação sem cartão técnico extra | `app/test/app/autenticacao/pagina_entrar_test.dart` |
 | V15-004 | Moldura de quatro destinos | Início, Explorar, Meu radar e Perfil permanecem navegáveis; aliases internos não criam destinos extras | `app/test/app/navegacao/moldura_test.dart` |
-| V15-005 | Meu radar sem dado inventado | Contagens do resumo são exibidas por fonte e a ação encaminha para Explorar/Alertas | `app/test/app/paginas/meu_radar_test.dart` |
-| V15-009 | Meu radar consolidado | Lista autenticada consulta busca, quatro origens, ordenação, paginação e valores textuais sem consultar fonte externa | `backend/api/testes/acompanhamentos-api.teste.ts`, `app/test/app/paginas/meu_radar_test.dart` |
+| V15-005 | Meu radar sem dado inventado | Total pessoal, cabeçalho V15, sino para alertas, busca com avanço, estados sem contagens fictícias e texto ampliado/RTL sem overflow | `app/test/app/paginas/meu_radar_test.dart` |
+| V15-009 | Meu radar consolidado | Lista autenticada consulta busca, quatro origens, ordenação padrão recente, paginação e valores textuais; chips mantêm a ordem V15, filtros enviam a origem correta e a composição não adiciona seletor de ordenação nem cartão da Central | `backend/api/testes/acompanhamentos-api.teste.ts`, `app/test/app/paginas/meu_radar_test.dart` |
 | V15-010 | Resumo pessoal da Home | O resumo usa contagens pessoais e estados indisponíveis sem fabricar zero; o destaque não lido permanece disponível no contrato/na Central, sem cartão de alerta na Home compacta | `backend/api/testes/resumo-inicio.teste.ts`, `app/test/app/paginas/inicio_test.dart` |
 | V15-011 | Preferência de movimento | A preferência local combina com `MediaQuery.disableAnimations`, persiste e não interfere no tema | `app/test/app/tema/aparencia_test.dart` |
 | V15-012 | Sessão expirada | 401 comum sinaliza reautenticação única; App Check, 403 e rede permanecem erros distintos | `app/test/core/api/cliente_test.dart` |
@@ -803,6 +810,8 @@ Web, integração, E2E, smoke, performance ou regressão visual automatizada.
 | V15-015 | Central de Alertas alinhada ao protótipo | Cabeçalho com botão `Voltar`, abas planas, filtro em folha, feed sem cartões elevados, barra inferior, toque de retorno e back Android; leitura coletiva percorre todas as páginas sem perder rollback local | `app/test/features/alertas/pagina_alertas_test.dart`, `app/test/features/alertas/controlador_alertas_test.dart`, `app/test/app/navegacao/moldura_test.dart` |
 | V15-016 | Hub Inter compacto alinhado ao protótipo | Cabeçalho com retorno visível, título/subtítulo do Banco Inter, dois cards responsivos sem contadores de resumo; Compre direto permanece alcançável em 320 px com texto ampliado, sem overflow, e o retorno usa toque e back Android | `app/test/app/navegacao/moldura_test.dart` |
 | V15-017 | Condição secundária do Inter completa | Folha da oferta exibe percentual e descrição integral para não-correntista, com quebra de linha, rolagem e texto ampliado em 320 px | `app/test/features/inter/pagina_cashback_inter_test.dart` |
+| V15-018 | Seleção administrativa do Compre direto no mobile | Perfil abre a administração autorizada; a aba Compre direto lista lojas e a chave envia somente a seleção, sem disparar coleta; botão visível e back Android retornam ao Perfil | `app/test/app/navegacao/moldura_test.dart` |
+| V15-D01 | Aceite local Samsung | Navegação real entre Home, Explorar, hubs de Inter, catálogo Livelo/Pichau e Central; back Android preserva a rota anterior sem resetar o app | `tools/mobile-device-acceptance/run.py` (somente local, fora do CI) |
 
 ## Totais do pytest Python
 

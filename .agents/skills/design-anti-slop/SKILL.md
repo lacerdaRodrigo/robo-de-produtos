@@ -1,9 +1,13 @@
 ---
 name: design-anti-slop
-description: Detect and fix AI design slop — the convergent look that shows up across AI-generated landing pages and dashboards (purple/indigo gradients, rounded-2xl everywhere, three-box feature grids, bento dashboards, aspirational-but-empty hero copy, etc.). Use this skill whenever the user asks Claude to build/generate/mock up a landing page, dashboard, or SaaS UI, OR when the user shares an existing design (screenshot, URL, code, Figma link) and asks for critique, feedback, "does this look AI-generated?", or "make this less generic." Trigger even if the user does not use the word "slop" — phrases like "build me a hero section," "this looks AI-made," "why does this look like every other SaaS page," or "make this feel more custom" all qualify. Prefer this skill over general design-critique when the concern is specifically convergence, sameness, or AI-generated feel.
+description: Audit or improve the distinctiveness of web landing pages and dashboards when the user requests it. Do not apply to native Flutter mobile screens governed by an approved design system such as this repository's V15.
 ---
 
 # design:anti-slop
+
+In this repository, do not use this skill to redesign or restyle the Android/iOS app.
+For a mobile V15 task, follow `mobile-design` and the approved HTML/design guide; report
+any apparent generic pattern without changing the approved visual system.
 
 AI design slop is a statistical problem with aesthetic symptoms. Language models sample near the center of their training distribution, so without specific constraints they produce the same landing page and the same dashboard, over and over. This skill exists to do two things that a banlist of "bad colors" cannot:
 
@@ -16,13 +20,13 @@ The skill does not own general design taste, accessibility, or copywriting. It o
 
 There are three modes. They have different triggers, different UX, and different outputs. Do not merge them.
 
-**Mode A — pre-generation brief enforcer.** Trigger when the user asks Claude to *produce* a landing page, dashboard, or app UI and has not supplied a style brief. Signals: "build a landing page for X," "make me a SaaS homepage," "generate a dashboard," "mock up a hero section," "design an app for Y." If there is no brief, read `workflows/pre-gen-brief.md` and follow it before writing any code.
+**Mode A — pre-generation brief enforcer.** Trigger when the user asks the assistant to *produce* a landing page or dashboard and has not supplied a style brief. Signals: "build a landing page for X," "make me a SaaS homepage," "generate a dashboard," or "mock up a hero section." If there is no brief, read `workflows/pre-gen-brief.md` and follow it before writing any code.
 
 **Mode B — post-generation audit.** Trigger when the user shares an existing design (screenshot, deployed URL, code file, Figma link, v0/Bolt/Lovable output) and asks for review. Signals: "does this look AI-generated," "critique this design," "what's wrong with this page," "make this less generic," "roast this landing page," or a bare screenshot with no instructions. Read `workflows/post-gen-audit.md` and follow it.
 
 **Mode C — iterative polish.** Trigger when the user has already accepted the page's structure and is asking for depth or richness, not regeneration. Signals: "make this better," "make the assets richer," "add some depth," "this still feels flat," "push it further," "what's missing." Read `workflows/iterative-polish.md`. The protocol is per-asset (inventory → rank → push from data-poor to data-rich → verify), and reactive cosmetic padding is forbidden.
 
-**If the request is ambiguous** — e.g., the user pastes a draft and says "improve this" — default to Mode B. If the user then asks Claude to regenerate from scratch, enter Mode A at that point. If the user accepts the structure and then asks to "go deeper," that's the handoff to Mode C.
+**If the request is ambiguous** — e.g., the user pastes a draft and says "improve this" — default to Mode B. If the user then asks the assistant to regenerate from scratch, enter Mode A at that point. If the user accepts the structure and then asks to "go deeper," that's the handoff to Mode C.
 
 **If the request is a throwaway or exploratory** — e.g., "just give me something rough to play with" — skip brief enforcement, generate, but name the defaults you fell back on ("I used indigo because you didn't specify; swap to a semantic palette when you have one") so the user can see what's happening.
 

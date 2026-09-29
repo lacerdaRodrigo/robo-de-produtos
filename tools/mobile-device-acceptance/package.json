@@ -1,0 +1,9 @@
+{
+  "name": "radar-mobile-device-acceptance",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "appium": "3.8.0",
+    "appium-uiautomator2-driver": "8.7.0"
+  }
+}

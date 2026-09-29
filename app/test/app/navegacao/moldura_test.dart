@@ -912,10 +912,22 @@ void main() {
     expect(find.text('Acesso administrador'), findsOneWidget);
   });
 
-  testWidgets('administração mobile mostra somente a zona de perigo', (
+  testWidgets('administração mobile permite selecionar lojas e voltar', (
     at,
   ) async {
-    await _abrir(at, administrador: true);
+    const lojasDiretasCasasBahia =
+        '{"itens":[{"id":"loja-casas-bahia",'
+        '"id_externo":"intercasasbahia","slug":"casas-bahia",'
+        '"nome":"Casas Bahia","selecionada":false,"ativa":true}],'
+        '"pagina":1,"por_pagina":20,"total_itens":1,'
+        '"total_paginas":1,"tem_proxima":false}';
+    final requisicoes = <http.Request>[];
+    await _abrir(
+      at,
+      administrador: true,
+      lojasDiretas: lojasDiretasCasasBahia,
+      requisicoes: requisicoes,
+    );
     await _abrirConta(at);
     final listaPerfil = find.byType(ListView).last;
     await at.drag(listaPerfil, const Offset(0, -700));
@@ -923,10 +935,41 @@ void main() {
     await at.tap(find.byKey(const Key('perfil-administracao')));
     await at.pumpAndSettle();
 
-    expect(find.text('Zona de perigo'), findsOneWidget);
-    expect(find.text('Sites parceiros'), findsNothing);
-    expect(find.text('Compre direto'), findsNothing);
-    expect(find.text('Preferências Livelo'), findsNothing);
+    expect(find.text('Sites parceiros'), findsOneWidget);
+    expect(find.text('Compre direto'), findsOneWidget);
+    await at.ensureVisible(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Compre direto'));
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('busca-lojas-diretas')), findsOneWidget);
+    expect(find.text('Casas Bahia'), findsOneWidget);
+
+    await at.tap(find.byType(Switch).first);
+    await at.pumpAndSettle();
+    final selecao = requisicoes.singleWhere(
+      (requisicao) =>
+          requisicao.method == 'PATCH' &&
+          requisicao.url.path == '/api/inter/produtos/lojas',
+    );
+    expect(selecao.body, '{"id":"loja-casas-bahia","selecionada":true}');
+    expect(
+      requisicoes.where(
+        (requisicao) =>
+            requisicao.method == 'POST' &&
+            requisicao.url.path == '/api/administracao/disparos',
+      ),
+      isEmpty,
+    );
+
+    await at.tap(find.byType(BackButton).first);
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('perfil-administracao')), findsOneWidget);
+
+    await at.tap(find.byKey(const Key('perfil-administracao')));
+    await at.pumpAndSettle();
+    await at.binding.handlePopRoute();
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('perfil-administracao')), findsOneWidget);
   });
 
   testWidgets('conta padrão não oferece administração', (at) async {

@@ -6,7 +6,7 @@ The goal is not to block the user, frustrate them, or lecture. The goal is to ex
 
 ## When to run this workflow
 
-Run it when the user asks Claude to produce a landing page, dashboard, or app UI and has not supplied a style brief. If the request is a quick throwaway ("just mock something up rough so I can see it") or the user has already given a detailed brief, skip the full five-axis interview and proceed with a shorter fallback (see "Short path" at the bottom).
+Run it when the user asks the assistant to produce a landing page or dashboard and has not supplied a style brief. If the request is a quick throwaway ("just mock something up rough so I can see it") or the user has already given a detailed brief, skip the full five-axis interview and proceed with a shorter fallback (see "Short path" at the bottom).
 
 ## The five axes
 

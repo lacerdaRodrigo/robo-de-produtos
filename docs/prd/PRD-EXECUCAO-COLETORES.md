@@ -15,6 +15,54 @@ leu do destino novo os catálogos Livelo (255), Inter Sites parceiros (378) e
 Pichau (1.223). O banco e a credencial antigos seguem disponíveis por sete dias
 para rollback.
 
+**Incidente em 2026-09-27:** o Samsung reiniciou em 26/09 às 15:40 com motivo
+`reboot,userrequested`. A Depuração por Wi-Fi ficou desligada. O estado SQLite
+local e o log do worker confirmaram sucesso nas agendas Livelo e Inter de 27/09
+até 20:10/15:30, respectivamente; as coletas Pichau de 26/09 às 20:30 e de
+27/09 às 09:30, 14:30 e 20:30 falharam no preflight com código `34` (ADB Wi-Fi
+indisponível), antes de abrir o Chrome. Após reativação manual e `adb tcpip
+5555` pelo USB autorizado, `status.sh` confirmou worker, watchdog, filas e
+ADB Wi-Fi saudáveis. O disparo manual GitHub `36360364615` enfileirou a
+solicitação Pichau `3`, concluída com sucesso na primeira tentativa (execução
+`4`, sete páginas, 1.223 itens lidos e únicos, sem recuperação). O status final
+confirmou Appium ocioso. Essa execução manual não substitui o gate: a janela de
+nove execuções agendadas recomeça.
+
+**Validação sem USB em 2026-09-27:** após a retirada do cabo de dados, o ADB
+listou somente o transporte Wi-Fi e o Android permaneceu com a tela bloqueada.
+O disparo manual GitHub `36362065611` criou a solicitação Pichau `4`. O worker
+abriu Appium e Chrome sem despertar a tela; a fila no Neon confirmou sucesso
+na primeira tentativa (execução `5`, sete páginas, 1.223 itens lidos e únicos,
+sem recuperação). Essa segunda execução manual confirma o caminho sem USB,
+mas também não conta para o gate de nove agendas consecutivas.
+
+**Livelo e Inter em 2026-09-27:** os disparos manuais GitHub `36362885182`
+(Livelo) e `36362887421` (Inter), feitos depois da agenda Inter das 21:30,
+terminaram com estado `sucesso` na fila do Samsung. A execução Livelo `8`
+registrou 255 parceiros e qualidade `completa`; Inter Sites parceiros `8`
+registrou 378 lojas lidas e válidas. A execução Inter Compre direto `8`
+terminou com estado `sucesso`, mas tinha zero lojas planejadas porque nenhuma
+loja direta ativa estava selecionada; portanto não comprova coleta de produtos.
+O SQLite local confirmou que as agendas Livelo das
+20:10 e Inter das 21:30 já haviam terminado com sucesso antes desses pedidos;
+nenhum horário da agenda foi alterado.
+
+**Correção do Compre direto em 2026-09-28:** a lista administrativa autenticada
+mostrava as 111 lojas do catálogo, mas nenhuma estava selecionada. No mobile,
+Perfil → Administração abria somente a Zona de perigo, então não havia como
+habilitar uma loja nessa jornada. A rota passou a abrir a página administrativa
+existente; Casas Bahia foi selecionada pela chave do catálogo. Uma nova leitura
+da API e a consulta direta somente leitura no banco confirmaram
+`selecionada = true` e `ativa = true`. O workflow manual `36373453844` enfileirou
+a rodada Inter sem alterar os horários agendados. A fila Android registrou o
+pedido `7` com o run ID `36373453844`, uma tentativa e estado `sucesso`. A
+execução `9` do banco terminou em sucesso: 1 loja planejada e bem-sucedida, 58
+páginas, 2.070 itens lidos, 1.927 produtos únicos, 143 duplicados e qualidade
+`completa`. O banco registrou 1.927 produtos ativos e 1.927 medições da
+execução às `2026-09-28 03:25:01 UTC`. No Samsung `SM-M135M`, a busca `motorola` na tela
+Compre direto retornou 66 ofertas da Casas Bahia e exibiu um cartão com preço e
+cashback reais. A agenda permaneceu intacta.
+
 Este documento é o contrato operacional comum de Livelo, Inter Sites parceiros,
 Inter Compre direto e Pichau. As regras de extração e publicação continuam nos
 PRDs de cada domínio; aqui ficam o agendamento, o despacho, as credenciais e a

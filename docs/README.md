@@ -21,6 +21,8 @@ documentação antes de abrir arquivos isolados.
 | [`prd/PRD-DISTRIBUICAO-ANDROID.md`](prd/PRD-DISTRIBUICAO-ANDROID.md) | Contrato da assinatura e distribuição privada do APK Android pelo GitHub Actions, Google Drive e e-mail. |
 | [`prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md`](prd/PRD-CENTRAL-ALERTAS-SUPORTE-PRIVACIDADE.md) | Contrato da Central de Alertas, suporte, privacidade, acompanhamento pessoal e notificações FCM. |
 | [`prd/PRD-ACEITE-MOBILE-V15.md`](prd/PRD-ACEITE-MOBILE-V15.md) | Registro completo de validação física, evidências e bloqueios do aceite Mobile V15. |
+| [`../tools/mobile-device-acceptance/README.md`](../tools/mobile-device-acceptance/README.md) | Runner local, privado e restrito ao aceite funcional no Samsung SM-M135M. |
+| [`guias/orquestracao-agentes.md`](guias/orquestracao-agentes.md) | Papéis dos subagentes Codex, investigação, planejamento, resolução de dúvidas, revisão e limites de automação. |
 | [`prd/PRD-BACKUP-NEON.md`](prd/PRD-BACKUP-NEON.md) | Contrato do backup semanal criptografado do Neon, limites da restauração e configuração externa pendente. |
 
 ## Artefatos visuais

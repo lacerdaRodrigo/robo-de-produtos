@@ -1,10 +1,15 @@
 ---
 name: frontend-design
-description: Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.
+description: Guidance for distinctive visual design on unconstrained web or product concepts. For native Flutter screens in an existing project, follow that project's approved design reference instead.
 license: Complete terms in LICENSE.txt
 ---
 
 # Frontend Design
+
+When the project has an approved screen reference, treat it as the visual contract. In
+this repository, a mobile screen must follow the V15 HTML and guide; this skill does not
+authorize inventing or changing that design. Use the creative guidance below only for
+unconstrained work the user explicitly requests.
 
 Approach this as the design lead at a design studio known for giving every client a distinct visual identity that is not mistaken for anyone else's. This client has already rejected proposals that felt cliché or templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take aesthetic risk if justified.
 

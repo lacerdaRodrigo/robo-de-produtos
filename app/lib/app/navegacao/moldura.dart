@@ -297,11 +297,8 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     aoAdministrar: widget.administrador
         ? () => Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (_) => PaginaAdministracao(
-                api: widget.api,
-                administrador: true,
-                somenteZonaDePerigo: true,
-              ),
+              builder: (_) =>
+                  PaginaAdministracao(api: widget.api, administrador: true),
             ),
           )
         : null,

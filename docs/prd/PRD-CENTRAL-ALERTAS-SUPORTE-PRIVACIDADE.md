@@ -124,6 +124,19 @@ textual, URL validada, paginação e contagem das quatro origens. Livelo, Inter
 Sites parceiros, Inter Compre direto e Pichau continuam em joins e contratos
 separados. Ausência de retrato não é convertida em zero ou item fictício.
 
+Na tela Flutter `Meu radar`, a composição segue a rota `watching` da V15 e
+respeita a área segura superior do Android: cabeçalho `No seu radar` com sino
+para abrir alertas, total pessoal em uma linha,
+busca com avanço e filtros horizontais `Todos`, `Sites parceiros`, `Compre
+direto`, `Livelo` e `Pichau`, nesta ordem. O total permanece independente da
+busca e do filtro ativos; o endpoint consultado continua paginado e recebe
+`ordenar=recentes`, sem seletor de ordenação na tela. Os cartões exibem apenas
+origem, nome, estado, valor textual e URL devolvidos pela API; o botão
+`Acompanhando` mantém a remoção reversível, e o link externo só aparece quando
+há URL válida. Não há cartão separado para a Central: o sino é o acesso aos
+alertas. Valores, datas, condições e categorias ausentes no payload não são
+inventados pelo cliente.
+
 `GET /api/resumo` sempre recebe o ID da identidade autenticada, inclusive para
 quem tem papel `admin`; o bloco `livelo`, `cashback_inter` e o recorte de `radar`
 representam acompanhamentos pessoais. A seleção global legada não vira o

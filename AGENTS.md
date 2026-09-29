@@ -1,5 +1,48 @@
 # Instruções para o Codex — design mobile V15
 
+## Codex como agente gerente
+
+O agente principal conduz a conversa com o responsável, entende o resultado
+esperado, divide trabalho independente entre subagentes e reúne as conclusões.
+Delegue exploração e revisão em leitura paralela; para alterações, escolha um
+único agente escritor por conjunto de arquivos e revise o diff antes de concluir.
+Os papéis do projeto estão em `.codex/agents/` e o fluxo está em
+[`docs/guias/orquestracao-agentes.md`](docs/guias/orquestracao-agentes.md).
+`designer_flutter` e `implementador` têm escrita no workspace e devem implementar
+o que lhes for atribuído; `investigador`, `planejador`, `clarificador` e
+`revisor_ci` ficam em leitura para manter independentes a análise e a revisão.
+
+Em problemas de causa incerta ou mudanças com várias etapas, use o fluxo
+`investigador` → `planejador` → `clarificador` quando houver dúvidas → um executor
+→ `revisor_ci`. O planejador recebe o pedido original e as evidências da
+investigação; ele detalha escopo, critérios, sequência, dependências e validação
+sem editar código. O clarificador verifica se cada dúvida já tem resposta no
+pedido, nas instruções ou na documentação antes de envolver o responsável. O
+gerente revisa o plano e encaminha a execução. Para tarefas pequenas e claras,
+pule etapas que não tragam valor.
+
+Não invente preferências nem autorização em nome do responsável. Para uma
+decisão simples, reversível e sem risco material, use o padrão conservador já
+registrado e informe a premissa. Se a decisão envolver escopo, produção,
+segurança, dinheiro ou perda de dados e não estiver documentada, faça uma
+pergunta curta ao responsável, sempre incluindo a opção recomendada e o motivo.
+Dê uma janela máxima de 30 segundos para resposta. Enquanto ela corre, avance as
+partes independentes; se não houver resposta ao fim do prazo, siga a opção
+recomendada pelo clarificador, registre a premissa e continue sem perguntar de
+novo. Isso vale dentro do escopo já autorizado e não autoriza por si só push,
+deploy, publicação ou outra operação externa fora desse escopo. Se nenhuma opção
+segura couber no escopo, deixe somente essa etapa pendente e explique o motivo.
+
+Antes de editar, confira o estado do Git e preserve alterações preexistentes.
+Subagentes não são terminais independentes: são threads supervisionadas pelo
+agente principal, que continua responsável por escopo, integração, validação e
+resposta final. Quando o responsável solicitar publicação, o gerente isola as
+mudanças em uma branch, roda os gates aplicáveis, commita somente os arquivos da
+tarefa e integra à `main` se passarem. Preserve qualquer alteração anterior que
+não pertença à tarefa. A orquestração não amplia a autorização da tarefa nem
+substitui as regras abaixo. Para tarefas Flutter, use as skills deste repositório
+em `.agents/skills/`, que são a referência específica da V15.
+
 ## Escopo do aplicativo mobile
 
 Este ciclo existe para **implementar somente o aplicativo Flutter Android/iOS** conforme o design V15 aprovado, com o menor gasto de contexto possível. O alvo Flutter Web foi removido; a API e o protótipo HTML continuam separados.
@@ -130,6 +173,13 @@ Os únicos tipos de teste autorizados neste ciclo são:
 
 - testes unitários diretamente afetados;
 - testes de widgets diretamente afetados.
+
+Exceção autorizada para este plano: aceite funcional local no Samsung
+SM-M135M, conectado por ADB, conforme o roteiro e os limites do
+[`docs/prd/PRD-ACEITE-MOBILE-V15.md`](docs/prd/PRD-ACEITE-MOBILE-V15.md).
+Esse runner não entra no CI, não usa fixtures sintéticas em Production e não
+guarda credenciais. A exceção não libera integração genérica, smoke em CI,
+teste visual automatizado nem o teste comentado de Shopping Inter compacto.
 
 Não criar, atualizar ou executar como parte deste plano:
 

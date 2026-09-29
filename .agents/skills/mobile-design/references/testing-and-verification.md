@@ -207,3 +207,9 @@ If any are skipped (e.g. no device available), say so explicitly rather than imp
 - [ ] Visual snapshots/goldens cover key states; changes were **reviewed**, not blind-updated.
 - [ ] Tests use **role/label queries** (a11y-tied), not brittle test IDs where avoidable.
 - [ ] Ship gate green: typecheck + lint + tests + clean console all pass before declaring done.
+# Repository gate
+
+For this repository's Mobile V15 cycle, `AGENTS.md` overrides the generic workflows
+below: run `dart format`, `flutter analyze`, and only directly affected unit/widget tests.
+Do not add or run integration, E2E, smoke, performance, golden/visual-regression, or
+Flutter Web tests. Manual Samsung acceptance is limited to the separate approved PRD.

@@ -130,7 +130,7 @@ class PaginaPerfil extends StatelessWidget {
           chave: 'perfil-administracao',
           icone: Icons.settings_outlined,
           titulo: 'Administração',
-          descricao: 'Zona de perigo protegida',
+          descricao: 'Catálogos e operações protegidas',
           aoTocar: aoAdministrar!,
         ),
       );

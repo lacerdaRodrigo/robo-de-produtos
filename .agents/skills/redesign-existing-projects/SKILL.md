@@ -1,9 +1,14 @@
 ---
 name: redesign-existing-projects
-description: Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS framework or vanilla CSS.
+description: Audit and upgrade existing websites built with CSS. For native Flutter app screens, follow the app's approved design reference and framework-specific conventions.
 ---
 
 # Redesign Skill
+
+This workflow is for CSS-based websites. If a user explicitly requests a review of a
+Flutter screen in this repository, use the V15 HTML and `docs/guias/design-v15.md` as the
+contract and route implementation through `mobile-design`; do not apply CSS advice or
+replace approved app structure.
 
 ## How This Works
 

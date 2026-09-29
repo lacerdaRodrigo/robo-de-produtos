@@ -1,6 +1,6 @@
 ---
 name: codebase-conventions
-description: "Makes generated code look like the code already in the repository — reuse the existing widget instead of building a second one, resolve typography and colours through the project's own source, reference only assets that exist and are declared, and match the file, class, and import naming already in use. Use this before writing any widget, any screen, any shared component, any Text style, and any asset reference, and whenever a task says \"add a screen\", \"build a component\", \"make it match the rest of the app\", or \"use our design system\". Trigger it on every code-writing task without waiting to be asked, because the default failure is invisible: the code compiles, looks reasonable in isolation, and quietly duplicates a component that already existed under a different name."
+description: "Match existing Flutter conventions before adding or changing a widget, screen, shared component, text style, or asset reference in this repository."
 ---
 
 # Codebase Conventions
@@ -14,13 +14,12 @@ the duplication only surfaces months later when a brand change has to be applied
 
 > **Read the conventions file first.** `.agents/flutter-conventions.md` records where this
 > project keeps its shared widgets, typography, colours, and assets, and what its naming
-> rules are. If it is absent, check legacy `.claude/flutter-conventions.md`. Generate it
-> with the `flutter-adapt` skill (`$flutter-adapt` in Codex or
-> `/flutter-code-quality:flutter-adapt` in Claude Code).
+> rules are. The stack choices are in `.agents/flutter-profile.yaml`; its schema is in
+> `.agents/skills/design-tokens/references/flutter-profile.md`. If the conventions file is
+> absent, discover the source inline. There is no `flutter-adapt` skill dependency in
+> this repository.
 >
-> **If it does not exist, do the discovery below inline before writing code.** Do not skip
-> it because there is no file — the file is a cache of an answer you would otherwise have
-> to work out, not a precondition.
+> If either file is absent, do the discovery below inline. A missing file is not a blocker.
 >
 > It records locations and rules, never an inventory of components. A list of every widget
 > in the project is out of date within a week and then actively misleads. Search live; use
@@ -34,9 +33,10 @@ Search first, and search by **role**, not by the name you have in mind. Searchin
 
 For a component that renders X, search in this order:
 
-1. **By suffix.** `grep -rn "class .*Button" lib/` — every button in the project, whatever
-   the prefix. Same for `Card`, `Field`, `Tile`, `Sheet`, `Dialog`, `Chip`, `Avatar`.
-2. **By the noun in the request.** A "balance card" means grepping `Balance` and `Card`
+1. **By suffix.** Search with `rg` for widget classes ending in `Button` under the Flutter
+   source root. Do the same for `Card`, `Field`, `Tile`, `Sheet`, `Dialog`, `Chip`, and
+   `Avatar`.
+2. **By the noun in the request.** A "balance card" means searching `Balance` and `Card`
    separately, not `BalanceCard`.
 3. **In the shared directories** the conventions file names, then in the current feature's
    `widgets/` directory.
@@ -63,13 +63,12 @@ read an existing one. Those are the three reasons duplication actually happens.
 
 ## Typography
 
-Text styles come from the project's typography source. Never write `TextStyle(...)` inline
-in a widget — an inline style is invisible in review and is how a screen ends up two
-points off from every other screen.
+Text styles come from the project's typography source. In this app, use
+`Theme.of(context).textTheme` and `app/lib/app/tema/tema.dart`; custom spacing, color,
+radius, size, and motion values come from `context.tokens` in
+`app/lib/app/tema/tokens.dart`. `AppTokens` does not contain a text-style group.
 
-Where the source is depends on the profile's `tokens` setting: `context.tokens.text.*`,
-`Theme.of(context).textTheme.*`, or the project's own constants class. The conventions
-file names the exact entry point.
+For other projects, use the typography source named by their conventions file and profile.
 
 If the design calls for a style the project does not have, add it to the typography source
 and use it from there. Do not inline it "just this once" — the token that does not exist
@@ -78,7 +77,7 @@ yet is the whole reason the next person inlines one too.
 Applying a single modifier to an existing style is fine and is not an inline style:
 
 ```dart
-style: context.tokens.text.bodyMedium.copyWith(color: context.tokens.color.danger)
+style: Theme.of(context).textTheme.bodyMedium
 ```
 
 Reaching for `copyWith` on three properties at once means the style itself is missing.
@@ -119,8 +118,9 @@ part of the codebase and one that reads as pasted in.
 - **Imports.** Match the project's mix of `package:` and relative imports, and its use of
   barrel files. This one is worth checking rather than guessing; projects are consistent
   about it and the analyzer often enforces it.
-- **Directory placement** is the architecture skill's job, not this one. Read it for where
-  the file goes; read this for what it is called and what it reuses.
+- **Directory placement.** In this repository, follow the `app/lib/app`,
+  `app/lib/features`, and `app/lib/core` layout recorded in `.agents/flutter-conventions.md`.
+  There is no separate architecture skill dependency.
 
 Everything `dart format` and `analysis_options.yaml` already enforce is not your concern —
 run the formatter and let the analyzer speak.

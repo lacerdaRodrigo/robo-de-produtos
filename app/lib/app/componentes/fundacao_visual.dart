@@ -309,6 +309,9 @@ class CampoBuscaRadar extends StatelessWidget {
     this.aoAcionar,
     this.somenteBusca = false,
     this.chaveCampo,
+    this.raioBorda,
+    this.comSombra = true,
+    this.acaoSemFundo = false,
   });
 
   final TextEditingController controlador;
@@ -322,27 +325,38 @@ class CampoBuscaRadar extends StatelessWidget {
   /// Remove o botão de avanço, mantendo o campo no formato `search-only`.
   final bool somenteBusca;
   final Key? chaveCampo;
+  final double? raioBorda;
+  final bool comSombra;
+  final bool acaoSemFundo;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final brilho = Theme.of(context).brightness;
+    final raio = raioBorda ?? tokens.radii.lg;
     final sufixo = acao != null
-        ? Padding(
-            padding: EdgeInsets.all(tokens.spacing.one),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                borderRadius: BorderRadius.circular(tokens.radii.md),
-              ),
-              child: acao,
-            ),
-          )
+        ? acaoSemFundo
+              ? SizedBox.square(
+                  dimension: tokens.sizes.touchTarget,
+                  child: Center(child: acao),
+                )
+              : Padding(
+                  padding: EdgeInsets.all(tokens.spacing.one),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: cores.superficieAlternativa,
+                      borderRadius: BorderRadius.circular(tokens.radii.md),
+                    ),
+                    child: acao,
+                  ),
+                )
         : somenteBusca
         ? null
         : Padding(
-            padding: EdgeInsets.all(tokens.spacing.one),
+            padding: acaoSemFundo
+                ? EdgeInsets.zero
+                : EdgeInsets.all(tokens.spacing.one),
             child: IconButton(
               tooltip: 'Pesquisar',
               onPressed: aoAcionar ?? () => aoMudar(controlador.text),
@@ -353,10 +367,12 @@ class CampoBuscaRadar extends StatelessWidget {
                 height: tokens.sizes.touchTarget,
               ),
               style: IconButton.styleFrom(
-                backgroundColor: cores.acao,
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                backgroundColor: acaoSemFundo ? null : cores.acao,
+                foregroundColor: acaoSemFundo
+                    ? cores.acao
+                    : Theme.of(context).colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(tokens.radii.md),
+                  borderRadius: BorderRadius.circular(raio),
                 ),
               ),
             ),
@@ -364,14 +380,14 @@ class CampoBuscaRadar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(tokens.radii.lg),
-        boxShadow: [SombraRadar.para(brilho)],
+        borderRadius: BorderRadius.circular(raio),
+        boxShadow: comSombra ? [SombraRadar.para(brilho)] : const [],
       ),
       child: TextField(
         key: chaveCampo,
         controller: controlador,
         onChanged: aoMudar,
-        onSubmitted: acao == null && !somenteBusca
+        onSubmitted: !somenteBusca
             ? (_) {
                 if (aoAcionar != null) {
                   aoAcionar!();
@@ -401,15 +417,15 @@ class CampoBuscaRadar extends StatelessWidget {
           constraints: BoxConstraints(minHeight: tokens.sizes.field),
           contentPadding: EdgeInsetsDirectional.only(end: tokens.spacing.two),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.lg),
+            borderRadius: BorderRadius.circular(raio),
             borderSide: BorderSide(color: cores.borda),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.lg),
+            borderRadius: BorderRadius.circular(raio),
             borderSide: BorderSide(color: cores.borda),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(tokens.radii.lg),
+            borderRadius: BorderRadius.circular(raio),
             borderSide: BorderSide(color: cores.acao, width: 1.5),
           ),
         ),

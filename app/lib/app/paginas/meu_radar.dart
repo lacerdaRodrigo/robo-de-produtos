@@ -8,7 +8,6 @@ import '../../core/api/erros.dart';
 import '../../core/api/modelos.dart';
 import '../componentes/estados.dart';
 import '../componentes/fundacao_visual.dart';
-import '../componentes/menu_conta.dart';
 import '../tema/tokens.dart';
 
 class PaginaMeuRadar extends StatefulWidget {
@@ -37,7 +36,7 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
   var _carregando = true;
   var _paginaAtual = 1;
   var _origem = 'todas';
-  var _ordenar = 'recentes';
+  int? _totalAcompanhamentos;
 
   @override
   void initState() {
@@ -48,7 +47,9 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
   @override
   void didUpdateWidget(covariant PaginaMeuRadar antigo) {
     super.didUpdateWidget(antigo);
-    if (widget.ativa && !antigo.ativa) _carregar(silencioso: true);
+    if (widget.ativa && !antigo.ativa) {
+      _carregar(silencioso: true, atualizarContagem: true);
+    }
   }
 
   @override
@@ -58,18 +59,42 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
     super.dispose();
   }
 
-  Future<void> _carregar({bool silencioso = false}) async {
+  Future<void> _carregar({
+    bool silencioso = false,
+    bool atualizarContagem = false,
+  }) async {
     if (!silencioso && mounted) setState(() => _carregando = true);
+    final consulta = _busca.text.trim();
+    final origem = _origem;
     try {
       final pagina = await widget.api.acompanhamentosPessoais(
-        q: _busca.text.trim(),
-        origem: _origem,
-        ordenar: _ordenar,
+        q: consulta,
+        origem: origem,
+        ordenar: 'recentes',
         pagina: _paginaAtual,
       );
+      int? totalAtualizado;
+      if (consulta.isEmpty && origem == 'todas') {
+        totalAtualizado = pagina.totalItens;
+      } else if (atualizarContagem || _totalAcompanhamentos == null) {
+        try {
+          final total = await widget.api.acompanhamentosPessoais(
+            origem: 'todas',
+            ordenar: 'recentes',
+            pagina: 1,
+            porPagina: 1,
+          );
+          totalAtualizado = total.totalItens;
+        } catch (_) {
+          // Uma falha na contagem não apaga a lista filtrada que carregou.
+        }
+      }
       if (!mounted) return;
       setState(() {
         _pagina = pagina;
+        if (totalAtualizado != null) {
+          _totalAcompanhamentos = totalAtualizado;
+        }
         _erro = null;
         _carregando = false;
       });
@@ -91,19 +116,16 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
     });
   }
 
+  void _acionarBusca() {
+    _temporizadorBusca?.cancel();
+    setState(() => _paginaAtual = 1);
+    _carregar();
+  }
+
   void _selecionarOrigem(String origem) {
     if (_origem == origem) return;
     setState(() {
       _origem = origem;
-      _paginaAtual = 1;
-    });
-    _carregar();
-  }
-
-  void _selecionarOrdenacao(String ordenar) {
-    if (_ordenar == ordenar) return;
-    setState(() {
-      _ordenar = ordenar;
       _paginaAtual = 1;
     });
     _carregar();
@@ -127,6 +149,9 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
           -1,
         ),
       );
+      if (_totalAcompanhamentos != null && _totalAcompanhamentos! > 0) {
+        _totalAcompanhamentos = _totalAcompanhamentos! - 1;
+      }
     });
     try {
       await widget.api.alterarAcompanhamentoPessoal(
@@ -149,8 +174,9 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
       setState(() {
         _erro = erro;
         _pagina = null;
+        _totalAcompanhamentos = null;
       });
-      await _carregar();
+      await _carregar(atualizarContagem: true);
     }
   }
 
@@ -162,7 +188,10 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
         ativo: true,
       );
       if (!mounted) return;
-      await _carregar(silencioso: true);
+      if (_totalAcompanhamentos != null) {
+        setState(() => _totalAcompanhamentos = _totalAcompanhamentos! + 1);
+      }
+      await _carregar(silencioso: true, atualizarContagem: true);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Acompanhamento restaurado.')),
@@ -195,89 +224,103 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
     }
 
     final pagina = _pagina!;
-    return RefreshIndicator(
-      onRefresh: _carregar,
-      child: ListView(
-        key: const Key('pagina-meu-radar'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsetsDirectional.only(
-          start: context.tokens.spacing.four,
-          end: context.tokens.spacing.four,
-          top: context.tokens.spacing.five,
-          bottom: context.tokens.spacing.eight,
-        ),
-        children: [
-          const CabecalhoSecaoRadar(
-            sobrelinha: 'Seu radar',
-            titulo: 'O que merece sua atenção.',
-            descricao:
-                'Acompanhe mudanças de lojas, cashback e produtos a partir dos catálogos.',
+    final total = _totalAcompanhamentos ?? pagina.totalItens;
+    final cores = CoresRadar.de(context);
+    return SafeArea(
+      top: true,
+      bottom: false,
+      child: RefreshIndicator(
+        onRefresh: () => _carregar(atualizarContagem: true),
+        child: ListView(
+          key: const Key('pagina-meu-radar'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsetsDirectional.only(
+            start: context.tokens.spacing.four,
+            end: context.tokens.spacing.four,
+            top: context.tokens.spacing.seven,
+            bottom: context.tokens.spacing.eight,
           ),
-          SizedBox(height: context.tokens.spacing.five),
-          _ResumoAcompanhamentos(
-            total: pagina.totalItens,
-            aoAbrirAlertas: widget.aoAbrirAlertas,
-          ),
-          SizedBox(height: context.tokens.spacing.four),
-          CampoBuscaRadar(
-            chaveCampo: const Key('busca-meu-radar'),
-            controlador: _busca,
-            dica: 'Buscar no seu radar',
-            aoMudar: _buscar,
-            somenteBusca: true,
-          ),
-          SizedBox(height: context.tokens.spacing.three),
-          _FiltrosRadar(
-            origem: _origem,
-            ordenar: _ordenar,
-            aoSelecionarOrigem: _selecionarOrigem,
-            aoSelecionarOrdenacao: _selecionarOrdenacao,
-          ),
-          SizedBox(height: context.tokens.spacing.four),
-          if (_carregando && pagina.itens.isNotEmpty)
-            const LinearProgressIndicator(minHeight: 2),
-          if (pagina.itens.isEmpty)
-            _EstadoSemAcompanhamentos(
-              filtrado: _busca.text.isNotEmpty || _origem != 'todas',
-              aoExplorar: widget.aoExplorar,
-            )
-          else
-            for (final item in pagina.itens) ...[
-              _CartaoAcompanhamento(
-                item: item,
-                aoRemover: () => _remover(item),
-                aoAbrir: () => _abrirItem(item),
+          children: [
+            CabecalhoSecaoRadar(
+              titulo: 'No seu radar',
+              descricao:
+                  '$total ${total == 1 ? 'item acompanhado' : 'itens acompanhados'} por você.',
+              acao: IconButton(
+                tooltip: 'Abrir alertas',
+                onPressed: widget.aoAbrirAlertas,
+                icon: const Icon(Icons.notifications_none_rounded),
+                constraints: BoxConstraints.tightFor(
+                  width: context.tokens.sizes.touchTarget,
+                  height: context.tokens.sizes.touchTarget,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: cores.superficieAlternativa,
+                  foregroundColor: cores.texto,
+                ),
               ),
-              SizedBox(height: context.tokens.spacing.three),
-            ],
-          if (_erro != null && pagina.itens.isNotEmpty)
-            TextButton.icon(
-              onPressed: _carregar,
-              icon: const Icon(Icons.refresh),
-              label: Text(_mensagemErro(_erro)),
             ),
-          SizedBox(height: context.tokens.spacing.three),
-          PaginacaoRadar(
-            pagina: pagina.pagina,
-            totalItens: pagina.totalItens,
-            porPagina: pagina.porPagina,
-            carregando: _carregando,
-            erro: _erro,
-            aoIrParaPagina: (numero) async {
-              setState(() => _paginaAtual = numero);
-              await _carregar();
-            },
-          ),
-          CartaoRadar(
-            aoTocar: widget.aoAbrirAlertas,
-            padding: EdgeInsets.all(context.tokens.spacing.four),
-            child: LinhaContaRadar(
-              icone: Icons.notifications_none_outlined,
-              titulo: 'Central de alertas',
-              descricao: 'Veja as mudanças registradas nos itens acompanhados.',
+            SizedBox(height: context.tokens.spacing.five),
+            CampoBuscaRadar(
+              chaveCampo: const Key('busca-meu-radar'),
+              controlador: _busca,
+              dica: 'Encontre na sua lista',
+              aoMudar: _buscar,
+              aoAcionar: _acionarBusca,
+              acao: IconButton(
+                tooltip: 'Pesquisar',
+                onPressed: _acionarBusca,
+                icon: const Icon(Icons.arrow_forward_rounded),
+                constraints: BoxConstraints.tightFor(
+                  width: context.tokens.sizes.touchTarget,
+                  height: context.tokens.sizes.touchTarget,
+                ),
+                style: IconButton.styleFrom(foregroundColor: cores.acao),
+              ),
+              raioBorda: context.tokens.radii.md,
+              comSombra: false,
+              acaoSemFundo: true,
             ),
-          ),
-        ],
+            SizedBox(height: context.tokens.spacing.four),
+            _FiltrosRadar(
+              origem: _origem,
+              aoSelecionarOrigem: _selecionarOrigem,
+            ),
+            SizedBox(height: context.tokens.spacing.three),
+            if (_carregando && pagina.itens.isNotEmpty)
+              const LinearProgressIndicator(minHeight: 2),
+            if (pagina.itens.isEmpty)
+              _EstadoSemAcompanhamentos(
+                filtrado: _busca.text.trim().isNotEmpty || _origem != 'todas',
+                aoExplorar: widget.aoExplorar,
+              )
+            else
+              for (final item in pagina.itens) ...[
+                _CartaoAcompanhamento(
+                  item: item,
+                  aoRemover: () => _remover(item),
+                  aoAbrir: () => _abrirItem(item),
+                ),
+                SizedBox(height: context.tokens.spacing.three),
+              ],
+            if (_erro != null && pagina.itens.isNotEmpty)
+              TextButton.icon(
+                onPressed: _carregar,
+                icon: const Icon(Icons.refresh),
+                label: Text(_mensagemErro(_erro)),
+              ),
+            PaginacaoRadar(
+              pagina: pagina.pagina,
+              totalItens: pagina.totalItens,
+              porPagina: pagina.porPagina,
+              carregando: _carregando,
+              erro: _erro,
+              aoIrParaPagina: (numero) async {
+                setState(() => _paginaAtual = numero);
+                await _carregar();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -302,125 +345,60 @@ class _PaginaMeuRadarState extends State<PaginaMeuRadar> {
   }
 }
 
-class _ResumoAcompanhamentos extends StatelessWidget {
-  const _ResumoAcompanhamentos({
-    required this.total,
-    required this.aoAbrirAlertas,
-  });
+class _FiltrosRadar extends StatelessWidget {
+  const _FiltrosRadar({required this.origem, required this.aoSelecionarOrigem});
 
-  final int total;
-  final VoidCallback aoAbrirAlertas;
+  final String origem;
+  final ValueChanged<String> aoSelecionarOrigem;
 
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: cores.superficieAlternativa,
-        borderRadius: BorderRadius.circular(context.tokens.radii.xl),
-        border: Border.all(color: cores.borda),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(context.tokens.spacing.five),
-        child: Row(
-          children: [
-            Icon(
-              Icons.bookmark_added_outlined,
-              color: cores.acao,
-              size: context.tokens.sizes.icon,
-            ),
-            SizedBox(width: context.tokens.spacing.three),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$total',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    total == 1
-                        ? 'acompanhamento ativo'
-                        : 'acompanhamentos ativos',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Abrir alertas',
-              onPressed: aoAbrirAlertas,
-              icon: const Icon(Icons.notifications_none_outlined),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FiltrosRadar extends StatelessWidget {
-  const _FiltrosRadar({
-    required this.origem,
-    required this.ordenar,
-    required this.aoSelecionarOrigem,
-    required this.aoSelecionarOrdenacao,
-  });
-
-  final String origem;
-  final String ordenar;
-  final ValueChanged<String> aoSelecionarOrigem;
-  final ValueChanged<String> aoSelecionarOrdenacao;
-
-  @override
-  Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final opcoes = <String, String>{
-      'todas': 'Todas',
+      'todas': 'Todos',
+      'inter_cashback': 'Sites parceiros',
+      'inter_produto': 'Compre direto',
       'livelo': 'Livelo',
-      'inter_cashback': 'Inter parceiros',
-      'inter_produto': 'Inter produtos',
       'pichau': 'Pichau',
     };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final entrada in opcoes.entries) ...[
-                Semantics(
-                  button: true,
-                  selected: origem == entrada.key,
-                  label: 'Filtrar por ${entrada.value}',
-                  child: ChoiceChip(
-                    label: Text(entrada.value),
-                    selected: origem == entrada.key,
-                    onSelected: (_) => aoSelecionarOrigem(entrada.key),
-                  ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final entrada in opcoes.entries) ...[
+            Semantics(
+              button: true,
+              selected: origem == entrada.key,
+              label: 'Filtrar por ${entrada.value}',
+              child: ChoiceChip(
+                showCheckmark: false,
+                label: Text(entrada.value),
+                selected: origem == entrada.key,
+                onSelected: (_) => aoSelecionarOrigem(entrada.key),
+                backgroundColor: cores.superficie,
+                selectedColor: cores.acao.withValues(alpha: 0.14),
+                side: BorderSide(
+                  color: origem == entrada.key ? cores.acao : cores.borda,
                 ),
-                SizedBox(width: context.tokens.spacing.two),
-              ],
-            ],
-          ),
-        ),
-        SizedBox(height: context.tokens.spacing.two),
-        DropdownButtonFormField<String>(
-          initialValue: ordenar,
-          decoration: const InputDecoration(labelText: 'Ordenar'),
-          items: const [
-            DropdownMenuItem(value: 'recentes', child: Text('Mais recentes')),
-            DropdownMenuItem(value: 'nome', child: Text('Nome')),
+                labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: origem == entrada.key ? cores.acao : cores.textoSuave,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(tokens.radii.pill),
+                ),
+                padding: EdgeInsetsDirectional.symmetric(
+                  horizontal: tokens.spacing.three,
+                  vertical: tokens.spacing.two,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.padded,
+              ),
+            ),
+            SizedBox(width: tokens.spacing.two),
           ],
-          onChanged: (valor) {
-            if (valor != null) aoSelecionarOrdenacao(valor);
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -439,51 +417,77 @@ class _CartaoAcompanhamento extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
+    final estado = _rotuloEstado(item.estado);
+    final valor = item.valorTexto?.trim();
+    final mostrarValor =
+        valor != null &&
+        valor.isNotEmpty &&
+        valor.toLowerCase() != estado.toLowerCase();
     return CartaoRadar(
       aoTocar: aoAbrir,
-      padding: EdgeInsetsDirectional.fromSTEB(
-        context.tokens.spacing.four,
-        context.tokens.spacing.four,
-        context.tokens.spacing.two,
-        context.tokens.spacing.four,
-      ),
-      child: Row(
+      padding: EdgeInsets.all(context.tokens.spacing.five),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          LayoutBuilder(
+            builder: (context, constraints) => Wrap(
+              spacing: context.tokens.spacing.two,
+              runSpacing: context.tokens.spacing.one,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text(
-                  _rotuloOrigem(item.origem),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cores.acao,
-                    fontWeight: FontWeight.w800,
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                  child: Text(
+                    _rotuloOrigem(item.origem),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: cores.textoSuave,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                SizedBox(height: context.tokens.spacing.one),
-                Text(
-                  item.nome,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                  child: IndicadorEstadoRadar(texto: estado),
                 ),
-                if (item.valorTexto != null) ...[
-                  SizedBox(height: context.tokens.spacing.one),
-                  Text(
-                    item.valorTexto!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-                SizedBox(height: context.tokens.spacing.one),
-                IndicadorEstadoRadar(texto: _rotuloEstado(item.estado)),
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Remover acompanhamento',
-            onPressed: aoRemover,
-            icon: const Icon(Icons.bookmark_remove_outlined),
+          SizedBox(height: context.tokens.spacing.three),
+          Text(
+            item.nome,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          if (mostrarValor) ...[
+            SizedBox(height: context.tokens.spacing.two),
+            Text(valor, style: Theme.of(context).textTheme.bodyMedium),
+          ],
+          SizedBox(height: context.tokens.spacing.three),
+          Divider(height: context.tokens.spacing.five, color: cores.borda),
+          Wrap(
+            spacing: context.tokens.spacing.two,
+            runSpacing: context.tokens.spacing.one,
+            children: [
+              TextButton.icon(
+                onPressed: aoRemover,
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('Acompanhando'),
+                style: TextButton.styleFrom(
+                  backgroundColor: cores.acao.withValues(alpha: 0.14),
+                  foregroundColor: cores.acao,
+                  padding: EdgeInsetsDirectional.symmetric(
+                    horizontal: context.tokens.spacing.three,
+                  ),
+                ),
+              ),
+              if (item.urlExterna != null && item.urlExterna!.isNotEmpty)
+                TextButton.icon(
+                  onPressed: aoAbrir,
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: Text('Ir para ${_rotuloDestino(item.origem)}'),
+                ),
+            ],
           ),
         ],
       ),
@@ -551,6 +555,13 @@ String _rotuloOrigem(String origem) => switch (origem) {
   'inter_produto' => 'INTER · COMPRE DIRETO',
   'pichau' => 'PICHAU',
   _ => 'RADAR',
+};
+
+String _rotuloDestino(String origem) => switch (origem) {
+  'livelo' => 'a Livelo',
+  'inter_cashback' || 'inter_produto' => 'o Inter',
+  'pichau' => 'a Pichau',
+  _ => 'a origem',
 };
 
 String _rotuloEstado(EstadoResumo estado) => switch (estado) {

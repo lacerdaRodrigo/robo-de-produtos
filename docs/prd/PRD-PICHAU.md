@@ -1,23 +1,20 @@
 # PRD — Pichau PC Gamer
 
-**Status:** jornada mobile e coleta Android versionadas; a correção de ciclo
-limpo, autorrecuperação única e diagnóstico estruturado está implementada e
-validada, e a migration passou pela validação branch-first e foi aplicada em
-produção. A execução `34761933582`, em 2026-09-13, comprovou uma coleta completa
-até a publicação, sem `pichau-banco` e sem evento porque não houve mudança de
-preço. Permanecem pendentes a inspeção ADB, a execução manual sem cabo, um
-evento real com entrega FCM e o gate de nove execuções agendadas em 72 horas.
-A execução `34519730452`, em 2026-09-10, falhou como `pichau-acesso`. Uma coleta anterior
-passou no mesmo commit também deixando o Chrome aberto: o processo residual é
-um risco real agora eliminado, mas não ficou comprovado como causa isolada.
-Essa falha reiniciou o gate de nove execuções agendadas em 72 horas.
+**Status:** jornada mobile e executor Android conjunto de Livelo, Inter e
+Pichau instalados no Samsung. Após o reboot de 26/09/2026, a Depuração por
+Wi-Fi desativada causou quatro falhas Pichau agendadas; a conexão foi recuperada
+e os pedidos manuais `36360364615` e `36362065611` publicaram 1.223 itens
+únicos cada, em sete páginas. O segundo passou com a tela bloqueada e sem cabo
+de dados. A inspeção ADB confirmou worker ativo e Chrome/Appium ociosos ao
+final. Continuam pendentes um evento real com entrega FCM e o gate de nove
+execuções Pichau agendadas consecutivas em 72 horas.
 
-**Última atualização:** 2026-09-21
+**Última atualização:** 2026-09-27
 
-O histórico de execuções reais acima prova o runner Pichau anterior, não a nova
-agenda conjunta Livelo/Inter/Pichau. O código desta reorganização ainda precisa
-ser integrado e instalado no Samsung; migrations, secrets, cópia Neon e gate de
-72 horas permanecem pendentes em [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
+O histórico anterior registra falhas e correções do runner; a implantação da
+agenda conjunta, das credenciais e do banco Neon novo está documentada no
+[`PRD de execução dos coletores`](PRD-EXECUCAO-COLETORES.md). O aceite
+operacional ainda aberto está em [`docs/PENDENCIAS.md`](../PENDENCIAS.md).
 
 ## Objetivo
 
@@ -749,11 +746,11 @@ viram ações externas, o acompanhamento faz rollback em falha e os quatro
 destinos persistentes mantêm sua semântica. Na Home compacta, também deve
 haver um card Pichau acionável e nenhuma seção `Atividade recente`.
 
-A integração Pichau Android só volta ao estado pronto depois da coleta manual
-da correção e do gate de 72 horas. A coleta `34761933582` já comprovou o
-caminho corrigido até a publicação completa. Catálogo,
-persistência, API autenticada e Wireless Debugging anteriores continuam
-validados; ciclo de Chrome, diagnóstico no Actions e disponibilidade contínua
-aguardam a nova prova. Evoluções de produto/API e o aceite operacional
+A integração Pichau Android ainda depende do gate de 72 horas para o aceite
+operacional. As coletas manuais `36360364615` e `36362065611` comprovaram a
+publicação completa no destino novo; a segunda passou sem cabo de dados, com
+tela bloqueada e Chrome/Appium ociosos ao final. O workflow atual apenas
+enfileira o pedido, e o resultado final foi confirmado na fila do Neon.
+Evoluções de produto/API e o aceite operacional
 permanecem listados separadamente em
 [`docs/PENDENCIAS.md`](../PENDENCIAS.md).

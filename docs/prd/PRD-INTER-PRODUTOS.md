@@ -1,16 +1,21 @@
 # PRD — Inter Produtos (Compre direto)
 
 **Versão:** V4.5.2 em aceite progressivo
-**Status vigente em 2026-09-26:** schema, coletor, API autenticada, Flutter e
+**Status vigente em 2026-09-28:** schema, coletor, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara preço e cashback
 de Produtos Inter conforme a seção 15.4 e o PRD compartilhado de alertas. A
-carga de referência da Casas Bahia publicou 3.310 produtos. As migrations do
-domínio foram aplicadas manualmente no banco alvo; as categorias externas são
-regidas pelo [`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
+carga de referência histórica da Casas Bahia publicou 3.310 produtos. Em
+2026-09-28, a execução `9` coletou a loja selecionada em 58 páginas, publicou
+1.927 produtos únicos com qualidade `completa`, e o app mostrou ofertas numa
+busca real. As migrations do domínio estão aplicadas no banco alvo; as
+categorias externas são regidas pelo
+[`PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md`](PRD-INTER-PRODUTOS-CATEGORIAS-EXTERNAS.md).
 **Execução recorrente vigente:** Produtos roda às 10h30, 15h30 e 21h30 no
 worker Samsung, depois da coleta de Sites parceiros. O workflow `inter.yml`
-somente enfileira pedidos manuais; a instalação do worker, a migration 031 e a
-troca de credenciais continuam pendentes. O contrato comum está em
+somente enfileira pedidos manuais; worker e fila 031 estão ativos. O pedido
+manual `36373453844` concluiu sem alterar a agenda. Casas Bahia está selecionada;
+Ponto continua pendente do próximo gate antes de ampliar as lojas. O contrato
+comum está em
 [`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
 **Levantamento da fonte:** 16 e 17 de agosto de 2026
 
@@ -601,6 +606,24 @@ Nenhum card contém imagem externa. Valores ausentes somem com rótulo honesto; 
 A página administrativa busca entre os 111 vendedores observados por nome e slug normalizados. “Ponto Frio” e “Pontofrio” encontram `Ponto`, mas a confirmação grava seu ID real.
 
 Não existe limite visual ou de banco para a quantidade selecionada. A tela deixa explícito que cada loja acrescenta uma coleta paginada três vezes ao dia e mostra a quantidade de páginas da última execução.
+
+No Android/iOS compacto, `Perfil → Administração → Compre direto` abre o
+mesmo catálogo administrativo paginado e protegido por papel. A chave da loja
+altera somente `selecionada` pela API. Ela não inicia coleta nem muda os
+horários: os produtos entram na busca após a próxima execução agendada ou um
+disparo manual autorizado. O campo `Loja` em `Produtos → Filtros` apenas recorta
+o catálogo já coletado e nunca seleciona vendedores para o robô.
+
+Em 2026-09-28, a lista administrativa mostrava 111 vendedores e nenhuma loja
+direta ativa selecionada. A execução anterior terminara com zero lojas
+planejadas, e no APK compacto o cartão de Administração abria somente a Zona de
+perigo; por isso o responsável não conseguia selecionar a loja nessa jornada.
+A rota mobile passou a abrir a página administrativa existente. Após selecionar
+Casas Bahia, a leitura autenticada e a consulta direta somente leitura
+confirmaram `selecionada = true` no banco. A execução `9` publicou 1.927
+produtos ativos, e a busca `motorola` no Samsung retornou 66 ofertas. A seleção
+é separada da busca de produtos; detalhes operacionais estão em
+[`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
 
 Remover exige confirmação. A remoção desativa novas coletas e a exposição pública, mas não apaga imediatamente produto nem histórico.
 

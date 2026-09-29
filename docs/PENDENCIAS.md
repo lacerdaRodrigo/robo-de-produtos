@@ -4,10 +4,16 @@ Lista viva somente do que continua aberto. Histórico concluído permanece no Gi
 
 O contrato operacional padrão do ciclo mobile V15 é o
 [`AGENTS.md`](../AGENTS.md): Flutter Android/iOS, `design-app/mobile-v15/index.html`
-como fonte visual, unitários/widgets afetados e integração/E2E fora do gate. O contrato de backend necessário ao V15 está implementado, a migration
-029 foi aplicada e confirmada pelo responsável, e o APK build `27503` foi
-retestado localmente contra a API publicada. A distribuição privada e o aceite
-físico completo continuam abertos; evidências e cenários restantes estão no
+como fonte visual e unitários/widgets afetados. Para este plano, foi autorizada
+uma exceção estreita: runner Appium local, somente no Samsung, descrito em
+[`tools/mobile-device-acceptance/README.md`](../tools/mobile-device-acceptance/README.md).
+O contrato de backend necessário ao V15 está implementado, a migration 029 foi
+aplicada e confirmada pelo responsável, e o APK histórico `27503` foi retestado
+contra a API publicada. A rodada local `1.73.1+2026092702` passou 13 cenários
+de navegação. A build `1.73.1+2026092801` foi instalada em 2026-09-28 e preservou
+a sessão autenticada. O acesso mobile à Administração, a seleção da Casas Bahia,
+a coleta e a busca real de produtos foram conferidos no Samsung; o aceite físico
+completo continua aberto. Evidências e cenários restantes estão no
 [`PRD de aceite mobile`](prd/PRD-ACEITE-MOBILE-V15.md). A
 disponibilidade contínua do executor Android permanece uma pendência separada
 na seção Pichau abaixo.
@@ -19,9 +25,9 @@ na seção Pichau abaixo.
   migration 029 foi aplicada e confirmada; a distribuição privada ainda
   depende da publicação/autorização externa.
 - [ ] Produzir um evento real de alerta e confirmar a entrega FCM; a coleta corrigida `34761933582` passou com 1.180 itens, mas não houve mudança de preço e, portanto, não houve evento pendente. A permissão de push é opcional e o histórico deve continuar acessível quando recusada.
-- [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. No Samsung, o APK build `27503` foi instalado e o relatório atual registra `29` cenários verdes, `11` amarelos, `2` pendentes e nenhum vermelho; o estado offline inicial agora apresenta falha/retry recuperável. Ainda faltam sessão expirada controlada, usuário comum, paginação completa, alguns estados e comparação visual formal, incluindo os cabeçalhos responsivos, áreas seguras, retorno Android, a composição corrigida do hub Banco Inter, a tela responsiva de Sites parceiros, a conferência física da folha de filtros de Sites parceiros com os selects alinhados e as opções do protótipo, ausência de busca no hub de Explorar, composição dos cartões do catálogo Livelo (hierarquia, Clube no histórico, condições e confirmação externa) e folha de histórico. No Moto G6 Play, permanecem as lacunas já registradas. Isso não vira smoke automatizado neste ciclo.
-- [ ] Aplicar `migracoes/030_categorias_cashback_inter.sql` no projeto Neon que atende a API Production e classificar as lojas atuais pelo endpoint administrativo. A migration já foi aplicada no novo destino vazio em 2026-09-26; lá ainda não há lojas para classificar. Enquanto não houver mapeamento aprovado, a API mantém as lojas em `Outros`; os códigos, validação, fallback e filtro já estão cobertos localmente.
-- [ ] Revalidar fisicamente a Central de Alertas após a composição V15 atual: botão `Voltar`, título `Mudou. Você viu.`, abas planas, filtro em folha, feed sem cartões, barra inferior e `Marcar todos como lidos` em mais de uma página. O widget e o controlador cobrem a estrutura, o toque de retorno e o contrato paginado; o back Android e a comparação visual ainda precisam de conferência no Samsung/Moto G6 Play.
+- [ ] Fazer o aceite físico completo no Moto G6 Play e no Samsung quando uma entrega mobile exigir. No Samsung, `1.73.1+2026092702` passou os 13 cenários automatizados locais listados no PRD: quatro destinos, rotas Inter, Livelo/Pichau, Meu radar, Central de Alertas e back Android. A captura de Meu radar confirmou a composição e a área segura. A build `1.73.1+2026092801` preservou a sessão e confirmou Administração, busca e cards reais do Compre direto; ainda faltam sessão expirada controlada, usuário comum, paginação completa, alguns estados e comparação visual formal de outras telas, incluindo cabeçalhos responsivos, folha de filtros Inter com os selects e opções do protótipo, busca no hub Explorar, cartões/histórico Livelo e estados adicionais de produto. A conta retornou 1 acompanhamento Riachuelo em estado `Sem dados`; o aceite histórico registrava 74 e a rodada anterior havia retornado zero, então confirmar se a diferença corresponde ao corte do banco/conta antes de aceitar continuidade dos dados. No Moto G6 Play, permanecem as lacunas já registradas.
+- [ ] Classificar as lojas atuais de cashback Inter pelo endpoint administrativo após confirmar o conjunto e aprovar o mapeamento de categorias. O responsável confirmou que `migracoes/030_categorias_cashback_inter.sql` foi aplicada em 2026-09-26; os endpoints mantêm o fallback `Outros`. A coleta registrada nesta lista publicou 378 lojas, então a anotação histórica de que o destino estava vazio precisa ser descartada; esta sessão não consultou diretamente o banco nem alterou classificações.
+- [ ] Revalidar fisicamente a Central de Alertas após a composição V15 atual: botão `Voltar`, título `Mudou. Você viu.`, abas planas, filtro em folha, feed sem cartões, barra inferior e `Marcar todos como lidos` em mais de uma página. A rodada atual abriu a Central e comprovou o back Android até a Home, mas a conta não tinha alertas não lidos; filtros, leitura coletiva, paginação e comparação visual continuam pendentes no Samsung/Moto G6 Play.
 - [x] Conferir manualmente no Samsung a nova composição da Home compacta: rail Livelo, Banco Inter e Pichau, sem a seção `Atividade recente` nem cartão de alerta; claro/escuro e bloqueio/retomada foram observados. `radar.destaque` permanece no contrato para a Central, enquanto a Home usa contadores e mantém estado honesto quando não há dados.
 - [x] Aplicar e verificar `migracoes/029_indices_mobile_v15.sql` em conexão
   direta/unpooled no ambiente de teste. O responsável confirmou as duas
@@ -29,9 +35,8 @@ na seção Pichau abaixo.
   Samsung.
 - [ ] Publicar e validar a correção de compatibilidade da leitura do catálogo Pichau após a mudança para acompanhamento pessoal; enquanto o fallback não for observado no ambiente publicado, não declarar o catálogo recuperado no APK real.
 - [ ] Conferir manualmente no Samsung a paginação de Produtos, Livelo, Sites parceiros e Compre direto nos limites de 9, 10 e 11 cards; o repositório cobre a regra por widget, mas não substitui o aceite físico.
-- [ ] Conferir manualmente no Samsung a navegação `Banco Inter → Sites parceiros` e `Banco Inter → Compre direto → Produtos`: abertura dos dois cards em telas próprias, abas `Todas`, `Selecionadas` e `Produtos`, atalho da Home, retorno às lojas e acesso contínuo ao histórico/links.
-- [ ] Conferir manualmente no Samsung o Compre direto nas abas `Todas` e `Selecionadas`, confirmando a composição compacta do protótipo: cabeçalho Banco Inter, busca, abas `Todos`/`No radar`, filtros e cards agrupados por loja; o teste de widget cobre a estrutura, mas o aceite visual físico continua pendente.
-- [x] Conferir manualmente no Samsung o novo acesso pelo perfil: aparência, Central de Alertas, suporte, privacidade e Administração exibindo somente a Zona de perigo, sem a antiga gaveta. O usuário autorizado abriu todos os destinos e o relatório registra o que ainda depende de outra conta/fixture.
+- [ ] Completar no Samsung a navegação `Banco Inter → Sites parceiros` e `Banco Inter → Compre direto → Produtos`. O runner confirmou o hub, as duas telas próprias e o retorno Android; em 2026-09-28 o fluxo Compre direto também foi percorrido no APK autenticado e abriu ofertas reais. Permanecem o atalho da Home, histórico e acesso contínuo aos links.
+- [ ] Concluir o aceite físico do Compre direto V15 no Samsung: cabeçalho Banco Inter, busca, abas `Todos`/`No radar`, filtros, paginação e cards agrupados por loja. Em 2026-09-28, a busca `motorola` retornou 66 ofertas da Casas Bahia e exibiu cartão com preço, cashback e detalhes; o histórico, os limites de paginação e a comparação formal com o HTML V15 continuam pendentes.
 - [x] Aplicar e verificar as migrations `025`, `026` e `027`: a leitura do banco
   confirmou 10 acompanhamentos Livelo, 16 Pichau, 37 Produtos Inter, dois
   eventos Inter recuperados com push suprimido e nenhuma outbox pendente.
@@ -80,13 +85,16 @@ na seção Pichau abaixo.
   botão `Filtros`, folha `Filtros · Pichau` com ordem/disponibilidade/faixa de
   preço — inclusive campo e ações alcançáveis acima do teclado —, hierarquia do
   card e abertura de `Detalhes`. Os widgets
-  cobrem claro, escuro e larguras de 320/390/430 px, mas não substituem a
-  comparação física com o protótipo.
+  cobrem claro, escuro e larguras de 320/390/430 px; a build `2026092602` abriu
+  o catálogo e confirmou abas/filtro, mas não cobre folha de filtros, teclado,
+  detalhes nem a comparação física completa com o protótipo.
 - [ ] Publicar a versão da API que contém o filtro server-side de faixa de preço
   da Pichau e validar novamente no APK. A validação física de 21/09/2026 no
   Samsung confirmou que o cliente envia `preco_min=3000` (junto de
   `ordenar=nome`), mas o endpoint publicado ainda retornou produtos abaixo de
-  R$ 3.000; não criar fallback local no Flutter.
+  R$ 3.000; os 4 testes direcionados do endpoint local passaram, mas não houve
+  deploy. Não criar fallback local no Flutter; o gate WAF abaixo continua
+  bloqueando a publicação.
 - A validação branch-first da `024` foi concluída em 2026-09-10 numa branch
   temporária derivada de `production`, sem aplicar a `023`: coluna e constraints
   válidas, 47 linhas existentes compatíveis com `{}` e grants preservados para
@@ -98,17 +106,28 @@ na seção Pichau abaixo.
 - [ ] Recuperar e analisar, em outro momento e apenas se ainda for útil, os
   metadados seguros do log local da falha de 10/09. Essa investigação foi
   adiada pelo responsável e não bloqueia a migration nem a implementação local.
-- [ ] Executar uma coleta manual real com a tela bloqueada e somente Wi-Fi:
-  exigir no máximo duas sessões, recuperação visível quando usada, catálogo e
-  contagens completos, nenhuma publicação parcial, fila/sumário detalhados no
-  Actions e Chrome/Appium ociosos ao final. A `34547539783` comprovou tudo isso
-  com transporte interno Wi-Fi, mas o cabo de dados permaneceu conectado para a
-  inspeção ADB e por isso não encerra este aceite.
 - [ ] Observar nove execuções Pichau agendadas consecutivas em 72 horas, com o
   aparelho dedicado, carregando, no Wi-Fi e tela bloqueada, sem abrir o Termux.
   Na arquitetura proposta, o worker Samsung também agenda Livelo às `:10` e
-  Inter às `:30` da hora seguinte; validar essas publicações separadamente. A
-  janela Pichau recomeça após implantação; qualquer nova falha a reinicia.
+  Inter às `:30` da hora seguinte. A
+  janela Pichau recomeça após implantação; qualquer nova falha a reinicia. Em
+  27/09/2026, o estado local confirmou sucesso nas agendas Livelo e Inter, mas
+  quatro slots Pichau desde o reboot de 26/09 falharam com `ADB Wi-Fi` ausente.
+  A conexão foi recuperada e o status voltou a ficar saudável. A solicitação
+  manual `3` (workflow `36360364615`) terminou com sucesso: sete páginas,
+  1.223 itens únicos e uma tentativa. Após retirar o USB, a solicitação manual
+  `4` (workflow `36362065611`) também terminou com sucesso na primeira
+  tentativa, com sete páginas e 1.223 itens únicos, enquanto a tela permaneceu
+  bloqueada. Iniciar nova sequência de nove slots agendados; as execuções
+  manuais não contam para o gate. Os pedidos manuais Livelo `5` e Inter `6`
+  (workflows `36362885182` e `36362887421`) terminaram com sucesso: 255
+  parceiros Livelo com qualidade completa e 378 lojas Inter válidas. Naquele
+  pedido, Compre direto teve zero lojas planejadas porque nenhuma loja direta
+  ativa estava selecionada. A causa foi corrigida em 2026-09-28: Casas Bahia
+  foi selecionada no catálogo administrativo mobile e a execução `9` concluiu
+  com 1 loja, 58 páginas, 1.927 produtos únicos e qualidade completa. O registro
+  e a confirmação de que nenhum horário da agenda mudou estão em
+  [`PRD-EXECUCAO-COLETORES.md`](prd/PRD-EXECUCAO-COLETORES.md).
 - [ ] Decidir depois do gate se a exigência de recuperação manual após reboot é
   aceitável: ligar e desbloquear uma vez, ativar “Depuração por Wi‑Fi”, executar
   `adb tcpip 5555` por USB autorizado, conferir o status e retirar o cabo. A
@@ -170,10 +189,15 @@ na seção Pichau abaixo.
 
 ## Testes e plataformas adiados
 
-- Integration, E2E, smoke automatizado, performance e regressão visual não fazem parte do gate deste ciclo.
+- Integração genérica, E2E em CI, smoke em CI, performance e regressão visual automatizada continuam fora do gate. Exceção autorizada neste plano: runner Appium local somente no Samsung SM-M135M; 13/13 cenários de navegação passaram e a regra completa está no PRD de aceite.
 - O alvo Flutter Web foi removido. API, workflows de backend e o protótipo HTML continuam existindo como superfícies separadas; não há build ou teste Web do aplicativo.
 - O provisionamento do schema e o corte autorizado para o novo Neon foram
   concluídos em 2026-09-26. O responsável confirmou que as migrations 033 e 034
   foram aplicadas corretamente; esta sessão não verificou o banco diretamente.
-  Nenhuma credencial foi criada/alterada, deploy realizado, coleta manual
-  disparada ou alteração feita no Samsung por esta sessão.
+  Na rodada de aceite mobile, nenhuma migration, credencial ou secret foi
+  alterado; não houve deploy nem coleta manual pelo runner. O Samsung recebeu o
+  APK debug universal `1.73.1+2026092602` com assinatura correspondente,
+  preservando dados; o aceite Appium foi somente leitura/navegação. A
+  recuperação operacional Pichau em 27/09 disparou uma coleta manual em
+  Production, registrada acima. Evidências privadas estão no diretório indicado
+  pelo PRD de aceite.

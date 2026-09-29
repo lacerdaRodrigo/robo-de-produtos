@@ -83,17 +83,15 @@ locales: [en, ar]
 strictness: block
 ```
 
-## Generating one
+## Creating or updating one
 
-```
-$flutter-adapt
-```
+There is no `flutter-adapt` skill dependency in this repository. If a profile is needed,
+inspect the Flutter package's `pubspec.yaml` and source tree, use only values from the
+table above, and leave uncertain fields out rather than guessing. Keep project-specific
+visual requirements in the project's conventions/agent instructions, not in this schema.
 
-In Claude Code the namespaced invocation is `/flutter-code-quality:flutter-adapt`. It
-inspects `pubspec.yaml` and `lib/`, infers each field from what the code actually does,
-and reports what it could not determine rather than guessing. If only
-`flutter-design-fidelity` is installed, write the file by hand from the table above — it
-is nine lines.
+This repository's confirmed profile is `.agents/flutter-profile.yaml` at the project
+root. Its companion file `.agents/flutter-conventions.md` records source locations.
 
 ## What the profile is not
 

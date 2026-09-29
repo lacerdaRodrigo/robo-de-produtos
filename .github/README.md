@@ -88,7 +88,9 @@ segredos necessários e a restauração em banco descartável estão descritos e
   tabelas pessoais fora do coletor. Os quatro logins e grants foram validados;
   os secrets de dispatch e a API Production já apontam ao Neon novo. A instalação
   e o worker do Samsung foram validados; o gate de nove execuções agendadas em
-  72 horas continua aberto. As migrations `033` e `034` ainda não foram aplicadas.
+  72 horas continua aberto. O responsável confirmou que as migrations `033` e
+  `034` foram aplicadas em 2026-09-26; backup, restore descartável e aceite das
+  funções destrutivas continuam pendentes.
 - O robô Pichau usa somente páginas públicas autorizadas, limita-se a 300
   páginas por execução, preserva as validações de catálogo e não persiste
   imagens, HTML ou cookies.

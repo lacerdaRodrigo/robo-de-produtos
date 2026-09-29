@@ -119,3 +119,9 @@ Treat Xcode yellow warnings as must-fix. Run `swiftlint` if present and clear it
 - [ ] App runs with a **clean console** — no red, no yellow, no stray logs.
 - [ ] No deprecated APIs left unmigrated.
 - [ ] All states exercised without new warnings.
+# Repository gate
+
+For this repository, follow `AGENTS.md`: format, analyze, and run only directly affected
+unit/widget tests. Render/compare with the V15 HTML when needed. Do not add broad test or
+Web workflows, and do not treat this generic reference's full manual matrix as a new
+gate.

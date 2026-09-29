@@ -74,3 +74,9 @@ final router = GoRouter(routes: [
 - Long lists are `ListView.builder`; collapsing headers use slivers.
 - Reusable extracted widgets, not mega-`build` methods.
 - Platform-adaptive where it matters; one accent; tonal M3 surfaces over heavy shadows.
+# Repository note
+
+This file contains generic Flutter examples. In this repository, follow
+`design-app/mobile-v15/index.html`, `docs/guias/design-v15.md`,
+`.agents/flutter-conventions.md`, and the existing `TemaRadar`/`AppTokens` implementation
+instead of the sample theme setup below.

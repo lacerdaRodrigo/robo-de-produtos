@@ -1,0 +1,10 @@
+# Confirmed against app/pubspec.yaml and the current Flutter source tree.
+state: setstate
+models: manual
+structure: feature_first
+di: none
+routing: navigator
+tokens: theme_extension
+l10n: none
+locales: [pt-BR]
+strictness: warn
