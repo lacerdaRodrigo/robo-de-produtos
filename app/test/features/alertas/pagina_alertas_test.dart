@@ -337,8 +337,17 @@ void main() {
 
       if (detalhe.origem == OrigemItemAlerta.pichau &&
           statusEsperado == 'Disponibilidade não informada') {
-        final preco = tester.widget<Text>(find.text('R\$ 3.999,90'));
-        expect(preco.style, TemaRadar.claro().textTheme.precoOferta);
+        final precoFinder = find.text('R\$ 3.999,90');
+        await tester.scrollUntilVisible(
+          precoFinder,
+          120,
+          scrollable: find.byType(Scrollable).first,
+        );
+        final preco = tester.widget<Text>(precoFinder);
+        expect(preco.style?.fontSize, 30);
+        expect(preco.style?.fontWeight, FontWeight.w800);
+        expect(preco.style?.letterSpacing, -1);
+        expect(preco.style?.height, 1.2);
       }
     }
   });
@@ -369,7 +378,11 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: tema,
-          home: PaginaDetalheAlerta(api: _api(), detalhe: detalhe),
+          home: PaginaDetalheAlerta(
+            key: ValueKey(tema.brightness),
+            api: _api(),
+            detalhe: detalhe,
+          ),
         ),
       );
       await tester.pumpAndSettle();

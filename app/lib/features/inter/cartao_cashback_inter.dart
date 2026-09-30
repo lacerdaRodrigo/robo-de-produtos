@@ -450,11 +450,11 @@ class _CartaoDetalhado extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               loja.encontrada ? oferta : 'Não encontrada na última coleta',
-              style: tema.textTheme.titleLarge?.copyWith(
+              style: tema.textTheme.precoOferta?.copyWith(
                 // Verde só comunica benefício. Loja ausente é um estado
                 // neutro, não atraso e tampouco cashback zero.
                 color: loja.encontrada ? cores.ganho : null,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 4),

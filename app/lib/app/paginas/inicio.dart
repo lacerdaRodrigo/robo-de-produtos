@@ -210,7 +210,7 @@ class _PaginaInicioState extends State<PaginaInicio>
                     ),
                   ],
                   if (widget.experienciaCompacta) ...[
-                    SizedBox(height: context.tokens.spacing.eight),
+                    SizedBox(height: context.tokens.spacing.seven),
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: tokens.spacing.five,
@@ -371,7 +371,7 @@ class _HeroResumoCompacto extends StatelessWidget {
         SizedBox(height: tokens.spacing.two),
         Text(
           'Boas escolhas começam aqui.',
-          style: tema.textTheme.headlineLarge,
+          style: tema.textTheme.tituloHeroInicio,
         ),
         SizedBox(height: tokens.spacing.three),
         if ((alertasNaoLidos ?? 0) > 0)

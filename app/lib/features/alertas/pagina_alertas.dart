@@ -274,9 +274,13 @@ class _EstadoPaginaAlertas extends State<PaginaAlertas> {
     if (_itensAbrindo.contains(alerta.id)) return;
     setState(() => _itensAbrindo.add(alerta.id));
     try {
-      if (!alerta.lido) {
+      final alertaAtual = _controlador.itens.firstWhere(
+        (item) => item.id == alerta.id,
+        orElse: () => alerta,
+      );
+      if (!alertaAtual.lido) {
         try {
-          await _controlador.marcar(alerta);
+          await _controlador.marcar(alertaAtual);
         } catch (_) {
           if (mounted) {
             mostrarMensagemRadar(

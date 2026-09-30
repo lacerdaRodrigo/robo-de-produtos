@@ -606,10 +606,9 @@ void main() {
       findsOneWidget,
     );
     final beneficio = find.descendant(of: cartao, matching: find.text('2,9'));
-    expect(
-      at.widget<Text>(beneficio).style,
-      TemaRadar.claro().textTheme.precoOferta,
-    );
+    expect(at.widget<Text>(beneficio).style?.fontWeight, FontWeight.w800);
+    expect(at.widget<Text>(beneficio).style?.letterSpacing, -1);
+    expect(at.widget<Text>(beneficio).style?.height, 1.2);
     expect(at.widget<Text>(beneficio).style?.fontSize, 30);
     expect(
       find.descendant(of: cartao, matching: find.text('pontos / R\$ 1')),

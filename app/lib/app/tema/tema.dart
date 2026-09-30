@@ -20,6 +20,8 @@ extension TipografiaOfertaV15 on TextTheme {
 }
 
 extension TipografiaInicioV15 on TextTheme {
+  TextStyle? get tituloHeroInicio => headlineLarge?.copyWith(fontSize: 32);
+
   TextStyle? get sobrelinhaInicio => bodySmall?.copyWith(
     fontWeight: FontWeight.w600,
     height: 1.2,

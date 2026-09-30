@@ -68,6 +68,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   DestinoCompacto _selecionadoCompacto = DestinoCompacto.inicio;
   GerenciadorNotificacoes? _notificacoes;
   bool _dialogSessaoAberto = false;
+  bool _rotaSecundariaAberta = false;
 
   @override
   void initState() {
@@ -286,7 +287,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     administrador: widget.administrador,
     identificacao: widget.identificacaoConta,
     aoAbrirAcompanhamentos: () => _selecionarCompacto(DestinoCompacto.radar),
-    aoAbrirNotificacoes: () => Navigator.of(context).push<void>(
+    aoAbrirNotificacoes: () => _abrirRotaSecundaria<void>(
       MaterialPageRoute<void>(
         builder: (_) => PaginaPreferenciasAlertas(
           api: widget.api,
@@ -295,7 +296,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         ),
       ),
     ),
-    aoAbrirAparencia: () => Navigator.of(context).push<void>(
+    aoAbrirAparencia: () => _abrirRotaSecundaria<void>(
       MaterialPageRoute<void>(
         builder: (_) => PaginaAparencia(
           destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
@@ -307,11 +308,11 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     aoAbrirProblema: () => unawaited(_abrirProblema()),
     aoAbrirRelatos: () => unawaited(_abrirMeusRelatos()),
     aoAbrirPrivacidade: () => unawaited(_abrirPrivacidade()),
-    aoAbrirLaboratorio: () => Navigator.of(context).push<void>(
+    aoAbrirLaboratorio: () => _abrirRotaSecundaria<void>(
       MaterialPageRoute<void>(builder: (_) => const PaginaLaboratorio()),
     ),
     aoAdministrar: widget.administrador
-        ? () => Navigator.of(context).push<void>(
+        ? () => _abrirRotaSecundaria<void>(
             MaterialPageRoute<void>(
               builder: (_) =>
                   PaginaAdministracao(api: widget.api, administrador: true),
@@ -362,18 +363,17 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     });
   }
 
-  Future<void> _abrirAlertas({String? coleta}) =>
-      Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (_) => PaginaAlertas(
-            api: widget.api,
-            coletaInicial: coleta,
-            destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
-            aoNavegar: _navegarDaCentral,
-            aoAbrirItem: _abrirOrigemDoAlerta,
-          ),
-        ),
-      );
+  Future<void> _abrirAlertas({String? coleta}) => _abrirRotaSecundaria<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaAlertas(
+        api: widget.api,
+        coletaInicial: coleta,
+        destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+        aoNavegar: _navegarDaCentral,
+        aoAbrirItem: _abrirOrigemDoAlerta,
+      ),
+    ),
+  );
 
   void _abrirOrigemDoAlerta(AlertaApp alerta) {
     final destino = switch (alerta.origem) {
@@ -397,7 +397,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     _selecionarCompacto(destino);
   }
 
-  Future<void> _abrirAjuda() => Navigator.of(context).push<void>(
+  Future<void> _abrirAjuda() => _abrirRotaSecundaria<void>(
     MaterialPageRoute<void>(
       builder: (_) => PaginaAjuda(
         api: widget.api,
@@ -407,7 +407,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirPrivacidade() => Navigator.of(context).push<void>(
+  Future<void> _abrirPrivacidade() => _abrirRotaSecundaria<void>(
     MaterialPageRoute<void>(
       builder: (_) => PaginaPrivacidade(
         api: widget.api,
@@ -417,7 +417,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirProblema() => Navigator.of(context).push<void>(
+  Future<void> _abrirProblema() => _abrirRotaSecundaria<void>(
     MaterialPageRoute<void>(
       builder: (_) => PaginaRelatoProblema(
         api: widget.api,
@@ -427,7 +427,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     ),
   );
 
-  Future<void> _abrirMeusRelatos() => Navigator.of(context).push<void>(
+  Future<void> _abrirMeusRelatos() => _abrirRotaSecundaria<void>(
     MaterialPageRoute<void>(
       builder: (_) => PaginaMeusRelatos(
         api: widget.api,
@@ -440,6 +440,15 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   void _navegarDeRotaSecundaria(DestinoCompacto destino) {
     Navigator.of(context).popUntil((rota) => rota.isFirst);
     _selecionarCompacto(destino);
+  }
+
+  Future<T?> _abrirRotaSecundaria<T>(Route<T> rota) async {
+    setState(() => _rotaSecundariaAberta = true);
+    try {
+      return await Navigator.of(context).push<T>(rota);
+    } finally {
+      if (mounted) setState(() => _rotaSecundariaAberta = false);
+    }
   }
 
   @override
@@ -475,9 +484,15 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
         );
 
         return PopScope<void>(
-          canPop: _selecionadoCompacto == DestinoCompacto.inicio,
+          canPop:
+              _rotaSecundariaAberta ||
+              _selecionadoCompacto == DestinoCompacto.inicio,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
+            if (_rotaSecundariaAberta) {
+              Navigator.of(context).pop();
+              return;
+            }
             if (_selecionadoCompacto == DestinoCompacto.inter &&
                 _inter.currentState?.voltarRotaInterna() == true) {
               return;

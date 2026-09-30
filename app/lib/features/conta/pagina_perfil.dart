@@ -68,6 +68,8 @@ class PaginaPerfil extends StatelessWidget {
             Semantics(
               key: const Key('perfil-conta'),
               container: true,
+              label: 'Olá. ${identificacao ?? 'Sua conta no Radar'}',
+              excludeSemantics: true,
               child: Row(
                 children: [
                   ExcludeSemantics(

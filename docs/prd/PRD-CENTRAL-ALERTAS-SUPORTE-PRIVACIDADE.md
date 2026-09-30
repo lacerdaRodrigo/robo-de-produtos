@@ -246,7 +246,8 @@ detalhe é empilhada sobre a Central; voltar pelo cabeçalho ou pelo sistema
 retorna à lista com filtros, página e posição preservados. Alerta ou entidade
 removidos recebem o mesmo `404` e usam o fallback para a área de origem. Falha
 de rede ou resposta 5xx mantém a Central aberta e oferece nova tentativa; não é
-tratada como item ausente.
+tratada como item ausente. Quando a leitura já foi confirmada, a nova tentativa
+repete somente a resolução do item e não envia outro `PATCH` de leitura.
 
 O DTO Pichau atual não fornece CPU, GPU, RAM ou armazenamento mostrados como
 exemplos no detalhe ilustrativo do HTML. A tela usa apenas os campos reais
@@ -287,13 +288,16 @@ demonstrativo do protótipo nem apresentar uma conta pessoal como canal oficial.
 Ajuda e Privacidade oferecem acesso ao formulário existente; Meus relatos exibe
 os registros reais devolvidos pela API, formata suas datas em pt-BR, permite
 copiar o protocolo, paginar e iniciar um novo relato. O avatar demonstrativo é
-decorativo e não duplica informação na árvore semântica. O formulário segue as cinco categorias V15 (`catalog`,
+decorativo; o item acessível do Perfil anuncia o cumprimento e a identificação
+real sem expor as iniciais do avatar. O formulário segue as cinco categorias V15 (`catalog`,
 `access`, `notification`, `privacy`, `other`) e aceita descrições de 10 a 2.000
 caracteres. O POST retorna o ID real do protocolo; após sucesso, o app abre Meus
 relatos com o comprovante retornado pela API enquanto atualiza a lista. A API
 preserva os quatro códigos legados já salvos, e a migration 035 amplia o CHECK
 do banco para novos registros V15 sem reescrever dados existentes. As telas
-secundárias preservam o retorno visível e o back Android pela pilha existente.
+secundárias preservam o retorno visível e usam a pilha existente: o back Android
+fecha primeiro a rota aberta; o shell só muda para Início quando nenhuma rota
+secundária está acima dele.
 No compacto, Aparência,
 Notificações, Ajuda, Privacidade, Meus relatos e Relatar problema mantêm a barra
 inferior V15. Trocar de destino nessa barra encerra todas as rotas

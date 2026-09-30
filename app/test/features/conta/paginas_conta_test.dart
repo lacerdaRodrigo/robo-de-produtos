@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -220,13 +221,14 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    addTearDown(semantica.dispose);
+    try {
+      await _abrir(tester, _perfil(identificacao: 'rodrigo@example.com'));
 
-    await _abrir(tester, _perfil(identificacao: 'rodrigo@example.com'));
-
-    expect(find.bySemanticsLabel('R'), findsNothing);
-    expect(find.bySemanticsLabel('Olá.'), findsOneWidget);
-    expect(find.bySemanticsLabel('rodrigo@example.com'), findsOneWidget);
+      expect(find.bySemanticsLabel('R'), findsNothing);
+      expect(find.bySemanticsLabel('Olá. rodrigo@example.com'), findsOneWidget);
+    } finally {
+      semantica.dispose();
+    }
   });
 
   testWidgets(
@@ -280,7 +282,7 @@ void main() {
       requisicoes,
       (_) async => http.Response('{"erro":{"codigo":"inesperado"}}', 500),
     );
-    await _verificarRetornos(tester, () => PaginaMeusRelatos(api: api));
+    await _abrir(tester, PaginaMeusRelatos(api: api));
     expect(
       find.text('Não foi possível carregar seus relatos agora.'),
       findsOneWidget,
@@ -290,6 +292,7 @@ void main() {
       requisicoes.map((request) => request.url.path),
       everyElement('/api/relatos-problema'),
     );
+    await _verificarRetornos(tester, () => PaginaMeusRelatos(api: api));
     expect(tester.takeException(), isNull);
   });
 
@@ -297,6 +300,22 @@ void main() {
     tester,
   ) async {
     final requisicoes = <http.Request>[];
+    final mensagensClipboard = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (methodCall) async {
+        if (methodCall.method == 'Clipboard.setData') {
+          mensagensClipboard.add(methodCall);
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     final api = _apiComResposta(requisicoes, (requisicao) async {
       final pagina = requisicao.url.queryParameters['pagina'];
       final primeira = pagina == '1';
@@ -342,23 +361,53 @@ void main() {
     expect(find.text('Meus relatos'), findsOneWidget);
     expect(find.text('O catálogo não atualizou.'), findsOneWidget);
     expect(find.text('519'), findsOneWidget);
-    expect(find.textContaining('28 de set. de 2026'), findsOneWidget);
+    final protocolo = find.byKey(const Key('protocolo-relato-519'));
+    final localizacoes = MaterialLocalizations.of(tester.element(protocolo));
+    final dataEsperada = localizacoes.formatMediumDate(
+      DateTime.parse('2026-09-28T16:30:00.000Z').toLocal(),
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('cartao-relato-519')),
+        matching: find.textContaining(dataEsperada),
+      ),
+      findsOneWidget,
+    );
     final copiar = find.byKey(const Key('copiar-relato-519'));
-    await tester.ensureVisible(copiar);
+    await tester.scrollUntilVisible(
+      copiar,
+      180,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(copiar);
     await tester.pumpAndSettle();
     expect(find.text('Protocolo copiado.'), findsOneWidget);
+    expect(mensagensClipboard.single.arguments, {'text': '519'});
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
 
-    final proxima = find.byTooltip('Próxima página');
-    await tester.ensureVisible(proxima);
+    expect(find.byKey(const Key('carregando-relatos-pagina')), findsNothing);
+    final proxima = find.ancestor(
+      of: find.byTooltip('Próxima página'),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(proxima).onPressed, isNotNull);
+    final listaRelatos = find.byType(ListView).first;
+    for (var tentativa = 0; tentativa < 20; tentativa++) {
+      if (tester.getCenter(proxima).dy < 840) break;
+      await tester.drag(listaRelatos, const Offset(0, -500));
+      await tester.pumpAndSettle();
+    }
+    expect(tester.getCenter(proxima).dy, lessThan(840));
+    expect(tester.widget<IconButton>(proxima).onPressed, isNotNull);
     await tester.tap(proxima);
     await tester.pumpAndSettle();
-    expect(find.text('A campanha apareceu duas vezes.'), findsOneWidget);
-    expect(find.text('520'), findsOneWidget);
     expect(
       requisicoes.map((request) => request.url.queryParameters['pagina']),
       ['1', '2'],
     );
+    expect(find.text('A campanha apareceu duas vezes.'), findsOneWidget);
+    expect(find.text('539'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

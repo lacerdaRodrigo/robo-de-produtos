@@ -243,7 +243,12 @@ void main() {
     expect(find.byKey(const Key('detalhes-pichau-PG-7600')), findsOneWidget);
     expect(requisicoes.single.url.queryParameters['por_pagina'], '20');
 
-    await at.tap(find.byKey(const Key('detalhes-pichau-PG-7800')));
+    final detalhes7800 = find.byKey(const Key('detalhes-pichau-PG-7800'));
+    final lista = find.byKey(const Key('pagina-pichau'));
+    await at.drag(lista, const Offset(0, 700));
+    await at.pumpAndSettle();
+    await at.ensureVisible(detalhes7800);
+    await at.tap(detalhes7800);
     await at.pumpAndSettle();
 
     expect(find.text('Detalhes'), findsAtLeastNWidgets(1));
@@ -654,7 +659,9 @@ void main() {
       isFalse,
     );
 
-    await at.tap(find.text('Todos'));
+    await at.tap(find.byKey(const Key('aplicar-filtros-pichau')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Todos').first);
     await at.pumpAndSettle();
     await at.tap(find.byKey(const Key('acompanhar-pichau-PG-7800')));
     await at.pumpAndSettle();

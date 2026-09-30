@@ -263,7 +263,7 @@ void main() {
   testWidgets('busca compacta consulta apenas depois do envio', (at) async {
     final termos = <String>[];
     final controlador = ControladorBuscaProdutos(
-      debounce: Duration.zero,
+      debounce: const Duration(milliseconds: 250),
       buscar:
           ({
             required termo,
@@ -281,14 +281,17 @@ void main() {
           },
     );
     addTearDown(controlador.dispose);
+    await controlador.carregarPadrao();
     await at.pumpWidget(
       MaterialApp(
         theme: TemaRadar.claro(),
-        home: PaginaProdutos(
-          api: _api(),
-          controlador: controlador,
-          incorporada: true,
-          experienciaCompacta: true,
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _api(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
         ),
       ),
     );
@@ -296,7 +299,7 @@ void main() {
     expect(termos, ['']);
 
     await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await at.pump(const Duration(milliseconds: 100));
     expect(termos, ['']);
 
     await at.testTextInput.receiveAction(TextInputAction.search);

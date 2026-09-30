@@ -327,7 +327,7 @@ void main() {
         color: tema.colorScheme.onSurfaceVariant,
       ),
     );
-    expect(titulo.style, tema.textTheme.headlineLarge);
+    expect(titulo.style, tema.textTheme.tituloHeroInicio);
     expect(
       estado.style,
       tema.textTheme.estadoInicio?.copyWith(
@@ -465,8 +465,14 @@ void main() {
     await at.pumpAndSettle();
 
     final cartaoFinder = find.byKey(const Key('origem-inter'));
+    await at.scrollUntilVisible(
+      cartaoFinder,
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
     final cartao = at.getRect(cartaoFinder);
-    expect(at.getSize(cartaoFinder).width, 132);
+    expect(at.getSize(cartaoFinder).width, greaterThan(132));
+    expect(at.getSize(cartaoFinder).width, lessThan(160));
     expect(at.getSize(cartaoFinder).height, greaterThan(136));
     for (final descricao in [
       find.descendant(
@@ -549,9 +555,14 @@ void main() {
       (_) async =>
           http.Response(jsonEncode(resumo(produtos: 'atualizando')), 200),
     );
-    await abrir(at, api, compacto: true);
+    await abrir(at, api, compacto: false);
     await at.pumpAndSettle();
 
+    await at.scrollUntilVisible(
+      find.text('Atualizando'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Atualizando'), findsOneWidget);
     expect(find.textContaining('Há uma coleta em andamento'), findsNothing);
   });

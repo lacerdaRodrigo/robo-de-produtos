@@ -11,6 +11,7 @@ import 'package:app_robo/app/tema/tema.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/features/alertas/pagina_alertas.dart';
+import 'package:app_robo/features/conta/pagina_perfil.dart';
 
 const _paginaVazia =
     '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,'
@@ -352,7 +353,7 @@ void main() {
 
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
-    expect(find.text('Central de Alertas'), findsOneWidget);
+    expect(find.text('Notificações'), findsOneWidget);
     expect(find.text('Aparência'), findsOneWidget);
     expect(find.text('Segurança e acesso'), findsNothing);
     expect(find.text('Integrações'), findsNothing);
@@ -1165,9 +1166,21 @@ void main() {
       expect(find.textContaining('Nenhum relato por aqui.'), findsOneWidget);
       await at.binding.handlePopRoute();
       await at.pumpAndSettle();
-      expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+      expect(find.text('Seu retorno importa.'), findsNothing);
+      expect(find.byType(PaginaPerfil), findsOneWidget);
+      expect(
+        at
+            .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+            .selectedIndex,
+        3,
+      );
 
-      await at.tap(find.byKey(const Key('perfil-acompanhamentos')));
+      final acompanhamentos = find.byKey(const Key('perfil-acompanhamentos'));
+      final listaPerfil = find.byType(ListView).last;
+      await at.drag(listaPerfil, const Offset(0, 640));
+      await at.pumpAndSettle();
+      await at.ensureVisible(acompanhamentos);
+      await at.tap(acompanhamentos);
       await at.pumpAndSettle();
       expect(
         at
@@ -1194,7 +1207,7 @@ void main() {
       );
       await at.binding.handlePopRoute();
       await at.pumpAndSettle();
-      expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+      expect(find.byType(PaginaPerfil), findsOneWidget);
 
       await at.tap(find.byKey(const Key('barra-inicio')));
       await at.pumpAndSettle();
@@ -1234,9 +1247,18 @@ void main() {
         saidas++;
       },
     );
+    expect(
+      at.widget<MolduraRadar>(find.byType(MolduraRadar)).aoSair,
+      isNotNull,
+    );
     await _abrirConta(at);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
     final sair = find.byKey(const Key('sair-conta'));
-    await at.ensureVisible(sair);
+    await at.scrollUntilVisible(
+      sair,
+      220,
+      scrollable: find.byType(Scrollable).last,
+    );
     await at.tap(sair);
     await at.pumpAndSettle();
 
@@ -1248,9 +1270,13 @@ void main() {
     await at.tap(find.byKey(const Key('cancelar-saida')));
     await at.pumpAndSettle();
     expect(saidas, 0);
-    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+    expect(find.byType(PaginaPerfil), findsOneWidget);
 
-    await at.ensureVisible(sair);
+    await at.scrollUntilVisible(
+      sair,
+      220,
+      scrollable: find.byType(Scrollable).last,
+    );
     await at.tap(sair);
     await at.pumpAndSettle();
     await at.tap(find.byKey(const Key('confirmar-saida')));
@@ -1324,7 +1350,7 @@ void main() {
 
     expect(at.takeException(), isNull);
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
-    expect(find.text('Acesso padrão'), findsOneWidget);
+    expect(find.text('Acesso padrão'), findsNothing);
     expect(find.text('Administração'), findsNothing);
   });
 
