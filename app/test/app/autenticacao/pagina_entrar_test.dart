@@ -248,10 +248,11 @@ void main() {
       await at.tap(find.text('Recuperar acesso'));
       await at.pumpAndSettle();
       await at.tap(find.byKey(const Key('recuperar-enviar')));
-      await at.pump();
+      await at.pumpAndSettle();
 
       expect(autenticador.recuperacaoRecebida, 'piloto@example.com');
-      expect(find.byKey(const Key('recuperar-aviso')), findsOneWidget);
+      expect(find.byKey(const Key('resultado-recuperacao')), findsOneWidget);
+      expect(find.text('Pedido registrado.'), findsOneWidget);
       expect(
         find.text(
           'Se o e-mail estiver cadastrado, você receberá as instruções.',
@@ -259,6 +260,51 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('E-mail ou senha inválidos.'), findsNothing);
+      expect(find.text('piloto@example.com'), findsNothing);
+      await at.tap(find.byKey(const Key('recuperacao-voltar-entrar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('login-entrar')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'confirmação de recuperação volta ao formulário pelo botão e pelo sistema',
+    (at) async {
+      final autenticador = _AutenticadorFalso();
+      await _abrir(at, autenticador);
+
+      await at.enterText(
+        find.byKey(const Key('login-email')),
+        'piloto@example.com',
+      );
+      await at.tap(find.text('Recuperar acesso'));
+      await at.pumpAndSettle();
+
+      await at.tap(find.byKey(const Key('recuperar-enviar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('resultado-recuperacao')), findsOneWidget);
+      await at.tap(find.byKey(const Key('voltar-recuperacao-enviada')));
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<TextFormField>(find.byKey(const Key('recuperar-email')))
+            .controller!
+            .text,
+        'piloto@example.com',
+      );
+
+      await at.tap(find.byKey(const Key('recuperar-enviar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('resultado-recuperacao')), findsOneWidget);
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<TextFormField>(find.byKey(const Key('recuperar-email')))
+            .controller!
+            .text,
+        'piloto@example.com',
+      );
     },
   );
 }

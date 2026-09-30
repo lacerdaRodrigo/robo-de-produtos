@@ -23,12 +23,14 @@ export type FiltrosSqlCatalogoLivelo = {
   codigosCategoria: string[];
   categoriaIncluiOutros: boolean;
   codigosConhecidos: string[];
+  somentePontuacaoComumAmpliada: boolean;
 };
 
 /** Traduz os rótulos apresentados pelo Flutter para os códigos persistidos. */
 export function filtrosSqlCatalogoLivelo(
   q: string,
   categoria: string,
+  somentePontuacaoComumAmpliada = false,
 ): FiltrosSqlCatalogoLivelo {
   const busca = normalizar(q);
   const categoriaNormalizada = normalizar(categoria);
@@ -47,11 +49,12 @@ export function filtrosSqlCatalogoLivelo(
       .map(([codigo]) => codigo),
     categoriaIncluiOutros: categoriaNormalizada === normalizar("Outros"),
     codigosConhecidos: entradas.map(([codigo]) => codigo),
+    somentePontuacaoComumAmpliada,
   };
 }
 
 export type AbaCatalogoLivelo = "todas" | "acompanhadas" | "alertas";
-export type OrdenacaoCatalogoLivelo = "pontos" | "nome";
+export type OrdenacaoCatalogoLivelo = "pontos" | "nome" | "validade";
 
 export type ParceiroCatalogoLivelo = Omit<
   ParceiroLiveloPersistido,
@@ -120,6 +123,7 @@ export function filtrarEOrdenarCatalogoLivelo(
     aba: AbaCatalogoLivelo;
     categoria: string;
     ordenar: OrdenacaoCatalogoLivelo;
+    somentePontuacaoComumAmpliada?: boolean;
   },
 ): ParceiroCatalogoLivelo[] {
   const busca = normalizar(filtros.q);
@@ -131,6 +135,12 @@ export function filtrarEOrdenarCatalogoLivelo(
       categoria &&
       !parceiro.categorias.some((rotulo) => normalizar(rotulo) === categoria)
     ) return false;
+    if (
+      filtros.somentePontuacaoComumAmpliada &&
+      (parceiro.pontos_base === null ||
+        parceiro.pontos_atuais === null ||
+        compararDecimalPositivo(parceiro.pontos_atuais, parceiro.pontos_base) <= 0)
+    ) return false;
     if (!busca) return true;
     return (
       normalizar(parceiro.nome).includes(busca) ||
@@ -139,6 +149,16 @@ export function filtrarEOrdenarCatalogoLivelo(
   });
 
   return [...filtrados].sort((a, b) => {
+    if (filtros.ordenar === "validade") {
+      const fimA = a.fim_promocao;
+      const fimB = b.fim_promocao;
+      if (fimA === null && fimB !== null) return 1;
+      if (fimB === null && fimA !== null) return -1;
+      if (fimA !== null && fimB !== null) {
+        const validade = fimA.localeCompare(fimB);
+        if (validade !== 0) return validade;
+      }
+    }
     if (filtros.ordenar === "nome") {
       return a.nome.localeCompare(b.nome, "pt-BR") || a.id_externo.localeCompare(b.id_externo);
     }

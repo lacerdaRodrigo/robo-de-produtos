@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_robo/app/componentes/fundacao_visual.dart';
+import 'package:app_robo/app/navegacao/destinos.dart';
 import 'package:app_robo/app/tema/tema.dart';
+import 'package:app_robo/app/tema/tokens.dart';
 
 void main() {
   for (final escuro in <bool>[false, true]) {
@@ -69,6 +71,10 @@ void main() {
         await at.tap(find.byKey(const Key('cartao-fundacao')));
         await at.enterText(find.byType(TextField), 'netshoes');
         await at.tap(find.byTooltip('Pesquisar'));
+        expect(
+          at.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus,
+          isFalse,
+        );
         await at.tap(find.text('Acompanhadas'));
         await at.pump();
 
@@ -81,6 +87,203 @@ void main() {
       },
     );
   }
+
+  testWidgets('busca segue raio, sombra e seta simples da V15', (tester) async {
+    final busca = TextEditingController();
+    addTearDown(busca.dispose);
+    String? termoEnviado;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CampoBuscaRadar(
+            chaveCampo: const Key('busca-v15'),
+            controlador: busca,
+            dica: 'Qual loja você procura?',
+            aoMudar: (_) {},
+            aoAcionar: () => termoEnviado = busca.text,
+          ),
+        ),
+      ),
+    );
+
+    final campo = tester.widget<TextField>(find.byKey(const Key('busca-v15')));
+    expect(
+      (campo.decoration!.border! as OutlineInputBorder).borderRadius,
+      BorderRadius.circular(TemaRadar.claro().extension<AppTokens>()!.radii.md),
+    );
+    final componente = tester.widget<CampoBuscaRadar>(
+      find.byType(CampoBuscaRadar),
+    );
+    expect(componente.comSombra, isFalse);
+    final iconeBusca = find.byIcon(Icons.arrow_forward_rounded);
+    final acao = tester.widget<IconButton>(
+      find.ancestor(of: iconeBusca, matching: find.byType(IconButton)).first,
+    );
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(
+              of: find.byTooltip('Pesquisar'),
+              matching: find.byType(Icon),
+            ),
+          )
+          .icon,
+      Icons.arrow_forward_rounded,
+    );
+    expect(acao.style?.backgroundColor?.resolve({}), isNull);
+
+    await tester.enterText(find.byKey(const Key('busca-v15')), 'Natura');
+    await tester.tap(find.byTooltip('Pesquisar'));
+    await tester.pump();
+    expect(termoEnviado, 'Natura');
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus,
+      isFalse,
+    );
+  });
+
+  testWidgets('cartão V15 pode usar superfície sem sombra', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CartaoRadar(
+            key: const Key('cartao-sem-sombra'),
+            comSombra: false,
+            child: const Text('Origem'),
+          ),
+        ),
+      ),
+    );
+
+    final cartao = tester.widget<CartaoRadar>(
+      find.byKey(const Key('cartao-sem-sombra')),
+    );
+    expect(cartao.comSombra, isFalse);
+    final superficie = tester.widget<DecoratedBox>(
+      find
+          .descendant(
+            of: find.byKey(const Key('cartao-sem-sombra')),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect((superficie.decoration as BoxDecoration).boxShadow, isEmpty);
+  });
+
+  testWidgets('barra inferior usa métricas V15 e aciona os quatro destinos', (
+    tester,
+  ) async {
+    DestinoCompacto? destinoAcionado;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: const SizedBox.expand(),
+          bottomNavigationBar: BarraInferiorRadar(
+            selecionado: DestinoCompacto.explorar,
+            aoSelecionar: (destino) => destinoAcionado = destino,
+          ),
+        ),
+      ),
+    );
+
+    final barra = tester.widget<NavigationBar>(
+      find.byKey(const Key('barra-inferior-v15')),
+    );
+    expect(barra.selectedIndex, 1);
+    expect(barra.height, 71);
+    for (final widget in barra.destinations) {
+      final destino = widget as NavigationDestination;
+      final icone = destino.icon as Icon;
+      final iconeSelecionado = destino.selectedIcon! as Icon;
+      expect(iconeSelecionado.icon, icone.icon);
+    }
+    expect(
+      tester
+          .widget<Icon>(
+            find
+                .descendant(
+                  of: find.byKey(const Key('barra-inicio')),
+                  matching: find.byType(Icon),
+                )
+                .first,
+          )
+          .size,
+      22,
+    );
+
+    for (final destino in const [
+      DestinoCompacto.inicio,
+      DestinoCompacto.explorar,
+      DestinoCompacto.radar,
+      DestinoCompacto.perfil,
+    ]) {
+      await tester.tap(find.byKey(Key('barra-${destino.name}')));
+      await tester.pumpAndSettle();
+      expect(destinoAcionado, destino);
+    }
+  });
+
+  testWidgets('barra compacta se adapta a 320 px com texto a 200%', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    DestinoCompacto? destinoAcionado;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: const SizedBox.expand(),
+          bottomNavigationBar: BarraInferiorRadar(
+            selecionado: DestinoCompacto.radar,
+            aoSelecionar: (destino) => destinoAcionado = destino,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('barra-inferior-v15-compacta')),
+      findsOneWidget,
+    );
+    expect(find.byType(NavigationBar), findsNothing);
+    for (final destino in const [
+      DestinoCompacto.inicio,
+      DestinoCompacto.explorar,
+      DestinoCompacto.radar,
+      DestinoCompacto.perfil,
+    ]) {
+      final destinoFinder = find.byKey(Key('barra-${destino.name}'));
+      expect(tester.getSize(destinoFinder).height, greaterThanOrEqualTo(54));
+      expect(
+        find.descendant(of: destinoFinder, matching: find.text(destino.titulo)),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(of: destinoFinder, matching: find.byType(Icon)),
+            )
+            .icon,
+        destino.icone,
+      );
+    }
+
+    await tester.tap(find.byKey(const Key('barra-perfil')));
+    expect(destinoAcionado, DestinoCompacto.perfil);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('folha mobile V15 bloqueia e desfoca o conteúdo ao fundo', (
     at,

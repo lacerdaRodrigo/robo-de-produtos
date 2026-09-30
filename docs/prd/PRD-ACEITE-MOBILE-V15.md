@@ -1,8 +1,9 @@
 # PRD — Aceite físico do Mobile V15
 
 **Status:** evidências históricas até 2026-09-19, rodada local no Samsung em
-2026-09-27 e verificações físicas focadas em 2026-09-28, inclusive com o APK
-`1.74.0+2026092802` e a sessão autenticada preservada. O aceite completo
+2026-09-27, verificações físicas focadas em 2026-09-28 com o APK
+`1.74.0+2026092802` e uma rodada parcial anterior no Moto em 2026-09-29. O APK
+final desta revisão ainda não foi instalado no Samsung M13. O aceite completo
 continua aberto; as evidências não substituem as pendências abertas em
 [`../PENDENCIAS.md`](../PENDENCIAS.md) nem autorizam publicação externa.
 
@@ -200,11 +201,68 @@ visual automatizado ou o teste comentado de Shopping Inter compacto.
   cards/histórico Inter sem produtos, leitura coletiva sem alertas pendentes,
   session expiry, conta comum ou fluxo FCM.
 
+## Inspeção diagnóstica da build anterior — Moto G6 Play — 2026-09-29
+
+- 🟡 O responsável abriu o APK no Motorola Moto G6 Play, Android 9, tela
+  reportada como `720×1440`, por scrcpy. Na versão anterior às correções desta
+  fatia, observou que Explorar mostrava cartões mais altos que o HTML V15, com
+  capacidades/estados extras e sombra; os atalhos da Home mostravam contagens
+  no lugar das descrições fixas da referência. A barra inferior e as barras do
+  sistema também pareciam mais altas ou escuras que o protótipo.
+- 🟡 Na Central aberta pelo sino da Home, tocar `Explorar` não fechou a rota e
+  manteve `Início` selecionado. Esta foi a evidência física que motivou a
+  correção de navegação e seleção; o botão/gesto Android já fazia o retorno à
+  rota anterior.
+- Esta inspeção descreve somente a build anterior às correções e não deve ser
+  usada para avaliar esta branch.
+
+## Conferência manual parcial da branch local — Moto G6 Play — 2026-09-29
+
+- 🟡 APK debug desta branch instalado por atualização (`adb -s 0047447355
+  install -r`), no Motorola Moto G6 Play, Android 9, resolução física
+  `720×1440` (área Flutter observada em `360×720`). A sessão autenticada
+  continuou ativa. Não houve limpeza de dados, logout, mutação de preferência,
+  acompanhamento, leitura de alertas, pedido de permissão ou envio de relato.
+- ✅ Home e Explorar abriram; Banco Inter mostrou as duas modalidades. Sites
+  parceiros mostrou 379 lojas; a busca `Temu` retornou uma loja, e a categoria
+  `Eletrônicos` mostrou o estado vazio com zero lojas. Ao limpar o recorte, as
+  379 lojas voltaram. Compre direto exibiu 1.924 produtos; a categoria
+  `Acessórios` retornou quatro e a busca `suporte` retornou sete, com o total
+  restaurado ao limpar os filtros e a busca. A primeira abertura das categorias
+  do Compre direto levou cerca de 22 s; em duas reaberturas as opções chegaram
+  em aproximadamente 8–12 s. Livelo exibiu 256 lojas; `Casa e decoração`
+  retornou 26 e `Limpar` restaurou as 256. Pichau exibiu 1.223 produtos;
+  `Esgotados` retornou 688 e `Limpar` restaurou os 1.223. A aba `No radar` da
+  Pichau mostrou o vazio real. Nenhuma busca ou filtro iniciou coleta ou gravou
+  dados.
+- ✅ Meu radar exibiu os dois itens existentes. A Central abriu vazia, exibiu
+  os seletores separados de origem e tipo, e voltou à moldura pela aba
+  Explorar. A rota Notificações e a folha V15 de permissão abriram; a folha foi
+  fechada sem solicitar permissão.
+- ✅ Aparência, Ajuda, Privacidade e Reportar problema abriram. A barra inferior
+  permaneceu visível nas rotas secundárias; trocar para Explorar fechou também
+  a rota Reportar problema aberta a partir de Ajuda. Back Android retornou de
+  Explorar à Home. Só o tema claro foi observado; os controles de preferência
+  permaneceram intactos.
+- 🟡 Comparação manual com referências V15 disponíveis confirmou a estrutura da
+  Home, Explorar, hub Inter e Aparência. As outras capturas foram inspecionadas
+  quanto a hierarquia e comportamento, sem comparação formal de pixels tela a
+  tela. As capturas sem dados pessoais estão em
+  `~/.local/state/radar-mobile-device-acceptance/evidence/20260929-moto-g6-v15/`
+  (diretório `0700`, arquivos `0600`, fora do Git).
+- 🟡 O APK consulta a API publicada. A folha de alertas mostra o filtro de
+  origem, mas esta conferência não o aplicou porque o endpoint publicado ainda
+  não contém o parâmetro; os testes locais cobrem o contrato novo. Também
+  continuam sem aceite no Moto: paginação nos limites, histórico, estados de
+  erro/parcial, conta comum, sessão expirada, dark mode e envio/entrega FCM.
+  Esta rodada parcial não conclui o aceite físico completo.
+
 ## Inventário de testes
 
 O inventário mantém os resultados do ciclo anterior; `D-043` registra a rodada
-local de 2026-09-27 com build, commit, checksum e evidência próprios. Não
-reaproveitar os estados históricos como evidência da build nova.
+local de 2026-09-27 e `D-044` a inspeção manual parcial do Moto em 2026-09-29,
+cada uma com build e evidência próprios. Não reaproveitar estados históricos
+como evidência da build desta branch.
 
 | ID | Tela/jornada | Cenário | Resultado | Tentativas | Evidência/observação |
 |---|---|---|---|---:|---|
@@ -222,20 +280,20 @@ reaproveitar os estados históricos como evidência da build nova.
 | D-012 | Início | Cards Livelo, Inter e Pichau | ✅ | 1 | `d052-home-light-fixed-2.png`; rail horizontal exibiu contagens reais das três origens. |
 | D-013 | Explorar | Cards, busca e abertura das subáreas | ✅ | 1 | `d020-explorar.png`, `d023-explorar-pichau.png`, `d021-livelo.png`, `d024-pichau.png`. |
 | D-014 | Inter | Escolha Sites parceiros/Compre direto | ✅ | 1 | `device-v30-inter.png`, `d033-inter-produtos.png`; hub e duas modalidades acessíveis. |
-| D-015 | Inter parceiros | Busca, filtros, ordenação e paginação | 🟡 | 1 | Busca/filtros anteriores foram abertos; nesta rodada, 379 lojas e condições reais foram vistas, mas busca, efeito dos filtros, ordenação e paginação física ainda não foram percorridos por completo. |
+| D-015 | Inter parceiros | Busca, filtros, ordenação e paginação | 🟡 | 2 | No Samsung `1.74.0+2026092802`, 379 lojas e condições reais foram vistas; busca, efeito dos filtros, ordenação e paginação ainda não foram percorridos por completo. Na rodada anterior desta branch no Moto, `Temu` retornou uma loja e `Eletrônicos` exibiu estado vazio; limpar restaurou as 379 lojas. |
 | D-016 | Inter parceiros | Acompanhar, desfazer, rollback e condições | ✅ | 1 | Natura foi acompanhada e removida novamente; mensagens de sucesso, condições e estado original foram restaurados. |
 | D-017 | Inter parceiros | Abertura da URL real da API | ✅ | 1 | Revalidado em `1.74.0+2026092802`: `Ver condições` abriu a URL real do Shopping Inter no Chrome e o back retornou ao app. |
-| D-018 | Inter direto | Produtos, lojas e categorias | 🟡 | 2 | Em `1.74.0+2026092802`, a Casas Bahia retornou 1.924 produtos; página 2, detalhe e histórico real abriram. Categorias, filtros aplicados, estado acompanhado e aceite visual completo continuam pendentes. |
-| D-019 | Inter direto | Filtros, busca, acompanhamento e histórico | 🟡 | 1 | A folha de filtros e o teclado foram exercitados; o histórico real abriu com quatro medições. Faltam comprovar efeito de filtros/busca nesta build, acompanhamento sem efeito residual e estados restantes. |
-| D-020 | Livelo | Catálogo, busca, filtros e ordenação | ✅ | 1 | Catálogo real, busca por `ACER`, filtros de categoria/acompanhamento e ordenação `Nome A–Z` foram exercitados. |
+| D-018 | Inter direto | Produtos, lojas e categorias | 🟡 | 3 | Em `1.74.0+2026092802`, a Casas Bahia retornou 1.924 produtos; página 2, detalhe e histórico real abriram. Na rodada anterior no Moto, `Acessórios` retornou quatro ofertas. Categorias, filtros aplicados nesta build e aceite visual completo continuam pendentes. |
+| D-019 | Inter direto | Filtros, busca, acompanhamento e histórico | 🟡 | 2 | No Samsung, a folha de filtros e o teclado foram exercitados, e o histórico real abriu com quatro medições; não se comprovou o efeito dos filtros nesta build. Na rodada anterior no Moto, `Acessórios` retornou quatro ofertas e `suporte` retornou sete; limpar restaurou o catálogo. Acompanhamento sem efeito residual e estados restantes continuam pendentes. |
+| D-020 | Livelo | Catálogo, busca, filtros e ordenação | ✅ | 2 | Catálogo real, busca por `ACER`, filtros de categoria/acompanhamento e ordenação `Nome A–Z` foram exercitados. Na rodada anterior no Moto, `Casa e decoração` retornou 26 de 256 lojas e limpar restaurou as 256. |
 | D-021 | Livelo | Pontos, condições, campanhas e validade | ✅ | 1 | Cards reais exibiram pontos normal/Clube, campanha, condições e validade até `23/09/2026`. |
 | D-022 | Livelo | Acompanhamento, paginação e histórico | ✅ | 1 | Angeloni foi acompanhada e removida novamente; página 2 e histórico real com medições foram abertos. |
-| D-023 | Pichau | Catálogo, busca, filtros e disponibilidade | 🟡 | 1 | Em `1.74.0+2026092802`, `Draconis` retornou dois produtos; `Todos` 1.223, `Disponíveis` 535 e `Esgotados` 688. `Fora do catálogo` e estados de erro/parcial não foram forçados. |
-| D-024 | Pichau | Preço Pix/cartão, detalhe e histórico | ✅ | 1 | Pix/cartão reais, filtro mínimo R$ 3.000 aplicado pela API e detalhe/histórico abriram; o histórico atual exibiu oito medições. |
+| D-023 | Pichau | Catálogo, busca, filtros e disponibilidade | 🟡 | 2 | Em `1.74.0+2026092802`, `Draconis` retornou dois produtos; `Todos` 1.223, `Disponíveis` 535 e `Esgotados` 688. Na rodada anterior no Moto, `Esgotados` retornou 688 de 1.223, limpar restaurou 1.223 e `No radar` mostrou vazio. `Fora do catálogo` e estados de erro/parcial não foram forçados. |
+| D-024 | Pichau | Preço Pix/cartão, detalhe e histórico | ✅ | 2 | Em `1.74.0+2026092802`, Pix/cartão reais, filtro mínimo R$ 3.000 aplicado pela API e detalhe/histórico abriram; o histórico mostrou oito medições. Na rodada anterior no Moto, Draconis exibiu mínimo/máximo e histórico com 55 medições nos últimos 30 dias. |
 | D-025 | Pichau | Acompanhamento, paginação e estados parciais | 🟡 | 1 | Acompanhamento foi desfeito/restaurado e página 2 foi aberta; estados parciais adicionais ainda não foram forçados. |
 | D-026 | Meu radar | Contagens reais por origem | ✅ | 1 | Lista atual mostrou `74 acompanhamentos ativos`, com filtros Livelo/Inter e cartões reais. |
 | D-027 | Meu radar | Vazio, explorar, alertas e atualização | 🟡 | 2 | A build atual abriu a lista e mostrou `0 acompanhamentos ativos`/estado vazio. O histórico D-026 registra 74; confirmar se a diferença vem do corte de banco/conta. Remoção, atualização e paginação completa continuam pendentes. |
-| D-028 | Alertas | Lista, vazio, filtros e paginação | 🟡 | 2 | A build atual abriu a Central real em estado sem alerta não lido; back Android retornou à Home. Filtros, paginação física e `Marcar todos como lidos` continuam pendentes porque não havia itens não lidos na sessão. |
+| D-028 | Alertas | Lista, vazio, filtros e paginação | 🟡 | 3 | A branch abriu a Central vazia, a folha com origem/tipo e trocou para Explorar. Paginação e `Marcar todos como lidos` continuam pendentes porque não havia alertas. O filtro por origem não foi aplicado: falta atualizar o endpoint publicado. |
 | D-029 | Alertas | Leitura individual e coletiva (build 27503) | ✅ | 1 | Evidência histórica: `Marcar lido` reduziu `52` para `51`; `Marcar visíveis` zerou os itens carregados. A versão atual precisa de novo aceite físico porque a ação agora percorre todas as páginas. |
 | D-030 | Alertas | Preferências e push opcional | ✅ | 1 | `d073-alertas-preferencias.png`, `d074-permissao-notificacoes.png`, `d075-permissao-recusada.png`; preferências abertas e recusa preservou o histórico. |
 | D-031 | Perfil | Tema claro, escuro e sistema | ✅ | 1 | `d052-home-light-fixed-2.png`, `d053-home-dark-fixed.png`, `d051-aparencia.png`; claro/escuro e tela de aparência verificados. |
@@ -247,10 +305,12 @@ reaproveitar os estados históricos como evidência da build nova.
 | D-037 | Responsividade | Retrato, paisagem e teclado aberto | ✅ | 1 | Paisagem e restauração para retrato foram exercitadas; teclado abriu durante busca Inter/Pichau e foi fechado sem perder a jornada. |
 | D-038 | Acessibilidade | Texto ampliado até 200% e alvos de toque | 🟡 | 1 | Escala Android `2.0` foi exercitada em Administração com conteúdo rolável e sem `RenderFlex overflow`; cobertura física de todas as rotas ainda é parcial. |
 | D-039 | Estados | Offline, atraso, falha, retry e sessão expirada | 🟡 | 1 | Correção `1/3`: perfil inicial ganhou timeout de 10 s e o offline exibiu falha/retry no APK `27503`; sessão Firebase expirada e atraso controlado ainda dependem de fixture/conta. |
-| D-040 | Visual | Comparação final com o protótipo V15 | 🟡 | 1 | Home, Explorar, Livelo, Pichau, Inter, Alertas, Perfil, suporte, claro e escuro foram renderizados no APK atual; comparação formal tela a tela com o HTML V15 ainda não foi fechada. |
+| D-040 | Visual | Comparação final com o protótipo V15 | 🟡 | 2 | Home, Explorar, hub Inter e Aparência foram comparados manualmente com as referências V15 no Moto; as outras rotas foram inspecionadas, mas falta comparação formal completa e validação em tema escuro. |
 | D-041 | Device | Bloqueio e retomada via ADB | ✅ | 1 | Com a confirmação administrativa aberta, a tela foi apagada e desbloqueada; a mesma rota e sessão foram retomadas no APK. |
-| D-042 | Instalação | Reinstalação do APK e abertura limpa | ✅ | 1 | `flutter build apk --debug`, `adb install -r` e `d071-reopen-after-wait.png`; APK abriu e passou pelo splash. |
+| D-042 | Instalação | Reinstalação do APK e abertura limpa | ✅ | 2 | APK debug local instalado por `adb install -r`; sessão persistiu e a Home carregou após a validação de acesso. |
 | D-043 | Navegação | Rotas V15 e back Android com sessão existente | ✅ | 1 | 13/13 passos passaram em `1.74.0+2026092802`; JSON e capturas privadas em `~/.local/state/radar-mobile-device-acceptance/evidence/20260929T021136Z/`. A sessão foi preservada e os retornos das rotas secundárias foram revalidados. |
+| D-044 | Navegação e comparação parcial | Branch local no Moto, filtros e rotas secundárias | 🟡 | 1 | APK SHA-256 `c9fb9aa6b72a3463e9aa4813e5669b29b7e4eb46132324f69da0f2505807414e`; sessão preservada. Capturas `home-final.png`, `appearance-final.png`, `alerts-final.png`, `inter-direct-filter-applied-acessorios.png`, `inter-partners-filter-electronicos-empty.png`, `livelo-filter-casa-aplicado.png`, `pichau-filter-esgotados-aplicado.png`, `report-final.png` e demais telas ficam em `~/.local/state/radar-mobile-device-acceptance/evidence/20260929-moto-g6-v15/`. Buscas e filtros de catálogo foram aplicados e limpos sem mutação de dados; o filtro de origem da Central não foi aplicado porque a API publicada ainda não aceita esse parâmetro. É evidência histórica e não valida esta revisão no Samsung M13. |
+| D-045 | Build e instalação final desta revisão | APK atualizado instalado no Samsung SM-M135M (M13) | 🟡 | 2 | Pendente. O `app-debug.apk` existente (1.74.0) foi modificado antes das alterações Flutter atuais e não comprova esta revisão. As tentativas de build foram bloqueadas por socket wildcard e pela SDK Flutter somente leitura (`engine.stamp`/`engine.realm`); o analisador Dart reportou `No issues found!`, mas encerrou ao gravar telemetria global somente leitura. Os testes widget foram bloqueados ao criar socket local e o ADB não se conectou ao servidor usado pelo `scrcpy` (`Operation not permitted`). Não houve instalação nem captura nova no M13. O responsável informou que as migrations foram executadas, incluindo a migration 035; esta sessão não consultou diretamente o banco. |
 
 ## Correções realizadas
 

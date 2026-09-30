@@ -28,12 +28,25 @@ export async function GET(requisicao: Request) {
       ? (abaBruta as AbaCatalogoLivelo)
       : "todas";
     const ordenarBruto = url.searchParams.get("ordenar") ?? "pontos";
-    const ordenar: OrdenacaoCatalogoLivelo = ordenarBruto === "nome" ? "nome" : "pontos";
+    const ordenar: OrdenacaoCatalogoLivelo = ["nome", "validade"].includes(ordenarBruto)
+      ? (ordenarBruto as OrdenacaoCatalogoLivelo)
+      : "pontos";
     const q = url.searchParams.get("q") ?? "";
     const categoria = url.searchParams.get("categoria") ?? "";
+    const campanha = url.searchParams.get("somente_pontuacao_comum_ampliada");
+    if (campanha !== null && campanha !== "true" && campanha !== "false") {
+      return NextResponse.json(corpoErro("validacao", "filtro de pontuacao invalido"), {
+        status: STATUS.INVALIDA,
+        headers: { "x-request-id": acesso.requisicaoId },
+      });
+    }
     const escopoGlobal =
       url.searchParams.get("escopo") === "global" && acesso.usuario.papel === "admin";
-    const filtrosCategorias = filtrosSqlCatalogoLivelo(q, categoria);
+    const filtrosCategorias = filtrosSqlCatalogoLivelo(
+      q,
+      categoria,
+      campanha === "true",
+    );
     const [resultado, resumo] = await Promise.all([
       buscarCatalogoLiveloPersistido({
         ...filtrosCategorias,

@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../navegacao/destinos.dart';
 import '../tema/aparencia.dart';
 import '../tema/tokens.dart';
 
@@ -10,10 +11,16 @@ enum TomRadar { neutro, acao, ganho, atencao, perigo }
 
 /// Marca compacta oficial da V15, usada nos cabeçalhos de raiz e de catálogo.
 class CabecalhoMarcaRadar extends StatelessWidget {
-  const CabecalhoMarcaRadar({super.key, this.rotulo, this.acao});
+  const CabecalhoMarcaRadar({
+    super.key,
+    this.rotulo,
+    this.acao,
+    this.rotuloNoInicio = false,
+  });
 
   final String? rotulo;
   final Widget? acao;
+  final bool rotuloNoInicio;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +33,7 @@ class CabecalhoMarcaRadar extends StatelessWidget {
             children: [
               SvgPicture.asset(
                 'assets/brand/symbol-dark.svg',
+                key: const Key('marca-cabecalho-radar'),
                 width: tokens.sizes.brandHeight,
                 height: tokens.sizes.brandHeight,
                 semanticsLabel: 'Radar',
@@ -46,10 +54,33 @@ class CabecalhoMarcaRadar extends StatelessWidget {
           )
         : SvgPicture.asset(
             'assets/brand/wordmark.svg',
+            key: const Key('marca-cabecalho-radar'),
             width: tokens.sizes.brandWidth,
             height: tokens.sizes.brandHeight,
             semanticsLabel: 'Radar',
           );
+    final estiloRotulo = tema.textTheme.labelLarge?.copyWith(
+      color: CoresRadar.de(context).textoSuave,
+      fontWeight: FontWeight.w700,
+    );
+    if (rotulo != null && rotuloNoInicio) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text(
+              rotulo!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: estiloRotulo,
+            ),
+          ),
+          SizedBox(width: tokens.spacing.four),
+          marca,
+          if (acao != null) ...[SizedBox(width: tokens.spacing.two), acao!],
+        ],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -59,14 +90,7 @@ class CabecalhoMarcaRadar extends StatelessWidget {
             child: marca,
           ),
         ),
-        if (rotulo != null)
-          Text(
-            rotulo!,
-            style: tema.textTheme.labelLarge?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+        if (rotulo != null) Text(rotulo!, style: estiloRotulo),
         if (acao != null) ...[SizedBox(width: tokens.spacing.two), acao!],
       ],
     );
@@ -202,12 +226,16 @@ class CartaoRadar extends StatelessWidget {
     this.aoTocar,
     this.padding = const EdgeInsets.all(16),
     this.corDestaque,
+    this.comSombra = true,
+    this.comBorda = true,
   });
 
   final Widget child;
   final VoidCallback? aoTocar;
   final EdgeInsetsGeometry padding;
   final Color? corDestaque;
+  final bool comSombra;
+  final bool comBorda;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +244,7 @@ class CartaoRadar extends StatelessWidget {
     final tokens = context.tokens;
     final forma = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(tokens.radii.lg),
-      side: BorderSide(color: cores.borda),
+      side: comBorda ? BorderSide(color: cores.borda) : BorderSide.none,
     );
     final conteudo = corDestaque == null
         ? Padding(padding: padding, child: child)
@@ -242,7 +270,9 @@ class CartaoRadar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: forma.borderRadius,
-        boxShadow: <BoxShadow>[SombraRadar.para(tema.brightness)],
+        boxShadow: comSombra
+            ? <BoxShadow>[SombraRadar.para(tema.brightness)]
+            : const <BoxShadow>[],
       ),
       child: Material(
         color: tema.cardColor,
@@ -251,6 +281,159 @@ class CartaoRadar extends StatelessWidget {
         child: aoTocar == null
             ? conteudo
             : InkWell(onTap: aoTocar, child: conteudo),
+      ),
+    );
+  }
+}
+
+/// Navegação persistente V15 compartilhada pela moldura e pela Central.
+class BarraInferiorRadar extends StatelessWidget {
+  const BarraInferiorRadar({
+    super.key,
+    required this.selecionado,
+    required this.aoSelecionar,
+  });
+
+  final DestinoCompacto selecionado;
+  final ValueChanged<DestinoCompacto> aoSelecionar;
+
+  static const _destinos = <DestinoCompacto>[
+    DestinoCompacto.inicio,
+    DestinoCompacto.explorar,
+    DestinoCompacto.radar,
+    DestinoCompacto.perfil,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = tokens.colors;
+    return LayoutBuilder(
+      builder: (context, limites) {
+        final escalaRotulo = MediaQuery.textScalerOf(context).scale(12);
+        final compactoAmpliado = limites.maxWidth <= 350 && escalaRotulo >= 24;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: cores.superficie,
+            border: Border(top: BorderSide(color: cores.borda)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: compactoAmpliado
+                ? Column(
+                    key: const Key('barra-inferior-v15-compacta'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _linhaCompacta(context, _destinos.take(2)),
+                      SizedBox(height: tokens.sizes.bottomNavigationCompactGap),
+                      _linhaCompacta(context, _destinos.skip(2)),
+                    ],
+                  )
+                : NavigationBar(
+                    key: const Key('barra-inferior-v15'),
+                    height: tokens.sizes.bottomNavigationHeight,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    selectedIndex: _destinos.indexOf(selecionado).clamp(0, 3),
+                    onDestinationSelected: (indice) =>
+                        aoSelecionar(_destinos[indice]),
+                    destinations: [
+                      for (final destino in _destinos)
+                        NavigationDestination(
+                          key: Key('barra-${destino.name}'),
+                          icon: Icon(
+                            destino.icone,
+                            size: tokens.sizes.bottomNavigationIcon,
+                          ),
+                          selectedIcon: Icon(
+                            destino.icone,
+                            size: tokens.sizes.bottomNavigationIcon,
+                          ),
+                          label: destino.titulo,
+                        ),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _linhaCompacta(
+    BuildContext context,
+    Iterable<DestinoCompacto> destinos,
+  ) {
+    final tokens = context.tokens;
+    return Row(
+      children: [
+        for (final destino in destinos) ...[
+          if (destino != destinos.first)
+            SizedBox(width: tokens.sizes.bottomNavigationCompactGap),
+          Expanded(child: _destinoCompacto(context, destino)),
+        ],
+      ],
+    );
+  }
+
+  Widget _destinoCompacto(BuildContext context, DestinoCompacto destino) {
+    final tokens = context.tokens;
+    final tema = Theme.of(context);
+    final cores = tokens.colors;
+    final selecionado = destino == this.selecionado;
+    final indicador =
+        tema.navigationBarTheme.indicatorColor ??
+        tema.colorScheme.primaryContainer;
+    final cor = selecionado ? cores.acao : cores.textoSuave;
+    return Semantics(
+      button: true,
+      selected: selecionado,
+      label: destino.titulo,
+      child: InkWell(
+        key: Key('barra-${destino.name}'),
+        excludeFromSemantics: true,
+        onTap: () => aoSelecionar(destino),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: tokens.sizes.bottomNavigationCompactHeight,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: tokens.sizes.bottomNavigationCompactHorizontalPadding,
+              vertical: tokens.spacing.one,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: selecionado ? indicador : Colors.transparent,
+                    borderRadius: BorderRadius.circular(tokens.radii.pill),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(
+                      tokens.sizes.bottomNavigationCompactGlyphPadding,
+                    ),
+                    child: Icon(
+                      destino.icone,
+                      size: tokens.sizes.bottomNavigationIcon,
+                      color: cor,
+                    ),
+                  ),
+                ),
+                SizedBox(width: tokens.spacing.one),
+                Flexible(
+                  child: Text(
+                    destino.titulo,
+                    style: tema.textTheme.labelMedium?.copyWith(
+                      color: cor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -310,8 +493,8 @@ class CampoBuscaRadar extends StatelessWidget {
     this.somenteBusca = false,
     this.chaveCampo,
     this.raioBorda,
-    this.comSombra = true,
-    this.acaoSemFundo = false,
+    this.comSombra = false,
+    this.acaoSemFundo = true,
   });
 
   final TextEditingController controlador;
@@ -334,7 +517,16 @@ class CampoBuscaRadar extends StatelessWidget {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final brilho = Theme.of(context).brightness;
-    final raio = raioBorda ?? tokens.radii.lg;
+    final raio = raioBorda ?? tokens.radii.md;
+    void acionarBusca() {
+      FocusScope.of(context).unfocus();
+      if (aoAcionar != null) {
+        aoAcionar!();
+      } else {
+        aoMudar(controlador.text);
+      }
+    }
+
     final sufixo = acao != null
         ? acaoSemFundo
               ? SizedBox.square(
@@ -359,8 +551,8 @@ class CampoBuscaRadar extends StatelessWidget {
                 : EdgeInsets.all(tokens.spacing.one),
             child: IconButton(
               tooltip: 'Pesquisar',
-              onPressed: aoAcionar ?? () => aoMudar(controlador.text),
-              icon: const Icon(Icons.chevron_right_rounded, size: 24),
+              onPressed: acionarBusca,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 20),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints.tightFor(
                 width: tokens.sizes.touchTarget,
@@ -387,15 +579,7 @@ class CampoBuscaRadar extends StatelessWidget {
         key: chaveCampo,
         controller: controlador,
         onChanged: aoMudar,
-        onSubmitted: !somenteBusca
-            ? (_) {
-                if (aoAcionar != null) {
-                  aoAcionar!();
-                } else {
-                  aoMudar(controlador.text);
-                }
-              }
-            : null,
+        onSubmitted: !somenteBusca ? (_) => acionarBusca() : null,
         textInputAction: TextInputAction.search,
         style: Theme.of(context).textTheme.bodyLarge,
         decoration: InputDecoration(

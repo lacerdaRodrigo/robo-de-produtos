@@ -231,6 +231,71 @@ void main() {
     });
   });
 
+  test(
+    'alertas enviam origem, tipo, aba e paginação como parâmetros separados',
+    () async {
+      final requisicoes = <http.Request>[];
+      final api = Api(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((requisicao) async {
+            requisicoes.add(requisicao);
+            return http.Response(
+              '{"itens":[],"nao_lidos":0,"pagina":3,"por_pagina":50,'
+              '"total_itens":0,"total_paginas":1,"tem_proxima":false}',
+              200,
+            );
+          }),
+        ),
+      );
+
+      await api.alertas(
+        filtroOrigem: 'inter_produto',
+        filtroTipo: 'preco',
+        somenteNaoLidos: true,
+        pagina: 3,
+        porPagina: 50,
+        coleta: '20',
+      );
+
+      final consulta = requisicoes.single.url.queryParameters;
+      expect(consulta['origem'], 'inter_produto');
+      expect(consulta['tipo'], 'preco');
+      expect(consulta['somente_nao_lidos'], 'true');
+      expect(consulta['pagina'], '3');
+      expect(consulta['por_pagina'], '50');
+      expect(consulta['coleta'], '20');
+    },
+  );
+
+  test('resolvedor de alerta lê um item atual pela rota autenticada', () async {
+    http.Request? requisicao;
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((request) async {
+          requisicao = request;
+          return http.Response(
+            '{"origem":"pichau","item":{"id_externo":"pc-10"}}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    final item = await api.resolverItemAlerta(alertaId: '91');
+
+    expect(requisicao?.method, 'GET');
+    expect(requisicao?.url.path, '/api/alertas/91/item');
+    expect(requisicao?.headers['authorization'], 'Bearer token-teste');
+    expect(item['origem'], 'pichau');
+    expect(item['item'], {'id_externo': 'pc-10'});
+  });
+
   test('página vazia não inventa itens', () async {
     final api = apiQueResponde(
       '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,"total_paginas":1,"tem_proxima":false}',
@@ -438,9 +503,10 @@ void main() {
       q: 'natura',
       aba: 'acompanhadas',
       categoria: 'Beleza',
-      ordenar: 'nome',
+      ordenar: 'validade',
       pagina: 2,
       porPagina: 10,
+      somentePontuacaoComumAmpliada: true,
     );
     await api.alterarAcompanhamentoLivelo(idExterno: 'NAT', acompanhada: true);
     await api.alterarAlertaLivelo(idExterno: 'NAT', ativo: true);
@@ -453,15 +519,54 @@ void main() {
       'q': 'natura',
       'aba': 'acompanhadas',
       'categoria': 'Beleza',
-      'ordenar': 'nome',
+      'ordenar': 'validade',
       'pagina': '2',
       'por_pagina': '10',
+      'somente_pontuacao_comum_ampliada': 'true',
     });
     expect(requisicoes[1].url.path, '/api/livelo/catalogo/NAT/acompanhamento');
     expect(requisicoes[1].body, '{"acompanhada":true}');
     expect(requisicoes[2].url.path, '/api/livelo/catalogo/NAT/alerta');
     expect(requisicoes[2].body, '{"ativo":true}');
   });
+
+  test(
+    'Meus relatos envia paginação e converte os dados do servidor',
+    () async {
+      late http.Request requisicao;
+      final api = Api(
+        paginaPadrao: 20,
+        cliente: ClienteApi(
+          baseUrl: baseUrl,
+          provedorToken: () async => 'token-teste',
+          cliente: http_testing.MockClient((entrada) async {
+            requisicao = entrada;
+            return http.Response(
+              '{"itens":[{"id":"519","categoria":"dados",'
+              '"mensagem":"O catálogo não atualizou.",'
+              '"criado_em":"2026-09-28T16:30:00Z"}],'
+              '"pagina":2,"por_pagina":10,"total_itens":11,'
+              '"total_paginas":2,"tem_proxima":false}',
+              200,
+            );
+          }),
+        ),
+      );
+
+      final pagina = await api.meusRelatos(pagina: 2, porPagina: 10);
+
+      expect(requisicao.url.path, '/api/relatos-problema');
+      expect(requisicao.url.queryParameters, {
+        'pagina': '2',
+        'por_pagina': '10',
+      });
+      expect(requisicao.headers['authorization'], 'Bearer token-teste');
+      expect(pagina.itens.single.id, '519');
+      expect(pagina.itens.single.mensagem, 'O catálogo não atualizou.');
+      expect(pagina.pagina, 2);
+      expect(pagina.totalItens, 11);
+    },
+  );
 
   test('acompanhamento Livelo do catálogo usa a relação pessoal', () async {
     late http.Request requisicao;
@@ -934,5 +1039,31 @@ void main() {
     expect(requisicoes[0].url.path, '/api/administracao/limpeza/livelo');
     expect(requisicoes[1].method, 'POST');
     expect(requisicoes[1].body, '{"frase":"APAGAR LIVELO"}');
+  });
+
+  test('relato retorna o protocolo confirmado pela API', () async {
+    final requisicoes = <http.Request>[];
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: baseUrl,
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((requisicao) async {
+          requisicoes.add(requisicao);
+          return http.Response('{"registrado":true,"id":"519"}', 201);
+        }),
+      ),
+    );
+
+    final protocolo = await api.relatarProblema(
+      categoria: 'privacy',
+      mensagem: 'Quero corrigir meus dados de conta.',
+      tela: 'relato-problema',
+      versaoApp: '1.2.3',
+    );
+
+    expect(protocolo, '519');
+    expect(requisicoes.single.url.path, '/api/relatos-problema');
+    expect(requisicoes.single.body, contains('"categoria":"privacy"'));
   });
 }

@@ -72,14 +72,25 @@ Proxy, rotação de IP e qualquer técnica fora do termo continuam proibidos.
 - O card abre uma subárea interna de Explorar, com botão de retorno.
 - O catálogo é paginado; busca por nome, marca e SKU é server-side.
 - O catálogo mobile segue a composição V15 com cabeçalho `Pichau`/`Catálogo`,
-  voltar, atualizar, título `PCs gamer`, busca com avanço, abas planas
+  voltar, atualizar, título `PCs gamer`, busca com avanço executada ao enviar
+  pela seta ou pelo teclado, abas planas
   `Todos`/`No radar`, total de produtos e botão `Filtros`.
+- Após a área segura, o cabeçalho usa o recuo superior V15 de 16 dp. Busca,
+  resumo e filtro seguem a composição compacta; cartões usam padding de 20 dp,
+  superfície, borda e raio do tema, sem faixa lateral nem sombra.
+- O título do item usa a tipografia V15 de 18 px; o preço Pix usa 30 px, peso
+  800 e números tabulares. Ambos respeitam a escala de texto do aparelho.
+- `Acompanhar` desligado usa fundo transparente, borda e texto neutros; no
+  estado acompanhado usa a superfície e a tinta de acento da V15 em claro e
+  escuro, conforme os tokens semânticos do tema.
 - A folha `Filtros · Pichau` segue a ordem do protótipo: `Menor preço Pix` por
   padrão, disponibilidade `Todos`, preço mínimo/máximo em reais e ações
-  `Limpar`/`Aplicar filtros`. Limpar apenas restaura o formulário; aplicar
-  reinicia a página sem perder a busca. Com o teclado aberto, a folha respeita
-  a área útil acima dele e permite rolar até o campo e as ações, sem ocultar o
-  valor digitado; em texto ampliado, ela também rola sem cortar ações. As três
+  `Limpar`/`Aplicar filtros`. Limpar aplica os padrões imediatamente sem perder
+  a busca nem a aba selecionada; aplicar reinicia a página sem perder a busca.
+  Com o teclado aberto, a folha respeita
+  a área útil acima dele e mantém `Limpar`/`Aplicar filtros` fixos e visíveis
+  enquanto o conteúdo rola, sem ocultar o valor digitado; em texto ampliado, a
+  folha continua rolável sem cortar ações. As três
   ordenações expostas (`Nome`, menor preço Pix e maior desconto Pix) seguem
   para a API e são aplicadas ao retrato paginado. Cada limite de preço é
   independente: a pessoa pode aplicar somente o mínimo ou somente o máximo; a
@@ -87,8 +98,9 @@ Proxy, rotação de IP e qualquer técnica fora do termo continuam proibidos.
 - O card do produto mostra o SKU quando fornecido, disponibilidade no canto
   superior direito, nome em até duas linhas com reticências visuais quando
   necessário (o nome completo permanece na semântica), marca/categoria quando
-  disponíveis, preço Pix em destaque, preço original riscado, preço no cartão
-  e desconto/condições textuais.
+  disponíveis, preço Pix em destaque, preço original riscado, preço no cartão,
+  desconto/condições textuais e horário de `atualizado_em` formatado localmente.
+  A lista usa 16 dp entre cartões, conforme a separação V15.
 - **Detalhes** abre a folha V15 do produto. Nela, **Abrir Pichau** usa somente
   uma URL `http` ou `https` fornecida pela API, e **Histórico** mantém as
   medições somente leitura sob demanda.
@@ -106,6 +118,8 @@ O cliente mantém estados semanticamente distintos:
 - coleta parcial ou atrasada preservando o último retrato válido;
 - produto disponível;
 - produto explicitamente esgotado pela Pichau;
+- disponibilidade ausente, vazia ou desconhecida, apresentada como
+  `Disponibilidade não informada`;
 - produto fora do catálogo após uma coleta completa.
 
 A ausência de preço permanece como ausência. Ela não é convertida para `R$ 0,00`.

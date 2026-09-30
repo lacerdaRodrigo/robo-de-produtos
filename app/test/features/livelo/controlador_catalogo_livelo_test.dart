@@ -87,6 +87,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             if (falhar) throw StateError('sem rede');
             return montarPagina(
@@ -143,6 +144,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             consultas.add('$q/$aba/$categoria/$ordenar/$pagina');
             if (pagina == 1) {
@@ -181,6 +183,46 @@ void main() {
     expect(consultas.last, '/todas/Marketplace/pontos/1');
   });
 
+  test(
+    'filtro de pontuação comum ampliada segue na consulta paginada',
+    () async {
+      final consultas = <String>[];
+      final controlador = ControladorCatalogoLivelo(
+        buscar:
+            ({
+              required q,
+              required aba,
+              required categoria,
+              required ordenar,
+              required pagina,
+              required somentePontuacaoComumAmpliada,
+            }) async {
+              consultas.add('$ordenar/$pagina/$somentePontuacaoComumAmpliada');
+              return montarPagina([parceiro('A')]);
+            },
+        alterarAcompanhamento:
+            ({required idExterno, required acompanhada}) async {},
+      );
+      addTearDown(controlador.dispose);
+
+      await controlador.carregarInicial();
+      await controlador.aplicarFiltros(
+        categoria: '',
+        ordenacao: OrdenacaoCatalogoLivelo.validade,
+        somentePontuacaoComumAmpliada: true,
+      );
+      expect(controlador.somentePontuacaoComumAmpliada, isTrue);
+      expect(consultas.last, 'validade/1/true');
+
+      await controlador.aplicarFiltros(
+        categoria: '',
+        ordenacao: OrdenacaoCatalogoLivelo.validade,
+      );
+      expect(controlador.somentePontuacaoComumAmpliada, isFalse);
+      expect(consultas.last, 'validade/1/false');
+    },
+  );
+
   test('debounce descarta resposta antiga', () async {
     final antiga = Completer<PaginaCatalogoLivelo>();
     final controlador = ControladorCatalogoLivelo(
@@ -192,6 +234,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) => q.isEmpty
           ? antiga.future
           : Future.value(
@@ -230,6 +273,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async => montarPagina([parceiro('A')], resumoDaPagina: resumo()),
       alterarAcompanhamento:
           ({required idExterno, required acompanhada}) async {
@@ -268,6 +312,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async => montarPagina([parceiro('A')]),
       alterarAcompanhamento: ({required idExterno, required acompanhada}) {
         chamadas++;

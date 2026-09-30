@@ -485,8 +485,11 @@ Cada card contém:
 
 Na jornada mobile V15 de `Sites parceiros`, o cabeçalho exibe `Sites parceiros`,
 `Banco Inter`, retorno pela pilha e a ação administrativa de atualização como
-ícone. O catálogo compacto usa o título `Lojas com cashback`, busca com ação de
-avanço, abas planas `Todos`/`No radar`, ação `Filtros` e cartões com nome,
+ícone, com recuo superior de 16 dp após a área segura. O catálogo compacto usa
+o título `Lojas com cashback`, busca com ação de avanço que consulta o termo
+somente ao enviar e fecha o teclado, abas planas `Todos`/`No radar`, ação
+`Filtros` e cartões separados por 16 dp em superfície
+simples com borda e raio V15, sem sombra ou faixa lateral, com nome,
 benefício, contexto e ações de acompanhamento/destino; as condições completas
 ficam na folha aberta pelo botão `Condições`. A composição é responsiva e não
 altera os textos ou estados reais recebidos da API. A folha `Filtros · Sites

@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 
-import type { PreferenciasAlertasEntrada, TipoAlerta } from "./alertas-api";
+import type { OrigemAlerta, PreferenciasAlertasEntrada, TipoAlerta } from "./alertas-api";
+import type { ParceiroLiveloPersistido } from "./banco";
+import { apresentarParceiroLivelo } from "./catalogo-livelo";
 import { mensageriaFirebase } from "./firebase-admin";
 import { linkShoppingInterDaLoja } from "./formato-inter";
 
@@ -12,7 +14,7 @@ function conectar() {
 
 export type AlertaApp = {
   id: string;
-  origem: "livelo" | "inter_cashback" | "inter_produto" | "pichau";
+  origem: OrigemAlerta;
   tipo: TipoAlerta;
   entidade_id: string;
   entidade_externa: string | null;
@@ -23,6 +25,18 @@ export type AlertaApp = {
   unidade: string;
   direcao: "aumento" | "reducao";
   lido: boolean;
+  criado_em: string;
+};
+
+export type ItemAlertaApp = {
+  origem: OrigemAlerta;
+  item: Record<string, unknown>;
+};
+
+export type RelatoProblemaApp = {
+  id: string;
+  categoria: string;
+  mensagem: string;
   criado_em: string;
 };
 
@@ -369,7 +383,7 @@ export async function resumoRadarPessoal(usuarioId: string): Promise<ResumoRadar
 
 export async function buscarAlertas(
   usuarioId: string,
-  opcoes: { pagina: number; porPagina: number; tipo: TipoAlerta | null; somenteNaoLidos: boolean; coleta: string | null },
+  opcoes: { pagina: number; porPagina: number; tipo: TipoAlerta | null; origem: OrigemAlerta | null; somenteNaoLidos: boolean; coleta: string | null },
 ): Promise<{ itens: AlertaApp[]; total: number; naoLidos: number; pagina: number }> {
   const sql = conectar();
   const limite = Math.min(50, Math.max(1, Math.floor(opcoes.porPagina)));
@@ -381,6 +395,7 @@ export async function buscarAlertas(
      WHERE usuario_app_id = ${usuarioId}
        AND criado_em >= now() - interval '90 days'
        AND (${opcoes.tipo === null} OR tipo = ${opcoes.tipo})
+       AND (${opcoes.origem === null} OR origem = ${opcoes.origem})
        AND (${!opcoes.somenteNaoLidos} OR lido = FALSE)
        AND (${opcoes.coleta === null} OR coleta_id = ${opcoes.coleta})
   `) as Array<{ total: number; nao_lidos: number }>;
@@ -397,6 +412,7 @@ export async function buscarAlertas(
      WHERE usuario_app_id = ${usuarioId}
        AND criado_em >= now() - interval '90 days'
        AND (${opcoes.tipo === null} OR tipo = ${opcoes.tipo})
+       AND (${opcoes.origem === null} OR origem = ${opcoes.origem})
        AND (${!opcoes.somenteNaoLidos} OR lido = FALSE)
        AND (${opcoes.coleta === null} OR coleta_id = ${opcoes.coleta})
      ORDER BY criado_em DESC, id DESC
@@ -424,6 +440,187 @@ export async function marcarAlertas(usuarioId: string, ids: string[], lido: bool
      RETURNING id
   `;
   return linhas.length;
+}
+
+/** Resolve somente a entidade vinculada a um alerta pertencente à conta. */
+export async function buscarItemAlerta(
+  usuarioId: string,
+  alertaId: string,
+): Promise<ItemAlertaApp | null> {
+  const sql = conectar();
+  const alertas = (await sql`
+    SELECT origem, entidade_id::text AS entidade_id
+      FROM evento_alerta
+     WHERE id = ${alertaId}::bigint
+       AND usuario_app_id = ${usuarioId}::bigint
+     LIMIT 1
+  `) as Array<{ origem: OrigemAlerta; entidade_id: string }>;
+  const alerta = alertas[0];
+  if (!alerta) return null;
+
+  if (alerta.origem === "livelo") {
+    const itens = (await sql`
+      SELECT parceiro.id_externo, parceiro.nome, parceiro.categorias,
+             parceiro.pontos_atuais, parceiro.pontos_anteriores,
+             parceiro.pontos_base, parceiro.pontos_clube, parceiro.moeda,
+             parceiro.prefixo_ate, parceiro.em_promocao, parceiro.campanha,
+             parceiro.descricao_campanha, parceiro.inicio_promocao,
+             parceiro.fim_promocao, parceiro.link,
+             EXISTS (
+               SELECT 1 FROM acompanhamento_usuario acompanhamento
+                WHERE acompanhamento.usuario_app_id = ${usuarioId}::bigint
+                  AND acompanhamento.origem = 'livelo'
+                  AND acompanhamento.entidade_id = parceiro.id
+             ) AS acompanhada,
+             COALESCE(loja.alerta_ativo, FALSE) AS alerta_ativo,
+             COALESCE(pontuacao.alertou, FALSE) AS alerta,
+             execucao.momento AS atualizado_em,
+             execucao.parceiros_lidos
+        FROM parceiro_livelo parceiro
+        JOIN execucao ON execucao.id = parceiro.atualizado_execucao_id
+        LEFT JOIN loja ON loja.parceiro_livelo_id = parceiro.id
+        LEFT JOIN pontuacao
+          ON pontuacao.execucao_id = parceiro.atualizado_execucao_id
+         AND pontuacao.loja_id = loja.id
+       WHERE parceiro.id = ${alerta.entidade_id}::bigint
+         AND parceiro.ativo = TRUE
+       LIMIT 1
+    `) as ParceiroLiveloPersistido[];
+    const parceiro = itens[0];
+    return parceiro
+      ? {
+          origem: alerta.origem,
+          item: { ...apresentarParceiroLivelo(parceiro) },
+        }
+      : null;
+  }
+
+  if (alerta.origem === "inter_cashback") {
+    const itens = (await sql`
+      WITH execucao_atual AS (
+        SELECT id
+          FROM execucao_inter
+         WHERE estado = 'sucesso'
+         ORDER BY concluida_em DESC
+         LIMIT 1
+      )
+      SELECT loja.id, loja.id_externo, loja.slug,
+             COALESCE(cashback.nome, loja.nome) AS nome,
+             COALESCE(cashback.cashback_principal_texto, loja.cashback_principal_texto)
+               AS cashback_principal_texto,
+             COALESCE(cashback.cashback_principal_valor, loja.cashback_principal_valor)
+               AS cashback_principal_valor,
+             COALESCE(cashback.cashback_secundario_texto, loja.cashback_secundario_texto)
+               AS cashback_secundario_texto,
+             COALESCE(cashback.cashback_secundario_valor, loja.cashback_secundario_valor)
+               AS cashback_secundario_valor,
+             COALESCE(cashback.etiqueta, loja.etiqueta) AS etiqueta,
+             COALESCE(cashback.descricao_principal, loja.descricao_principal)
+               AS descricao_principal,
+             COALESCE(cashback.descricao_secundaria, loja.descricao_secundaria)
+               AS descricao_secundaria,
+             COALESCE(categoria.categoria, 'outros') AS categoria,
+             COALESCE(cashback.encontrada, TRUE) AS encontrada,
+             EXISTS (
+               SELECT 1 FROM acompanhamento_usuario acompanhamento
+                WHERE acompanhamento.usuario_app_id = ${usuarioId}::bigint
+                  AND acompanhamento.origem = 'inter_cashback'
+                  AND acompanhamento.entidade_id = loja.id
+             ) AS favorita
+        FROM loja_inter loja
+        CROSS JOIN execucao_atual
+        LEFT JOIN mapeamento_categoria_cashback_inter categoria
+          ON categoria.loja_inter_id = loja.id
+        LEFT JOIN cashback_inter cashback
+          ON cashback.loja_inter_id = loja.id
+         AND cashback.execucao_inter_id = execucao_atual.id
+       WHERE loja.id = ${alerta.entidade_id}::bigint
+         AND loja.ativa = TRUE
+       LIMIT 1
+    `) as Array<Record<string, unknown> & { slug: string }>;
+    const loja = itens[0];
+    if (!loja) return null;
+    return {
+      origem: alerta.origem,
+      item: { ...loja, link: linkShoppingInterDaLoja(loja.slug) },
+    };
+  }
+
+  if (alerta.origem === "inter_produto") {
+    const itens = (await sql`
+      SELECT produto.id_externo, produto.nome, produto.marca,
+             COALESCE(NULLIF(btrim(produto.categoria), ''), 'Sem categoria') AS categoria,
+             produto.caminho,
+             medicao.preco_lista_texto AS preco_cheio_texto,
+             medicao.preco_lista AS preco_cheio_valor,
+             medicao.preco_atual_texto,
+             medicao.preco_atual AS preco_atual_valor,
+             medicao.desconto_texto, medicao.desconto_percentual_texto,
+             medicao.cashback_texto, medicao.cashback_percentual_texto,
+             medicao.preco_liquido_texto, medicao.parcelamento,
+             medicao.estoque, medicao.etiquetas,
+             medicao.momento AS atualizada_em,
+             loja.slug AS loja_slug, loja.nome AS loja_nome,
+             EXISTS (
+               SELECT 1 FROM acompanhamento_usuario acompanhamento
+                WHERE acompanhamento.usuario_app_id = ${usuarioId}::bigint
+                  AND acompanhamento.origem = 'inter_produto'
+                  AND acompanhamento.entidade_id = produto.id
+             ) AS acompanhado
+        FROM produto_direto_inter produto
+        JOIN loja_direta_inter loja
+          ON loja.id = produto.loja_direta_inter_id
+        JOIN LATERAL (
+          SELECT medicao.*
+            FROM medicao_produto_direto_inter medicao
+            JOIN execucao_loja_produtos_inter execucao
+              ON execucao.id = medicao.execucao_loja_produtos_inter_id
+             AND execucao.estado = 'sucesso'
+           WHERE medicao.produto_direto_inter_id = produto.id
+           ORDER BY medicao.momento DESC
+           LIMIT 1
+        ) medicao ON TRUE
+       WHERE produto.id = ${alerta.entidade_id}::bigint
+       LIMIT 1
+    `) as Array<Record<string, unknown>>;
+    const item = itens[0];
+    return item ? { origem: alerta.origem, item } : null;
+  }
+
+  if (alerta.origem !== "pichau") return null;
+
+  const itens = (await sql`
+    SELECT produto.id_externo, produto.sku, produto.nome, produto.marca,
+           produto.categoria_externa, produto.url_produto,
+           produto.presente_no_catalogo, produto.disponibilidade,
+           EXISTS (
+             SELECT 1 FROM acompanhamento_usuario acompanhamento
+              WHERE acompanhamento.usuario_app_id = ${usuarioId}::bigint
+                AND acompanhamento.origem = 'pichau'
+                AND acompanhamento.entidade_id = produto.id
+           ) AS acompanhada,
+           medicao.preco_original_texto, medicao.preco_pix_texto,
+           medicao.desconto_pix_texto, medicao.preco_cartao_texto,
+           medicao.parcelamento, medicao.sem_juros, medicao.etiquetas,
+           medicao.momento AS atualizado_em
+      FROM pichau_produto produto
+      LEFT JOIN LATERAL (
+        SELECT medicao.*
+          FROM pichau_medicao medicao
+          JOIN pichau_execucao execucao
+            ON execucao.id = medicao.execucao_id
+           AND execucao.estado = 'sucesso'
+         WHERE medicao.produto_id = produto.id
+         ORDER BY medicao.momento DESC, medicao.id DESC
+         LIMIT 1
+      ) medicao ON TRUE
+     WHERE produto.id = ${alerta.entidade_id}::bigint
+     LIMIT 1
+  `) as Array<Record<string, unknown>>;
+  const produto = itens[0];
+  return produto
+    ? { origem: alerta.origem, item: { ...produto, origem: "Pichau" } }
+    : null;
 }
 
 export async function lerPreferenciasAlertas(usuarioId: string): Promise<PreferenciasAlertas> {
@@ -545,6 +742,34 @@ export async function registrarRelatoProblema(usuarioId: string, valor: { catego
     RETURNING id
   `) as Array<{ id: string }>;
   return String(linhas[0].id);
+}
+
+export async function buscarRelatosProblema(
+  usuarioId: string,
+  opcoes: { pagina: number; porPagina: number },
+): Promise<{ itens: RelatoProblemaApp[]; total: number; pagina: number }> {
+  const sql = conectar();
+  const limite = Math.min(50, Math.max(1, Math.floor(opcoes.porPagina)));
+  const solicitada = Math.max(1, Math.floor(opcoes.pagina));
+  const totais = (await sql`
+    SELECT count(*)::int AS total
+      FROM relato_problema_app
+     WHERE usuario_app_id = ${usuarioId}
+       AND criado_em >= now() - interval '180 days'
+  `) as Array<{ total: number }>;
+  const total = totais[0]?.total ?? 0;
+  const totalPaginas = Math.max(1, Math.ceil(total / limite));
+  const pagina = Math.min(solicitada, totalPaginas);
+  const deslocamento = (pagina - 1) * limite;
+  const itens = (await sql`
+    SELECT id::text, categoria, mensagem, criado_em
+      FROM relato_problema_app
+     WHERE usuario_app_id = ${usuarioId}
+       AND criado_em >= now() - interval '180 days'
+     ORDER BY criado_em DESC, id DESC
+     LIMIT ${limite} OFFSET ${deslocamento}
+  `) as RelatoProblemaApp[];
+  return { itens, total, pagina };
 }
 
 type OutboxPendente = { id: string; usuario_app_id: string; origem: string; coleta_id: string };

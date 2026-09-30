@@ -56,6 +56,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               required categoria,
               required ordenar,
               required pagina,
+              required somentePontuacaoComumAmpliada,
             }) => widget.api.catalogoLivelo(
               q: q,
               aba: aba,
@@ -64,6 +65,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
               pagina: pagina,
               porPagina: _itensPorPagina,
               acompanhamentoPessoal: true,
+              somentePontuacaoComumAmpliada: somentePontuacaoComumAmpliada,
             ),
         alterarAcompanhamento: ({required idExterno, required acompanhada}) =>
             widget.api.alterarAcompanhamentoPessoalLivelo(
@@ -242,7 +244,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
                 key: const Key('busca-catalogo-livelo'),
                 controlador: _busca,
                 dica: 'Qual loja você procura?',
-                aoMudar: _controlador.mudarBusca,
+                aoMudar: (_) {},
+                aoAcionar: () => _controlador.mudarBusca(_busca.text),
               ),
             ),
           ),
@@ -274,7 +277,8 @@ class _EstadoPaginaCatalogoLiveloAndroid
                 mostrarFiltro: _controlador.aba == AbaCatalogoLivelo.lojas,
                 filtroAtivo:
                     _controlador.categoria.isNotEmpty ||
-                    _controlador.ordenacao != OrdenacaoCatalogoLivelo.nome,
+                    _controlador.ordenacao != OrdenacaoCatalogoLivelo.nome ||
+                    _controlador.somentePontuacaoComumAmpliada,
                 aoFiltrar: _abrirFiltros,
               ),
             ),
@@ -367,12 +371,16 @@ class _EstadoPaginaCatalogoLiveloAndroid
   Future<void> _abrirFiltros() async {
     var ordenacao = _controlador.ordenacao;
     var categoria = _controlador.categoria;
+    var somentePontuacaoComumAmpliada =
+        _controlador.somentePontuacaoComumAmpliada;
+    final tokens = context.tokens;
     await mostrarFolhaRadar<void>(
       context,
       builder: (contexto) => StatefulBuilder(
         builder: (contexto, atualizar) => FolhaRadar(
-          titulo: 'Filtrar todas as lojas',
-          descricao: 'Refine o catálogo completo da Livelo.',
+          titulo: 'Filtros · Livelo',
+          descricao: '',
+          mostrarVoltar: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -393,7 +401,7 @@ class _EstadoPaginaCatalogoLiveloAndroid
                     DropdownMenuItem(value: valor, child: Text(valor)),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: tokens.spacing.three),
               DropdownButtonFormField<OrdenacaoCatalogoLivelo>(
                 key: const Key('ordenacao-filtro-livelo'),
                 initialValue: ordenacao,
@@ -407,24 +415,42 @@ class _EstadoPaginaCatalogoLiveloAndroid
                     DropdownMenuItem(value: valor, child: Text(valor.rotulo)),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: tokens.spacing.three),
+              CheckboxListTile(
+                key: const Key('filtro-pontuacao-ampliada-livelo'),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: somentePontuacaoComumAmpliada,
+                title: const Text('Somente pontuação comum ampliada'),
+                onChanged: (valor) {
+                  if (valor != null) {
+                    atualizar(() => somentePontuacaoComumAmpliada = valor);
+                  }
+                },
+              ),
+              SizedBox(height: tokens.spacing.four),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.of(contexto).pop();
+                        atualizar(() {
+                          categoria = '';
+                          ordenacao = OrdenacaoCatalogoLivelo.nome;
+                          somentePontuacaoComumAmpliada = false;
+                        });
                         unawaited(
                           _controlador.aplicarFiltros(
                             categoria: '',
                             ordenacao: OrdenacaoCatalogoLivelo.nome,
+                            somentePontuacaoComumAmpliada: false,
                           ),
                         );
                       },
                       child: const Text('Limpar'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: tokens.spacing.two),
                   Expanded(
                     child: FilledButton(
                       onPressed: () {
@@ -433,10 +459,12 @@ class _EstadoPaginaCatalogoLiveloAndroid
                           _controlador.aplicarFiltros(
                             categoria: categoria,
                             ordenacao: ordenacao,
+                            somentePontuacaoComumAmpliada:
+                                somentePontuacaoComumAmpliada,
                           ),
                         );
                       },
-                      child: const Text('Ver lojas'),
+                      child: const Text('Aplicar filtros'),
                     ),
                   ),
                 ],
@@ -496,10 +524,13 @@ class _EstadoPaginaCatalogoLiveloAndroid
 
     return [
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: EdgeInsetsDirectional.symmetric(
+          horizontal: context.tokens.spacing.five,
+        ),
         sliver: SliverList.separated(
           itemCount: _controlador.itens.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) =>
+              SizedBox(height: context.tokens.spacing.four),
           itemBuilder: (context, indice) {
             final parceiro = _controlador.itens[indice];
             return CartaoCatalogoLivelo(
@@ -605,14 +636,16 @@ class _ResumoResultados extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final escalaGrande = MediaQuery.textScalerOf(context).scale(13) >= 26;
     final resumo = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           '$total ${total == 1 ? 'loja' : 'lojas'}',
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: CoresRadar.de(context).textoSuave,
+          ),
         ),
         if (contexto != 'Catálogo completo') ...[
           const SizedBox(height: 3),
@@ -620,9 +653,8 @@ class _ResumoResultados extends StatelessWidget {
             contexto,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: CoresRadar.de(context).textoSuave,
-              fontSize: 9,
             ),
           ),
         ],
@@ -647,7 +679,7 @@ class _ResumoResultados extends StatelessWidget {
                 color: CoresRadar.de(context).acao.withValues(alpha: 0.48),
               )
             : null,
-        minimumSize: const Size(0, 38),
+        minimumSize: Size(0, tokens.sizes.touchTarget),
         padding: const EdgeInsets.symmetric(horizontal: 12),
       ),
       icon: Icon(
@@ -661,38 +693,25 @@ class _ResumoResultados extends StatelessWidget {
     );
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 10, 2, 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: CoresRadar.de(context).borda.withValues(alpha: 0.76),
-          ),
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, limites) {
-          if (!mostrarFiltro) return resumo;
-          final estreito =
-              limites.maxWidth < 340 ||
-              MediaQuery.textScalerOf(context).scale(10) > 12;
-          if (estreito) {
-            return Column(
+      child: !mostrarFiltro
+          ? resumo
+          : escalaGrande
+          ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 resumo,
-                const SizedBox(height: 8),
-                Align(alignment: Alignment.centerRight, child: botao),
+                SizedBox(height: tokens.spacing.two),
+                Align(alignment: AlignmentDirectional.centerEnd, child: botao),
               ],
-            );
-          }
-          return Row(
-            children: [
-              Expanded(child: resumo),
-              const SizedBox(width: 12),
-              botao,
-            ],
-          );
-        },
-      ),
+            )
+          : Row(
+              key: const Key('linha-resumo-resultados-livelo'),
+              children: [
+                Expanded(child: resumo),
+                SizedBox(width: tokens.spacing.two),
+                botao,
+              ],
+            ),
     );
   }
 }

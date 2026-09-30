@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
@@ -8,6 +9,7 @@ import 'package:http/testing.dart' as http_testing;
 import 'package:app_robo/app/app.dart';
 import 'package:app_robo/app/navegacao/moldura.dart';
 import 'package:app_robo/app/tema/aparencia.dart';
+import 'package:app_robo/app/tema/tokens.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 
@@ -181,7 +183,9 @@ void main() {
     expect(at.getSemantics(linhaAparencia).label, contains('Escuro'));
   });
 
-  testWidgets('layout amplo preserva o tema claro', (at) async {
+  testWidgets('layout amplo preserva tema claro e barras de sistema claras', (
+    at,
+  ) async {
     at.view.devicePixelRatio = 1;
     at.view.physicalSize = const Size(1440, 900);
     addTearDown(at.view.resetDevicePixelRatio);
@@ -206,5 +210,14 @@ void main() {
       Brightness.light,
     );
     expect(find.byKey(const Key('alternar-tema-cabecalho')), findsNothing);
+    final overlay = at.widget<AnnotatedRegion<SystemUiOverlayStyle>>(
+      find.byType(AnnotatedRegion<SystemUiOverlayStyle>),
+    );
+    expect(overlay.value.statusBarColor, Tokens.canvas);
+    expect(overlay.value.statusBarBrightness, Brightness.light);
+    expect(overlay.value.statusBarIconBrightness, Brightness.dark);
+    expect(overlay.value.systemNavigationBarColor, Tokens.paper);
+    expect(overlay.value.systemNavigationBarDividerColor, Tokens.line);
+    expect(overlay.value.systemNavigationBarIconBrightness, Brightness.dark);
   });
 }

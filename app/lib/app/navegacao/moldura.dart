@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
+import '../../core/api/modelos.dart';
 import '../../core/autenticacao/autenticador.dart';
 import '../../core/versao_app.dart';
 import '../../features/administracao/pagina_administracao.dart';
@@ -16,6 +17,7 @@ import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';
 import '../autenticacao/pagina_entrar.dart';
+import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
 import '../paginas/inicio.dart';
 import '../paginas/lojas.dart';
@@ -220,8 +222,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
     _visitadosCompactos.contains(DestinoCompacto.explorar)
         ? PaginaProgramas(
             key: const PageStorageKey('programas-compacto'),
-            api: widget.api,
-            ativa: _selecionadoCompacto == DestinoCompacto.explorar,
             aoAbrirLivelo: () => _selecionarCompacto(DestinoCompacto.livelo),
             aoAbrirInter: () => _selecionarCompacto(DestinoCompacto.inter),
             aoAbrirPichau: () => _selecionarCompacto(DestinoCompacto.pichau),
@@ -282,14 +282,30 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
 
   Widget _paginaPerfilCompacta() => PaginaPerfil(
     key: const PageStorageKey('perfil-compacto'),
+    api: widget.api,
     administrador: widget.administrador,
     identificacao: widget.identificacaoConta,
-    aoAbrirAlertas: () => unawaited(_abrirAlertas()),
+    aoAbrirAcompanhamentos: () => _selecionarCompacto(DestinoCompacto.radar),
+    aoAbrirNotificacoes: () => Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => PaginaPreferenciasAlertas(
+          api: widget.api,
+          destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+          aoNavegar: _navegarDeRotaSecundaria,
+        ),
+      ),
+    ),
     aoAbrirAparencia: () => Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const PaginaAparencia()),
+      MaterialPageRoute<void>(
+        builder: (_) => PaginaAparencia(
+          destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+          aoNavegar: _navegarDeRotaSecundaria,
+        ),
+      ),
     ),
     aoAbrirAjuda: () => unawaited(_abrirAjuda()),
     aoAbrirProblema: () => unawaited(_abrirProblema()),
+    aoAbrirRelatos: () => unawaited(_abrirMeusRelatos()),
     aoAbrirPrivacidade: () => unawaited(_abrirPrivacidade()),
     aoAbrirLaboratorio: () => Navigator.of(context).push<void>(
       MaterialPageRoute<void>(builder: (_) => const PaginaLaboratorio()),
@@ -302,13 +318,42 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
             ),
           )
         : null,
-    aoSair: widget.aoSair == null
-        ? null
-        : () async {
-            await _notificacoes?.removerAtual();
-            await widget.aoSair!();
-          },
+    aoSair: widget.aoSair == null ? null : _confirmarSaida,
   );
+
+  Future<void> _confirmarSaida() async {
+    final sair = await mostrarFolhaRadar<bool>(
+      context,
+      builder: (contexto) => FolhaRadar(
+        titulo: 'Sair do Radar?',
+        descricao:
+            'Seus acompanhamentos ficam salvos. Os avisos deste aparelho serão desativados.',
+        mostrarVoltar: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                key: const Key('cancelar-saida'),
+                onPressed: () => Navigator.of(contexto).pop(false),
+                child: const Text('Cancelar'),
+              ),
+            ),
+            SizedBox(width: contexto.tokens.spacing.two),
+            Expanded(
+              child: FilledButton(
+                key: const Key('confirmar-saida'),
+                onPressed: () => Navigator.of(contexto).pop(true),
+                child: const Text('Sair'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (sair != true || !mounted) return;
+    await _notificacoes?.removerAtual();
+    await widget.aoSair?.call();
+  }
 
   void _abrirProdutosNoInter() {
     _selecionarCompacto(DestinoCompacto.inter);
@@ -320,23 +365,82 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
   Future<void> _abrirAlertas({String? coleta}) =>
       Navigator.of(context).push<void>(
         MaterialPageRoute<void>(
-          builder: (_) => PaginaAlertas(api: widget.api, coletaInicial: coleta),
+          builder: (_) => PaginaAlertas(
+            api: widget.api,
+            coletaInicial: coleta,
+            destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+            aoNavegar: _navegarDaCentral,
+            aoAbrirItem: _abrirOrigemDoAlerta,
+          ),
         ),
       );
 
+  void _abrirOrigemDoAlerta(AlertaApp alerta) {
+    final destino = switch (alerta.origem) {
+      'livelo' => DestinoCompacto.livelo,
+      'inter_cashback' || 'inter_produto' => DestinoCompacto.inter,
+      'pichau' => DestinoCompacto.pichau,
+      _ => null,
+    };
+    if (destino == null) {
+      mostrarMensagemRadar(
+        context,
+        'A origem deste alerta não está disponível.',
+      );
+      return;
+    }
+    _navegarDaCentral(destino);
+  }
+
+  void _navegarDaCentral(DestinoCompacto destino) {
+    Navigator.of(context).pop();
+    _selecionarCompacto(destino);
+  }
+
   Future<void> _abrirAjuda() => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(builder: (_) => PaginaAjuda(api: widget.api)),
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaAjuda(
+        api: widget.api,
+        destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+        aoNavegar: _navegarDeRotaSecundaria,
+      ),
+    ),
   );
 
   Future<void> _abrirPrivacidade() => Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(builder: (_) => PaginaPrivacidade(api: widget.api)),
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaPrivacidade(
+        api: widget.api,
+        destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+        aoNavegar: _navegarDeRotaSecundaria,
+      ),
+    ),
   );
 
   Future<void> _abrirProblema() => Navigator.of(context).push<void>(
     MaterialPageRoute<void>(
-      builder: (_) => PaginaRelatoProblema(api: widget.api),
+      builder: (_) => PaginaRelatoProblema(
+        api: widget.api,
+        destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+        aoNavegar: _navegarDeRotaSecundaria,
+      ),
     ),
   );
+
+  Future<void> _abrirMeusRelatos() => Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => PaginaMeusRelatos(
+        api: widget.api,
+        destinoSelecionado: _selecionadoCompacto.destinoDaBarra,
+        aoNavegar: _navegarDeRotaSecundaria,
+      ),
+    ),
+  );
+
+  void _navegarDeRotaSecundaria(DestinoCompacto destino) {
+    Navigator.of(context).popUntil((rota) => rota.isFirst);
+    _selecionarCompacto(destino);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +486,7 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
           },
           child: Scaffold(
             body: conteudo,
-            bottomNavigationBar: _BarraInferiorRadar(
+            bottomNavigationBar: BarraInferiorRadar(
               selecionado: _selecionadoCompacto.destinoDaBarra,
               aoSelecionar: _selecionarCompacto,
             ),
@@ -391,54 +495,6 @@ class _EstadoMolduraRadar extends State<MolduraRadar> {
       },
     );
   }
-}
-
-class _BarraInferiorRadar extends StatelessWidget {
-  const _BarraInferiorRadar({
-    required this.selecionado,
-    required this.aoSelecionar,
-  });
-
-  final DestinoCompacto selecionado;
-  final ValueChanged<DestinoCompacto> aoSelecionar;
-
-  static const _destinos = <DestinoCompacto>[
-    DestinoCompacto.inicio,
-    DestinoCompacto.explorar,
-    DestinoCompacto.radar,
-    DestinoCompacto.perfil,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final indiceSelecionado = _destinos.indexOf(selecionado);
-    return SafeArea(
-      top: false,
-      child: NavigationBar(
-        key: const Key('barra-inferior-v15'),
-        selectedIndex: indiceSelecionado < 0 ? 0 : indiceSelecionado,
-        onDestinationSelected: (indice) => aoSelecionar(_destinos[indice]),
-        destinations: [
-          for (final destino in _destinos)
-            NavigationDestination(
-              key: Key('barra-${destino.name}'),
-              icon: Icon(destino.icone),
-              selectedIcon: Icon(_iconeSelecionado(destino)),
-              label: destino.titulo,
-            ),
-        ],
-      ),
-    );
-  }
-
-  static IconData _iconeSelecionado(DestinoCompacto destino) =>
-      switch (destino) {
-        DestinoCompacto.inicio => Icons.home,
-        DestinoCompacto.explorar => Icons.explore,
-        DestinoCompacto.radar => Icons.bookmark,
-        DestinoCompacto.perfil => Icons.person,
-        _ => destino.icone,
-      };
 }
 
 class _PaginaProgramaInterna extends StatelessWidget {

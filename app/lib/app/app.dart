@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/api/api.dart';
 import '../core/api/construcao.dart';
@@ -12,6 +14,7 @@ import 'inicializacao/pagina_abertura.dart';
 import 'navegacao/moldura.dart';
 import 'tema/aparencia.dart';
 import 'tema/tema.dart';
+import 'tema/tokens.dart';
 
 /// Raiz do aplicativo Radar de Benefícios.
 ///
@@ -110,30 +113,50 @@ class _EstadoRadarApp extends State<RadarApp> {
       builder: (context, _) => MaterialApp(
         title: 'Radar de Benefícios',
         debugShowCheckedModeBanner: false,
+        locale: const Locale('pt', 'BR'),
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const <Locale>[Locale('pt', 'BR')],
         theme: TemaRadar.claro(),
         darkTheme: TemaRadar.escuro(),
         themeMode: _aparencia.modo,
-        builder: (context, child) {
-          final media = MediaQuery.of(context);
-          final mediaComMovimento = media.copyWith(
-            disableAnimations:
-                media.disableAnimations || _aparencia.reduzirMovimento,
-          );
-          return MediaQuery(
-            data: mediaComMovimento,
-            child: AparenciaRadar(
-              controlador: _aparencia,
-              child: LayoutBuilder(
-                builder: (context, limites) {
-                  final preservarClaro =
-                      limites.maxWidth >= _larguraLayoutAmplo;
-                  if (!preservarClaro) return child!;
-                  return Theme(data: TemaRadar.claro(), child: child!);
-                },
+        builder: (context, child) => LayoutBuilder(
+          builder: (context, limites) {
+            final preservarClaro = limites.maxWidth >= _larguraLayoutAmplo;
+            final temaEfetivo = preservarClaro
+                ? TemaRadar.claro()
+                : Theme.of(context);
+            final cores =
+                temaEfetivo.extension<CoresRadar>() ?? CoresRadar.de(context);
+            final iconesClaros = temaEfetivo.brightness == Brightness.dark;
+            final barrasSistema = SystemUiOverlayStyle(
+              statusBarColor: cores.canvas,
+              statusBarBrightness: temaEfetivo.brightness,
+              statusBarIconBrightness: iconesClaros
+                  ? Brightness.light
+                  : Brightness.dark,
+              systemNavigationBarColor: cores.superficie,
+              systemNavigationBarDividerColor: cores.borda,
+              systemNavigationBarIconBrightness: iconesClaros
+                  ? Brightness.light
+                  : Brightness.dark,
+            );
+            final media = MediaQuery.of(context);
+            final mediaComMovimento = media.copyWith(
+              disableAnimations:
+                  media.disableAnimations || _aparencia.reduzirMovimento,
+            );
+            final conteudo = preservarClaro
+                ? Theme(data: temaEfetivo, child: child!)
+                : child!;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: barrasSistema,
+              child: MediaQuery(
+                data: mediaComMovimento,
+                child: AparenciaRadar(controlador: _aparencia, child: conteudo),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
         home: widget.inicializador != null
             ? PaginaAbertura(
                 inicializar: widget.inicializador!,

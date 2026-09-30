@@ -161,7 +161,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     if (!widget.administrador) return const SizedBox.shrink();
     if (_carregando) {
       if (widget.somenteIcone) {
-        return IconButton.filledTonal(
+        return IconButton(
           tooltip: 'Verificando atualização',
           onPressed: null,
           icon: SizedBox.square(
@@ -181,7 +181,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     }
     if (_erro != null) {
       if (widget.somenteIcone) {
-        return IconButton.filledTonal(
+        return IconButton(
           tooltip: 'Verificar disponibilidade de atualização',
           onPressed: _consultar,
           icon: const Icon(Icons.refresh),
@@ -203,7 +203,7 @@ class _EstadoBotaoDisparo extends State<BotaoDisparo> {
     // largura das abas e deixa o estado completo disponível no tooltip.
     final textoCompacto = _solicitando ? 'Atualizando…' : widget.rotulo;
     if (widget.somenteIcone) {
-      return IconButton.filledTonal(
+      return IconButton(
         tooltip: espera > 0
             ? 'Aguarde ${_tempo(espera)} para atualizar.'
             : widget.rotulo,

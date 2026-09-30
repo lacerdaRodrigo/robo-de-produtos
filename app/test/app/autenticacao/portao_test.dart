@@ -116,13 +116,14 @@ void main() {
     await at.tap(recuperar);
     await at.pumpAndSettle();
     await at.tap(find.byKey(const Key('recuperar-enviar')));
-    await at.pump();
+    await at.pumpAndSettle();
 
     expect(autenticador.recuperacaoRecebida, 'piloto@example.com');
     expect(
       find.textContaining('Se o e-mail estiver cadastrado'),
       findsOneWidget,
     );
+    expect(find.text('Pedido registrado.'), findsOneWidget);
   });
 
   testWidgets('sessão convidada atravessa o gate e abre o app', (at) async {

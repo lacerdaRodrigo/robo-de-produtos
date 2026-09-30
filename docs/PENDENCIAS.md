@@ -12,12 +12,13 @@ essas regras.
   conteúdo da notificação e a abertura da Central. Não criar fixtures nem
   alterar dados de produção para provocar o evento. A permissão de push continua
   opcional e o histórico deve permanecer acessível quando recusada.
-- [ ] Completar o aceite físico no Samsung SM-M135M e no Moto G6 Play. No
-  Samsung, ainda faltam sessão expirada controlada, conta sem papel
+- [ ] Completar o aceite físico no Samsung SM-M135M (M13), aparelho-alvo desta
+  revisão. Ainda faltam sessão expirada controlada, conta sem papel
   administrativo, estados de erro/atraso/parcial, leitura de tela, cobertura de
   rotas com texto ampliado e comparação formal de todas as telas com o HTML V15.
-  No Moto G6 Play, a rodada física ainda não foi executada. O registro detalhado
-  está no [`PRD de aceite mobile`](prd/PRD-ACEITE-MOBILE-V15.md).
+  A rodada parcial anterior no Moto G6 Play é histórica e não substitui o aceite
+  no M13. O registro detalhado está no
+  [`PRD de aceite mobile`](prd/PRD-ACEITE-MOBILE-V15.md).
 - [ ] Revisar e aprovar o mapeamento de categorias das lojas atuais de cashback
   Inter; depois, classificar o conjunto confirmado pelo fluxo administrativo.
   A confirmação da migration não aprova categorias em nome do responsável.
@@ -51,6 +52,11 @@ essas regras.
   Riachuelo em `Sem dados`, enquanto a evidência anterior registrava 74 e outra
   rodada retornou zero. Confirmar conta/corte de dados antes de aceitar a
   continuidade dos acompanhamentos; não preencher valores ausentes.
+
+## Revisão mobile V15 desta branch
+
+- [ ] Gerar e instalar o APK final desta revisão no Samsung SM-M135M (M13), preservando a sessão. O artefato existente não contém as alterações atuais; os bloqueios de build e ADB estão detalhados em D-045 no [`PRD de aceite mobile`](prd/PRD-ACEITE-MOBILE-V15.md). A evidência D-044 é uma rodada parcial anterior no Moto G6 Play e não valida esta revisão no aparelho-alvo.
+- [ ] Publicar a API desta branch para habilitar `GET /api/relatos-problema`, as cinco categorias V15, os parâmetros do catálogo Livelo (`somente_pontuacao_comum_ampliada` e `ordenar=validade`) e as rotas de filtro/detalhe da Central de Alertas. Até a publicação, não validar esses fluxos no APK contra o serviço real. A migration `035_categorias_relato_mobile_v15.sql` foi informada como executada pelo responsável; esta sessão não consultou o banco.
 
 ## Executor Android e Pichau
 

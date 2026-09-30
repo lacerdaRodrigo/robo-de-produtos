@@ -447,11 +447,21 @@ e detalhes internos de erro não são exibidos pelo aplicativo.
 No aplicativo V15, a tela Android compacta da Livelo usa cabeçalho próprio com
 `Livelo`, `Catálogo`, voltar para Explorar e atualização representada por ícone.
 O título é `Lojas e pontos`, sem a descrição redundante da origem; a busca usa
-`CampoBuscaRadar` com avanço, e as abas são `Lojas` e `No radar`, sem contadores
-embutidos. Filtros, seletores de categoria e detalhes abrem
-pela `FolhaRadar`, com puxador, cabeçalho centralizado, voltar/fechar e fundo
-bloqueado e desfocado. Essa padronização é visual; o catálogo continua
-consultando apenas a API autenticada e paginada.
+`CampoBuscaRadar` com avanço e consulta somente ao enviar pela seta ou pelo
+teclado; as abas são `Lojas` e `No radar`, sem contadores
+embutidos. Filtros, seletores de categoria e detalhes abrem pela `FolhaRadar`,
+com puxador e fundo bloqueado e desfocado. A folha de filtros usa o título
+`Filtros` e um botão de fechar; a lista de categoria e ordenação mantém contagem
+e ação na mesma linha a 360 dp e permite reflow em escala de texto ampliada. O
+protótipo também mostra `Somente pontuação comum ampliada`. A opção inclui somente
+parceiros com `pontos_atuais` e `pontos_base` presentes e pontuação atual maior
+que a base; pontos de Clube não entram nessa comparação. A API aplica o filtro
+no SQL antes da contagem e da paginação (`somente_pontuacao_comum_ampliada=true`),
+e ordena `Fim da campanha` por data crescente, com validade ausente por último.
+`Limpar` aplica os padrões imediatamente e mantém a folha aberta, a busca e a aba.
+O catálogo continua consultando somente a API autenticada e paginada. Esses
+parâmetros estão implementados nesta branch e dependem da publicação da API para
+funcionarem no APK contra o serviço real.
 
 O histórico Livelo também abre como folha sobre os detalhes da loja, sem criar
 uma rota de tela cheia. O cabeçalho exibe `Histórico · {nome da loja}` e
@@ -473,9 +483,11 @@ aparece quando o total é 11 ou maior. A API continua sendo a fonte de total e
 das páginas existentes; o Flutter não infere nem baixa o catálogo completo.
 Depois da troca, a lista retorna ao início com uma animação suave.
 
-Cada cartão segue a hierarquia compacta do protótipo: categoria e horário da
+Cada cartão segue a hierarquia compacta do protótipo, separado dos vizinhos por
+16 dp: categoria e horário da
 última coleta, nome da loja, pontuação em destaque com `pontos / R$ 1`, base e
-eventual Clube, selos de campanha/validade, acompanhamento, condições,
+Clube somente quando a pontuação Clube supera a comum por comparação decimal
+exata, selos de campanha/validade, acompanhamento, condições,
 histórico e abertura externa da Livelo. O horário é derivado de
 `resumo.ultima_coleta`; ausência continua visível como estado sem atualização.
 O cartão não exibe logotipo externo nem um sino duplicado para acompanhamento.

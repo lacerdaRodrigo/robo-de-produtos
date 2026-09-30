@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
+import '../../app/tema/tema.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
 import 'formato_cashback_inter.dart';
@@ -201,6 +202,13 @@ class _CartaoCompactoV15 extends StatelessWidget {
     final tokens = context.tokens;
     final textoPrincipal =
         loja.cashbackPrincipalTexto ?? 'Oferta não informada';
+    final contexto = [
+      loja.categoria?.trim(),
+      loja.etiqueta?.trim(),
+    ].whereType<String>().where((valor) => valor.isNotEmpty).join(' · ');
+    final atualizado = atualizadoEm == null
+        ? null
+        : dataHoraInter(atualizadoEm);
     final possuiAcompanhamento = podeAdministrar || aoAcompanhar != null;
     final seguir = OutlinedButton.icon(
       key: ValueKey('acompanhar-${loja.id}'),
@@ -252,9 +260,10 @@ class _CartaoCompactoV15 extends StatelessWidget {
     );
 
     return Padding(
-      padding: EdgeInsets.only(bottom: tokens.spacing.three),
+      padding: EdgeInsets.only(bottom: tokens.spacing.four),
       child: CartaoRadar(
-        padding: EdgeInsets.all(tokens.spacing.four),
+        padding: EdgeInsets.all(tokens.spacing.five),
+        comSombra: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -262,7 +271,7 @@ class _CartaoCompactoV15 extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    loja.etiqueta ?? 'Site parceiro',
+                    contexto.isEmpty ? 'Sites parceiros' : contexto,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: tema.textTheme.labelMedium?.copyWith(
@@ -278,21 +287,27 @@ class _CartaoCompactoV15 extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                if (loja.encontrada && atualizado != null)
+                  Flexible(
+                    child: Text(
+                      atualizado,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: cores.textoSuave,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            SizedBox(height: tokens.spacing.one),
-            Text(
-              loja.nome,
-              style: tema.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            SizedBox(height: tokens.spacing.two),
+            SizedBox(height: tokens.spacing.three),
+            Text(loja.nome, style: tema.textTheme.tituloOferta),
+            SizedBox(height: tokens.spacing.three),
             Text(
               loja.encontrada ? textoPrincipal : 'Oferta não encontrada',
-              style: tema.textTheme.headlineSmall?.copyWith(
+              style: tema.textTheme.precoOferta?.copyWith(
                 color: loja.encontrada ? cores.texto : cores.textoSuave,
-                fontWeight: FontWeight.w800,
               ),
             ),
             SizedBox(height: tokens.spacing.one),

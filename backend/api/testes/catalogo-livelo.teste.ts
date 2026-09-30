@@ -81,6 +81,49 @@ describe("catálogo Livelo autenticado", () => {
     }).map((item) => item.id_externo)).toEqual(["A"]);
   });
 
+  it("filtra pontuação comum ampliada sem usar Clube ou converter para float", () => {
+    const acima = apresentarParceiroLivelo({
+      ...parceiro("D", "Pontos maiores", "10.01", ["marketplace"]),
+      pontos_base: "10",
+      pontos_clube: "15",
+    });
+    const igual = apresentarParceiroLivelo({
+      ...parceiro("E", "Pontos iguais", "10.0", ["marketplace"]),
+      pontos_base: "10",
+    });
+    const ausente = apresentarParceiroLivelo({
+      ...parceiro("F", "Sem base", "99", ["marketplace"]),
+      pontos_base: null,
+    });
+    const ampliada = filtrarEOrdenarCatalogoLivelo(
+      [acima, igual, ausente],
+      {
+        q: "",
+        aba: "todas",
+        categoria: "",
+        ordenar: "pontos",
+        somentePontuacaoComumAmpliada: true,
+      },
+    );
+
+    expect(ampliada.map((item) => item.id_externo)).toEqual(["D"]);
+  });
+
+  it("ordena validade crescente e mantém validade ausente por último", () => {
+    const itens = [
+      apresentarParceiroLivelo({ ...parceiro("A", "Sem fim", "1", []), fim_promocao: null }),
+      apresentarParceiroLivelo({ ...parceiro("B", "Depois", "1", []), fim_promocao: "2026-10-02" }),
+      apresentarParceiroLivelo({ ...parceiro("C", "Antes", "1", []), fim_promocao: "2026-09-30" }),
+    ];
+
+    expect(filtrarEOrdenarCatalogoLivelo(itens, {
+      q: "",
+      aba: "todas",
+      categoria: "",
+      ordenar: "validade",
+    }).map((item) => item.id_externo)).toEqual(["C", "B", "A"]);
+  });
+
   it("ordena pontos textuais com precisão e encontra a melhor oferta", () => {
     const ordenados = filtrarEOrdenarCatalogoLivelo(itens, {
       q: "",

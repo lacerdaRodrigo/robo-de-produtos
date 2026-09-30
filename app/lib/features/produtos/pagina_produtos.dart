@@ -218,7 +218,10 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
                     dica: widget.experienciaCompacta
                         ? 'Buscar produtos'
                         : 'Ex.: celular Motorola Edge 60 Pro',
-                    aoMudar: _controlador.mudarTermo,
+                    aoMudar: widget.experienciaCompacta
+                        ? (_) {}
+                        : _controlador.mudarTermo,
+                    aoAcionar: () => _controlador.mudarTermo(_campoBusca.text),
                   ),
                 ),
                 Padding(
@@ -531,7 +534,7 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
         sliver: SliverList.separated(
           itemCount: widgets.length,
           separatorBuilder: (_, _) =>
-              SizedBox(height: context.tokens.spacing.two),
+              SizedBox(height: context.tokens.spacing.four),
           itemBuilder: (_, indice) => widgets[indice],
         ),
       ),
@@ -741,13 +744,17 @@ class _EstadoPaginaProdutos extends State<PaginaProdutos> {
       alturaMaxima: 0.84,
       builder: (_) => FolhaRadar(
         titulo: 'Filtros · Compre direto',
-        descricao: 'Ajuste a ordem e o recorte do catálogo salvo.',
+        descricao: '',
+        mostrarVoltar: false,
         child: Flexible(
           child: _FiltrosProdutosSheet(
             api: widget.api,
             filtros: _controlador.filtros,
             podeLerLojasSelecionadas: widget.administrador,
             mostrarCabecalho: false,
+            aoLimpar: () => _controlador.mudarFiltros(
+              FiltrosProdutos(escopos: _controlador.filtros.escopos),
+            ),
           ),
         ),
       ),
@@ -865,12 +872,14 @@ class _FiltrosProdutosSheet extends StatefulWidget {
     required this.filtros,
     required this.podeLerLojasSelecionadas,
     this.mostrarCabecalho = true,
+    required this.aoLimpar,
   });
 
   final Api api;
   final FiltrosProdutos filtros;
   final bool podeLerLojasSelecionadas;
   final bool mostrarCabecalho;
+  final VoidCallback aoLimpar;
 
   @override
   State<_FiltrosProdutosSheet> createState() => _EstadoFiltrosProdutosSheet();
@@ -1139,6 +1148,7 @@ class _EstadoFiltrosProdutosSheet extends State<_FiltrosProdutosSheet> {
       _precoMin.clear();
       _precoMax.clear();
     });
+    widget.aoLimpar();
   }
 
   static const _valorSemCategoria = '__sem_categoria__';

@@ -67,6 +67,47 @@ void main() {
     expect(find.textContaining('Aguarde 5 min'), findsOneWidget);
   });
 
+  testWidgets('ação compacta de atualização não recebe fundo preenchido', (
+    at,
+  ) async {
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((_) async {
+          return http.Response(
+            jsonEncode({
+              'dominio': 'livelo',
+              'cooldown_segundos': 0,
+              'ultima_solicitacao_em': null,
+              'ultimo_estado': null,
+            }),
+            200,
+          );
+        }),
+      ),
+    );
+
+    await at.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BotaoDisparo(
+            api: api,
+            dominio: 'livelo',
+            administrador: true,
+            somenteIcone: true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    final botao = at.widget<IconButton>(find.byType(IconButton));
+    expect(botao.style?.backgroundColor?.resolve({}), isNull);
+    expect(at.getSize(find.byType(IconButton)), const Size(48, 48));
+  });
+
   testWidgets('cooldown recusado informa e usa a espera do servidor', (
     at,
   ) async {

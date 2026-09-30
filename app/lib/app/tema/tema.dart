@@ -2,6 +2,40 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
+extension TipografiaOfertaV15 on TextTheme {
+  TextStyle? get tituloOferta => titleMedium?.copyWith(
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 1.35,
+    letterSpacing: -0.45,
+  );
+
+  TextStyle? get precoOferta => headlineSmall?.copyWith(
+    fontSize: 30,
+    fontWeight: FontWeight.w800,
+    height: 1.2,
+    letterSpacing: -1,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+}
+
+extension TipografiaInicioV15 on TextTheme {
+  TextStyle? get sobrelinhaInicio => bodySmall?.copyWith(
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: 0,
+  );
+
+  TextStyle? get estadoInicio => bodySmall?.copyWith(height: 1.55);
+
+  TextStyle? get tituloSecaoInicio => titleLarge?.copyWith(
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 1.25,
+    letterSpacing: -0.4,
+  );
+}
+
 /// Material 3 da identidade Radar V15.
 abstract final class TemaRadar {
   static ThemeData claro() =>
@@ -14,6 +48,7 @@ abstract final class TemaRadar {
     required Brightness brilho,
     required CoresRadar cores,
   }) {
+    const tamanhos = AppSizes.v15();
     final base = ThemeData(
       useMaterial3: true,
       brightness: brilho,
@@ -67,8 +102,9 @@ abstract final class TemaRadar {
         letterSpacing: -1,
       ),
       headlineLarge: texto.headlineLarge?.copyWith(
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.8,
+        fontWeight: FontWeight.w700,
+        height: 1.16,
+        letterSpacing: -1.4,
       ),
       headlineMedium: texto.headlineMedium?.copyWith(
         fontWeight: FontWeight.w800,
@@ -90,7 +126,7 @@ abstract final class TemaRadar {
           colors: cores,
           spacing: const AppSpacing.v15(),
           radii: const AppRadii.v15(),
-          sizes: const AppSizes.v15(),
+          sizes: tamanhos,
           motion: const AppMotion.v15(),
         ),
         cores,
@@ -104,10 +140,21 @@ abstract final class TemaRadar {
         titleTextStyle: tipografia.titleLarge,
       ),
       navigationBarTheme: NavigationBarThemeData(
+        height: tamanhos.bottomNavigationHeight,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         backgroundColor: cores.superficie,
-        indicatorColor: cores.acao.withValues(alpha: 0.14),
+        indicatorColor: brilho == Brightness.dark
+            ? Tokens.acaoFundoEscuro
+            : Tokens.actionSoft,
+        indicatorShape: const StadiumBorder(),
         elevation: 0,
-        labelTextStyle: WidgetStatePropertyAll(tipografia.labelMedium),
+        labelTextStyle: WidgetStateProperty.resolveWith((estados) {
+          final selecionado = estados.contains(WidgetState.selected);
+          return tipografia.labelMedium?.copyWith(
+            color: selecionado ? cores.acao : cores.textoSuave,
+            fontWeight: FontWeight.w600,
+          );
+        }),
         iconTheme: WidgetStateProperty.resolveWith((estados) {
           final selecionado = estados.contains(WidgetState.selected);
           return IconThemeData(

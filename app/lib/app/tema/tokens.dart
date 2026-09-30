@@ -108,6 +108,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   const CoresRadar({
     required this.marca,
     required this.acao,
+    required this.acaoForte,
     required this.ganho,
     required this.atencao,
     required this.perigo,
@@ -120,11 +121,13 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     required this.teal,
     required this.marcaTexto,
     required this.perigoFundo,
+    required this.acaoFundo,
   });
 
   const CoresRadar.claras()
     : marca = Tokens.ink,
       acao = Tokens.action,
+      acaoForte = Tokens.actionStrong,
       ganho = Tokens.teal,
       atencao = Tokens.focus,
       perigo = Tokens.danger,
@@ -136,11 +139,13 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       texto = Tokens.ink,
       teal = Tokens.teal,
       marcaTexto = Tokens.actionInk,
-      perigoFundo = Tokens.dangerSoft;
+      perigoFundo = Tokens.dangerSoft,
+      acaoFundo = Tokens.acaoFundo;
 
   const CoresRadar.escuras()
     : marca = Tokens.superficieEscura,
       acao = Tokens.acaoEscura,
+      acaoForte = Tokens.acaoForteEscura,
       ganho = Tokens.ganhoEscuro,
       atencao = Tokens.atencaoEscuro,
       perigo = Tokens.perigoEscuro,
@@ -152,9 +157,11 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       texto = Tokens.textoEscuro,
       teal = Tokens.ganhoEscuro,
       marcaTexto = Tokens.actionInkDark,
-      perigoFundo = Tokens.acaoFundoEscuro;
+      perigoFundo = Tokens.acaoFundoEscuro,
+      acaoFundo = Tokens.acaoFundoEscuro;
 
   final Color acao;
+  final Color acaoForte;
   final Color marca;
   final Color ganho;
   final Color atencao;
@@ -168,6 +175,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   final Color teal;
   final Color marcaTexto;
   final Color perigoFundo;
+  final Color acaoFundo;
 
   static CoresRadar de(BuildContext context) =>
       Theme.of(context).extension<CoresRadar>() ??
@@ -179,6 +187,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
   CoresRadar copyWith({
     Color? marca,
     Color? acao,
+    Color? acaoForte,
     Color? ganho,
     Color? atencao,
     Color? perigo,
@@ -191,9 +200,11 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     Color? teal,
     Color? marcaTexto,
     Color? perigoFundo,
+    Color? acaoFundo,
   }) => CoresRadar(
     marca: marca ?? this.marca,
     acao: acao ?? this.acao,
+    acaoForte: acaoForte ?? this.acaoForte,
     ganho: ganho ?? this.ganho,
     atencao: atencao ?? this.atencao,
     perigo: perigo ?? this.perigo,
@@ -206,6 +217,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     teal: teal ?? this.teal,
     marcaTexto: marcaTexto ?? this.marcaTexto,
     perigoFundo: perigoFundo ?? this.perigoFundo,
+    acaoFundo: acaoFundo ?? this.acaoFundo,
   );
 
   @override
@@ -215,6 +227,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
     return CoresRadar(
       marca: mistura(marca, other.marca),
       acao: mistura(acao, other.acao),
+      acaoForte: mistura(acaoForte, other.acaoForte),
       ganho: mistura(ganho, other.ganho),
       atencao: mistura(atencao, other.atencao),
       perigo: mistura(perigo, other.perigo),
@@ -230,6 +243,7 @@ class CoresRadar extends ThemeExtension<CoresRadar> {
       teal: mistura(teal, other.teal),
       marcaTexto: mistura(marcaTexto, other.marcaTexto),
       perigoFundo: mistura(perigoFundo, other.perigoFundo),
+      acaoFundo: mistura(acaoFundo, other.acaoFundo),
     );
   }
 }
@@ -247,6 +261,7 @@ class AppSpacing {
     required this.eight,
     required this.nine,
     required this.ten,
+    required this.compactStatusGap,
   });
 
   const AppSpacing.v15()
@@ -259,7 +274,9 @@ class AppSpacing {
       seven = 32,
       eight = 40,
       nine = 48,
-      ten = 64;
+      ten = 64,
+      // O HTML V15 define 6 px entre o indicador verde e o rótulo do hero.
+      compactStatusGap = 6;
 
   final double one;
   final double two;
@@ -271,6 +288,7 @@ class AppSpacing {
   final double eight;
   final double nine;
   final double ten;
+  final double compactStatusGap;
 }
 
 @immutable
@@ -305,6 +323,13 @@ class AppSizes {
     required this.illustrationHeight,
     required this.sheetHandleWidth,
     required this.sheetHandleHeight,
+    required this.bottomNavigationHeight,
+    required this.bottomNavigationIcon,
+    required this.bottomNavigationCompactHeight,
+    required this.bottomNavigationCompactGap,
+    required this.bottomNavigationCompactGlyphPadding,
+    required this.bottomNavigationCompactHorizontalPadding,
+    required this.statusIndicator,
   });
 
   const AppSizes.v15()
@@ -314,12 +339,21 @@ class AppSizes {
       badge = 24,
       brandWidth = 104,
       brandHeight = 30,
-      compactRailWidth = 148,
-      compactRailHeight = 120,
+      compactRailWidth = 132,
+      compactRailHeight = 136,
       illustrationWidth = 96,
       illustrationHeight = 72,
       sheetHandleWidth = 40,
-      sheetHandleHeight = 4;
+      sheetHandleHeight = 4,
+      // CSS V15: alvo com 63 px mínimos, 6 px no topo, 2 px na base e borda.
+      bottomNavigationHeight = 71,
+      bottomNavigationIcon = 22,
+      // CSS V15: duas linhas para escala 200% em largura até 350 px.
+      bottomNavigationCompactHeight = 54,
+      bottomNavigationCompactGap = 2,
+      bottomNavigationCompactGlyphPadding = 5,
+      bottomNavigationCompactHorizontalPadding = 2,
+      statusIndicator = 6;
 
   final double touchTarget;
   final double field;
@@ -333,6 +367,13 @@ class AppSizes {
   final double illustrationHeight;
   final double sheetHandleWidth;
   final double sheetHandleHeight;
+  final double bottomNavigationHeight;
+  final double bottomNavigationIcon;
+  final double bottomNavigationCompactHeight;
+  final double bottomNavigationCompactGap;
+  final double bottomNavigationCompactGlyphPadding;
+  final double bottomNavigationCompactHorizontalPadding;
+  final double statusIndicator;
 }
 
 @immutable

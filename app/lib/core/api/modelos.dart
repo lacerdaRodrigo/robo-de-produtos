@@ -88,6 +88,13 @@ class ProdutoDireto {
   /// Presença no snapshot atual. Ausente nas buscas, explícito no histórico.
   final bool? ativo;
 
+  String get statusDisponibilidade {
+    if (ativo == false) return 'Fora do catálogo';
+    if (estoque == 0) return 'Esgotado';
+    if (estoque == null) return 'Disponibilidade não informada';
+    return 'Disponível';
+  }
+
   ProdutoDireto copiarCom({bool? acompanhado}) => ProdutoDireto(
     idExterno: idExterno,
     nome: nome,
@@ -1036,6 +1043,27 @@ class PerfilUsuario {
   final String papel;
 
   bool get administrador => papel == 'admin';
+}
+
+class RelatoProblema {
+  const RelatoProblema({
+    required this.id,
+    required this.categoria,
+    required this.mensagem,
+    required this.criadoEm,
+  });
+
+  factory RelatoProblema.parse(Map<String, dynamic> objeto) => RelatoProblema(
+    id: _texto(objeto['id']),
+    categoria: _texto(objeto['categoria']),
+    mensagem: _texto(objeto['mensagem']),
+    criadoEm: _texto(objeto['criado_em']),
+  );
+
+  final String id;
+  final String categoria;
+  final String mensagem;
+  final String criadoEm;
 }
 
 /// Estado da última solicitação manual de coleta, não da coleta em si.
