@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/tema/tema.dart';
+import 'package:app_robo/app/tema/tokens.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
@@ -23,6 +25,8 @@ ProdutoDireto _produto({
   String nome = 'Motorola Edge 60 Pro',
   String? categoria = 'Celular',
   bool acompanhado = false,
+  int? estoque = 4,
+  bool? ativo,
 }) => ProdutoDireto(
   idExterno: id,
   nome: nome,
@@ -39,12 +43,13 @@ ProdutoDireto _produto({
   cashbackPercentualTexto: '9%',
   precoLiquidoTexto: 'R\$ 3.356,89',
   parcelamento: 'Em 10x sem juros',
-  estoque: 4,
+  estoque: estoque,
   etiquetas: const ['Oferta'],
   lojaSlug: loja == 'Casas Bahia' ? 'casas-bahia' : 'ponto',
   lojaNome: loja,
   atualizadaEm: '2026-08-22T12:00:00Z',
   acompanhado: acompanhado,
+  ativo: ativo,
 );
 
 Pagina<ProdutoDireto> _pagina(
@@ -71,6 +76,38 @@ Api _api() => Api(
     cliente: http_testing.MockClient((_) async => http.Response('{}', 500)),
   ),
 );
+
+Future<void> _pesquisar(WidgetTester at, String chave, String termo) async {
+  await at.enterText(find.byKey(Key(chave)), termo);
+  await at.testTextInput.receiveAction(TextInputAction.search);
+  await at.pumpAndSettle();
+}
+
+void _esperarCartaoOfertaV15(WidgetTester at) {
+  final cartaoRadar = at.widget<CartaoRadar>(find.byType(CartaoRadar));
+  expect(cartaoRadar.comSombra, isFalse);
+  expect(cartaoRadar.corDestaque, isNull);
+  expect(cartaoRadar.padding, const EdgeInsets.all(20));
+
+  final materialFinder = find
+      .descendant(
+        of: find.byType(CartaoProduto),
+        matching: find.byType(Material),
+      )
+      .first;
+  final material = at.widget<Material>(materialFinder);
+  expect(material.color, Tokens.paper);
+  final forma = material.shape! as RoundedRectangleBorder;
+  expect(forma.borderRadius, BorderRadius.circular(RaioRadar.grande));
+  expect(forma.side.color, Tokens.line);
+
+  final decoradorFinder = find
+      .ancestor(of: materialFinder, matching: find.byType(DecoratedBox))
+      .first;
+  final decoracao =
+      at.widget<DecoratedBox>(decoradorFinder).decoration as BoxDecoration;
+  expect(decoracao.boxShadow, isEmpty);
+}
 
 Api _apiFiltros() => Api(
   paginaPadrao: 20,
@@ -223,6 +260,50 @@ Widget _tela(ControladorBuscaProdutos controlador) => MaterialApp(
 );
 
 void main() {
+  testWidgets('busca compacta consulta apenas depois do envio', (at) async {
+    final termos = <String>[];
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async {
+            termos.add(termo);
+            return _pagina([_produto()]);
+          },
+    );
+    addTearDown(controlador.dispose);
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: PaginaProdutos(
+          api: _api(),
+          controlador: controlador,
+          incorporada: true,
+          experienciaCompacta: true,
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    expect(termos, ['']);
+
+    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
+    await at.pumpAndSettle();
+    expect(termos, ['']);
+
+    await at.testTextInput.receiveAction(TextInputAction.search);
+    await at.pumpAndSettle();
+    expect(termos, ['', 'edge']);
+  });
+
   testWidgets('oferta compacta identifica loja e Banco Inter', (at) async {
     await at.pumpWidget(
       MaterialApp(
@@ -243,12 +324,13 @@ void main() {
 
     expect(find.text('Casas Bahia'), findsOneWidget);
     expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+    expect(
+      at.widget<Text>(find.text('Motorola Edge 60 Pro')).style?.fontSize,
+      18,
+    );
     expect(find.text('Disponível'), findsOneWidget);
     expect(at.widget<Text>(find.text('Disponível')).textAlign, TextAlign.end);
-    expect(
-      at.widget<Text>(find.text('R\$ 3.688,89')).style?.fontSize,
-      greaterThanOrEqualTo(28),
-    );
+    expect(at.widget<Text>(find.text('R\$ 3.688,89')).style?.fontSize, 30);
     final semantica = at.getSemantics(find.byType(CartaoProduto));
     expect(
       semantica.label,
@@ -256,6 +338,121 @@ void main() {
         'Oferta Motorola Edge 60 Pro, da loja Casas Bahia, no Banco Inter',
       ),
     );
+    _esperarCartaoOfertaV15(at);
+  });
+
+  testWidgets('cartão compacto distingue estoque ausente de zero', (at) async {
+    for (final (estoque, ativo, status) in <(int?, bool?, String)>[
+      (null, null, 'Disponibilidade não informada'),
+      (0, null, 'Esgotado'),
+      (4, false, 'Fora do catálogo'),
+    ]) {
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: Scaffold(
+            body: CartaoProduto(
+              produto: _produto(estoque: estoque, ativo: ativo),
+              compacto: true,
+              aoAbrirDetalhes: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(status), findsOneWidget);
+      final cores = CoresRadar.de(at.element(find.text(status)));
+      expect(
+        at.widget<Text>(find.text(status)).style?.color,
+        status == 'Disponibilidade não informada'
+            ? cores.textoSuave
+            : cores.atencao,
+      );
+      expect(at.takeException(), isNull);
+    }
+  });
+
+  testWidgets('detalhe distingue disponibilidade ausente, zero e catálogo', (
+    at,
+  ) async {
+    for (final (estoque, ativo, status) in <(int?, bool?, String)>[
+      (null, null, 'Disponibilidade não informada'),
+      (0, null, 'Esgotado'),
+      (4, false, 'Fora do catálogo'),
+    ]) {
+      await at.pumpWidget(
+        MaterialApp(
+          theme: TemaRadar.claro(),
+          home: PaginaDetalheProduto(
+            produto: _produto(estoque: estoque, ativo: ativo),
+            aoAbrirHistorico: () {},
+          ),
+        ),
+      );
+
+      expect(find.text(status), findsOneWidget);
+      final cores = CoresRadar.de(at.element(find.text(status)));
+      expect(
+        at.widget<Text>(find.text(status)).style?.color,
+        status == 'Disponibilidade não informada'
+            ? cores.textoSuave
+            : cores.atencao,
+      );
+      expect(at.takeException(), isNull);
+    }
+  });
+
+  testWidgets('oferta compacta suporta texto a 200% sem overflow', (at) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(2),
+          ),
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: SizedBox(
+                width: 320,
+                child: CartaoProduto(
+                  produto: _produto(),
+                  compacto: true,
+                  aoAcompanhar: () {},
+                  aoAbrirDetalhes: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Motorola Edge 60 Pro'), findsOneWidget);
+    expect(find.text('R\$ 3.688,89'), findsOneWidget);
+    expect(at.takeException(), isNull);
+    await at.drag(find.byType(SingleChildScrollView), const Offset(0, -500));
+    await at.pump();
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('oferta ampla usa a superfície plana do cartão V15', (at) async {
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: CartaoProduto(produto: _produto(), aoAbrirDetalhes: () {}),
+        ),
+      ),
+    );
+
+    _esperarCartaoOfertaV15(at);
+    expect(at.takeException(), isNull);
   });
 
   testWidgets('título compacto ocupa o card sem truncar o nome', (at) async {
@@ -363,8 +560,7 @@ void main() {
         ),
       ),
     );
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
     await at.drag(
       find.byKey(const Key('produtos-compacto')),
       const Offset(0, -600),
@@ -457,6 +653,59 @@ void main() {
     );
   });
 
+  testWidgets('folha de filtros Compre direto fecha sem voltar nem aplicar', (
+    at,
+  ) async {
+    final controlador = ControladorBuscaProdutos(
+      debounce: Duration.zero,
+      buscar:
+          ({
+            required termo,
+            required pagina,
+            marca,
+            categoria,
+            escopo,
+            required semCategoria,
+            loja,
+            precoMin,
+            precoMax,
+          }) async => _pagina([_produto()]),
+    );
+    addTearDown(controlador.dispose);
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: Scaffold(
+          body: PaginaProdutos(
+            api: _apiFiltros(),
+            controlador: controlador,
+            incorporada: true,
+            experienciaCompacta: true,
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('filtros-produtos')));
+    await at.pumpAndSettle();
+
+    expect(find.text('Filtros · Compre direto'), findsOneWidget);
+    expect(
+      find.text('Ajuste a ordem e o recorte do catálogo salvo.'),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('voltar-folha-radar')), findsNothing);
+    expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
+    expect(controlador.filtros.estaVazio, isTrue);
+
+    await at.tap(find.byKey(const Key('fechar-folha-radar')));
+    await at.pumpAndSettle();
+    expect(find.text('Filtros · Compre direto'), findsNothing);
+    expect(controlador.filtros.estaVazio, isTrue);
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('filtros seguem o protótipo e editam ordem, loja e preços', (
     at,
   ) async {
@@ -536,7 +785,14 @@ void main() {
     expect(lojaRecebida, 'ponto');
     expect(find.text('Filtros ativos'), findsOneWidget);
 
-    await at.tap(find.text('Limpar filtros'));
+    await at.tap(find.text('Filtros ativos'));
+    await at.pumpAndSettle();
+    await at.ensureVisible(find.byKey(const Key('limpar-filtros-produtos')));
+    await at.tap(find.byKey(const Key('limpar-filtros-produtos')));
+    await at.pumpAndSettle();
+    expect(controlador.filtros.estaVazio, isTrue);
+    expect(find.text('Filtros · Compre direto'), findsOneWidget);
+    await at.tap(find.byKey(const Key('fechar-folha-radar')));
     await at.pumpAndSettle();
     expect(find.text('Filtros'), findsOneWidget);
   });
@@ -579,8 +835,7 @@ void main() {
         ),
       ),
     );
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
     await at.scrollUntilVisible(
       find.text('Motorola Edge 60 Pro'),
       180,
@@ -666,8 +921,7 @@ void main() {
     expect(find.text('No radar'), findsOneWidget);
     expect(find.byKey(const Key('filtros-produtos')), findsOneWidget);
 
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
     expect(find.text('Casas Bahia'), findsAtLeastNWidgets(1));
     expect(find.text('Disponível'), findsOneWidget);
     expect(find.text('Detalhes'), findsOneWidget);
@@ -713,8 +967,7 @@ void main() {
         ),
       ),
     );
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
 
     final acompanhar = find.byKey(const Key('alerta-produto-casas-bahia-edge'));
     expect(find.text('Acompanhar'), findsOneWidget);
@@ -722,6 +975,16 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Acompanhando'), findsOneWidget);
+    final botaoAcompanhando = at.widget<TextButton>(
+      find.ancestor(
+        of: find.text('Acompanhando'),
+        matching: find.byType(TextButton),
+      ),
+    );
+    expect(
+      botaoAcompanhando.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      CoresRadar.de(at.element(find.text('Acompanhando'))).acaoFundo,
+    );
     expect(at.takeException(), isNull);
   });
 
@@ -769,8 +1032,7 @@ void main() {
       ),
     );
     await at.pumpAndSettle();
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
     expect(at.takeException(), isNull);
     await at.drag(
       find.byKey(const Key('produtos-compacto')),
@@ -880,8 +1142,7 @@ void main() {
         ),
       ),
     );
-    await at.enterText(find.byKey(const Key('busca-produtos')), 'edge');
-    await at.pumpAndSettle();
+    await _pesquisar(at, 'busca-produtos', 'edge');
     await at.scrollUntilVisible(
       find.text('Motorola Edge 60 Pro'),
       120,

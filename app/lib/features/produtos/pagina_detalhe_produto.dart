@@ -32,7 +32,7 @@ class _EstadoPaginaDetalheProduto extends State<PaginaDetalheProduto> {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final produto = widget.produto;
-    final status = _statusProduto(produto);
+    final status = produto.statusDisponibilidade;
     final marcaCategoria = [
       produto.marca,
       produto.categoria,
@@ -217,12 +217,19 @@ class _SeloStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
-    final ativo = texto == 'Disponível';
+    final tom = switch (texto) {
+      'Disponível' => cores.ganho,
+      'Disponibilidade não informada' => cores.textoSuave,
+      _ => cores.atencao,
+    };
+    final fundo = texto == 'Disponibilidade não informada'
+        ? cores.superficieAlternativa
+        : tom.withValues(alpha: 0.14);
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: (ativo ? cores.ganho : cores.atencao).withValues(alpha: 0.14),
+          color: fundo,
           borderRadius: BorderRadius.circular(tokens.radii.md),
         ),
         child: Padding(
@@ -233,7 +240,7 @@ class _SeloStatus extends StatelessWidget {
           child: Text(
             texto,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: ativo ? cores.ganho : cores.atencao,
+              color: tom,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -392,10 +399,4 @@ class _AvisoCashbackDetalhe extends StatelessWidget {
       ),
     );
   }
-}
-
-String _statusProduto(ProdutoDireto produto) {
-  if (produto.ativo == false) return 'Fora do catálogo';
-  if (produto.estoque == 0) return 'Esgotado';
-  return 'Disponível';
 }

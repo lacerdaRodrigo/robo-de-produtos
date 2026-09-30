@@ -60,6 +60,7 @@ class Api {
     int pagina = 1,
     int? porPagina,
     bool acompanhamentoPessoal = true,
+    bool somentePontuacaoComumAmpliada = false,
   }) async {
     final corpo = await cliente.obter(
       '/api/livelo/catalogo',
@@ -70,6 +71,8 @@ class Api {
         'ordenar': ordenar,
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
+        if (somentePontuacaoComumAmpliada)
+          'somente_pontuacao_comum_ampliada': 'true',
         if (!acompanhamentoPessoal) 'escopo': 'global',
       },
     );
@@ -346,7 +349,8 @@ class Api {
   }
 
   Future<PaginaAlertasApi> alertas({
-    String filtro = 'todos',
+    String? filtroOrigem,
+    String filtroTipo = 'todos',
     bool somenteNaoLidos = false,
     String? coleta,
     int pagina = 1,
@@ -357,9 +361,9 @@ class Api {
       consulta: <String, String>{
         'pagina': '$pagina',
         'por_pagina': '${porPagina ?? paginaPadrao}',
-        if (filtro != 'todos' && filtro != 'nao_lidos') 'tipo': filtro,
-        if (filtro == 'nao_lidos' || somenteNaoLidos)
-          'somente_nao_lidos': 'true',
+        'origem': ?filtroOrigem,
+        if (filtroTipo != 'todos') 'tipo': filtroTipo,
+        if (somenteNaoLidos) 'somente_nao_lidos': 'true',
         'coleta': ?coleta,
       },
     );
@@ -372,6 +376,14 @@ class Api {
       corpo: <String, Object?>{'lido': lido},
     );
   }
+
+  /// Resolve, pela API autenticada, o item associado a um alerta.
+  ///
+  /// O payload mantém os mesmos campos do DTO de catálogo da origem. A tela
+  /// converte o mapa para o modelo correspondente sem baixar uma página de
+  /// catálogo.
+  Future<Map<String, dynamic>> resolverItemAlerta({required String alertaId}) =>
+      cliente.obter('/api/alertas/${Uri.encodeComponent(alertaId)}/item');
 
   Future<void> marcarAlertas({
     required List<String> ids,
@@ -420,14 +432,14 @@ class Api {
     );
   }
 
-  Future<void> relatarProblema({
+  Future<String> relatarProblema({
     required String categoria,
     required String mensagem,
     required String tela,
     required String versaoApp,
     String? sistema,
   }) async {
-    await cliente.criar(
+    final resposta = await cliente.criar(
       '/api/relatos-problema',
       corpo: <String, Object?>{
         'categoria': categoria,
@@ -437,6 +449,25 @@ class Api {
         'sistema': sistema,
       },
     );
+    final id = resposta['id']?.toString().trim();
+    if (id == null || id.isEmpty) {
+      throw const FormatException('A API não retornou o protocolo do relato.');
+    }
+    return id;
+  }
+
+  Future<Pagina<RelatoProblema>> meusRelatos({
+    int pagina = 1,
+    int? porPagina,
+  }) async {
+    final corpo = await cliente.obter(
+      '/api/relatos-problema',
+      consulta: <String, String>{
+        'pagina': '$pagina',
+        'por_pagina': '${porPagina ?? paginaPadrao}',
+      },
+    );
+    return Pagina.parse(corpo, RelatoProblema.parse);
   }
 
   Future<void> alterarAcompanhamentoPessoal({

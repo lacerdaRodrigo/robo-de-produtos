@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
+import '../../app/tema/tema.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
 
@@ -31,14 +32,15 @@ class CartaoProduto extends StatelessWidget {
     if (compacto) return _compacto(context);
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final tokens = context.tokens;
     final precoCheioDiferente =
         produto.precoCheioTexto != null &&
         produto.precoCheioTexto != produto.precoAtualTexto;
     return Semantics(
       label: 'Produto ${produto.nome}, da loja ${produto.lojaNome}',
       child: CartaoRadar(
-        corDestaque: cores.acao,
-        padding: const EdgeInsets.all(16),
+        comSombra: false,
+        padding: EdgeInsets.all(tokens.spacing.five),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -199,7 +201,7 @@ class CartaoProduto extends StatelessWidget {
     final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
     final tokens = context.tokens;
-    final disponibilidade = _disponibilidadeProduto(produto);
+    final disponibilidade = produto.statusDisponibilidade;
     final cashback = [
       produto.cashbackPercentualTexto,
       produto.cashbackTexto,
@@ -211,23 +213,62 @@ class CartaoProduto extends StatelessWidget {
     final precoCheioDiferente =
         produto.precoCheioTexto != null &&
         produto.precoCheioTexto != produto.precoAtualTexto;
+    final textoAmpliado = MediaQuery.textScalerOf(context).scale(13) >= 26;
+    final botaoAcompanhar = aoAcompanhar == null
+        ? null
+        : TextButton.icon(
+            key: ValueKey(
+              'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
+            ),
+            onPressed: aoAcompanhar,
+            icon: Icon(
+              produto.acompanhado
+                  ? Icons.check
+                  : Icons.notifications_none_outlined,
+              size: 16,
+            ),
+            label: Text(produto.acompanhado ? 'Acompanhando' : 'Acompanhar'),
+            style: TextButton.styleFrom(
+              alignment: AlignmentDirectional.centerStart,
+              foregroundColor: cores.acao,
+              backgroundColor: produto.acompanhado
+                  ? cores.acaoFundo
+                  : cores.superficieAlternativa,
+              padding: EdgeInsetsDirectional.symmetric(
+                horizontal: tokens.spacing.two,
+              ),
+              minimumSize: Size(0, tokens.sizes.touchTarget),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(tokens.radii.md),
+              ),
+            ),
+          );
+    final botaoDetalhes = Tooltip(
+      message: 'Ver detalhes',
+      child: TextButton.icon(
+        onPressed: aoAbrirDetalhes,
+        key: const ValueKey('detalhes-produto'),
+        icon: const Icon(Icons.arrow_forward, size: 16),
+        label: const Text('Detalhes'),
+        style: TextButton.styleFrom(
+          foregroundColor: cores.acao,
+          minimumSize: Size(0, tokens.sizes.touchTarget),
+          padding: EdgeInsetsDirectional.only(start: tokens.spacing.two),
+        ),
+      ),
+    );
     return Semantics(
       label:
           'Oferta ${produto.nome}, da loja ${produto.lojaNome}, '
           'no Banco Inter',
       child: CartaoRadar(
-        padding: EdgeInsets.zero,
-        corDestaque: cores.acao,
+        comSombra: false,
+        padding: EdgeInsets.all(tokens.spacing.five),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(
-                tokens.spacing.five,
-                tokens.spacing.five,
-                tokens.spacing.five,
-                tokens.spacing.four,
-              ),
+              padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -252,19 +293,18 @@ class CartaoProduto extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.end,
                           style: tema.textTheme.labelSmall?.copyWith(
-                            color: cores.textoSuave,
+                            color:
+                                disponibilidade == 'Esgotado' ||
+                                    disponibilidade == 'Fora do catálogo'
+                                ? cores.atencao
+                                : cores.textoSuave,
                           ),
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: tokens.spacing.three),
-                  Text(
-                    produto.nome,
-                    style: tema.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  Text(produto.nome, style: tema.textTheme.tituloOferta),
                   if (marcaCategoria.isNotEmpty)
                     Text(
                       marcaCategoria,
@@ -285,10 +325,7 @@ class CartaoProduto extends StatelessWidget {
                     ),
                   Text(
                     produto.precoAtualTexto,
-                    style: tema.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                    ),
+                    style: tema.textTheme.precoOferta,
                   ),
                   if (cashback.isNotEmpty)
                     Text(
@@ -307,64 +344,23 @@ class CartaoProduto extends StatelessWidget {
                   SizedBox(height: tokens.spacing.three),
                   Divider(height: 1, color: cores.borda),
                   SizedBox(height: tokens.spacing.two),
-                  Row(
-                    children: [
-                      if (aoAcompanhar != null)
-                        Expanded(
-                          child: TextButton.icon(
-                            key: ValueKey(
-                              'alerta-produto-${produto.lojaSlug}-${produto.idExterno}',
-                            ),
-                            onPressed: aoAcompanhar,
-                            icon: Icon(
-                              produto.acompanhado
-                                  ? Icons.check
-                                  : Icons.notifications_none_outlined,
-                              size: 16,
-                            ),
-                            label: Text(
-                              produto.acompanhado
-                                  ? 'Acompanhando'
-                                  : 'Acompanhar',
-                            ),
-                            style: TextButton.styleFrom(
-                              alignment: AlignmentDirectional.centerStart,
-                              foregroundColor: cores.acao,
-                              backgroundColor: produto.acompanhado
-                                  ? cores.perigoFundo
-                                  : cores.superficieAlternativa,
-                              padding: EdgeInsetsDirectional.symmetric(
-                                horizontal: tokens.spacing.two,
-                              ),
-                              minimumSize: Size(0, tokens.sizes.touchTarget),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  tokens.radii.md,
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        const Spacer(),
-                      Tooltip(
-                        message: 'Ver detalhes',
-                        child: TextButton.icon(
-                          onPressed: aoAbrirDetalhes,
-                          key: const ValueKey('detalhes-produto'),
-                          icon: const Icon(Icons.arrow_forward, size: 16),
-                          label: const Text('Detalhes'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: cores.acao,
-                            minimumSize: Size(0, tokens.sizes.touchTarget),
-                            padding: EdgeInsetsDirectional.only(
-                              start: tokens.spacing.two,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  if (textoAmpliado)
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: tokens.spacing.two,
+                      runSpacing: tokens.spacing.one,
+                      children: [?botaoAcompanhar, botaoDetalhes],
+                    )
+                  else
+                    Row(
+                      children: [
+                        if (botaoAcompanhar != null)
+                          Expanded(child: botaoAcompanhar)
+                        else
+                          const Spacer(),
+                        botaoDetalhes,
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -374,9 +370,6 @@ class CartaoProduto extends StatelessWidget {
     );
   }
 }
-
-String _disponibilidadeProduto(ProdutoDireto produto) =>
-    produto.estoque == 0 ? 'Esgotado' : 'Disponível';
 
 class _ValorComercial extends StatelessWidget {
   const _ValorComercial({

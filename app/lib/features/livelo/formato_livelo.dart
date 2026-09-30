@@ -12,6 +12,29 @@ String pontosLivelo(String? valor, {String moeda = 'R\$'}) {
 /// Parte numérica da pontuação para a hierarquia visual do cartão.
 String valorPontosLivelo(String? valor) => decimal(valor) ?? '—';
 
+/// Compara as pontuações textuais sem usar `double` e sem tratar ausência como zero.
+bool pontosClubeSuperaComum(String? clube, String? comum) {
+  final primeiro = _decimalExato(clube);
+  final segundo = _decimalExato(comum);
+  if (primeiro == null || segundo == null) return false;
+  final escala = primeiro.$2 > segundo.$2 ? primeiro.$2 : segundo.$2;
+  final clubeEscalado = primeiro.$1 * BigInt.from(10).pow(escala - primeiro.$2);
+  final comumEscalado = segundo.$1 * BigInt.from(10).pow(escala - segundo.$2);
+  return clubeEscalado > comumEscalado;
+}
+
+(BigInt, int)? _decimalExato(String? valor) {
+  final texto = valor?.trim();
+  final correspondencia = texto == null
+      ? null
+      : RegExp(r'^([+-]?)(\d+)(?:\.(\d+))?$').firstMatch(texto);
+  if (correspondencia == null) return null;
+  final fracao = correspondencia.group(3) ?? '';
+  final numero = BigInt.tryParse('${correspondencia.group(2)}$fracao');
+  if (numero == null) return null;
+  return (correspondencia.group(1) == '-' ? -numero : numero, fracao.length);
+}
+
 /// Texto curto para cada linha do histórico, sem recalcular a pontuação.
 String pontosHistoricoLivelo(String? valor, {String moeda = 'R\$'}) {
   final pontos = decimal(valor);

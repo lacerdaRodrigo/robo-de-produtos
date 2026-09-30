@@ -72,6 +72,15 @@ class PichauProduto {
   bool get esgotado => disponibilidade == 'esgotado';
   bool get foraDoCatalogo => !presenteNoCatalogo;
 
+  String get statusDisponibilidade {
+    if (foraDoCatalogo) return 'Fora do catálogo';
+    return switch (disponibilidade) {
+      'disponivel' => 'Disponível',
+      'esgotado' => 'Esgotado',
+      _ => 'Disponibilidade não informada',
+    };
+  }
+
   PichauProduto copiarCom({bool? acompanhada}) => PichauProduto(
     idExterno: idExterno,
     sku: sku,

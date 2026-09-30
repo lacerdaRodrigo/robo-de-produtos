@@ -5,6 +5,7 @@ import '../../core/api/modelos.dart';
 import '../componentes/estados.dart';
 import '../componentes/fundacao_visual.dart';
 import '../identidade/logo_radar.dart';
+import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
 /// Resumo real do dia. Atualiza somente pela API e mantém o último retrato
@@ -120,6 +121,7 @@ class _PaginaInicioState extends State<PaginaInicio>
   @override
   Widget build(BuildContext context) {
     final resumo = _resumo;
+    final tokens = context.tokens;
     if (resumo == null && _carregando) {
       return const Carregando(mensagem: 'Carregando seu radar…');
     }
@@ -140,21 +142,53 @@ class _PaginaInicioState extends State<PaginaInicio>
           SliverSafeArea(
             sliver: SliverPadding(
               padding: widget.experienciaCompacta
-                  ? const EdgeInsets.fromLTRB(18, 22, 18, 38)
+                  ? EdgeInsetsDirectional.fromSTEB(0, 22, 0, 38)
                   : const EdgeInsets.fromLTRB(20, 24, 20, 44),
               sliver: SliverList.list(
                 children: [
                   if (widget.experienciaCompacta) ...[
-                    CabecalhoMarcaRadar(
-                      acao: IconButton(
-                        key: const Key('abrir-alertas-cabecalho'),
-                        tooltip: 'Abrir alertas',
-                        onPressed: widget.aoAbrirAlertas,
-                        icon: const Icon(Icons.notifications_none),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.five,
+                      ),
+                      child: CabecalhoMarcaRadar(
+                        key: const Key('cabecalho-inicio-compacto'),
+                        acao: IconButton(
+                          key: const Key('abrir-alertas-cabecalho'),
+                          tooltip: resumo.radar.alertasNaoLidos == null
+                              ? 'Abrir alertas'
+                              : 'Alertas, ${resumo.radar.alertasNaoLidos} não lidos',
+                          onPressed: widget.aoAbrirAlertas,
+                          style: IconButton.styleFrom(
+                            backgroundColor:
+                                tokens.colors.superficieAlternativa,
+                            foregroundColor: tokens.colors.texto,
+                            shape: const CircleBorder(),
+                          ),
+                          icon: Badge(
+                            isLabelVisible:
+                                (resumo.radar.alertasNaoLidos ?? 0) > 0,
+                            backgroundColor: tokens.colors.acao,
+                            textColor: tokens.colors.marcaTexto,
+                            label: resumo.radar.alertasNaoLidos == null
+                                ? null
+                                : Text(
+                                    resumo.radar.alertasNaoLidos! > 99
+                                        ? '99+'
+                                        : '${resumo.radar.alertasNaoLidos}',
+                                  ),
+                            child: const Icon(Icons.notifications_none),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: context.tokens.spacing.five),
-                    _HeroResumoCompacto(resumo: resumo),
+                    SizedBox(height: tokens.spacing.six),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.five,
+                      ),
+                      child: _HeroResumoCompacto(resumo: resumo),
+                    ),
                   ] else
                     _CabecalhoResumo(
                       resumo: resumo,
@@ -166,34 +200,48 @@ class _PaginaInicioState extends State<PaginaInicio>
                     ),
                   if (_falhouAtualizacao) ...[
                     const SizedBox(height: 16),
-                    _AvisoFalhaAtualizacao(
-                      aoTentarNovamente: () => _consultar(forcar: true),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.five,
+                      ),
+                      child: _AvisoFalhaAtualizacao(
+                        aoTentarNovamente: () => _consultar(forcar: true),
+                      ),
                     ),
                   ],
                   if (widget.experienciaCompacta) ...[
-                    const SizedBox(height: 25),
-                    _TituloSecao(
-                      titulo: 'Explore as origens',
-                      complemento: 'Preços e benefícios por fonte',
-                      compactoMobile: true,
-                      acao: widget.aoAbrirProgramas == null
-                          ? null
-                          : TextButton(
-                              onPressed: widget.aoAbrirProgramas,
-                              child: const Text('Ver todas'),
-                            ),
+                    SizedBox(height: context.tokens.spacing.eight),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.five,
+                      ),
+                      child: _TituloSecao(
+                        titulo: 'Explore as origens',
+                        complemento: '',
+                        compactoMobile: true,
+                        acao: widget.aoAbrirProgramas == null
+                            ? null
+                            : TextButton(
+                                onPressed: widget.aoAbrirProgramas,
+                                child: const Text('Ver todas'),
+                              ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _TrilhoOrigensCompacto(
-                      resumo: resumo,
                       aoAbrirLivelo: widget.aoAbrirLivelo,
                       aoAbrirInter: widget.aoAbrirCashback,
                       aoAbrirPichau: widget.aoAbrirPichau,
                     ),
                     const SizedBox(height: 12),
-                    _ColecaoRadarCompacta(
-                      total: _totalAcompanhamentos(resumo),
-                      aoAbrir: widget.aoAbrirRadar,
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: tokens.spacing.five,
+                      ),
+                      child: _ColecaoRadarCompacta(
+                        total: _totalAcompanhamentos(resumo),
+                        aoAbrir: widget.aoAbrirRadar,
+                      ),
                     ),
                   ] else ...[
                     const SizedBox(height: 20),
@@ -303,43 +351,66 @@ class _HeroResumoCompacto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cores = CoresRadar.de(context);
     final tokens = context.tokens;
     final tema = Theme.of(context);
+    final alertasNaoLidos = resumo.radar.alertasNaoLidos;
+    final estado = alertasNaoLidos == null
+        ? 'Sinal pessoal indisponível'
+        : alertasNaoLidos == 0
+        ? 'Tudo lido por enquanto'
+        : '$alertasNaoLidos mudanças para conferir';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'SEU RADAR, SEU RITMO',
-          style: tema.textTheme.labelSmall?.copyWith(
-            color: cores.acao,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
+          style: tema.textTheme.sobrelinhaInicio?.copyWith(
+            color: tokens.colors.textoSuave,
           ),
         ),
         SizedBox(height: tokens.spacing.two),
         Text(
           'Boas escolhas começam aqui.',
-          style: tema.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            height: 1.1,
+          style: tema.textTheme.headlineLarge,
+        ),
+        SizedBox(height: tokens.spacing.three),
+        if ((alertasNaoLidos ?? 0) > 0)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Semantics(
+                excludeSemantics: true,
+                child: DecoratedBox(
+                  key: const Key('indicador-mudancas-nao-lidas'),
+                  decoration: BoxDecoration(
+                    color: tokens.colors.ganho,
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox.square(
+                    dimension: tokens.sizes.statusIndicator,
+                  ),
+                ),
+              ),
+              SizedBox(width: tokens.spacing.compactStatusGap),
+              Flexible(
+                child: Text(
+                  estado,
+                  key: const Key('estado-resumo-compacto'),
+                  style: tema.textTheme.estadoInicio?.copyWith(
+                    color: tokens.colors.textoSuave,
+                  ),
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            estado,
+            key: const Key('estado-resumo-compacto'),
+            style: tema.textTheme.estadoInicio?.copyWith(
+              color: tokens.colors.textoSuave,
+            ),
           ),
-        ),
-        SizedBox(height: tokens.spacing.one),
-        Text(
-          resumo.radar.estado == EstadoResumo.atualizando ||
-                  resumo.radar.estado == EstadoResumo.parcial ||
-                  resumo.produtos.estado == EstadoResumo.atualizando ||
-                  resumo.cashbackInter.estado == EstadoResumo.atualizando
-              ? 'Atualizando'
-              : resumo.radar.alertasNaoLidos == null
-              ? 'Sinal pessoal indisponível'
-              : resumo.radar.alertasNaoLidos == 0
-              ? 'Tudo lido por enquanto'
-              : '${resumo.radar.alertasNaoLidos} alertas para conferir',
-          style: tema.textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
-        ),
-        SizedBox(height: tokens.spacing.five),
       ],
     );
   }
@@ -353,13 +424,11 @@ int _totalAcompanhamentos(ResumoInicio resumo) =>
 
 class _TrilhoOrigensCompacto extends StatelessWidget {
   const _TrilhoOrigensCompacto({
-    required this.resumo,
     required this.aoAbrirLivelo,
     required this.aoAbrirInter,
     required this.aoAbrirPichau,
   });
 
-  final ResumoInicio resumo;
   final VoidCallback? aoAbrirLivelo;
   final VoidCallback? aoAbrirInter;
   final VoidCallback? aoAbrirPichau;
@@ -367,6 +436,9 @@ class _TrilhoOrigensCompacto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final larguraUtil = MediaQuery.sizeOf(context).width;
+    final larguraCartao = larguraUtil * 0.43;
+    final larguraMinima = tokens.sizes.compactRailWidth;
     final itens =
         <
           ({
@@ -380,66 +452,79 @@ class _TrilhoOrigensCompacto extends StatelessWidget {
           (
             chave: 'origem-inter',
             titulo: 'Banco Inter',
-            descricao: '${resumo.cashbackInter.lojasAcompanhadas} lojas',
+            descricao: 'Cashback e produtos',
             icone: Icons.storefront_outlined,
             acao: aoAbrirInter,
           ),
           (
             chave: 'origem-livelo',
             titulo: 'Livelo',
-            descricao: '${resumo.livelo.lojasAcompanhadas} lojas',
+            descricao: 'Pontos em lojas',
             icone: Icons.auto_awesome_outlined,
             acao: aoAbrirLivelo,
           ),
           (
             chave: 'origem-pichau',
             titulo: 'Pichau',
-            descricao: '${resumo.pichau.produtosAtivos} produtos',
+            descricao: 'PCs gamer',
             icone: Icons.desktop_windows_outlined,
             acao: aoAbrirPichau,
           ),
         ];
-    return SizedBox(
-      height: tokens.sizes.compactRailHeight,
-      child: ListView.separated(
-        key: const Key('trilho-origens'),
-        scrollDirection: Axis.horizontal,
-        itemCount: itens.length,
-        separatorBuilder: (_, _) => SizedBox(width: tokens.spacing.three),
-        itemBuilder: (context, indice) {
-          final item = itens[indice];
-          return SizedBox(
-            width: tokens.sizes.compactRailWidth,
-            child: CartaoRadar(
-              key: Key(item.chave),
-              aoTocar: item.acao,
-              padding: EdgeInsets.all(tokens.spacing.three),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(item.icone, color: CoresRadar.de(context).acao),
-                  const Spacer(),
-                  Text(
-                    item.titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    item.descricao,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: CoresRadar.de(context).textoSuave,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+    return SingleChildScrollView(
+      key: const Key('trilho-origens'),
+      scrollDirection: Axis.horizontal,
+      child: IntrinsicHeight(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: tokens.spacing.five),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var indice = 0; indice < itens.length; indice++) ...[
+                if (indice > 0) SizedBox(width: tokens.spacing.three),
+                Builder(
+                  builder: (context) {
+                    final item = itens[indice];
+                    return SizedBox(
+                      width: larguraCartao < larguraMinima
+                          ? larguraMinima
+                          : larguraCartao,
+                      child: CartaoRadar(
+                        key: Key(item.chave),
+                        aoTocar: item.acao,
+                        comSombra: false,
+                        padding: EdgeInsets.all(tokens.spacing.four),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              item.icone,
+                              color: CoresRadar.de(context).acao,
+                            ),
+                            SizedBox(height: tokens.spacing.five),
+                            Text(
+                              item.titulo,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            SizedBox(height: tokens.spacing.one),
+                            Text(
+                              item.descricao,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: CoresRadar.de(context).textoSuave,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -993,25 +1078,22 @@ class _TituloSecao extends StatelessWidget {
               Expanded(
                 child: Text(
                   titulo,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    letterSpacing: -0.6,
-                  ),
+                  style: Theme.of(context).textTheme.tituloSecaoInicio,
                 ),
               ),
               ?acao,
             ],
           ),
-          const SizedBox(height: 5),
-          Text(
-            complemento,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: CoresRadar.de(context).textoSuave,
-              fontSize: 11,
+          if (complemento.isNotEmpty) ...[
+            const SizedBox(height: 5),
+            Text(
+              complemento,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: CoresRadar.de(context).textoSuave,
+                fontSize: 11,
+              ),
             ),
-          ),
+          ],
         ],
       );
     }

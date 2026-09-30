@@ -273,7 +273,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
 
   Widget _conteudo(BuildContext context) {
     final cores = CoresRadar.de(context);
-    final margem = widget.incorporada ? 18.0 : 24.0;
+    final margem = widget.incorporada ? context.tokens.spacing.five : 24.0;
     final atrasada = coletaInterAtrasada(
       _controlador.atualizadoEm,
       DateTime.now(),
@@ -396,7 +396,7 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
               controlador: _campoBusca,
               chaveCampo: const Key('busca-cashback-inter'),
               dica: 'Qual loja você procura?',
-              aoMudar: _controlador.mudarBusca,
+              aoMudar: (_) {},
               aoAcionar: () => _controlador.mudarBusca(_campoBusca.text),
             ),
           ),
@@ -461,7 +461,13 @@ class _EstadoPaginaCashbackInter extends State<PaginaCashbackInter>
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 112),
+        padding: EdgeInsetsDirectional.fromSTEB(
+          context.tokens.spacing.five,
+          context.tokens.spacing.three,
+          context.tokens.spacing.five,
+          context.tokens.sizes.bottomNavigationHeight +
+              context.tokens.spacing.eight,
+        ),
         sliver: SliverList(
           delegate: SliverChildListDelegate([
             for (final loja in lojas)
@@ -700,10 +706,13 @@ class _BarraResultadosCashbackInter extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '$total ${total == 1 ? 'loja encontrada' : 'lojas encontradas'}',
+              '$total ${total == 1 ? 'loja' : 'lojas'}',
+              key: const Key('contagem-resultados-cashback-inter'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+              ).textTheme.labelMedium?.copyWith(color: cores.textoSuave),
             ),
           ),
           OutlinedButton.icon(

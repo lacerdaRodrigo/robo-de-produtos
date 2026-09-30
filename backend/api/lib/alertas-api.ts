@@ -1,6 +1,14 @@
 export const TIPOS_ALERTA = ["preco", "cashback", "pontuacao"] as const;
 export type TipoAlerta = (typeof TIPOS_ALERTA)[number];
 
+export const ORIGENS_ALERTA = [
+  "inter_cashback",
+  "inter_produto",
+  "livelo",
+  "pichau",
+] as const;
+export type OrigemAlerta = (typeof ORIGENS_ALERTA)[number];
+
 export type PreferenciasAlertasEntrada = {
   push_global: boolean;
   preco: boolean;
@@ -10,6 +18,12 @@ export type PreferenciasAlertasEntrada = {
 
 export function tipoAlerta(valor: string | null): TipoAlerta | null {
   return TIPOS_ALERTA.includes(valor as TipoAlerta) ? (valor as TipoAlerta) : null;
+}
+
+export function origemAlerta(valor: string | null): OrigemAlerta | null {
+  return ORIGENS_ALERTA.includes(valor as OrigemAlerta)
+    ? (valor as OrigemAlerta)
+    : null;
 }
 
 export function idsAlerta(valor: unknown): string[] | null {
@@ -71,10 +85,10 @@ export function validarRelatoProblema(
   const tela = typeof corpo.tela === "string" ? corpo.tela.trim() : "";
   const versao = typeof corpo.versao_app === "string" ? corpo.versao_app.trim() : "";
   const sistema = corpo.sistema == null ? null : String(corpo.sistema).trim();
-  if (!["erro", "dados", "conta", "outro"].includes(categoria)) {
+  if (!["catalog", "access", "notification", "privacy", "other"].includes(categoria)) {
     return { ok: false, mensagem: "categoria invalida" };
   }
-  if (mensagem.length < 1 || mensagem.length > 2000 || tela.length < 1 || tela.length > 120 || versao.length < 1 || versao.length > 80 || (sistema !== null && sistema.length > 200)) {
+  if (mensagem.length < 10 || mensagem.length > 2000 || tela.length < 1 || tela.length > 120 || versao.length < 1 || versao.length > 80 || (sistema !== null && sistema.length > 200)) {
     return { ok: false, mensagem: "relato fora do tamanho permitido" };
   }
   return { ok: true, valor: { categoria, mensagem, tela, versao_app: versao, sistema } };

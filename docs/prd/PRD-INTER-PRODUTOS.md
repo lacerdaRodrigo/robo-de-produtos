@@ -489,7 +489,7 @@ Isso remove somente a entrada visual desta jornada; o contrato/API de categorias
 externas e seus controladores compartilhados permanecem preservados até uma
 decisão específica sobre um fluxo separado de configuração.
 
-O campo de produtos segue o campo de busca V15: ícone de busca, superfície de papel com borda e sombra suave, texto de exemplo e botão brasa de avanço com chevron. A digitação continua acionando a busca local com o debounce existente; o botão e o envio pelo teclado apenas repetem essa mesma consulta, sem acesso direto ao Inter. Campos de catálogo que filtram imediatamente, como os de lojas, usam a variante `search-only` sem botão de avanço.
+O campo compacto de produtos segue o campo de busca V15: ícone de busca, superfície de papel com borda, sem sombra, texto de exemplo e botão brasa de avanço com seta simples. A digitação mantém o texto no campo; a consulta local ocorre ao tocar na seta ou enviar pelo teclado, sem acesso direto ao Inter. A ação `Limpar` na folha remove imediatamente os filtros aplicados e preserva busca e aba. Campos administrativos de catálogo que filtram imediatamente podem usar a variante `search-only` sem botão de avanço.
 
 Na composição compacta V15, aplicada em 2026-09-20, a tela de Produtos reproduz
 a sequência do protótipo: título “Produtos por loja”, busca com placeholder
@@ -507,11 +507,14 @@ fica oculta quando o total for até 20; com 21 resultados, passa a exibir a
 segunda página. Busca, filtro e categoria continuam reiniciando na página 1.
 Após a troca, a lista retorna ao início com uma animação suave.
 
-O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V15. Ela usa puxador, cabeçalho com voltar/fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
+Os cartões compactos de oferta seguem o HTML V15: superfície com borda, raio e padding de 20 dp, sem faixa lateral nem sombra; os cartões se separam por 16 dp; o título do item usa 18 px e o preço 30 px, com números tabulares. Esses estilos crescem com a escala de texto do sistema e o cartão continua rolável.
+
+O botão `Filtros` abre a `FolhaRadar`, componente compartilhado das folhas V15. Ela usa puxador, cabeçalho com o título e um controle `X` para fechar, superfície arredondada, fundo escurecido e desfocado e ações alinhadas ao contrato visual. O retorno do sistema fecha a folha. Os filtros de catálogo não aceitam texto livre: a pessoa escolhe uma opção já conhecida pelo sistema. Isso impede que uma marca digitada, uma categoria aproximada ou um slug copiado crie uma consulta ambígua ou não verificável.
 
 A folha mantém a ordem “Menor preço por loja”/“Nome por loja”, a loja, a
-categoria externa real e a faixa opcional de preço. `Limpar` restaura a ordem e
-remove esses recortes; `Aplicar filtros` preserva o termo e reinicia a página.
+categoria externa real e a faixa opcional de preço. `Limpar` aplica os padrões
+imediatamente, mantém a folha aberta e preserva o termo e a aba; `Aplicar
+filtros` preserva o termo e reinicia a página.
 As abas `Todos` e `No radar` também reiniciam a página: a segunda envia
 `acompanhados=true` à API e nunca filtra apenas o primeiro lote no cliente.
 
@@ -577,9 +580,13 @@ O agrupamento lógico por loja é preservado com cabeçalho de loja e horário d
 - preço cheio riscado quando diferente, preço atual em escala de destaque e
   estimativa após cashback;
 - cashback e disponibilidade quando presentes;
+- `Disponibilidade não informada` quando o snapshot não inclui estoque;
+  `Esgotado` quando estoque é zero e `Fora do catálogo` quando o item está
+  inativo;
 - ação “Acompanhar”/“Acompanhando” e botão “Detalhes” para a rota completa da oferta;
 - ao salvar o acompanhamento, o card muda imediatamente para “Acompanhando”;
-  se a API falhar, desfaz o estado local e informa a falha;
+  o estado confirmado usa a superfície de ação `acaoFundo` em tema claro e
+  escuro, enquanto uma falha desfaz o estado local e informa a falha;
 - cards ordenados por menor preço por loja ou nome por loja, conforme a folha.
 
 Na jornada compacta, `Detalhes` substitui a composição do catálogo pela rota
@@ -597,6 +604,8 @@ No layout amplo, a versão detalhada continua mostrando também:
 - cashback absoluto e percentual;
 - “Após cashback: R$ ...”;
 - parcelamento e disponibilidade;
+- disponibilidade sem estoque informado permanece explícita como
+  `Disponibilidade não informada`;
 - link para histórico.
 
 Nenhum card contém imagem externa. Valores ausentes somem com rótulo honesto; nunca viram zero.

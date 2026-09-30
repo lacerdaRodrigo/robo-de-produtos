@@ -6,8 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/componentes/estados.dart';
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/paginas/inicio.dart';
 import 'package:app_robo/app/tema/tema.dart';
+import 'package:app_robo/app/tema/tokens.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 
@@ -118,6 +120,7 @@ Future<void> abrir(
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool compacto = false,
+  bool escuro = false,
   DateTime Function()? agora,
 }) async {
   at.view.devicePixelRatio = 1;
@@ -126,7 +129,9 @@ Future<void> abrir(
   addTearDown(at.view.resetPhysicalSize);
   await at.pumpWidget(
     MaterialApp(
-      theme: tamanho.width >= 920 ? TemaRadar.claro() : TemaRadar.claro(),
+      theme: TemaRadar.claro(),
+      darkTheme: TemaRadar.escuro(),
+      themeMode: escuro ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
         body: PaginaInicio(
           api: api,
@@ -298,7 +303,7 @@ void main() {
     expect(chamadas, 2);
   });
 
-  testWidgets('Resumo compacto reproduz a hierarquia V15 com dados reais', (
+  testWidgets('Home compacta usa as descrições estáticas da referência', (
     at,
   ) async {
     final api = apiQueResponde(
@@ -308,6 +313,51 @@ void main() {
     await at.pumpAndSettle();
 
     expect(find.text('Boas escolhas começam aqui.'), findsOneWidget);
+    final tema = Theme.of(at.element(find.text('Boas escolhas começam aqui.')));
+    final sobrelinha = at.widget<Text>(find.text('SEU RADAR, SEU RITMO'));
+    final titulo = at.widget<Text>(find.text('Boas escolhas começam aqui.'));
+    final cabecalho = find.byKey(const Key('cabecalho-inicio-compacto'));
+    final estado = at.widget<Text>(
+      find.byKey(const Key('estado-resumo-compacto')),
+    );
+    final tituloSecao = at.widget<Text>(find.text('Explore as origens'));
+    expect(
+      sobrelinha.style,
+      tema.textTheme.sobrelinhaInicio?.copyWith(
+        color: tema.colorScheme.onSurfaceVariant,
+      ),
+    );
+    expect(titulo.style, tema.textTheme.headlineLarge);
+    expect(
+      estado.style,
+      tema.textTheme.estadoInicio?.copyWith(
+        color: tema.colorScheme.onSurfaceVariant,
+      ),
+    );
+    expect(tituloSecao.style, tema.textTheme.tituloSecaoInicio);
+    expect(sobrelinha.style?.fontSize, 12);
+    expect(titulo.style?.fontSize, 32);
+    expect(estado.style?.fontSize, 12);
+    expect(
+      at.getTopLeft(find.text('SEU RADAR, SEU RITMO')).dy -
+          at.getBottomLeft(cabecalho).dy,
+      24,
+    );
+    expect(
+      at.getTopLeft(find.text('Boas escolhas começam aqui.')).dy -
+          at.getBottomLeft(find.text('SEU RADAR, SEU RITMO')).dy,
+      8,
+    );
+    expect(
+      at.getTopLeft(find.byKey(const Key('estado-resumo-compacto'))).dy -
+          at.getBottomLeft(find.text('Boas escolhas começam aqui.')).dy,
+      12,
+    );
+    expect(
+      at.getTopLeft(find.text('Explore as origens')).dy -
+          at.getBottomLeft(find.byKey(const Key('estado-resumo-compacto'))).dy,
+      32,
+    );
     expect(find.text('Tudo atualizado'), findsNothing);
     expect(find.text('Atualizado com avisos'), findsNothing);
     expect(find.text('Explore as origens'), findsOneWidget);
@@ -315,12 +365,129 @@ void main() {
     expect(find.byKey(const Key('origem-inter')), findsOneWidget);
     expect(find.byKey(const Key('origem-pichau')), findsOneWidget);
     expect(find.text('Atividade recente'), findsNothing);
-    expect(find.text('4 lojas'), findsOneWidget);
-    expect(find.text('100 produtos'), findsOneWidget);
+    expect(find.text('Cashback e produtos'), findsOneWidget);
+    expect(find.text('Pontos em lojas'), findsOneWidget);
+    expect(find.text('PCs gamer'), findsOneWidget);
+    expect(find.text('4 lojas'), findsNothing);
+    expect(find.text('100 produtos'), findsNothing);
+    for (final chave in const [
+      'origem-inter',
+      'origem-livelo',
+      'origem-pichau',
+    ]) {
+      final cartao = at.widget<CartaoRadar>(find.byKey(Key(chave)));
+      expect(cartao.comSombra, isFalse);
+    }
     expect(find.byKey(const Key('atualizar-resumo-cabecalho')), findsNothing);
   });
 
-  testWidgets('Home compacta não exibe o destaque de alerta', (at) async {
+  for (final escuro in [false, true]) {
+    testWidgets(
+      'sino da Home usa superfície secundária no tema ${escuro ? 'escuro' : 'claro'}',
+      (at) async {
+        final api = apiQueResponde(
+          (_) async => http.Response(jsonEncode(resumo()), 200),
+        );
+        await abrir(at, api, compacto: true, escuro: escuro);
+        await at.pumpAndSettle();
+
+        final sino = at.widget<IconButton>(
+          find.byKey(const Key('abrir-alertas-cabecalho')),
+        );
+        final cores = Theme.of(
+          at.element(find.byKey(const Key('abrir-alertas-cabecalho'))),
+        ).extension<CoresRadar>()!;
+        expect(
+          sino.style?.backgroundColor?.resolve({}),
+          cores.superficieAlternativa,
+        );
+        expect(sino.style?.foregroundColor?.resolve({}), cores.texto);
+        expect(sino.style?.shape?.resolve({}), const CircleBorder());
+      },
+    );
+  }
+
+  testWidgets('cards compactos seguem largura V15 e altura pelo conteúdo', (
+    at,
+  ) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+
+    for (final largura in [320.0, 360.0, 390.0, 430.0]) {
+      await abrir(at, api, compacto: true, tamanho: Size(largura, 844));
+      await at.pumpAndSettle();
+
+      expect(
+        at.getSize(find.byKey(const Key('trilho-origens'))).width,
+        closeTo(largura, 0.1),
+        reason: 'a área de rolagem chega às bordas em $largura dp',
+      );
+      final tamanhoCartao = at.getSize(find.byKey(const Key('origem-inter')));
+      final larguraEsperada = largura * 0.43;
+      expect(
+        tamanhoCartao.width,
+        closeTo(larguraEsperada < 132 ? 132 : larguraEsperada, 0.1),
+        reason: 'largura do card em $largura dp',
+      );
+      expect(
+        tamanhoCartao.height,
+        greaterThan(0),
+        reason: 'altura em $largura dp',
+      );
+      expect(at.takeException(), isNull, reason: 'layout em $largura dp');
+
+      if (largura == 360) {
+        final descricao = find.text('Cashback e produtos');
+        final texto = at.widget<Text>(descricao);
+        expect(texto.maxLines, isNull);
+        expect(texto.overflow, isNull);
+        expect(
+          at.getSize(descricao).height,
+          greaterThan(18),
+          reason: 'a descrição quebra em duas linhas a 360 dp',
+        );
+      }
+    }
+  });
+
+  testWidgets('cards compactos crescem em 320 dp com texto a 200%', (at) async {
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(resumo()), 200),
+    );
+    await abrir(
+      at,
+      api,
+      compacto: true,
+      tamanho: const Size(320, 640),
+      escalaTexto: 2,
+    );
+    await at.pumpAndSettle();
+
+    final cartaoFinder = find.byKey(const Key('origem-inter'));
+    final cartao = at.getRect(cartaoFinder);
+    expect(at.getSize(cartaoFinder).width, 132);
+    expect(at.getSize(cartaoFinder).height, greaterThan(136));
+    for (final descricao in [
+      find.descendant(
+        of: cartaoFinder,
+        matching: find.text('Cashback e produtos'),
+      ),
+    ]) {
+      final texto = at.widget<Text>(descricao);
+      final retangulo = at.getRect(descricao);
+      expect(texto.maxLines, isNull);
+      expect(texto.overflow, isNull);
+      expect(retangulo.left, greaterThanOrEqualTo(cartao.left));
+      expect(retangulo.right, lessThanOrEqualTo(cartao.right));
+      expect(retangulo.bottom, lessThanOrEqualTo(cartao.bottom));
+    }
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('Home compacta mostra a contagem no sino sem cartão de alerta', (
+    at,
+  ) async {
     final api = apiQueResponde(
       (_) async => http.Response(jsonEncode(resumoComDestaque()), 200),
     );
@@ -329,7 +496,33 @@ void main() {
 
     expect(find.text('Natura'), findsNothing);
     expect(find.text('Ver alertas'), findsNothing);
+    final badge = at.widget<Badge>(find.byType(Badge));
+    expect(badge.isLabelVisible, isTrue);
+    expect(find.text('1'), findsOneWidget);
     expect(find.text('Explore as origens'), findsOneWidget);
+    expect(find.text('1 mudanças para conferir'), findsOneWidget);
+    expect(
+      find.byKey(const Key('indicador-mudancas-nao-lidas')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Home compacta mostra tudo lido sem o ponto de mudança', (
+    at,
+  ) async {
+    final corpo = resumo();
+    corpo['radar'] = <String, Object?>{
+      'estado': 'atualizado',
+      'alertas_nao_lidos': 0,
+    };
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(corpo), 200),
+    );
+    await abrir(at, api, compacto: true);
+    await at.pumpAndSettle();
+
+    expect(find.text('Tudo lido por enquanto'), findsOneWidget);
+    expect(find.byKey(const Key('indicador-mudancas-nao-lidas')), findsNothing);
   });
 
   testWidgets('card Pichau abre sua subárea de Explorar', (at) async {

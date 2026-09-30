@@ -15,7 +15,9 @@ class ControladorAlertas extends ChangeNotifier {
   final Api _api;
   final String? _coleta;
   List<AlertaApp> itens = const [];
-  String filtro = 'todos';
+  String aba = 'todos';
+  String? filtroOrigem;
+  String filtroTipo = 'todos';
   int pagina = 1;
   int totalItens = 0;
   int totalPaginas = 1;
@@ -35,7 +37,9 @@ class ControladorAlertas extends ChangeNotifier {
     notifyListeners();
     try {
       final resposta = await _api.alertas(
-        filtro: filtro,
+        filtroOrigem: filtroOrigem,
+        filtroTipo: filtroTipo,
+        somenteNaoLidos: aba == 'nao_lidos',
         pagina: pagina,
         coleta: _coleta,
       );
@@ -60,9 +64,20 @@ class ControladorAlertas extends ChangeNotifier {
 
   Future<void> iniciar() => carregar(preservar: false);
 
-  Future<void> mudarFiltro(String novo) async {
-    if (filtro == novo) return;
-    filtro = novo;
+  Future<void> mudarAba(String nova) async {
+    if (aba == nova) return;
+    aba = nova;
+    pagina = 1;
+    await carregar(preservar: true);
+  }
+
+  Future<void> aplicarFiltros({
+    required String? origem,
+    required String tipo,
+  }) async {
+    if (filtroOrigem == origem && filtroTipo == tipo) return;
+    filtroOrigem = origem;
+    filtroTipo = tipo;
     pagina = 1;
     await carregar(preservar: true);
   }
@@ -123,7 +138,9 @@ class ControladorAlertas extends ChangeNotifier {
     PaginaAlertasApi? resposta;
     do {
       resposta = await _api.alertas(
-        filtro: filtro,
+        filtroOrigem: filtroOrigem,
+        filtroTipo: filtroTipo,
+        somenteNaoLidos: aba == 'nao_lidos',
         pagina: paginaBusca,
         porPagina: 50,
         coleta: _coleta,

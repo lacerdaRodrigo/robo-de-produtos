@@ -16,7 +16,12 @@ void main() {
     expect(Tokens.line.toARGB32(), const Color(0xFFD9D1C8).toARGB32());
     expect(Tokens.action.toARGB32(), const Color(0xFFB6421E).toARGB32());
     expect(Tokens.actionStrong.toARGB32(), const Color(0xFF8F3416).toARGB32());
+    expect(
+      const CoresRadar.claras().acaoForte.toARGB32(),
+      Tokens.actionStrong.toARGB32(),
+    );
     expect(Tokens.actionSoft.toARGB32(), const Color(0xFFFBE6D9).toARGB32());
+    expect(Tokens.acaoFundo.toARGB32(), Tokens.actionSoft.toARGB32());
     expect(Tokens.ganho.toARGB32(), const Color(0xFF236347).toARGB32());
     expect(Tokens.ganhoFundo.toARGB32(), const Color(0xFFE1EEE5).toARGB32());
     expect(Tokens.atencao.toARGB32(), const Color(0xFF835B16).toARGB32());
@@ -52,6 +57,10 @@ void main() {
       const Color(0xFF4B3027).toARGB32(),
     );
     expect(
+      Tokens.acaoFundoEscuro.toARGB32(),
+      const CoresRadar.escuras().acaoFundo.toARGB32(),
+    );
+    expect(
       Tokens.ganhoFundoEscuro.toARGB32(),
       const Color(0xFF2C4034).toARGB32(),
     );
@@ -72,6 +81,10 @@ void main() {
       Tokens.acaoForteEscura.toARGB32(),
       const Color(0xFFFFC09F).toARGB32(),
     );
+    expect(
+      const CoresRadar.escuras().acaoForte.toARGB32(),
+      Tokens.acaoForteEscura.toARGB32(),
+    );
     expect(Tokens.marcaEscura.toARGB32(), const Color(0xFFF6F0E9).toARGB32());
     expect(Tokens.perigoEscuro.toARGB32(), const Color(0xFFFFADB2).toARGB32());
   });
@@ -86,6 +99,8 @@ void main() {
     expect(const AppSizes.v15().touchTarget, 48);
     expect(const AppSizes.v15().field, 48);
     expect(const AppSizes.v15().badge, 24);
+    expect(const AppSizes.v15().statusIndicator, 6);
+    expect(const AppSpacing.v15().compactStatusGap, 6);
   });
 
   test('tema gera um ColorScheme material', () {

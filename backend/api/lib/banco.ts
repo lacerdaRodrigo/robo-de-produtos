@@ -98,7 +98,8 @@ export type FiltrosCatalogoLiveloPersistido = {
   codigosCategoria: string[];
   categoriaIncluiOutros: boolean;
   codigosConhecidos: string[];
-  ordenar: "pontos" | "nome";
+  somentePontuacaoComumAmpliada: boolean;
+  ordenar: "pontos" | "nome" | "validade";
 };
 
 export type PaginaCatalogoLiveloPersistido = {
@@ -210,6 +211,14 @@ export async function buscarCatalogoLiveloPersistido(
            )
          )
        )
+       AND (
+         ${!filtros.somentePontuacaoComumAmpliada}
+         OR (
+           parceiro.pontos_atuais IS NOT NULL
+           AND parceiro.pontos_base IS NOT NULL
+           AND parceiro.pontos_atuais > parceiro.pontos_base
+         )
+       )
   `) as Array<{ total: number }>;
   const total = totais[0]?.total ?? 0;
   const totalPaginas = Math.max(1, Math.ceil(total / limite));
@@ -294,7 +303,16 @@ export async function buscarCatalogoLiveloPersistido(
            )
          )
        )
+       AND (
+         ${!filtros.somentePontuacaoComumAmpliada}
+         OR (
+           parceiro.pontos_atuais IS NOT NULL
+           AND parceiro.pontos_base IS NOT NULL
+           AND parceiro.pontos_atuais > parceiro.pontos_base
+         )
+       )
      ORDER BY
+       CASE WHEN ${filtros.ordenar === "validade"} THEN parceiro.fim_promocao END ASC NULLS LAST,
        CASE WHEN ${filtros.ordenar === "pontos"} THEN parceiro.pontos_atuais END DESC,
        parceiro.nome,
        parceiro.id_externo

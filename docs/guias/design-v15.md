@@ -36,7 +36,9 @@ são resumidos pelo cliente nem substituídos por frases inventadas.
 | Texto sobre ação | `#FFF8F3` | `#481B09` |
 | Destaque suave | `#FBE6D9` | `#4B3027` |
 
-Escala de espaço: 4, 8, 12, 16, 20, 24, 32, 40 e 48. Raios por função:
+Escala base de espaço: 4, 8, 12, 16, 20, 24, 32, 40 e 48. Valores pontuais do
+HTML também recebem tokens semânticos; por exemplo, o ponto de status do hero e
+seu intervalo de 6 px usam `statusIndicator` e `compactStatusGap`. Raios por função:
 10 em controles, 18 em ofertas, 26 em destaque/folhas e circular apenas em
 ícones/chips apropriados. Não aplicar o mesmo contêiner a todo tipo de conteúdo.
 

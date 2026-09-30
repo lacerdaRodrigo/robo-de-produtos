@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
+import '../../app/navegacao/destinos.dart';
 import '../../app/tema/aparencia.dart';
 import '../../app/tema/tokens.dart';
 
 class PaginaAparencia extends StatelessWidget {
-  const PaginaAparencia({super.key});
+  const PaginaAparencia({
+    super.key,
+    this.destinoSelecionado = DestinoCompacto.perfil,
+    this.aoNavegar,
+  });
+
+  final DestinoCompacto destinoSelecionado;
+  final ValueChanged<DestinoCompacto>? aoNavegar;
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +21,7 @@ class PaginaAparencia extends StatelessWidget {
     final controlador = AparenciaRadar.talvezDe(context);
     final modo = controlador?.modo ?? ThemeMode.system;
     final reduzirMovimento = controlador?.reduzirMovimento ?? false;
+    final compacto = MediaQuery.sizeOf(context).width < 920;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Aparência'),
@@ -32,16 +41,15 @@ class PaginaAparencia extends StatelessWidget {
           ),
           children: [
             const CabecalhoSecaoRadar(
-              sobrelinha: 'Perfil / Aparência',
-              titulo: 'Escolha como o Radar aparece.',
-              descricao: 'A mudança é imediata e não reinicia sua sessão.',
+              titulo: 'Do seu jeito.',
+              descricao: 'Uma escolha para todo o aplicativo.',
             ),
             SizedBox(height: tokens.spacing.six),
             _OpcaoTema(
               key: const Key('aparencia-opcao-system'),
-              icone: Icons.brightness_auto_outlined,
-              titulo: 'Sistema',
-              descricao: 'Segue a preferência do aparelho.',
+              modo: ThemeMode.system,
+              titulo: 'Seguir o sistema',
+              descricao: 'Acompanha a aparência do aparelho.',
               selecionada: modo == ThemeMode.system,
               aoTocar: controlador == null
                   ? null
@@ -50,9 +58,9 @@ class PaginaAparencia extends StatelessWidget {
             SizedBox(height: tokens.spacing.three),
             _OpcaoTema(
               key: const Key('aparencia-opcao-light'),
-              icone: Icons.light_mode_outlined,
+              modo: ThemeMode.light,
               titulo: 'Claro',
-              descricao: 'Superfícies abertas e contraste nítido.',
+              descricao: 'Luz suave, leitura confortável.',
               selecionada: modo == ThemeMode.light,
               aoTocar: controlador == null
                   ? null
@@ -61,25 +69,17 @@ class PaginaAparencia extends StatelessWidget {
             SizedBox(height: tokens.spacing.three),
             _OpcaoTema(
               key: const Key('aparencia-opcao-dark'),
-              icone: Icons.dark_mode_outlined,
+              modo: ThemeMode.dark,
               titulo: 'Escuro',
-              descricao: 'Fundo profundo para pouca luz.',
+              descricao: 'Grafite, contraste e menos brilho.',
               selecionada: modo == ThemeMode.dark,
               aoTocar: controlador == null
                   ? null
                   : () => controlador.definir(ThemeMode.dark),
             ),
             SizedBox(height: tokens.spacing.five),
-            CartaoRadar(
-              corDestaque: CoresRadar.de(context).teal,
-              child: Text(
-                'Em Sistema, o Radar acompanha o tema do dispositivo quando essa informação existir.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: CoresRadar.de(context).textoSuave,
-                ),
-              ),
-            ),
-            SizedBox(height: tokens.spacing.three),
+            Text('Movimento', style: Theme.of(context).textTheme.titleMedium),
+            SizedBox(height: tokens.spacing.two),
             _OpcaoMovimento(
               reduzirMovimento: reduzirMovimento,
               aoMudar: controlador == null
@@ -89,6 +89,12 @@ class PaginaAparencia extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: compacto && aoNavegar != null
+          ? BarraInferiorRadar(
+              selecionado: destinoSelecionado.destinoDaBarra,
+              aoSelecionar: aoNavegar!,
+            )
+          : null,
     );
   }
 }
@@ -106,41 +112,27 @@ class _OpcaoMovimento extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final cores = CoresRadar.de(context);
-    return Semantics(
-      container: true,
-      label: 'Reduzir movimento${reduzirMovimento ? ', ativo' : ''}',
-      child: CartaoRadar(
+    return MergeSemantics(
+      child: Padding(
         key: const Key('aparencia-reduzir-movimento'),
-        padding: EdgeInsets.all(tokens.spacing.four),
+        padding: EdgeInsetsDirectional.symmetric(
+          vertical: tokens.spacing.three,
+        ),
         child: Row(
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                borderRadius: BorderRadius.circular(tokens.radii.md),
-              ),
-              child: SizedBox.square(
-                dimension: tokens.spacing.nine,
-                child: Icon(
-                  Icons.motion_photos_off_outlined,
-                  color: cores.acao,
-                ),
-              ),
-            ),
-            SizedBox(width: tokens.spacing.three),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Reduzir movimento',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                    'Reduzir animações',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: tokens.spacing.one),
                   Text(
-                    'Desativa transições decorativas e mantém o feedback funcional.',
+                    'Transições mais discretas.',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
@@ -159,14 +151,14 @@ class _OpcaoMovimento extends StatelessWidget {
 class _OpcaoTema extends StatelessWidget {
   const _OpcaoTema({
     super.key,
-    required this.icone,
+    required this.modo,
     required this.titulo,
     required this.descricao,
     required this.selecionada,
     required this.aoTocar,
   });
 
-  final IconData icone;
+  final ThemeMode modo;
   final String titulo;
   final String descricao;
   final bool selecionada;
@@ -175,52 +167,100 @@ class _OpcaoTema extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final tema = Theme.of(context);
     final cores = CoresRadar.de(context);
+    final forma = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(tokens.radii.lg),
+      side: BorderSide(color: selecionada ? cores.acao : cores.borda),
+    );
+    final corSuperficie = selecionada
+        ? tokens.colors.acaoFundo
+        : cores.superficie;
     return Semantics(
       button: true,
       selected: selecionada,
       label: '$titulo${selecionada ? ', ativo' : ''}. $descricao',
-      child: CartaoRadar(
-        aoTocar: aoTocar,
-        corDestaque: selecionada ? cores.acao : null,
-        padding: EdgeInsets.all(tokens.spacing.four),
-        child: Row(
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: cores.superficieAlternativa,
-                borderRadius: BorderRadius.circular(tokens.radii.md),
-              ),
-              child: SizedBox.square(
-                dimension: tokens.spacing.nine,
-                child: Icon(icone, color: cores.acao),
-              ),
-            ),
-            SizedBox(width: tokens.spacing.three),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: tokens.sizes.field + tokens.spacing.eight,
+        ),
+        child: Material(
+          color: corSuperficie,
+          shape: forma,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: aoTocar,
+            child: Padding(
+              padding: EdgeInsets.all(tokens.spacing.four),
+              child: Row(
                 children: [
-                  Text(
-                    '$titulo${selecionada ? ' · ativo' : ''}',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                  _AmostraTema(modo: modo),
+                  SizedBox(width: tokens.spacing.four),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          titulo,
+                          style: tema.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: tokens.spacing.one),
+                        Text(
+                          descricao,
+                          style: tema.textTheme.bodySmall?.copyWith(
+                            color: cores.textoSuave,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: tokens.spacing.one),
-                  Text(
-                    descricao,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
+                  SizedBox(width: tokens.spacing.two),
+                  Icon(
+                    selecionada ? Icons.check : Icons.chevron_right,
+                    color: cores.textoSuave,
                   ),
                 ],
               ),
             ),
-            Icon(selecionada ? Icons.check_circle : Icons.chevron_right),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _AmostraTema extends StatelessWidget {
+  const _AmostraTema({required this.modo});
+
+  final ThemeMode modo;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    final corClara = const CoresRadar.claras().canvas;
+    final corEscura = const CoresRadar.escuras().superficie;
+    return Container(
+      width: tokens.spacing.eight,
+      height: tokens.sizes.field + tokens.spacing.one,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: cores.borda),
+        borderRadius: BorderRadius.circular(tokens.radii.md),
+      ),
+      child: switch (modo) {
+        ThemeMode.light => ColoredBox(color: corClara),
+        ThemeMode.dark => ColoredBox(color: corEscura),
+        ThemeMode.system => Row(
+          children: [
+            Expanded(child: ColoredBox(color: corClara)),
+            Expanded(child: ColoredBox(color: corEscura)),
+          ],
+        ),
+      },
     );
   }
 }

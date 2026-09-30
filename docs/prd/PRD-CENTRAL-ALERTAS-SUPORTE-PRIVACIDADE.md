@@ -73,13 +73,33 @@ Rotas autenticadas em `backend/api/app/api`:
 - `POST/DELETE /api/notificacoes/dispositivos`;
 - `POST /api/notificacoes/outbox` (admin, acionamento manual);
 - `POST /api/cron/notificacoes/outbox` (GitHub Actions, `Authorization: Bearer OUTBOX_CRON_SECRET`);
-- `POST /api/relatos-problema`;
+- `GET/POST /api/relatos-problema`;
+- `GET /api/alertas/{id}/item`;
 - `GET /api/alertas/acompanhamentos`;
 - `PATCH /api/alertas/acompanhamentos`;
 - `PATCH /api/livelo/catalogo/{id_externo}/acompanhamento-pessoal`;
 - `PATCH /api/inter/cashback/{id}/acompanhamento`;
 - `PATCH /api/inter/produtos/{loja}/{id_externo}/acompanhamento`.
 - `PATCH /api/pichau/catalogo/{id_externo}/acompanhamento-pessoal`.
+
+`GET /api/alertas` aceita `pagina`, `por_pagina`, `tipo`, `origem`,
+`somente_nao_lidos` e `coleta`. `origem` é opcional e aceita somente os
+códigos `inter_cashback`, `inter_produto`, `livelo` e `pichau`; “Todas as
+origens” omite o parâmetro. Origem, tipo, leitura e coleta se combinam na
+consulta, na contagem e na paginação server-side. O cliente não filtra apenas
+os itens da página carregada.
+
+`GET /api/alertas/{id}/item` valida o alerta dentro da conta autenticada e
+resolve uma única entidade pelo ID interno, retornando seu DTO de catálogo
+existente. Alerta de outra conta, ausente ou associado a entidade removida tem
+resposta indistinguível `404`. A rota permanece sem cache.
+
+`GET /api/relatos-problema` exige autenticação sensível, consulta somente os
+relatos da conta autenticada e pagina até 50 itens por página. A leitura respeita
+a retenção de 180 dias e retorna apenas protocolo, categoria, mensagem e data de
+criação. Resposta sem itens é distinta de falha de leitura; o cliente não converte
+erro da API em lista vazia. A rota está nesta branch e requer publicação do
+serviço API antes da leitura real no aparelho.
 
 As rotas de usuário e administrativas usam Firebase Auth, respeitam App Check
 quando o enforcement está ligado, isolam por `usuario_app_id`, paginam e
@@ -157,6 +177,10 @@ Enquanto os dados ainda estão frescos, voltar ao app não gera consulta. A Home
 não faz polling a cada 30 segundos; o prazo local é apenas cache em memória e
 não altera a agenda nem a validade das coletas persistidas.
 
+Na Home compacta, o trilho `Explore as origens` rola de ponta a ponta com
+respiro interno de 20 dp. Cada atalho ocupa 43% da largura disponível, com
+mínimo de 132 dp, e cresce pela escala de texto sem truncar a descrição.
+
 `usuario_app.ultimo_acesso_em` só é atualizado no primeiro vínculo, quando o
 e-mail verificado muda ou após 24 horas. Auditoria técnica é retida por 30 dias;
 baldes de limite sem uso são removidos após 24 horas pelo cron interno horário.
@@ -204,26 +228,90 @@ um feed de mudanças sem cartões elevados. Cada mudança mostra origem e horár
 título orientado pela direção da alteração, entidade, comparação textual dos
 valores, `Ver item` e o estado de leitura. O filtro de tipo abre uma folha; ele
 continua usando o contrato paginado da API, sem baixar catálogo completo.
+`Filtrar mudanças` combina Origem (`Todas as origens`, `Sites parceiros`,
+`Compre direto`, `Livelo`, `Pichau`) e Tipo de mudança (`Todos`, `Preço`,
+`Cashback`, `Pontos`); esses filtros permanecem independentes das abas
+`Todos`/`Não lidos`. O mapeamento é `Sites parceiros` → `inter_cashback`,
+`Compre direto` → `inter_produto`, `Livelo` → `livelo` e `Pichau` → `pichau`.
 
 `Marcar todos como lidos` percorre as páginas do recorte atual com `por_pagina`
 limitado a 50 e envia lotes de no máximo 100 IDs para o `PATCH /api/alertas`.
-Falhas restauram os itens e a contagem que estavam visíveis antes da tentativa.
-`Ver item` mantém a ação contextual do protótipo e usa o callback da moldura
-quando disponível para voltar à origem correspondente (Livelo, Inter ou Pichau);
-sem esse callback, informa a origem sem inventar uma rota de detalhe que a API de
-alertas não fornece.
+O recorte inclui abas de leitura, origem, tipo e coleta. Falhas restauram os
+itens e a contagem que estavam visíveis antes da tentativa.
+`Ver item` marca o alerta como lido e solicita `GET /api/alertas/{id}/item`.
+A rota autentica a conta, confere o vínculo entre o alerta e `usuario_app_id` e
+resolve somente a entidade apontada por `entidade_id`, retornando um dos quatro
+DTOs de catálogo já existentes. Não baixa um catálogo completo. A tela de
+detalhe é empilhada sobre a Central; voltar pelo cabeçalho ou pelo sistema
+retorna à lista com filtros, página e posição preservados. Alerta ou entidade
+removidos recebem o mesmo `404` e usam o fallback para a área de origem. Falha
+de rede ou resposta 5xx mantém a Central aberta e oferece nova tentativa; não é
+tratada como item ausente.
 
-A rota compacta mantém a barra inferior V15 visível, com Início selecionado como
-no protótipo; tocar outro destino fecha a Central e devolve o contexto à moldura
-principal. O perfil substitui a antiga gaveta: oferece Central, Ajuda, Reportar
-problema, Privacidade, aparência, Administração e saída. Livelo, Banco Inter e
-Pichau são subáreas de Explorar. O botão/gesto de voltar do Android em Explorar
-retorna para Início. Produtos Inter exibe a ação pessoal `Acompanhar`, sem
-alterar a seleção global de lojas.
+O DTO Pichau atual não fornece CPU, GPU, RAM ou armazenamento mostrados como
+exemplos no detalhe ilustrativo do HTML. A tela usa apenas os campos reais
+disponíveis no contrato Pichau (SKU, marca/categoria, preço, disponibilidade,
+parcelamento e etiquetas); dados ausentes não são preenchidos com os exemplos do
+protótipo. Em Compre direto e Pichau, disponibilidade/estoque ausente é exibido
+como `Disponibilidade não informada`, nunca como `Disponível`; estoque zero
+continua sendo `Esgotado`.
+
+A rota compacta mantém a barra inferior V15 visível e seleciona o destino de
+origem da Central (por exemplo, Início quando aberta pelo sino da Home ou Perfil
+quando aberta pelas preferências da conta). Tocar qualquer um dos quatro destinos
+fecha a Central e seleciona a área correspondente na moldura existente, sem
+duplicar a rota; o botão/gesto Android mantém o destino de origem. O Perfil segue
+os grupos clicáveis do protótipo: Acompanhamentos, Aparência e Notificações na
+conta; Ajuda, Relatar problema, Meus relatos e Privacidade no suporte; e saída
+da sessão após confirmação. A identificação usa os dados reais da sessão; o
+nome ilustrativo do HTML não é copiado para a conta. A contagem de
+Acompanhamentos vem de `GET /api/resumo` e apresenta indisponibilidade sem
+substituir a falha por zero. A descrição de Notificações reflete `push_global`
+de `GET /api/alertas/preferencias`; ela informa o estado da preferência sem
+afirmar que a permissão de notificações do aparelho está concedida. A Central é
+aberta pelo sino da Home ou pelas preferências de Notificações. Administração
+continua restrita ao papel autorizado. Livelo,
+Banco Inter e Pichau são subáreas de Explorar. O botão/gesto de voltar do Android
+em Explorar retorna para Início. Produtos Inter exibe a ação pessoal
+`Acompanhar`, sem alterar a seleção global de lojas.
+
+No Flutter, Perfil segue o cabeçalho V15 e agrupa os atalhos de conta e suporte
+em superfícies planas, mostrando apenas a identificação recebida da sessão. A
+tela Aparência apresenta seguir o sistema, claro e escuro, marca a opção ativa
+com borda e superfície de acento e mantém o controle de redução de movimento
+ligado à preferência local existente. O layout amplo permanece claro e as
+barras do sistema acompanham o tema efetivo. Ajuda usa perguntas
+expansíveis com respostas baseadas nos contratos atuais; Privacidade descreve
+retenção e direitos com os fatos disponíveis no produto, sem reproduzir o texto
+demonstrativo do protótipo nem apresentar uma conta pessoal como canal oficial.
+Ajuda e Privacidade oferecem acesso ao formulário existente; Meus relatos exibe
+os registros reais devolvidos pela API, formata suas datas em pt-BR, permite
+copiar o protocolo, paginar e iniciar um novo relato. O avatar demonstrativo é
+decorativo e não duplica informação na árvore semântica. O formulário segue as cinco categorias V15 (`catalog`,
+`access`, `notification`, `privacy`, `other`) e aceita descrições de 10 a 2.000
+caracteres. O POST retorna o ID real do protocolo; após sucesso, o app abre Meus
+relatos com o comprovante retornado pela API enquanto atualiza a lista. A API
+preserva os quatro códigos legados já salvos, e a migration 035 amplia o CHECK
+do banco para novos registros V15 sem reescrever dados existentes. As telas
+secundárias preservam o retorno visível e o back Android pela pilha existente.
+No compacto, Aparência,
+Notificações, Ajuda, Privacidade, Meus relatos e Relatar problema mantêm a barra
+inferior V15. Trocar de destino nessa barra encerra todas as rotas
+secundárias abertas a partir da conta antes de selecionar a aba, inclusive
+quando o formulário foi aberto por Ajuda ou Privacidade.
+Esses testes de widget não substituem a conferência manual no Samsung SM-M135M
+(M13).
 
 Quando a Central é aberta como rota secundária, o botão `Voltar` do cabeçalho e
 o botão/gesto de voltar do Android fazem o mesmo `pop` para a tela anterior,
 preservando o estado da moldura e sem criar uma nova instância da Central.
+
+A rota `Notificações` apresenta as quatro preferências reais recebidas por
+`GET /api/alertas/preferencias`; cada alternância envia um `PATCH` serializado,
+atualiza a opção de forma otimista e restaura o valor anterior com mensagem de
+erro se a gravação falhar. `Rever permissão do aparelho` abre uma folha V15;
+`Agora não` fecha a folha e `Permitir` solicita a permissão real do sistema.
+Recusar mantém a Central e o histórico disponíveis.
 
 Após o primeiro login, FCM solicita permissão. Recusar ou indisponibilidade do
 Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.

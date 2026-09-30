@@ -208,6 +208,21 @@ describe("pontuacoes", () => {
     }
   });
 
+  it("aplica a pontuação comum antes da contagem e ordena por validade", async () => {
+    bancoFalso.respostas.push([{ total: 1 }], []);
+    await buscarCatalogoLiveloPersistido({
+      ...filtrosSqlCatalogoLivelo("", "", true),
+      aba: "todas",
+      ordenar: "validade",
+    }, 1, 10);
+
+    expect(bancoFalso.consultas[0]).toContain("pontos_atuais IS NOT NULL");
+    expect(bancoFalso.consultas[0]).toContain("pontos_base IS NOT NULL");
+    expect(bancoFalso.consultas[0]).toContain("pontos_atuais > parceiro.pontos_base");
+    expect(bancoFalso.consultas[1]).toContain("parceiro.fim_promocao END ASC NULLS LAST");
+    expect(bancoFalso.consultas[1]).toContain("LIMIT 10");
+  });
+
   it("protege medições legadas contra exclusão física da loja", () => {
     const migracao = readFileSync(
       resolve(process.cwd(), "../../migracoes/016_preserva_historico_livelo.sql"),

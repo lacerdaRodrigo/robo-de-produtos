@@ -21,6 +21,7 @@ CashbackInter _loja({
   String nome = 'Magazine Luiza',
   bool encontrada = true,
   bool favorita = false,
+  String? categoria = 'Eletrônicos',
   String? secundaria = '2% de cashback',
   String? descricaoPrincipal = 'Em itens selecionados',
   String? descricaoSecundaria,
@@ -38,6 +39,7 @@ CashbackInter _loja({
   descricaoSecundaria:
       descricaoSecundaria ??
       (secundaria == null ? null : 'Para não-correntistas'),
+  categoria: categoria,
   encontrada: encontrada,
   favorita: favorita,
   link: link,
@@ -131,11 +133,21 @@ void main() {
       find.byKey(const Key('alerta-inter-magazine luiza')),
       findsOneWidget,
     );
-    expect(find.text('Até 12% de cashback'), findsOneWidget);
+    final beneficio = find.text('Até 12% de cashback');
+    expect(beneficio, findsOneWidget);
+    final estiloBeneficio = at.widget<Text>(beneficio).style!;
+    expect(estiloBeneficio.fontSize, 30);
+    expect(estiloBeneficio.fontWeight, FontWeight.w800);
+    expect(estiloBeneficio.height, 1.2);
+    expect(estiloBeneficio.letterSpacing, -1);
+    expect(
+      estiloBeneficio.fontFeatures,
+      contains(const FontFeature.tabularFigures()),
+    );
     expect(find.text('Para correntista'), findsOneWidget);
     expect(find.text('Para não-correntista'), findsOneWidget);
     expect(find.text('Para correntista'), findsOneWidget);
-    expect(find.text('Oferta especial'), findsOneWidget);
+    expect(find.textContaining('Oferta especial'), findsOneWidget);
     expect(find.text('Para não-correntista'), findsOneWidget);
     await at.tap(find.text('Para não-correntista'));
     await at.pumpAndSettle();
@@ -276,7 +288,7 @@ void main() {
 
     expect(find.text('Animale'), findsOneWidget);
     expect(find.text('Aramis'), findsOneWidget);
-    expect(find.text('2 lojas encontradas'), findsOneWidget);
+    expect(find.text('2 lojas'), findsOneWidget);
     expect(find.text('Lojas com cashback'), findsOneWidget);
     expect(find.text('Filtros'), findsOneWidget);
     expect(find.byKey(const Key('paginacao-radar-1')), findsNothing);
@@ -285,7 +297,7 @@ void main() {
     expect(find.text('Todos'), findsOneWidget);
     expect(find.text('No radar'), findsOneWidget);
     expect(
-      at.getTopLeft(find.text('2 lojas encontradas')).dy,
+      at.getTopLeft(find.text('2 lojas')).dy,
       greaterThan(
         at.getBottomLeft(find.byKey(const Key('filtros-cashback-inter'))).dy,
       ),
@@ -298,6 +310,28 @@ void main() {
     expect(find.text('Aramis'), findsOneWidget);
     expect(find.text('Acompanhando'), findsOneWidget);
     expect(find.byKey(const Key('paginacao-radar-1')), findsNothing);
+  });
+
+  testWidgets('busca compacta do Inter espera o envio do termo', (at) async {
+    final consultas = <String>[];
+    final controlador = ControladorCashbackInter(
+      buscar: ({required q, required ordenar, required pagina}) async {
+        consultas.add(q);
+        return _pagina([_loja()]);
+      },
+    );
+    addTearDown(controlador.dispose);
+    await at.pumpWidget(_telaCompacta(controlador));
+    await at.pumpAndSettle();
+    expect(consultas, ['']);
+
+    await at.enterText(find.byKey(const Key('busca-cashback-inter')), 'casas');
+    await at.pumpAndSettle();
+    expect(consultas, ['']);
+
+    await at.testTextInput.receiveAction(TextInputAction.search);
+    await at.pumpAndSettle();
+    expect(consultas, ['', 'casas']);
   });
 
   testWidgets('puxar e voltar ao app atualizam cashback e resumo', (at) async {
@@ -580,6 +614,16 @@ void main() {
         ),
       );
       await at.pumpAndSettle();
+
+      final cartao = at.widget<CartaoRadar>(
+        find.descendant(
+          of: find.byType(CartaoCashbackInter),
+          matching: find.byType(CartaoRadar),
+        ),
+      );
+      expect(cartao.comSombra, isFalse);
+      expect(cartao.padding, const EdgeInsets.all(20));
+      expect(at.widget<Text>(find.text('Magazine Luiza')).style?.fontSize, 18);
 
       final acompanhar = find.byKey(
         const ValueKey('acompanhar-magazine luiza'),

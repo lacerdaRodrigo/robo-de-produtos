@@ -106,6 +106,15 @@ void main() {
     expect(decimal(null), isNull);
   });
 
+  test('Clube aparece somente quando supera a pontuação comum', () {
+    expect(pontosClubeSuperaComum('3.50', '3.5'), isFalse);
+    expect(pontosClubeSuperaComum('3.5000000000000001', '3.5'), isTrue);
+    expect(pontosClubeSuperaComum('10.01', '9.999'), isTrue);
+    expect(pontosClubeSuperaComum('2.9', '3.0'), isFalse);
+    expect(pontosClubeSuperaComum(null, '3.0'), isFalse);
+    expect(pontosClubeSuperaComum('indisponivel', '3.0'), isFalse);
+  });
+
   test('rótulos do Clube distinguem as campanhas', () {
     expect(rotuloClube('CLUB'), 'Exclusivo para assinantes Clube');
     expect(rotuloClube('PROMOTION_CLUB'), 'Assinantes Clube ganham mais');

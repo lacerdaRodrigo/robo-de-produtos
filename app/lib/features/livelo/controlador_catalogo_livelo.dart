@@ -16,7 +16,8 @@ enum AbaCatalogoLivelo {
 
 enum OrdenacaoCatalogoLivelo {
   pontos('pontos', 'Maior pontuação'),
-  nome('nome', 'Nome A–Z');
+  nome('nome', 'Nome da loja'),
+  validade('validade', 'Fim da campanha');
 
   const OrdenacaoCatalogoLivelo(this.codigo, this.rotulo);
   final String codigo;
@@ -30,6 +31,7 @@ typedef BuscarCatalogoLivelo =
       required String categoria,
       required String ordenar,
       required int pagina,
+      required bool somentePontuacaoComumAmpliada,
     });
 
 typedef AlterarAcompanhamentoLivelo =
@@ -78,6 +80,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   int _porPagina = 10;
   int _totalPaginas = 1;
   bool _temProxima = false;
+  bool _somentePontuacaoComumAmpliada = false;
   bool _carregandoInicial = false;
   bool _carregandoMais = false;
   Object? _erroInicial;
@@ -96,6 +99,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   int get porPagina => _porPagina;
   int get totalPaginas => _totalPaginas;
   bool get temProxima => _temProxima;
+  bool get somentePontuacaoComumAmpliada => _somentePontuacaoComumAmpliada;
   bool get carregandoInicial => _carregandoInicial;
   bool get carregandoMais => _carregandoMais;
   Object? get erroInicial => _erroInicial;
@@ -131,10 +135,16 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
   Future<void> aplicarFiltros({
     required String categoria,
     required OrdenacaoCatalogoLivelo ordenacao,
+    bool somentePontuacaoComumAmpliada = false,
   }) async {
-    if (categoria == _categoria && ordenacao == _ordenacao) return;
+    if (categoria == _categoria &&
+        ordenacao == _ordenacao &&
+        somentePontuacaoComumAmpliada == _somentePontuacaoComumAmpliada) {
+      return;
+    }
     _categoria = categoria;
     _ordenacao = ordenacao;
+    _somentePontuacaoComumAmpliada = somentePontuacaoComumAmpliada;
     await _reiniciarECarregar();
   }
 
@@ -353,6 +363,7 @@ class ControladorCatalogoLivelo extends ChangeNotifier {
     categoria: _aba == AbaCatalogoLivelo.lojas ? _categoria : '',
     ordenar: _ordenacao.codigo,
     pagina: pagina,
+    somentePontuacaoComumAmpliada: _somentePontuacaoComumAmpliada,
   );
 
   void _aplicarPagina(PaginaCatalogoLivelo pagina) {

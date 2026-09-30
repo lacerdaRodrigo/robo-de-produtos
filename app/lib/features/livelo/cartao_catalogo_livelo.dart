@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/componentes/fundacao_visual.dart';
+import '../../app/tema/tema.dart';
 import '../../app/tema/tokens.dart';
 import '../../core/api/modelos.dart';
 import 'formato_livelo.dart';
@@ -64,7 +65,8 @@ class CartaoCatalogoLivelo extends StatelessWidget {
       label: 'Parceiro Livelo ${parceiro.nome}',
       child: CartaoRadar(
         key: Key('cartao-livelo-${parceiro.idExterno}'),
-        padding: EdgeInsetsDirectional.all(tokens.spacing.four),
+        padding: EdgeInsetsDirectional.all(tokens.spacing.five),
+        comSombra: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -107,10 +109,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               children: [
                 Text(
                   valorPontosLivelo(parceiro.pontosAtuais),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cores.texto,
-                  ),
+                  style: Theme.of(context).textTheme.precoOferta,
                 ),
                 Text(
                   'pontos / ${parceiro.moeda} 1',
@@ -125,7 +124,7 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               SizedBox(height: tokens.spacing.one),
               Text(
                 'Base ${valorPontosLivelo(parceiro.pontosBase)} pts'
-                '${parceiro.pontosClube == null ? '' : ' · Clube ${valorPontosLivelo(parceiro.pontosClube)} pts'}',
+                '${pontosClubeSuperaComum(parceiro.pontosClube, parceiro.pontosAtuais) ? ' · Clube ${valorPontosLivelo(parceiro.pontosClube)} pts' : ''}',
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
@@ -182,34 +181,51 @@ class CartaoCatalogoLivelo extends StatelessWidget {
               },
             ),
             SizedBox(height: tokens.spacing.one),
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TextButton.icon(
-                      key: Key('historico-${parceiro.idExterno}'),
-                      onPressed: aoHistorico,
-                      style: TextButton.styleFrom(foregroundColor: cores.acao),
-                      icon: const Icon(Icons.history),
-                      label: const Text('Histórico'),
+            LayoutBuilder(
+              builder: (context, limites) {
+                final textoAmpliado =
+                    MediaQuery.textScalerOf(context).scale(13) >= 26;
+                final historico = TextButton.icon(
+                  key: Key('historico-${parceiro.idExterno}'),
+                  onPressed: aoHistorico,
+                  style: TextButton.styleFrom(foregroundColor: cores.acao),
+                  icon: const Icon(Icons.history),
+                  label: const Text('Histórico'),
+                );
+                final abrirLivelo = TextButton.icon(
+                  onPressed: _linkHttpsValido(parceiro.link)
+                      ? aoAbrirLivelo
+                      : null,
+                  style: TextButton.styleFrom(foregroundColor: cores.acao),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Ir à Livelo'),
+                );
+
+                if (textoAmpliado || limites.maxWidth < 300) {
+                  return Wrap(
+                    spacing: tokens.spacing.two,
+                    runSpacing: tokens.spacing.one,
+                    children: [historico, abrirLivelo],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: historico,
+                      ),
                     ),
-                  ),
-                ),
-                Flexible(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton.icon(
-                      onPressed: _linkHttpsValido(parceiro.link)
-                          ? aoAbrirLivelo
-                          : null,
-                      style: TextButton.styleFrom(foregroundColor: cores.acao),
-                      icon: const Icon(Icons.open_in_new),
-                      label: const Text('Ir à Livelo'),
+                    Flexible(
+                      child: Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: abrirLivelo,
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ],
         ),

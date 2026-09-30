@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/navegacao/destinos.dart';
 import 'package:app_robo/app/navegacao/moldura.dart';
 import 'package:app_robo/app/tema/tema.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
+import 'package:app_robo/features/alertas/pagina_alertas.dart';
 
 const _paginaVazia =
     '{"itens":[],"pagina":1,"por_pagina":20,"total_itens":0,'
@@ -65,6 +67,30 @@ const _resumo =
     '"lojas_sem_coleta":0,"produtos_ativos":0},'
     '"pichau":{"estado":"sem_dados"}}';
 
+const _alertasPichau =
+    '{"itens":[{"id":"91","origem":"pichau","tipo":"preco",'
+    '"entidade_id":"10","entidade_nome":"PC Gamer",'
+    '"coleta_id":"42","valor_anterior":"4199.90",'
+    '"valor_atual":"3999.90","unidade":"reais",'
+    '"direcao":"reducao","lido":false,'
+    '"criado_em":"2026-09-20T12:02:00Z"}],"nao_lidos":1,'
+    '"pagina":1,"por_pagina":20,"total_itens":1,'
+    '"total_paginas":1,"tem_proxima":false}';
+
+const _detalheAlertaPichau =
+    '{"origem":"pichau","item":{"id_externo":"10",'
+    '"sku":"PCM-67001","nome":"PC Gamer",'
+    '"marca":"Pichau","categoria_externa":"PC Gamer",'
+    '"url_produto":"https://www.pichau.com.br/pc-gamer",'
+    '"presente_no_catalogo":true,"disponibilidade":"disponivel",'
+    '"preco_original_texto":"R\$ 4.199,90",'
+    '"preco_pix_texto":"R\$ 3.999,90",'
+    '"desconto_pix_texto":"5% no Pix",'
+    '"preco_cartao_texto":"R\$ 4.399,90",'
+    '"parcelamento":"12x","sem_juros":false,'
+    '"etiquetas":["PC Gamer"],"atualizado_em":null,'
+    '"acompanhada":false}}';
+
 const _resumoComEstadosIndependentes =
     '{"gerado_em":"2026-08-23T12:00:00Z","estado_geral":"atencao",'
     '"livelo":{"estado":"atualizado","ultimo_sucesso_em":"2026-08-23T10:30:00Z",'
@@ -83,6 +109,7 @@ Api _api({
   String sitesParceiros = _paginaVazia,
   String lojasDiretas = _paginaVazia,
   String produtos = _produtosInter,
+  String alertas = _paginaVazia,
   List<http.Request>? requisicoes,
 }) => Api(
   paginaPadrao: 20,
@@ -96,6 +123,13 @@ Api _api({
       }
       if (requisicao.url.path == '/api/resumo') {
         return http.Response(resumo, 200);
+      }
+      if (requisicao.url.path == '/api/alertas' && requisicao.method == 'GET') {
+        return http.Response(alertas, 200);
+      }
+      if (requisicao.url.path == '/api/alertas/91/item' &&
+          requisicao.method == 'GET') {
+        return http.Response(_detalheAlertaPichau, 200);
       }
       if (requisicao.url.path == '/api/inter/cashback') {
         return http.Response(cashback, 200);
@@ -161,7 +195,9 @@ Future<void> _abrir(
   String sitesParceiros = _paginaVazia,
   String lojasDiretas = _paginaVazia,
   String produtos = _produtosInter,
+  String alertas = _paginaVazia,
   List<http.Request>? requisicoes,
+  Future<void> Function()? aoSair,
 }) async {
   at.view.devicePixelRatio = 1;
   at.view.physicalSize = tamanho;
@@ -185,9 +221,11 @@ Future<void> _abrir(
           sitesParceiros: sitesParceiros,
           lojasDiretas: lojasDiretas,
           produtos: produtos,
+          alertas: alertas,
           requisicoes: requisicoes,
         ),
         administrador: administrador,
+        aoSair: aoSair,
         agora: () => DateTime(2026, 8, 26),
       ),
       builder: (context, child) => MediaQuery(
@@ -240,6 +278,8 @@ Future<void> _irParaCompacto(WidgetTester at, DestinoCompacto destino) async {
     await at.pumpAndSettle();
   } else if (destino == DestinoCompacto.inter) {
     final programa = find.byKey(const Key('programa-inter'));
+    await at.drag(paginaProgramas, const Offset(0, 800));
+    await at.pumpAndSettle();
     for (
       var tentativa = 0;
       tentativa < 8 && programa.evaluate().isEmpty;
@@ -383,7 +423,7 @@ void main() {
     );
   });
 
-  testWidgets('Explorar agrega Livelo, Inter e Pichau sem busca no hub', (
+  testWidgets('Explorar ordena Inter, Livelo e Pichau sem busca no hub', (
     at,
   ) async {
     await _abrir(at, tamanho: const Size(390, 1200));
@@ -393,6 +433,42 @@ void main() {
     expect(find.byKey(const Key('programa-livelo')), findsOneWidget);
     expect(find.byKey(const Key('programa-inter')), findsOneWidget);
     expect(find.byKey(const Key('programa-pichau')), findsOneWidget);
+    expect(
+      at.getTopLeft(find.byKey(const Key('programa-inter'))).dy,
+      lessThan(at.getTopLeft(find.byKey(const Key('programa-livelo'))).dy),
+    );
+    expect(
+      at.getTopLeft(find.byKey(const Key('programa-livelo'))).dy,
+      lessThan(at.getTopLeft(find.byKey(const Key('programa-pichau'))).dy),
+    );
+    expect(
+      find.text('Lojas parceiras e pontos por real gasto.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Cashback em lojas e compra de produtos.'),
+      findsOneWidget,
+    );
+    expect(find.text('PCs gamer com preço Pix e cartão.'), findsOneWidget);
+    expect(find.text('02 experiências'), findsOneWidget);
+    expect(find.text('Catálogo'), findsNothing);
+    expect(find.text('Pontuação'), findsNothing);
+    expect(find.text('3 acompanhadas'), findsNothing);
+    for (final chave in const [
+      'programa-inter',
+      'programa-livelo',
+      'programa-pichau',
+    ]) {
+      final card = at.widget<CartaoRadar>(
+        find
+            .ancestor(
+              of: find.byKey(Key(chave)),
+              matching: find.byType(CartaoRadar),
+            )
+            .first,
+      );
+      expect(card.comSombra, isFalse);
+    }
   });
 
   testWidgets('Explorar usa cabeçalho V15 e título responsivo', (at) async {
@@ -405,6 +481,19 @@ void main() {
     await _irParaCompacto(at, DestinoCompacto.programas);
 
     expect(find.byKey(const Key('cabecalho-explorar')), findsOneWidget);
+    expect(
+      at.getTopLeft(find.byKey(const Key('marca-cabecalho-radar'))).dx,
+      lessThan(
+        at
+            .getTopLeft(
+              find.descendant(
+                of: find.byKey(const Key('cabecalho-explorar')),
+                matching: find.text('Explorar'),
+              ),
+            )
+            .dx,
+      ),
+    );
     expect(
       at.getTopLeft(find.byKey(const Key('cabecalho-explorar'))).dy,
       greaterThanOrEqualTo(40),
@@ -448,10 +537,66 @@ void main() {
     expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
 
     await _irParaCompacto(at, DestinoCompacto.inter);
+    final rolagemInter = find
+        .descendant(
+          of: find.byKey(const Key('hub-shopping-inter')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    for (final chave in const [
+      'modo-inter-cashback',
+      'modo-inter-compre-direto',
+    ]) {
+      await at.scrollUntilVisible(
+        find.byKey(Key(chave)),
+        160,
+        scrollable: rolagemInter,
+      );
+      final cartao = at.widget<CartaoRadar>(find.byKey(Key(chave)));
+      expect(cartao.comSombra, isFalse);
+      expect(cartao.padding, const EdgeInsets.all(20));
+    }
     await at.binding.handlePopRoute();
     await at.pumpAndSettle();
     expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
   });
+
+  testWidgets(
+    'Shopping Inter interno mantém área segura e 16 dp de respiro superior',
+    (at) async {
+      const recuoSuperior = 24.0;
+      const espacamentoV15 = 16.0;
+      await _abrir(
+        at,
+        tamanho: const Size(390, 844),
+        recuoSuperiorSistema: recuoSuperior,
+      );
+      await _irParaCompacto(at, DestinoCompacto.inter);
+      final escolhaSites = find.byKey(const Key('modo-inter-cashback'));
+      await at.scrollUntilVisible(
+        escolhaSites,
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const Key('hub-shopping-inter')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await at.tap(escolhaSites);
+      await at.pumpAndSettle();
+
+      final linhaCabecalho = find.byKey(
+        const Key('cabecalho-interno-shopping-inter'),
+      );
+      expect(linhaCabecalho, findsOneWidget);
+      expect(
+        at.getTopLeft(linhaCabecalho).dy,
+        closeTo(recuoSuperior + espacamentoV15, 0.01),
+      );
+      expect(at.takeException(), isNull);
+    },
+  );
 
   testWidgets('Explorar volta para Início pelo Android', (at) async {
     await _abrir(at);
@@ -882,12 +1027,9 @@ void main() {
     expect(find.text('+ escolher lojas'), findsNothing);
   });
 
-  testWidgets('Alertas existentes continuam acessíveis pelo perfil', (
-    at,
-  ) async {
+  testWidgets('Alertas existentes continuam acessíveis pela Home', (at) async {
     await _abrir(at);
-    await _abrirConta(at);
-    await at.tap(find.text('Central de Alertas'));
+    await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
     await at.pumpAndSettle();
 
     expect(find.text('Mudou. Você viu.'), findsOneWidget);
@@ -903,13 +1045,217 @@ void main() {
     expect(find.text('Nenhum alerta corresponde a este filtro.'), findsNothing);
   });
 
+  testWidgets('Ver item abre detalhe e retorna sem recriar a Central', (
+    at,
+  ) async {
+    final requisicoes = <http.Request>[];
+    await _abrir(at, alertas: _alertasPichau, requisicoes: requisicoes);
+    await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
+    await at.pumpAndSettle();
+    expect(find.text('PC Gamer'), findsOneWidget);
+
+    await at.tap(find.text('Ver item'));
+    await at.pumpAndSettle();
+
+    expect(
+      requisicoes.any(
+        (requisicao) =>
+            requisicao.method == 'PATCH' &&
+            requisicao.url.path == '/api/alertas/91/leitura',
+      ),
+      isTrue,
+    );
+    expect(find.byKey(const Key('detalhe-alerta-pichau')), findsOneWidget);
+    expect(find.byKey(const Key('voltar-detalhe-alerta')), findsOneWidget);
+
+    await at.binding.handlePopRoute();
+    await at.pumpAndSettle();
+    expect(find.byType(PaginaAlertas), findsOneWidget);
+    expect(find.text('PC Gamer'), findsOneWidget);
+
+    await at.tap(find.text('Ver item'));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('barra-explorar')));
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
+    expect(find.byType(PaginaAlertas), findsNothing);
+  });
+
+  testWidgets('rotas de conta mantêm abas e trocam mesmo a partir de subrota', (
+    at,
+  ) async {
+    await _abrir(at);
+    await _abrirConta(at);
+    await at.tap(find.byKey(const Key('perfil-aparencia')));
+    await at.pumpAndSettle();
+
+    expect(find.text('Do seu jeito.'), findsOneWidget);
+    expect(
+      at
+          .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+          .selectedIndex,
+      3,
+    );
+    await at.tap(find.byKey(const Key('barra-explorar')));
+    await at.pumpAndSettle();
+    expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
+    expect(find.text('Do seu jeito.'), findsNothing);
+
+    await _abrirConta(at);
+    final ajuda = find.byKey(const Key('perfil-ajuda'));
+    await at.ensureVisible(ajuda);
+    await at.tap(ajuda);
+    await at.pumpAndSettle();
+    expect(find.text('Pode perguntar.'), findsOneWidget);
+    await at.ensureVisible(find.byKey(const Key('ajuda-abrir-relato')));
+    await at.tap(find.byKey(const Key('ajuda-abrir-relato')));
+    await at.pumpAndSettle();
+    expect(find.text('O que aconteceu?'), findsOneWidget);
+    await at.tap(find.byKey(const Key('barra-explorar')));
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
+    expect(find.text('Pode perguntar.'), findsNothing);
+    expect(find.text('O que aconteceu?'), findsNothing);
+  });
+
+  testWidgets(
+    'Central conserva seleção, navega pelos quatro destinos e volta',
+    (at) async {
+      await _abrir(at);
+
+      await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+            .selectedIndex,
+        0,
+      );
+      await at.tap(find.byKey(const Key('barra-explorar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('pagina-programas')), findsOneWidget);
+      expect(find.byType(PaginaAlertas), findsNothing);
+
+      await at.tap(find.byKey(const Key('barra-inicio')));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
+      await at.pumpAndSettle();
+      await at.tap(find.byKey(const Key('barra-radar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('pagina-meu-radar')), findsOneWidget);
+
+      await at.tap(find.byTooltip('Abrir alertas'));
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+            .selectedIndex,
+        2,
+      );
+      await at.tap(find.byKey(const Key('barra-perfil')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+
+      final meusRelatos = find.byKey(const Key('perfil-relatos'));
+      await at.ensureVisible(meusRelatos);
+      await at.tap(meusRelatos);
+      await at.pumpAndSettle();
+      expect(find.text('Seu retorno importa.'), findsOneWidget);
+      expect(find.textContaining('Nenhum relato por aqui.'), findsOneWidget);
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('perfil-acompanhamentos')));
+      await at.pumpAndSettle();
+      expect(
+        at
+            .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+            .selectedIndex,
+        2,
+      );
+      expect(find.byKey(const Key('pagina-meu-radar')), findsOneWidget);
+      await at.tap(find.byKey(const Key('barra-perfil')));
+      await at.pumpAndSettle();
+
+      await at.tap(find.byKey(const Key('perfil-notificacoes')));
+      await at.pumpAndSettle();
+      expect(find.text('Notificações'), findsOneWidget);
+      expect(
+        find.byKey(const Key('voltar-notificacoes-alertas')),
+        findsOneWidget,
+      );
+      expect(
+        at
+            .widget<NavigationBar>(find.byKey(const Key('barra-inferior-v15')))
+            .selectedIndex,
+        3,
+      );
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('barra-inicio')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('abrir-alertas-cabecalho')), findsOneWidget);
+
+      await at.tap(find.byKey(const Key('abrir-alertas-cabecalho')));
+      await at.pumpAndSettle();
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(find.byType(PaginaAlertas), findsNothing);
+      expect(find.byKey(const Key('abrir-alertas-cabecalho')), findsOneWidget);
+    },
+  );
+
   testWidgets('conta oferece administração fora das três áreas', (at) async {
     await _abrir(at, administrador: true);
     await _abrirConta(at);
 
-    expect(find.text('Administração'), findsOneWidget);
     expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
-    expect(find.text('Acesso administrador'), findsOneWidget);
+    expect(find.text('Olá.'), findsOneWidget);
+    final administracao = find.text('Administração');
+    await at.scrollUntilVisible(
+      administracao,
+      180,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(administracao, findsOneWidget);
+  });
+
+  testWidgets('saída exige confirmação e mantém a sessão ao cancelar', (
+    at,
+  ) async {
+    var saidas = 0;
+    await _abrir(
+      at,
+      aoSair: () async {
+        saidas++;
+      },
+    );
+    await _abrirConta(at);
+    final sair = find.byKey(const Key('sair-conta'));
+    await at.ensureVisible(sair);
+    await at.tap(sair);
+    await at.pumpAndSettle();
+
+    expect(find.text('Sair do Radar?'), findsOneWidget);
+    expect(
+      find.textContaining('Seus acompanhamentos ficam salvos.'),
+      findsOneWidget,
+    );
+    await at.tap(find.byKey(const Key('cancelar-saida')));
+    await at.pumpAndSettle();
+    expect(saidas, 0);
+    expect(find.byKey(const Key('perfil-conta')), findsOneWidget);
+
+    await at.ensureVisible(sair);
+    await at.tap(sair);
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('confirmar-saida')));
+    await at.pumpAndSettle();
+    expect(saidas, 1);
   });
 
   testWidgets('administração mobile permite selecionar lojas e voltar', (

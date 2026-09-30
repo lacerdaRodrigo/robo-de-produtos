@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
+import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/tema/tema.dart';
 import 'package:app_robo/app/tema/tokens.dart';
 import 'package:app_robo/core/api/api.dart';
@@ -63,6 +64,7 @@ ControladorCatalogoLivelo _controlador({
         required categoria,
         required ordenar,
         required pagina,
+        required somentePontuacaoComumAmpliada,
       }) async => dados.montarPagina(
         [
           dados.parceiro(
@@ -123,7 +125,64 @@ Future<void> _dispararAtualizacao(WidgetTester at) async {
   await at.pump();
 }
 
+void _expectSuperficieOfertaV15(
+  WidgetTester at,
+  Finder cartao,
+  EdgeInsetsGeometry padding,
+) {
+  const tokens = AppTokens.claro();
+  final cartaoWidget = at.widget<CartaoRadar>(cartao);
+  expect(cartaoWidget.padding, padding);
+  expect(cartaoWidget.comSombra, isFalse);
+  expect(cartaoWidget.corDestaque, isNull);
+
+  final superficies = find.descendant(
+    of: cartao,
+    matching: find.byType(Material),
+  );
+  final superficie = at.widget<Material>(superficies.first);
+  expect(superficie.color, tokens.colors.superficie);
+  final forma = superficie.shape! as RoundedRectangleBorder;
+  expect(forma.borderRadius, BorderRadius.circular(tokens.radii.lg));
+  expect(forma.side.color, tokens.colors.borda);
+  expect(forma.side.width, 1);
+}
+
 void main() {
+  testWidgets('busca Livelo só consulta depois de enviar o termo', (at) async {
+    final consultas = <String>[];
+    final controlador = ControladorCatalogoLivelo(
+      buscar:
+          ({
+            required q,
+            required aba,
+            required categoria,
+            required ordenar,
+            required pagina,
+            required somentePontuacaoComumAmpliada,
+          }) async {
+            consultas.add(q);
+            return dados.montarPagina([]);
+          },
+      alterarAcompanhamento:
+          ({required idExterno, required acompanhada}) async {},
+    );
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador);
+    expect(consultas, ['']);
+
+    await at.enterText(
+      find.byKey(const Key('busca-catalogo-livelo')),
+      'natura',
+    );
+    await at.pumpAndSettle();
+    expect(consultas, ['']);
+
+    await at.tap(find.byTooltip('Pesquisar'));
+    await at.pumpAndSettle();
+    expect(consultas, ['', 'natura']);
+  });
+
   testWidgets('polling encerra ao receber novo retrato', (at) async {
     var consultas = 0;
     final controlador = ControladorCatalogoLivelo(
@@ -134,6 +193,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             consultas += 1;
             return dados.montarPagina(
@@ -173,6 +233,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             consultas += 1;
             return dados.montarPagina([dados.parceiro('A')]);
@@ -220,6 +281,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             consultas += 1;
             if (consultas > 1) throw StateError('sem rede');
@@ -261,6 +323,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async {
             consultas += 1;
             return dados.montarPagina([dados.parceiro('A')]);
@@ -344,15 +407,17 @@ void main() {
 
     await at.tap(find.byKey(const Key('filtrar-ordenar-livelo')));
     await at.pumpAndSettle();
-    expect(find.text('Filtrar todas as lojas'), findsOneWidget);
+    expect(find.text('Filtros · Livelo'), findsOneWidget);
+    expect(find.byKey(const Key('voltar-folha-radar')), findsNothing);
+    expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
     expect(find.text('Limpar'), findsOneWidget);
-    expect(find.text('Ver lojas'), findsOneWidget);
+    expect(find.text('Aplicar filtros'), findsOneWidget);
 
     await at.tap(find.byKey(const Key('categoria-filtro-livelo')));
     await at.pumpAndSettle();
     await at.tap(find.text('Marketplace').last);
     await at.pumpAndSettle();
-    await at.tap(find.text('Ver lojas'));
+    await at.tap(find.text('Aplicar filtros'));
     await at.pumpAndSettle();
 
     expect(controlador.categoria, 'Marketplace');
@@ -368,6 +433,61 @@ void main() {
     expect(find.byKey(const Key('filtrar-ordenar-livelo')), findsNothing);
   });
 
+  testWidgets('filtros expõem pontuação comum e fim da campanha', (at) async {
+    final controlador = _controlador();
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador);
+
+    await at.tap(find.byKey(const Key('filtrar-ordenar-livelo')));
+    await at.pumpAndSettle();
+    final pontuacao = find.byKey(const Key('filtro-pontuacao-ampliada-livelo'));
+    expect(find.text('Somente pontuação comum ampliada'), findsOneWidget);
+    await at.tap(find.byKey(const Key('ordenacao-filtro-livelo')));
+    await at.pumpAndSettle();
+    expect(find.text('Fim da campanha'), findsOneWidget);
+    await at.tap(find.text('Fim da campanha'));
+    await at.pumpAndSettle();
+    await at.tap(pontuacao);
+    await at.pumpAndSettle();
+    await at.tap(find.text('Aplicar filtros'));
+    await at.pumpAndSettle();
+
+    expect(controlador.somentePontuacaoComumAmpliada, isTrue);
+    expect(controlador.ordenacao, OrdenacaoCatalogoLivelo.validade);
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('Limpar Livelo aplica os padrões e mantém a folha aberta', (
+    at,
+  ) async {
+    final controlador = _controlador();
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador);
+    await at.tap(find.byKey(const Key('filtrar-ordenar-livelo')));
+    await at.pumpAndSettle();
+
+    await at.tap(find.byKey(const Key('categoria-filtro-livelo')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Marketplace').last);
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('ordenacao-filtro-livelo')));
+    await at.pumpAndSettle();
+    await at.tap(find.text('Fim da campanha'));
+    await at.pumpAndSettle();
+    await at.tap(find.byKey(const Key('filtro-pontuacao-ampliada-livelo')));
+    await at.pumpAndSettle();
+
+    await at.tap(find.text('Limpar'));
+    await at.pumpAndSettle();
+
+    expect(find.text('Filtros · Livelo'), findsOneWidget);
+    expect(controlador.categoria, isEmpty);
+    expect(controlador.ordenacao, OrdenacaoCatalogoLivelo.nome);
+    expect(controlador.somentePontuacaoComumAmpliada, isFalse);
+    expect(find.text('Todas as categorias'), findsOneWidget);
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('qualidade reduzida não recria o card de resumo', (at) async {
     final controlador = ControladorCatalogoLivelo(
       buscar:
@@ -377,6 +497,7 @@ void main() {
             required categoria,
             required ordenar,
             required pagina,
+            required somentePontuacaoComumAmpliada,
           }) async => dados.montarPagina(
             [dados.parceiro('A')],
             resumoDaPagina: dados.resumo(
@@ -474,6 +595,7 @@ void main() {
     await at.pumpAndSettle();
 
     final cartao = find.byKey(const Key('cartao-livelo-A'));
+    _expectSuperficieOfertaV15(at, cartao, const EdgeInsetsDirectional.all(20));
     expect(find.byKey(const Key('alerta-A')), findsNothing);
     expect(
       find.descendant(of: cartao, matching: find.text('Marketplace')),
@@ -483,6 +605,12 @@ void main() {
       find.descendant(of: cartao, matching: find.text('2,9')),
       findsOneWidget,
     );
+    final beneficio = find.descendant(of: cartao, matching: find.text('2,9'));
+    expect(
+      at.widget<Text>(beneficio).style,
+      TemaRadar.claro().textTheme.precoOferta,
+    );
+    expect(at.widget<Text>(beneficio).style?.fontSize, 30);
     expect(
       find.descendant(of: cartao, matching: find.text('pontos / R\$ 1')),
       findsOneWidget,
@@ -506,6 +634,18 @@ void main() {
     expect(
       find.descendant(of: cartao, matching: find.text('Ir à Livelo')),
       findsOneWidget,
+    );
+    final historico = find.descendant(
+      of: cartao,
+      matching: find.text('Histórico'),
+    );
+    final irALivelo = find.descendant(
+      of: cartao,
+      matching: find.text('Ir à Livelo'),
+    );
+    expect(
+      at.getRect(historico).center.dy,
+      closeTo(at.getRect(irALivelo).center.dy, 1),
     );
   });
 
@@ -620,6 +760,35 @@ void main() {
     },
   );
 
+  testWidgets('360 dp mantém contagem e filtros na mesma linha V15', (
+    at,
+  ) async {
+    final controlador = _controlador();
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador, tamanho: const Size(360, 800));
+
+    final linha = find.byKey(const Key('linha-resumo-resultados-livelo'));
+    final contagem = find.descendant(of: linha, matching: find.text('2 lojas'));
+    final botao = find.descendant(
+      of: linha,
+      matching: find.byKey(const Key('filtrar-ordenar-livelo')),
+    );
+
+    expect(linha, findsOneWidget);
+    expect(contagem, findsOneWidget);
+    expect(botao, findsOneWidget);
+    expect(at.getSize(botao).height, greaterThanOrEqualTo(48));
+
+    final rectLinha = at.getRect(linha);
+    final rectContagem = at.getRect(contagem);
+    final rectBotao = at.getRect(botao);
+    expect(rectLinha.top, greaterThanOrEqualTo(0));
+    expect(rectLinha.bottom, lessThanOrEqualTo(800));
+    expect(rectBotao.top, lessThanOrEqualTo(rectContagem.center.dy));
+    expect(rectBotao.bottom, greaterThanOrEqualTo(rectContagem.center.dy));
+    expect(at.takeException(), isNull);
+  });
+
   testWidgets('320 px e texto a 150% continuam roláveis sem overflow', (
     at,
   ) async {
@@ -634,6 +803,34 @@ void main() {
       const Offset(0, -300),
     );
     await at.pump();
+    expect(at.takeException(), isNull);
+  });
+
+  testWidgets('ações Livelo quebram em 200% sem overflow', (at) async {
+    final controlador = _controlador();
+    addTearDown(controlador.dispose);
+    await _abrir(at, controlador, tamanho: const Size(320, 640), escala: 2);
+
+    final cartao = find.byKey(const Key('cartao-livelo-A'));
+    final historico = find.descendant(
+      of: cartao,
+      matching: find.text('Histórico'),
+    );
+    final abrirLivelo = find.descendant(
+      of: cartao,
+      matching: find.text('Ir à Livelo'),
+    );
+    await at.ensureVisible(abrirLivelo);
+    await at.pumpAndSettle();
+
+    final limiteCartao = at.getRect(cartao);
+    final limiteHistorico = at.getRect(historico);
+    final limiteLivelo = at.getRect(abrirLivelo);
+    expect(limiteLivelo.top, greaterThanOrEqualTo(limiteHistorico.bottom));
+    expect(limiteHistorico.left, greaterThanOrEqualTo(limiteCartao.left));
+    expect(limiteHistorico.right, lessThanOrEqualTo(limiteCartao.right));
+    expect(limiteLivelo.left, greaterThanOrEqualTo(limiteCartao.left));
+    expect(limiteLivelo.right, lessThanOrEqualTo(limiteCartao.right));
     expect(at.takeException(), isNull);
   });
 }

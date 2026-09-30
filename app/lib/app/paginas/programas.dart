@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/api/api.dart';
-import '../../core/api/modelos.dart';
-import '../componentes/estados.dart';
 import '../componentes/fundacao_visual.dart';
 import '../tema/tokens.dart';
 
@@ -10,141 +7,64 @@ import '../tema/tokens.dart';
 ///
 /// A lista reúne somente as fontes conectadas; os catálogos abertos a partir
 /// daqui continuam consultando seus próprios dados server-side.
-class PaginaProgramas extends StatefulWidget {
+class PaginaProgramas extends StatelessWidget {
   const PaginaProgramas({
     super.key,
-    required this.api,
     required this.aoAbrirLivelo,
     required this.aoAbrirInter,
     required this.aoAbrirPichau,
-    this.ativa = true,
   });
 
-  final Api api;
   final VoidCallback aoAbrirLivelo;
   final VoidCallback aoAbrirInter;
   final VoidCallback aoAbrirPichau;
-  final bool ativa;
-
-  @override
-  State<PaginaProgramas> createState() => _EstadoPaginaProgramas();
-}
-
-class _EstadoPaginaProgramas extends State<PaginaProgramas> {
-  ResumoInicio? _resumo;
-  Object? _erro;
-  var _carregando = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _carregar();
-  }
-
-  @override
-  void didUpdateWidget(covariant PaginaProgramas antigo) {
-    super.didUpdateWidget(antigo);
-    if (widget.ativa && !antigo.ativa) _carregar(silencioso: true);
-  }
-
-  Future<void> _carregar({bool silencioso = false}) async {
-    if (!silencioso && mounted) setState(() => _carregando = true);
-    try {
-      final resumo = await widget.api.resumo();
-      if (!mounted) return;
-      setState(() {
-        _resumo = resumo;
-        _erro = null;
-        _carregando = false;
-      });
-    } catch (erro) {
-      if (!mounted) return;
-      setState(() {
-        _erro = erro;
-        _carregando = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final programas = <_ProgramaRadar>[
       _ProgramaRadar(
+        chave: const Key('programa-inter'),
+        titulo: 'Banco Inter',
+        descricao: 'Cashback em lojas e compra de produtos.',
+        tipo: '02 experiências',
+        aoTocar: aoAbrirInter,
+      ),
+      _ProgramaRadar(
         chave: const Key('programa-livelo'),
         titulo: 'Livelo',
         descricao: 'Lojas parceiras e pontos por real gasto.',
         tipo: 'Pontos',
-        capacidades: const ['Catálogo', 'Pontuação', 'Histórico'],
-        estado: _resumo == null ? null : _rotuloEstado(_resumo!.livelo.estado),
-        detalhe: _resumo == null
-            ? null
-            : '${_resumo!.livelo.lojasAcompanhadas} acompanhadas',
-        aoTocar: widget.aoAbrirLivelo,
-      ),
-      _ProgramaRadar(
-        chave: const Key('programa-inter'),
-        titulo: 'Banco Inter',
-        descricao: 'Cashback em lojas e compra de produtos.',
-        tipo: 'Cashback + produtos',
-        capacidades: const ['Sites parceiros', 'Cashback', 'Compre direto'],
-        estado: _resumo == null
-            ? null
-            : _rotuloEstado(_resumo!.cashbackInter.estado),
-        detalhe: _resumo == null
-            ? null
-            : '${_resumo!.cashbackInter.lojasAcompanhadas} acompanhadas',
-        aoTocar: widget.aoAbrirInter,
+        aoTocar: aoAbrirLivelo,
       ),
       _ProgramaRadar(
         chave: const Key('programa-pichau'),
         titulo: 'Pichau',
         descricao: 'PCs gamer com preço Pix e cartão.',
         tipo: 'Tecnologia',
-        capacidades: const ['Catálogo PC Gamer', 'Pix + cartão', 'Estoque'],
-        estado: _resumo == null ? null : _rotuloEstado(_resumo!.pichau.estado),
-        detalhe: _resumo == null
-            ? null
-            : '${_resumo!.pichau.produtosAtivos} produtos disponíveis',
-        aoTocar: widget.aoAbrirPichau,
+        aoTocar: aoAbrirPichau,
       ),
     ];
 
-    return RefreshIndicator(
-      onRefresh: _carregar,
-      child: SafeArea(
-        top: true,
-        bottom: false,
-        child: ListView(
-          key: const Key('pagina-programas'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsetsDirectional.only(
-            start: context.tokens.spacing.five,
-            top: context.tokens.spacing.four,
-            end: context.tokens.spacing.five,
-            bottom: context.tokens.spacing.six,
-          ),
-          children: [
-            const _CabecalhoExplorar(),
-            SizedBox(height: context.tokens.spacing.six),
-            if (_carregando) ...[
-              SizedBox(height: context.tokens.spacing.three),
-              const LinearProgressIndicator(),
-            ],
-            if (_erro != null && _resumo == null) ...[
-              SizedBox(height: context.tokens.spacing.three),
-              EstadoFalha(
-                mensagem:
-                    'Não foi possível carregar os resumos. As fontes continuam disponíveis.',
-                voltar: _carregar,
-              ),
-            ],
-            for (var indice = 0; indice < programas.length; indice++) ...[
-              _CartaoPrograma(programa: programas[indice]),
-              if (indice != programas.length - 1)
-                SizedBox(height: context.tokens.spacing.three),
-            ],
-          ],
+    return SafeArea(
+      top: true,
+      bottom: false,
+      child: ListView(
+        key: const Key('pagina-programas'),
+        padding: EdgeInsetsDirectional.only(
+          start: context.tokens.spacing.five,
+          top: context.tokens.spacing.four,
+          end: context.tokens.spacing.five,
+          bottom: context.tokens.spacing.six,
         ),
+        children: [
+          const _CabecalhoExplorar(),
+          SizedBox(height: context.tokens.spacing.six),
+          for (var indice = 0; indice < programas.length; indice++) ...[
+            _CartaoPrograma(programa: programas[indice]),
+            if (indice != programas.length - 1)
+              SizedBox(height: context.tokens.spacing.three),
+          ],
+        ],
       ),
     );
   }
@@ -192,9 +112,6 @@ class _ProgramaRadar {
     required this.titulo,
     required this.descricao,
     required this.tipo,
-    required this.capacidades,
-    required this.estado,
-    required this.detalhe,
     required this.aoTocar,
   });
 
@@ -202,9 +119,6 @@ class _ProgramaRadar {
   final String titulo;
   final String descricao;
   final String tipo;
-  final List<String> capacidades;
-  final String? estado;
-  final String? detalhe;
   final VoidCallback aoTocar;
 }
 
@@ -224,6 +138,7 @@ class _CartaoPrograma extends StatelessWidget {
     };
     return CartaoRadar(
       aoTocar: programa.aoTocar,
+      comSombra: false,
       padding: EdgeInsets.all(tokens.spacing.five),
       child: Semantics(
         button: true,
@@ -237,7 +152,7 @@ class _CartaoPrograma extends StatelessWidget {
               children: [
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: cores.acao.withValues(alpha: 0.12),
+                    color: cores.acaoFundo,
                     borderRadius: BorderRadius.circular(tokens.radii.md),
                   ),
                   child: Padding(
@@ -272,58 +187,9 @@ class _CartaoPrograma extends StatelessWidget {
                 context,
               ).textTheme.bodyMedium?.copyWith(color: cores.textoSuave),
             ),
-            SizedBox(height: tokens.spacing.four),
-            Wrap(
-              spacing: tokens.spacing.one,
-              runSpacing: tokens.spacing.one,
-              children: [
-                for (final capacidade in programa.capacidades)
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: cores.superficieAlternativa,
-                      borderRadius: BorderRadius.circular(tokens.radii.md),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: tokens.spacing.two,
-                        vertical: tokens.spacing.one,
-                      ),
-                      child: Text(
-                        capacidade,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cores.textoSuave,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            if (programa.estado != null) ...[
-              SizedBox(height: tokens.spacing.three),
-              Text(
-                '${programa.detalhe} · ${programa.estado}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: cores.textoSuave,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 }
-
-String _rotuloEstado(EstadoResumo estado) => switch (estado) {
-  EstadoResumo.atualizado => 'atualizado',
-  EstadoResumo.atencao => 'atenção',
-  EstadoResumo.atrasado => 'atrasado',
-  EstadoResumo.atualizando => 'atualizando',
-  EstadoResumo.falhaRecente => 'falha recente',
-  EstadoResumo.parcial => 'parcial',
-  EstadoResumo.degradado => 'degradado',
-  EstadoResumo.semDados => 'sem dados',
-  EstadoResumo.indisponivel => 'indisponível',
-};

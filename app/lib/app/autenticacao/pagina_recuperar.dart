@@ -28,7 +28,6 @@ class _EstadoPaginaRecuperarAcesso extends State<PaginaRecuperarAcesso> {
   final _formulario = GlobalKey<FormState>();
   bool _ocupado = false;
   String? _erro;
-  String? _aviso;
 
   @override
   void dispose() {
@@ -41,20 +40,27 @@ class _EstadoPaginaRecuperarAcesso extends State<PaginaRecuperarAcesso> {
     setState(() {
       _ocupado = true;
       _erro = null;
-      _aviso = null;
     });
+    var mostrarConfirmacao = false;
     try {
       await widget.autenticador.redefinirSenha(_email.text.trim());
-      if (mounted) setState(() => _aviso = _mensagemNeutra);
+      mostrarConfirmacao = true;
     } on FalhaDeAutenticacao {
       // Nunca revelar se o endereço existe, mesmo quando o provedor falha.
-      if (mounted) setState(() => _aviso = _mensagemNeutra);
+      mostrarConfirmacao = true;
     } catch (_) {
       if (mounted) {
         setState(() => _erro = 'Não foi possível pedir uma nova senha.');
       }
     } finally {
       if (mounted) setState(() => _ocupado = false);
+    }
+    if (mostrarConfirmacao && mounted) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => const _PaginaRecuperacaoEnviada(),
+        ),
+      );
     }
   }
 
@@ -119,13 +125,6 @@ class _EstadoPaginaRecuperarAcesso extends State<PaginaRecuperarAcesso> {
                       erro: true,
                     ),
                   ],
-                  if (_aviso != null) ...[
-                    SizedBox(height: tokens.spacing.four),
-                    _MensagemRecuperacao(
-                      chave: const Key('recuperar-aviso'),
-                      texto: _aviso!,
-                    ),
-                  ],
                   SizedBox(height: tokens.spacing.five),
                   FilledButton.icon(
                     key: const Key('recuperar-enviar'),
@@ -144,6 +143,82 @@ class _EstadoPaginaRecuperarAcesso extends State<PaginaRecuperarAcesso> {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: CoresRadar.de(context).textoSuave,
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaginaRecuperacaoEnviada extends StatelessWidget {
+  const _PaginaRecuperacaoEnviada();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final cores = CoresRadar.de(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recuperar acesso'),
+        leading: IconButton(
+          key: const Key('voltar-recuperacao-enviada'),
+          tooltip: 'Voltar',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: SingleChildScrollView(
+              padding: EdgeInsetsDirectional.fromSTEB(
+                tokens.spacing.four,
+                tokens.spacing.five,
+                tokens.spacing.four,
+                tokens.spacing.eight,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const CabecalhoMarcaRadar(),
+                  SizedBox(height: tokens.spacing.ten),
+                  Semantics(
+                    key: const Key('resultado-recuperacao'),
+                    liveRegion: true,
+                    label: 'Pedido registrado.',
+                    child: ExcludeSemantics(
+                      child: Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: tokens.spacing.nine,
+                        color: cores.ganho,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: tokens.spacing.five),
+                  Text(
+                    'Pedido registrado.',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: tokens.spacing.three),
+                  Text(
+                    _EstadoPaginaRecuperarAcesso._mensagemNeutra,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: cores.textoSuave),
+                  ),
+                  SizedBox(height: tokens.spacing.six),
+                  FilledButton(
+                    key: const Key('recuperacao-voltar-entrar'),
+                    onPressed: () =>
+                        Navigator.of(context).popUntil((rota) => rota.isFirst),
+                    child: const Text('Voltar para entrar'),
                   ),
                 ],
               ),

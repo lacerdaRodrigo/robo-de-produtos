@@ -494,6 +494,7 @@ class _AbaModoInter extends StatelessWidget {
       key: _chaveCartao,
       aoTocar: aoTocar,
       padding: EdgeInsets.all(context.tokens.spacing.five),
+      comSombra: false,
       corDestaque: selecionada ? cores.acao : null,
       child: Semantics(
         selected: selecionada,
@@ -1544,11 +1545,12 @@ class _PaginaInternaShoppingInter extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(
                   tokens.spacing.one,
-                  tokens.spacing.one / 2,
+                  tokens.spacing.four,
                   tokens.spacing.four,
                   tokens.spacing.one / 2,
                 ),
                 child: Row(
+                  key: const Key('cabecalho-interno-shopping-inter'),
                   children: [
                     IconButton(
                       key: const Key('voltar-para-shopping-inter'),
