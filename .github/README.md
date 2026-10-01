@@ -23,7 +23,10 @@ O Dependabot abre atualizações semanais para npm (`backend/api`), pub
 (`app`) e pip (`backend/robo`), e atualizações mensais das GitHub Actions.
 Atualizações não são auto-merge: passam pelos gates do CI. O job API executa
 `npm audit --audit-level=high`; versões vulneráveis não devem ser silenciadas
-com exceções sem justificativa e prazo registrados.
+com exceções sem justificativa e prazo registrados. Correções transitivas que
+caibam nas faixas já declaradas são registradas em
+`backend/api/package-lock.json` com `npm audit fix`; alterações de faixas
+diretas também atualizam `package.json`.
 
 As agendas Livelo (09:10/14:10/20:10), Pichau (09:30/14:30/20:30) e Inter
 (10:30/15:30/21:30), no fuso `America/Sao_Paulo`, rodam no worker do Samsung,
