@@ -314,6 +314,11 @@ como evidência da build desta branch.
 
 ## Correções realizadas
 
+- `1/3` — Semântica do sino da Home: o rótulo do Android agora anuncia a
+  Central e o total de alertas não lidos; o badge visual deixa de substituir o
+  nome acessível. O widget diretamente afetado confirma o rótulo e a ação
+  semântica. A conferência física desta correção ainda depende da nova build no
+  M13.
 - `1/3` — header compacto: marca passou a usar fundação visual compartilhada e
   alinhamento direcional correto em claro/escuro; validado no device e nos
   widgets de navegação.

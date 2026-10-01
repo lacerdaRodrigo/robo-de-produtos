@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
@@ -117,6 +118,7 @@ Future<void> abrir(
   VoidCallback? aoAbrirProdutos,
   VoidCallback? aoAbrirCashback,
   VoidCallback? aoAbrirPichau,
+  VoidCallback? aoAbrirAlertas,
   Size tamanho = const Size(390, 844),
   double escalaTexto = 1,
   bool compacto = false,
@@ -141,6 +143,7 @@ Future<void> abrir(
           aoAbrirProdutos: aoAbrirProdutos,
           aoAbrirCashback: aoAbrirCashback,
           aoAbrirPichau: aoAbrirPichau,
+          aoAbrirAlertas: aoAbrirAlertas,
           agora: agora ?? () => DateTime(2026, 8, 23),
           experienciaCompacta: compacto,
         ),
@@ -237,6 +240,26 @@ void main() {
 
     expect(find.text('—'), findsOneWidget);
     expect(find.text('Livelo: indisponível'), findsOneWidget);
+  });
+
+  testWidgets('sino da Home anuncia a Central e a contagem de não lidos', (
+    at,
+  ) async {
+    final dadosResumo = resumoComDestaque();
+    final radar = Map<String, Object?>.from(dadosResumo['radar']! as Map);
+    radar['alertas_nao_lidos'] = 4;
+    dadosResumo['radar'] = radar;
+    final api = apiQueResponde(
+      (_) async => http.Response(jsonEncode(dadosResumo), 200),
+    );
+
+    await abrir(at, api, compacto: true, aoAbrirAlertas: () {});
+    await at.pumpAndSettle();
+
+    final sino = find.bySemanticsLabel('Alertas, 4 não lidos');
+    expect(sino, findsOneWidget);
+    final dadosSemanticos = at.getSemantics(sino).getSemanticsData();
+    expect(dadosSemanticos.hasAction(SemanticsAction.tap), isTrue);
   });
 
   testWidgets('falha inicial mostra retry', (at) async {

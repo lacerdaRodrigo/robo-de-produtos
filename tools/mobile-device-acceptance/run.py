@@ -21,6 +21,8 @@ from typing import Any
 
 PACKAGE = "br.com.radarbeneficios.app"
 DEFAULT_URL = "http://127.0.0.1:4723/wd/hub"
+NAVIGATION_DESTINATIONS = ("Início", "Explorar", "Meu radar", "Perfil")
+HOME_ALERTS_BUTTON = "Alertas"
 
 
 class AcceptanceError(RuntimeError):
@@ -287,14 +289,14 @@ def main() -> int:
     status = "aprovado"
     try:
         driver.start()
-        driver.wait_for("Tab 1 of 4", timeout=45)
-        for tab in ("Tab 1 of 4", "Tab 2 of 4", "Tab 3 of 4", "Tab 4 of 4"):
-            driver.wait_for(tab)
-        driver.click("Tab 1 of 4")
-        driver.wait_for("Abrir alertas")
+        driver.wait_for(NAVIGATION_DESTINATIONS[0], timeout=45)
+        for destination in NAVIGATION_DESTINATIONS:
+            driver.wait_for(destination)
+        driver.click(NAVIGATION_DESTINATIONS[0])
+        driver.wait_for(HOME_ALERTS_BUTTON)
         passed("Home carregada e quatro destinos principais acessíveis", "home.png")
 
-        driver.click("Tab 2 of 4")
+        driver.click(NAVIGATION_DESTINATIONS[1])
         for _ in range(3):
             if driver.is_visible("ESCOLHA SEU CAMINHO"):
                 break
@@ -353,13 +355,13 @@ def main() -> int:
         driver.wait_for("Pichau")
         passed("Back Android preserva a rota Explorar", "pichau-return.png")
 
-        driver.click("Tab 3 of 4")
+        driver.click(NAVIGATION_DESTINATIONS[2])
         driver.wait_for("No seu radar")
         passed("Meu radar abre e mostra o estado atual da conta", "meu-radar.png")
 
-        driver.click("Tab 1 of 4")
-        driver.wait_for("Abrir alertas")
-        driver.click("Abrir alertas")
+        driver.click(NAVIGATION_DESTINATIONS[0])
+        driver.wait_for(HOME_ALERTS_BUTTON)
+        driver.click(HOME_ALERTS_BUTTON)
         alert_marker = "Tudo lido por enquanto"
         try:
             driver.wait_for(alert_marker, timeout=8)
@@ -367,7 +369,7 @@ def main() -> int:
             driver.wait_for("Marcar todos como lidos", timeout=8)
         passed("Central de Alertas abre em estado real da conta", "alertas.png")
         driver.back()
-        driver.wait_for("Abrir alertas")
+        driver.wait_for(HOME_ALERTS_BUTTON)
         passed("Back Android da Central retorna à Home", "alertas-back.png")
 
     except AcceptanceError as error:

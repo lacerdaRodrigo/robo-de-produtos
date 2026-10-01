@@ -132,6 +132,9 @@ class _PaginaInicioState extends State<PaginaInicio>
         voltar: () => _consultar(forcar: true),
       );
     }
+    final rotuloAlertas = resumo.radar.alertasNaoLidos == null
+        ? 'Abrir alertas'
+        : 'Alertas, ${resumo.radar.alertasNaoLidos} não lidos';
 
     return RefreshIndicator(
       onRefresh: () => _consultar(forcar: true),
@@ -153,31 +156,36 @@ class _PaginaInicioState extends State<PaginaInicio>
                       ),
                       child: CabecalhoMarcaRadar(
                         key: const Key('cabecalho-inicio-compacto'),
-                        acao: IconButton(
-                          key: const Key('abrir-alertas-cabecalho'),
-                          tooltip: resumo.radar.alertasNaoLidos == null
-                              ? 'Abrir alertas'
-                              : 'Alertas, ${resumo.radar.alertasNaoLidos} não lidos',
-                          onPressed: widget.aoAbrirAlertas,
-                          style: IconButton.styleFrom(
-                            backgroundColor:
-                                tokens.colors.superficieAlternativa,
-                            foregroundColor: tokens.colors.texto,
-                            shape: const CircleBorder(),
-                          ),
-                          icon: Badge(
-                            isLabelVisible:
-                                (resumo.radar.alertasNaoLidos ?? 0) > 0,
-                            backgroundColor: tokens.colors.acao,
-                            textColor: tokens.colors.marcaTexto,
-                            label: resumo.radar.alertasNaoLidos == null
-                                ? null
-                                : Text(
-                                    resumo.radar.alertasNaoLidos! > 99
-                                        ? '99+'
-                                        : '${resumo.radar.alertasNaoLidos}',
-                                  ),
-                            child: const Icon(Icons.notifications_none),
+                        acao: Semantics(
+                          label: rotuloAlertas,
+                          button: true,
+                          onTap: widget.aoAbrirAlertas,
+                          child: ExcludeSemantics(
+                            child: IconButton(
+                              key: const Key('abrir-alertas-cabecalho'),
+                              tooltip: rotuloAlertas,
+                              onPressed: widget.aoAbrirAlertas,
+                              style: IconButton.styleFrom(
+                                backgroundColor:
+                                    tokens.colors.superficieAlternativa,
+                                foregroundColor: tokens.colors.texto,
+                                shape: const CircleBorder(),
+                              ),
+                              icon: Badge(
+                                isLabelVisible:
+                                    (resumo.radar.alertasNaoLidos ?? 0) > 0,
+                                backgroundColor: tokens.colors.acao,
+                                textColor: tokens.colors.marcaTexto,
+                                label: resumo.radar.alertasNaoLidos == null
+                                    ? null
+                                    : Text(
+                                        resumo.radar.alertasNaoLidos! > 99
+                                            ? '99+'
+                                            : '${resumo.radar.alertasNaoLidos}',
+                                      ),
+                                child: const Icon(Icons.notifications_none),
+                              ),
+                            ),
                           ),
                         ),
                       ),

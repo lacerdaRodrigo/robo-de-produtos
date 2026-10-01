@@ -23,6 +23,10 @@ tools/mobile-device-acceptance/build-install.sh
 tools/mobile-device-acceptance/run-local.sh
 ```
 
+O roteiro encontra os destinos da navegação pelos rótulos `Início`, `Explorar`,
+`Meu radar` e `Perfil`; o acesso à Central usa o rótulo semântico `Alertas`, que
+permanece estável quando o total de não lidos muda.
+
 O build verifica a assinatura antes de `adb install -r`; se não coincidir,
 interrompe sem desinstalar o app nem apagar seus dados. O número de build deve
 ser informado em `DEVICE_ACCEPTANCE_BUILD_NUMBER` e ser novo para cada rodada.
