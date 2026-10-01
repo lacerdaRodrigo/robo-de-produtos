@@ -157,6 +157,7 @@ class _PaginaInicioState extends State<PaginaInicio>
                       child: CabecalhoMarcaRadar(
                         key: const Key('cabecalho-inicio-compacto'),
                         acao: Semantics(
+                          container: true,
                           label: rotuloAlertas,
                           button: true,
                           onTap: widget.aoAbrirAlertas,

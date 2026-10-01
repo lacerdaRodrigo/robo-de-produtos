@@ -249,17 +249,25 @@ void main() {
     final radar = Map<String, Object?>.from(dadosResumo['radar']! as Map);
     radar['alertas_nao_lidos'] = 4;
     dadosResumo['radar'] = radar;
+    var abriuAlertas = false;
     final api = apiQueResponde(
       (_) async => http.Response(jsonEncode(dadosResumo), 200),
     );
 
-    await abrir(at, api, compacto: true, aoAbrirAlertas: () {});
+    await abrir(
+      at,
+      api,
+      compacto: true,
+      aoAbrirAlertas: () => abriuAlertas = true,
+    );
     await at.pumpAndSettle();
 
     final sino = find.bySemanticsLabel('Alertas, 4 não lidos');
     expect(sino, findsOneWidget);
     final dadosSemanticos = at.getSemantics(sino).getSemanticsData();
     expect(dadosSemanticos.hasAction(SemanticsAction.tap), isTrue);
+    at.semantics.tap(find.semantics.byLabel('Alertas, 4 não lidos'));
+    expect(abriuAlertas, isTrue);
   });
 
   testWidgets('falha inicial mostra retry', (at) async {
