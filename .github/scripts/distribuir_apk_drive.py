@@ -449,6 +449,41 @@ def _bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _distribution_email_content(
+    *,
+    version: str,
+    run_id: str,
+    sha: str,
+    published: PublishedFile,
+) -> tuple[str, str, str]:
+    subject = f"APK interna Radar pronta — {version} — {sha[:8]}"
+    text_body = (
+        "A nova APK interna do Radar de Benefícios está pronta.\n\n"
+        f"Versão: {version}\n"
+        f"Execução: {run_id}\n"
+        f"Commit: {sha}\n"
+        "Tipo: APK debug para testes\n"
+        "API: https://robo-de-produtos.vercel.app\n\n"
+        f"Download privado: {published.web_view_link}\n\n"
+        "A assinatura de depuração pode variar entre execuções. Para instalar "
+        "uma APK de outra execução, talvez seja necessário desinstalar a anterior; "
+        "o Android apaga os dados locais do app ao desinstalá-lo."
+    )
+    html_body = (
+        "<p>A nova APK interna do Radar de Benefícios está pronta.</p>"
+        f"<p><b>Versão:</b> {version}<br>"
+        f"<b>Execução:</b> {run_id}<br>"
+        f"<b>Commit:</b> {sha}<br>"
+        "<b>Tipo:</b> APK debug para testes<br>"
+        "<b>API:</b> https://robo-de-produtos.vercel.app</p>"
+        f'<p><a href="{published.web_view_link}">Baixar APK privada</a></p>'
+        "<p>A assinatura de depuração pode variar entre execuções. Para instalar "
+        "uma APK de outra execução, talvez seja necessário desinstalar a anterior; "
+        "o Android apaga os dados locais do app ao desinstalá-lo.</p>"
+    )
+    return subject, text_body, html_body
+
+
 def _distribution(args: argparse.Namespace) -> int:
     owner = required_env("EMAIL_REMETENTE")
     destination = required_env("EMAIL_DESTINO")
@@ -465,29 +500,11 @@ def _distribution(args: argparse.Namespace) -> int:
     )
     if not published.web_view_link:
         raise DistributionError("Drive não retornou link privado para a APK")
-    subject = f"APK interna Radar pronta — {args.version} — {args.sha[:8]}"
-    text_body = (
-        "A nova APK interna do Radar de Benefícios está pronta.\n\n"
-        f"Versão: {args.version}\n"
-        f"Execução: {args.run_id}\n"
-        f"Commit: {args.sha}\n"
-        "Tipo: release assinada para distribuição privada\n"
-        "API: https://robo-de-produtos.vercel.app\n\n"
-        f"Download privado: {published.web_view_link}\n\n"
-        "A APK pode substituir a instalada no Samsung somente se o application "
-        "id e a assinatura forem compatíveis. A primeira instalação pode exigir "
-        "remover a versão debug e entrar novamente."
-    )
-    html_body = (
-        "<p>A nova APK interna do Radar de Benefícios está pronta.</p>"
-        f"<p><b>Versão:</b> {args.version}<br>"
-        f"<b>Execução:</b> {args.run_id}<br>"
-        f"<b>Commit:</b> {args.sha}<br>"
-        "<b>Tipo:</b> release assinada para distribuição privada<br>"
-        "<b>API:</b> https://robo-de-produtos.vercel.app</p>"
-        f'<p><a href="{published.web_view_link}">Baixar APK privada</a></p>'
-        "<p>A atualização depende de application id e assinatura compatíveis. "
-        "A primeira instalação pode exigir remover a versão debug e entrar novamente.</p>"
+    subject, text_body, html_body = _distribution_email_content(
+        version=args.version,
+        run_id=args.run_id,
+        sha=args.sha,
+        published=published,
     )
     send_gmail_message(
         sender=owner,
