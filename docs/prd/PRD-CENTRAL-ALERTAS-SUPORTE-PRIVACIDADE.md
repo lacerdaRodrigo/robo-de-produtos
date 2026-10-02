@@ -1,7 +1,9 @@
 # PRD — Central de Alertas, suporte e privacidade
 
 Status: implementado no contrato e no código; as migrations `023`, `025`, `026`,
-`027`, `028` e `029` foram aplicadas manualmente. A aplicação da `028` foi confirmada
+`027`, `028` e `029` foram aplicadas manualmente. A migration `036` está
+versionada e ainda depende de aplicação operacional antes da publicação desta
+mudança. A aplicação da `028` foi confirmada
 por leitura de produção: as funções estão como `SECURITY DEFINER`, com
 `search_path` fechado, e o `pichau_publisher` pode executá-las. Ainda dependem
 de operação um evento real que gere push, a entrega FCM e o aceite físico do
@@ -24,6 +26,8 @@ A migration `migracoes/023_alertas_suporte_privacidade.sql` cria:
 - `preferencia_alerta`, com flags globais e por tipo;
 - `token_fcm_app`, com tokens ativos por usuário;
 - `notificacao_outbox_alerta`, idempotente por usuário/origem/coleta;
+- `notificacao_entrega_alerta` (migration `036`), com estado e tentativas por
+  par evento/aparelho, usando as chaves internas sem duplicar o token FCM;
 - `relato_problema_app`, com retenção de 180 dias.
 
 A migration `migracoes/026_alertas_pichau_pessoal.sql` inclui `pichau` como
@@ -119,11 +123,27 @@ continua pendente no painel e não deve ser descrita como ativa antes da
 verificação. O `proxy.ts` aplica HTTPS e a allowlist CORS somente a `/api/*`;
 origens não autorizadas são recusadas antes dos route handlers. Mensagens/logs
 não incluem tokens, URLs de banco ou dados pessoais. A
-outbox faz retry, recupera linhas presas em `enviando` há pelo
-menos 15 minutos, não duplica envios e desativa tokens FCM inválidos. O workflow
-acorda a API a cada 15 minutos; o envio real continua no Firebase Cloud
-Messaging através do Firebase Admin SDK. Não há limite diário artificial de
-notificações.
+outbox recupera linhas presas em `enviando` há pelo menos 15 minutos, respeita
+preferências e desativa tokens FCM inválidos. O corpo é gerado na API para cada
+evento: preço de produto inclui loja, produto e valor; cashback inclui produto
+ou loja e percentual; Livelo explicita pontos por real; Pichau identifica o
+preço Pix. Os nomes são normalizados e limitados a 48 caracteres. Valores
+`NUMERIC` permanecem strings e são formatados em pt-BR. Cada evento elegível
+gera uma mensagem por aparelho ativo, preservando o título e as chaves `rota`,
+`coleta` e `origem` usados para abrir a Central. O worker tenta até 25 pares
+evento/aparelho por execução; o restante fica na outbox para ciclos posteriores.
+
+A migration `036` registra cada entrega por evento/aparelho. Em um retry, apenas
+entregas pendentes ou falhas voltam a ser enviadas; uma aceitação FCM já gravada
+não é repetida quando outro aparelho falha. Como o FCM e o banco não compartilham
+uma transação, uma queda entre o aceite do FCM e a gravação local ainda pode
+causar duplicidade. A fila antiga não guardava resultado por aparelho: durante o
+cutover, linhas legadas `pendente`, `falha` ou `enviando` são encerradas sem
+replay; os eventos permanecem no histórico da Central.
+
+O workflow acorda a API uma vez por hora; o envio real continua no Firebase
+Cloud Messaging através do Firebase Admin SDK. Não há limite diário artificial
+de notificações.
 
 `GET /api/perfil` fecha o gate de entrada do Flutter: não recebe identidade em
 query ou corpo e retorna exclusivamente o `id`, o `email` e o `papel` da sessão
@@ -337,15 +357,22 @@ Firebase não bloqueia a Central nem o histórico. Logout remove o token atual.
 
 ## Pendências externas
 
-Conforme confirmação operacional do responsável, as migrations 023 e seguintes
-foram aplicadas manualmente e o Firebase `radarbeneficios` está configurado para
-a API/Android. A verificação de produção em 2026-09-13 confirmou a `028` em
-modo somente leitura, incluindo `SECURITY DEFINER`, `search_path` fechado e
-execução para `pichau_publisher`. A coleta `34761933582` passou com qualidade
+Conforme confirmação operacional do responsável, as migrations da Central
+indicadas no status acima foram aplicadas manualmente e o Firebase
+`radarbeneficios` está configurado para a API/Android. A verificação de produção
+em 2026-09-13 confirmou a `028` em modo somente leitura, incluindo
+`SECURITY DEFINER`, `search_path` fechado e execução para `pichau_publisher`. A
+coleta `34761933582` passou com qualidade
 completa, sem `pichau-banco`, mas não houve mudança de preço para gerar evento.
 O merge, deploy, APK e secret do cron foram confirmados; ainda falta produzir um
 evento real, observar sua entrega FCM e instalar/conferir a APK nos devices para
 o aceite manual completo.
+
+Para esta mudança, a migration `036` precisa ser aplicada por operação autorizada
+antes de publicar o código da API. Suspenda o processamento da outbox durante a
+aplicação para evitar concorrência com a fila legada; valide a tabela e os grants
+de `robo_api`, depois publique a API e observe uma mudança natural. Este ciclo
+não aplica a migration nem publica a API.
 
 Este PRD incorpora os contratos implementados. O checkpoint operacional de
 migration, publicação e reteste físico está no
