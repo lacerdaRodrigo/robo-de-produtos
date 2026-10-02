@@ -13,6 +13,28 @@ SPEC.loader.exec_module(MODULE)
 
 
 class DistribuirApkDriveTest(unittest.TestCase):
+    def test_email_identifica_apk_debug_e_avisa_sobre_reinstalacao(self):
+        published = MODULE.PublishedFile(
+            file_id="file-id",
+            name="radar.apk",
+            web_view_link="https://drive.google.com/file/d/file-id/view",
+            created_time=None,
+            reused=False,
+        )
+
+        _, text_body, html_body = MODULE._distribution_email_content(
+            version="1.0.0+100",
+            run_id="12345",
+            sha="a" * 40,
+            published=published,
+        )
+
+        self.assertIn("Tipo: APK debug para testes", text_body)
+        self.assertIn("assinatura de depuração pode variar entre execuções", text_body)
+        self.assertIn("desinstalar a anterior", text_body)
+        self.assertIn("apaga os dados locais do app", text_body)
+        self.assertIn("APK debug para testes", html_body)
+
     def test_escape_query_preserva_id_com_aspas(self):
         self.assertEqual(MODULE._drive_query_value("a'b"), "'a\\'b'")
 

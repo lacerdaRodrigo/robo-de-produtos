@@ -872,7 +872,7 @@ o gate Flutter são catálogos separados e não foram executados neste trabalho.
 | CI-004 | Escape da consulta Drive | Preserva IDs com aspas na consulta ao Drive. |
 | CI-005 | Consulta de propriedade balanceada | Monta corretamente as consultas da pasta e das APKs marcadas. |
 | CI-006 | Retenção | Remove somente APKs marcadas mais antigas que o limite de 10. |
-| CI-007 | Assinatura privada release | O build de distribuição exige keystore e alias configurados, não usa assinatura debug como fallback, verifica o APK e apaga o JKS temporário do runner | `app/android/app/build.gradle.kts`, `.github/workflows/app-robo.yml` e `apksigner verify --print-certs` |
+| CI-007 | Aviso de APK debug | O e-mail identifica a APK como debug e avisa que a assinatura pode variar e a desinstalação pode apagar dados locais | `.github/scripts/test_distribuir_apk_drive.py` |
 
 Execução local: `python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v`.
 

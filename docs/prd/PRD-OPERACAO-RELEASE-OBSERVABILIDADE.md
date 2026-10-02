@@ -66,8 +66,11 @@ formato comum nem a um destino central de logs.
 
 ## 3. Deploy e monitoramento
 
-O workflow `app-robo.yml` valida o Flutter e mantém a distribuição privada
-condicionada aos secrets e à variável de release. O workflow de CI executa
+O workflow `app-robo.yml` valida o Flutter e distribui uma APK debug privada
+após push humano na `main` ou execução manual com `distribuir=true`. A entrega
+depende dos secrets de Drive e e-mail; não exige assinatura release. A
+assinatura debug pode variar entre execuções, e reinstalar pode apagar dados
+locais. O workflow de CI executa
 qualidade da API; este checkout não contém evidência de um workflow próprio que
 publique a API. A Vercel pode usar integração Git configurada fora do
 repositório; o modo real precisa ser conferido antes de criar uma segunda
@@ -96,7 +99,7 @@ e os históricos dos serviços já existentes sem afirmar cobertura centralizada
 | API | O mecanismo do deployment Vercel não é versionado neste checkout. | Confirmar integração e procedimento no projeto Vercel e ensaiar em homologação antes de Production. |
 | Banco | O PRD Neon descreve restore em destino isolado; o primeiro restore ainda não foi aceito. | Fazer backup real, conferir ACL e restaurar em branch/banco descartável antes de qualquer limpeza destrutiva. |
 | Robôs | O worker Samsung atualiza in-place e não tem rollback automático. O procedimento operacional e as limitações estão em `PRD-EXECUCAO-COLETORES.md`. | Ensaiar parada, recuperação/reinstalação e retomada no M13; não declarar autonomia após reboot. |
-| Aplicativo | A distribuição privada retém APKs assinados, condicionada ao OAuth/assinatura e à retenção configurados. | Aceitar a primeira release assinada, testar atualização/retorno no aparelho e confirmar qual artefato pode ser instalado sem perder acesso. |
+| Aplicativo | A distribuição privada retém APKs debug, condicionada ao OAuth e à retenção configurados. A assinatura pode variar por execução. | Instalar a APK distribuída e testar reinstalação/retorno no aparelho, registrando se foi necessário desinstalar a anterior e o impacto nos dados locais. |
 
 Não substituir rollback de API por restauração de banco, nem limpeza de dados
 por rollback de aplicação. Cada procedimento precisa registrar artefato,

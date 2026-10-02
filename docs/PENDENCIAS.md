@@ -71,10 +71,11 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
 
 ## Contas, segurança e serviços externos
 
-- [ ] Corrigir a credencial OAuth expirada/revogada da distribuição privada e
-  concluir o aceite externo: instalar pelo fluxo autorizado, confirmar conta
-  permitida e bloqueio de conta não autorizada, observar mais de 10 builds para
-  retenção e confirmar um push em `main`. Ver o PRD de distribuição Android.
+- [ ] Validar a credencial OAuth atual da distribuição privada (houve um
+  `invalid_grant` anterior) e concluir o aceite externo: instalar pelo fluxo
+  autorizado, confirmar conta permitida e bloqueio de conta não autorizada,
+  observar mais de 10 builds para retenção e confirmar um push em `main`. Ver o
+  PRD de distribuição Android.
 - [ ] Configurar o gate WAF no Vercel: `/api/*`, chave por IP, janela fixa de 60
   segundos e limite de 240 requisições por minuto; manter em `Log` por 24 horas,
   revisar tráfego legítimo e só depois habilitar `429`, incluindo `/api/status`.
@@ -108,8 +109,10 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
 - [ ] Provisionar homologação separada (Firebase, banco, API e secrets) antes
   de validar integrações ou falhas controladas fora de Production.
 - [ ] Fazer os ensaios de rollback em cada destino real: API no provedor, restore
-  Neon descartável, recuperação do worker no M13 e reinstalação/retorno de APK
-  assinado. O procedimento e os limites estão no
+  Neon descartável, recuperação do worker no M13 e reinstalação/retorno da APK
+  debug distribuída. A assinatura pode variar entre execuções; desinstalar a
+  versão anterior pode apagar os dados locais. O procedimento e os limites estão
+  no
   [`PRD de operação`](prd/PRD-OPERACAO-RELEASE-OBSERVABILIDADE.md) e nos PRDs de
   domínio; os mecanismos externos e os ensaios ainda não foram aceitos.
 
@@ -119,10 +122,10 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
   classificação etária, política de privacidade, formulário de segurança de
   dados, capturas e pacote release; concluir a revisão jurídica do fluxo LGPD da
   Central (consentimento, exclusão de conta e dados efetivamente coletados).
-- [ ] Criar e guardar offline, de forma criptografada, a chave estável
-  `radar-release`; cadastrar os secrets `ANDROID_KEYSTORE_*`/`ANDROID_KEY_*`,
-  conferir a impressão digital e habilitar release somente após essa
-  conferência. A primeira instalação release exige remover o APK debug e
-  autenticar novamente.
+- [ ] Criar e guardar offline, de forma criptografada, uma chave de assinatura
+  estável para um futuro pacote release/Google Play; conferir sua impressão
+  digital e documentar a assinatura. Isso é separado da distribuição privada
+  de APK debug para testes, que não usa esses secrets. Uma primeira instalação
+  release pode exigir remover o APK debug e autenticar novamente.
 - [ ] Configurar distribuição interna da Google Play antes de qualquer
   liberação pública.

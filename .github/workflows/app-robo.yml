@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "app/**"
+      - ".github/workflows/app-robo.yml"
+      - ".github/scripts/distribuir_apk_drive.py"
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -61,10 +63,9 @@ jobs:
     name: Distribuir APK privada
     needs: flutter
     if: >-
-      vars.ANDROID_RELEASE_ENABLED == 'true' &&
-      ((github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       github.actor != 'github-actions[bot]') ||
-      (github.event_name == 'workflow_dispatch' && inputs.distribuir == true))
+      (github.event_name == 'workflow_dispatch' && inputs.distribuir == true)
     runs-on: ubuntu-latest
 
     steps:
@@ -79,41 +80,21 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: Gerar APK release assinada
+      - name: Gerar APK debug interna
         working-directory: app
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
-          : "${ANDROID_KEYSTORE_BASE64:?ANDROID_KEYSTORE_BASE64 ausente}"
-          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD ausente}"
-          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS ausente}"
-          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD ausente}"
-          keystore="$RUNNER_TEMP/radar-release.jks"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
-          chmod 600 "$keystore"
-          trap 'rm -f "$keystore"' EXIT
-          export ANDROID_KEYSTORE_PATH="$keystore"
           build_number=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))
-          flutter build apk --release \
+          flutter build apk --debug \
             --build-number="$build_number" \
             --dart-define=API_URL=https://robo-de-produtos.vercel.app \
             --dart-define=ATIVAR_APP_CHECK=false
           mkdir -p "$RUNNER_TEMP/radar-apk"
-          short_sha="${GITHUB_SHA:0:8}"
+          short_sha="$(git rev-parse --short=8 "$GITHUB_SHA")"
           app_version="$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)"
-          apk_name="robo-app-release-${app_version}-${GITHUB_RUN_ID}-${short_sha}.apk"
-          apk_path="build/app/outputs/flutter-apk/app-release.apk"
-          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
-          [[ -n "$sdk_root" && -d "$sdk_root/build-tools" ]]
-          apksigner="$(find "$sdk_root/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
-          [[ -x "$apksigner" ]]
-          "$apksigner" verify --print-certs "$apk_path"
-          cp "$apk_path" "$RUNNER_TEMP/radar-apk/$apk_name"
+          apk_name="robo-app-debug-${app_version}-${GITHUB_RUN_ID}-${short_sha}.apk"
+          cp build/app/outputs/flutter-apk/app-debug.apk "$RUNNER_TEMP/radar-apk/$apk_name"
           {
             echo "APK_PATH=$RUNNER_TEMP/radar-apk/$apk_name"
             echo "APK_NAME=$apk_name"
