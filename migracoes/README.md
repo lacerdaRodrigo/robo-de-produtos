@@ -43,6 +43,8 @@ cria o `001` e carrega o catálogo.
 | `032_permissoes_consumidores_neon.sql` | roles distintas para API, Actions e Samsung; isolamento das filas e dados pessoais | Segurança/Neon |
 | `033_limpeza_admin_segura.sql` | funções fixas `SECURITY DEFINER` para limpeza administrativa; API recebe somente `EXECUTE` | Segurança/Admin |
 | `034_role_backup_readonly.sql` | role de grupo `radar_backup` somente leitura e privilégios futuros de leitura | Backup/Neon |
+| `035_categorias_relato_mobile_v15.sql` | amplia as categorias de relato sem remover valores legados | Mobile V15/Alertas |
+| `036_rastreio_entrega_push.sql` | rastreia cada envio FCM por evento/aparelho e encerra a outbox legada sem replay ambíguo | API/Alertas |
 
 ## Onde são usadas
 
@@ -52,10 +54,13 @@ cria o `001` e carrega o catálogo.
 - Segurança dos consumidores: `032` (grants mínimos para API, Actions e Samsung).
 - Segurança das operações administrativas: `033` (funções fixas de limpeza; não aplicada neste ciclo).
 - Backup: `034` (role de grupo sem login; ainda exige criar/associar credencial de login fora do repositório e não foi aplicada).
+- API/Alertas: `036` (rastreio por evento/aparelho; arquivo versionado, ainda não aplicado).
 
-As migrations `033` e `034` são apenas arquivos versionados. Não foram
+As migrations `033`, `034` e `036` são apenas arquivos versionados. Não foram
 executadas contra o Neon de produção: `033` depende de backup e teste destrutivo
-em banco descartável; `034` depende de confirmar proprietário, grants e alvo.
+em banco descartável; `034` depende de confirmar proprietário, grants e alvo;
+`036` exige suspender o processamento da outbox durante a aplicação e validar
+que a API possui os grants da nova tabela.
 
 ## Destino Neon novo — 2026-09-26
 

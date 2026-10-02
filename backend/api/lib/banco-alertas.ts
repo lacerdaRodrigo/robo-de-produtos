@@ -5,6 +5,7 @@ import type { ParceiroLiveloPersistido } from "./banco";
 import { apresentarParceiroLivelo } from "./catalogo-livelo";
 import { mensageriaFirebase } from "./firebase-admin";
 import { linkShoppingInterDaLoja } from "./formato-inter";
+import { formatarCorpoPush, type EventoPush } from "./notificacoes-formatacao";
 
 function conectar() {
   const url = process.env.DATABASE_URL;
@@ -773,7 +774,10 @@ export async function buscarRelatosProblema(
 }
 
 type OutboxPendente = { id: string; usuario_app_id: string; origem: string; coleta_id: string };
+type EventoOutbox = EventoPush & { id: string };
+type TokenPush = { id: string; token: string };
 type ResultadoOutbox = { processadas: number; enviadas: number; recuperadas: number };
+const MAXIMO_ENTREGAS_POR_EXECUCAO = 25;
 
 function codigoErroMensageria(erro: unknown): string {
   if (!erro || typeof erro !== "object") return "";
@@ -786,6 +790,13 @@ function codigoErroMensageria(erro: unknown): string {
 export async function processarOutboxAlertas(limite = 20): Promise<ResultadoOutbox> {
   const sql = conectar();
   await sql`SELECT expurgar_alertas_suporte()`;
+  await sql`
+    UPDATE notificacao_entrega_alerta
+       SET estado = 'falha', proxima_tentativa_em = now(),
+           ultimo_erro = 'processamento interrompido', atualizado_em = now()
+     WHERE estado = 'enviando'
+       AND atualizado_em < now() - interval '15 minutes'
+  `;
   const presas = (await sql`
     UPDATE notificacao_outbox_alerta
        SET estado = 'falha', proxima_tentativa_em = now(),
@@ -796,14 +807,16 @@ export async function processarOutboxAlertas(limite = 20): Promise<ResultadoOutb
   `) as Array<{ id: string }>;
   let processadas = 0;
   let enviadas = 0;
+  let entregasTentadas = 0;
   for (let indice = 0; indice < Math.min(50, Math.max(1, limite)); indice += 1) {
+    if (entregasTentadas >= MAXIMO_ENTREGAS_POR_EXECUCAO) break;
     const linhas = (await sql`
       UPDATE notificacao_outbox_alerta
          SET estado = 'enviando', tentativas = tentativas + 1, atualizado_em = now()
        WHERE id = (
-         SELECT id FROM notificacao_outbox_alerta
+          SELECT id FROM notificacao_outbox_alerta
           WHERE estado IN ('pendente', 'falha') AND proxima_tentativa_em <= now()
-          ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1
+          ORDER BY atualizado_em, id FOR UPDATE SKIP LOCKED LIMIT 1
        )
       RETURNING id, usuario_app_id, origem, coleta_id
     `) as OutboxPendente[];
@@ -811,47 +824,222 @@ export async function processarOutboxAlertas(limite = 20): Promise<ResultadoOutb
     if (!outbox) break;
     processadas += 1;
     try {
-      const [tokens, contagens, preferencias] = await Promise.all([
-        sql`SELECT id, token FROM token_fcm_app WHERE usuario_app_id = ${outbox.usuario_app_id} AND ativo = TRUE`,
-        sql`SELECT tipo, count(*)::int AS total FROM evento_alerta WHERE usuario_app_id = ${outbox.usuario_app_id} AND origem = ${outbox.origem} AND coleta_id = ${outbox.coleta_id} GROUP BY tipo`,
+      const [tokens, preferencias, eventos] = await Promise.all([
+        sql`SELECT id::text, token FROM token_fcm_app WHERE usuario_app_id = ${outbox.usuario_app_id} AND ativo = TRUE`,
         sql`SELECT push_global, preco, cashback, pontuacao FROM preferencia_alerta WHERE usuario_app_id = ${outbox.usuario_app_id}`,
-      ]);
+        sql`
+          SELECT alerta.id::text, alerta.origem, alerta.tipo,
+                 alerta.entidade_nome, alerta.valor_atual::text, alerta.unidade,
+                 CASE WHEN alerta.origem = 'inter_produto' THEN loja.nome END AS loja_nome
+            FROM evento_alerta alerta
+            LEFT JOIN produto_direto_inter produto
+              ON alerta.origem = 'inter_produto' AND produto.id = alerta.entidade_id
+            LEFT JOIN loja_direta_inter loja
+              ON loja.id = produto.loja_direta_inter_id
+           WHERE alerta.usuario_app_id = ${outbox.usuario_app_id}
+             AND alerta.origem = ${outbox.origem}
+             AND alerta.coleta_id = ${outbox.coleta_id}
+             AND alerta.notificar_push = TRUE
+           ORDER BY alerta.id
+        `,
+      ]) as [TokenPush[], PreferenciasAlertas[], EventoOutbox[]];
       const preferencia = (preferencias as Array<{ push_global: boolean; preco: boolean; cashback: boolean; pontuacao: boolean }>)[0];
       if (preferencia?.push_global === false) {
+        await sql`
+          UPDATE notificacao_entrega_alerta entrega
+             SET estado = 'cancelada', atualizado_em = now()
+            FROM evento_alerta alerta
+           WHERE entrega.evento_alerta_id = alerta.id
+             AND alerta.usuario_app_id = ${outbox.usuario_app_id}
+             AND alerta.origem = ${outbox.origem}
+             AND alerta.coleta_id = ${outbox.coleta_id}
+             AND entrega.estado IN ('pendente', 'falha')
+        `;
         await sql`UPDATE notificacao_outbox_alerta SET estado = 'enviada', atualizado_em = now() WHERE id = ${outbox.id}`;
         enviadas += 1;
         continue;
       }
       const habilitado = (tipo: string) => preferencia?.[tipo as "preco" | "cashback" | "pontuacao"] ?? true;
-      const contagensHabilitadas = (contagens as Array<{ tipo: string; total: number }>).filter((item) => habilitado(item.tipo));
-      if (contagensHabilitadas.length === 0) {
+      const eventosHabilitados = (eventos as EventoOutbox[]).filter((evento) => habilitado(evento.tipo));
+      const tiposHabilitados = Array.from(new Set(eventosHabilitados.map((evento) => evento.tipo)));
+      if (tiposHabilitados.length === 0) {
+        await sql`
+          UPDATE notificacao_entrega_alerta entrega
+             SET estado = 'cancelada', atualizado_em = now()
+            FROM evento_alerta alerta
+           WHERE entrega.evento_alerta_id = alerta.id
+             AND alerta.usuario_app_id = ${outbox.usuario_app_id}
+             AND alerta.origem = ${outbox.origem}
+             AND alerta.coleta_id = ${outbox.coleta_id}
+             AND entrega.estado IN ('pendente', 'falha')
+        `;
         await sql`UPDATE notificacao_outbox_alerta SET estado = 'enviada', atualizado_em = now() WHERE id = ${outbox.id}`;
         enviadas += 1;
         continue;
       }
-      if (tokens.length === 0) {
+      if ((tokens as TokenPush[]).length === 0) {
+        await sql`
+          UPDATE notificacao_entrega_alerta entrega
+             SET estado = 'cancelada', atualizado_em = now()
+            FROM evento_alerta alerta
+           WHERE entrega.evento_alerta_id = alerta.id
+             AND alerta.usuario_app_id = ${outbox.usuario_app_id}
+             AND alerta.origem = ${outbox.origem}
+             AND alerta.coleta_id = ${outbox.coleta_id}
+             AND entrega.estado IN ('pendente', 'falha')
+        `;
         await sql`UPDATE notificacao_outbox_alerta SET estado = 'enviada', atualizado_em = now() WHERE id = ${outbox.id}`;
         enviadas += 1;
         continue;
       }
-      const resumo = contagensHabilitadas.map((item) => `${item.tipo}:${item.total}`).join(", ");
-      const mensagem = {
-        notification: { title: "Novas alterações no Radar", body: `${resumo || "Há uma nova alteração"}. Toque para abrir a Central.` },
-        data: { rota: "alertas", coleta: outbox.coleta_id, origem: outbox.origem },
-      };
-      const invalidos: string[] = [];
-      let falhaEnvio = false;
-      for (const token of tokens as Array<{ id: string; token: string }>) {
-        try { await mensageriaFirebase().send({ ...mensagem, token: token.token }); }
-        catch (erro) {
+
+      await sql`
+        UPDATE notificacao_entrega_alerta entrega
+           SET estado = 'cancelada', atualizado_em = now()
+          FROM evento_alerta alerta
+           WHERE entrega.evento_alerta_id = alerta.id
+             AND alerta.usuario_app_id = ${outbox.usuario_app_id}
+             AND alerta.origem = ${outbox.origem}
+             AND alerta.coleta_id = ${outbox.coleta_id}
+             AND alerta.tipo <> ALL(${tiposHabilitados}::text[])
+             AND entrega.estado IN ('pendente', 'falha')
+      `;
+
+      await sql`
+        UPDATE notificacao_entrega_alerta entrega
+           SET estado = 'cancelada', atualizado_em = now()
+          FROM token_fcm_app token, evento_alerta alerta
+         WHERE entrega.evento_alerta_id = alerta.id
+           AND entrega.token_fcm_app_id = token.id
+           AND alerta.usuario_app_id = ${outbox.usuario_app_id}
+           AND alerta.origem = ${outbox.origem}
+           AND alerta.coleta_id = ${outbox.coleta_id}
+           AND token.ativo = FALSE
+           AND entrega.estado IN ('pendente', 'falha')
+      `;
+
+      await sql`
+        INSERT INTO notificacao_entrega_alerta (evento_alerta_id, token_fcm_app_id)
+        SELECT alerta.id, token.id
+          FROM evento_alerta alerta
+          JOIN token_fcm_app token ON token.usuario_app_id = alerta.usuario_app_id
+         WHERE alerta.usuario_app_id = ${outbox.usuario_app_id}
+           AND alerta.origem = ${outbox.origem}
+           AND alerta.coleta_id = ${outbox.coleta_id}
+           AND alerta.notificar_push = TRUE
+           AND alerta.tipo = ANY(${tiposHabilitados}::text[])
+           AND token.ativo = TRUE
+        ON CONFLICT (evento_alerta_id, token_fcm_app_id) DO NOTHING
+      `;
+
+      const eventosPorId = new Map((eventos as EventoOutbox[]).map((evento) => [evento.id, evento]));
+      const tokensPorId = new Map((tokens as TokenPush[]).map((token) => [token.id, token]));
+      for (let indiceEntrega = 0; indiceEntrega < MAXIMO_ENTREGAS_POR_EXECUCAO; indiceEntrega += 1) {
+        if (entregasTentadas >= MAXIMO_ENTREGAS_POR_EXECUCAO) break;
+        const reclamadas = (await sql`
+          WITH candidata AS (
+            SELECT entrega.evento_alerta_id, entrega.token_fcm_app_id
+              FROM notificacao_entrega_alerta entrega
+              JOIN evento_alerta alerta ON alerta.id = entrega.evento_alerta_id
+              JOIN token_fcm_app token ON token.id = entrega.token_fcm_app_id
+             WHERE alerta.usuario_app_id = ${outbox.usuario_app_id}
+               AND alerta.origem = ${outbox.origem}
+               AND alerta.coleta_id = ${outbox.coleta_id}
+               AND alerta.notificar_push = TRUE
+               AND alerta.tipo = ANY(${tiposHabilitados}::text[])
+               AND token.ativo = TRUE
+               AND entrega.estado IN ('pendente', 'falha')
+               AND entrega.proxima_tentativa_em <= now()
+             ORDER BY entrega.tentativas, entrega.proxima_tentativa_em,
+                      entrega.evento_alerta_id, entrega.token_fcm_app_id
+             FOR UPDATE OF entrega SKIP LOCKED
+             LIMIT 1
+          )
+          UPDATE notificacao_entrega_alerta entrega
+             SET estado = 'enviando', tentativas = tentativas + 1,
+                 atualizado_em = now()
+            FROM candidata
+           WHERE entrega.evento_alerta_id = candidata.evento_alerta_id
+             AND entrega.token_fcm_app_id = candidata.token_fcm_app_id
+          RETURNING entrega.evento_alerta_id::text, entrega.token_fcm_app_id::text
+        `) as Array<{ evento_alerta_id: string; token_fcm_app_id: string }>;
+        const entrega = reclamadas[0];
+        if (!entrega) break;
+        entregasTentadas += 1;
+
+        const evento = eventosPorId.get(entrega.evento_alerta_id);
+        const token = tokensPorId.get(entrega.token_fcm_app_id);
+        if (!evento || !token) {
+          await sql`
+            UPDATE notificacao_entrega_alerta
+               SET estado = 'cancelada', atualizado_em = now()
+             WHERE evento_alerta_id = ${entrega.evento_alerta_id}
+               AND token_fcm_app_id = ${entrega.token_fcm_app_id}
+          `;
+          continue;
+        }
+
+        try {
+          await mensageriaFirebase().send({
+            notification: {
+              title: "Novas alterações no Radar",
+              body: formatarCorpoPush(evento),
+            },
+            data: { rota: "alertas", coleta: outbox.coleta_id, origem: outbox.origem },
+            token: token.token,
+          });
+          await sql`
+            UPDATE notificacao_entrega_alerta
+               SET estado = 'enviada', ultimo_erro = NULL, atualizado_em = now()
+             WHERE evento_alerta_id = ${evento.id}
+               AND token_fcm_app_id = ${token.id}
+          `;
+        } catch (erro) {
           const codigo = codigoErroMensageria(erro);
-          if (codigo === "messaging/registration-token-not-registered" || codigo === "messaging/invalid-registration-token") invalidos.push(token.token);
-          else falhaEnvio = true;
+          if (codigo === "messaging/registration-token-not-registered" || codigo === "messaging/invalid-registration-token") {
+            await sql`UPDATE token_fcm_app SET ativo = FALSE, atualizado_em = now() WHERE id = ${token.id}`;
+            await sql`
+              UPDATE notificacao_entrega_alerta
+                 SET estado = 'invalida', ultimo_erro = 'token FCM inválido', atualizado_em = now()
+               WHERE token_fcm_app_id = ${token.id}
+                 AND estado IN ('pendente', 'enviando', 'falha')
+                 AND evento_alerta_id IN (
+                   SELECT id FROM evento_alerta
+                    WHERE usuario_app_id = ${outbox.usuario_app_id}
+                      AND origem = ${outbox.origem}
+                      AND coleta_id = ${outbox.coleta_id}
+                 )
+            `;
+          } else {
+            await sql`
+              UPDATE notificacao_entrega_alerta
+                 SET estado = 'falha',
+                     proxima_tentativa_em = now() + make_interval(secs => LEAST(3600, 30 * tentativas)),
+                     ultimo_erro = 'falha de envio', atualizado_em = now()
+               WHERE evento_alerta_id = ${evento.id}
+                 AND token_fcm_app_id = ${token.id}
+            `;
+          }
         }
       }
-      if (invalidos.length > 0) await sql`UPDATE token_fcm_app SET ativo = FALSE, atualizado_em = now() WHERE usuario_app_id = ${outbox.usuario_app_id} AND token = ANY(${invalidos}::text[])`;
-      if (falhaEnvio) {
-        await sql`UPDATE notificacao_outbox_alerta SET estado = 'falha', proxima_tentativa_em = now() + make_interval(secs => LEAST(3600, 30 * tentativas)), ultimo_erro = 'falha de envio', atualizado_em = now() WHERE id = ${outbox.id}`;
+
+      const pendencias = (await sql`
+        SELECT count(*)::int AS total, min(entrega.proxima_tentativa_em) AS proxima_tentativa_em
+          FROM notificacao_entrega_alerta entrega
+          JOIN evento_alerta alerta ON alerta.id = entrega.evento_alerta_id
+         WHERE alerta.usuario_app_id = ${outbox.usuario_app_id}
+           AND alerta.origem = ${outbox.origem}
+           AND alerta.coleta_id = ${outbox.coleta_id}
+           AND entrega.estado IN ('pendente', 'enviando', 'falha')
+      `) as Array<{ total: number; proxima_tentativa_em: string | null }>;
+      if ((pendencias[0]?.total ?? 0) > 0) {
+        await sql`
+          UPDATE notificacao_outbox_alerta
+             SET estado = 'falha',
+                 proxima_tentativa_em = GREATEST(COALESCE(${pendencias[0].proxima_tentativa_em}, now()), now() + interval '30 seconds'),
+                 ultimo_erro = 'falha de envio', atualizado_em = now()
+           WHERE id = ${outbox.id}
+        `;
         continue;
       }
       await sql`UPDATE notificacao_outbox_alerta SET estado = 'enviada', ultimo_erro = NULL, atualizado_em = now() WHERE id = ${outbox.id}`;

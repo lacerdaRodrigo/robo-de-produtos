@@ -12,6 +12,11 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
   da notificação e a abertura da Central pelo toque. Não criar fixture nem
   alterar dados de Production para provocar o evento. Push permanece opcional e
   o histórico deve continuar acessível após recusa.
+- [ ] Aplicar/verificar a migration `036_rastreio_entrega_push.sql` no banco alvo
+  por operação autorizada antes de publicar a API desta mudança. Suspender o
+  processamento da outbox durante o corte; a migration encerra pendências antigas
+  sem replay porque não há histórico individual de aceite FCM. Depois, conferir
+  a tabela/grants de `robo_api` e observar uma mudança natural.
 - [ ] Executar no Samsung SM-M135M (M13) os casos físicos ainda abertos: sessão
   expirada controlada, conta sem papel administrativo, atraso/erro/parcial,
   TalkBack, texto a 200% em todas as rotas e comparação formal de todas as telas
@@ -59,10 +64,10 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
 - [ ] Decidir se a recuperação manual do ADB por Wi-Fi após reboot é aceitável.
   Se não for, decidir separadamente pelo controlador Linux residencial; esta
   ROM não permite prometer recuperação autônoma pelo Android sem root.
-- [ ] Publicar a API com os identificadores de escopo necessários antes de
-  distribuir o APK correspondente e conferir a compatibilidade do serviço
-  publicado. O fallback Pichau também depende de validação publicada em ambiente
-  controlado.
+- [ ] Publicar a API com os identificadores de escopo necessários e a migration
+  `036` aplicada antes de distribuir o APK correspondente; conferir a
+  compatibilidade do serviço publicado. O fallback Pichau também depende de
+  validação publicada em ambiente controlado.
 
 ## Contas, segurança e serviços externos
 
