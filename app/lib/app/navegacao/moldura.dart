@@ -13,6 +13,7 @@ import '../../features/conta/paginas_conta.dart';
 import '../../features/conta/pagina_aparencia.dart';
 import '../../features/conta/pagina_laboratorio.dart';
 import '../../features/conta/pagina_perfil.dart';
+import '../../features/inter/pagina_hub_shopping_inter.dart';
 import '../../features/livelo/pagina_catalogo_livelo_android.dart';
 import '../../features/pichau/pagina_pichau.dart';
 import '../../features/produtos/pagina_produtos.dart';

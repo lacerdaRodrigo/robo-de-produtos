@@ -190,6 +190,34 @@ describe("persistência do acompanhamento Pichau", () => {
     expect(bancoFalso.consultas[2]).not.toContain("acompanhamento_usuario");
   });
 
+  it("mantém o catálogo carregável quando falta uma coluna pessoal", async () => {
+    bancoFalso.falha = Object.assign(
+      new Error("column acompanhamento.origem does not exist"),
+      { code: "42703" },
+    );
+    bancoFalso.respostas.push([{ total: 1 }], [produto]);
+
+    const resultado = await buscarCatalogoPichau(
+      {
+        q: "",
+        aba: "todas",
+        disponibilidade: "todas",
+        ordenar: "nome",
+        precoMin: null,
+        precoMax: null,
+        pagina: 1,
+        porPagina: 20,
+      },
+      "42",
+    );
+
+    expect(resultado.total).toBe(1);
+    expect(resultado.itens).toHaveLength(1);
+    expect(bancoFalso.consultas[0]).toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[1]).not.toContain("acompanhamento_usuario");
+    expect(bancoFalso.consultas[2]).not.toContain("acompanhamento_usuario");
+  });
+
   it("não mascara falhas que não pertencem ao acompanhamento pessoal", async () => {
     bancoFalso.falha = Object.assign(
       new Error('relation "pichau_produto" does not exist'),

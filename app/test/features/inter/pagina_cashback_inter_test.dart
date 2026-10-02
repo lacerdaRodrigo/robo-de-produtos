@@ -8,7 +8,6 @@ import 'package:http/testing.dart' as http_testing;
 
 import 'package:app_robo/app/componentes/fundacao_visual.dart';
 import 'package:app_robo/app/tema/tema.dart';
-import 'package:app_robo/app/paginas/lojas.dart';
 import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/core/api/modelos.dart';
@@ -16,6 +15,7 @@ import 'package:app_robo/core/api/pagina.dart';
 import 'package:app_robo/features/inter/cartao_cashback_inter.dart';
 import 'package:app_robo/features/inter/controlador_cashback_inter.dart';
 import 'package:app_robo/features/inter/pagina_cashback_inter.dart';
+import 'package:app_robo/features/inter/pagina_hub_shopping_inter.dart';
 
 CashbackInter _loja({
   String nome = 'Magazine Luiza',

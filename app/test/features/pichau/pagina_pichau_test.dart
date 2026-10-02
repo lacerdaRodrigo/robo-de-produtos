@@ -561,8 +561,10 @@ void main() {
     expect(find.text('Catálogo vazio'), findsOneWidget);
 
     final parcial = Map<String, dynamic>.from(_catalogo)
-      ..['qualidade'] = 'degradada'
-      ..['ultima_tentativa_estado'] = 'parcial';
+      ..['resumo'] = <String, dynamic>{
+        'qualidade': 'degradada',
+        'ultima_tentativa_estado': 'parcial',
+      };
     await at.pumpWidget(
       _tela(_api(requisicoes: <http.Request>[], catalogo: parcial)),
     );

@@ -847,3 +847,33 @@ Em 2026-08-16, a fonte pública respondeu sem autenticação e com identificaç�
 No levantamento inicial não houve coleta completa nem escrita. Em 2026-08-17, o contrato real revelou três diferenças que as fixtures antigas escondiam: raiz `sellers`, tags como objetos e caminhos relativos com variante `?v=`. Depois da correção, a migração `008` foi aplicada e a rodada 3 da Casas Bahia terminou em `sucesso`: 94 páginas, 3.363 itens lidos, 3.310 únicos, 53 sobreposições e Edge 60 Pro presente com preço de R$ 3.688,89 e 9% de cashback naquele momento. Ponto continua desmarcada até o próximo gate.
 
 Ainda em 2026-08-17, uma rodada posterior mostrou que `pagination.total` pode variar durante todas as três tentativas da mesma partição. A V4.5.1 passou a concluir cada candidata até `isLastPage`, preferir qualquer tentativa estável e, se todas variarem, publicar a candidata completa com mais produtos únicos como `degradada`. Essa publicação atualiza encontrados e medições sem inativar ausentes; a migração `009` guarda qualidade, tentativas e intervalo dos totais.
+
+### 15.5 Aposentadoria futura de tabelas legadas
+
+`oferta_direta_inter_atual`, `disparo_manual` e `disparo_manual_inter` não são
+fontes atuais do catálogo Compre direto nem da fila atual do Samsung. Ainda há
+referências administrativas, de grants, documentação e compatibilidade; a
+ausência de um escritor de domínio não prova que o schema pode ser removido.
+`solicitacao_disparo_app` e `coleta_android_fila` pertencem a fluxos ativos e
+ficam fora deste plano.
+
+Uma eventual aposentadoria exige um ciclo separado, sem reescrever migrations
+históricas:
+
+1. localizar e retirar por release os leitores, escritores, rótulos, contagens
+   de prévia, funções de limpeza, grants e documentação ativa que ainda nomeiam
+   as tabelas; confirmar os SHAs publicados da API e dos workers;
+2. observar ao menos três slots agendados e um dispatch normal sem novas
+   leituras/escritas nas tabelas candidatas, usando telemetria e consulta
+   somente leitura;
+3. decidir retenção/exportação do histórico com o responsável, gerar e conferir
+   backup recuperável, e inspecionar dependências de catálogo no PostgreSQL;
+4. preparar uma migration nova com comportamento restritivo (`RESTRICT`, sem
+   `CASCADE`) e testar aplicação, rollback de código e dependências em banco
+   descartável; não usar a aplicação da migration 033 como autorização para
+   chamar funções de limpeza;
+5. obter autorização explícita para a migration e a janela de execução; conferir
+   novamente o alvo e o backup antes de qualquer operação fora do descartável.
+
+Até todos os gates e a autorização existirem, manter as tabelas e funções como
+estão. Nenhuma remoção de schema está autorizada por este plano.

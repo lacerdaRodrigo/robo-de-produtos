@@ -3,6 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_robo/features/pichau/modelos_pichau.dart';
 
 void main() {
+  test('lê o estado da última tentativa do resumo real da API', () {
+    final pagina = PaginaCatalogoPichau.parse({
+      'itens': <dynamic>[],
+      'resumo': <String, dynamic>{
+        'ultima_tentativa_estado': 'parcial',
+        'qualidade': 'degradada',
+      },
+      'pagina': 1,
+      'por_pagina': 20,
+      'total_itens': 0,
+      'total_paginas': 1,
+      'tem_proxima': false,
+    });
+
+    expect(pagina.ultimaTentativaEstado, 'parcial');
+    expect(pagina.qualidade, 'degradada');
+  });
+
   test(
     'preserva campos comerciais opcionais sem transformar ausência em zero',
     () {

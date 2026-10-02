@@ -1,16 +1,21 @@
 # PRD — Inter Cashback (Sites parceiros)
 
 **Versão:** V3.0–V3.3
-**Status vigente em 2026-09-26:** coleta, Postgres, API autenticada, Flutter e
+**Status vigente em 2026-10-01:** coleta, Postgres, API autenticada, Flutter e
 acompanhamento pessoal estão implementados. A Central compara o cashback de
-Sites parceiros conforme a seção 16.2 e o PRD compartilhado de alertas. A
-migration `006` foi registrada como aplicada no Neon; a primeira sincronização
-real cadastrou 381 lojas. A entrega FCM de um evento real ainda depende de
+Sites parceiros conforme a seção 16.2 e o PRD compartilhado de alertas. As
+migrations `006` e `030` constam aplicadas no destino Neon; a primeira
+sincronização real cadastrou 381 lojas. A lista física consultada no M13 em
+2026-10-01 mostrou 378 lojas ativas naquele corte. A taxonomia editorial tem
+sete códigos; a migração não aprova a classificação das lojas, que continua
+pendente de revisão e aprovação do responsável antes de qualquer alteração pelo
+fluxo administrativo. A entrega FCM de um evento real ainda depende de
 validação operacional.
 **Execução recorrente vigente:** o worker Samsung agenda esta fonte às 10h30,
-15h30 e 21h30; `inter.yml` apenas enfileira pedidos manuais. A instalação do
-worker, a migration 031 e a troca de credenciais continuam pendentes. O contrato comum
-está em [`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
+15h30 e 21h30; `inter.yml` apenas enfileira pedidos manuais. O worker e a fila
+estão instalados e provisionados; o gate de nove execuções Pichau agendadas em
+72 horas continua aberto e não é substituído por rodadas manuais. O contrato
+comum está em [`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md).
 **Levantamento da fonte:** 14 de agosto de 2026
 
 > A V3 adiciona uma segunda fonte ao produto. A Livelo continua existindo e funcionando com seus próprios módulos, tabelas, workflow e páginas. O Shopping Inter entra como uma integração paralela: coleta o catálogo público, permite selecionar lojas e mostra cashback e condições da oferta.
@@ -448,6 +453,10 @@ disparo_manual_inter
 - Não há exclusão automática de histórico na V3 (RN52).
 - A categoria da loja é editorial e fica separada do snapshot de cashback. Sem
   linha em `mapeamento_categoria_cashback_inter`, a consulta usa `outros`.
+- A migration `030` cria as sete opções e a tabela de mapeamento, mas não define
+  categorias por loja nem representa aprovação editorial. Não preencher
+  `mapeamento_categoria_cashback_inter` por inferência automática ou por nome;
+  lojas sem vínculo continuam em `Outros` até decisão e alteração explícita.
 - A administração atualiza esse vínculo por
   `PATCH /api/inter/lojas/categoria` com `{ id, categoria }`; a fonte do Inter
   continua sem categoria e não é modificada.

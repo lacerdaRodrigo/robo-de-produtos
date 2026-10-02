@@ -26,23 +26,29 @@ class ControladorAlertas extends ChangeNotifier {
   bool carregando = false;
   bool parcial = false;
   Object? erro;
+  int _geracaoCarregamento = 0;
 
   bool get temProxima => pagina < totalPaginas;
 
   Future<void> carregar({bool preservar = true}) async {
-    if (carregando) return;
+    final geracao = ++_geracaoCarregamento;
+    final origem = filtroOrigem;
+    final tipo = filtroTipo;
+    final somenteNaoLidos = aba == 'nao_lidos';
+    final paginaSolicitada = pagina;
     carregando = true;
     erro = null;
     if (!preservar) itens = const [];
     notifyListeners();
     try {
       final resposta = await _api.alertas(
-        filtroOrigem: filtroOrigem,
-        filtroTipo: filtroTipo,
-        somenteNaoLidos: aba == 'nao_lidos',
-        pagina: pagina,
+        filtroOrigem: origem,
+        filtroTipo: tipo,
+        somenteNaoLidos: somenteNaoLidos,
+        pagina: paginaSolicitada,
         coleta: _coleta,
       );
+      if (geracao != _geracaoCarregamento) return;
       itens = resposta.itens;
       pagina = resposta.pagina;
       totalItens = resposta.totalItens;
@@ -51,14 +57,18 @@ class ControladorAlertas extends ChangeNotifier {
       naoLidos = resposta.naoLidos;
       parcial = false;
     } on ErroDeApi catch (ex) {
+      if (geracao != _geracaoCarregamento) return;
       erro = ex;
       parcial = itens.isNotEmpty;
     } on Object catch (ex) {
+      if (geracao != _geracaoCarregamento) return;
       erro = ex;
       parcial = itens.isNotEmpty;
     } finally {
-      carregando = false;
-      notifyListeners();
+      if (geracao == _geracaoCarregamento) {
+        carregando = false;
+        notifyListeners();
+      }
     }
   }
 

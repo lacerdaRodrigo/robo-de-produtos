@@ -115,6 +115,31 @@ class Appium:
         )
         return value if isinstance(value, list) else []
 
+    def find_all_inputs(self) -> list[dict[str, Any]]:
+        assert self.session_id
+        value = self.request(
+            "POST",
+            f"/session/{self.session_id}/elements",
+            {
+                "using": "-android uiautomator",
+                "value": 'new UiSelector().className("android.widget.EditText")',
+            },
+        )
+        return value if isinstance(value, list) else []
+
+    def find_all_text(self, text: str) -> list[dict[str, Any]]:
+        assert self.session_id
+        safe = text.replace("\\", "\\\\").replace('"', '\\"')
+        value = self.request(
+            "POST",
+            f"/session/{self.session_id}/elements",
+            {
+                "using": "-android uiautomator",
+                "value": f'new UiSelector().textContains("{safe}")',
+            },
+        )
+        return value if isinstance(value, list) else []
+
     def clickable(self, element_id: str) -> bool:
         assert self.session_id
         value = self.request(
@@ -128,6 +153,11 @@ class Appium:
             "GET", f"/session/{self.session_id}/element/{element_id}/attribute/displayed"
         )
         return str(value).lower() == "true"
+
+    def rect(self, element_id: str) -> dict[str, int]:
+        assert self.session_id
+        value = self.request("GET", f"/session/{self.session_id}/element/{element_id}/rect")
+        return value if isinstance(value, dict) else {}
 
     def click(self, description: str, timeout: float = 12) -> None:
         deadline = time.monotonic() + timeout
@@ -152,6 +182,88 @@ class Appium:
                 )
             time.sleep(0.35)
         raise AcceptanceError(f"Não encontrei o controle acessível '{description}'.")
+
+    def replace_text(self, value: str) -> None:
+        targets: list[str] = []
+        elements = self.find_all_inputs()
+        targets = [
+            item["element-6066-11e4-a52e-4f735466cecf"]
+            for item in elements
+            if "element-6066-11e4-a52e-4f735466cecf" in item
+            and self.displayed(item["element-6066-11e4-a52e-4f735466cecf"])
+        ]
+        if not targets:
+            raise AcceptanceError("O campo de busca não ficou visível.")
+        target = min(targets, key=lambda item: self.rect(item).get("y", 0))
+        assert self.session_id
+        self.request("POST", f"/session/{self.session_id}/element/{target}/click", {})
+        self.request("POST", f"/session/{self.session_id}/element/{target}/clear", {})
+        if value:
+            self.request(
+                "POST",
+                f"/session/{self.session_id}/element/{target}/value",
+                {"text": value, "value": list(value)},
+            )
+
+    def submit_search(self) -> None:
+        assert self.session_id
+        self.request(
+            "POST",
+            f"/session/{self.session_id}/execute/sync",
+            {"script": "mobile: pressKey", "args": [{"keycode": 66}]},
+        )
+
+    def click_lowest(self, description: str) -> None:
+        """Click the lower matching control when a sheet overlays the page."""
+        elements = self.find_all(description)
+        if not elements:
+            elements = self.find_all_text(description)
+        targets = [
+            item["element-6066-11e4-a52e-4f735466cecf"]
+            for item in elements
+            if "element-6066-11e4-a52e-4f735466cecf" in item
+            and self.displayed(item["element-6066-11e4-a52e-4f735466cecf"])
+            and self.clickable(item["element-6066-11e4-a52e-4f735466cecf"])
+        ]
+        if not targets:
+            raise AcceptanceError(f"Não encontrei o controle acessível '{description}'.")
+        target = max(targets, key=lambda item: self.rect(item).get("y", 0))
+        assert self.session_id
+        self.request("POST", f"/session/{self.session_id}/element/{target}/click", {})
+
+    def click_after_scroll(self, description: str, max_swipes: int = 12) -> None:
+        """Reveal a sheet action that moves below the viewport with enlarged text."""
+        for _ in range(max_swipes):
+            if self.is_visible(description):
+                self.click(description, timeout=2)
+                return
+            self.scroll_down()
+        raise AcceptanceError(
+            f"O controle '{description}' não apareceu após rolar a folha."
+        )
+
+    def tap_center_lowest(self, description: str) -> None:
+        """Tap a visible match when Flutter exposes no click action."""
+        elements = self.find_all(description)
+        if not elements:
+            elements = self.find_all_text(description)
+        targets = [
+            item["element-6066-11e4-a52e-4f735466cecf"]
+            for item in elements
+            if "element-6066-11e4-a52e-4f735466cecf" in item
+            and self.displayed(item["element-6066-11e4-a52e-4f735466cecf"])
+        ]
+        if not targets:
+            raise AcceptanceError(f"Não encontrei o texto acessível '{description}'.")
+        rect = self.rect(max(targets, key=lambda item: self.rect(item).get("y", 0)))
+        x = rect.get("x", 0) + rect.get("width", 0) // 2
+        y = rect.get("y", 0) + rect.get("height", 0) // 2
+        assert self.session_id
+        self.request(
+            "POST",
+            f"/session/{self.session_id}/execute/sync",
+            {"script": "mobile: clickGesture", "args": [{"x": x, "y": y}]},
+        )
 
     def wait_for(self, description: str, timeout: float = 20) -> None:
         deadline = time.monotonic() + timeout
@@ -178,36 +290,133 @@ class Appium:
         )
 
     def scroll_down(self) -> None:
-        self.scroll("down")
+        self._swipe_list("up")
 
     def scroll_up(self) -> None:
-        self.scroll("up")
+        self._swipe_list("down")
 
-    def scroll(self, direction: str) -> None:
-        assert self.session_id
-        self.request(
-            "POST",
-            f"/session/{self.session_id}/execute/sync",
-            {
-                "script": "mobile: scrollGesture",
-                "args": [
-                    {
-                        "left": 32,
-                        "top": 180,
-                        "width": 1016,
-                        "height": 1740,
-                        "direction": direction,
-                        "percent": 0.72,
-                    }
-                ],
-            },
+    def _swipe_list(self, direction: str) -> None:
+        size = subprocess.run(
+            ["adb", "-s", self.serial, "shell", "wm", "size"],
+            check=False,
+            capture_output=True,
+            text=True,
         )
+        match = re.search(r"(?:Physical|Override) size: (\d+)x(\d+)", size.stdout)
+        if size.returncode != 0 or match is None:
+            raise AcceptanceError("Não foi possível ler a resolução do Samsung autorizado.")
+        width, height = map(int, match.groups())
+        x = int(width * 0.92)
+        top = int(height * 0.21)
+        bottom = int(height * 0.70)
+        start_y, end_y = (bottom, top) if direction == "up" else (top, bottom)
+        result = subprocess.run(
+            [
+                "adb",
+                "-s",
+                self.serial,
+                "shell",
+                "input",
+                "swipe",
+                str(x),
+                str(start_y),
+                str(x),
+                str(end_y),
+                "350",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise AcceptanceError("Não foi possível rolar a lista no Samsung autorizado.")
+        time.sleep(0.35)
 
     def screenshot(self, path: Path) -> None:
         assert self.session_id
         encoded = self.request("GET", f"/session/{self.session_id}/screenshot")
         path.write_bytes(base64.b64decode(encoded))
         path.chmod(0o600)
+
+    def page_source(self) -> str:
+        assert self.session_id
+        value = self.request("GET", f"/session/{self.session_id}/source")
+        return value if isinstance(value, str) else ""
+
+    def wait_for_source(self, text: str, *, present: bool, timeout: float = 20) -> None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            found = text in self.page_source()
+            if found == present:
+                return
+            time.sleep(0.4)
+        state = "aparecer" if present else "sumir"
+        raise AcceptanceError(f"O texto de tela '{text}' não chegou a {state}.")
+
+    def wait_for_source_any(self, texts: tuple[str, ...], timeout: float = 45) -> str:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            source = self.page_source()
+            if any(text in source for text in texts):
+                return source
+            time.sleep(0.5)
+        raise AcceptanceError(
+            "A lista não chegou a um estado final conhecido antes do timeout."
+        )
+
+    def wait_for_catalog_rows(self, texts: tuple[str, ...], timeout: float = 60) -> str:
+        """Accept a settled visible count when enlarged text moves card actions offscreen."""
+        deadline = time.monotonic() + timeout
+        previous = ""
+        stable_samples = 0
+        count_pattern = re.compile(
+            r'(?:text|content-desc)="[^"]*\b\d[\d.,]*\s+(?:lojas|produtos|ofertas)\b'
+        )
+        while time.monotonic() < deadline:
+            source = self.page_source()
+            if any(text in source for text in texts):
+                return source
+            settled_count = (
+                count_pattern.search(source) is not None
+                and "android.widget.ProgressBar" not in source
+            )
+            if settled_count and source == previous:
+                stable_samples += 1
+                if stable_samples >= 2:
+                    return source
+            else:
+                stable_samples = 0
+            previous = source
+            time.sleep(0.5)
+        raise AcceptanceError(
+            "A lista não apresentou conteúdo final nem uma contagem estável antes do timeout."
+        )
+
+    def wait_for_source_change(self, original: str, timeout: float = 30) -> str:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            source = self.page_source()
+            if source != original:
+                return source
+            time.sleep(0.5)
+        raise AcceptanceError("O conteúdo visível não mudou depois da navegação.")
+
+    def wait_for_pagination(self, page: int, original: str, timeout: float = 60) -> str:
+        deadline = time.monotonic() + timeout
+        label = f"Paginação, página {page} de"
+        label_seen = False
+        while time.monotonic() < deadline:
+            source = self.page_source()
+            label_seen = label_seen or label in source
+            loading = "android.widget.ProgressBar" in source
+            if source != original and label in source and not loading:
+                return source
+            if label not in source:
+                self.scroll_down()
+            time.sleep(0.5)
+        raise AcceptanceError(
+            f"A paginação não confirmou a página {page} (rótulo visto: {label_seen})."
+        )
 
 
 def verify_device(serial: str) -> None:
@@ -285,10 +494,24 @@ def main() -> int:
         outcomes.append({"cenario": name, "resultado": "aprovado"})
         print(f"PASS {name}", flush=True)
 
+    def inspect_profile_route(title: str, screenshot: str) -> None:
+        driver.click(NAVIGATION_DESTINATIONS[3])
+        driver.wait_for("Olá.")
+        driver.click_after_scroll(title)
+        driver.wait_for(title)
+        passed(f"Perfil abre {title} e o conteúdo está disponível", screenshot)
+        driver.back()
+        driver.wait_for("Olá.")
+
     exit_code = 0
     status = "aprovado"
     try:
         driver.start()
+        for _ in range(4):
+            if driver.is_visible(NAVIGATION_DESTINATIONS[0]):
+                break
+            driver.back()
+            time.sleep(0.4)
         driver.wait_for(NAVIGATION_DESTINATIONS[0], timeout=45)
         for destination in NAVIGATION_DESTINATIONS:
             driver.wait_for(destination)
@@ -320,7 +543,139 @@ def main() -> int:
         driver.wait_for("Filtros")
         driver.wait_for("Todos")
         driver.wait_for("No radar")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
         passed("Sites parceiros abre a lista e os filtros", "inter-parceiros.png")
+
+        for _ in range(20):
+            if driver.is_visible("Próxima página"):
+                break
+            driver.scroll_down()
+        driver.wait_for("Próxima página")
+        primeira_pagina = driver.page_source()
+        driver.click("Próxima página")
+        driver.wait_for_pagination(2, primeira_pagina)
+        passed("Sites parceiros pagina a lista real", "inter-parceiros-pagina-2.png")
+        for _ in range(20):
+            if driver.is_visible("Página anterior"):
+                break
+            driver.scroll_down()
+        driver.wait_for("Página anterior")
+        segunda_pagina = driver.page_source()
+        driver.click("Página anterior")
+        driver.wait_for_pagination(1, segunda_pagina)
+
+        for _ in range(20):
+            if any(
+                driver.displayed(item["element-6066-11e4-a52e-4f735466cecf"])
+                for item in driver.find_all_inputs()
+                if "element-6066-11e4-a52e-4f735466cecf" in item
+            ):
+                break
+            driver.scroll_up()
+        if not any(
+            driver.displayed(item["element-6066-11e4-a52e-4f735466cecf"])
+            for item in driver.find_all_inputs()
+            if "element-6066-11e4-a52e-4f735466cecf" in item
+        ):
+            raise AcceptanceError("O campo de busca dos Sites parceiros não apareceu.")
+        driver.replace_text("Sam")
+        driver.submit_search()
+        busca_inter_pronta = driver.wait_for_source_any(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Sam’s Club BR",
+                "Nenhuma loja encontrada para",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+        if "Sam" not in busca_inter_pronta:
+            raise AcceptanceError("A busca dos Sites parceiros não preservou o termo.")
+        passed("Sites parceiros aplica a busca por loja", "inter-parceiros-busca-sam.png")
+
+        driver.replace_text("zzradarsemresultado")
+        driver.submit_search()
+        driver.wait_for("Nenhuma loja encontrada para")
+        passed("Sites parceiros apresenta vazio para busca sem correspondência", "inter-parceiros-busca-vazia.png")
+        driver.replace_text("")
+        driver.submit_search()
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+
+        driver.click("Filtros")
+        driver.wait_for("Filtros · Sites parceiros")
+        driver.click_lowest("Todas as categorias")
+        driver.wait_for("Outros")
+        driver.click_lowest("Outros")
+        driver.click_after_scroll("Aplicar filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+        passed("Sites parceiros aplica o filtro real de categoria", "inter-parceiros-filtro-outros.png")
+
+        driver.click("Filtros")
+        driver.wait_for("Filtros · Sites parceiros")
+        driver.tap_center_lowest("Maior cashback")
+        driver.wait_for("Nome da loja")
+        driver.click_lowest("Nome da loja")
+        driver.click("Aplicar filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+        passed("Sites parceiros aplica a ordenação Nome A–Z", "inter-parceiros-ordenado.png")
+
+        driver.click("No radar")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja está acompanhada ainda.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+        passed("Sites parceiros mostra o recorte No radar", "inter-parceiros-no-radar.png")
+        driver.click("Todos")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
+        driver.click("Filtros")
+        driver.click("Limpar")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja do Inter foi encontrada.",
+                "Não foi possível carregar o cashback do Inter.",
+            )
+        )
         driver.back()
         driver.wait_for("Como você quer comprar?")
         driver.wait_for("Compre direto")
@@ -331,7 +686,116 @@ def main() -> int:
         driver.wait_for("Todos")
         driver.wait_for("No radar")
         driver.wait_for("Filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
         passed("Compre direto abre Produtos por loja com Todos, No radar e filtros", "inter-produtos.png")
+
+        driver.replace_text("Suporte Fixo")
+        driver.submit_search()
+        busca_direto_pronta = driver.wait_for_source_any(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Suporte Fixo",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+        if "Nenhum produto encontrado com esses filtros." in busca_direto_pronta:
+            raise AcceptanceError("A busca pelo produto real acompanhado ficou vazia.")
+        passed("Compre direto busca no catálogo real", "inter-produtos-busca.png")
+
+        driver.replace_text("zzradarsemresultado")
+        driver.submit_search()
+        driver.wait_for("Nenhum produto encontrado com esses filtros.")
+        passed("Compre direto mostra estado vazio da busca", "inter-produtos-vazio.png")
+        driver.replace_text("")
+        driver.submit_search()
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+
+        driver.click("Filtros")
+        driver.wait_for("Filtros · Compre direto")
+        driver.wait_for("Todas as categorias")
+        driver.click_lowest("Todas as categorias")
+        driver.wait_for("Acessórios")
+        driver.click_lowest("Acessórios")
+        driver.click_after_scroll("Aplicar filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+        passed("Compre direto aplica o filtro real de categoria", "inter-produtos-filtro-acessorios.png")
+
+        driver.click("No radar")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+        passed("Compre direto aplica o recorte No radar", "inter-produtos-no-radar.png")
+        driver.click("Todos")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+        driver.click("Filtros")
+        driver.wait_for("Filtros · Compre direto")
+        driver.click_after_scroll("Limpar")
+        driver.click_after_scroll("Aplicar filtros")
+        driver.wait_for_source("Filtros (1)", present=False)
+        driver.wait_for("Filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum produto encontrado com esses filtros.",
+                "Não foi possível buscar produtos agora.",
+            )
+        )
+        passed("Compre direto restaura filtros e aba Todos", "inter-produtos-restaurado.png")
+        for _ in range(20):
+            if driver.is_visible("Próxima página"):
+                break
+            driver.scroll_down()
+        if driver.is_visible("Próxima página"):
+            primeira_pagina = driver.page_source()
+            driver.click("Próxima página")
+            driver.wait_for_pagination(2, primeira_pagina)
+            passed("Compre direto pagina o catálogo real", "inter-produtos-pagina-2.png")
+            for _ in range(20):
+                if driver.is_visible("Página anterior"):
+                    break
+                driver.scroll_down()
+            driver.wait_for("Página anterior")
+            segunda_pagina = driver.page_source()
+            driver.click("Página anterior")
+            driver.wait_for_pagination(1, segunda_pagina)
+        else:
+            raise AcceptanceError("O catálogo atual de Compre direto não expôs a página 2.")
         driver.back()
         driver.wait_for("Como você quer comprar?")
         driver.back()
@@ -342,6 +806,15 @@ def main() -> int:
         driver.wait_for("Filtros")
         driver.wait_for("Lojas")
         driver.wait_for("No radar")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhuma loja está acompanhada.",
+                "Nenhuma loja corresponde aos filtros atuais.",
+                "Não foi possível carregar o catálogo Livelo.",
+            )
+        )
         passed("Catálogo Livelo abre com controles de filtro", "livelo.png")
         driver.back()
         driver.wait_for("ESCOLHA SEU CAMINHO")
@@ -350,6 +823,41 @@ def main() -> int:
         driver.click("Pichau")
         driver.wait_for("Filtros")
         driver.wait_for("Todos")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum PC Gamer foi encontrado na última coleta completa.",
+                "Não foi possível carregar o catálogo Pichau.",
+            )
+        )
+        driver.click("Filtros")
+        driver.wait_for("Disponibilidade")
+        driver.click_lowest("Todos")
+        driver.wait_for("Fora do catálogo")
+        driver.click("Fora do catálogo")
+        driver.click_after_scroll("Aplicar filtros")
+        driver.wait_for_source_any(
+            (
+                "Nenhum PC Gamer corresponde aos filtros atuais.",
+                "Não foi possível carregar o catálogo Pichau.",
+            )
+        )
+        passed(
+            "Pichau aplica a aba Fora do catálogo no catálogo real",
+            "pichau-fora-catalogo.png",
+        )
+        driver.click("Filtros")
+        driver.click_after_scroll("Limpar")
+        driver.click_after_scroll("Aplicar filtros")
+        driver.wait_for_catalog_rows(
+            (
+                "Acompanhar",
+                "Acompanhando",
+                "Nenhum PC Gamer foi encontrado na última coleta completa.",
+                "Não foi possível carregar o catálogo Pichau.",
+            )
+        )
         passed("Catálogo Pichau abre com filtros e abas", "pichau.png")
         driver.back()
         driver.wait_for("Pichau")
@@ -357,6 +865,14 @@ def main() -> int:
 
         driver.click(NAVIGATION_DESTINATIONS[2])
         driver.wait_for("No seu radar")
+        driver.wait_for_source_any(
+            (
+                "acompanhados por você.",
+                "Seu radar ainda está vazio.",
+                "Nenhum item encontrado.",
+                "Não foi possível carregar os acompanhamentos",
+            )
+        )
         passed("Meu radar abre e mostra o estado atual da conta", "meu-radar.png")
 
         driver.click(NAVIGATION_DESTINATIONS[0])
@@ -367,10 +883,45 @@ def main() -> int:
             driver.wait_for(alert_marker, timeout=8)
         except AcceptanceError:
             driver.wait_for("Marcar todos como lidos", timeout=8)
+        driver.wait_for_source("Motorola Edge", present=True)
         passed("Central de Alertas abre em estado real da conta", "alertas.png")
+        driver.click("Não lidos")
+        driver.wait_for("Marcar todos como lidos")
+        passed("Aba Não lidos carrega o recorte da conta", "alertas-nao-lidos.png")
+        driver.click("Filtrar")
+        driver.wait_for("Filtrar mudanças")
+        driver.click_lowest("Todas as origens")
+        driver.wait_for("Sites parceiros")
+        driver.click_lowest("Sites parceiros")
+        driver.screenshot(args.artifacts / "alertas-filtro-sites-selecionado.png")
+        driver.click("Aplicar")
+        driver.wait_for("Nenhum alerta corresponde a este filtro.")
+        driver.wait_for_source("Motorola Edge", present=False)
+        passed("Filtro por origem aplica-se à Central", "alertas-filtrado-sites.png")
+        driver.click("Filtrar")
+        driver.tap_center_lowest("Sites parceiros")
+        driver.wait_for("Todas as origens")
+        driver.click_lowest("Todas as origens")
+        driver.click("Aplicar")
+        driver.wait_for("Marcar todos como lidos")
+        driver.click("Todos")
+        driver.wait_for("Marcar todos como lidos")
+        driver.wait_for_source("Motorola Edge", present=True)
+        passed("Central retorna à lista Todos após limpar o filtro", "alertas-todos.png")
         driver.back()
         driver.wait_for(HOME_ALERTS_BUTTON)
         passed("Back Android da Central retorna à Home", "alertas-back.png")
+
+        driver.click(NAVIGATION_DESTINATIONS[3])
+        driver.wait_for("Olá.")
+        passed("Perfil e identificação da conta abrem", "perfil.png")
+        inspect_profile_route("Aparência", "perfil-aparencia.png")
+        inspect_profile_route("Notificações", "perfil-notificacoes.png")
+        inspect_profile_route("Ajuda", "perfil-ajuda.png")
+        inspect_profile_route("Privacidade", "perfil-privacidade.png")
+        inspect_profile_route("Relatar problema", "perfil-relatar-problema.png")
+        inspect_profile_route("Meus relatos", "perfil-meus-relatos.png")
+        inspect_profile_route("Administração", "perfil-administracao.png")
 
     except AcceptanceError as error:
         print(f"BLOCK {error}", file=sys.stderr, flush=True)

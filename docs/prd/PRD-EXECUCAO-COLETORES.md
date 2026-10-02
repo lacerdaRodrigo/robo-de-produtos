@@ -231,6 +231,121 @@ em 72 horas, com tela bloqueada e sem abrir o Termux. Uma falha reinicia essa
 janela. Isso não substitui a checagem manual inicial de que Livelo e as duas
 rotinas Inter também executaram e publicaram estados corretos.
 
+## Runbook de Livelo e Inter
+
+Este roteiro cobre Livelo, Inter Sites parceiros e Inter Compre direto. Os três
+coletores escrevem no banco e podem gerar alertas/outbox; usar apenas em uma
+execução operacional já autorizada. Não rodar localmente contra Production para
+investigar ou fabricar um estado. O fluxo administrativo que escolhe as lojas
+Compre direto também não é um disparo de coleta.
+
+### Entradas e comandos
+
+| Domínio | Entrada consultada | Comando do coletor | Limite e comportamento relevante |
+|---|---|---|---|
+| Livelo | Catálogo público; lojas acompanhadas/apelidos e preferências configuradas | `python -m robo_livelo.principal` | `LIMIAR_PARCEIROS` padrão 150; configuração local via `CAMINHO_CONFIG` |
+| Inter Sites parceiros | Catálogo público do Shopping Inter; conjunto `favorita_inter` e `loja_inter` | `python -m robo_inter.principal_inter` | `LIMIAR_LOJAS_INTER` padrão 100 |
+| Inter Compre direto | Lojas ativas selecionadas em `loja_direta_inter`; catálogo público de produtos | `python -m robo_inter.principal_produtos_inter` | 36 resultados por página; busca suplementar `smartphone`; pausa de 1,5 s; até três tentativas de rodada quando a contagem fica inconsistente |
+
+Execute os comandos a partir de `backend/robo`, dentro do ambiente virtual e
+com as dependências instaladas conforme [`backend/robo/README.md`](../../backend/robo/README.md).
+Eles não aceitam seleção de loja como argumento operacional: Compre direto lê a
+seleção ativa persistida. Uma falha no coletor de Sites parceiros encerra a
+rodada Inter antes de começar Compre direto. A ordem da rodada é fixa: Sites
+parceiros, depois Compre direto. Os dados de configuração e banco ficam no
+arquivo privado da instalação; não os copiar para o shell gravado, logs, Issue
+ou terminal compartilhado.
+
+Variáveis operacionais sem valores secretos:
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | Conexão da execução do coletor ou do worker, fornecida pelo ambiente privado |
+| `ROBO_DISPATCH_DATABASE_URL` | Secret do GitHub Actions injetado como `DATABASE_URL` apenas para enfileirar o pedido manual |
+| `LIMIAR_PARCEIROS`, `LIMIAR_LOJAS_INTER` | Mínimos de integridade Livelo/Inter descritos acima |
+| `CAMINHO_CONFIG` | Arquivo TOML local alternativo do coletor Livelo; não é usado pelo fluxo agendado para selecionar lojas |
+| `ROBO_GITHUB_REPOSITORY` | Repositório consultado pelo daemon; padrão `lacerdaRodrigo/robo-de-produtos` |
+| `ROBO_GITHUB_POLL_SECONDS` | Intervalo de consulta de execuções concluídas; padrão 180 s, intervalo aceito de 120 a 3600 s |
+| `ROBO_CELULAR_STATE_FILE`, `PREFIX`, `LOG_LEVEL` | Caminho do estado local, prefixo Termux e nível de log do executor |
+
+O Samsung carrega o ambiente privado do executor; Actions recebe somente o
+secret restrito de despacho. Nunca usar `env`, `set -x`, `printenv` ou `cat` no
+arquivo de ambiente como diagnóstico, pois isso expõe valores confidenciais.
+
+### Agendamento, despacho e verificação
+
+Os slots locais são Livelo às 09:10, 14:10 e 20:10, e as duas rotinas Inter às
+10:30, 15:30 e 21:30, em `America/Sao_Paulo`. A fila consulta o daemon a cada
+30 s; uma janela de até 90 s inicia o slot. Não há catch-up para slot perdido.
+Execuções manuais dos workflows `robo.yml` e `inter.yml` apenas enfileiram
+pedidos; `inter.yml` solicita a rodada completa do Inter, não escolhe entre
+Sites parceiros e Compre direto. O worker observa Actions aproximadamente a
+cada 180 s. Um run verde confirma o enqueue, não a coleta. Uma nova execução do
+workflow cria um novo pedido; não existe retry terminal automático da fila.
+
+Após autorização operacional para um novo disparo, o ponto de entrada é
+`workflow_dispatch` em `robo.yml` (Livelo) ou `inter.yml` (rodada Inter). Os
+comandos GitHub CLI equivalentes são `gh workflow run robo.yml --ref main` e
+`gh workflow run inter.yml --ref main`. Este documento registra o procedimento;
+não autoriza dispatch nem reexecução por si só. Evite disparar um workflow só
+para “ver se funciona”, pois isso escreve fila, execução, catálogo e, quando
+aplicável, notificações.
+
+Verifique a execução nesta ordem, sempre sem imprimir credenciais ou dados
+pessoais:
+
+1. `backend/robo/scripts/celular/status.sh`: código 0 indica worker saudável;
+   código 2 indica falha operacional/configuração.
+2. GitHub Actions: confirme o run ID e que a conclusão significa pedido
+   enfileirado, não coleta concluída.
+3. Leia a linha correspondente de `coleta_android_fila`: fonte, estado,
+   tentativa, `workflow_run_id`, horários e código de falha. Não mostre a URL de
+   conexão no mesmo comando.
+4. Consulte o log local privado em
+   `$PREFIX/var/log/robo-celular/worker.log`; ele tem rotação acima de 5 MiB e
+   modo `0600`.
+5. Confira a última execução e sua qualidade nas tabelas de domínio abaixo; só
+   estado `sucesso` com catálogo publicado confirma a coleta completa.
+
+### Escritas, retries e falhas
+
+| Domínio | Tabelas de execução/publicação | Efeitos adicionais |
+|---|---|---|
+| Livelo | `execucao`, `parceiro_livelo`, `pontuacao`, vínculo `loja.parceiro_livelo_id` | Eventos/outbox de alerta quando os critérios reais de mudança forem atendidos |
+| Inter Sites parceiros | `execucao_inter`, `loja_inter`, `cashback_inter` | Eventos/outbox de alerta quando houver mudança elegível |
+| Inter Compre direto | `execucao_produtos_inter`, `execucao_loja_produtos_inter`, `estagio_produto_inter`, `produto_direto_inter`, `medicao_produto_direto_inter` | Remove staging concluído e medições com mais de 30 dias; pode gerar eventos/outbox de preço |
+
+Nenhum desses fluxos usa `oferta_direta_inter_atual`. Falhas do coletor
+retornam código 1; sucesso retorna 0. O worker aplica timeout de 15 min a
+Livelo e 50 min à rodada Inter inteira. Timeout geral termina em 124; falha ao
+iniciar processo, em 127. A fila manual usa lease de uma hora. O worker tem um
+único reinício controlado após atualização do checkout (código 75); isso não é
+rollback da atualização.
+
+Livelo e os dois adaptadores HTTP do Inter tentam a leitura até três vezes, com
+timeout de 30 s e esperas de 2 s e 4 s. Inter repete erro de rede, HTTP 408,
+429 e 5xx; outros 4xx falham sem retry. Uma resposta acima de 5 MiB falha sem
+retry. Compre direto também repete a rodada até três vezes se os totais de
+páginas forem inconsistentes; se nenhum retrato ficar consistente, publica o
+melhor retrato como degradado, sem inativar produtos ausentes daquele recorte.
+Uma rodada parcial retorna código 1. A fila não reexecuta automaticamente
+falha terminal; uma retomada operacional requer novo dispatch autorizado.
+
+### Diagnóstico rápido
+
+| Sintoma | Checagem seguinte |
+|---|---|
+| Worker indisponível | `status.sh`; confirmar Android ligado, Termux worker e Wi-Fi. Após reboot, seguir a recuperação Samsung documentada acima; o Android não reativa sozinho a Depuração por Wi-Fi |
+| Workflow verde sem catálogo novo | Verificar `coleta_android_fila`; workflow verde só confirma enqueue. Depois conferir worker.log e tabelas de execução do domínio |
+| Fila sem progresso | Conferir estado/lease, idade do último log e relógio local. Não criar outro pedido até determinar se o anterior ainda está em execução |
+| Inter sem execução de produtos | Conferir se Sites parceiros falhou primeiro; as etapas são seriais e uma falha na primeira impede a segunda |
+| Compre direto parcial | Conferir estado/qualidade da rodada e páginas/totais. A rodada degradada conserva a última disponibilidade de itens não vistos; não marcar como catálogo completo |
+| Segredo ou dado pessoal apareceu no log | Restringir o artefato, removê-lo do canal compartilhado e trocar a credencial exposta conforme o processo do provedor |
+
+As falhas do domínio devem ser diagnosticadas pela execução persistida e pelo
+código de falha; não inferir sucesso por quantidade não zero, workflow verde,
+campo vazio ou ausência de alerta.
+
 ## Pendências do rollout
 
 O schema, as roles e os grants do projeto Neon novo foram provisionados sem

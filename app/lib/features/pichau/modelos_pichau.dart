@@ -183,7 +183,10 @@ class PaginaCatalogoPichau {
       atualizadoEm: _textoOpcionalPichau(objeto['atualizado_em']),
       qualidade: _textoOpcionalPichau(objeto['qualidade'] ?? resumo.qualidade),
       ultimaTentativaEstado: _textoOpcionalPichau(
-        objeto['ultima_tentativa_estado'],
+        objeto['ultima_tentativa_estado'] ??
+            (resumoBruto is Map<String, dynamic>
+                ? resumoBruto['ultima_tentativa_estado']
+                : null),
       ),
     );
   }

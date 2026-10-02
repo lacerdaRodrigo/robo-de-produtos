@@ -9,7 +9,29 @@ de dados. A inspeção ADB confirmou worker ativo e Chrome/Appium ociosos ao
 final. Continuam pendentes um evento real com entrega FCM e o gate de nove
 execuções Pichau agendadas consecutivas em 72 horas.
 
-**Última atualização:** 2026-09-28
+**Última atualização:** 2026-10-01
+
+### Contrato parcial da API e runner de aceite — 2026-10-01
+
+O endpoint `/api/pichau/catalogo` entrega `ultima_tentativa_estado` dentro de
+`resumo`. A análise do contrato encontrou que o modelo Flutter lia esse campo
+somente na raiz, impedindo que `parcial` fosse reconhecido pela tela. O modelo
+agora lê o formato publicado (e preserva compatibilidade com a forma antiga na
+raiz); o teste de widget usa o mesmo envelope da API e o teste unitário cobre
+`resumo.ultima_tentativa_estado=parcial`. Isso corrige o consumo local do estado,
+mas não substitui a validação física de catálogo parcial/erro no M13.
+
+Na rodada física de 2026-10-01, o filtro `Fora do catálogo` exibiu o estado
+vazio e `Limpar` restaurou `Todos` com 1.228 produtos. Erro e parcial não foram
+forçados. A API respondeu 1.223 produtos pelo caminho normal; o teste backend
+confirma os fallbacks por relação ausente, coluna ausente e permissão, mas a
+API publicada ainda precisa ser validada em ambiente controlado, sem fault
+injection em Production.
+
+O runner de aceite foi ampliado para percorrer as telas secundárias de Perfil
+sem mutações e para rolar folhas de filtros quando texto ampliado desloca as
+ações. Essa extensão não foi executada no aparelho depois da perda de conexão
+ADB; não contar a cobertura adicional até repetir a execução no M13.
 
 ### Verificação física focada — 2026-09-28
 

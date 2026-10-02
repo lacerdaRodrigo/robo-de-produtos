@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,79 @@ Api _api({required List<http.Request> requisicoes}) => Api(
 );
 
 void main() {
+  test('respostas antigas não substituem o último filtro aplicado', () async {
+    final requisicoes = <http.Request>[];
+    final respostas = List.generate(3, (_) => Completer<http.Response>());
+    final requisicaoIniciada = List.generate(3, (_) => Completer<void>());
+    final api = Api(
+      paginaPadrao: 2,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token',
+        cliente: http_testing.MockClient((request) {
+          requisicoes.add(request);
+          final indice = requisicoes.length - 1;
+          requisicaoIniciada[indice].complete();
+          return respostas[indice].future;
+        }),
+      ),
+    );
+    final controlador = ControladorAlertas(api: api);
+    addTearDown(controlador.dispose);
+
+    Future<http.Response> resposta(String id) async => http.Response(
+      jsonEncode({
+        'itens': [
+          {
+            'id': id,
+            'origem': 'inter_cashback',
+            'tipo': 'preco',
+            'entidade_id': '2',
+            'entidade_nome': 'Loja',
+            'coleta_id': '9',
+            'valor_anterior': '20.00',
+            'valor_atual': '18.00',
+            'unidade': 'reais',
+            'direcao': 'queda',
+            'lido': false,
+            'criado_em': 'agora',
+          },
+        ],
+        'nao_lidos': 1,
+        'pagina': 1,
+        'por_pagina': 20,
+        'total_itens': 1,
+        'total_paginas': 1,
+        'tem_proxima': false,
+      }),
+      200,
+    );
+
+    final inicial = controlador.iniciar();
+    await requisicaoIniciada[0].future;
+    final abaNaoLidos = controlador.mudarAba('nao_lidos');
+    await requisicaoIniciada[1].future;
+    final filtro = controlador.aplicarFiltros(
+      origem: 'inter_cashback',
+      tipo: 'preco',
+    );
+    await requisicaoIniciada[2].future;
+
+    expect(requisicoes[2].url.queryParameters['origem'], 'inter_cashback');
+    expect(requisicoes[2].url.queryParameters['tipo'], 'preco');
+    expect(requisicoes[2].url.queryParameters['somente_nao_lidos'], 'true');
+
+    respostas[2].complete(await resposta('filtro-atual'));
+    await filtro;
+    respostas[0].complete(await resposta('resposta-inicial-antiga'));
+    respostas[1].complete(await resposta('resposta-aba-antiga'));
+    await Future.wait([inicial, abaNaoLidos]);
+
+    expect(controlador.itens.single.id, 'filtro-atual');
+    expect(controlador.carregando, isFalse);
+    expect(controlador.erro, isNull);
+  });
+
   test('aba e filtros independentes persistem ao paginar', () async {
     final requisicoes = <http.Request>[];
     final controlador = ControladorAlertas(api: _api(requisicoes: requisicoes));

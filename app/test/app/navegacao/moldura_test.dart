@@ -523,6 +523,7 @@ void main() {
     expect(find.byKey(const Key('voltar-programas-inter')), findsOneWidget);
     expect(find.text('Banco Inter'), findsOneWidget);
     expect(find.text('Escolha a experiência'), findsOneWidget);
+    expect(find.text('ESCOLHA A EXPERIÊNCIA'), findsNothing);
     expect(find.text('Como você quer comprar?'), findsOneWidget);
     expect(
       find.byWidgetPredicate(

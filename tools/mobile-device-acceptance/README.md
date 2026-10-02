@@ -25,7 +25,11 @@ tools/mobile-device-acceptance/run-local.sh
 
 O roteiro encontra os destinos da navegação pelos rótulos `Início`, `Explorar`,
 `Meu radar` e `Perfil`; o acesso à Central usa o rótulo semântico `Alertas`, que
-permanece estável quando o total de não lidos muda.
+permanece estável quando o total de não lidos muda. No catálogo Pichau, também
+seleciona `Fora do catálogo` e volta para `Todos`; essa navegação só lê os
+resultados existentes e não força falhas nem altera dados. Na Central, percorre a
+aba `Não lidos`, aplica o filtro real de origem e restaura `Todos`; não marca
+alertas como lidos.
 
 O build verifica a assinatura antes de `adb install -r`; se não coincidir,
 interrompe sem desinstalar o app nem apagar seus dados. O número de build deve
