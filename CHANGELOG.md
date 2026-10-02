@@ -2,6 +2,45 @@
 
 <!-- version list -->
 
+## v1.74.1 (2026-10-02)
+
+### Bug Fixes
+
+- Announce home alerts accessibly
+  ([`717afe8`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/717afe88b8216eabf45c899607177e0d055dd409))
+
+- Constrain alert button semantics
+  ([`331c7c1`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/331c7c1cac60a80ff856523aee27d1820897732d))
+
+### Chores
+
+- **agents**: Enable scoped autonomous edits
+  ([#57](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/57),
+  [`3b650a4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/3b650a4e301cb8d8bcd2f1782705217c00f91c2d))
+
+### Documentation
+
+- Keep Pichau fallback validation open
+  ([#60](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/60),
+  [`251ad2a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/251ad2a66554c1628e7c48a85051641e3a0815a7))
+
+- Reconcile open mobile acceptance items
+  ([#60](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/60),
+  [`251ad2a`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/251ad2a66554c1628e7c48a85051641e3a0815a7))
+
+- **agents**: Document post-push CI verification
+  ([#56](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/56),
+  [`51de2b4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/51de2b43b91aa7065cee768331207112d15fb94a))
+
+- **agents**: Honor standing main publication authorization
+  ([#58](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/58),
+  [`c8bc931`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/c8bc931a98af4e3083b91f2006c1c54f8c93b12c))
+
+- **agents**: Require CI before main integration
+  ([#56](https://github.com/lacerdaRodrigo/robo-de-produtos/pull/56),
+  [`51de2b4`](https://github.com/lacerdaRodrigo/robo-de-produtos/commit/51de2b43b91aa7065cee768331207112d15fb94a))
+
+
 ## v1.74.0 (2026-09-29)
 
 ### Chores
