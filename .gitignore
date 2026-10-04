@@ -38,3 +38,5 @@ npm-debug.log*
 .vscode/
 .idea/
 .DS_Store
+# Apostila original mantida localmente; o índice resumido é versionado.
+/.codex/design/Apostila_Padroes_de_Interface_FUUXUI_1.pdf

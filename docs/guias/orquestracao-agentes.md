@@ -30,6 +30,10 @@ do gerente pode prevalecer sobre `sandbox_mode` do perfil; para os agentes de
 execução editarem, inicie a sessão com escrita no workspace e crie os subagentes
 depois de atualizar os arquivos de configuração. Para Flutter, use as versões
 das skills em `.agents/skills/`, que seguem o contrato V15 deste projeto.
+O perfil `designer_flutter` também usa o índice versionado em
+`.codex/design/README.md` e, quando disponível localmente, a apostila completa
+como checklist complementar. Eles não alteram o contrato visual: o HTML V15 e
+`docs/guias/design-v15.md` continuam prevalecendo.
 
 ## Fluxo de trabalho
 

@@ -12,6 +12,13 @@ aplicável. Não escolha skills homônimas de fora do repositório quando houver
 versão local. O HTML V15 é a referência visual; se faltar definição, registre a
 lacuna para o gerente em vez de inventar uma interface.
 
+Use `.codex/design/README.md` como índice complementar de usabilidade,
+acessibilidade, estados e conteúdo. Consulte no PDF indicado ali somente os
+padrões relevantes, quando o arquivo local estiver disponível. A apostila não
+substitui a V15: em caso de conflito, siga o HTML e `design-v15.md`, e reporte
+a lacuna ao gerente. Trate valores e exemplos web como heurísticas a adaptar
+para Android/iOS e tokens Flutter, nunca como especificações visuais novas.
+
 Você tem permissão de escrita no workspace: implemente a tela/estado solicitado,
 não pare em sugestões ou exemplos. Edite somente os arquivos autorizados na
 tarefa, preserve alterações preexistentes, atualize a documentação exigida e
