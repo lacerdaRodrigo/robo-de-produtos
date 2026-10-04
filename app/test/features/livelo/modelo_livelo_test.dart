@@ -130,6 +130,23 @@ void main() {
     expect(validadeLivelo('2026-08-22T23:59:00Z'), 'Válido até 22/08/2026');
   });
 
+  test('data do histórico usa Hoje e dia/mês no horário de Brasília', () {
+    final agora = DateTime.utc(2026, 10, 3, 12);
+
+    expect(
+      dataHoraHistoricoLivelo('2026-10-03T12:10:00Z', agora: agora),
+      'Hoje, 09:10',
+    );
+    expect(
+      dataHoraHistoricoLivelo('2026-09-17T17:10:00Z', agora: agora),
+      '17/09, 14:10',
+    );
+    expect(
+      dataHoraHistoricoLivelo(null, agora: agora),
+      'Nenhuma coleta registrada',
+    );
+  });
+
   test('card formata pontuação, coleta e validade sem inventar dados', () {
     final agora = DateTime.utc(2026, 8, 28, 15);
 

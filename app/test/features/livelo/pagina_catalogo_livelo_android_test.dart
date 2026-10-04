@@ -12,6 +12,7 @@ import 'package:app_robo/core/api/api.dart';
 import 'package:app_robo/core/api/cliente.dart';
 import 'package:app_robo/features/livelo/controlador_catalogo_livelo.dart';
 import 'package:app_robo/features/livelo/pagina_catalogo_livelo_android.dart';
+import 'package:app_robo/features/livelo/pagina_historico_livelo_android.dart';
 
 import 'controlador_catalogo_livelo_test.dart' as dados;
 
@@ -661,10 +662,19 @@ void main() {
           provedorToken: () async => 'token-teste',
           cliente: http_testing.MockClient((requisicao) async {
             requisicoes.add(requisicao);
-            return http.Response(
-              r'{"id_externo":"B","medicoes":[{"momento":"2026-08-29T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-28T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-27T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-26T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-25T17:00:00Z","pontos_atuais":"5","pontos_base":"1","pontos_clube":"10","moeda":"R$"},{"momento":"2026-08-24T17:00:00Z","pontos_atuais":"4","pontos_base":"1","pontos_clube":"10","moeda":"R$"}]}',
-              200,
-            );
+            return http.Response(r'''
+              {
+                "id_externo": "B",
+                "medicoes": [
+                  {"momento":"2026-08-29T17:00:00Z","pontos_atuais":"8","pontos_base":"1","pontos_clube":"10","moeda":"R$"},
+                  {"momento":"2026-08-28T17:00:00Z","pontos_atuais":"8","pontos_base":"1","pontos_clube":"10","moeda":"R$"},
+                  {"momento":"2026-08-27T17:00:00Z","pontos_atuais":"8","pontos_base":"1","pontos_clube":"10","moeda":"R$"},
+                  {"momento":"2026-08-26T17:00:00Z","pontos_atuais":"2","pontos_base":"1","pontos_clube":"2","moeda":"R$"},
+                  {"momento":"2026-08-25T17:00:00Z","pontos_atuais":"2","pontos_base":"1","pontos_clube":"2","moeda":"R$"},
+                  {"momento":"2026-08-24T17:00:00Z","pontos_atuais":"4","pontos_base":"1","pontos_clube":"4","moeda":"R$"}
+                ]
+              }
+              ''', 200);
           }),
         ),
       );
@@ -723,13 +733,19 @@ void main() {
       await at.pumpAndSettle();
 
       expect(find.byKey(const Key('folha-historico-livelo')), findsOneWidget);
-      expect(find.text('Histórico · Loja Comum'), findsOneWidget);
+      expect(find.text('Histórico de preço'), findsOneWidget);
+      expect(find.text('Loja Comum · Livelo'), findsOneWidget);
       expect(
         find.text('Últimas medições · até 30 registros · somente leitura'),
         findsOneWidget,
       );
-      expect(find.text('5 pts/R\$ 1'), findsNWidgets(5));
-      expect(find.text('Clube: 10 pts/R\$ 1'), findsNWidgets(5));
+      expect(find.byKey(const Key('voltar-folha-radar')), findsOneWidget);
+      expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
+      expect(find.text('8 pts/R\$ 1'), findsNWidgets(3));
+      expect(find.text('2 pts/R\$ 1'), findsNWidgets(2));
+      expect(find.text('Clube: 10 pts/R\$ 1'), findsNWidgets(3));
+      expect(find.text('Clube: 2 pts/R\$ 1'), findsNothing);
+      expect(find.text('29/08, 14:00'), findsOneWidget);
       expect(find.text('Completa'), findsNWidgets(5));
       await at.scrollUntilVisible(
         find.byTooltip('Próxima página'),
@@ -752,12 +768,83 @@ void main() {
       await at.pumpAndSettle();
       expect(find.text('2 de 2'), findsOneWidget);
       expect(find.text('4 pts/R\$ 1'), findsOneWidget);
+      expect(find.text('Clube: 4 pts/R\$ 1'), findsNothing);
       expect(
         requisicoes.map((requisicao) => requisicao.url.path),
         contains('/api/livelo/catalogo/B/historico'),
       );
+
+      await at.ensureVisible(find.byKey(const Key('voltar-folha-radar')));
+      await at.tap(find.byKey(const Key('voltar-folha-radar')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('folha-historico-livelo')), findsNothing);
+      expect(find.byKey(const Key('catalogo-livelo-android')), findsOneWidget);
+
+      await at.ensureVisible(find.byKey(const Key('historico-B')));
+      await at.tap(find.byKey(const Key('historico-B')));
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('folha-historico-livelo')), findsOneWidget);
+      await at.binding.handlePopRoute();
+      await at.pumpAndSettle();
+      expect(find.byKey(const Key('folha-historico-livelo')), findsNothing);
+      expect(find.byKey(const Key('catalogo-livelo-android')), findsOneWidget);
     },
   );
+
+  testWidgets('histórico Livelo segue legível em 320 dp com texto ampliado', (
+    at,
+  ) async {
+    at.view.devicePixelRatio = 1;
+    at.view.physicalSize = const Size(320, 640);
+    addTearDown(at.view.resetDevicePixelRatio);
+    addTearDown(at.view.resetPhysicalSize);
+    final api = Api(
+      paginaPadrao: 20,
+      cliente: ClienteApi(
+        baseUrl: 'http://localhost:3000',
+        provedorToken: () async => 'token-teste',
+        cliente: http_testing.MockClient((_) async {
+          return http.Response(
+            r'{"id_externo":"B","medicoes":[{"momento":"2026-08-29T17:00:00Z","pontos_atuais":"8","pontos_base":"1","pontos_clube":"10","moeda":"R$"}]}',
+            200,
+          );
+        }),
+      ),
+    );
+
+    await at.pumpWidget(
+      MaterialApp(
+        theme: TemaRadar.claro(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(1.5),
+          ),
+          child: Scaffold(
+            body: SizedBox(
+              height: 576,
+              child: PaginaHistoricoLiveloAndroid(
+                api: api,
+                parceiro: dados.parceiro('B', nome: 'Loja Comum'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await at.pumpAndSettle();
+
+    expect(find.byKey(const Key('folha-historico-livelo')), findsOneWidget);
+    expect(find.text('Histórico de preço'), findsOneWidget);
+    expect(find.text('Loja Comum · Livelo'), findsOneWidget);
+    expect(
+      find.text('Últimas medições · até 30 registros · somente leitura'),
+      findsOneWidget,
+    );
+    expect(find.text('Clube: 10 pts/R\$ 1'), findsOneWidget);
+    expect(find.byKey(const Key('voltar-folha-radar')), findsOneWidget);
+    expect(find.byKey(const Key('fechar-folha-radar')), findsOneWidget);
+  });
 
   testWidgets('360 dp mantém contagem e filtros na mesma linha V15', (
     at,
