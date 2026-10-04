@@ -123,6 +123,24 @@ String dataHoraLivelo(String? iso) {
       '${dois(brasilia.hour)}:${dois(brasilia.minute)}';
 }
 
+/// Data compacta da linha do histórico, conforme a folha V15 da Livelo.
+String dataHoraHistoricoLivelo(String? iso, {DateTime? agora}) {
+  final instante = instanteApi(iso);
+  if (instante == null) {
+    return 'Nenhuma coleta registrada';
+  }
+  final brasilia = instante.subtract(const Duration(hours: 3));
+  final referencia = (agora ?? DateTime.now()).toUtc().subtract(
+    const Duration(hours: 3),
+  );
+  String dois(int numero) => numero.toString().padLeft(2, '0');
+  final horario = '${dois(brasilia.hour)}:${dois(brasilia.minute)}';
+  if (_mesmoDia(brasilia, referencia)) {
+    return 'Hoje, $horario';
+  }
+  return '${dois(brasilia.day)}/${dois(brasilia.month)}, $horario';
+}
+
 String validadeLivelo(String? iso) {
   final instante = instanteApi(iso);
   if (instante == null) {
