@@ -74,6 +74,12 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
 
 ## Contas, segurança e serviços externos
 
+- [ ] Remover a exceção temporária do alerta GHSA-vfj7-8cjw-p6xm (`braces`) da
+  auditoria completa da API quando houver uma versão oficial corrigida. O alerta
+  atual chega apenas pelo preset de lint de desenvolvimento; produção e demais
+  alertas altos/críticos continuam bloqueando o CI. Ver o contrato em
+  [`PRD de operação`](prd/PRD-OPERACAO-RELEASE-OBSERVABILIDADE.md) e o
+  [advisory upstream](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
 - [ ] Validar a credencial OAuth renovada da distribuição privada e concluir o
   aceite externo: instalar pelo fluxo
   autorizado, confirmar conta permitida e bloqueio de conta não autorizada,

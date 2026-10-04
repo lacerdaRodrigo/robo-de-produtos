@@ -463,13 +463,16 @@ O catálogo continua consultando somente a API autenticada e paginada. Esses
 parâmetros estão implementados nesta branch e dependem da publicação da API para
 funcionarem no APK contra o serviço real.
 
-O histórico Livelo também abre como folha sobre os detalhes da loja, sem criar
-uma rota de tela cheia. O cabeçalho exibe `Histórico · {nome da loja}` e
-`Últimas medições · até 30 registros · somente leitura`; cada página mostra até
-cinco linhas com data, pontuação curta e o estado `Completa`. Quando há mais
-linhas, a folha usa navegação `página de total`, sem iniciar nova coleta nem
-misturar parceiros. Quando a API fornece `pontos_clube` na medição, a linha
-também mostra `Clube: {valor} pts/R$ 1`, preservando esse valor textual.
+O histórico Livelo abre como folha sobre o catálogo, sem criar uma rota de tela
+cheia. O cabeçalho exibe `Histórico de preço`, o subtítulo `{nome da loja} ·
+Livelo` e controles visíveis de voltar e fechar; a linha
+`Últimas medições · até 30 registros · somente leitura` fica separada do
+cabeçalho. Cada página mostra até cinco linhas com data curta (`Hoje, HH:mm`
+ou `DD/MM, HH:mm`), pontuação curta e estado `Completa`. Quando há mais linhas,
+a folha usa navegação `página de total`, sem iniciar nova coleta nem misturar
+parceiros. A linha `Clube: {valor} pts/R$ 1` aparece quando o Clube supera a
+pontuação comum da medição; o decimal recebido permanece textual e a
+comparação é exata.
 
 `Condições` abre uma folha própria com a pontuação comum, Clube, validade,
 campanha e o botão `Abrir Livelo`; ela não oferece o histórico. `Abrir Livelo`

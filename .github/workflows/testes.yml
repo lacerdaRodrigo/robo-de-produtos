@@ -59,8 +59,11 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Auditoria de dependencias
-        run: npm audit --audit-level=high
+      - name: Auditoria de dependencias de producao
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Auditoria completa de dependencias
+        run: node scripts/auditar-dependencias.mjs
 
       - name: Tipos
         run: npm run checar
