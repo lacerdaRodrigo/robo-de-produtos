@@ -15,6 +15,13 @@ leu do destino novo os catálogos Livelo (255), Inter Sites parceiros (378) e
 Pichau (1.223). O banco e a credencial antigos seguem disponíveis por sete dias
 para rollback.
 
+**Consulta de leitura no M13 — 2026-10-03:** o ADB USB encontrou o Samsung
+SM-M135M ligado; o Termux e processos `bash`/`python` também apareceram no
+snapshot de processos. `status.sh` e os logs privados não foram lidos: o
+`run-as com.termux` foi recusado porque o pacote não é debuggable. Essa
+observação não confirma saúde das filas, resultados de slots ou nove execuções
+Pichau consecutivas; o gate permanece aberto em [`PENDENCIAS.md`](../PENDENCIAS.md).
+
 **Incidente em 2026-09-27:** o Samsung reiniciou em 26/09 às 15:40 com motivo
 `reboot,userrequested`. A Depuração por Wi-Fi ficou desligada. O estado SQLite
 local e o log do worker confirmaram sucesso nas agendas Livelo e Inter de 27/09

@@ -20,15 +20,16 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
 - [ ] Executar no Samsung SM-M135M (M13) os casos físicos ainda abertos: sessão
   expirada controlada, conta sem papel administrativo, atraso/erro/parcial,
   TalkBack, texto a 200% em todas as rotas e comparação formal de todas as telas
-  e estados com o HTML V15. A última rodada completa foi no build
-  `1.74.0+2026100103`; a fonte atual ainda não foi instalada. O build 104 não
-  contém as últimas correções, o build 105 não pôde ser gerado sem baixar o
-  Gradle Wrapper e o ADB desta sessão não consegue iniciar. O PRD mantém a
-  matriz e as evidências por cenário.
-- [ ] Rodar os testes Flutter focados da extração do hub Inter em um ambiente
-  que permita ao Flutter Tester abrir o socket local. Na tentativa desta sessão
-  o sandbox negou o socket antes de qualquer teste começar. Depois, gerar e
-  instalar no M13 o APK correspondente à fonte validada.
+  e estados com o HTML V15. A build atual `1.74.1+2026100301` foi instalada,
+  mas o runner corrigido também bloqueou antes do primeiro cenário porque não
+  encontrou o rótulo acessível `Início`. A tela ficou aberta no app; a árvore de
+  acessibilidade ainda precisa ser esclarecida. O PRD mantém a matriz e as
+  evidências por cenário.
+- [ ] Resolver manualmente o caso Shopping Inter compacto: decidir se `Acompanhar`
+  continua visível na lista ou se o cartão pode sair da árvore ao deixar de
+  acompanhar e reposicionar. O teste permanece comentado em
+  `app/test/app/navegacao/moldura_test.dart`; não remover o comentário, adaptar
+  a expectativa nem mudar a interface antes da decisão manual.
 - [ ] Validar fisicamente a Central com mais de uma página de alertas não lidos,
   leitura individual e coletiva, paginação e estado vazio. A conta mostrou dois
   não lidos no build 103; a rodada foi somente leitura e nenhum alerta foi
@@ -66,8 +67,10 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
   ROM não permite prometer recuperação autônoma pelo Android sem root.
 - [ ] Publicar a API com os identificadores de escopo necessários e a migration
   `036` aplicada antes de distribuir o APK correspondente; conferir a
-  compatibilidade do serviço publicado. O fallback Pichau também depende de
-  validação publicada em ambiente controlado.
+  compatibilidade do serviço publicado. A implantação base em Production com
+  `radar_api`, status/outbox saudáveis e leitura autenticada dos catálogos já foi
+  confirmada no PRD de execução; isso não valida a revisão dependente da `036`.
+  O fallback Pichau também depende de validação publicada em ambiente controlado.
 
 ## Contas, segurança e serviços externos
 
@@ -77,8 +80,8 @@ Flutter estão em [`AGENTS.md`](../AGENTS.md).
   alertas altos/críticos continuam bloqueando o CI. Ver o contrato em
   [`PRD de operação`](prd/PRD-OPERACAO-RELEASE-OBSERVABILIDADE.md) e o
   [advisory upstream](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
-- [ ] Validar a credencial OAuth atual da distribuição privada (houve um
-  `invalid_grant` anterior) e concluir o aceite externo: instalar pelo fluxo
+- [ ] Validar a credencial OAuth renovada da distribuição privada e concluir o
+  aceite externo: instalar pelo fluxo
   autorizado, confirmar conta permitida e bloqueio de conta não autorizada,
   observar mais de 10 builds para retenção e confirmar um push em `main`. Ver o
   PRD de distribuição Android.
