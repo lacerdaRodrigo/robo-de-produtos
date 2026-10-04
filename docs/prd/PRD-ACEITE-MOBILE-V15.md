@@ -1,22 +1,21 @@
 # PRD — Aceite físico do Mobile V15
 
-**Status:** evidências históricas até 2026-09-19, rodadas no Samsung em
-2026-09-27, 2026-09-28, 2026-09-30 e 2026-10-01, além de uma rodada parcial
-anterior no Moto em 2026-09-29. A build `1.74.0+2026100103` passou 29/29
-cenários no Samsung M13. Uma correção posterior de cabeçalho gerou a build
-`1.74.0+2026100104`, ainda sem instalação física porque o ADB deste ambiente
-não consegue iniciar o daemon. O aceite completo continua aberto; as evidências
+**Status:** a build `1.74.0+2026100103` passou 29/29 cenários no Samsung M13 em
+2026-10-01. A revisão atual `1.74.1+2026100301`, commit `ce2e7aa`, foi instalada
+no M13 em 2026-10-03; o runner não encontrou o rótulo acessível `Início` e
+bloqueou antes de executar cenários. Uma abertura manual mostrou Explorar/Livelo
+com carregamento ainda ativo. O aceite completo continua aberto; as evidências
 não substituem as pendências abertas em
 [`../PENDENCIAS.md`](../PENDENCIAS.md) nem autorizam publicação externa.
 
-## Identificação
+## Identificação da campanha inicial — 2026-09-19
 
 - Branch histórica do device: `codex/design-mobile-v15-definitivo`
 - Branch de fechamento local: `main`
 - Commit-base do APK retestado: `f1ffa13` — merge da implementação V15 e backend
 - Device principal: Samsung SM-M135M, Android 14, conectado por ADB USB
 - Application ID: `br.com.radarbeneficios.app`
-- APK: `app/build/app/outputs/flutter-apk/app-debug.apk`, build `27503`, instalado com sucesso
+- APK da campanha inicial: `app/build/app/outputs/flutter-apk/app-debug.apk`, build `27503`, instalado com sucesso
 - Início: 2026-09-19
 - Credenciais: usadas somente durante o login; não são registradas neste arquivo
 
@@ -380,12 +379,12 @@ como evidência da build desta branch.
 | D-037 | Responsividade | Retrato, paisagem e teclado aberto | ✅ | 1 | Paisagem e restauração para retrato foram exercitadas; teclado abriu durante busca Inter/Pichau e foi fechado sem perder a jornada. |
 | D-038 | Acessibilidade | Texto ampliado até 200% e alvos de toque | 🟡 | 2 | M13 em escala 2.0: Administração e 14 passos de rotas passaram sem overflow; em Compre direto, `Aplicar filtros` ficou abaixo da área visível. O runner agora rola a folha, mas falta repetir a cobertura em todas as rotas, alvos e TalkBack. |
 | D-039 | Estados | Offline, atraso, falha, retry e sessão expirada | 🟡 | 1 | Offline/retry já foi observado em build anterior; sessão Firebase expirada, atraso controlado e estados vazios/parciais de todos os domínios ainda dependem de sessão de QA/condição externa. |
-| D-040 | Visual | Comparação final com o protótipo V15 | 🟡 | 3 | Comparação manual no M13 cobriu nove jornadas principais contra o HTML V15. Corrigiu-se no código a sobrelinha extra do hub Inter; falta instalar/rever a build 104 e comparar as telas secundárias de Perfil e os estados/temas restantes. |
+| D-040 | Visual | Comparação final com o protótipo V15 | 🟡 | 3 | Comparação manual no M13 cobriu nove jornadas principais contra o HTML V15. A correção da sobrelinha extra do hub Inter está na build atual instalada em 03/10, mas a tentativa automatizada bloqueou antes de abrir a rota; comparar a correção e as telas secundárias de Perfil, estados e temas restantes. |
 | D-041 | Device | Bloqueio e retomada via ADB | ✅ | 1 | Com a confirmação administrativa aberta, a tela foi apagada e desbloqueada; a mesma rota e sessão foram retomadas no APK. |
 | D-042 | Instalação | Reinstalação do APK e abertura limpa | ✅ | 2 | APK debug local instalado por `adb install -r`; sessão persistiu e a Home carregou após a validação de acesso. |
-| D-043 | Navegação | Rotas V15 e back Android com sessão existente | ✅ | 3 | 29/29 cenários passaram no build `1.74.0+2026100103`; evidências em `~/.local/state/radar-mobile-device-acceptance/evidence/20261001T040639Z/`. Sessão preservada; nenhum alerta ou acompanhamento foi alterado. |
+| D-043 | Navegação | Rotas V15 e back Android com sessão existente | 🟡 | 3 | 29/29 cenários passaram no build `1.74.0+2026100103`; no build atual `1.74.1+2026100301`, o runner corrigido não encontrou `Início` e bloqueou antes do primeiro cenário, mantendo a Activity em primeiro plano. Esclarecer a árvore de acessibilidade e repetir o aceite físico. |
 | D-044 | Navegação e comparação parcial | Branch local no Moto, filtros e rotas secundárias | 🟡 | 1 | APK SHA-256 `c9fb9aa6b72a3463e9aa4813e5669b29b7e4eb46132324f69da0f2505807414e`; sessão preservada. Capturas `home-final.png`, `appearance-final.png`, `alerts-final.png`, `inter-direct-filter-applied-acessorios.png`, `inter-partners-filter-electronicos-empty.png`, `livelo-filter-casa-aplicado.png`, `pichau-filter-esgotados-aplicado.png`, `report-final.png` e demais telas ficam em `~/.local/state/radar-mobile-device-acceptance/evidence/20260929-moto-g6-v15/`. Buscas e filtros de catálogo foram aplicados e limpos sem mutação de dados; o filtro de origem da Central não foi aplicado porque a API publicada ainda não aceita esse parâmetro. É evidência histórica e não valida esta revisão no Samsung M13. |
-| D-045 | Build e instalação final desta revisão | Build atual instalada no Samsung SM-M135M (M13) | 🟡 | 4 | A última APK gerada é `1.74.0+2026100104`, SHA-256 `97c10c66314b967b45e83a6c0e496ae1e632c9ceb05621e74ac784e17f4f1451`; ela não contém o parser Pichau corrigido nem a extração do hub Inter. A tentativa de gerar a build 105 falhou porque o Gradle Wrapper não pôde baixar a distribuição; ADB também falha ao iniciar neste ambiente (`could not install *smartsocket* listener: Operation not permitted`). |
+| D-045 | Build e instalação final desta revisão | Build atual instalada no Samsung SM-M135M (M13) | ✅ | 4 | APK `1.74.1+2026100301`, commit `ce2e7aa70f6368997e15fdc76d34aa791c5c02ad`, SHA-256 `e19eb52ca73a43fc9ea8dcbe985344a6785d5cdbbc2f68cc34eb7339d862c98f`, compilada e instalada no M13 por `adb install -r`; assinatura compatível e dados preservados. Os testes focados de moldura e Sites parceiros também passaram nesta fonte. |
 
 ## Correções realizadas
 
@@ -436,13 +435,37 @@ como evidência da build desta branch.
   ambiente Flutter/ADB estiver liberado.
 
 - A distribuição privada por Drive falhou no CI `35471530166` com
-  `invalid_grant` porque o refresh token OAuth expirou ou foi revogado. É
-  necessário renovar/publicar a credencial externa antes do aceite da
-  distribuição privada; isso não bloqueou o APK local instalado por ADB.
+  `invalid_grant`. O PRD de distribuição registra a renovação OAuth em
+  2026-10-02; uma nova execução bem-sucedida ainda é necessária para validar a
+  credencial e concluir o aceite externo. Isso não bloqueou o APK local
+  instalado por ADB.
 - Sessão expirada, atraso controlado, vazio controlado, usuário comum,
   paginação física completa e alguns históricos dependem de ambiente/contas ou
   de um roteiro manual adicional; permanecem amarelos ou pendentes, nunca foram
   marcados como verde por inferência.
+
+### Revalidação no M13 — 2026-10-03
+
+- APK `1.74.1+2026100301`, commit `ce2e7aa70f6368997e15fdc76d34aa791c5c02ad`,
+  SHA-256 `e19eb52ca73a43fc9ea8dcbe985344a6785d5cdbbc2f68cc34eb7339d862c98f`,
+  instalada com `adb install -r` após conferir a assinatura. Dados locais foram
+  preservados.
+- `flutter test --suppress-analytics test/app/navegacao/moldura_test.dart` —
+  35/35 passaram. `flutter test --suppress-analytics
+  test/features/inter/pagina_cashback_inter_test.dart` — 19/19 passaram. O build
+  Android debug atual também concluiu.
+- O runner iniciou Appium, mas bloqueou antes do primeiro cenário por não
+  encontrar `Início` na árvore consultada. A versão anterior enviou até quatro
+  eventos Back enquanto buscava o rótulo, o que retornou rotas e fechou a
+  Activity; a captura final no launcher não representa falha da jornada. O
+  runner foi corrigido e repetido: continuou sem encontrar o rótulo, mas manteve
+  `MainActivity` em primeiro plano e bloqueou sem navegar. Ainda falta esclarecer
+  a ausência dos rótulos na árvore Android. Evidências privadas das tentativas
+  ficam em `~/.local/state/radar-mobile-device-acceptance/evidence/20261004T002124Z/`
+  e `~/.local/state/radar-mobile-device-acceptance/evidence/20261004T003825Z/`.
+- A abertura manual mostrou `Explorar → Livelo`, catálogo com zero lojas e
+  indicadores de carregamento. Não houve login, escrita, mudança de seleção,
+  leitura de alertas, acompanhamento ou criação de dados.
 
 ## Fechamento histórico da validação até 2026-09-19
 

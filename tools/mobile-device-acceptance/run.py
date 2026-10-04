@@ -507,11 +507,7 @@ def main() -> int:
     status = "aprovado"
     try:
         driver.start()
-        for _ in range(4):
-            if driver.is_visible(NAVIGATION_DESTINATIONS[0]):
-                break
-            driver.back()
-            time.sleep(0.4)
+        # Missing semantics is not permission to pop the current route or close the app.
         driver.wait_for(NAVIGATION_DESTINATIONS[0], timeout=45)
         for destination in NAVIGATION_DESTINATIONS:
             driver.wait_for(destination)

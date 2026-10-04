@@ -9,7 +9,7 @@ de dados. A inspeção ADB confirmou worker ativo e Chrome/Appium ociosos ao
 final. Continuam pendentes um evento real com entrega FCM e o gate de nove
 execuções Pichau agendadas consecutivas em 72 horas.
 
-**Última atualização:** 2026-10-01
+**Última atualização:** 2026-10-03
 
 ### Contrato parcial da API e runner de aceite — 2026-10-01
 
@@ -779,16 +779,19 @@ continuam pendentes.
 
 ## Estado operacional do executor Android
 
-O runner Pichau, a migration 022, o diagnóstico 024, a limpeza de tarefas
-recentes, a restauração da tela e o alinhamento de checkout do código anterior
-passaram por coleta real. A nova integração com agenda única, estado SQLite,
-despacho GitHub para Livelo/Inter e caminhos organizados ainda não foi instalada
-no Samsung nem validada em produção. Backup/cópia do Neon, migration 031,
-secrets, instalação e gate de 72 horas continuam pendentes. O telefone precisa
-permanecer carregando, no Wi‑Fi e com a depuração sem fio disponível; a tela
-pode ficar bloqueada depois do primeiro desbloqueio pós-reboot. O cabo USB não
-faz parte da execução recorrente. A inclusão da Pichau na busca global de
-Produtos continua sendo decisão separada.
+O executor Android conjunto de Livelo, Inter e Pichau foi instalado no Samsung;
+as migrations `031`, `032` e os logins/segredos operacionais do projeto novo
+foram validados conforme o
+[`PRD-EXECUCAO-COLETORES.md`](PRD-EXECUCAO-COLETORES.md). Após o reboot de
+26/09/2026, a Depuração por Wi‑Fi desligada causou quatro falhas Pichau
+agendadas; a conexão foi recuperada manualmente, como descrito no runbook. Isso
+não prova autonomia após reboot nem completa o aceite operacional: seguem
+pendentes nove execuções Pichau agendadas consecutivas em 72 horas, a validação
+física dos timeouts e da atualização/reinício do worker e o ensaio de rollback.
+O aparelho deve permanecer carregando e no Wi‑Fi; a tela pode ficar bloqueada
+depois do primeiro desbloqueio pós-reboot, e o cabo de dados não faz parte da
+execução recorrente. Backup/restore Neon continua pendente no PRD próprio. A
+inclusão da Pichau na busca global de Produtos continua sendo decisão separada.
 
 ## Critérios de aceite
 

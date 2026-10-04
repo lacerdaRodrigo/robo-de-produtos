@@ -31,6 +31,11 @@ resultados existentes e não força falhas nem altera dados. Na Central, percorr
 aba `Não lidos`, aplica o filtro real de origem e restaura `Todos`; não marca
 alertas como lidos.
 
+O app precisa expor `Início` na árvore de acessibilidade ao abrir. Se o rótulo
+não aparecer, o runner registra o bloqueio e captura a tela sem enviar eventos
+Back para tentar recuperar a rota; a ausência de um nó não autoriza fechar ou
+navegar pela pilha do usuário.
+
 O build verifica a assinatura antes de `adb install -r`; se não coincidir,
 interrompe sem desinstalar o app nem apagar seus dados. O número de build deve
 ser informado em `DEVICE_ACCEPTANCE_BUILD_NUMBER` e ser novo para cada rodada.
