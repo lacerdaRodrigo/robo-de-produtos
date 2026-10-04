@@ -32,6 +32,15 @@ O workflow Android versiona e identifica o artefato privado; a API não publica
 um identificador de release junto com cada resposta. A associação exata entre
 APK, commit da API e deployment requer evidência do provedor de deploy.
 
+O CI da API mantém bloqueante a auditoria de dependências de produção. A
+auditoria completa do lockfile também bloqueia qualquer alerta alto/crítico,
+cadeia ou dependência diferente da exceção temporária descrita em
+[`PENDENCIAS.md`](../PENDENCIAS.md): o alerta GHSA-vfj7-8cjw-p6xm em `braces`,
+alcançado somente pelo preset de lint de desenvolvimento. O verificador
+`backend/api/scripts/auditar-dependencias.mjs` confere os pacotes, a cadeia e a
+classificação `dev` no lockfile. Remover a exceção quando houver release oficial
+corrigido.
+
 ## 2. Logs e correlação
 
 O formato comum proposto para eventos operacionais é JSON com:

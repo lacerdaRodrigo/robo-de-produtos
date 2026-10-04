@@ -88,7 +88,7 @@ origem; abrir condições não deve limpar busca, filtro ou página.
 | `inter` | Escolha entre Sites parceiros e Compre direto; cada card abre sua própria rota interna, sem renderizar o catálogo abaixo da escolha. |
 | `partners` | Cashback por loja, principal/secundário, condições e acompanhamento. |
 | `direct` | Produtos agrupados por loja, busca e filtros; preço, cashback e estimativa. |
-| `livelo` | Cabeçalho Livelo/Catálogo com voltar e atualizar por ícone, título Lojas e pontos sem descrição redundante, busca com avanço, abas Lojas/No radar, filtros e cartões com categoria/última coleta, loja, pontuação, base, Clube, campanha, validade, acompanhamento, condições e histórico. Condições e abertura externa usam folhas próprias; o histórico mostra Clube quando o payload da medição o fornece, com título da loja, status Completa e paginação. |
+| `livelo` | Cabeçalho Livelo/Catálogo com voltar e atualizar por ícone, título Lojas e pontos sem descrição redundante, busca com avanço, abas Lojas/No radar, filtros e cartões com categoria/última coleta, loja, pontuação, base, Clube, campanha, validade, acompanhamento, condições e histórico. Condições e abertura externa usam folhas próprias; o histórico usa título `Histórico de preço`, subtítulo `{loja} · Livelo`, voltar/fechar, metadados em linha própria, datas compactas, até cinco medições por página, status `Completa` e Clube somente quando supera a pontuação comum. |
 | `pichau` | Cabeçalho Pichau/Catálogo com voltar e atualizar, título PCs gamer, busca com avanço, abas Todos/No radar, folha `Filtros · Pichau` com ordem Pix, disponibilidade, faixa de preço e ações Limpar/Aplicar filtros, cards com SKU, disponibilidade no canto direito, título longo em duas linhas, preços Pix/cartão e desconto; Detalhes reúne abertura externa e histórico. |
 | `detail` | Identidade do item, valores, especificações, seguir e destino. |
 | `watching` | Área segura superior; cabeçalho `No seu radar` com sino, total pessoal, busca com avanço, filtros horizontais Todos/Sites parceiros/Compre direto/Livelo/Pichau, lista paginada e cards com origem, nome, estado, valor textual e ações `Acompanhando`/link externo quando a API fornece URL; remoção permite desfazer. Sem seletor de ordenação ou cartão extra da Central. |
@@ -102,11 +102,14 @@ origem; abrir condições não deve limpar busca, filtro ou página.
 
 Folhas reutilizáveis: condições, histórico, filtros do catálogo, filtros de
 alertas, saída, destino externo, permissão e restauração da demonstração. A
-folha de histórico usa cabeçalho centralizado com voltar/fechar, identificação
-do produto, resumo de mínimo e máximo, total da janela de 30 dias e medições
-com preço, cashback e após cashback alinhados à direita. Quando houver mais de
-uma página, a folha mostra cinco medições por vez, o indicador `1 de N` (com o
-número da página atual) e setas circulares de anterior/próxima.
+folha de histórico usa cabeçalho centralizado com voltar/fechar e identificação
+do item. Históricos de produto podem mostrar resumo de mínimo e máximo, total
+da janela de 30 dias e medições com preço, cashback e após cashback alinhados à
+direita. O histórico Livelo usa datas compactas (`Hoje, HH:mm` ou `DD/MM,
+HH:mm`), metadados separados do cabeçalho e a pontuação Clube somente quando
+supera a comum. Quando houver mais de uma página, a folha mostra cinco medições
+por vez, o indicador `1 de N` (com o número da página atual) e setas circulares
+de anterior/próxima.
 
 ## Composição e comportamento
 

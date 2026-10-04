@@ -65,9 +65,9 @@ class _EstadoPaginaHistoricoLiveloAndroid
   @override
   Widget build(BuildContext context) => FolhaRadar(
     key: const Key('folha-historico-livelo'),
-    titulo: 'Histórico · ${widget.parceiro.nome}',
-    descricao: 'Últimas medições · até 30 registros · somente leitura',
-    mostrarVoltar: false,
+    titulo: 'Histórico de preço',
+    descricao: '${widget.parceiro.nome} · Livelo',
+    mostrarVoltar: true,
     child: Flexible(child: _corpo()),
   );
 
@@ -101,6 +101,15 @@ class _EstadoPaginaHistoricoLiveloAndroid
       key: const Key('historico-livelo-android'),
       padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.five),
       children: [
+        Padding(
+          padding: EdgeInsetsDirectional.only(bottom: tokens.spacing.three),
+          child: Text(
+            'Últimas medições · até 30 registros · somente leitura',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: tokens.colors.textoSuave),
+          ),
+        ),
         for (final medicao in pagina) _LinhaMedicao(medicao: medicao),
         if (totalPaginas > 1) ...[
           SizedBox(height: tokens.spacing.three),
@@ -139,7 +148,7 @@ class _LinhaMedicao extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              dataHoraLivelo(medicao.momento).replaceFirst(', ', ' · '),
+              dataHoraHistoricoLivelo(medicao.momento),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: cores.textoSuave),
@@ -160,7 +169,10 @@ class _LinhaMedicao extends StatelessWidget {
                 const _StatusHistorico(),
               ],
             ),
-            if (medicao.pontosClube != null) ...[
+            if (pontosClubeSuperaComum(
+              medicao.pontosClube,
+              medicao.pontos,
+            )) ...[
               SizedBox(height: tokens.spacing.one),
               Text(
                 'Clube: ${pontosHistoricoLivelo(medicao.pontosClube, moeda: medicao.moeda)}',
