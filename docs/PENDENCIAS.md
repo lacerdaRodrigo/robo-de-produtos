@@ -6,6 +6,17 @@ Os detalhes e resultados parciais ficam nos PRDs de domínio e no
 [`PRD de aceite mobile`](prd/PRD-ACEITE-MOBILE-V15.md). Os gates do ciclo
 Flutter estão em [`AGENTS.md`](../AGENTS.md).
 
+## Design system Radar DS
+
+- [ ] Aprovar visualmente o Radar DS (artefato e `VitrineDs`) antes de ligar o
+  tema no app. Guia: [`guias/design-system.md`](guias/design-system.md).
+- [ ] Rodar `flutter analyze` e `flutter test test/design_system` — a camada foi
+  escrita numa sessão sem SDK Flutter/Dart e ainda não foi compilada.
+- [ ] Migrar as telas na ordem do guia (Pichau como piloto) e, ao final, remover
+  `tokens.dart`, `CoresRadar`, `FolhaRadar`, `fundacao_visual.dart` e Manrope.
+- [ ] Atualizar o protótipo HTML (`design-app/`) para a nova identidade, ou
+  registrar a decisão de usar o artefato Radar DS como fonte visual.
+
 ## Aceite mobile e dados reais
 
 - [ ] Observar uma mudança natural de preço, confirmar a entrega FCM, o conteúdo

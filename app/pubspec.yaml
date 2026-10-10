@@ -75,6 +75,9 @@ flutter:
     - family: Manrope
       fonts:
         - asset: assets/fonts/manrope.ttf
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/plus_jakarta_sans.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

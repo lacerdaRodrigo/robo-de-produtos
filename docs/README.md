@@ -33,6 +33,7 @@ documentação antes de abrir arquivos isolados.
 | [`../design-app/mobile-v15/index.html`](../design-app/mobile-v15/index.html) | Fonte visual navegável da identidade mobile V15, com temas, assets, estados, jornadas e movimento. |
 | [`../design-app/mobile-v15/identidade.html`](../design-app/mobile-v15/identidade.html) | Galeria da marca, ícones, ilustrações e animações oficiais da V15. |
 | [`guias/design-v15.md`](guias/design-v15.md) | Contrato visual, componentes, acessibilidade, movimento e cobertura funcional da V15. |
+| [`guias/design-system.md`](guias/design-system.md) | Radar DS: nova identidade, componentes Flutter reutilizáveis, histórico e filtros únicos com estado global, plano de migração. Proposta aguardando aprovação. |
 
 ## PRDs de domínio
 
